@@ -153,10 +153,11 @@ func main() {
 	if ygrad, err := y.Grad(); err != nil {
 		fmt.Printf("dz/dy: %v", ygrad)
 	}
+
 	// Output:
 	// z: 4.5
 	// dz/dx: 1
-	// dz/dx 1
+	// dz/dy: 1
 }
 ```
 
@@ -209,26 +210,35 @@ Of course, Gorgonia also supports the more traditional symbolic differentiation 
 
 	// Output:
 	// z: 4.5
-	// dz/dx: 1
-	// dz/dx 1
+	// dz/dx: 1 | 1
+	// dz/dy: 1 | 1
 ```
 
 Currently Gorgonia only performs backwards mode automatic differentiation (aka backpropagation), although one may observe the vestiges of an older version which supported forwards mode differentiation in the existence of `*dualValue`. It may return in the future.
 
 ##Graph##
 
-A lot has been said about a computation graph or an expression graph. But what is it exactly? Think of it as an AST for the math expression that you want. Here's the graph for the examples above:
+A lot has been said about a computation graph or an expression graph. But what is it exactly? Think of it as an AST for the math expression that you want. Here's the graph for the examples (but with a vector and a scalar addition instead) above:
 
-![picture](picture)
+![graph1](https://raw.githubusercontent.com/chewxy/gorgonia/master/media/exprGraph_example1.png)
 
+By the way, Gorgonia comes with nice-ish graph printing abilities. Here's an example of a graph of the equation `y = x²` and its derivation:
+
+![graph1](https://raw.githubusercontent.com/chewxy/gorgonia/master/media/exprGraph_example2.png)
+
+To read the graph is easy. The expression builds from bottom up, while the derivations build from top down. This way the derivative of each node is roughly on the same level. 
+
+Red-outlined nodes indicate that it's a root node. Green outlined nodes indicate that they're a leaf node. Nodes with a yellow background indicate that it's an input node. The dotted arrows indicate which node is the gradient node for the pointed-to node.
+
+Concretely, it says that `c42011e840` (`dy/dx`) is the gradient node of the input `c42011e000` (which is `x`).
 
 
 #API Stability#
-Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards
+Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
 
 #Contributing#
 
-Obviously since you are most probably reading this on Github, Github will form tha major part of the workflow for contributing to this package.
+Obviously since you are most probably reading this on Github, Github will form the major part of the workflow for contributing to this package.
 
 ##Steps##
 1. Fork this project on Github
