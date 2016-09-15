@@ -236,11 +236,13 @@ Concretely, it says that `c42011e840` (`dy/dx`) is the gradient node of the inpu
 
 A Node is rendered thusly:
 
-| ID | name :: type  |
-| OP* | Op :: Op type|
-| shape |
-| overwrites input # |
-| Value† | Gradient |
+<table>
+<tr><td>ID</td><td>node name :: type</td></tr>
+<tr><td>OP*</td><td>op name :: type</td></tr>
+<tr><td colspan="2">shape</td></tr>
+<tr><td colspan="2">compilation metadata</td></tr>
+<tr><td>Value†</td><td>Gradient</td></tr>
+</table>
 
 ###Additional Notes###
 
