@@ -232,9 +232,43 @@ Red-outlined nodes indicate that it's a root node. Green outlined nodes indicate
 
 Concretely, it says that `c42011e840` (`dy/dx`) is the gradient node of the input `c42011e000` (which is `x`).
 
+###Node Rendering###
+
+A Node is rendered thusly:
+
+| ID | name :: type  |
+| OP* | Op :: Op type|
+| shape |
+| overwrites input # |
+| Value† | Gradient |
+
+###Additional Notes###
+
+* If it's an input node, then the Op row will not show up.
+* If there are no Values bound to the node, it will show up as NIL. However, when there are values and gradients, it will try to as best as possible display the values bound to the node.
+
+
 
 #API Stability#
 Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
+
+#Roadmap#
+
+Here are the goals for Gorgonia, sorted by importance 
+
+- [ ] 90+% test coverage. Current coverage is 50% for Gorgonia and 75% for the Tensor packages
+- [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely.
+- [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
+- [ ] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
+- [ ] Refactor the CuBLAS package as well as the Blase package.
+- [ ] Distributed computing. The ability to spread jobs out across multiple machines and communicating with each other has been attempted at least 3 times, but failed each time.
+- [ ] Re-introduce the VM that deals with artificial/synthetic gradients.
+- [ ] Improve performance especially re: allocation, minimize impact of type system.
+- [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in gneral.
+- [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
+- [ ] Derivative-free optimization algorithms
+
+
 
 #Contributing#
 
@@ -267,9 +301,7 @@ A Significant Contributor is one who has shown *deep understanding* of how the l
 * Provided expert analysis on parts of the package (for example, you may be a floating point operations expert who optimized one function)
 * Answered at least 10 support questions.
 
-
-
-Significant Contributors list will be updated once a month (if anyone even uses Gorgonia that is)
+Significant Contributors list will be updated once a month (if anyone even uses Gorgonia that is).
 
 #How To Get Support#
 The best way of support right now is to open a ticket on Github.
@@ -277,7 +309,6 @@ The best way of support right now is to open a ticket on Github.
 
 #Licence#
 
-Gorgonia is licenced under a variant of Apache 2.0. It's for all intents and purposes the same as the Apache 2.0 Licence, with the exception of not being able to commercially profit directly from the package unless you're a Significant Contributor (for example, providing commercial support for the package). 
+Gorgonia is licenced under a variant of Apache 2.0. It's for all intents and purposes the same as the Apache 2.0 Licence, with the exception of not being able to commercially profit directly from the package unless you're a Significant Contributor (for example, providing commercial support for the package). It's perfectly fine to profit directly from a derivative of Gorgonia (for example, if you use Gorgonia as a library in your product)
 
-
-Everyone is still allowed to use Gorgonia for commercial purposes
+Everyone is still allowed to use Gorgonia for commercial purposes (example: using it in a software for your business).
