@@ -6,6 +6,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/math32"
 )
 
 // Solver is anything that does gradient updates.
@@ -27,6 +28,9 @@ func WithL2Reg(l2reg float64) SolverOpt {
 		case *AdamSolver:
 			st.l2reg = l2reg
 			st.useL2Reg = true
+		case *VanillaSolver:
+			st.l2reg = l2reg
+			st.useL2Reg = true
 		}
 	}
 	return f
@@ -37,6 +41,9 @@ func WithL1Reg(l1reg float64) SolverOpt {
 	f := func(s Solver) {
 		switch st := s.(type) {
 		case *AdamSolver:
+			st.l1reg = l1reg
+			st.useL1Reg = true
+		case *VanillaSolver:
 			st.l1reg = l1reg
 			st.useL1Reg = true
 		}
@@ -50,12 +57,14 @@ func WithBatchSize(batch float64) SolverOpt {
 		switch st := s.(type) {
 		case *AdamSolver:
 			st.batch = batch
+		case *VanillaSolver:
+			st.batch = batch
 		}
 	}
 	return f
 }
 
-// WithEps sets the smoothing factor for the solver. Currently all solvers in this package has them
+// WithEps sets the smoothing factor for the solver.
 func WithEps(eps float64) SolverOpt {
 	f := func(s Solver) {
 		switch st := s.(type) {
@@ -78,6 +87,9 @@ func WithClip(clip float64) SolverOpt {
 		case *AdamSolver:
 			st.clip = clip
 			st.useClip = true
+		case *VanillaSolver:
+			st.clip = clip
+			st.useClip = true
 		}
 	}
 	return f
@@ -90,6 +102,8 @@ func WithLearnRate(eta float64) SolverOpt {
 		case *RMSPropSolver:
 			st.eta = eta
 		case *AdamSolver:
+			st.eta = eta
+		case *VanillaSolver:
 			st.eta = eta
 		}
 	}
@@ -346,7 +360,7 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 				}
 
 				dv.Value = ws
-				dv.d = Scalar{t: Float64, v: float32(0)} // zero it
+				dv.d = Scalar{t: Float32, v: float32(0)} // zero it
 			case Float64:
 				decay := s.decay
 				omdecay := 1.0 - s.decay
@@ -585,6 +599,10 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 				defer tf32.ReturnTensor(vHats)
 				defer tf32.ReturnTensor(mHats)
 
+				if _, err = tf64.Add(w, mHats, types.UseUnsafe()); err != nil {
+					return
+				}
+
 				g.Zero()
 			case Float64:
 				cv := cvv.(Tensor)
@@ -710,6 +728,10 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 				defer tf64.ReturnTensor(vHats)
 				defer tf64.ReturnTensor(mHats)
 
+				if _, err = tf64.Add(w, mHats, types.UseUnsafe()); err != nil {
+					return
+				}
+
 				g.Zero()
 			default:
 				err = NewError(NotYetImplemented, "Tensor of %T not implemented yet for AdamSolver", dt)
@@ -833,5 +855,541 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 		}
 
 	}
+	return
+}
+
+// VanillaSolver is your bog standard stochastic gradient descent optimizer. There are no fancy features to this
+type VanillaSolver struct {
+	eta   float64 // learn rate
+	clip  float64 // clip gradients
+	l1reg float64 // l1 regularization parameter
+	l2reg float64 // l2 regularization parameter
+	batch float64 // batch size
+
+	useClip, useL1Reg, useL2Reg bool
+}
+
+// NewVanillaSolver creates a new VanillaSolver with sane-ish default values
+func NewVanillaSolver(opts ...SolverOpt) *VanillaSolver {
+	s := &VanillaSolver{
+		batch: 1,
+		eta:   0.001,
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+func (s *VanillaSolver) Step(model Nodes) (err error) {
+	for _, n := range model {
+		dv, ok := n.boundTo.(*dualValue)
+		if !ok {
+			err = NewError(typeError, "Expected a *dualValue in %v (%x). Got %T instead", n, n.Hashcode(), n.boundTo)
+			return
+		}
+
+		var dt Dtype
+		dt, err = dtypeOf(dv.Type())
+		if err != nil {
+			return
+		}
+
+		grad := dv.d
+		weights := dv.Value
+
+		switch wt := weights.(type) {
+		case Tensor:
+			switch dt {
+			case Float32:
+				w := wt.Tensor.(*tf32.Tensor)
+				g := grad.(Tensor).Tensor.(*tf32.Tensor)
+
+				l1reg := float32(s.l1reg)
+				l2reg := float32(s.l2reg)
+				batch := float32(s.batch)
+				clip := float32(s.clip)
+				eta := float32(s.eta)
+
+				// prep the regularization of gradients
+				var l1regs, l2regs *tf32.Tensor
+				if s.useL1Reg {
+					if l1regs, err = tf32.Sign(w); err != nil {
+						return
+					}
+
+					if l1regs, err = tf32.PointwiseMul(l1reg, l1regs, types.UseUnsafe()); err != nil {
+						return
+					}
+
+					if g, err = tf32.Add(g, l1regs, types.UseUnsafe()); err != nil {
+						return
+					}
+
+					defer tf32.ReturnTensor(l1regs)
+				}
+
+				if s.useL2Reg {
+					if l2regs, err = tf32.PointwiseMul(l2reg, w); err != nil {
+						return
+					}
+
+					if g, err = tf32.Add(g, l2regs, types.UseUnsafe()); err != nil {
+						return
+					}
+
+					defer tf32.ReturnTensor(l2regs)
+				}
+
+				if batch > 1 {
+					if g, err = tf32.PointwiseMul(1/batch, g, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				if s.useClip && clip > 0 {
+					if g, err = tf32.Clamp(g, -clip, clip, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				if g, err = tf32.PointwiseMul(-eta, g, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				if _, err = tf32.Add(w, g, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				g.Zero()
+			case Float64:
+				w := wt.Tensor.(*tf64.Tensor)
+				g := grad.(Tensor).Tensor.(*tf64.Tensor)
+
+				l1reg := s.l1reg
+				l2reg := s.l2reg
+				batch := s.batch
+				clip := s.clip
+				eta := s.eta
+
+				// prep the regularization of gradients
+				var l1regs, l2regs *tf64.Tensor
+				if s.useL1Reg {
+					if l1regs, err = tf64.Sign(w); err != nil {
+						return
+					}
+
+					if l1regs, err = tf64.PointwiseMul(l1reg, l1regs, types.UseUnsafe()); err != nil {
+						return
+					}
+
+					if g, err = tf64.Add(g, l1regs, types.UseUnsafe()); err != nil {
+						return
+					}
+
+					defer tf64.ReturnTensor(l1regs)
+				}
+
+				if s.useL2Reg {
+					if l2regs, err = tf64.PointwiseMul(l2reg, w); err != nil {
+						return
+					}
+
+					if g, err = tf64.Add(g, l2regs, types.UseUnsafe()); err != nil {
+						return
+					}
+
+					defer tf64.ReturnTensor(l2regs)
+				}
+
+				if batch > 1 {
+					if g, err = tf64.PointwiseMul(1/batch, g, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				if s.useClip && clip > 0 {
+					if g, err = tf64.Clamp(g, -clip, clip, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				if g, err = tf64.PointwiseMul(-eta, g, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				if _, err = tf64.Add(w, g, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				g.Zero()
+
+			default:
+				err = nyi("VanillaSolver.Step", wt)
+				return
+			}
+		case Scalar:
+			switch dt {
+			case Float32:
+				g := grad.(Scalar).v.(float32)
+				w := wt.v.(float32)
+
+				l1reg := float32(s.l1reg)
+				l2reg := float32(s.l2reg)
+				batch := float32(s.batch)
+				clip := float32(s.clip)
+				eta := float32(s.eta)
+
+				if s.useL1Reg {
+					if w < 0 {
+						l1reg = -l1reg
+					}
+					g += l1reg
+				}
+
+				if s.useL2Reg {
+					l2reg *= w
+					g += l2reg
+				}
+
+				if batch > 1 {
+					g *= (1 / batch)
+				}
+
+				if s.useClip {
+					if g > clip {
+						g = clip
+					} else if g < -clip {
+						g = -clip
+					}
+				}
+
+				upd := -eta * g
+				w += upd
+
+				dv.Value = Scalar{t: Float32, v: w}
+				dv.d = Scalar{t: Float32, v: float32(0.0)}
+			case Float64:
+				g := grad.(Scalar).v.(float64)
+				w := wt.v.(float64)
+
+				l1reg := s.l1reg
+				l2reg := s.l2reg
+				batch := s.batch
+				clip := s.clip
+				eta := s.eta
+
+				if s.useL1Reg {
+					if w < 0 {
+						l1reg = -l1reg
+					}
+					g += l1reg
+				}
+
+				if s.useL2Reg {
+					l2reg *= w
+					g += l2reg
+				}
+
+				if batch > 1 {
+					g *= (1 / batch)
+				}
+
+				if s.useClip {
+					if g > clip {
+						g = clip
+					} else if g < -clip {
+						g = -clip
+					}
+				}
+
+				upd := -eta * g
+				w += upd
+
+				dv.Value = Scalar{t: Float64, v: w}
+				dv.d = Scalar{t: Float64, v: 0.0}
+			default:
+				err = nyi("VanillaSolver.step", wt)
+				return
+			}
+		default:
+			err = nyi("VanillaSolver.step", wt)
+			return
+		}
+	}
+	return
+}
+
+// AdaGradSolver is the solver that does adaptive gradient descent. Read the paper: http://jmlr.org/papers/v12/duchi11a.html
+type AdaGradSolver struct {
+	eta   float64 // learn rate
+	eps   float64 // smoothing factor
+	l1Reg float64 // l1reg param
+	l2reg float64 // l2reg param
+	clip  float64 // clip at
+
+	useL2Reg, useClip bool
+
+	cache []*dualValue
+}
+
+// NewAdaGradSolver creates a new AdaGradSolver with sane-ish default values
+func NewAdaGradSolver(opts ...SolverOpt) *AdaGradSolver {
+	s := &AdaGradSolver{
+		eta: 0.001,
+		eps: 1e-8,
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+func (s *AdaGradSolver) Step(model Nodes) (err error) {
+	if s.cache == nil {
+		s.cache = make([]*dualValue, len(model))
+	}
+
+	for i, n := range model {
+		dv, ok := n.boundTo.(*dualValue)
+		if !ok {
+			err = NewError(typeError, "Expected a *dualValue in %v (%x). Got %T instead", n, n.Hashcode(), n.boundTo)
+			return
+		}
+
+		var cached *dualValue
+		if cached = s.cache[i]; cached == nil {
+			if cached, err = dv.clone0(); err != nil {
+				return
+			}
+			s.cache[i] = cached
+		}
+
+		var dt Dtype
+		if dt, err = dtypeOf(dv.Type()); err != nil {
+			return
+		}
+
+		grad := dv.d
+		weights := dv.Value
+
+		cv := cached.Value
+
+		switch cw := cv.(type) {
+		case Tensor:
+			switch dt {
+			case Float32:
+				var w, g, c, g2, regularized *tf32.Tensor
+
+				l2reg := float32(s.l2reg)
+				clip := float32(s.clip)
+				eps := float32(s.eps)
+				eta := float32(s.eta)
+
+				g = grad.(Tensor).Tensor.(*tf32.Tensor)
+				if g2, err = tf32.PointwiseSquare(g); err != nil { // safe version
+					return
+				}
+
+				c = cw.Tensor.(*tf32.Tensor)
+				tf32.Add(c, g2, types.UseUnsafe())
+
+				if s.useClip {
+					if _, err = tf32.Clamp(g, -clip, clip, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				// update
+				var upd *tf32.Tensor
+
+				if upd, err = tf32.Add(c, eps); err != nil {
+					return
+				}
+
+				if _, err = tf32.InvSqrt(upd, types.UseUnsafe()); err != nil {
+					return
+				}
+				if _, err = tf32.PointwiseMul(g, -eta, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				if _, err = tf32.PointwiseMul(upd, g, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				// regularize
+				w = weights.(Tensor).Tensor.(*tf32.Tensor)
+
+				if s.useL2Reg {
+					if regularized, err = tf32.PointwiseMul(w, l2reg); err != nil {
+						return
+					}
+
+					if _, err = tf32.Sub(upd, regularized, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				if _, err = tf32.Add(w, upd, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				// zero all
+				g.Zero()
+			case Float64:
+				var w, g, c, g2, regularized *tf64.Tensor
+
+				l2reg := s.l2reg
+				clip := s.clip
+				eps := s.eps
+				eta := s.eta
+
+				g = grad.(Tensor).Tensor.(*tf64.Tensor)
+				if g2, err = tf64.PointwiseSquare(g); err != nil { // safe version
+					return
+				}
+
+				c = cw.Tensor.(*tf64.Tensor)
+				tf64.Add(c, g2, types.UseUnsafe())
+
+				if s.useClip {
+					if _, err = tf64.Clamp(g, -clip, clip, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				// update
+				var upd *tf64.Tensor
+
+				if upd, err = tf64.Add(c, eps); err != nil {
+					return
+				}
+
+				if _, err = tf64.InvSqrt(upd, types.UseUnsafe()); err != nil {
+					return
+				}
+				if _, err = tf64.PointwiseMul(g, -eta, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				if _, err = tf64.PointwiseMul(upd, g, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				// regularize
+				w = weights.(Tensor).Tensor.(*tf64.Tensor)
+
+				if s.useL2Reg {
+					if regularized, err = tf64.PointwiseMul(w, l2reg); err != nil {
+						return
+					}
+
+					if _, err = tf64.Sub(upd, regularized, types.UseUnsafe()); err != nil {
+						return
+					}
+				}
+
+				if _, err = tf64.Add(w, upd, types.UseUnsafe()); err != nil {
+					return
+				}
+
+				// zero all
+				g.Zero()
+
+			default:
+
+			}
+		case Scalar:
+			switch dt {
+			case Float32:
+				var w, g, c float32
+
+				l2reg := float32(s.l2reg)
+				clip := float32(s.clip)
+				eps := float32(s.eps)
+				eta := float32(s.eta)
+
+				c = cw.v.(float32)
+				g = grad.(Scalar).v.(float32)
+
+				c += g * g
+
+				if s.useClip {
+					if g > clip {
+						g = clip
+					} else if g < -clip {
+						g = -clip
+					}
+				}
+
+				w = weights.(Scalar).v.(float32)
+
+				upd := -eta * g / math32.Sqrt(c+eps)
+
+				if s.useL2Reg {
+					upd -= w * l2reg
+				}
+
+				w += upd
+
+				// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
+				var ws Value
+				if ws, err = anyToValue(w); err != nil {
+					return
+				}
+
+				dv.Value = ws
+				dv.d = Scalar{t: Float32, v: float32(0)} // zero it
+
+			case Float64:
+				var w, g, c float64
+
+				l2reg := s.l2reg
+				clip := s.clip
+				eps := s.eps
+				eta := s.eta
+
+				c = cw.v.(float64)
+				g = grad.(Scalar).v.(float64)
+
+				c += g * g
+
+				if s.useClip {
+					if g > clip {
+						g = clip
+					} else if g < -clip {
+						g = -clip
+					}
+				}
+
+				w = weights.(Scalar).v.(float64)
+				upd := -eta * g / math.Sqrt(c+eps)
+				if s.useL2Reg {
+					upd -= w * l2reg
+				}
+
+				w += upd
+
+				// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
+				var ws Value
+				if ws, err = anyToValue(w); err != nil {
+					return
+				}
+
+				dv.Value = ws
+				dv.d = Scalar{t: Float64, v: float64(0)}
+			default:
+				err = nyi("Adagrad step", dt)
+				return
+			}
+		default:
+			err = nyi("Adagrad step", cv)
+			return
+		}
+
+	}
+
 	return
 }
