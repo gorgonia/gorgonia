@@ -207,99 +207,99 @@ func TestTranspose(t *testing.T) {
 	assert.NotNil(T.old)
 	assert.NotNil(T.transposeWith)
 
-	/*
-		t.Log("Testing 4-Tensor (2x3x4x5): Basic Transpose")
-		backing = RangeFloat32(0, 2*3*4*5)
-		T = NewTensor(WithShape(2, 3, 4, 5), WithBacking(backing))
+	t.Log("Testing 4-Tensor (2x3x4x5): Basic Transpose")
+	backing = RangeFloat32(0, 2*3*4*5)
+	T = NewTensor(WithShape(2, 3, 4, 5), WithBacking(backing))
 
-		correct = []float32{
-			0, 60,
-			20, 80,
-			40, 100,
+	correct = []float32{
+		0, 60,
+		20, 80,
+		40, 100,
 
-			5, 65,
-			25, 85,
-			45, 105,
+		5, 65,
+		25, 85,
+		45, 105,
 
-			10, 70,
-			30, 90,
-			50, 110,
+		10, 70,
+		30, 90,
+		50, 110,
 
-			15, 75,
-			35, 95,
-			55, 115,
+		15, 75,
+		35, 95,
+		55, 115,
 
-			// new layer
-			1, 61,
-			21, 81,
-			41, 101,
+		// new layer
+		1, 61,
+		21, 81,
+		41, 101,
 
-			6, 66,
-			26, 86,
-			46, 106,
+		6, 66,
+		26, 86,
+		46, 106,
 
-			11, 71,
-			31, 91,
-			51, 111,
+		11, 71,
+		31, 91,
+		51, 111,
 
-			16, 76,
-			36, 96,
-			56, 116,
+		16, 76,
+		36, 96,
+		56, 116,
 
-			// new layer
-			2, 62,
-			22, 82,
-			42, 102,
+		// new layer
+		2, 62,
+		22, 82,
+		42, 102,
 
-			7, 67,
-			27, 87,
-			47, 107,
+		7, 67,
+		27, 87,
+		47, 107,
 
-			12, 72,
-			32, 92,
-			52, 112,
+		12, 72,
+		32, 92,
+		52, 112,
 
-			17, 77,
-			37, 97,
-			57, 117,
+		17, 77,
+		37, 97,
+		57, 117,
 
-			// new layer
-			3, 63,
-			23, 83,
-			43, 103,
+		// new layer
+		3, 63,
+		23, 83,
+		43, 103,
 
-			8, 68,
-			28, 88,
-			48, 108,
+		8, 68,
+		28, 88,
+		48, 108,
 
-			13, 73,
-			33, 93,
-			53, 113,
+		13, 73,
+		33, 93,
+		53, 113,
 
-			18, 78,
-			38, 98,
-			58, 118,
+		18, 78,
+		38, 98,
+		58, 118,
 
-			// new layer
-			4, 64,
-			24, 84,
-			44, 104,
+		// new layer
+		4, 64,
+		24, 84,
+		44, 104,
 
-			9, 69,
-			29, 89,
-			49, 109,
+		9, 69,
+		29, 89,
+		49, 109,
 
-			14, 74,
-			34, 94,
-			54, 114,
+		14, 74,
+		34, 94,
+		54, 114,
 
-			19, 79,
-			39, 99,
-			59, 119,
-		}
-		T.Transpose()
-		assert.Equal(correct, T.data, "Transpose of (2,3,4,5) 4-tensor isn't correct")
-	*/
+		19, 79,
+		39, 99,
+		59, 119,
+	}
+	T.T()
+	T.Transpose()
+	assert.Equal(correct, T.data, "Transpose of (2,3,4,5) 4-tensor isn't correct")
+
 }
 
 func TestTRepeat(t *testing.T) {

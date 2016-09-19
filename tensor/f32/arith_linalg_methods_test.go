@@ -544,7 +544,6 @@ func TestTouter(t *testing.T) {
 
 }
 
-/*
 func TestTensorMul(t *testing.T) {
 	assert := assert.New(t)
 	var A, B, C *Tensor
@@ -561,8 +560,14 @@ func TestTensorMul(t *testing.T) {
 	expectedData = []float32{4400, 4730, 4532, 4874, 4664, 5018, 4796, 5162, 4928, 5306}
 	assert.Equal(expectedData, C.data)
 	assert.Equal(expectedShape, C.Shape())
+
+	// make sure nothing's changed
+	assert.Equal(types.Shape{3, 4, 5}, A.Shape())
+	assert.Equal(types.Shape{4, 3, 2}, B.Shape())
+	assert.Equal(RangeFloat32(0, 60), A.data)
+	assert.Equal(RangeFloat32(0, 24), B.data)
 }
-*/
+
 /*
 //TODO
 func TestCrazyCases(t *testing.T) {

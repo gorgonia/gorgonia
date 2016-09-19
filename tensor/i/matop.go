@@ -159,7 +159,7 @@ func (t *Tensor) Transpose() {
 	expStrides := expShape.CalcStrides() // important! because the strides would have changed once the underlying data changed
 	defer types.ReturnInts(expStrides)
 
-	size := t.Size()
+	size := len(t.data)
 	axes := t.transposeWith
 
 	if t.IsVector() {
@@ -177,40 +177,39 @@ func (t *Tensor) Transpose() {
 	// To check if ith bit is set: track & (1 << i)
 	// To check every bit up to size is unset: (1 << size)
 	//
-	var track uint64
-	track = (1 << 0) + (1 << (uint64(size) - 1))
+
+	track := types.NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
 
 	// // we start our iteration at 1, because transposing 0 does noting.
 	var saved, tmp int
 	var i int
 
-	for i = 1; track != ((1 << uint64(size)) - 1); {
+	for i = 1; ; {
 		dest := t.transposeIndex(i, axes, expStrides)
 
-		if (track&(1<<uint64(i)) > 0) && ((track & (1 << uint64(dest))) > 0) {
+		if track.IsSet(i) && track.IsSet(dest) {
 			t.data[i] = saved
 			saved = int(0) //@DEFAULTZERO
 
-			for track&(1<<uint64(i)) > 0 {
+			for i < size && track.IsSet(i) {
 				i++
 			}
-			if i >= len(t.data) {
+
+			if i >= size {
 				break
 			}
 			continue
 		}
 
-		track |= (1 << uint64(i))
+		track.Set(i)
 		tmp = t.data[i]
 		t.data[i] = saved
 		saved = tmp
 
 		i = dest
 	}
-
-	// final cleanup
-	// TODO: find a nicer way that doesn't abuse side effects like setting a variable of `i`
-	t.data[i] = saved
 
 	t.setShape(expShape...)
 	t.sanity()

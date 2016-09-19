@@ -241,6 +241,22 @@ func (t *Tensor) Clone() *Tensor {
 	return retVal
 }
 
+func (t *Tensor) borrowClone() *Tensor {
+	retVal := BorrowTensor(len(t.data))
+	types.ReturnAP(retVal.AP)
+	retVal.AP = t.AP.Clone()
+
+	if t.old != nil {
+		retVal.old = t.old.Clone()
+	}
+
+	newdata := make([]int, len(t.data))
+	copy(newdata, t.data)
+	retVal.data = newdata
+	retVal.Lock()
+	return retVal
+}
+
 func (t *Tensor) IsView() bool {
 	return t.viewOf != nil
 }
