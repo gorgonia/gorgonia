@@ -1,9 +1,6 @@
 package types
 
-import (
-	"fmt"
-	"log"
-)
+import "fmt"
 
 // An AP is an access pattern. It tells the various ndarrays how to access their data through the use of strides
 // Through the AP, there are several definitions of things, most notably there are two very specific "special cases":
@@ -212,6 +209,5 @@ func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) in
 	for i, p := range pattern {
 		newPattern[p] = i
 	}
-	log.Printf("NEWPATTERN : %v", newPattern)
 	return TransposeIndex(i, oldShape, newPattern, oldStrides, newStrides)
 }

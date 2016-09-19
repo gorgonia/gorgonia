@@ -21,7 +21,6 @@ func TestIntsPool(t *testing.T) {
 	ints = BorrowInts(2)
 
 	assert.Equal(2, len(ints))
-	assert.Equal(111, ints[0])
-	assert.Equal(222, ints[1])
-
+	assert.Equal(0, ints[0])
+	assert.Equal(0, ints[1])
 }

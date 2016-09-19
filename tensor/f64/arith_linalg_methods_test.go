@@ -563,6 +563,7 @@ func TestTensorMul(t *testing.T) {
 	assert.Equal(expectedShape, C.Shape())
 }
 */
+
 /*
 //TODO
 func TestCrazyCases(t *testing.T) {

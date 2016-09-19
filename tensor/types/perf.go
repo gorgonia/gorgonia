@@ -3,7 +3,7 @@ package types
 import "sync"
 
 const (
-	maxAPDims = 4
+	maxAPDims = 8
 )
 
 var intsPool [8]sync.Pool
@@ -41,7 +41,7 @@ func ReturnInts(ints []int) {
 	}
 	ints = ints[:cap(ints)]
 	for i := range ints {
-		ints[i] = 11720
+		ints[i] = 0
 	}
 
 	intsPool[size].Put(ints)
@@ -52,7 +52,10 @@ var apPool [maxAPDims]sync.Pool
 
 func BorrowAP(dims int) *AP {
 	if dims >= maxAPDims {
-		return new(AP)
+		ap := new(AP)
+		ap.shape = make(Shape, dims)
+		ap.strides = make([]int, dims)
+		return ap
 	}
 
 	ap := apPool[dims].Get().(*AP)
