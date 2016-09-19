@@ -28,17 +28,23 @@ func dotEscape(s string) string {
 	return s
 }
 
-func printOp(n *Node) bool    { return n.op != nil && !n.isStmt }
-func isLeaf(n *Node) bool     { return len(n.children) == 0 }
-func isInput(n *Node) bool    { return n.isInput() }
-func isMarked(n *Node) bool   { return n.ofInterest }
-func isRoot(n *Node) bool     { return n.isRoot() }
-func isStmt(n *Node) bool     { return n.isStmt }
-func hasShape(n *Node) bool   { return n.shape != nil }
-func hasGrad(n *Node) bool    { _, err := n.Grad(); return err == nil }
-func opStr(n *Node) string    { return n.op.String() }
-func opType(n *Node) string   { return n.op.Type().String() }
-func nodeType(n *Node) string { return n.t.String() }
+func printOp(n *Node) bool  { return n.op != nil && !n.isStmt }
+func isLeaf(n *Node) bool   { return len(n.children) == 0 }
+func isInput(n *Node) bool  { return n.isInput() }
+func isMarked(n *Node) bool { return n.ofInterest }
+func isRoot(n *Node) bool   { return n.isRoot() }
+func isStmt(n *Node) bool   { return n.isStmt }
+func hasShape(n *Node) bool { return n.shape != nil }
+func hasGrad(n *Node) bool  { _, err := n.Grad(); return err == nil }
+func opStr(n *Node) string  { return n.op.String() }
+func opType(n *Node) string { return n.op.Type().String() }
+
+func nodeType(n *Node) string {
+	if n.t == nil {
+		return "NIL"
+	}
+	return n.t.String()
+}
 
 func overwritesInput(n *Node) int {
 	if n.op == nil {
