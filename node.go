@@ -217,9 +217,11 @@ func (n *Node) isRoot() bool {
 
 // type related isX() helper methods
 
+// IsScalar indicates if a node represents a a scalar value. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsScalar() bool { _, ok := n.t.(Dtype); return ok }
 
-func (n *Node) isVector() bool {
+// IsVector indicates if a node represents a vector value. This is based on the type of the node, not the actual value associated with the node
+func (n *Node) IsVector() bool {
 	if t, ok := n.t.(*TensorType); ok {
 		return t.d == 1
 	}
@@ -227,7 +229,8 @@ func (n *Node) isVector() bool {
 	return false
 }
 
-func (n *Node) isColVec() bool {
+// IsColVec indicates if a node represents a Column Vector. This is based on the type of the node, not the actual value associated with the node
+func (n *Node) IsColVec() bool {
 	if _, ok := n.t.(*TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsColVec()
@@ -236,7 +239,8 @@ func (n *Node) isColVec() bool {
 	return false
 }
 
-func (n *Node) isRowVec() bool {
+// IsRowVec indicates if a node represents a Row Vector. This is based on the type of the node, not the actual value associated with the node
+func (n *Node) IsRowVec() bool {
 	if _, ok := n.t.(*TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsRowVec()
@@ -245,7 +249,8 @@ func (n *Node) isRowVec() bool {
 	return false
 }
 
-func (n *Node) isMatrix() bool {
+// IsMatrix indicates if a node represents a matrix. This is based on the type of the node, not the actual value associated with the node
+func (n *Node) IsMatrix() bool {
 	if t, ok := n.t.(*TensorType); ok {
 		return t.d == 2
 	}
@@ -309,7 +314,7 @@ func (n *Node) Dims() int { return n.t.dims() }
 func (n *Node) Shape() types.Shape { return n.shape }
 
 // IsVec returns whether this node is a vector
-func (n *Node) IsVec() bool { return n.isVector() }
+func (n *Node) IsVec() bool { return n.IsVector() }
 
 // Name returns the name of the node. If a name was specified and it is too long,
 // the short name will be used instead (except in inputs)

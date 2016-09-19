@@ -107,10 +107,10 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	return HadamardDiv(retVal, c)
 }
 
-// ReLu is a convenience function for creating rectified linear units activation functions.
+// Rectify is a convenience function for creating rectified linear units activation functions.
 // This function uses >=, which is the canonical version. If you want to use >, you can create
 // your own by just following this.
-func ReLu(x *Node) (retVal *Node, err error) {
+func Rectify(x *Node) (retVal *Node, err error) {
 	var zero *Node
 	var dt Dtype
 

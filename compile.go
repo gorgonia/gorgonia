@@ -11,6 +11,7 @@ import (
 // This file deals with the compilation from a expression graph into a program
 // that is executed by an interpreter
 
+// Compile takes a graph and outputs a program suitable for *TapeMachine to run
 func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("Compiling")
 	enterLoggingContext()
@@ -35,8 +36,7 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 		outputs = append(outputs, root)
 	}
 
-	df := Analyze(g, sortedNodes)
-	compileLogf("Replacements: %+#d", FmtNodeMap(df.Replacements()))
+	df := analyze(g, sortedNodes)
 
 	df.intervals = buildIntervals(sortedNodes)
 	ra := new(regalloc)
@@ -81,7 +81,7 @@ func CompileFunctionNEW(g *ExprGraph, inputs, outputs Nodes) (prog *program, loc
 		return
 	}
 
-	df := Analyze(subgraph, sortedNodes)
+	df := analyze(subgraph, sortedNodes)
 	df.intervals = buildIntervals(sortedNodes)
 
 	ra := new(regalloc)

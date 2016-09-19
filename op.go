@@ -82,6 +82,7 @@ type NoRetOp interface {
 	returnsNothing() bool
 }
 
+// An AdOp is an Op that supports automatic differentiation.
 type AdOp interface {
 	Op
 

@@ -40,18 +40,7 @@ func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
 	return n, true
 }
 
-// Replacements only shows you the nodes that are different
-func (df *dataflow) Replacements() map[*Node]*Node {
-	retVal := make(map[*Node]*Node)
-	for k, v := range df.replacements {
-		if k != v {
-			retVal[k] = v
-		}
-	}
-	return retVal
-}
-
-func Analyze(g *ExprGraph, sorted Nodes) *dataflow {
+func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	compileLogf("Performing dataflow analysis")
 	enterLoggingContext()
 	defer leaveLoggingContext()
@@ -68,8 +57,6 @@ func Analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	replacements := make(map[*Node]*Node)
 	var buf bytes.Buffer
 	for i := len(sorted) - 1; i >= 0; i-- {
-		// for _, n := range sortedNodes {
-		// n := node.(*Node)
 		n := sorted[i]
 		fmt.Fprintf(&buf, "%d, ", n.ID())
 		r, _ := df.vn(n)

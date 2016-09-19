@@ -162,7 +162,7 @@ func (op sumOp) inferShape(t Type, inputs ...*Node) (shape types.Shape, err erro
 	switch {
 	case in.IsScalar():
 		shape = scalarShape
-	case in.isVector() && !in.isRowVec() && !in.isColVec():
+	case in.IsVector() && !in.IsRowVec() && !in.IsColVec():
 		if len(op.along) > 1 || (len(op.along) == 1 && op.along[0] != 0) {
 			err = NewError(ShapeError, "Shape mismatch: along is %v. Shape is %v", op.along, in.shape)
 			return

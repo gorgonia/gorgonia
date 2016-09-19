@@ -125,10 +125,10 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 
 	var op BinaryOp
 	switch {
-	case a.isVector() && b.isVector():
+	case a.IsVector() && b.IsVector():
 		op = linAlgBinOp{āBinaryOperator: vecDotOperator}
-	case a.isVector() || b.isVector():
-		if a.isVector() {
+	case a.IsVector() || b.IsVector():
+		if a.IsVector() {
 			// b is matrix
 			op = linAlgBinOp{
 				āBinaryOperator: matVecMulOperator,
@@ -151,7 +151,7 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 }
 
 func OuterProd(a, b *Node) (retVal *Node, err error) {
-	if !a.isVector() || !b.isVector() {
+	if !a.IsVector() || !b.IsVector() {
 		err = NewError(GraphError, "Expected only vectors to be able to do OuterProd") //for now
 		return
 	}
@@ -315,7 +315,7 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 	var exp, sum *Node
 	if exp, err = Exp(a); err == nil {
 		axis := 1 // default
-		if exp.isColVec() || (exp.isVector() && !exp.isRowVec()) {
+		if exp.IsColVec() || (exp.IsVector() && !exp.IsRowVec()) {
 			axis = 0
 		}
 
@@ -433,9 +433,9 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 	dims := a.Dims()
 	if len(along) == 0 {
 		switch {
-		case a.isRowVec():
+		case a.IsRowVec():
 			along = []int{1}
-		case a.isColVec(), a.isVector():
+		case a.IsColVec(), a.IsVector():
 			along = []int{0}
 		default:
 			along = intRange(0, dims)

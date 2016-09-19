@@ -10,7 +10,7 @@ import (
 	"github.com/chewxy/gorgonia/tensor/types"
 )
 
-// TODO
+// Value represents a value that Gorgonia accepts
 type Value interface {
 	Type() Type
 	Shape() types.Shape
@@ -28,6 +28,7 @@ type Valuer interface {
 	Value() Value
 }
 
+// Tensor is a Value. It wraps over types.Tensor
 type Tensor struct {
 	types.Tensor
 }

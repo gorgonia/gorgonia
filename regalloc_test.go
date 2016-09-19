@@ -128,7 +128,7 @@ func TestRegAlloc(t *testing.T) {
 	}
 
 	is := buildIntervals(sorted)
-	df := Analyze(g, sorted)
+	df := analyze(g, sorted)
 
 	df.intervals = is
 	ra := new(regalloc)
