@@ -259,6 +259,7 @@ Gorgonia's API is as of right now, not considered stable. It will be stable from
 Here are the goals for Gorgonia, sorted by importance 
 
 - [ ] 90+% test coverage. Current coverage is 50% for Gorgonia and 75% for the Tensor packages
+- [ ] TravisCI for this package.
 - [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely.
 - [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
 - [ ] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
@@ -270,27 +271,18 @@ Here are the goals for Gorgonia, sorted by importance
 - [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
 - [ ] Derivative-free optimization algorithms
 
+#Goals#
+The primary goal for Gorgonia is to be a highly performant machine learning/graph-based computation library that can scale across multiple machines. It should bring the appeal of Go (simple compilation and deployment process) to the ML world. It's a long way from there currently, however, the baby steps are already there.
+
+The secondary goal for Gorgonia is to provide a platform for exploration for non-standard deep-learning and neural network related things. This includes things like neo-hebbian learning, corner-cutting algorithms, evolutionary algorithms and the like. 
 
 
 #Contributing#
 
 Obviously since you are most probably reading this on Github, Github will form the major part of the workflow for contributing to this package.
 
-##Steps##
-1. Fork this project on Github
-2. Clone to your local drive
-3. Check if there are any pending issues in the issues tracker
-4. Pick an unassigned issue that you can accomplish. Comment on the issue to pick it up.
-5. Work on it, using topic branches is highly recommended.
-
 See also: CONTRIBUTING.md
 
-##How To Get Your Pull Request Accepted##
-
-1. Test, test, test. Make sure your new code doesn't break the tests
-2. If you add new code, you must add tests.
-3. `Gofmt` your code
-5. Atomic pull requests - one issue per pull request.
 
 ##Contributors and Significant Contributors##
 All contributions are welcome. However, there is a new class of contributor, called Significant Contributors. 
