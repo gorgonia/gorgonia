@@ -1,0 +1,977 @@
+digraph fullGraph {
+	nodesep=1;
+	rankdir=TB;
+	ranksep="1.5 equally";
+	Node_0xc420118540:anchor:s->Node_0xc4201180c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118540:anchor:s->Node_0xc420118300:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420118600:anchor:s->Node_0xc420118540:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118600:anchor:s->Node_0xc4201183c0:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4201186c0:anchor:s->Node_0xc420118600:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118840:anchor:s->Node_0xc4201186c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118840:anchor:s->Node_0xc420118900:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4201189c0:anchor:s->Node_0xc420118600:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118a80:anchor:s->Node_0xc4201189c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118b40:anchor:s->Node_0xc420118a80:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118c00:anchor:s->Node_0xc420118240:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118cc0:anchor:s->Node_0xc420118c00:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118cc0:anchor:s->Node_0xc420118b40:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420118d80:anchor:s->Node_0xc420118e40:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118d80:anchor:s->Node_0xc420118240:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420118f00:anchor:s->Node_0xc420118d80:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118f00:anchor:s->Node_0xc420119140:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420118fc0:anchor:s->Node_0xc4201186c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119080:anchor:s->Node_0xc420118600:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119140:anchor:s->Node_0xc420119080:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118f00:anchor:s->Node_0xc420118d80:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118f00:anchor:s->Node_0xc420119140:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119200:anchor:s->Node_0xc420118cc0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119200:anchor:s->Node_0xc420118f00:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4201192c0:anchor:s->Node_0xc420119200:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119380:anchor:s->Node_0xc420119200:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119440:anchor:s->Node_0xc4201192c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119440:anchor:s->Node_0xc420119380:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119500:anchor:s->Node_0xc420118300:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4201195c0:anchor:s->Node_0xc420119500:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119740:anchor:s->Node_0xc420119800:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119740:anchor:s->Node_0xc4201195c0:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4201198c0:anchor:s->Node_0xc420119440:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4201198c0:anchor:s->Node_0xc420119740:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119a40:anchor:s->Node_0xc4201195c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118e40:anchor:s->Node_0xc420119a40:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119b00:anchor:s->Node_0xc420119800:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118e40:anchor:s->Node_0xc420119b00:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119bc0:anchor:s->Node_0xc420119500:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119b00:anchor:s->Node_0xc420119c80:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119bc0:anchor:s->Node_0xc420119c80:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119d40:anchor:s->Node_0xc420118300:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119d40:anchor:s->Node_0xc420119e00:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119d40:anchor:s->Node_0xc420119ec0:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119c80:anchor:s->Node_0xc420119ec0:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420118e40:anchor:s->Node_0xc4203ba000:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119380:anchor:s->Node_0xc4203ba000:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba0c0:anchor:s->Node_0xc420119440:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119380:anchor:s->Node_0xc4203ba0c0:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba0c0:anchor:s->Node_0xc4203ba180:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba180:anchor:s->Node_0xc4203ba240:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420118e40:anchor:s->Node_0xc4203ba240:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba000:anchor:s->Node_0xc4203ba300:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc420119380:anchor:s->Node_0xc4203ba300:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba300:anchor:s->Node_0xc4203ba3c0:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba480:anchor:s->Node_0xc420119140:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba3c0:anchor:s->Node_0xc4203ba480:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba540:anchor:s->Node_0xc420118d80:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba3c0:anchor:s->Node_0xc4203ba540:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba540:anchor:s->Node_0xc4203ba600:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4201186c0:anchor:s->Node_0xc4203ba6c0:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba600:anchor:s->Node_0xc4203ba6c0:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba780:anchor:s->Node_0xc420118b40:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba300:anchor:s->Node_0xc4203ba780:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba840:anchor:s->Node_0xc420118c00:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba300:anchor:s->Node_0xc4203ba840:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203ba840:anchor:s->Node_0xc4203ba900:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba9c0:anchor:s->Node_0xc4201189c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba9c0:anchor:s->Node_0xc4203baa80:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba900:anchor:s->Node_0xc4203baa80:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203baa80:anchor:s->Node_0xc4203bab40:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203ba6c0:anchor:s->Node_0xc4203bac00:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bab40:anchor:s->Node_0xc4203bac00:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bac00:anchor:s->Node_0xc4203bacc0:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bac00:anchor:s->Node_0xc4203bad80:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bad80:anchor:s->Node_0xc420118300:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bae40:anchor:s->Node_0xc4201180c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bac00:anchor:s->Node_0xc4203bae40:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc420119ec0:anchor:s->Node_0xc4203baf00:anchor:n[ dir=back, labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bae40:anchor:s->Node_0xc4203baf00:anchor:n[ dir=back, labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bb080:anchor:s->Node_0xc4203bb140:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bb080:anchor:s->Node_0xc4203baf00:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bb200:anchor:s->Node_0xc420118300:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bb200:anchor:s->Node_0xc4203bb080:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bb2c0:anchor:s->Node_0xc4203bb140:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bb2c0:anchor:s->Node_0xc4203bacc0:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bb380:anchor:s->Node_0xc4201183c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bb380:anchor:s->Node_0xc4203bb2c0:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bb500:anchor:s->Node_0xc420118300:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bb500:anchor:s->Node_0xc4203bb200:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	Node_0xc4203bb5c0:anchor:s->Node_0xc4201183c0:anchor:n[ labelfloat=false, taillabel=" 0 " ];
+	Node_0xc4203bb5c0:anchor:s->Node_0xc4203bb380:anchor:n[ labelfloat=false, taillabel=" 1 " ];
+	outsideRoot->insideInputs[ constraint=false, style=invis, weight=999 ];
+	outsideConsts->insideConsts[ constraint=false, style=invis, weight=999 ];
+	outsideRoot->outsideConsts[ constraint=false, style=invis, weight=999 ];
+	insideInputs->insideConsts[ constraint=false, style=invis, weight=999 ];
+	outsideExprG->insideExprG[ constraint=false, style=invis, weight=999 ];
+	outsideConsts->outsideExprG[ constraint=false, style=invis, weight=999 ];
+	insideConsts->insideExprG[ constraint=false, style=invis, weight=999 ];
+	outside_gradients->inside_gradients[ constraint=false, style=invis, weight=999 ];
+	outsideExprG->outside_gradients[ constraint=false, style=invis, weight=999 ];
+	insideExprG->inside_gradients[ constraint=false, style=invis, weight=999 ];
+	subgraph cluster_constants {
+	label=constants;
+	Node_0xc420118900 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;">
+
+<TR><TD>c420118900</TD><TD>0.5 :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>const 0.5 :: Float64</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>0.5</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118e40 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;">
+
+<TR><TD>c420118e40</TD><TD>1 :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>const 1 :: Float64</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>1</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119800 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;">
+
+<TR><TD>c420119800</TD><TD>l1reg :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>const 0.01 :: Float64</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>0.01</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119e00 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;">
+
+<TR><TD>c420119e00</TD><TD>2 :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>const 2 :: Float64</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>2</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bb140 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;">
+
+<TR><TD>c4203bb140</TD><TD>0.1 :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>const 0.1 :: Float64</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>0.1</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	insideConsts [ style=invis ];
+
+}
+;
+	subgraph cluster_expressionGraph {
+	label=expressionGraph;
+	Node_0xc420118540 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118540</TD><TD>A × b(%2db758dc, %c03c6e56) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>A × b :: Matrix a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118600 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118600</TD><TD>+(%efddbc0f, %9e5f1403) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>+ :: Vector a → a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118840 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c420118840</TD><TD>pred :: Vector Bool</TD></TR>
+<TR><TD>Op</TD><TD>&gt; :: Vector a → a → Vector Bool</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4201189c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4201189c0</TD><TD>neg(%d324c16e) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118a80 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118a80</TD><TD>softplus(%65c1e129) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>softplus :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118b40 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118b40</TD><TD>neg(%48b4ccc8) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118c00 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118c00</TD><TD>neg(%cacd344d) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118cc0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118cc0</TD><TD>⊙(%7ea39547, %5ac584e1) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118d80 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118d80</TD><TD>-(%4f435087, %cacd344d) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>- :: a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118f00 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420118f00</TD><TD>⊙(%44a518b1, %355aad94) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118fc0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c420118fc0</TD><TD>neg(%f0c4381b) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119080 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119080</TD><TD>softplus(%d324c16e) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>softplus :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119140 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119140</TD><TD>neg(%f983e344) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119200 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119200</TD><TD>crossEntropy :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>- :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4201192c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4201192c0</TD><TD>Σ[0](%e7dfea1d) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>Σ[0] :: Vector a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119440 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119440</TD><TD>÷(%3888ca78, %dbb9b7f0) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>÷ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>1 </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119500 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119500</TD><TD>sq(%c03c6e56) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>sq :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4201195c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4201195c0</TD><TD>Σ[0](%9a8bfbb7) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>Σ[0] :: Vector a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119740 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119740</TD><TD>⊙(%f8e57d0d, %faa49b61) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>1 </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4201198c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c4201198c0</TD><TD>cost :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>+ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>1 </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bb080 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bb080</TD><TD>⊙(%e218ef45, %4f63d4dd) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bb200 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bb200</TD><TD>-(%c03c6e56, %f9e8bc6d) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>- :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bb2c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bb2c0</TD><TD>⊙(%e218ef45, %a9b7e379) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bb380 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bb380</TD><TD>-(%9e5f1403, %be4deb82) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>- :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bb500 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;"  BGCOLOR="lightblue">
+
+<TR><TD>c4203bb500</TD><TD>w :: Vector Float64 = -(%c03c6e56, %f9e8bc6d) :: Vector Float64 :: NIL</TD></TR>
+
+
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bb5c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;"  BGCOLOR="lightblue">
+
+<TR><TD>c4203bb5c0</TD><TD>bias :: Float64 = -(%9e5f1403, %be4deb82) :: Float64 :: NIL</TD></TR>
+
+
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	insideExprG [ style=invis ];
+
+}
+;
+	subgraph cluster_gradients {
+	label=gradients;
+	Node_0xc4201186c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4201186c0</TD><TD>prob :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>sigmoid :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119380 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119380</TD><TD>SizeOf=400(%e7dfea1d) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>SizeOf=400 :: Vector a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119a40 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c420119a40</TD><TD>⊙(%faa49b61, %4f435087) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119b00 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119b00</TD><TD>⊙(%f8e57d0d, %4f435087) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119bc0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119bc0</TD><TD>SizeOf=784(%9a8bfbb7) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>SizeOf=784 :: Vector a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119c80 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119c80</TD><TD>Repeat[0](%7945d8c6, %74721126) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>Repeat[0] :: a → a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119d40 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119d40</TD><TD>⊙(%c03c6e56, %dd3be14c) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420119ec0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c420119ec0</TD><TD>⊙(%3840ec03, %7f7cf71) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba000 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba000</TD><TD>÷(%4f435087, %dbb9b7f0) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>÷ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba0c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba0c0</TD><TD>÷(%25f79f74, %dbb9b7f0) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>÷ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba180 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba180</TD><TD>neg(%b8ebfaf7) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba240 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c4203ba240</TD><TD>⊙(%50014aca, %4f435087) :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: a → a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba300 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba300</TD><TD>Repeat[0](%b91ba793, %dbb9b7f0) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>Repeat[0] :: a → a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba3c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba3c0</TD><TD>neg(%f5b104a2) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba480 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c4203ba480</TD><TD>⊙(%355aad94, %a5b578e5) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba540 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba540</TD><TD>⊙(%44a518b1, %a5b578e5) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba600 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba600</TD><TD>neg(%b0b5daed) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba6c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba6c0</TD><TD>⊙(%f0c4381b, %9fa6bea7) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba780 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c4203ba780</TD><TD>⊙(%5ac584e1, %f5b104a2) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba840 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba840</TD><TD>⊙(%7ea39547, %f5b104a2) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba900 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba900</TD><TD>neg(%6cab59f7) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203ba9c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203ba9c0</TD><TD>sigmoid(%65c1e129) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>sigmoid :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203baa80 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203baa80</TD><TD>⊙(%3dda993b, %beea95e6) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>⊙ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bab40 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bab40</TD><TD>neg(%2769a08a) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>neg :: a → a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bac00 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bac00</TD><TD>+(%dfe51103, %b533c74b) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>+ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bacc0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bacc0</TD><TD>dcost/db :: Float64</TD></TR>
+<TR><TD>Op</TD><TD>Σ[0] :: Vector a → a</TD></TR>
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bad80 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#FF0000;" >
+
+<TR><TD>c4203bad80</TD><TD>a ⊗ b(%c40bc746, %c03c6e56) :: Matrix Float64</TD></TR>
+<TR><TD>Op</TD><TD>a ⊗ b :: Vector a → Vector a → Matrix a</TD></TR>
+<TR><TD COLSPAN="2">(400, 784)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203bae40 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203bae40</TD><TD>Aᵀ × b(%2db758dc, %c40bc746) :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>Aᵀ × b :: Matrix a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4203baf00 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor" >
+
+<TR><TD>c4203baf00</TD><TD>dcost/dw :: Vector Float64</TD></TR>
+<TR><TD>Op</TD><TD>+ :: Vector a → Vector a → Vector a</TD></TR>
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">0</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	inside_gradients [ style=invis ];
+
+}
+;
+	subgraph cluster_inputs {
+	label=inputs;
+	Node_0xc4201180c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;" BGCOLOR="lightyellow">
+
+<TR><TD>c4201180c0</TD><TD>x :: Matrix Float64</TD></TR>
+
+<TR><TD COLSPAN="2">(400, 784)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118240 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;" BGCOLOR="lightyellow">
+
+<TR><TD>c420118240</TD><TD>y :: Vector Float64</TD></TR>
+
+<TR><TD COLSPAN="2">(400, 1)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+
+<TR><TD>Value</TD><TD>%!s(NIL)</TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc420118300 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;" BGCOLOR="lightyellow">
+
+<TR><TD>c420118300</TD><TD>w :: Vector Float64</TD></TR>
+
+<TR><TD COLSPAN="2">(784, 1)</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	Node_0xc4201183c0 [ fontname=monospace, label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" PORT="anchor"  COLOR="#00FF00;" BGCOLOR="lightyellow">
+
+<TR><TD>c4201183c0</TD><TD>bias :: Float64</TD></TR>
+
+<TR><TD COLSPAN="2">()</TD></TR>
+<TR><TD COLSPAN="2">-1</TD></TR>
+<TR><TD>Value</TD><TD>Grad</TD></TR>
+<TR><TD>%!s(NIL)</TD><TD>%!s(NIL) </TD></TR>
+
+
+</TABLE>
+>, shape=none ];
+	insideInputs [ style=invis ];
+
+}
+;
+	subgraph inputConsts {
+	rank=max;
+
+}
+;
+	subgraph outsides {
+	outsideConsts [ style=invis ];
+	outsideExprG [ style=invis ];
+	outsideRoot [ style=invis ];
+	outside_gradients [ style=invis ];
+
+}
+;
+
+}
