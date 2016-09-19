@@ -89,5 +89,6 @@ func ReturnTensor(t *Tensor) {
 		t.transposeWith = nil
 	}
 
+	t.Unlock()
 	pool.Put(t)
 }
