@@ -15,10 +15,13 @@ Gorgonia:
 
 #Why Use Gorgonia?#
 
-When the author created the primordial version of Gorgonia, TensorFlow wasn't released yet. And now that TensorFlow has been released, there still isn't a good Go extension. The main reason to use Gorgonia is if you are using Go extensively. 
+The main reason to use Gorgonia is developer comfort. If you're using a Go stack extensively, now you have access to the ability to create production-ready machine learning systems in an environment that you are already familiar and comfortable with. 
 
-It may sound biased, but this author also thinks that it's easier to reason about the equations with Gorgonia than Theano. This is mainly due to the reduced feature set (for example, Gorgonia has no support for something like Theano's `scan`).
+ML/AI at large is usually split into two stages: the experimental stage where one builds various models, test and retest; and the deployed state where a model after being tested and played with, is deployed. This necessitate different roles like data scientist and data engineer.
 
+Typically the two phases have different tools: Python/Lua (using Theano, [Torch](http://torch.ch/), etc) is commonly used for the experimental stage, and then the model is rewritten in some more performant language like C++ (using [dlib](http://dlib.net/ml.html), [mlpack](http://mlpack.org) etc). Of course, nowadays the gap is closing and people frequently share the tools between them. Tensorflow is one such tool that bridges the gap.
+
+Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently fairly performant - its speeds are comparable to Theano's and Tensorflow's (official benchmarks haven't yet been done because of an existing CUDA bug in Gorgonia; and also the implementations may differ slightly so an exact like-for-like model is hard to compare).
 
 #Installation #
 
@@ -26,23 +29,30 @@ The package is go-gettable: `go get -u github.com/chewxy/gorgonia`.
 
 There are very few dependencies that Gorgonia uses - and they're all pretty stable, so as of now, there isn't a need for vendoring tools. These are the list of external packages that Gorgonia calls, ranked in order of reliance that this package has (subpackages are omitted):
 
-* [gonum/graph](http://github.com/gonum/graph)†
-* [gonum/blas](http://github.com/gonum/blas)†
-* [math32](http://github.com/chewxy/math32)‡
-* [set](http://github.com/xtgo/set)‡
-* [gographviz](http://github.com/awalterschulze/gographviz)†
-* [rng](http://github.com/leesper/rng)
-* [errors](http://github.com/pkg/errors)‡
-* [gonum/matrix](http://github.com/gonum/matrix)†
-* [testify/assert](https://github.com/stretchr/testify)\*
+<table>
+<thead><th>Pacakge</th><th>Used for</th><th>Vitality</th><th>Notes</th></thead>
+<tbody>
+<tr><td>[gonum/graph](http://github.com/gonum/graph)</td><td>Sorting graphs</td><td>Vital. Removal means Gorgonia will not work</td><td>Development of Gorgonia is committed to keeping up with the most updated version</td></tr>
+<tr><td>[gonum/blas](http://github.com/gonum/blas)</td><td>Tensor subpackage</td><td>Vital. Removal means Gorgonial will not work</td><td>Development of Gorgonia is committed to keeping up with the most updated version</td></tr>
+<tr><td>[math32](http://github.com/chewxy/math32)</td><td>`float32` operations</td><td>Can be replaced by `float32(math.XXX(float64(x)))`</td><td>Same maintainer as Gorgonia, same API as the built in `math` package</td></tr>
+<tr><td>[set](http://github.com/xtgo/set)</td><td>Various set operation</td><td>Can be easily replaced</td><td>Stable API for the past 1 year</td></tr>
+<tr><td>[gographviz](http://github.com/awalterschulze/gographviz)</td><td>Used for printing graphs</td><td>Graph printing is only vital to debugging. Gorgonia can survive without, but with a major feature loss</td><td>Stable API for the past 1 year</td></tr>
+<tr><td>[rng](http://github.com/leesper/rng)</td><td>Used to implement helper functions to generate initial weights</td><td>Can be replaced fairly easily. Gorgonia can do without the convenience functions too</td><td></td></tr>
+<tr><td>[errors](http://github.com/pkg/errors)</td><td>Error wrapping</td><td>Gorgonia won't die without it. In fact Gorgonia has also used [goerrors/errors](https://github.com/go-errors/errors) in the past.</td><td>Stable API for the past 6 months</td></tr>
+<tr><td>[gonum/matrix](http://github.com/gonum/matrix)</td><td>Compatibility between `Tensor` and Gonum's Matrix</td><td></td><td>Development of Gorgonia is committed to keeping up with the most updated version</td></tr>
+<tr><td>[testify/assert](https://github.com/stretchr/testify)</td><td>Testing</td><td>Can do without but will be a massive pain in the ass to test</td><td></td></tr>
+<tr><td>[diffmatchpatch](https://https://github.com/sergi/go-diff)</td><td>Generating the individual `Tensor` types</td><td>Can do without</td><td></td></tr>
+</tbody>
+</table>
 
-Packages marked with a † indicates that the development of Gorgonia is committed to keeping up with the most updated versions of these packages. Packages marked with \* are used during testing. One can do without, but it'd be a pain in the ass to do so.
-
-Packages marked with a ‡ have generally stable APIs.
 
 #Usage#
 
-Gorgonia works by creating a computation graph, and then executing it. Think of it as a programming language, but is limited to mathematical functions. In fact this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree)
+Gorgonia works by creating a computation graph, and then executing it. Think of it as a programming language, but is limited to mathematical functions. In fact this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree). 
+
+Microsoft's [CNTK](https://github.com/Microsoft/CNTK), with its BrainScript, is perhaps the best at exemplifying the idea that building of a computation graph and running of the computation graphs are different thihngs, and that the user should be in different modes of thoughts when going about them. 
+
+Whilst Gorgonia's implementation doesn't enforce the separation of thought as far as CNTK's BrainScript does, the syntax does help a little bit.
 
 Here's an example - say you want to define a math expression `z = x + y`. Here's how you'd do it:
 
@@ -255,25 +265,26 @@ A Node is rendered thusly:
 #API Stability#
 Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
 
+1.0 is defined by when the test coverage hits 90%, and the relevant `Tensor` methods have been completed.
+
 #Roadmap#
 
 Here are the goals for Gorgonia, sorted by importance 
 
-- [ ] 90+% test coverage. Current coverage is 50% for Gorgonia and 75% for the Tensor packages
+- [ ] 90+% test coverage. Current coverage is 50% for Gorgonia and 75% for the Tensor packages.
+- [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
 - [ ] TravisCI for this package.
 - [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely.
-- [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
+- [ ] Improve performance especially re: allocation, minimize impact of type system.
 - [ ] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
 - [ ] Refactor the CuBLAS package as well as the Blase package.
 - [ ] Distributed computing. The ability to spread jobs out across multiple machines and communicating with each other has been attempted at least 3 times, but failed each time.
-- [ ] Re-introduce the VM that deals with artificial/synthetic gradients.
-- [ ] Improve performance especially re: allocation, minimize impact of type system.
 - [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in gneral.
 - [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
 - [ ] Derivative-free optimization algorithms
 
 #Goals#
-The primary goal for Gorgonia is to be a highly performant machine learning/graph-based computation library that can scale across multiple machines. It should bring the appeal of Go (simple compilation and deployment process) to the ML world. It's a long way from there currently, however, the baby steps are already there.
+The primary goal for Gorgonia is to be a *highly performant* machine learning/graph computation-based library that can scale across multiple machines. It should bring the appeal of Go (simple compilation and deployment process) to the ML world. It's a long way from there currently, however, the baby steps are already there.
 
 The secondary goal for Gorgonia is to provide a platform for exploration for non-standard deep-learning and neural network related things. This includes things like neo-hebbian learning, corner-cutting algorithms, evolutionary algorithms and the like. 
 
