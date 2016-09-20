@@ -3,7 +3,7 @@
 
 #include "textflag.h"
 
-// func vecMul(a, b []float64)
+// func vecMul(a, b []float32)
 TEXT ·vecMul(SB), NOSPLIT, $0
 	MOVQ a_data+0(FP), SI
 	MOVQ b_data+24(FP), DI  		// use detination index register for this
@@ -15,60 +15,57 @@ TEXT ·vecMul(SB), NOSPLIT, $0
 	CMPQ AX, BX
 	JNE panic						// jump to panic if not the same length. TOOD: return bloody errors
 
-	SUBQ $8, AX 					// 4 items or more?
+	SUBQ $16, AX 					// 16 items or more
 	JL remainder
 
 loop:
 
 	// a[0]
-	MOVAPD (SI), X0
-	MOVAPD (DI), X1
-	MULPD X0, X1
-	MOVAPD X1, (SI)
+	MOVAPS (SI), X0
+	MOVAPS (DI), X1
+	MULPS X0, X1
+	MOVAPS X1, (SI)
 
-	MOVAPD 16(SI), X2
-	MOVAPD 16(DI), X3
-	MULPD X2, X3
-	MOVAPD X3, 16(SI)
+	MOVAPS 16(SI), X2
+	MOVAPS 16(DI), X3
+	MULPS X2, X3
+	MOVAPS X3, 16(SI)
 
-	MOVAPD 32(SI), X4
-	MOVAPD 32(DI), X5
-	MULPD X4, X5
-	MOVAPD X5, 32(SI)
+	MOVAPS 32(SI), X4
+	MOVAPS 32(DI), X5
+	MULPS X4, X5
+	MOVAPS X5, 32(SI)
 
-	MOVAPD 48(SI), X6
-	MOVAPD 48(DI), X7
-	MULPD X6, X7
-	MOVAPD X7, 48(SI)
+	MOVAPS 48(SI), X6
+	MOVAPS 48(DI), X7
+	MULPS X6, X7
+	MOVAPS X7, 48(SI)
 
-
-
-	// update pointers (4 * 2 * 8) - 2*2 elements each time, each element is 8 bytes
+	// update pointers. 4 registers, 4 elements at once, each element is 4 bytes
 	ADDQ $64, SI
 	ADDQ $64, DI
 
-	// start of array is now 8*2 less
-	SUBQ	$8, AX
+	// start of array is now 16 less
+	SUBQ	$16, AX
 	JGE		loop
 
 remainder:
-	ADDQ 	$8, AX
+	ADDQ 	$16, AX
 	JE 		done
 
 remainderloop:
-	
 	// copy into the appropriate registers
-	MOVSD 	(SI), X0
-	MOVSD 	(DI), X1
-	MULSD	X0, X1
+	MOVSS 	(SI), X0
+	MOVSS 	(DI), X1
+	MULSS	X0, X1
 
 	// save it back
-	MOVSD	X1, (SI)
+	MOVSS	X1, (SI)
 
 
 	// update pointer to the top of the data
-	ADDQ 	$8, SI
-	ADDQ	$8, DI
+	ADDQ 	$4, SI
+	ADDQ	$4, DI
 
 	DECQ 	AX
 	JNE 	remainderloop
