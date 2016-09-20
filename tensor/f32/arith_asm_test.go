@@ -1,4 +1,3 @@
-// +build DONOTUSE
 // +build sse avx
 
 /*
@@ -12,8 +11,11 @@ Currently vecDiv does not handle division by zero correctly. It returns a NaN in
 package tensorf32
 
 import (
+	"log"
 	"testing"
+	"unsafe"
 
+	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,44 +36,255 @@ func TestVecAdd(t *testing.T) {
 	a := RangeFloat32(0, niceprime-1)
 
 	correct := RangeFloat32(0, niceprime-1)
-	t.Logf("correct: %v", correct)
 	for i, v := range correct {
 		correct[i] = v + v
 	}
-	t.Logf("correct: %v", correct)
-	t.Logf("a : %v", a)
-
 	vecAdd(a, a)
-	t.Logf("correct: %v", correct)
-	t.Logf("a : %v", a)
 	assert.Equal(correct, a)
 
-	// b := RangeFloat32(niceprime, 2*niceprime-1)
-	// for i := range correct {
-	// 	correct[i] = a[i] + b[i]
-	// }
+	b := RangeFloat32(niceprime, 2*niceprime-1)
+	for i := range correct {
+		correct[i] = a[i] + b[i]
+	}
 
-	// vecAdd(a, b)
-	// assert.Equal(correct, a)
+	vecAdd(a, b)
+	assert.Equal(correct, a)
 
-	// /* Weird Corner Cases*/
-	// for i := 1; i < 65; i++ {
-	// 	a = RangeFloat32(0, i)
-	// 	var testAlign bool
-	// 	addr := &a[0]
-	// 	u := uint(uintptr(unsafe.Pointer(addr)))
-	// 	if u&uint(32) != 0 {
-	// 		testAlign = true
-	// 	}
+	/* Weird Corner Cases*/
+	for i := 1; i < 65; i++ {
+		a = RangeFloat32(0, i)
+		var testAlign bool
+		addr := &a[0]
+		u := uint(uintptr(unsafe.Pointer(addr)))
+		if u&uint(32) != 0 {
+			testAlign = true
+		}
 
-	// 	if testAlign {
-	// 		b = RangeFloat32(i, 2*i)
-	// 		correct = make([]float32, i)
-	// 		for j := range correct {
-	// 			correct[j] = b[j] + a[j]
-	// 		}
-	// 		vecAdd(a, b)
-	// 		assert.Equal(correct, a)
-	// 	}
-	// }
+		if testAlign {
+			b = RangeFloat32(i, 2*i)
+			correct = make([]float32, i)
+			for j := range correct {
+				correct[j] = b[j] + a[j]
+			}
+			vecAdd(a, b)
+			assert.Equal(correct, a)
+		}
+	}
+}
+
+func TestVecSub(t *testing.T) {
+	assert := assert.New(t)
+
+	a := RangeFloat32(0, niceprime-1)
+
+	correct := RangeFloat32(0, niceprime-1)
+	for i := range correct {
+		correct[i] = correct[i] - correct[i]
+	}
+
+	vecSub(a, a)
+	assert.Equal(correct, a)
+
+	b := RangeFloat32(niceprime, 2*niceprime-1)
+	for i := range correct {
+		correct[i] = a[i] - b[i]
+	}
+
+	vecSub(a, b)
+	assert.Equal(correct, a)
+
+	/* Weird Corner Cases*/
+	for i := 1; i < 65; i++ {
+		a = RangeFloat32(0, i)
+		var testAlign bool
+		addr := &a[0]
+		u := uint(uintptr(unsafe.Pointer(addr)))
+		if u&uint(32) != 0 {
+			testAlign = true
+		}
+
+		if testAlign {
+			b = RangeFloat32(i, 2*i)
+			correct = make([]float32, i)
+			for j := range correct {
+				correct[j] = a[j] - b[j]
+			}
+			log.Printf("i %v", i)
+			vecSub(a, b)
+			assert.Equal(correct, a)
+		}
+	}
+}
+
+func TestVecMul(t *testing.T) {
+	assert := assert.New(t)
+
+	a := RangeFloat32(0, niceprime-1)
+
+	correct := RangeFloat32(0, niceprime-1)
+	for i := range correct {
+		correct[i] = correct[i] * correct[i]
+	}
+	vecMul(a, a)
+	assert.Equal(correct, a)
+
+	b := RangeFloat32(niceprime, 2*niceprime-1)
+	for i := range correct {
+		correct[i] = a[i] * b[i]
+	}
+
+	vecMul(a, b)
+	assert.Equal(correct, a)
+
+	/* Weird Corner Cases*/
+
+	for i := 1; i < 65; i++ {
+		a = RangeFloat32(0, i)
+		var testAlign bool
+		addr := &a[0]
+		u := uint(uintptr(unsafe.Pointer(addr)))
+		if u&uint(32) != 0 {
+			testAlign = true
+		}
+
+		if testAlign {
+			b = RangeFloat32(i, 2*i)
+			correct = make([]float32, i)
+			for j := range correct {
+				correct[j] = a[j] * b[j]
+			}
+			vecMul(a, b)
+			assert.Equal(correct, a)
+		}
+	}
+}
+
+func TestVecDiv(t *testing.T) {
+	assert := assert.New(t)
+
+	a := RangeFloat32(0, niceprime-1)
+
+	correct := RangeFloat32(0, niceprime-1)
+	for i := range correct {
+		correct[i] = correct[i] / correct[i]
+	}
+	vecDiv(a, a)
+	assert.Equal(correct[1:], a[1:])
+	assert.Equal(true, math32.IsNaN(a[0]), "a[0] is: %v", a[0])
+
+	b := RangeFloat32(niceprime, 2*niceprime-1)
+	for i := range correct {
+		correct[i] = a[i] / b[i]
+	}
+
+	vecDiv(a, b)
+	assert.Equal(correct[1:], a[1:])
+	assert.Equal(true, math32.IsNaN(a[0]), "a[0] is: %v", a[0])
+
+	/* Weird Corner Cases*/
+
+	for i := 1; i < 65; i++ {
+		a = RangeFloat32(0, i)
+		var testAlign bool
+		addr := &a[0]
+		u := uint(uintptr(unsafe.Pointer(addr)))
+		if u&uint(32) != 0 {
+			testAlign = true
+		}
+
+		if testAlign {
+			b = RangeFloat32(i, 2*i)
+			correct = make([]float32, i)
+			for j := range correct {
+				correct[j] = a[j] / b[j]
+			}
+			vecDiv(a, b)
+			assert.Equal(correct[1:], a[1:])
+		}
+	}
+
+}
+
+func TestVecSqrt(t *testing.T) {
+	assert := assert.New(t)
+
+	a := RangeFloat32(0, niceprime-1)
+
+	correct := RangeFloat32(0, niceprime-1)
+	for i, v := range correct {
+		correct[i] = math32.Sqrt(v)
+	}
+	vecSqrt(a)
+	assert.Equal(correct, a)
+
+	// negatives
+	a = []float32{-1, -2, -3, -4}
+	vecSqrt(a)
+
+	for _, v := range a {
+		if !math32.IsNaN(v) {
+			t.Error("Expected NaN")
+		}
+	}
+
+	/* Weird Corner Cases*/
+	for i := 1; i < 65; i++ {
+		a = RangeFloat32(0, i)
+		var testAlign bool
+		addr := &a[0]
+		u := uint(uintptr(unsafe.Pointer(addr)))
+		if u&uint(32) != 0 {
+			testAlign = true
+		}
+
+		if testAlign {
+			correct = make([]float32, i)
+			for j := range correct {
+				correct[j] = math32.Sqrt(a[j])
+			}
+			vecSqrt(a)
+			assert.Equal(correct, a)
+		}
+	}
+}
+
+func TestVecInvSqrt(t *testing.T) {
+
+	assert := assert.New(t)
+	a := RangeFloat32(0, niceprime-1)
+
+	correct := RangeFloat32(0, niceprime-1)
+	for i, v := range correct {
+		correct[i] = float32(1.0) / math32.Sqrt(v)
+	}
+
+	vecInvSqrt(a)
+	assert.Equal(correct[1:], a[1:])
+	if !math32.IsInf(a[0], 0) {
+		t.Error("1/0 should be +Inf or -Inf")
+	}
+
+	// Weird Corner Cases
+
+	for i := 1; i < 65; i++ {
+		a = RangeFloat32(0, i)
+		var testAlign bool
+		addr := &a[0]
+		u := uint(uintptr(unsafe.Pointer(addr)))
+		if u&uint(32) != 0 {
+			testAlign = true
+		}
+
+		if testAlign {
+			correct = make([]float32, i)
+			for j := range correct {
+				correct[j] = 1.0 / math32.Sqrt(a[j])
+			}
+			vecInvSqrt(a)
+			assert.Equal(correct[1:], a[1:], "i = %d, %v", i, RangeFloat32(0, i))
+			if !math32.IsInf(a[0], 0) {
+				t.Error("1/0 should be +Inf or -Inf")
+			}
+		}
+	}
 }

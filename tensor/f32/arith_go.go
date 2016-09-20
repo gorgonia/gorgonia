@@ -1,3 +1,5 @@
+// +build !avx,!sse
+
 package tensorf32
 
 import "github.com/chewxy/math32"
