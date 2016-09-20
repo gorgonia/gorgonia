@@ -34,8 +34,9 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 * [rng](http://github.com/leesper/rng)
 * [errors](http://github.com/pkg/errors)‡
 * [gonum/matrix](http://github.com/gonum/matrix)†
+* [testify/assert](https://github.com/stretchr/testify)\*
 
-Packages marked with a † indicates that the development of Gorgonia is committed to keeping up with the most updated versions of these packages.
+Packages marked with a † indicates that the development of Gorgonia is committed to keeping up with the most updated versions of these packages. Packages marked with \* are used during testing. One can do without, but it'd be a pain in the ass to do so.
 
 Packages marked with a ‡ have generally stable APIs.
 
