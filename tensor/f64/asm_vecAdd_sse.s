@@ -8,13 +8,12 @@ TEXT ·vecAdd(SB), 7, $0
 
 	MOVQ a_len+8(FP), AX 			// len(a) into AX - +8, because first 8 is pointer, second 8 is length, third 8 is cap
 	MOVQ b_len+32(FP), BX			// len(b) into BX
-	MOVQ AX, BP						// len(a) into BP for working purposes
 
 	// check if they're the same length
 	CMPQ AX, BX
 	JNE panic						// jump to panic if not the same length. TOOD: return bloody errors
 
-	SUBQ $8, BP 					// 4 items or more?
+	SUBQ $8, AX 					// 8 items or more?
 	JL remainder
 
 loop:
@@ -42,16 +41,16 @@ loop:
 
 
 
-	// update pointers (4 * 2 * 8) - 2*2 elements each time, each element is 8 bytes
+	// update pointers (4 * 2 * 8) - 2 elements each register, 4 registers used, each element is 8 bytes
 	ADDQ $64, SI
 	ADDQ $64, DI
 
 	// start of array is now 8*2 less
-	SUBQ	$8, BP
+	SUBQ	$8, AX
 	JGE		loop
 
 remainder:
-	ADDQ 	$8, BP
+	ADDQ 	$8, AX
 	JE 		done
 
 remainderloop:
@@ -69,7 +68,7 @@ remainderloop:
 	ADDQ 	$8, SI
 	ADDQ	$8, DI
 
-	DECQ 	BP
+	DECQ 	AX
 	JNE 	remainderloop
 
 done:
