@@ -2,11 +2,11 @@
 // +build amd64
 
 /*
-This function adds two []float32 with some SIMD optimizations using AVX.
+vecSub subtracts two []float64 with some SIMD optimizations using AVX.
 
 Instead of doing this:
 	for i := 0; i < len(a); i++ {
-	    a[i] += b[i]
+	    a[i] -= b[i]
 	}
 
 Here, I use the term "pairs" to denote an element of `a` and and element of `b` that will be added together. 
@@ -46,6 +46,23 @@ This pseudocode best explains the rather simple assembly:
 		}
 	}
 
+	remainder2head:
+	lenA += 4
+	if lenA == 0 {
+		return
+	}
+
+	remainder4:
+	for {
+		a[i:i+2*4] -= b[i:i+2*4]
+		lenA -=2
+		i += 2 * 8  // 2 elements, 8 bytes each
+		
+		if lenA < 0{
+			break
+		}
+	}
+
 	remainder1head:
 	lenA += 4
 	if lenA == 0 {
@@ -54,13 +71,12 @@ This pseudocode best explains the rather simple assembly:
 
 	remainder1:
 	for {
-		a[i] += b[i]
+		a[i] -= b[i]
 		i+=8 // each element is 8 bytes
 		lenA--
 	}
 
 	return
-
 
 Citation
 ========
@@ -73,7 +89,7 @@ TEXT ·vecSub(SB), NOSPLIT, $0
 	MOVQ a_data+0(FP), SI
 	MOVQ b_data+24(FP), DI // use destination index register for this
 
-	MOVQ a_len+8(FP), AX  // len(a) into AX - +8, because first 8 is pointer, second 8 is length, third 8 is cap
+	MOVQ a_len+8(FP), AX  // len(a) into AX
 	MOVQ b_len+32(FP), BX // len(b) into BX
 	MOVQ AX, AX           // len(a) into AX for working purposes
 
@@ -91,10 +107,10 @@ loop:
 	// VMOVUPD (DI), Y1
 	// VSUBPD Y1, Y0, Y0
 	// VMOVUPD Y0, (SI)
-	BYTE $0xc5; BYTE $0xfd; BYTE $0x10; BYTE $0x06
-	BYTE $0xc5; BYTE $0xfd; BYTE $0x10; BYTE $0x0f
-	BYTE $0xc5; BYTE $0xfd; BYTE $0x5c; BYTE $0xc1
-	BYTE $0xc5; BYTE $0xfd; BYTE $0x11; BYTE $0x06
+	BYTE $0xc5; BYTE $0xfd; BYTE $0x10; BYTE $0x06 // vmovupd 0(%rsi),%ymm0
+	BYTE $0xc5; BYTE $0xfd; BYTE $0x10; BYTE $0x0f // vmovupd 0(%rdi),%ymm1
+	BYTE $0xc5; BYTE $0xfd; BYTE $0x5c; BYTE $0xc1 // vsubpd %ymm1,%ymm0,%ymm0
+	BYTE $0xc5; BYTE $0xfd; BYTE $0x11; BYTE $0x06 // vmovupd %ymm0, 0(%rsi)
 
 	// 4 elements processed. Each element is 8 bytes. So jump 32 bytes
 	ADDQ $32, SI
@@ -107,16 +123,38 @@ remainder:
 	ADDQ $4, AX
 	JE   done
 
+	SUBQ $2, AX
+	JL   remainder1head
+
+remainder2:
+	// VMOVUPD (SI), X0
+	// VMOVUPD (DI), X1
+	// VSUBPD X1, X0, X0
+	// VMOVUPD X0, (SI)
+	BYTE $0xc5; BYTE $0xf9; BYTE $0x10; BYTE $0x06 // vmovupd 0(%rsi),%xmm0
+	BYTE $0xc5; BYTE $0xf9; BYTE $0x10; BYTE $0x0f // vmovupd 0(%rdi),%xmm1
+	BYTE $0xc5; BYTE $0xf9; BYTE $0x5c; BYTE $0xc1 // vsubpd  %xmm1,%xmm0,%xmm0
+	BYTE $0xc5; BYTE $0xf9; BYTE $0x11; BYTE $0x06 // vmovupd %xmm0, 0(%rsi)
+
+	ADDQ $16, SI
+	ADDQ $16, DI
+	SUBQ $2, AX
+	JGE  remainder2
+
+remainder1head:
+	ADDQ $2, AX
+	JE   done
+
 remainder1:
 	// copy into the appropriate registers
 	// VMOVSD	(SI), X0
 	// VMOVSD	(DI), X1
 	// VSUBSD	X1, X0, X0
 	// VMOVSD	X0, (SI)
-	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x06
-	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x0f
-	BYTE $0xc5; BYTE $0xfb; BYTE $0x5c; BYTE $0xc1
-	BYTE $0xc5; BYTE $0xfb; BYTE $0x11; BYTE $0x06
+	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x06 // vmovsd 0(%rsi),%xmm0
+	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x0f // vmovsd 0(%rdi),%xmm1
+	BYTE $0xc5; BYTE $0xfb; BYTE $0x5c; BYTE $0xc1 // vsubsd %xmm1,%xmm0,%xmm0
+	BYTE $0xc5; BYTE $0xfb; BYTE $0x11; BYTE $0x06 // vmovsd %xmm0, 0(%rsi)
 
 	// update pointer to the top of the data
 	ADDQ $8, SI

@@ -2,11 +2,11 @@
 // +build amd64
 
 /*
-This function adds two []float32 with some SIMD optimizations using AVX.
+vecSub subtracts two []float32 with some SIMD optimizations using AVX.
 
 Instead of doing this:
 	for i := 0; i < len(a); i++ {
-	    a[i] += b[i]
+	    a[i] -= b[i]
 	}
 
 Here, I use the term "pairs" to denote an element of `a` and and element of `b` that will be added together. 
@@ -54,7 +54,7 @@ This pseudocode best explains the rather simple assembly:
 
 	remainder4:
 	for {
-		a[i:i+4*4] += b[i:i+4*4]
+		a[i:i+4*4] -= b[i:i+4*4]
 		lenA -=4
 		i += 4 * 4  // 4 elements, 4 bytes each
 		
@@ -71,7 +71,7 @@ This pseudocode best explains the rather simple assembly:
 
 	remainder1:
 	for {
-		a[i] += b[i]
+		a[i] -= b[i]
 		i+=4 // each element is 4 bytes
 		lenA--
 	}
@@ -89,7 +89,7 @@ TEXT ·vecSub(SB), NOSPLIT, $0
 	MOVQ a_data+0(FP), SI
 	MOVQ b_data+24(FP), DI // use destination index register for this
 
-	MOVQ a_len+8(FP), AX  // len(a) into AX - +8, because first 8 is pointer, second 8 is length, third 8 is cap
+	MOVQ a_len+8(FP), AX  // len(a) into AX
 	MOVQ b_len+32(FP), BX // len(b) into BX
 	MOVQ AX, AX           // len(a) into AX for working purposes
 
@@ -138,7 +138,6 @@ remainder4:
 
 	ADDQ $16, SI
 	ADDQ $16, DI
-
 	SUBQ $4, AX
 	JGE  remainder4
 

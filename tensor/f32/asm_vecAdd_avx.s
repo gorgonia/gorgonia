@@ -28,7 +28,6 @@ These are the registers I use to store the relevant information:
 	X0, X1 - XMM registers.
 
 This pseudocode best explains the rather simple assembly:
-
 	lenA := len(a)
 	i := 0
 

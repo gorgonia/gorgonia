@@ -11,7 +11,6 @@ Currently vecDiv does not handle division by zero correctly. It returns a NaN in
 package tensorf32
 
 import (
-	"log"
 	"testing"
 	"unsafe"
 
@@ -109,7 +108,6 @@ func TestVecSub(t *testing.T) {
 			for j := range correct {
 				correct[j] = a[j] - b[j]
 			}
-			log.Printf("i %v", i)
 			vecSub(a, b)
 			assert.Equal(correct, a)
 		}

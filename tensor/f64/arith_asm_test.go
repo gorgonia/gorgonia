@@ -21,9 +21,9 @@ import (
 // 1049 is actually a prime, so it cannot be divisible by any other number
 // This is a good way to test that the remainder part of the vecAdd/Sub/Mul/Div/Pow works
 const (
-	// niceprime = 7
+	niceprime = 37
 	// niceprime = 1049
-	niceprime = 597929
+	// niceprime = 597929
 	// niceprime = 1299827 // because sometimes I feel like being an idiot
 )
 

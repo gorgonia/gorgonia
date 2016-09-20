@@ -2,7 +2,7 @@
 // +build amd64
 
 /*
-This function adds two []float32 with some SIMD optimizations using AVX.
+vecMul multiplies two []float32 with some SIMD optimizations using AVX.
 
 Instead of doing this:
 	for i := 0; i < len(a); i++ {
@@ -81,20 +81,18 @@ This pseudocode best explains the rather simple assembly:
 // func vecMul(a, b []float32)
 TEXT ·vecMul(SB), NOSPLIT, $0
 	MOVQ a_data+0(FP), SI
-	MOVQ b_data+24(FP), DI  		// use detination index register for this
+	MOVQ b_data+24(FP), DI // use detination index register for this
 
-	MOVQ a_len+8(FP), AX 			// len(a) into AX - +8, because first 8 is pointer, second 8 is length, third 8 is cap
-	MOVQ b_len+32(FP), BX			// len(b) into BX
+	MOVQ a_len+8(FP), AX  // len(a) into AX
+	MOVQ b_len+32(FP), BX // len(b) into BX
 
 	// check if they're the same length
 	CMPQ AX, BX
-	JNE panic						// jump to panic if not the same length. TOOD: return bloody errors
+	JNE  panic  // jump to panic if not the same length. TOOD: return bloody errors
 
-	// each ymm register can take up to 8 float32s. 
+	// each ymm register can take up to 8 float32s.
 	SUBQ $8, AX
-	JL remainder
-
-
+	JL   remainder
 
 loop:
 	// a[0] to a[7]
@@ -102,43 +100,41 @@ loop:
 	// VMOVUPS 0(DI), Y1
 	// VMULPS Y0, Y1, Y0
 	// VMOVUPS  Y0, 0(SI)
-	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x06;    // vmovups (%rsi),%ymm0
-	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x0f;    // vmovups (%rdi),%ymm1
-	BYTE $0xc5; BYTE $0xf4; BYTE $0x59; BYTE $0xc0;    // vmulps %ymm0,%ymm1,%ymm0
-	BYTE $0xc5; BYTE $0xfc; BYTE $0x11; BYTE $0x06;    // vmovups %ymm0,(%rsi)
+	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x06 // vmovups (%rsi),%ymm0
+	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x0f // vmovups (%rdi),%ymm1
+	BYTE $0xc5; BYTE $0xf4; BYTE $0x59; BYTE $0xc0 // vmulps %ymm0,%ymm1,%ymm0
+	BYTE $0xc5; BYTE $0xfc; BYTE $0x11; BYTE $0x06 // vmovups %ymm0,(%rsi)
 
 	ADDQ $32, SI
 	ADDQ $32, DI
 	SUBQ $8, AX
-	JGE loop
+	JGE  loop
 
 remainder:
-	ADDQ 	$8, AX
-	JE 		done
+	ADDQ $8, AX
+	JE   done
 
-	SUBQ 	$4, AX
-	JL 		remainder1head
-
+	SUBQ $4, AX
+	JL   remainder1head
 
 remainder4:
 	// VMOVUPS (SI), X0
 	// VMOVUPS (DI), X1
 	// VMULPS  X0, X1, X0
 	// VMOVUPS X0 (SI)
-	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x06;    // vmovups (%rsi),%xmm0
-	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x0f;    // vmovups (%rdi),%xmm1
-	BYTE $0xc5; BYTE $0xf0; BYTE $0x59; BYTE $0xc0;    // vmulps %xmm0,%xmm1,%xmm0
-	BYTE $0xc5; BYTE $0xf8; BYTE $0x11; BYTE $0x06;    // vmovups %xmm0,(%rsi)
+	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x06 // vmovups (%rsi),%xmm0
+	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x0f // vmovups (%rdi),%xmm1
+	BYTE $0xc5; BYTE $0xf0; BYTE $0x59; BYTE $0xc0 // vmulps %xmm0,%xmm1,%xmm0
+	BYTE $0xc5; BYTE $0xf8; BYTE $0x11; BYTE $0x06 // vmovups %xmm0,(%rsi)
 
 	ADDQ $16, SI
 	ADDQ $16, DI
-
 	SUBQ $4, AX
-	JGE remainder4
+	JGE  remainder4
 
 remainder1head:
 	ADDQ $4, AX
-	JE done
+	JE   done
 
 remainder1:
 	// copy into the appropriate registers
@@ -146,23 +142,22 @@ remainder1:
 	// VMOVSS	(DI), X1
 	// VMULSS	X0, X1, X0
 	// VMOVSS	X0, (SI)
-	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x06;    // vmovss (%rsi),%xmm0
-	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x0f;    // vmovss (%rdi),%xmm1
-	BYTE $0xc5; BYTE $0xf2; BYTE $0x59; BYTE $0xc0;    // vmulss %xmm0,%xmm1,%xmm0
-	BYTE $0xc5; BYTE $0xfa; BYTE $0x11; BYTE $0x06;    // vmovss %xmm0,(%rsi)
+	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x06 // vmovss (%rsi),%xmm0
+	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x0f // vmovss (%rdi),%xmm1
+	BYTE $0xc5; BYTE $0xf2; BYTE $0x59; BYTE $0xc0 // vmulss %xmm0,%xmm1,%xmm0
+	BYTE $0xc5; BYTE $0xfa; BYTE $0x11; BYTE $0x06 // vmovss %xmm0,(%rsi)
 
 	// update pointer to the top of the data
-	ADDQ 	$4, SI
-	ADDQ	$4, DI
-	
+	ADDQ $4, SI
+	ADDQ $4, DI
+
 	DECQ AX
-	JNE 	remainder1
+	JNE  remainder1
 
 done:
 	RET
 
 panic:
-	CALL 	runtime·panicindex(SB)
+	CALL runtime·panicindex(SB)
 	RET
-
 

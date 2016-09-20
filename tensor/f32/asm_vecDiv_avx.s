@@ -85,28 +85,26 @@ Citation
 ========
 [0]http://www.felixcloutier.com/x86/DIVPS.html
 */
-
 #include "textflag.h"
 
 // func vecDiv(a, b []float32)
 TEXT ·vecDiv(SB), NOSPLIT, $0
 	MOVQ a_data+0(FP), SI
-	MOVQ b_data+24(FP), DI  		// use destination index register for this
+	MOVQ b_data+24(FP), DI // use destination index register for this
 
-	MOVQ a_len+8(FP), AX 			// len(a) into AX - +8, because first 8 is pointer, second 8 is length, third 8 is cap
-	MOVQ b_len+32(FP), BX			// len(b) into BX
-	
+	MOVQ a_len+8(FP), AX  // len(a) into AX - +8, because first 8 is pointer, second 8 is length, third 8 is cap
+	MOVQ b_len+32(FP), BX // len(b) into BX
+
 	// check if they're the same length
 	CMPQ AX, BX
-	JNE		panic 		// jump to panic if not the same length. TOOD: return bloody errors
+	JNE  panic  // jump to panic if not the same length. TOOD: return bloody errors
 
 	SUBQ $8, AX
-	JL remainder
+	JL   remainder
 
-	// each ymm register can take up to 4 float64s. 
+	// each ymm register can take up to 4 float64s.
 	// There are 8 ymm registers (8 pairs to do addition) available (TODO: check how to access the other 8 ymm registers without fucking things up)
 	// Therefore a total of 16 elements can be processed at a time
-
 
 loop:
 	// a[0] to a[7]
@@ -114,11 +112,10 @@ loop:
 	// VMOVUPS (DI), Y1
 	// VDIVPS Y1, Y0, Y0
 	// VMOVUPS Y0, (SI)
-	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x06;    // vmovups (%rsi),%ymm0
-	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x0f;    // vmovups (%rdi),%ymm1
-	BYTE $0xc5; BYTE $0xfc; BYTE $0x5e; BYTE $0xc1;    // vdivps %ymm1,%ymm0,%ymm0
-	BYTE $0xc5; BYTE $0xfc; BYTE $0x11; BYTE $0x06;    // vmovups %ymm0,(%rsi)
-
+	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x06 // vmovups (%rsi),%ymm0
+	BYTE $0xc5; BYTE $0xfc; BYTE $0x10; BYTE $0x0f // vmovups (%rdi),%ymm1
+	BYTE $0xc5; BYTE $0xfc; BYTE $0x5e; BYTE $0xc1 // vdivps %ymm1,%ymm0,%ymm0
+	BYTE $0xc5; BYTE $0xfc; BYTE $0x11; BYTE $0x06 // vmovups %ymm0,(%rsi)
 
 	ADDQ $32, SI
 	ADDQ $32, DI
@@ -136,10 +133,11 @@ remainder4:
 	// VMOVUPS (SI), X0
 	// VMOVUPS (DI), X1
 	// VDIVPS X1, X0, X0
-	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x06;    // vmovups (%rsi),%xmm0
-	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x0f;    // vmovups (%rdi),%xmm1
-	BYTE $0xc5; BYTE $0xf8; BYTE $0x5e; BYTE $0xc1;    // vdivps %xmm1,%xmm0,%xmm0
-	BYTE $0xc5; BYTE $0xf8; BYTE $0x11; BYTE $0x06;    // vmovups %xmm0,(%rsi)
+	// VMOVUPS X0, (SI)
+	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x06 // vmovups (%rsi),%xmm0
+	BYTE $0xc5; BYTE $0xf8; BYTE $0x10; BYTE $0x0f // vmovups (%rdi),%xmm1
+	BYTE $0xc5; BYTE $0xf8; BYTE $0x5e; BYTE $0xc1 // vdivps %xmm1,%xmm0,%xmm0
+	BYTE $0xc5; BYTE $0xf8; BYTE $0x11; BYTE $0x06 // vmovups %xmm0,(%rsi)
 
 	ADDQ $16, SI
 	ADDQ $16, DI
@@ -155,23 +153,22 @@ remainder1:
 	// VMOVSS	(DI), X1
 	// VDIVSS	X1, X0, X0
 	// VMOVSS	X0, (SI)
-	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x06;    // vmovss (%rsi),%xmm0
-	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x0f;    // vmovss (%rdi),%xmm1
-	BYTE $0xc5; BYTE $0xfa; BYTE $0x5e; BYTE $0xc1;    // vdivss %xmm1,%xmm0,%xmm0
-	BYTE $0xc5; BYTE $0xfa; BYTE $0x11; BYTE $0x06;    // vmovss %xmm0,(%rsi)
+	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x06 // vmovss (%rsi),%xmm0
+	BYTE $0xc5; BYTE $0xfa; BYTE $0x10; BYTE $0x0f // vmovss (%rdi),%xmm1
+	BYTE $0xc5; BYTE $0xfa; BYTE $0x5e; BYTE $0xc1 // vdivss %xmm1,%xmm0,%xmm0
+	BYTE $0xc5; BYTE $0xfa; BYTE $0x11; BYTE $0x06 // vmovss %xmm0,(%rsi)
 
 	// update pointer to the top of the data
-	ADDQ 	$4, SI
-	ADDQ	$4, DI
-	
+	ADDQ $4, SI
+	ADDQ $4, DI
+
 	DECQ AX
-	JNE 	remainder1
+	JNE  remainder1
 
 done:
 	RET
 
 panic:
-	CALL 	runtime·panicindex(SB)
+	CALL runtime·panicindex(SB)
 	RET
-
 

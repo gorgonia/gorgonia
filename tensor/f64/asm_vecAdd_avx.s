@@ -28,7 +28,6 @@ These are the registers I use to store the relevant information:
 	X0, X1 - XMM registers.
 
 This pseudocode best explains the rather simple assembly:
-
 	lenA := len(a)
 	i := 0
 
@@ -43,8 +42,25 @@ This pseudocode best explains the rather simple assembly:
 		}
 	}
 
-	remainder:
+	remainder4head:
 	lenA += 4
+	if lenA == 0 {
+		return
+	}
+
+	remainder2:
+	for {
+		a[i:i+2*8] += b[i:i+2*8]
+		lenA -=2
+		i += 2 * 8  // 2 elements, 8 bytes each
+		
+		if lenA < 0{
+			break
+		}
+	}
+
+	remainder1head:
+	lenA += 2
 	if lenA == 0 {
 		return
 	}
@@ -90,12 +106,34 @@ loop:
 
 	ADDQ $32, SI
 	ADDQ $32, DI
-
 	SUBQ $4, AX
 	JGE  loop
 
 remainder:
 	ADDQ $4, AX
+	JE   done
+
+	SUBQ $2, AX
+	JL   remainder1head
+
+remainder2:
+	// VMOVUPD (SI), X0
+	// VMOVUPD (DI), X1
+	// VADDPD X0, X1, X0
+	// VMOVUPD X0, (SI)
+	BYTE $0xc5; BYTE $0xf9; BYTE $0x10; BYTE $0x06 // vmovupd (%rsi),%xmm0
+	BYTE $0xc5; BYTE $0xf9; BYTE $0x10; BYTE $0x0f // vmovupd (%rdi),%xmm1
+	BYTE $0xc5; BYTE $0xf1; BYTE $0x58; BYTE $0xc0 // vaddpd %xmm0,%xmm1,%xmm0
+	BYTE $0xc5; BYTE $0xf9; BYTE $0x11; BYTE $0x06 // vmovupd %xmm0,(%rsi)
+
+	ADDQ $16, SI
+	ADDQ $16, DI
+
+	SUBQ $2, AX
+	JGE  remainder2
+
+remainder1head:
+	ADDQ $2, AX
 	JE   done
 
 remainder1:
@@ -104,10 +142,10 @@ remainder1:
 	// VMOVSD	(DI), X1
 	// VADDSD	X0, X1, X0
 	// VMOVSD	X0, (SI)
-	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x06
-	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x0f
-	BYTE $0xc5; BYTE $0xf3; BYTE $0x58; BYTE $0xc0
-	BYTE $0xc5; BYTE $0xfb; BYTE $0x11; BYTE $0x06
+	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x06 // vmovsd (%rsi), %xmm0
+	BYTE $0xc5; BYTE $0xfb; BYTE $0x10; BYTE $0x0f // vmovsd (%rdi), %xmm1
+	BYTE $0xc5; BYTE $0xf3; BYTE $0x58; BYTE $0xc0 // vaddsd %xmm0,%xmm1,%xmm0
+	BYTE $0xc5; BYTE $0xfb; BYTE $0x11; BYTE $0x06 // vmovsd %xmm0,(%rsi)
 
 	// update pointer to the top of the data
 	ADDQ $8, SI
