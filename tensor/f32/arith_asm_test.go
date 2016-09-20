@@ -286,3 +286,145 @@ func TestVecInvSqrt(t *testing.T) {
 		}
 	}
 }
+
+/* BENCHMARKS */
+
+func _vanillaVecAdd(a, b []float32) {
+	for i := range a {
+		a[i] += b[i]
+	}
+}
+
+func BenchmarkVecAdd(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		vecAdd(x, y)
+	}
+}
+
+func BenchmarkVanillaVecAdd(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		_vanillaVecAdd(x, y)
+	}
+}
+
+func _vanillaVecSub(a, b []float32) {
+	for i := range a {
+		a[i] -= b[i]
+	}
+}
+
+func BenchmarkVecSub(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		vecSub(x, y)
+	}
+}
+
+func BenchmarkVanillaVecSub(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		_vanillaVecSub(x, y)
+	}
+}
+
+func _vanillaVecMul(a, b []float32) {
+	for i := range a {
+		a[i] *= b[i]
+	}
+}
+
+func BenchmarkVecMul(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		vecMul(x, y)
+	}
+}
+
+func BenchmarkVanillaVecMul(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		_vanillaVecMul(x, y)
+	}
+}
+
+func _vanillaVecDiv(a, b []float32) {
+	for i := range a {
+		a[i] /= b[i]
+	}
+}
+
+func BenchmarkVecDiv(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		vecDiv(x, y)
+	}
+}
+
+func BenchmarkVanillaVecDiv(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+	y := RangeFloat32(niceprime, 2*niceprime)
+
+	for n := 0; n < b.N; n++ {
+		_vanillaVecDiv(x, y)
+	}
+}
+
+func _vanillaVecSqrt(a []float32) {
+	for i, v := range a {
+		a[i] = math32.Sqrt(v)
+	}
+}
+
+func BenchmarkVecSqrt(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+
+	for n := 0; n < b.N; n++ {
+		vecSqrt(x)
+	}
+}
+
+func BenchmarkVanillaVecSqrt(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+
+	for n := 0; n < b.N; n++ {
+		_vanillaVecSqrt(x)
+	}
+}
+
+func _vanillaVecInverseSqrt(a []float32) {
+	for i, v := range a {
+		a[i] = 1.0 / math32.Sqrt(v)
+	}
+}
+
+func BenchmarkVecInvSqrt(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+
+	for n := 0; n < b.N; n++ {
+		vecInvSqrt(x)
+	}
+}
+
+func BenchmarkVanillaVecInvSqrt(b *testing.B) {
+	x := RangeFloat32(0, niceprime)
+
+	for n := 0; n < b.N; n++ {
+		_vanillaVecInverseSqrt(x)
+	}
+}
