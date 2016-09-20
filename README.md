@@ -29,21 +29,19 @@ The package is go-gettable: `go get -u github.com/chewxy/gorgonia`.
 
 There are very few dependencies that Gorgonia uses - and they're all pretty stable, so as of now, there isn't a need for vendoring tools. These are the list of external packages that Gorgonia calls, ranked in order of reliance that this package has (subpackages are omitted):
 
-<table>
-<thead><th>Pacakge</th><th>Used for</th><th>Vitality</th><th>Notes</th></thead>
-<tbody>
-<tr><td>[gonum/graph](http://github.com/gonum/graph)</td><td>Sorting graphs</td><td>Vital. Removal means Gorgonia will not work</td><td>Development of Gorgonia is committed to keeping up with the most updated version</td></tr>
-<tr><td>[gonum/blas](http://github.com/gonum/blas)</td><td>Tensor subpackage</td><td>Vital. Removal means Gorgonial will not work</td><td>Development of Gorgonia is committed to keeping up with the most updated version</td></tr>
-<tr><td>[math32](http://github.com/chewxy/math32)</td><td>`float32` operations</td><td>Can be replaced by `float32(math.XXX(float64(x)))`</td><td>Same maintainer as Gorgonia, same API as the built in `math` package</td></tr>
-<tr><td>[set](http://github.com/xtgo/set)</td><td>Various set operation</td><td>Can be easily replaced</td><td>Stable API for the past 1 year</td></tr>
-<tr><td>[gographviz](http://github.com/awalterschulze/gographviz)</td><td>Used for printing graphs</td><td>Graph printing is only vital to debugging. Gorgonia can survive without, but with a major feature loss</td><td>Stable API for the past 1 year</td></tr>
-<tr><td>[rng](http://github.com/leesper/rng)</td><td>Used to implement helper functions to generate initial weights</td><td>Can be replaced fairly easily. Gorgonia can do without the convenience functions too</td><td></td></tr>
-<tr><td>[errors](http://github.com/pkg/errors)</td><td>Error wrapping</td><td>Gorgonia won't die without it. In fact Gorgonia has also used [goerrors/errors](https://github.com/go-errors/errors) in the past.</td><td>Stable API for the past 6 months</td></tr>
-<tr><td>[gonum/matrix](http://github.com/gonum/matrix)</td><td>Compatibility between `Tensor` and Gonum's Matrix</td><td></td><td>Development of Gorgonia is committed to keeping up with the most updated version</td></tr>
-<tr><td>[testify/assert](https://github.com/stretchr/testify)</td><td>Testing</td><td>Can do without but will be a massive pain in the ass to test</td><td></td></tr>
-<tr><td>[diffmatchpatch](https://https://github.com/sergi/go-diff)</td><td>Generating the individual `Tensor` types</td><td>Can do without</td><td></td></tr>
-</tbody>
-</table>
+|Package|Used For|Vitality|Notes|
+|-------|--------|--------|-----|
+|[gonum/graph](http://github.com/gonum/graph)| Sorting `*ExprGraph`| Vital. Removal means Gorgonia will not work | Development of Gorgonia is committed to keeping up with the most updated version|
+|[gonum/blas](http://github.com/gonum/blas)|Tensor subpackage linear algebra operations|Vital. Removal means Gorgonial will not work|Development of Gorgonia is committed to keeping up with the most updated version|
+|[math32](http://github.com/chewxy/math32)|`float32` operations|Can be replaced by `float32(math.XXX(float64(x)))`|Same maintainer as Gorgonia, same API as the built in `math` package|
+|[set](http://github.com/xtgo/set)|Various set operations|Can be easily replaced|Stable API for the past 1 year|
+|[gographviz](http://github.com/awalterschulze/gographviz)|Used for printing graphs|Graph printing is only vital to debugging. Gorgonia can survive without, but with a major (but arguably nonvital) feature loss|Stable API for the past 1 year|
+|[rng](http://github.com/leesper/rng)|Used to implement helper functions to generate initial weights|Can be replaced fairly easily. Gorgonia can do without the convenience functions too||
+|[errors](http://github.com/pkg/errors)|Error wrapping|>Gorgonia won't die without it. In fact Gorgonia has also used [goerrors/errors](https://github.com/go-errors/errors) in the past.|Stable API for the past 6 months|
+|[gonum/matrix](http://github.com/gonum/matrix)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version|
+|[testify/assert](https://github.com/stretchr/testify)|Testing|Can do without but will be a massive pain in the ass to test||
+|[diffmatchpatch](https://https://github.com/sergi/go-diff)|Generating the individual `Tensor` types|Can do without ||
+
 
 
 #Usage#
