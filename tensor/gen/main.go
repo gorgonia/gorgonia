@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,7 +10,13 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
+
+var diffOnly = flag.Bool("d", false, "display diffs instead of rewriting files")
+var list = flag.Bool("l", false, "list files")
+var verbose = flag.Bool("v", false, "verbose")
 
 var arithables []string
 var matop []string
@@ -196,8 +203,6 @@ var replacements = map[string]map[string]string{
 
 		// Flags stuff
 		"AsTensorF64": "AsTensorF32",
-		// General stuff
-		"// +build !avx,!sse": "",
 	},
 }
 
@@ -288,15 +293,31 @@ func pasta(t string) {
 		}
 
 		destFileName := fmt.Sprintf("../%s/%s", generates[t], fn)
-		if err = ioutil.WriteFile(destFileName, []byte(replaced), 0664); err != nil {
-			panic(err)
+		if *diffOnly {
+			orig, err := ioutil.ReadFile(destFileName)
+			if err != nil {
+				log.Printf("Error while reading %v. Error: %v", destFileName, err)
+				continue
+			}
+
+			dmp := diffmatchpatch.New()
+			diffs := dmp.DiffMain(string(orig), replaced, false)
+			patches := dmp.PatchMake(diffs)
+			if len(patches) > 0 {
+				fmt.Printf("%v Diff: \n%v\n", destFileName, dmp.PatchToText(patches))
+			}
+		} else {
+			if err = ioutil.WriteFile(destFileName, []byte(replaced), 0664); err != nil {
+				panic(err)
+			}
+
+			// gofmt and goimports this shit
+			cmd := exec.Command("goimports", "-w", destFileName)
+			if err = cmd.Run(); err != nil {
+				log.Println(err)
+			}
 		}
 
-		// gofmt and goimports this shit
-		cmd := exec.Command("goimports", "-w", destFileName)
-		if err = cmd.Run(); err != nil {
-			log.Println(err)
-		}
 	}
 }
 
@@ -325,27 +346,37 @@ func walk(dir string, info os.FileInfo, _ error) (err error) {
 	return
 }
 
+func vprintf(format string, attrs ...interface{}) {
+	if *verbose {
+		fmt.Printf(format, attrs...)
+	}
+}
+
 func main() {
+	flag.Parse()
+
 	filepath.Walk("../f64", walk)
-	fmt.Printf("arithables: %v\n", arithables)
-	fmt.Printf("cmp: %v\n", cmp)
-	fmt.Printf("matop: %v\n", matop)
+	vprintf("arithables: %v\n", arithables)
+	vprintf("cmp: %v\n", cmp)
+	vprintf("matop: %v\n", matop)
 
 	for t, short := range generates {
 		dirname := "../" + short
 
 		if _, err := os.Stat(dirname); os.IsNotExist(err) {
-			fmt.Printf("Created %s\n", dirname)
+			vprintf("Created %s\n", dirname)
 			os.Mkdir(dirname, 0777)
 		}
 
-		fmt.Printf("Working on %v. These files will be overwritten:\n", dirname)
+		vprintf("Working on %v. These files will be overwritten:\n", dirname)
 		for _, w := range towrite(t) {
-			fmt.Printf("\t%v\n", w)
+			vprintf("\t%v\n", w)
 			filename := filepath.Join(dirname, w)
-			if err := os.Remove(filename); err != nil {
-				if !os.IsNotExist(err) {
-					panic(err)
+			if !*diffOnly {
+				if err := os.Remove(filename); err != nil {
+					if !os.IsNotExist(err) {
+						panic(err)
+					}
 				}
 			}
 		}
