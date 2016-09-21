@@ -1,0 +1,27 @@
+language: go
+branches:
+  only:
+    - master
+go:
+  - 1.6.3
+  - 1.7.1
+  - tip
+env:
+  global:
+    - GOARCH=amd64
+
+install:
+- go get -u -v $(go list -f '{{join .Imports "\n"}}' ./... | sort | uniq | grep -v golang-samples)
+
+script: 
+- go test -v . 
+- go test -v ./tensor/f64
+- go test -v ./tensor/f32
+- go test -v ./tensor/i
+- go test -v ./tensor/b
+- go test -tags='sse' -v . 
+- go test -tags='sse' -v ./tensor/f64
+- go test -tags='sse' -v ./tensor/f32
+- go test -tags='avx' -v . 
+- go test -tags='avx' -v ./tensor/f64
+- go test -tags='avx' -v ./tensor/f32
