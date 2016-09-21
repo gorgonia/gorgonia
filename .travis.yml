@@ -11,7 +11,7 @@ env:
     - GOARCH=amd64
 
 install:
-- go get -u -v ./..
+- go get -u -v ./...
 
 script: 
 - go test -v . 
