@@ -105,3 +105,61 @@ func TestClone(t *testing.T) {
 	assert.EqualValues(T.AP, T1000.AP)
 	assert.Equal(T.data, T1000.data)
 }
+
+func TestI(t *testing.T) {
+	assert := assert.New(t)
+	var T *Tensor
+	var correct []float32
+
+	T = I(4, 4, 0)
+	correct = []float32{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, 1)
+	correct = []float32{0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, 2)
+	correct = []float32{0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, 3)
+	correct = []float32{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, 4)
+	correct = []float32{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, -1)
+	correct = []float32{0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, -2)
+	correct = []float32{0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, -3)
+	correct = []float32{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, -4)
+	correct = []float32{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	assert.Equal(correct, T.data)
+
+	// non square identity (technically this shouldn't exist)
+	T = I(4, 5, 0)
+	correct = []float32{1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 5, 1)
+	correct = []float32{0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 5, -1)
+	correct = []float32{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0}
+	assert.Equal(correct, T.data)
+
+	T = I(4, 4, -1)
+	t.Logf("%+#v", T)
+}

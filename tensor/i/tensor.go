@@ -85,6 +85,74 @@ func Zeroes(shape ...int) *Tensor {
 	return t
 }
 
+// I creates the identity matrix (usually a square) matrix with 1s across the diagonals, and zeroes elsewhere, like so:
+//		Matrix(4,4)
+// 		⎡1  0  0  0⎤
+// 		⎢0  1  0  0⎥
+// 		⎢0  0  1  0⎥
+// 		⎣0  0  0  1⎦
+// While technically an identity matrix is a square matrix, in attempt to keep feature parity with Numpy,
+// the I() function allows you to create non square matrices, as well as an index to start the diagonals.
+//
+// For example:
+//		T = I(4, 4, 1)
+// Yields:
+//		⎡0  1  0  0⎤
+//		⎢0  0  1  0⎥
+//		⎢0  0  0  1⎥
+//		⎣0  0  0  0⎦
+//
+// The index k can also be a negative number:
+// 		T = I(4, 4, -1)
+// Yields:
+// 		⎡0  0  0  0⎤
+// 		⎢1  0  0  0⎥
+// 		⎢0  1  0  0⎥
+// 		⎣0  0  1  0⎦
+func I(r, c, k int) (retVal *Tensor) {
+	retVal = NewTensor(WithShape(r, c))
+	if k >= c {
+		return
+	}
+
+	i := k
+	if k < 0 {
+		i = (-k) * c
+	}
+
+	var s *Tensor
+	var err error
+	end := c - k
+	if end > r {
+		s, err = retVal.Slice(nil)
+	} else {
+		s, err = retVal.Slice(rangedSlice{0, end})
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
+	// this method is barbaric. Probably want to write a feature update for iterator?
+	iter := newIterator(s)
+	var count, step int
+	for j, err := iter.next(); err == nil; j, err = iter.next() {
+		if count < i {
+			count++
+			continue
+		}
+		if step == 0 {
+			retVal.data[j] = int(1) //@DEFAULTONE
+		}
+		count++
+		step++
+		if step >= c+1 {
+			step = 0
+		}
+	}
+	return
+}
+
 // WithBacking is a construction option for NewTensor
 // Use it as such:
 //		backing := []int{1,2,3,4}

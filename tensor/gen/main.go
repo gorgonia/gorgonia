@@ -40,6 +40,9 @@ var allignores = []string{
 	"compat_test.go",
 	"io.go",
 	"io_test.go",
+
+	"matrix.go",
+	"matrix_test.go",
 }
 
 var boolignores = []string{
