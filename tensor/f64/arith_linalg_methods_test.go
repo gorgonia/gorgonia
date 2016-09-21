@@ -551,6 +551,7 @@ func TestTensorMul(t *testing.T) {
 	var expectedData []float64
 	var err error
 
+	// 3T-3T
 	A = NewTensor(WithShape(3, 4, 5), WithBacking(RangeFloat64(0, 60)))
 	B = NewTensor(WithShape(4, 3, 2), WithBacking(RangeFloat64(0, 24)))
 	if C, err = A.TensorMul(B, []int{1, 0}, []int{0, 1}); err != nil {
@@ -566,6 +567,11 @@ func TestTensorMul(t *testing.T) {
 	assert.Equal(types.Shape{4, 3, 2}, B.Shape())
 	assert.Equal(RangeFloat64(0, 60), A.data)
 	assert.Equal(RangeFloat64(0, 24), B.data)
+
+	// TODO:
+	// nT-vec
+	// nT-mat
+	// stupids
 }
 
 /*

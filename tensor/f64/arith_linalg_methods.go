@@ -483,8 +483,14 @@ func (t *Tensor) TensorMul(other *Tensor, axesA, axesB []int) (retVal *Tensor, e
 	}
 
 	// the magic happens here
-	if retVal, err = doT.MatMul(doOther); err != nil {
-		return
+	if doOther.IsVector() {
+		if retVal, err = doT.MatVecMul(doOther); err != nil {
+			return
+		}
+	} else {
+		if retVal, err = doT.MatMul(doOther); err != nil {
+			return
+		}
 	}
 
 	retShape := types.BorrowInts(len(retShape1) + len(retShape2))

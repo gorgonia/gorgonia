@@ -23,6 +23,49 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	// safe, incr, reuse := parseSafeReuse(opts...)
 	reuse, incr := parseReuseIncr(opts...)
 
+	// a or b is scalar:
+	switch {
+	case a.IsScalar() && b.IsScalar():
+		// user is an idiot
+		res := a.data[0] * b.data[0]
+		switch {
+		case incr != nil:
+			vecTrans(res, incr.data)
+			retVal = incr
+		case reuse != nil:
+			retVal = reuse
+			retVal.Reshape()
+			retVal.data[0] = res
+		default:
+			retVal = NewTensor(AsScalar(res))
+		}
+		return
+	case a.IsScalar() && !b.IsScalar():
+		switch {
+		case incr != nil && reuse != nil:
+			return PointwiseMul(a.ScalarValue(), b, types.WithIncr(incr), types.WithReuse(reuse))
+		case incr != nil:
+			return PointwiseMul(a.ScalarValue(), b, types.WithIncr(incr))
+		case reuse != nil:
+			return PointwiseMul(a.ScalarValue(), b, types.WithReuse(reuse))
+		default:
+			return PointwiseMul(a.ScalarValue(), b)
+		}
+	case !a.IsScalar() && b.IsScalar():
+		switch {
+		case incr != nil && reuse != nil:
+			return PointwiseMul(a, b.ScalarValue(), types.WithIncr(incr), types.WithReuse(reuse))
+		case incr != nil:
+			return PointwiseMul(a, b.ScalarValue(), types.WithIncr(incr))
+		case reuse != nil:
+			return PointwiseMul(a, b.ScalarValue(), types.WithReuse(reuse))
+		default:
+			return PointwiseMul(a, b.ScalarValue())
+		}
+	}
+
+	// now the stupid scaling stuff is out of the way, let's do some linear algebra
+
 	if incr != nil {
 		defer func() {
 			if incr.Size() != retVal.Size() {
@@ -51,7 +94,7 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 				return
 			}
 			return a.inner(b)
-		} else if b.Dims() == 2 {
+		} else if b.IsMatrix() {
 			if b.Shape()[0] != a.Size() {
 				err = shapeMismatchError(a.Shape(), b.Shape())
 				return
@@ -74,7 +117,7 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 		}
 	}
 
-	if a.Dims() == 2 {
+	if a.IsMatrix() {
 		as := a.Shape()
 		bs := b.Shape()
 		ar, ac := as[0], as[1]
@@ -110,6 +153,41 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 		}
 		return
 	}
-	// TODO: redoing using TensorDot. SumProd is as of now broken
-	return nil, notyetimplemented("sum prod not yet implemented")
+
+	as := a.Shape()
+	bs := b.Shape()
+	axesA := types.BorrowInts(1)
+	axesB := types.BorrowInts(1)
+	defer types.ReturnInts(axesA)
+	defer types.ReturnInts(axesB)
+
+	var lastA, secondLastB int
+
+	lastA = len(as) - 1
+	axesA[0] = lastA
+	if len(bs) >= 2 {
+		secondLastB = len(bs) - 2
+	} else {
+		secondLastB = 0
+	}
+	axesB[0] = secondLastB
+
+	if as[lastA] != bs[secondLastB] {
+		err = shapeMismatchError(as, bs)
+		return
+	}
+
+	if retVal, err = a.TensorMul(b, axesA, axesB); err != nil {
+		return
+	}
+
+	if reuse != nil {
+		// swap out the underlying data and metadata
+		reuse.data, retVal.data = retVal.data, reuse.data
+		reuse.AP, retVal.AP = retVal.AP, reuse.AP
+		defer ReturnTensor(retVal)
+
+		retVal = reuse
+	}
+	return
 }
