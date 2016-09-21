@@ -73,7 +73,7 @@ func TestQueue(t *testing.T) {
 	}
 
 	whichblas.DoWork()
-	assert.True(floatsEqual(correct, c))
+	assert.True(floatsEqual(correct, C))
 
 	/* Test if the queueing works */
 	correct = []float64{0, 0, 0, 0, 0, 0}
