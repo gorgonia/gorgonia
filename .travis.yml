@@ -6,22 +6,20 @@ go:
   - 1.6.3
   - 1.7.1
   - tip
+
 env:
   global:
     - GOARCH=amd64
+  - BLAS_LIB=OpenBLAS
 
+# Cache used to persist the compiled BLAS library between CI calls.
+cache:
+  directories:
+  - .travis/OpenBLAS.cache
+
+# Install the appropriate blas library (if any) and associated gonum software.
 install:
-- go get -u -v ./...
+- source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/install.sh
 
 script: 
-- go test -v . 
-- go test -v ./tensor/f64
-- go test -v ./tensor/f32
-- go test -v ./tensor/i
-- go test -v ./tensor/b
-- go test -tags='sse' -v . 
-- go test -tags='sse' -v ./tensor/f64
-- go test -tags='sse' -v ./tensor/f32
-- go test -tags='avx' -v . 
-- go test -tags='avx' -v ./tensor/f64
-- go test -tags='avx' -v ./tensor/f32
+- source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/test.sh
