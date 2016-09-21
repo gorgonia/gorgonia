@@ -11,6 +11,8 @@ func TestDot(t *testing.T) {
 	assert := assert.New(t)
 	var a, b, c, r *Tensor
 	var A, B, R, R2 *Tensor
+	var s, s2 *Tensor
+	var incr *Tensor
 	var err error
 	var expectedShape types.Shape
 	var expectedData []float64
@@ -32,17 +34,11 @@ func TestDot(t *testing.T) {
 	A = NewTensor(WithShape(3, 2), WithBacking(RangeFloat64(0, 6)))
 	R, err = Dot(b, A)
 
-	expectedShape = types.Shape{2, 1}
+	expectedShape = types.Shape{2}
 	expectedData = []float64{10, 13}
 	assert.Nil(err)
 	assert.Equal(expectedData, R.data)
 	assert.Equal(expectedShape, R.Shape())
-
-	t.Log("Mat⋅Vec, should be equal to b⋅A")
-	R2, err = Dot(A, b)
-	assert.Equal(R, R2)
-	assert.Equal(expectedData, R2.data)
-	assert.Equal(expectedShape, R2.Shape())
 
 	// mat-mat
 	t.Log("Mat⋅Mat")
@@ -139,29 +135,160 @@ func TestDot(t *testing.T) {
 	assert.Equal(expectedData, R.data)
 	assert.Equal(expectedShape, R.Shape())
 
-	// 3T-vec with reuse
-	t.Log("3T⋅vec with reuse")
-	R.Zero()
-	R, err = Dot(A, b, types.WithReuse(R))
+	// v-T
+	t.Log("Vec⋅3T")
+	R2, err = Dot(b, B)
+	expectedShape = types.Shape{2, 3, 5}
+	expectedData = []float64{
+		70, 76, 82, 88, 94,
+		190, 196, 202, 208, 214,
+		310, 316, 322, 328, 334,
+
+		430, 436, 442, 448, 454,
+		550, 556, 562, 568, 574,
+		670, 676, 682, 688, 694,
+	}
+	assert.Nil(err)
+	assert.Equal(expectedData, R2.data)
+	assert.Equal(expectedShape, R2.Shape())
+
+	// m-3T
+	t.Log("Mat⋅3T")
+	A = NewTensor(WithShape(2, 4), WithBacking(RangeFloat64(0, 8)))
+	B = NewTensor(WithShape(2, 4, 5), WithBacking(RangeFloat64(0, 40)))
+	R, err = Dot(A, B)
+	expectedShape = types.Shape{2, 2, 5}
+	expectedData = []float64{
+		70, 76, 82, 88, 94,
+		190, 196, 202, 208, 214,
+
+		190, 212, 234, 256, 278,
+		630, 652, 674, 696, 718,
+	}
 	assert.Nil(err)
 	assert.Equal(expectedData, R.data)
 	assert.Equal(expectedShape, R.Shape())
 
+	// test reuse
+
+	// m-v with reuse
+	t.Log("Mat⋅Vec with reuse")
+	R = NewTensor(WithShape(2))
+	R2, err = Dot(A, b, types.WithReuse(R))
+	expectedShape = types.Shape{2}
+	expectedData = []float64{14, 38}
+	assert.Nil(err)
+	assert.Equal(R, R2)
+	assert.Equal(expectedData, R.data)
+	assert.Equal(expectedShape, R.Shape())
+
+	// 3T-vec with reuse
+	t.Logf("3T⋅vec with reuse")
+	R.Zero()
+	A = NewTensor(WithShape(2, 3, 4), WithBacking(RangeFloat64(0, 24)))
+	R2, err = Dot(A, b, types.WithReuse(R))
+	expectedShape = types.Shape{2, 3}
+	expectedData = []float64{
+		14, 38, 62,
+		86, 110, 134,
+	}
+	assert.Nil(err)
+	assert.Equal(R, R2)
+	assert.Equal(expectedData, R2.data)
+	assert.Equal(expectedShape, R2.Shape())
+
 	// v-m
 	t.Log("vec⋅Mat with reuse")
-	R.Zero()
-	A = NewTensor(WithShape(4, 2), WithBacking(RangeFloat64(0, 8)))
-	R, err = Dot(b, A, types.WithReuse(R))
+	R = NewTensor(WithShape(2))
+	a = NewTensor(WithShape(4), WithBacking(RangeFloat64(0, 4)))
+	B = NewTensor(WithShape(4, 2), WithBacking(RangeFloat64(0, 8)))
+	R2, err = Dot(a, B, types.WithReuse(R))
 	expectedShape = types.Shape{2}
 	expectedData = []float64{28, 34}
 	assert.Nil(err)
+	assert.Equal(R, R2)
 	assert.Equal(expectedData, R.data)
 	assert.Equal(expectedShape, R.Shape())
+
+	// test incr
+	incrBack := make([]float64, 2)
+	copy(incrBack, expectedData)
+	incr = NewTensor(WithBacking(incrBack), WithShape(2))
+	R, err = Dot(a, B, types.WithIncr(incr))
+	vecScale(2, expectedData)
+	assert.Nil(err)
+	assert.Equal(incr, R)
+	assert.Equal(expectedData, R.data)
+	assert.Equal(expectedShape, R.Shape())
+
+	// The Nearly Stupids
+
+	s = NewTensor(AsScalar(5.0))
+	s2 = NewTensor(AsScalar(10.0))
+	R, err = Dot(s, s2)
+	assert.Nil(err)
+	assert.True(R.IsScalar())
+	assert.Equal(50.0, R.data[0])
+
+	R.Zero()
+	R2, err = Dot(s, s2, types.WithReuse(R))
+	assert.Nil(err)
+	assert.True(R2.IsScalar())
+	assert.Equal(50.0, R2.data[0])
+
+	R, err = Dot(s, A)
+	expectedData = RangeFloat64(0, 24)
+	vecScale(5.0, expectedData)
+	assert.Nil(err)
+	assert.Equal(A.Shape(), R.Shape())
+	assert.Equal(expectedData, R.data)
+
+	R.Zero()
+	R2, err = Dot(s, A, types.WithReuse(R))
+	assert.Nil(err)
+	assert.Equal(R, R2)
+	assert.Equal(A.Shape(), R2.Shape())
+	assert.Equal(expectedData, R2.data)
+
+	R, err = Dot(A, s)
+	assert.Nil(err)
+	assert.Equal(A.Shape(), R.Shape())
+	assert.Equal(expectedData, R.data)
+
+	R.Zero()
+	R2, err = Dot(A, s, types.WithReuse(R))
+	assert.Nil(err)
+	assert.Equal(R, R2)
+	assert.Equal(A.Shape(), R2.Shape())
+	assert.Equal(expectedData, R2.data)
+
+	incr = NewTensor(WithShape(R2.Shape()...))
+	copy(incr.data, expectedData)
+	incr2 := incr.Clone() // backup a copy for the following test
+	vecScale(2, expectedData)
+	R, err = Dot(A, s, types.WithIncr(incr))
+	assert.Nil(err)
+	assert.Equal(incr, R)
+	assert.Equal(A.Shape(), R.Shape())
+	assert.Equal(expectedData, R.data)
+
+	incr = incr2
+	R, err = Dot(s, A, types.WithIncr(incr))
+	assert.Nil(err)
+	assert.Equal(incr, R)
+	assert.Equal(A.Shape(), R.Shape())
+	assert.Equal(expectedData, R.data)
+
+	incr = NewTensor(AsScalar(50.0))
+	R, err = Dot(s, s2, types.WithIncr(incr))
+	assert.Nil(err)
+	assert.True(R.IsScalar())
+	assert.Equal(100.0, R.data[0])
 
 	/* HERE BE STUPIDS */
 
 	// different sizes of vectors
-	c = NewTensor(WithShape(1, 4))
+	c = NewTensor(WithShape(1, 100))
 	_, err = Dot(a, c)
 	assert.NotNil(err)
 
@@ -176,15 +303,15 @@ func TestDot(t *testing.T) {
 	_, err = Dot(A, B, types.WithReuse(R))
 	assert.NotNil(err)
 
+	// mat-vec but wrong reuse size
+	b = NewTensor(WithShape(2))
+	_, err = Dot(A, b, types.WithReuse(R))
+	assert.NotNil(err)
+
 	// T-T but misaligned shape
 	A = NewTensor(WithShape(2, 3, 4))
 	B = NewTensor(WithShape(4, 2, 3))
 	_, err = Dot(A, B)
 	assert.NotNil(err)
 
-	// v-T
-	a = NewTensor(WithShape(4))
-	B = NewTensor(WithShape(2, 3, 4))
-	_, err = Dot(a, B)
-	assert.NotNil(err)
 }
