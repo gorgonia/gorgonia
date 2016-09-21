@@ -1,4 +1,4 @@
-#Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia)#
+#Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia)#
 
 Gorgonia is a library that helps facilitate machine learning in Go. Write and evaluate mathematical equations involving multidimensional arrays easily. If this sounds like [Theano](http://deeplearning.net/software/theano/) or [TensorFlow](https://www.tensorflow.org/), it's because the idea is quite similar. Specifically, the library is pretty low-level, like Theano, but has higher goals like Tensorflow.
 
