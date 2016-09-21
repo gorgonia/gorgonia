@@ -47,6 +47,9 @@ func newSyncPool(size int) *sync.Pool {
 	return pool
 }
 
+// BorrowTensor borrows a *Tensor from the pool. Using the *Tensor pool will help ease the garbage collector pressure,
+// but if you're not careful, you may end up with a use-after-free scenario.
+// Use with caution!!!!
 func BorrowTensor(size int) *Tensor {
 	if !useTensorPool {
 		return NewTensor(WithShape(size, 1))
@@ -63,8 +66,26 @@ func BorrowTensor(size int) *Tensor {
 	return pool.Get().(*Tensor)
 }
 
+// ReturnTensor returns a *Tensor to the pool. Use with caution!
 func ReturnTensor(t *Tensor) {
 	if !useTensorPool {
+		return
+	}
+
+	// views cannot be returned because the underlying data may still be in use
+	// instead, we return the component bits, and then let t be gc'd away
+	if t.viewOf != nil {
+		types.ReturnAP(t.AP)
+		t.AP = nil
+		if t.old != nil {
+			types.ReturnAP(t.old)
+			t.old = nil
+		}
+		if t.transposeWith != nil {
+			types.ReturnInts(t.transposeWith)
+			t.transposeWith = nil
+		}
+		t.data = nil
 		return
 	}
 

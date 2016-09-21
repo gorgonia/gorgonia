@@ -128,6 +128,7 @@ func I(r, c, k int) (retVal *Tensor) {
 	} else {
 		s, err = retVal.Slice(rangedSlice{0, end})
 	}
+	defer ReturnTensor(s)
 
 	if err != nil {
 		panic(err)
