@@ -34,6 +34,10 @@ func TestGobShite(t *testing.T) {
 }
 
 func TestSaveLoadNumpy(t *testing.T) {
+	if os.Getenv("TRAVISTEST") == "true" {
+		t.Skip("skipping test; This is being run on TravisCI")
+	}
+
 	assert := assert.New(t)
 	T := NewTensor(WithShape(2, 2), WithBacking([]float32{1, 5, 10, -1}))
 	f, _ := os.OpenFile("test.npy", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)

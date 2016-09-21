@@ -14,6 +14,7 @@ env:
   global:
     - GOARCH=amd64
     - BLAS_LIB=OpenBLAS
+    - TRAVISTEST=true
 
 # Cache used to persist the compiled BLAS library between CI calls.
 cache:

@@ -8,6 +8,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const EPSILON float64 = 1e-10
+
+func floatEquals(a, b float64) bool {
+	if (a-b) < EPSILON && (b-a) < EPSILON {
+		return true
+	}
+	return false
+}
+
+func floatsEqual(a, b []float64) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, v := range a {
+		if !floatEquals(v, b[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 func randomFloat64(r, c int) []float64 {
 	retVal := make([]float64, r*c)
 	for i := range retVal {
@@ -51,7 +73,7 @@ func TestQueue(t *testing.T) {
 	}
 
 	whichblas.DoWork()
-	assert.Equal(correct, C)
+	assert.True(floatsEqual(correct, c))
 
 	/* Test if the queueing works */
 	correct = []float64{0, 0, 0, 0, 0, 0}
@@ -88,8 +110,8 @@ func TestQueue(t *testing.T) {
 
 	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C2, ldc)
 
-	assert.Equal(correct, C1)
-	assert.Equal(correct, C2)
+	assert.True(floatsEqual(correct, C1))
+	assert.True(floatsEqual(correct, C2))
 
 	A = randomFloat64(2, 2)
 	B = randomFloat64(2, 3)
@@ -107,7 +129,7 @@ func TestQueue(t *testing.T) {
 
 	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C3, ldc)
 
-	assert.Equal(correct1, C1)
-	assert.Equal(correct2, C2)
-	assert.Equal(correct3, C3)
+	assert.True(floatsEqual(correct1, C1))
+	assert.True(floatsEqual(correct2, C2))
+	assert.True(floatsEqual(correct3, C3))
 }
