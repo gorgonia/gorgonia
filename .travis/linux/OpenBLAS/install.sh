@@ -53,9 +53,8 @@ sudo cp -r ${CACHE_DIR}/* /usr/
 # install gonum/blas against OpenBLAS
 export CGO_LDFLAGS="-L/usr/lib -lopenblas"
 go get github.com/gonum/blas
-pushd cgo
-go install -v -x
-popd
+go install -v -x github.com/gonum/blas
+
 
 # run the OS common installation script
 source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/install.sh

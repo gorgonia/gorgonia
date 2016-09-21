@@ -2,17 +2,17 @@ set -ex
 
 go env
 
-go test -v . 
-go test -v ./tensor/f64
-go test -v ./tensor/f32
-go test -v ./tensor/i
-go test -v ./tensor/b
-go test -tags='sse' -v . 
-go test -tags='sse' -v ./tensor/f64
-go test -tags='sse' -v ./tensor/f32
-go test -tags='avx' -v . 
-go test -tags='avx' -v ./tensor/f64
-go test -tags='avx' -v ./tensor/f32
+go test -v -a ./...
+go test -v -a ./tensor/f64
+go test -v -a ./tensor/f32
+go test -v -a ./tensor/i
+go test -v -a ./tensor/b
+go test -tags='sse' -v -a ./...
+go test -tags='sse' -v -a ./tensor/f64
+go test -tags='sse' -v -a ./tensor/f32
+go test -tags='avx' -v -a ./...
+go test -tags='avx' -v -a ./tensor/f64
+go test -tags='avx' -v -a ./tensor/f32
 
 #if [[ $TRAVIS_SECURE_ENV_VARS = "true" ]]; then bash -c "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG/.travis/test-coverage.sh"; fi
 
