@@ -996,7 +996,6 @@ func TestT_at_itol(t *testing.T) {
 	if err == nil {
 		t.Error("Expected an error")
 	}
-	t.Log(err)
 }
 
 func TestCopyTo(t *testing.T) {

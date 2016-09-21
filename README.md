@@ -48,7 +48,7 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 
 Gorgonia works by creating a computation graph, and then executing it. Think of it as a programming language, but is limited to mathematical functions. In fact this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree). 
 
-Microsoft's [CNTK](https://github.com/Microsoft/CNTK), with its BrainScript, is perhaps the best at exemplifying the idea that building of a computation graph and running of the computation graphs are different thihngs, and that the user should be in different modes of thoughts when going about them. 
+Microsoft's [CNTK](https://github.com/Microsoft/CNTK), with its BrainScript, is perhaps the best at exemplifying the idea that building of a computation graph and running of the computation graphs are different things, and that the user should be in different modes of thoughts when going about them. 
 
 Whilst Gorgonia's implementation doesn't enforce the separation of thought as far as CNTK's BrainScript does, the syntax does help a little bit.
 
@@ -277,7 +277,7 @@ Here are the goals for Gorgonia, sorted by importance
 - [ ] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
 - [ ] Refactor the CuBLAS package as well as the Blase package.
 - [ ] Distributed computing. The ability to spread jobs out across multiple machines and communicating with each other has been attempted at least 3 times, but failed each time.
-- [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in gneral.
+- [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in general.
 - [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
 - [ ] Derivative-free optimization algorithms
 
