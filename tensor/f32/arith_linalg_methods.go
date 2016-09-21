@@ -165,7 +165,7 @@ func (t *Tensor) matVecMul(other *Tensor, retVal *Tensor) {
 // If that isn't passed in,  a new ndarray will be created instead.
 func (t *Tensor) MatMul(other *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	// check that both are matrices
-	if t.Dims() != 2 || other.Dims() != 2 {
+	if !t.IsMatrix() || !other.IsMatrix() {
 		err = types.NewError(types.OpError, "MatMul only works when there are two matrices. t has %v; other has %v", t.Shape(), other.Shape())
 		return
 	}
@@ -483,7 +483,7 @@ func (t *Tensor) TensorMul(other *Tensor, axesA, axesB []int) (retVal *Tensor, e
 	}
 
 	// the magic happens here
-	if retVal, err = doT.MatMul(doOther); err != nil {
+	if retVal, err = Dot(doT, doOther); err != nil {
 		return
 	}
 

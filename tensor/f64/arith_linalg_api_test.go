@@ -228,17 +228,17 @@ func TestDot(t *testing.T) {
 	R, err = Dot(s, s2)
 	assert.Nil(err)
 	assert.True(R.IsScalar())
-	assert.Equal(50.0, R.data[0])
+	assert.Equal(float64(50), R.data[0])
 
 	R.Zero()
 	R2, err = Dot(s, s2, types.WithReuse(R))
 	assert.Nil(err)
 	assert.True(R2.IsScalar())
-	assert.Equal(50.0, R2.data[0])
+	assert.Equal(float64(50), R2.data[0])
 
 	R, err = Dot(s, A)
 	expectedData = RangeFloat64(0, 24)
-	vecScale(5.0, expectedData)
+	vecScale(float64(5), expectedData)
 	assert.Nil(err)
 	assert.Equal(A.Shape(), R.Shape())
 	assert.Equal(expectedData, R.data)
@@ -279,11 +279,11 @@ func TestDot(t *testing.T) {
 	assert.Equal(A.Shape(), R.Shape())
 	assert.Equal(expectedData, R.data)
 
-	incr = NewTensor(AsScalar(50.0))
+	incr = NewTensor(AsScalar(float64(50)))
 	R, err = Dot(s, s2, types.WithIncr(incr))
 	assert.Nil(err)
 	assert.True(R.IsScalar())
-	assert.Equal(100.0, R.data[0])
+	assert.Equal(float64(100), R.data[0])
 
 	/* HERE BE STUPIDS */
 

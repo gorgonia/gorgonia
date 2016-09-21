@@ -23,6 +23,45 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	// safe, incr, reuse := parseSafeReuse(opts...)
 	reuse, incr := parseReuseIncr(opts...)
 
+	switch {
+	case a.IsScalar() && b.IsScalar():
+		res := a.data[0] * b.data[0]
+		switch {
+		case incr != nil:
+			if !incr.IsScalar() {
+				err = shapeMismatchError(types.ScalarShape(), incr.Shape())
+				return
+			}
+			incr.data[0] += res
+			retVal = incr
+		case reuse != nil:
+			retVal = reuse
+			retVal.Reshape()
+			retVal.data[0] = res
+		default:
+			retVal = NewTensor(AsScalar(res))
+		}
+		return
+	case a.IsScalar():
+		switch {
+		case incr != nil:
+			return PointwiseMul(a.ScalarValue(), b, types.WithIncr(incr))
+		case reuse != nil:
+			return PointwiseMul(a.ScalarValue(), b, types.WithReuse(reuse))
+		}
+		// default moved out
+		return PointwiseMul(a.ScalarValue(), b)
+	case b.IsScalar():
+		switch {
+		case incr != nil:
+			return PointwiseMul(a, b.ScalarValue(), types.WithIncr(incr))
+		case reuse != nil:
+			return PointwiseMul(a, b.ScalarValue(), types.WithReuse(reuse))
+		}
+		return PointwiseMul(a, b.ScalarValue())
+	}
+	// now the stupid scaling stuff is out of the way, let's do some linear algebra
+
 	if incr != nil {
 		defer func() {
 			if incr.Size() != retVal.Size() {
@@ -34,30 +73,80 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 				err = errors.Wrapf(err, incrReshapeErr, retVal.Shape(), reuse.DataSize())
 				return
 			}
-
 			vecAdd(incr.data, retVal.data)
-
-			// release retVal
-
 			retVal = incr
 		}()
 	}
 
-	if a.IsVector() {
-		if b.IsVector() {
+	switch {
+	case a.IsVector():
+		switch {
+		case b.IsVector():
 			// check size
 			if a.Size() != b.Size() {
 				err = shapeMismatchError(a.Shape(), b.Shape())
 				return
 			}
 			return a.inner(b)
-		} else if b.Dims() == 2 {
+		case b.IsMatrix():
 			if b.Shape()[0] != a.Size() {
 				err = shapeMismatchError(a.Shape(), b.Shape())
 				return
 			}
 
-			expectedShape := types.Shape{b.Shape()[1], 1}
+			expectedShape := types.Shape{b.Shape()[1]}
+			if reuse != nil {
+				retVal = reuse
+				// check that retVal has the correct shape
+				if retVal.Size() != expectedShape.TotalSize() {
+					err = shapeMismatchError(expectedShape, retVal.Shape())
+					return
+				}
+
+				if err = retVal.Reshape(expectedShape...); err != nil {
+					return
+				}
+
+			} else {
+				retVal = NewTensor(WithShape(expectedShape...))
+			}
+			b.T()
+			b.matVecMul(a, retVal)
+			b.T()
+			return
+		default:
+
+		}
+	case a.IsMatrix():
+		switch {
+		case b.IsVector():
+			if a.Shape()[1] != b.Size() {
+				err = shapeMismatchError(a.Shape(), b.Shape())
+				return
+			}
+			expectedShape := types.Shape{a.Shape()[0]}
+			if reuse != nil {
+				retVal = reuse
+				// check that retVal has the correct shape
+				if retVal.Size() != expectedShape.TotalSize() {
+					err = shapeMismatchError(expectedShape, retVal.Shape())
+					return
+				}
+
+				if err = retVal.Reshape(expectedShape...); err != nil {
+					return
+				}
+			} else {
+				retVal = NewTensor(WithShape(expectedShape...))
+			}
+			a.matVecMul(b, retVal)
+			return
+		case b.IsMatrix():
+			if a.Shape()[1] != b.Shape()[0] {
+				err = shapeMismatchError(a.Shape(), b.Shape())
+				return
+			}
+			expectedShape := types.Shape{a.Shape()[0], b.Shape()[1]}
 			if reuse != nil {
 				retVal = reuse
 				// check that retVal has the correct shape
@@ -68,48 +157,46 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 				retVal = NewTensor(WithShape(expectedShape...))
 			}
 
-			b.T()
-			b.matVecMul(a, retVal)
-			return
-		}
-	}
-
-	if a.Dims() == 2 {
-		as := a.Shape()
-		bs := b.Shape()
-		ar, ac := as[0], as[1]
-		br, bc := bs[0], bs[1]
-
-		if ac != br && !b.IsVector() {
-			err = shapeMismatchError(a.Shape(), b.Shape())
-			return
-		} else if b.IsVector() && ac != br {
-			if err = b.T(); err != nil {
-				err = errors.Wrap(err, "Error while transposing")
-				return
-			}
-			bs = b.Shape()
-			br, bc = bs[0], bs[1]
-		}
-
-		expectedShape := types.Shape{ar, bc}
-		if reuse != nil {
-			retVal = reuse
-			// check that retVal has the correct shape
-			if !retVal.Shape().Eq(expectedShape) {
-				err = shapeMismatchError(expectedShape, retVal.Shape())
-			}
-		} else {
-			retVal = NewTensor(WithShape(expectedShape...))
-		}
-
-		if b.IsVector() {
-			a.matVecMul(b, retVal)
-		} else if b.Dims() == 2 {
 			a.matMul(b, retVal)
+			return
+		default:
 		}
+	default:
+	}
+	as := a.Shape()
+	bs := b.Shape()
+	axesA := types.BorrowInts(1)
+	axesB := types.BorrowInts(1)
+	defer types.ReturnInts(axesA)
+	defer types.ReturnInts(axesB)
+
+	var lastA, secondLastB int
+
+	lastA = len(as) - 1
+	axesA[0] = lastA
+	if len(bs) >= 2 {
+		secondLastB = len(bs) - 2
+	} else {
+		secondLastB = 0
+	}
+	axesB[0] = secondLastB
+
+	if as[lastA] != bs[secondLastB] {
+		err = shapeMismatchError(as, bs)
 		return
 	}
-	// TODO: redoing using TensorDot. SumProd is as of now broken
-	return nil, notyetimplemented("sum prod not yet implemented")
+
+	if retVal, err = a.TensorMul(b, axesA, axesB); err != nil {
+		return
+	}
+
+	if reuse != nil {
+		// swap out the underlying data and metadata
+		reuse.data, retVal.data = retVal.data, reuse.data
+		reuse.AP, retVal.AP = retVal.AP, reuse.AP
+		defer ReturnTensor(retVal)
+
+		retVal = reuse
+	}
+	return
 }
