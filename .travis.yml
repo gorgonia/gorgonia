@@ -11,7 +11,7 @@ env:
     - GOARCH=amd64
 
 install:
-- go get -u -v $(go list -f '{{join .Imports "\n"}}' ./... | sort | uniq | grep -v golang-samples)
+- go get -u -v $(go list -f '{{join .Imports "\n"}}' ./... | sort | uniq | grep -v gorgonia)
 
 script: 
 - go test -v . 
