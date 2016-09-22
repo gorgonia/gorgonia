@@ -212,6 +212,7 @@ func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) in
 	return TransposeIndex(i, oldShape, newPattern, oldStrides, newStrides)
 }
 
+// FlatIterator helps with iterating a Tensor with funny shapes
 type FlatIterator struct {
 	*AP
 
@@ -242,6 +243,7 @@ func (it *FlatIterator) Next() (int, error) {
 		for d := len(it.shape) - 1; d >= 0; d-- {
 			if d == 0 && it.track[0]+1 >= it.shape[0] {
 				it.done = true
+				it.track[d] = 0 // overflow it
 				break
 			}
 
@@ -314,8 +316,5 @@ func (it *FlatIterator) Reset() {
 	if it.done {
 		it.done = false
 		it.lastIndex = 0
-		for i := range it.track {
-			it.track[i] = 0
-		}
 	}
 }

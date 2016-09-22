@@ -292,6 +292,7 @@ func TestUntransposeIndex(t *testing.T) {
 var flatIterTests1 = []struct {
 	shape   Shape
 	strides []int
+
 	correct []int
 }{
 	{ScalarShape(), []int{}, []int{0}},                  // scalar
@@ -300,6 +301,8 @@ var flatIterTests1 = []struct {
 	{Shape{1, 5}, []int{1}, []int{0, 1, 2, 3, 4}},       // rowvec
 	{Shape{2, 3}, []int{3, 1}, []int{0, 1, 2, 3, 4, 5}}, // basic mat
 	{Shape{3, 2}, []int{1, 3}, []int{0, 3, 1, 4, 2, 5}}, // basic mat, transposed
+	{Shape{2, 2}, []int{5, 1}, []int{0, 1, 5, 6}},       // basic 5x5, sliced: Mat[1:3, 2,4]
+	{Shape{2, 2}, []int{1, 5}, []int{0, 5, 1, 6}},       // basic 5x5, sliced: Mat[1:3, 2,4] then transposed
 
 	{Shape{2, 3, 4}, []int{12, 4, 1}, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}}, // basic 3-Tensor
 	{Shape{2, 4, 3}, []int{12, 1, 4}, []int{0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11, 12, 16, 20, 13, 17, 21, 14, 18, 22, 15, 19, 23}}, // basic 3-Tensor (under (0, 2, 1) transpose)
@@ -313,7 +316,7 @@ var flatIterSlices = []struct {
 	corrects [][]int
 }{
 	{[]Slice{nil}, [][]int{{0}}},
-	{[]Slice{rs{0, 3, 1}, rs{0, 5, 2}}, [][]int{{0, 1, 2}, {0, 2, 4}}},
+	{[]Slice{rs{0, 3, 1}, rs{0, 5, 2}, rs{0, 6, -1}}, [][]int{{0, 1, 2}, {0, 2, 4}, {4, 3, 2, 1, 0}}},
 }
 
 func TestFlatIterator(t *testing.T) {
@@ -371,5 +374,50 @@ func TestFlatIterator_Slice(t *testing.T) {
 				assert.Equal(fis.corrects[j], nexts, "Test %d", i)
 			}
 		}
+	}
+}
+
+func TestFlatIterator_Coord(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap *AP
+	var it *FlatIterator
+	var err error
+	// var nexts []int
+	var donecount int
+
+	ap = NewAP(Shape{2, 3, 4}, []int{12, 4, 1})
+	it = NewFlatIterator(ap)
+
+	var correct = [][]int{
+		{0, 0, 1},
+		{0, 0, 2},
+		{0, 0, 3},
+		{0, 1, 0},
+		{0, 1, 1},
+		{0, 1, 2},
+		{0, 1, 3},
+		{0, 2, 0},
+		{0, 2, 1},
+		{0, 2, 2},
+		{0, 2, 3},
+		{1, 0, 0},
+		{1, 0, 1},
+		{1, 0, 2},
+		{1, 0, 3},
+		{1, 1, 0},
+		{1, 1, 1},
+		{1, 1, 2},
+		{1, 1, 3},
+		{1, 2, 0},
+		{1, 2, 1},
+		{1, 2, 2},
+		{1, 2, 3},
+		{0, 0, 0},
+	}
+
+	for _, err = it.Next(); err == nil; _, err = it.Next() {
+		assert.Equal(correct[donecount], it.Coord())
+		donecount++
 	}
 }
