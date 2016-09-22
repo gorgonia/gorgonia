@@ -25,7 +25,6 @@ func SortIndex(in interface{}) (out []int) {
 		out = make([]int, len(list))
 		copy(orig, list)
 		sort.Ints(list)
-
 		for i, s := range list {
 			for j, o := range orig {
 				if o == s {

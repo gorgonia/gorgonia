@@ -211,3 +211,93 @@ func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) in
 	}
 	return TransposeIndex(i, oldShape, newPattern, oldStrides, newStrides)
 }
+
+type FlatIterator struct {
+	*AP
+
+	//state
+	lastIndex int
+	track     []int
+	done      bool
+}
+
+func NewFlatIterator(ap *AP) *FlatIterator {
+	return &FlatIterator{
+		AP:    ap,
+		track: make([]int, len(ap.shape)),
+	}
+}
+
+func (it *FlatIterator) Next() (int, error) {
+	if it.done {
+		ReturnInts(it.track)
+		it.track = nil
+		return -1, noopError{}
+	}
+
+	defer func() {
+		if it.IsScalar() {
+			it.done = true
+			return
+		}
+
+		for d := len(it.shape) - 1; d >= 0; d-- {
+			if d == 0 && it.track[0]+1 >= it.shape[0] {
+				it.done = true
+				break
+			}
+
+			if it.track[d] < it.shape[d]-1 {
+				it.track[d]++
+				break
+			}
+			// overflow
+			it.track[d] = 0
+		}
+	}()
+
+	retVal, err := Ltoi(it.shape, it.strides, it.track...)
+	it.lastIndex = retVal
+	return retVal, err
+}
+
+func (it *FlatIterator) Coord() []int {
+	return it.track
+}
+
+func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
+	var next int
+	var nexts []int
+	for next, err := it.Next(); err == nil; next, err = it.Next() {
+		nexts = append(nexts, next)
+	}
+	if _, ok := err.(NoOpError); err != nil && !ok {
+		return
+	}
+
+	start := sli.Start()
+	end := sli.End()
+	step := sli.Step()
+
+	// sanity checks
+	if step == 0 && end-start > 1 {
+		err = NewError(IndexError, "Slice has 0 steps, but start is %d and end is %d", start, end)
+		return
+	}
+
+	if step < 0 {
+		// reverse the nexts
+		for i := len(nexts)/2 - 1; i >= 0; i-- {
+			j := len(nexts) - 1 - i
+			nexts[i], nexts[j] = nexts[j], nexts[i]
+		}
+		step = -step
+	}
+
+	for i := start; i < end; i += step {
+		retVal = append(retVal, nexts[i])
+	}
+
+	err = nil
+	return
+}

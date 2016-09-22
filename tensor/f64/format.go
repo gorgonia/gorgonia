@@ -151,10 +151,10 @@ func (t *Tensor) Format(state fmt.State, c rune) {
 				}
 			}
 		case t.viewOf != nil:
-			it := newIterator(t)
+			it := types.NewFlatIterator(t.AP)
 			var c, i int
 			var err error
-			for i, err = it.next(); err == nil; i, err = it.next() {
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
 
 				buf = strconv.AppendFloat(buf[:0], t.data[i], format, precision, 64)
 				state.Write(buf)

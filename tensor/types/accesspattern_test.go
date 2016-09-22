@@ -288,3 +288,46 @@ func TestUntransposeIndex(t *testing.T) {
 		}
 	}
 }
+
+var flatIterTests1 = []struct {
+	shape   Shape
+	strides []int
+	correct []int
+}{
+	{ScalarShape(), []int{}, []int{0}},                  // scalar
+	{Shape{5}, []int{1}, []int{0, 1, 2, 3, 4}},          // vector
+	{Shape{5, 1}, []int{1}, []int{0, 1, 2, 3, 4}},       // colvec
+	{Shape{1, 5}, []int{1}, []int{0, 1, 2, 3, 4}},       // rowvec
+	{Shape{2, 3}, []int{3, 1}, []int{0, 1, 2, 3, 4, 5}}, // basic mat
+	{Shape{3, 2}, []int{1, 3}, []int{0, 3, 1, 4, 2, 5}}, // basic mat, transposed
+
+	{Shape{2, 3, 4}, []int{12, 4, 1}, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}}, // basic 3-Tensor
+	{Shape{2, 4, 3}, []int{12, 1, 4}, []int{0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11, 12, 16, 20, 13, 17, 21, 14, 18, 22, 15, 19, 23}}, // basic 3-Tensor (under (0, 2, 1) transpose)
+	{Shape{4, 2, 3}, []int{1, 12, 4}, []int{0, 4, 8, 12, 16, 20, 1, 5, 9, 13, 17, 21, 2, 6, 10, 14, 18, 22, 3, 7, 11, 15, 19, 23}}, // basic 3-Tensor (under (2, 0, 1) transpose)
+	{Shape{3, 2, 4}, []int{4, 12, 1}, []int{0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7, 16, 17, 18, 19, 8, 9, 10, 11, 20, 21, 22, 23}}, // basic 3-Tensor (under (1, 0, 2) transpose)
+	{Shape{4, 3, 2}, []int{1, 4, 12}, []int{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}}, // basic 3-Tensor (under (2, 1, 0) transpose)
+}
+
+func TestFlatIterator(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap *AP
+	var it *FlatIterator
+	var err error
+	var nexts []int
+
+	// basic shit
+	for i, fit := range flatIterTests1 {
+		nexts = nexts[:0]
+		err = nil
+		ap = NewAP(fit.shape, fit.strides)
+		it = NewFlatIterator(ap)
+		for next, err := it.Next(); err == nil; next, err = it.Next() {
+			nexts = append(nexts, next)
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			t.Error(err)
+		}
+		assert.Equal(fit.correct, nexts, "Test %d", i)
+	}
+}

@@ -135,9 +135,9 @@ func I(r, c, k int) (retVal *Tensor) {
 	}
 
 	// this method is barbaric. Probably want to write a feature update for iterator?
-	iter := newIterator(s)
+	iter := types.NewFlatIterator(s.AP)
 	var count, step int
-	for j, err := iter.next(); err == nil; j, err = iter.next() {
+	for j, err := iter.Next(); err == nil; j, err = iter.Next() {
 		if count < i {
 			count++
 			continue
@@ -332,6 +332,7 @@ func (t *Tensor) IsView() bool {
 
 /* Misc public API */
 func (t *Tensor) Data() interface{} { return t.data }
+func (t *Tensor) Old() *types.AP    { return t.old }
 
 /* Other Data types */
 
