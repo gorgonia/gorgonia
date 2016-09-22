@@ -126,7 +126,7 @@ func I(r, c, k int) (retVal *Tensor) {
 	if end > r {
 		s, err = retVal.Slice(nil)
 	} else {
-		s, err = retVal.Slice(rangedSlice{0, end})
+		s, err = retVal.Slice(rs{0, end, 0})
 	}
 	defer ReturnTensor(s)
 
@@ -335,14 +335,31 @@ func (t *Tensor) Data() interface{} { return t.data }
 
 /* Other Data types */
 
-type rangedSlice struct {
-	start, end int
+// rs is a struct representing a ranged slice: [start:end:step]
+type rs struct {
+	start, end, step int
 }
 
-func (s rangedSlice) Start() int { return s.start }
-func (s rangedSlice) End() int   { return s.end }
+// makeRS creates a ranged slice. It takes an optional step param.
+func makeRS(start, end int, opts ...int) rs {
+	step := 1
+	if len(opts) > 0 {
+		step = opts[0]
+	}
+	return rs{
+		start: start,
+		end:   end,
+		step:  step,
+	}
+}
 
-type singleSlice int
+func (s rs) Start() int { return s.start }
+func (s rs) End() int   { return s.end }
+func (s rs) Step() int  { return s.step }
 
-func (s singleSlice) Start() int { return int(s) }
-func (s singleSlice) End() int   { return int(s) + 1 }
+// ss is a single slice, representing this: [start:start+1:0]
+type ss int
+
+func (s ss) Start() int { return int(s) }
+func (s ss) End() int   { return int(s) + 1 }
+func (s ss) Step() int  { return 0 }

@@ -219,7 +219,7 @@ func TestSliceOp(t *testing.T) {
 	// T[0] -> Scalar
 	T = tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{1, 2}))
 	TT = FromTensor(T)
-	slice = newSliceOp(0, 1, 0, T.Dims())
+	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
 	if shape, err = slice.inferShape(TT.Type(), n); err != nil {
@@ -248,7 +248,7 @@ func TestSliceOp(t *testing.T) {
 	// T[0] -> Scalar (again, but this time, with a colvec)
 	T = tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{1, 2}))
 	TT = FromTensor(T)
-	slice = newSliceOp(0, 1, 0, T.Dims())
+	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
 	if shape, err = slice.inferShape(TT.Type(), n); err != nil {
@@ -266,7 +266,7 @@ func TestSliceOp(t *testing.T) {
 	// T[0] again, but this time, with a rowvec
 	T = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{1, 2}))
 	TT = FromTensor(T)
-	slice = newSliceOp(0, 1, 0, T.Dims())
+	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
 	if shape, err = slice.inferShape(TT.Type(), n); err != nil {
@@ -284,7 +284,7 @@ func TestSliceOp(t *testing.T) {
 	// T[0] again, but this time, with a rowvec, this time along axis 1. this should yield a scalar
 	T = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{1, 2}))
 	TT = FromTensor(T)
-	slice = newSliceOp(0, 1, 1, T.Dims())
+	slice = newSliceOp(S(0), 1, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
 	if shape, err = slice.inferShape(TT.Type(), n); err != nil {

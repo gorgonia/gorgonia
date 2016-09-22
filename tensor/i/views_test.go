@@ -16,7 +16,7 @@ func TestIterator(t *testing.T) {
 
 	// slice a scalar
 	T = NewTensor(WithShape(2), WithBacking([]int{2, 1}))
-	v, err = T.Slice(singleSlice(0))
+	v, err = T.Slice(ss(0))
 	if err != nil {
 		t.Error(err)
 	}
@@ -29,7 +29,7 @@ func TestIterator(t *testing.T) {
 
 	// slice a row vec
 	T = NewTensor(WithBacking(RangeInt(0, 9)), WithShape(3, 3))
-	v, err = T.Slice(rangedSlice{1, 2})
+	v, err = T.Slice(makeRS(1, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,7 +43,7 @@ func TestIterator(t *testing.T) {
 	assert.Equal([]int{0, 1, 2}, nexts)
 
 	// slice a col vec
-	v, err = T.Slice(nil, rangedSlice{1, 2})
+	v, err = T.Slice(nil, makeRS(1, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,7 +56,7 @@ func TestIterator(t *testing.T) {
 	assert.Equal([]int{0, 3, 6}, nexts)
 
 	// slice a submatrix
-	v, err = T.Slice(rangedSlice{0, 2}, rangedSlice{0, 2})
+	v, err = T.Slice(makeRS(0, 2), makeRS(0, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,7 +69,7 @@ func TestIterator(t *testing.T) {
 	assert.Equal([]int{0, 1, 3, 4}, nexts)
 
 	// slice a submatrix
-	v, err = T.Slice(singleSlice(0), rangedSlice{1, 3})
+	v, err = T.Slice(ss(0), makeRS(1, 3))
 	if err != nil {
 		t.Error(err)
 	}
@@ -85,7 +85,7 @@ func TestIterator(t *testing.T) {
 	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeInt(0, 2*3*4)))
 
 	// T[:, 1:3, :]
-	v, err = T.Slice(nil, rangedSlice{1, 3})
+	v, err = T.Slice(nil, makeRS(1, 3))
 	if err != nil {
 		t.Error(err)
 	}
@@ -99,7 +99,7 @@ func TestIterator(t *testing.T) {
 	assert.Equal(correctNexts, nexts)
 
 	// T[0, :, 2]
-	v, err = T.Slice(singleSlice(0), nil, singleSlice(2))
+	v, err = T.Slice(ss(0), nil, ss(2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -140,7 +140,7 @@ func TestMaterialize(t *testing.T) {
 	var err error
 
 	T = NewTensor(WithShape(3, 3), WithBacking(RangeInt(0, 9)))
-	T2, err = T.Slice(rangedSlice{0, 2}, rangedSlice{0, 2}) // T[0:2, 0:2]
+	T2, err = T.Slice(makeRS(0, 2), makeRS(0, 2)) // T[0:2, 0:2]
 	if err != nil {
 		t.Error(err)
 	}

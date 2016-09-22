@@ -49,6 +49,7 @@ type Tensor interface {
 type Slice interface {
 	Start() int
 	End() int
+	Step() int
 }
 
 type FunctionFlag byte

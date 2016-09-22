@@ -460,19 +460,17 @@ func (op repeatOp) Hashcode() uint32 {
 
 // sliceOp represents a slicing operation. If end <= start, it means ":"
 type sliceOp struct {
+	types.Slice
+
 	along int // along which axis to slice?
 	d     int // how many dimensions were the original tensor
-
-	start int
-	end   int
 }
 
-func newSliceOp(from, to, along, d int) sliceOp {
+func newSliceOp(s types.Slice, along, d int) sliceOp {
 	return sliceOp{
+		Slice: s,
 		along: along,
 		d:     d,
-		start: from,
-		end:   to,
 	}
 }
 
@@ -485,7 +483,7 @@ func (op sliceOp) Type() Type {
 	a := newTypeVariable("a", withTVConstraints(floats))
 	tt := newTensorType(op.d, a)
 
-	selection := op.end - op.start
+	selection := op.End() - op.Start()
 
 	if selection == 1 {
 		if op.d == 1 {
@@ -516,7 +514,7 @@ func (op sliceOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err erro
 		return
 	}
 
-	s[op.along] = op.end - op.start
+	s[op.along] = op.End() - op.Start()
 
 	if s.Eq(types.Shape{1, 1}) || s.IsScalar() {
 		s = scalarShape
@@ -657,10 +655,13 @@ func (op sliceOp) WriteHash(h hash.Hash) {
 		panic(err)
 	}
 	fmt.Fprintf(h, "%v", op.along)
-	if err := binary.Write(h, binary.LittleEndian, byte(op.start)); err != nil {
+	if err := binary.Write(h, binary.LittleEndian, byte(op.Start())); err != nil {
 		panic(err)
 	}
-	if err := binary.Write(h, binary.LittleEndian, byte(op.end)); err != nil {
+	if err := binary.Write(h, binary.LittleEndian, byte(op.End())); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(h, binary.LittleEndian, byte(op.Step())); err != nil {
 		panic(err)
 	}
 }
@@ -680,18 +681,14 @@ func (op sliceOp) String() string {
 	if op.all() {
 		buf.WriteString(":")
 	} else {
-		fmt.Fprintf(&buf, "%d:%d", op.start, op.end)
+		fmt.Fprintf(&buf, "%d:%d%d", op.Start(), op.End(), op.Step())
 	}
 
 	buf.WriteString("...]")
 	return buf.String()
 }
 
-// sliceOp also implements types.Slice
-
-func (op sliceOp) Start() int { return op.start }
-func (op sliceOp) End() int   { return op.end }
-func (op sliceOp) all() bool  { return op.end <= op.start }
+func (op sliceOp) all() bool { return op.End() <= op.Start() }
 
 // T[:] +=incr
 // THIS IS AN UNSAFE OPERATION
@@ -876,10 +873,13 @@ func (op sliceIncrOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, byte(op.along)); err != nil {
 		panic(err)
 	}
-	if err := binary.Write(h, binary.LittleEndian, byte(op.start)); err != nil {
+	if err := binary.Write(h, binary.LittleEndian, byte(op.Start())); err != nil {
 		panic(err)
 	}
-	if err := binary.Write(h, binary.LittleEndian, byte(op.end)); err != nil {
+	if err := binary.Write(h, binary.LittleEndian, byte(op.End())); err != nil {
+		panic(err)
+	}
+	if err := binary.Write(h, binary.LittleEndian, byte(op.Step())); err != nil {
 		panic(err)
 	}
 }
@@ -900,7 +900,7 @@ func (op sliceIncrOp) String() string {
 	if op.all() {
 		buf.WriteString(":")
 	} else {
-		fmt.Fprintf(&buf, "%d:%d", op.start, op.end)
+		fmt.Fprintf(&buf, "%d:%d:%d", op.Start(), op.End())
 	}
 
 	buf.WriteString("...]+=...")

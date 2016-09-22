@@ -619,13 +619,13 @@ func TestTSlice(t *testing.T) {
 	// vanillavec
 	T = NewTensor(WithBacking(RangeFloat32(0, 4)), WithShape(4))
 	t.Log("T[0]")
-	if V, err = T.Slice(singleSlice(0)); err != nil {
+	if V, err = T.Slice(ss(0)); err != nil {
 		t.Error(err)
 	}
 	assert.Equal([]float32{float32(0)}, V.data)
 
 	t.Log("T[0:2]")
-	V, err = T.Slice(rangedSlice{0, 2})
+	V, err = T.Slice(makeRS(0, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -634,14 +634,14 @@ func TestTSlice(t *testing.T) {
 	// colvec
 	T = NewTensor(WithBacking(RangeFloat32(0, 4)), WithShape(4, 1))
 	t.Log("T[0]")
-	V, err = T.Slice(singleSlice(0))
+	V, err = T.Slice(ss(0))
 	if err != nil {
 		t.Error(err)
 	}
 	assert.Equal([]float32{float32(0)}, V.data)
 
 	t.Log("T[1:3]")
-	V, err = T.Slice(rangedSlice{1, 3})
+	V, err = T.Slice(makeRS(1, 3))
 	if err != nil {
 		t.Error(err)
 	}
@@ -650,24 +650,24 @@ func TestTSlice(t *testing.T) {
 	// rowvec
 	T = NewTensor(WithBacking(RangeFloat32(0, 4)), WithShape(1, 4))
 	t.Log("T[0]")
-	if V, err = T.Slice(singleSlice(0)); err != nil {
+	if V, err = T.Slice(ss(0)); err != nil {
 		t.Error(err)
 	}
 	assert.Equal([]float32{0, 1, 2, 3}, V.data)
 
 	t.Log("T[1:3] - will Error")
-	if _, err = T.Slice(rangedSlice{1, 3}); err == nil {
+	if _, err = T.Slice(makeRS(1, 3)); err == nil {
 		t.Error("Expected an error - dimension 0 only has a size of 1")
 	}
 
 	t.Log("T[:, 1:3]")
-	if V, err = T.Slice(nil, rangedSlice{1, 3}); err != nil {
+	if V, err = T.Slice(nil, makeRS(1, 3)); err != nil {
 		t.Error(err)
 	}
 	assert.Equal([]float32{1, 2}, V.data)
 
 	t.Log("T[0, 0]")
-	if V, err = T.Slice(singleSlice(0), singleSlice(0)); err != nil {
+	if V, err = T.Slice(ss(0), ss(0)); err != nil {
 		t.Error(err)
 	}
 	assert.Equal([]float32{float32(0)}, V.data)
@@ -688,7 +688,7 @@ func TestTSlice(t *testing.T) {
 		4, 5, 6, 7
 	*/
 	t.Log("T[0:2]")
-	V, err = T.Slice(rangedSlice{0, 2})
+	V, err = T.Slice(makeRS(0, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -710,7 +710,7 @@ func TestTSlice(t *testing.T) {
 		4, 5, 6, 7
 	*/
 	t.Log("T[1]")
-	V, err = T.Slice(singleSlice(1))
+	V, err = T.Slice(ss(1))
 	if err != nil {
 		t.Error(err)
 	}
@@ -725,7 +725,7 @@ func TestTSlice(t *testing.T) {
 
 	// should be the same as above - this is more testing rangeSlice and singleSlice similarity than anything
 	t.Log("T[1:2]")
-	V, err = T.Slice(rangedSlice{1, 2})
+	V, err = T.Slice(makeRS(1, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -744,7 +744,7 @@ func TestTSlice(t *testing.T) {
 		C[2, 6, 10]
 	*/
 	t.Log("T[:, 2]")
-	V, err = T.Slice(nil, singleSlice(2))
+	V, err = T.Slice(nil, ss(2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -769,7 +769,7 @@ func TestTSlice(t *testing.T) {
 		8, 9
 	*/
 	t.Log("T[:, 0:2]")
-	V, err = T.Slice(nil, rangedSlice{0, 2})
+	V, err = T.Slice(nil, makeRS(0, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -802,7 +802,7 @@ func TestTSlice(t *testing.T) {
 
 	*/
 	t.Log("T[1, 0:2, 1:3]")
-	V, err = T.Slice(singleSlice(1), rangedSlice{0, 2}, rangedSlice{1, 3})
+	V, err = T.Slice(ss(1), makeRS(0, 2), makeRS(1, 3))
 	if err != nil {
 		t.Error(err)
 	}
@@ -829,7 +829,7 @@ func TestTSlice(t *testing.T) {
 
 	*/
 	t.Log("T[1, 1, 1:3]")
-	V, err = T.Slice(rangedSlice{1, 2}, singleSlice(1), rangedSlice{1, 3})
+	V, err = T.Slice(makeRS(1, 2), ss(1), makeRS(1, 3))
 	if err != nil {
 		t.Error(err)
 	}
@@ -859,7 +859,7 @@ func TestTSlice(t *testing.T) {
 
 	*/
 	t.Log("T[:, 1, 1:3]")
-	V, err = T.Slice(nil, singleSlice(1), rangedSlice{1, 3})
+	V, err = T.Slice(nil, ss(1), makeRS(1, 3))
 	if err != nil {
 		t.Error(err)
 	}
@@ -874,7 +874,7 @@ func TestTSlice(t *testing.T) {
 
 	// T[0, :, 2]
 	t.Log("T[0, :, 2]")
-	V, err = T.Slice(singleSlice(0), nil, singleSlice(2))
+	V, err = T.Slice(ss(0), nil, ss(2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -889,7 +889,7 @@ func TestTSlice(t *testing.T) {
 	// T[0, 1, 2]
 	// willl yield a scalar
 	t.Log("T[0,1,2]")
-	V, err = T.Slice(singleSlice(0), singleSlice(1), singleSlice(2))
+	V, err = T.Slice(ss(0), ss(1), ss(2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -898,19 +898,19 @@ func TestTSlice(t *testing.T) {
 	// And now, ladies and gentlemen, the idiots!
 
 	// too many slices
-	_, err = T.Slice(singleSlice(1), singleSlice(2), singleSlice(3), singleSlice(4))
+	_, err = T.Slice(ss(1), ss(2), ss(3), ss(4))
 	if err == nil {
 		t.Error("Expected a DimMismatchError error")
 	}
 
 	// out of range sliced
-	_, err = T.Slice(rangedSlice{1, 5})
+	_, err = T.Slice(makeRS(1, 5))
 	if err == nil {
 		t.Error("Expected a IndexError")
 	}
 
 	// surely nobody can be this dumb? Having a start of negatives
-	_, err = T.Slice(rangedSlice{-1, 1})
+	_, err = T.Slice(makeRS(-1, 1))
 	if err == nil {
 		t.Error("Expected a IndexError")
 	}
@@ -1034,7 +1034,7 @@ func TestCopyTo(t *testing.T) {
 	// test views
 	T = NewTensor(WithShape(3, 3))
 	T2 = NewTensor(WithShape(2, 2))
-	T3, _ = T.Slice(rangedSlice{0, 2}, rangedSlice{0, 2}) // T[0:2, 0:2], shape == (2,2)
+	T3, _ = T.Slice(makeRS(0, 2), makeRS(0, 2)) // T[0:2, 0:2], shape == (2,2)
 	if err = T2.CopyTo(T3); err != nil {
 		t.Log(err) // for now it's a not yet implemented error. TODO: FIX THIS
 	}

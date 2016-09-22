@@ -548,7 +548,7 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 			// op = newSliceOp(0, -1, i, retVal.Dims())
 			continue
 		} else {
-			op = newSliceOp(slice.Start(), slice.End(), i, retVal.Dims())
+			op = newSliceOp(slice, i, retVal.Dims())
 		}
 
 		if retVal, err = applyOp(op, retVal); err != nil {

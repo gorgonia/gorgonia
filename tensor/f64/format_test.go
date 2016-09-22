@@ -160,7 +160,7 @@ Matrix (2, 2) [2 1]
 	var V *Tensor
 	var err error
 
-	V, err = T.Slice(rangedSlice{1, 2})
+	V, err = T.Slice(makeRS(1, 2))
 	if err != nil {
 		t.Error(err)
 	}
@@ -174,7 +174,7 @@ Matrix (3, 2) [2 1]
 	assert.Equal(expected, res, res)
 
 	// T[:, 1]
-	V, err = T.Slice(nil, singleSlice(1))
+	V, err = T.Slice(nil, ss(1))
 	res = fmt.Sprintf("\n%+s", V)
 	expected = `
 Matrix (2, 2) [6 1]
@@ -184,7 +184,7 @@ Matrix (2, 2) [6 1]
 	assert.Equal(expected, res, res)
 
 	// T[1, :, 1]
-	V, err = T.Slice(singleSlice(1), nil, singleSlice(1))
+	V, err = T.Slice(ss(1), nil, ss(1))
 	if err != nil {
 		t.Error(err)
 	}
@@ -194,7 +194,7 @@ C[7881299347898368p-50  5066549580791808p-49  6192449487634432p-49]`
 	assert.Equal(expected, res)
 
 	// T[1, 1, 1] - will result in a scalar
-	V, err = T.Slice(singleSlice(1), singleSlice(1), singleSlice(1))
+	V, err = T.Slice(ss(1), ss(1), ss(1))
 	if err != nil {
 		t.Error(err)
 	}
@@ -204,7 +204,7 @@ C[7881299347898368p-50  5066549580791808p-49  6192449487634432p-49]`
 
 	// on regular matrices
 	T = NewTensor(WithShape(3, 5), WithBacking(RangeFloat64(0, 3*5)))
-	V, err = T.Slice(singleSlice(1))
+	V, err = T.Slice(ss(1))
 	if err != nil {
 		t.Error(err)
 	}
