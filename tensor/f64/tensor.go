@@ -134,22 +134,12 @@ func I(r, c, k int) (retVal *Tensor) {
 		panic(err)
 	}
 
-	// this method is barbaric. Probably want to write a feature update for iterator?
+	var nexts []int
 	iter := types.NewFlatIterator(s.AP)
-	var count, step int
-	for j, err := iter.Next(); err == nil; j, err = iter.Next() {
-		if count < i {
-			count++
-			continue
-		}
-		if step == 0 {
-			retVal.data[j] = float64(1) //@DEFAULTONE
-		}
-		count++
-		step++
-		if step >= c+1 {
-			step = 0
-		}
+	nexts, err = iter.Slice(rs{i, s.Size(), c + 1})
+
+	for _, v := range nexts {
+		s.data[v] = float64(1) //@DEFAULTONE
 	}
 	return
 }
