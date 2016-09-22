@@ -299,7 +299,22 @@ func TestTranspose(t *testing.T) {
 	T.T()
 	T.Transpose()
 	assert.Equal(correct, T.data, "Transpose of (2,3,4,5) 4-tensor isn't correct")
+}
 
+func TestTUT(t *testing.T) {
+	assert := assert.New(t)
+	var T *Tensor
+
+	T = NewTensor(WithShape(2, 3, 4))
+	T.T()
+	T.UT()
+	assert.Nil(T.old)
+	assert.Nil(T.transposeWith)
+
+	T.T(2, 0, 1)
+	T.UT()
+	assert.Nil(T.old)
+	assert.Nil(T.transposeWith)
 }
 
 func TestTRepeat(t *testing.T) {

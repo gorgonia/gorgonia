@@ -86,12 +86,9 @@ func (t *Tensor) T(axes ...int) (err error) {
 	// this is important, because any old transposes for dim >=3 are merely permutations of the strides
 	if t.old != nil {
 		if t.IsVector() {
-			// then simplly untranspose it by setting it to nil (and returning it to pool)
-			types.ReturnAP(t.old)
+			// the transform that was calculated was a waste of time - return it to the pool then untranspose
 			types.ReturnAP(transform)
-			t.AP = t.old
-			t.old = nil
-			t.transposeWith = nil
+			t.UT()
 			return
 		}
 
@@ -107,13 +104,11 @@ func (t *Tensor) T(axes ...int) (err error) {
 		// if it is reversed, well, we just restore the backed up one
 		if isReversed {
 			types.ReturnAP(transform)
-			types.ReturnAP(t.AP)
-			// types.ReturnInts(t.transposeWith)
-			t.AP = t.old
-			t.old = nil
-			t.transposeWith = nil
+			t.UT()
 			return
 		}
+
+		// cool beans. No funny reversals. We'd have to actually do transpose then
 		t.Transpose()
 	}
 
@@ -122,6 +117,26 @@ func (t *Tensor) T(axes ...int) (err error) {
 	t.transposeWith = axes
 	t.AP = transform
 	return nil
+}
+
+// UT is a quick way to untranspose a currently transposed *Tensor
+// The reason for having this is quite simply illustrated by this problem:
+//		T = NewTensor(WithShape(2,3,4))
+//		T.T(1,2,0)
+//
+// To untranspose that, we'd need to apply a transpose of (2,0,1).
+// This means having to keep track and calculate the transposes.
+// Instead, here's a helpful convenience function to instantly untranspose any previous transposes.
+//
+// Nothing will happen if there was no previous transpose
+func (t *Tensor) UT() {
+	if t.old != nil {
+		types.ReturnAP(t.AP)
+		types.ReturnInts(t.transposeWith)
+		t.AP = t.old
+		t.old = nil
+		t.transposeWith = nil
+	}
 }
 
 // Transpose() actually transposes the data.
