@@ -325,6 +325,10 @@ func pasta(t string) {
 }
 
 func walk(dir string, info os.FileInfo, _ error) (err error) {
+	if info.IsDir() && info.Name() != "f64" {
+		return filepath.SkipDir
+	}
+
 	fn := path.Base(dir)
 	var matchedasm, matchedArith, matchedCmp, matchedGo bool
 	if matchedasm, err = filepath.Match("*asm*", info.Name()); err == nil && matchedasm {
