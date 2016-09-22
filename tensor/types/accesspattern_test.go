@@ -308,6 +308,14 @@ var flatIterTests1 = []struct {
 	{Shape{4, 3, 2}, []int{1, 4, 12}, []int{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}}, // basic 3-Tensor (under (2, 1, 0) transpose)
 }
 
+var flatIterSlices = []struct {
+	slices   []Slice
+	corrects [][]int
+}{
+	{[]Slice{nil}, [][]int{{0}}},
+	{[]Slice{rs{0, 3, 1}, rs{0, 5, 2}}, [][]int{{0, 1, 2}, {0, 2, 4}}},
+}
+
 func TestFlatIterator(t *testing.T) {
 	assert := assert.New(t)
 
@@ -329,5 +337,39 @@ func TestFlatIterator(t *testing.T) {
 			t.Error(err)
 		}
 		assert.Equal(fit.correct, nexts, "Test %d", i)
+	}
+}
+
+func TestFlatIterator_Slice(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap *AP
+	var it *FlatIterator
+	var err error
+	var nexts []int
+
+	for i, fit := range flatIterTests1 {
+		ap = NewAP(fit.shape, fit.strides)
+		it = NewFlatIterator(ap)
+		nexts, err = it.Slice(nil)
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			t.Error(err)
+		}
+
+		assert.Equal(fit.correct, nexts, "Test %d", i)
+
+		if i < len(flatIterSlices) {
+			fis := flatIterSlices[i]
+			for j, sli := range fis.slices {
+				it.Reset()
+
+				nexts, err = it.Slice(sli)
+				if _, ok := err.(NoOpError); err != nil && !ok {
+					t.Error(err)
+				}
+
+				assert.Equal(fis.corrects[j], nexts, "Test %d", i)
+			}
+		}
 	}
 }

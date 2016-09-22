@@ -230,8 +230,6 @@ func NewFlatIterator(ap *AP) *FlatIterator {
 
 func (it *FlatIterator) Next() (int, error) {
 	if it.done {
-		ReturnInts(it.track)
-		it.track = nil
 		return -1, noopError{}
 	}
 
@@ -268,10 +266,15 @@ func (it *FlatIterator) Coord() []int {
 func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 	var next int
 	var nexts []int
-	for next, err := it.Next(); err == nil; next, err = it.Next() {
+	for next, err = it.Next(); err == nil; next, err = it.Next() {
 		nexts = append(nexts, next)
 	}
 	if _, ok := err.(NoOpError); err != nil && !ok {
+		return
+	}
+
+	if sli == nil {
+		retVal = nexts
 		return
 	}
 
@@ -280,8 +283,7 @@ func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 	step := sli.Step()
 
 	// sanity checks
-	if step == 0 && end-start > 1 {
-		err = NewError(IndexError, "Slice has 0 steps, but start is %d and end is %d", start, end)
+	if err = sliceSanity(sli, len(nexts)); err != nil {
 		return
 	}
 
@@ -294,10 +296,26 @@ func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 		step = -step
 	}
 
+	// cleanup before loop
+	if end > len(nexts) {
+		end = len(nexts)
+	}
+	// nexts = nexts[:end]
+
 	for i := start; i < end; i += step {
 		retVal = append(retVal, nexts[i])
 	}
 
 	err = nil
 	return
+}
+
+func (it *FlatIterator) Reset() {
+	if it.done {
+		it.done = false
+		it.lastIndex = 0
+		for i := range it.track {
+			it.track[i] = 0
+		}
+	}
 }

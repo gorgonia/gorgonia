@@ -14,11 +14,6 @@ type noopError struct{}
 func (e noopError) NoOp() bool    { return true }
 func (e noopError) Error() string { return "NoOp" }
 
-// MetadataMismatch is when everything inside the Tensor gets fucked up.
-type MetadataMismatchError struct {
-	a, b Tensor
-}
-
 //go:generate stringer -type=errorType
 type errorType byte
 
