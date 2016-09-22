@@ -23,6 +23,7 @@ type AP struct {
 	// triangle byte // up = 0xf0;  down = 0x0f; symmetric = 0xff; not a triangle = 0x00
 }
 
+// NewAP creates a new AP, given the shape and strides
 func NewAP(shape Shape, strides []int) *AP {
 	return &AP{
 		shape:   shape,
@@ -32,6 +33,13 @@ func NewAP(shape Shape, strides []int) *AP {
 	}
 }
 
+// SetShape is for very specific times when modifying the AP is necessary, such as reshaping and doing I/O related stuff
+//
+// Caveats:
+//
+// - SetShape will recalculate the strides.
+//
+// - If the AP is locked, nothing will happen
 func (ap *AP) SetShape(s ...int) {
 	if !ap.fin {
 		if ap.shape != nil {
@@ -45,8 +53,6 @@ func (ap *AP) SetShape(s ...int) {
 
 		// scalar
 		if len(s) == 0 {
-			ap.shape = nil
-			ap.strides = nil
 			ap.dims = 0
 			return
 		}
@@ -212,7 +218,10 @@ func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) in
 	return TransposeIndex(i, oldShape, newPattern, oldStrides, newStrides)
 }
 
-// FlatIterator helps with iterating a Tensor with funny shapes
+// FlatIterator is an iterator that iterates over Tensors. It utilizes the *AP
+// of a Tensor to determine what the next index is.
+// This data structure is similar to Numpy's flatiter, with some standard Go based restrictions of course
+// (such as, not allowing negative indices)
 type FlatIterator struct {
 	*AP
 
@@ -222,6 +231,7 @@ type FlatIterator struct {
 	done      bool
 }
 
+// NewFlatIterator creates a new FlatIterator
 func NewFlatIterator(ap *AP) *FlatIterator {
 	return &FlatIterator{
 		AP:    ap,
@@ -229,6 +239,7 @@ func NewFlatIterator(ap *AP) *FlatIterator {
 	}
 }
 
+// Next returns the index of the current coordinate.
 func (it *FlatIterator) Next() (int, error) {
 	if it.done {
 		return -1, noopError{}
@@ -261,10 +272,14 @@ func (it *FlatIterator) Next() (int, error) {
 	return retVal, err
 }
 
+// Coord returns the next coordinate.
+// When Next() is called, the coordinates are updated AFTER the Next() returned.
+// See example for more details.
 func (it *FlatIterator) Coord() []int {
 	return it.track
 }
 
+// Slice is a convenience function that augments
 func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 	var next int
 	var nexts []int
@@ -312,9 +327,16 @@ func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 	return
 }
 
+// Resets the iterator
 func (it *FlatIterator) Reset() {
+	it.done = false
+	it.lastIndex = 0
+
 	if it.done {
-		it.done = false
-		it.lastIndex = 0
+		return
+	}
+
+	for i := range it.track {
+		it.track[i] = 0
 	}
 }

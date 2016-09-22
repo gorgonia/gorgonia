@@ -5,6 +5,7 @@ import (
 	"runtime"
 )
 
+// NoOpError is a useful for operations that have no op.
 type NoOpError interface {
 	NoOp() bool
 }

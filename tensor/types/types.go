@@ -52,6 +52,7 @@ type Slice interface {
 	Step() int
 }
 
+// FunctionFlag are flags for calling Tensor functions. Use only with FuncOpt
 type FunctionFlag byte
 
 const (
@@ -65,8 +66,10 @@ const (
 	AsTensorInt
 )
 
+// FuncOpt are optionals for calling Tensor function.
 type FuncOpt func() (FunctionFlag, interface{})
 
+// WithIncr passes in a Tensor to be incremented.
 func WithIncr(incr Tensor) FuncOpt {
 	f := func() (FunctionFlag, interface{}) {
 		return Incr, incr
@@ -74,6 +77,7 @@ func WithIncr(incr Tensor) FuncOpt {
 	return f
 }
 
+// WithReuse passes in a Tensor to be reused.
 func WithReuse(reuse Tensor) FuncOpt {
 	f := func() (FunctionFlag, interface{}) {
 		return Reuse, reuse
@@ -81,6 +85,7 @@ func WithReuse(reuse Tensor) FuncOpt {
 	return f
 }
 
+// UseSafe ensures that the operation is a safe operation (copies data, does not clobber). This is the default option for most methods and functions
 func UseSafe() FuncOpt {
 	f := func() (FunctionFlag, interface{}) {
 		return SafeOp, nil
@@ -88,6 +93,7 @@ func UseSafe() FuncOpt {
 	return f
 }
 
+// UseUnsafe ensures that the operation is an unsafe operation - data will be clobbered, and operations performed inplace
 func UseUnsafe() FuncOpt {
 	f := func() (FunctionFlag, interface{}) {
 		return UnsafeOp, nil
@@ -95,6 +101,7 @@ func UseUnsafe() FuncOpt {
 	return f
 }
 
+// AsSameType makes sure that the return Tensor is the same type as input Tensors.
 func AsSameType() FuncOpt {
 	f := func() (FunctionFlag, interface{}) {
 		return AsSame, nil

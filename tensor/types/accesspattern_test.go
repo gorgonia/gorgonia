@@ -421,3 +421,26 @@ func TestFlatIterator_Coord(t *testing.T) {
 		donecount++
 	}
 }
+
+// really this is just for completeness sake
+func TestFlatIterator_Reset(t *testing.T) {
+	assert := assert.New(t)
+	ap := NewAP(Shape{2, 3, 4}, []int{12, 4, 1})
+	it := NewFlatIterator(ap)
+
+	it.Next()
+	it.Next()
+	it.Reset()
+	assert.Equal(0, it.lastIndex)
+	assert.Equal(false, it.done)
+	assert.Equal([]int{0, 0, 0}, it.track)
+
+	for _, err := it.Next(); err == nil; _, err = it.Next() {
+	}
+
+	it.Reset()
+	assert.Equal(0, it.lastIndex)
+	assert.Equal(false, it.done)
+	assert.Equal([]int{0, 0, 0}, it.track)
+
+}
