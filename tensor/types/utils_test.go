@@ -6,33 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDivmod(t *testing.T) {
-	as := []int{0, 1, 2, 3, 4, 5}
-	bs := []int{1, 2, 3, 3, 2, 3}
-	qs := []int{0, 0, 0, 1, 2, 1}
-	rs := []int{0, 1, 2, 0, 0, 2}
-
-	for i, a := range as {
-		b := bs[i]
-		eq := qs[i]
-		er := rs[i]
-
-		q, r := Divmod(a, b)
-		if q != eq {
-			t.Errorf("Expected %d / %d to equal %d. Got %d instead", a, b, eq, q)
-		}
-		if r != er {
-			t.Errorf("Expected %d %% %d to equal %d. Got %d instead", a, b, er, r)
-		}
-	}
-
-	assert := assert.New(t)
-	fail := func() {
-		Divmod(1, 0)
-	}
-	assert.Panics(fail)
-}
-
 func TestLtoi_Itol(t *testing.T) {
 	var strides []int
 	var shape Shape
@@ -212,5 +185,50 @@ func TestUnsafePermute(t *testing.T) {
 	_, err = Permute([]int{0, 0}, strides, shape)
 	if err == nil {
 		t.Error("Expected an AxisErr")
+	}
+}
+
+func TestSliceSanity(t *testing.T) {
+	var s Slice
+	var err error
+
+	s = rs{0, 1, 1}
+	if err = sliceSanity(s, 10); err != nil {
+		t.Error(err)
+	}
+
+	s = rs{1, 6, 2}
+	if err = sliceSanity(s, 10); err != nil {
+		t.Error(err)
+	}
+
+	s = rs{}
+	if err = sliceSanity(s, 10); err != nil {
+		t.Error(err)
+	}
+
+	s = rs{4, 2, 1}
+	if err = sliceSanity(s, 10); err == nil {
+		t.Error("Expected an error")
+	}
+
+	s = rs{2, 4, 0}
+	if err = sliceSanity(s, 10); err == nil {
+		t.Error("Expected an error")
+	}
+
+	s = rs{-1, -1, 1}
+	if err = sliceSanity(s, 10); err == nil {
+		t.Error("Expected an error")
+	}
+
+	s = rs{-2, -1, 1}
+	if err = sliceSanity(s, 10); err == nil {
+		t.Error("Expected an error")
+	}
+
+	s = rs{12, 24, 1}
+	if err = sliceSanity(s, 10); err == nil {
+		t.Error("Expected an error")
 	}
 }

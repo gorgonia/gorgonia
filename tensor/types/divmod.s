@@ -1,6 +1,8 @@
 // +build !noasm
 
-TEXT	·Divmod(SB),7,$32
+#include "textflag.h"
+
+TEXT ·Divmod(SB),NOSPLIT,$0
 	MOVQ	a+0(FP), SI
 	MOVQ	b+8(FP), CX
 	MOVQ	SI, AX

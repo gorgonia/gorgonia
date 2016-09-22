@@ -257,3 +257,27 @@ func Permute(pattern []int, xs ...[]int) (retVal [][]int, err error) {
 	}
 	return
 }
+
+func sliceSanity(s Slice, size int) error {
+	start := s.Start()
+	end := s.End()
+	step := s.Step()
+
+	if start > end {
+		return NewError(IndexError, "Start %d > End %d", start, end)
+	}
+
+	if start < 0 {
+		return NewError(IndexError, "Start %d < 0", start)
+	}
+
+	if step == 0 && end-start > 1 {
+		return NewError(IndexError, "Slice has 0 steps, but start is %d and end is %d", start, end)
+	}
+
+	if start >= size {
+		return NewError(IndexError, "Start %d > size %d", start, size)
+	}
+
+	return nil
+}
