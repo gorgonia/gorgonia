@@ -80,7 +80,11 @@ func sum(a []float64) float64 {
 	return reduce(add, float64(0), a...)
 }
 
-// caveat : default value is used
+// sliceMax finds the max of a []float64. There are some gotchas with this function.
+// An ideal function design would be something like this:
+//		func sliceMax(a []float64) (retVal float64, err error)
+// where an error is returned when the slice is empty.
+// Because I'm mostly lazy there is no such checks.
 func sliceMax(a []float64) (retVal float64) {
 	for _, v := range a {
 		if v > retVal {
@@ -90,6 +94,7 @@ func sliceMax(a []float64) (retVal float64) {
 	return
 }
 
+// vecMax takes two slices, and compares them elementwise. The highest value is put into a
 func vecMax(a, b []float64) {
 	if len(a) != len(b) {
 		panic("Index error")

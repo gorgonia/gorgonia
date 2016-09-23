@@ -164,7 +164,7 @@ var sumTests = []struct {
 	// vector
 	{"v.sum(0)", types.Shape{5}, 0, types.ScalarShape(), []float64{10}},
 	{"c.sum(0)", types.Shape{5, 1}, 0, types.ScalarShape(), []float64{10}},
-	{"c.sum(1)", types.Shape{5, 1}, 1, types.ScalarShape(), []float64{10}},
+	{"c.sum(1)", types.Shape{5, 1}, 1, types.Shape{5}, []float64{0, 1, 2, 3, 4}},
 	{"r.sum(0)", types.Shape{5, 1}, 0, types.ScalarShape(), []float64{10}},
 	{"r.sum(1)", types.Shape{1, 5}, 1, types.ScalarShape(), []float64{10}},
 
@@ -203,4 +203,69 @@ func TestTsum(t *testing.T) {
 		assert.True(sts.correctShape.Eq(T2.Shape()), "Test %v - Correct shape is %v. Got %v", sts.name, sts.correctShape, T2.Shape())
 		assert.Equal(sts.correctData, T2.data, "Test %v - wrong data", sts.name)
 	}
+
+	// scalar
+	T = NewTensor(AsScalar(float64(5)))
+	T2 = T.sum(0)
+	assert.True(types.ScalarShape().Eq(T2.Shape()))
+	assert.Equal(float64(5), T.data[0])
+}
+
+var maxTests = []struct {
+	name   string
+	shape  types.Shape
+	modify []int
+	axis   int
+
+	correctShape types.Shape
+	correctData  []float64
+}{
+	// vector
+	{"v.max(0)", types.Shape{5}, []int{0, 3}, 0, types.ScalarShape(), []float64{2000}},
+	{"c.max(0)", types.Shape{5, 1}, []int{0, 3}, 0, types.ScalarShape(), []float64{2000}},
+	{"c.max(1)", types.Shape{5, 1}, []int{0, 3}, 1, types.Shape{5}, []float64{1000, 1, 2, 2000, 4}},
+	{"r.max(0)", types.Shape{1, 5}, []int{0, 3}, 0, types.Shape{5}, []float64{1000, 1, 2, 2000, 4}},
+	{"r.max(1)", types.Shape{1, 5}, []int{0, 3}, 1, types.ScalarShape(), []float64{2000}},
+
+	// matrix
+	{"m.max(0)", types.Shape{2, 3}, []int{0, 4}, 0, types.Shape{3}, []float64{1000, 2000, 5}},
+	{"m.max(1)", types.Shape{2, 3}, []int{0, 4}, 1, types.Shape{2}, []float64{1000, 2000}},
+
+	//3T
+	{"3T.max(0)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 0, types.Shape{3, 4}, []float64{
+		1000, 2000, 14, 15,
+		16, 17, 3000, 4000,
+		20, 21, 22, 23,
+	}},
+
+	{"3T.max(1)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 1, types.Shape{2, 4}, []float64{
+		1000, 9, 3000, 11,
+		20, 2000, 22, 4000,
+	}},
+
+	{"3T.max(2)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 2, types.Shape{2, 3}, []float64{
+		1000, 3000, 11,
+		2000, 4000, 23,
+	}},
+}
+
+func TestTmax(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+
+	for _, mts := range maxTests {
+		T = NewTensor(WithShape(mts.shape...), WithBacking(RangeFloat64(0, mts.shape.TotalSize())))
+		for i, ind := range mts.modify {
+			T.data[ind] = float64((i + 1) * 1000)
+		}
+		T2 = T.max(mts.axis)
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v - Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
+	}
+
+	// scalar
+	T = NewTensor(AsScalar(float64(5)))
+	T2 = T.sum(0)
+	assert.True(types.ScalarShape().Eq(T2.Shape()))
+	assert.Equal(float64(5), T.data[0])
 }

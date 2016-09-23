@@ -2,6 +2,24 @@ package tensorf64
 
 import "github.com/chewxy/gorgonia/tensor/types"
 
+/*
+This file contains code that deals with the reduction of a Tensor by axis.
+
+There are two general variants of the code - The first variant is in Reduce().
+This is a generic reduction code - you can pass in any reduce function
+	type reduceFn func (a, b float64) float64
+
+The second variant is a more optimized version of the generic one - the same basic frame
+is copied for Sum and Max and Min.
+
+All of the code in this file is structured in such a way that they're embarassingly parallel.
+This message will serve as a reminder until all the code in this file which are embarassingly parallel
+has been parallelized
+
+List of functions parallalized:
+	<crickets>
+*/
+
 // Reduce takes a function, a default value and reduces the axis using the function.
 func (t *Tensor) Reduce(f func(a, b float64) float64, def float64, axis int) (retVal *Tensor, err error) {
 	if axis >= t.Dims() {
@@ -232,7 +250,31 @@ func (t *Tensor) sum(axis int) (retVal *Tensor) {
 }
 
 func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
-	return nil, nil
+	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
+	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {
+		ret := sliceMax(t.data)
+		retVal = NewTensor(AsScalar(ret))
+		return
+	}
+	retVal = t
+	prev := -1
+	dims := len(retVal.Shape())
+	for _, axis := range along {
+		if prev == -1 {
+			prev = axis
+		}
+		if axis > prev {
+			axis--
+		}
+
+		if axis >= dims {
+			err = types.DimMismatchErr(axis, retVal.Dims())
+			return
+		}
+
+		retVal = retVal.max(axis)
+	}
+	return
 }
 
 func (t *Tensor) max(axis int) (retVal *Tensor) {
