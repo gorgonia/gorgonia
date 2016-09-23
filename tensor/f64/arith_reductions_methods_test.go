@@ -1,6 +1,7 @@
 package tensorf64
 
 import (
+	"log"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor/types"
@@ -98,61 +99,6 @@ func TestTreduce(t *testing.T) {
 	assert.Equal(expectedData, T2.data)
 }
 
-func TestTSum(t *testing.T) {
-	assert := assert.New(t)
-	var T, T2 *Tensor
-	var err error
-	var expectedShape types.Shape
-	var expectedData []float64
-
-	// Most common use (don't sum along any axis)
-	T = NewTensor(WithShape(2, 2), WithBacking(RangeFloat64(0, 4)))
-	T2, err = T.Sum()
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.ScalarShape()
-	expectedData = []float64{6}
-	assert.Equal(expectedData, T2.data)
-	assert.True(expectedShape.Eq(T2.Shape()))
-
-	// sum along one axis (see TestTsum for more specific axis related testing)
-	T2, err = T.Sum(0)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expectedShape = types.Shape{2}
-	expectedData = []float64{2, 4}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// Sum along multiple axis
-	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeFloat64(0, 2*3*4)))
-	T2, err = T.Sum(1, 2)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expectedShape = types.Shape{2}
-	expectedData = []float64{66, 210}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// Sum along multiple axes, but larger axis first. Should have the same result as prev
-	T2, err = T.Sum(2, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	/* IDIOT TESTING TIME */
-	_, err = T.Sum(3)
-	assert.NotNil(err)
-}
-
 var sumTests = []struct {
 	name  string
 	shape types.Shape
@@ -169,8 +115,8 @@ var sumTests = []struct {
 	{"r.sum(1)", types.Shape{1, 5}, 1, types.ScalarShape(), []float64{10}},
 
 	// matrix
-	{"m.sum(0)", types.Shape{2, 2}, 0, types.Shape{2}, []float64{2, 4}},
-	{"m.sum(1)", types.Shape{2, 2}, 1, types.Shape{2}, []float64{1, 5}},
+	{"A.sum(0)", types.Shape{2, 2}, 0, types.Shape{2}, []float64{2, 4}},
+	{"A.sum(1)", types.Shape{2, 2}, 1, types.Shape{2}, []float64{1, 5}},
 
 	// 3Tensor
 	{"3T.sum(0)", types.Shape{5, 3, 6}, 0, types.Shape{3, 6}, []float64{
@@ -211,6 +157,48 @@ func TestTsum(t *testing.T) {
 	assert.Equal(float64(5), T.data[0])
 }
 
+var SumTests = []struct {
+	name  string
+	along []int
+
+	correctShape types.Shape
+	correctData  []float64
+}{
+	{"common case: T.Sum()", []int{}, types.ScalarShape(), []float64{15}},
+	{"A.Sum(0)", []int{0}, types.Shape{3}, []float64{3, 5, 7}},
+	{"A.Sum(1)", []int{1}, types.Shape{2}, []float64{3, 12}},
+	{"A.Sum(0,1)", []int{0, 1}, types.ScalarShape(), []float64{15}},
+	{"A.Sum(1,0)", []int{1, 0}, types.ScalarShape(), []float64{15}},
+}
+
+func TestTSum(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+	var err error
+
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat64(0, 6)))
+	for _, sts := range SumTests {
+		if T2, err = T.Sum(sts.along...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(T2.Shape()), "Test %v. Correct shape is %v. Got %v", sts.name, sts.correctShape, T2.Shape())
+		assert.Equal(sts.correctData, T2.data, "Test %v - wrong data", sts.name)
+	}
+	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeFloat64(0, 24)))
+	if T2, err = T.Sum(1, 2); err != nil {
+		t.Error(err)
+		goto idiots
+	}
+	assert.True(types.Shape{2}.Eq(T2.Shape()), "3T.Max(1,2) error: Correct shape is (2). Got %v", T.Shape())
+	assert.Equal([]float64{66, 210}, T2.data)
+
+idiots:
+	/* IDIOT TESTING TIME */
+	_, err = T.Sum(3)
+	assert.NotNil(err)
+}
+
 var maxTests = []struct {
 	name   string
 	shape  types.Shape
@@ -228,8 +216,8 @@ var maxTests = []struct {
 	{"r.max(1)", types.Shape{1, 5}, []int{0, 3}, 1, types.ScalarShape(), []float64{2000}},
 
 	// matrix
-	{"m.max(0)", types.Shape{2, 3}, []int{0, 4}, 0, types.Shape{3}, []float64{1000, 2000, 5}},
-	{"m.max(1)", types.Shape{2, 3}, []int{0, 4}, 1, types.Shape{2}, []float64{1000, 2000}},
+	{"A.max(0)", types.Shape{2, 3}, []int{0, 4}, 0, types.Shape{3}, []float64{1000, 2000, 5}},
+	{"A.max(1)", types.Shape{2, 3}, []int{0, 4}, 1, types.Shape{2}, []float64{1000, 2000}},
 
 	//3T
 	{"3T.max(0)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 0, types.Shape{3, 4}, []float64{
@@ -265,7 +253,52 @@ func TestTmax(t *testing.T) {
 
 	// scalar
 	T = NewTensor(AsScalar(float64(5)))
-	T2 = T.sum(0)
+	T2 = T.max(0)
 	assert.True(types.ScalarShape().Eq(T2.Shape()))
 	assert.Equal(float64(5), T.data[0])
+}
+
+var MaxTests = []struct {
+	name  string
+	along []int
+
+	correctShape types.Shape
+	correctData  []float64
+}{
+	{"common case: T.Max()", []int{}, types.ScalarShape(), []float64{1000}},
+	{"A.Max(0)", []int{0}, types.Shape{3}, []float64{1000, 4, 5}},
+	{"A.Max(1)", []int{1}, types.Shape{2}, []float64{1000, 5}},
+	{"A.Max(0,1)", []int{0, 1}, types.ScalarShape(), []float64{1000}},
+	{"A.Max(1,0)", []int{1, 0}, types.ScalarShape(), []float64{1000}},
+}
+
+func TestTMax(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+	var err error
+
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat64(0, 6)))
+	T.data[0] = 1000
+	for _, mts := range MaxTests {
+		log.Printf("%v", mts.name)
+		if T2, err = T.Max(mts.along...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v. Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
+	}
+
+	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeFloat64(0, 24)))
+	if T2, err = T.Max(1, 2); err != nil {
+		t.Error(err)
+		goto idiots
+	}
+	assert.True(types.Shape{2}.Eq(T2.Shape()), "3T.Max(1,2) error: Correct shape is (2). Got %v", T.Shape())
+	assert.Equal([]float64{11, 23}, T2.data)
+
+idiots:
+	/* IDIOT TESTING TIME */
+	_, err = T.Max(5)
+	assert.NotNil(err)
 }
