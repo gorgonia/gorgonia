@@ -126,7 +126,7 @@ func I(r, c, k int) (retVal *Tensor) {
 	if end > r {
 		s, err = retVal.Slice(nil)
 	} else {
-		s, err = retVal.Slice(rs{0, end, 0})
+		s, err = retVal.Slice(rs{0, end, 1})
 	}
 	defer ReturnTensor(s)
 

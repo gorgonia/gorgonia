@@ -42,6 +42,14 @@ func NewAP(shape Shape, strides []int) *AP {
 // - If the AP is locked, nothing will happen
 func (ap *AP) SetShape(s ...int) {
 	if !ap.fin {
+		// scalars are a special case, we don't want to remove it completely
+		if len(s) == 0 {
+			ap.shape = ap.shape[:0]
+			ap.strides = ap.strides[:0]
+			ap.dims = 0
+			return
+		}
+
 		if ap.shape != nil {
 			// ReturnInts(ap.shape)
 			ap.shape = nil
@@ -49,12 +57,6 @@ func (ap *AP) SetShape(s ...int) {
 		if ap.strides != nil {
 			// ReturnInts(ap.strides)
 			ap.strides = nil
-		}
-
-		// scalar
-		if len(s) == 0 {
-			ap.dims = 0
-			return
 		}
 		ap.shape = Shape(s).Clone()
 		ap.strides = ap.shape.CalcStrides()
@@ -300,7 +302,7 @@ func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 	step := sli.Step()
 
 	// sanity checks
-	if err = sliceSanity(sli, len(nexts)); err != nil {
+	if err = CheckSlice(sli, len(nexts)); err != nil {
 		return
 	}
 

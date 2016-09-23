@@ -258,7 +258,8 @@ func Permute(pattern []int, xs ...[]int) (retVal [][]int, err error) {
 	return
 }
 
-func sliceSanity(s Slice, size int) error {
+// CheckSlice checks a slice to see if it's sane
+func CheckSlice(s Slice, size int) error {
 	start := s.Start()
 	end := s.End()
 	step := s.Step()

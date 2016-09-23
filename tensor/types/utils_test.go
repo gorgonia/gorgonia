@@ -193,42 +193,42 @@ func TestSliceSanity(t *testing.T) {
 	var err error
 
 	s = rs{0, 1, 1}
-	if err = sliceSanity(s, 10); err != nil {
+	if err = CheckSlice(s, 10); err != nil {
 		t.Error(err)
 	}
 
 	s = rs{1, 6, 2}
-	if err = sliceSanity(s, 10); err != nil {
+	if err = CheckSlice(s, 10); err != nil {
 		t.Error(err)
 	}
 
 	s = rs{}
-	if err = sliceSanity(s, 10); err != nil {
+	if err = CheckSlice(s, 10); err != nil {
 		t.Error(err)
 	}
 
 	s = rs{4, 2, 1}
-	if err = sliceSanity(s, 10); err == nil {
+	if err = CheckSlice(s, 10); err == nil {
 		t.Error("Expected an error")
 	}
 
 	s = rs{2, 4, 0}
-	if err = sliceSanity(s, 10); err == nil {
+	if err = CheckSlice(s, 10); err == nil {
 		t.Error("Expected an error")
 	}
 
 	s = rs{-1, -1, 1}
-	if err = sliceSanity(s, 10); err == nil {
+	if err = CheckSlice(s, 10); err == nil {
 		t.Error("Expected an error")
 	}
 
 	s = rs{-2, -1, 1}
-	if err = sliceSanity(s, 10); err == nil {
+	if err = CheckSlice(s, 10); err == nil {
 		t.Error("Expected an error")
 	}
 
 	s = rs{12, 24, 1}
-	if err = sliceSanity(s, 10); err == nil {
+	if err = CheckSlice(s, 10); err == nil {
 		t.Error("Expected an error")
 	}
 }
