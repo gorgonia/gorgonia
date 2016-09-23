@@ -2,6 +2,7 @@ package tensorf64
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
@@ -25,10 +26,9 @@ func TestTFormat(t *testing.T) {
 	// short vector
 	T = NewTensor(WithShape(4))
 	res = fmt.Sprintf("%v", T)
-	assert.Equal("[  0    0    0    0]", res)
-
+	expected = "[  0    0    0    0]"
+	assert.Equal(expected, res)
 	T = NewTensor(WithShape(2, 2), WithBacking([]float64{3.141515163242, 20, 5.15, 6.28}))
-	// T = NewTensor(WithShape(3, 3), WithBacking(RangeFloat64(0, 9)))
 
 	res = fmt.Sprintf("\n%v", T)
 	expected = `
@@ -43,7 +43,7 @@ func TestTFormat(t *testing.T) {
 ⎡3.1   20⎤
 ⎣5.2  6.3⎦
 `
-	assert.Equal(expected, res)
+	assert.Equal(expected, res, res)
 
 	// with metadata
 	res = fmt.Sprintf("\n%+0.2v", T)
@@ -100,6 +100,7 @@ Matrix (2, 2) [2 1]
 	assert.Equal(expected, res, res)
 
 	// vectors
+	log.Printf("HAPPY PIDAY")
 	T = NewTensor(WithShape(3, 1))
 	res = fmt.Sprintf("%v", T)
 	expected = `C[0  0  0]`
@@ -183,13 +184,23 @@ Matrix (2, 2) [6 1]
 `
 	assert.Equal(expected, res, res)
 
+	// transpose a view
+	V.T()
+	expected = `
+Matrix (2, 2) [1 6]
+⎡2  8⎤
+⎣3  9⎦
+`
+	res = fmt.Sprintf("\n%+s", V)
+	assert.Equal(expected, res, res)
+
 	// T[1, :, 1]
 	V, err = T.Slice(ss(1), nil, ss(1))
 	if err != nil {
 		t.Error(err)
 	}
-	expected = `Vector (3, 1) [2]
-C[7881299347898368p-50  5066549580791808p-49  6192449487634432p-49]`
+	expected = `Vector (3) [2]
+[7881299347898368p-50  5066549580791808p-49  6192449487634432p-49]`
 	res = fmt.Sprintf("%+b", V)
 	assert.Equal(expected, res)
 
@@ -208,7 +219,7 @@ C[7881299347898368p-50  5066549580791808p-49  6192449487634432p-49]`
 	if err != nil {
 		t.Error(err)
 	}
-	expected = `R[  5    6    7    8    9]`
+	expected = `[  5    6    7    8    9]`
 	res = fmt.Sprintf("%v", V)
 	assert.Equal(expected, res)
 
