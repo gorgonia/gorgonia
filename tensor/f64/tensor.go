@@ -160,7 +160,13 @@ func WithBacking(a []float64) consOpt {
 func WithShape(dims ...int) consOpt {
 	f := func(t *Tensor) {
 		t.setShape(dims...)
+
+		// special case for scalars
+		if len(dims) == 0 {
+			t.data = make([]float64, 1)
+		}
 	}
+
 	return consOpt(f)
 }
 

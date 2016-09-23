@@ -153,66 +153,54 @@ func TestTSum(t *testing.T) {
 	assert.NotNil(err)
 }
 
-func TestTsum(t *testing.T) {
-	assert := assert.New(t)
-	var T, T2 *Tensor
-	var expectedShape types.Shape
-	var expectedData []float64
+var sumTests = []struct {
+	name  string
+	shape types.Shape
+	axis  int
 
-	T = NewTensor(WithShape(2, 2), WithBacking(RangeFloat64(0, 4)))
+	correctShape types.Shape
+	correctData  []float64
+}{
+	// vector
+	{"v.sum(0)", types.Shape{5}, 0, types.ScalarShape(), []float64{10}},
+	{"c.sum(0)", types.Shape{5, 1}, 0, types.ScalarShape(), []float64{10}},
+	{"c.sum(1)", types.Shape{5, 1}, 1, types.ScalarShape(), []float64{10}},
+	{"r.sum(0)", types.Shape{5, 1}, 0, types.ScalarShape(), []float64{10}},
+	{"r.sum(1)", types.Shape{1, 5}, 1, types.ScalarShape(), []float64{10}},
 
-	T2 = T.sum(0)
-	expectedShape = types.Shape{2}
-	expectedData = []float64{2, 4}
+	// matrix
+	{"m.sum(0)", types.Shape{2, 2}, 0, types.Shape{2}, []float64{2, 4}},
+	{"m.sum(1)", types.Shape{2, 2}, 1, types.Shape{2}, []float64{1, 5}},
 
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	T2 = T.sum(1)
-	expectedShape = types.Shape{2}
-	expectedData = []float64{1, 5}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	/* 3D tensor */
-
-	T = NewTensor(WithShape(5, 3, 6), WithBacking(RangeFloat64(0, 5*3*6)))
-
-	T2 = T.sum(0)
-	expectedShape = types.Shape{3, 6}
-	expectedData = []float64{
+	// 3Tensor
+	{"3T.sum(0)", types.Shape{5, 3, 6}, 0, types.Shape{3, 6}, []float64{
 		180, 185, 190, 195, 200, 205,
 		210, 215, 220, 225, 230, 235,
 		240, 245, 250, 255, 260, 265,
-	}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	T2 = T.sum(1)
-	expectedShape = types.Shape{5, 6}
-	expectedData = []float64{
+	}},
+	{"3T.sum(1)", types.Shape{5, 3, 6}, 1, types.Shape{5, 6}, []float64{
 		18, 21, 24, 27, 30, 33,
 		72, 75, 78, 81, 84, 87,
 		126, 129, 132, 135, 138, 141,
 		180, 183, 186, 189, 192, 195,
 		234, 237, 240, 243, 246, 249,
-	}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	T2 = T.sum(2)
-	expectedShape = types.Shape{5, 3}
-	expectedData = []float64{
+	}},
+	{"3T.sum(2)", types.Shape{5, 3, 6}, 2, types.Shape{5, 3}, []float64{
 		15, 51, 87,
 		123, 159, 195,
 		231, 267, 303,
 		339, 375, 411,
 		447, 483, 519,
-	}
+	}},
+}
 
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+func TestTsum(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+	for _, sts := range sumTests {
+		T = NewTensor(WithShape(sts.shape...), WithBacking(RangeFloat64(0, sts.shape.TotalSize())))
+		T2 = T.sum(sts.axis)
+		assert.True(sts.correctShape.Eq(T2.Shape()), "Test %v - Correct shape is %v. Got %v", sts.name, sts.correctShape, T2.Shape())
+		assert.Equal(sts.correctData, T2.data, "Test %v - wrong data", sts.name)
+	}
 }
