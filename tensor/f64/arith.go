@@ -80,6 +80,32 @@ func sum(a []float64) float64 {
 	return reduce(add, float64(0), a...)
 }
 
+// caveat : default value is used
+func sliceMax(a []float64) (retVal float64) {
+	for _, v := range a {
+		if v > retVal {
+			retVal = v
+		}
+	}
+	return
+}
+
+func vecMax(a, b []float64) {
+	if len(a) != len(b) {
+		panic("Index error")
+	}
+
+	a = a[:len(a)]
+	b = b[:len(a)]
+
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+}
+
 /* FUNCTION VARIABLES */
 
 var (

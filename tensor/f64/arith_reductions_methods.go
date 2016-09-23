@@ -235,6 +235,66 @@ func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
 	return nil, nil
 }
 
-func (t *Tensor) max(along int) (retVal *Tensor) {
-	return nil
+func (t *Tensor) max(axis int) (retVal *Tensor) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape types.Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = NewTensor(WithShape(newShape...))
+
+	size := t.Shape()[axis]
+	switch axis {
+	case 0:
+		// most efficient
+		split := len(t.data) / size
+		copy(retVal.data[0:split], t.data[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			vecMax(retVal.data, t.data[start:start+split])
+			start += split
+		}
+	case len(t.Shape()) - 1:
+		// second most efficient
+		var at int
+		for start := 0; start <= len(t.data)-size; start += size {
+			s := sliceMax(t.data[start : start+size])
+			retVal.data[at] = s
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			data := t.data[start : start+outerStride]
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					if data[readFrom] > retVal.data[writeTo] {
+						retVal.data[writeTo] = data[readFrom]
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return
 }
