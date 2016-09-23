@@ -8,7 +8,7 @@ import "github.com/chewxy/gorgonia/tensor/types"
 // Materialize takes a view, copies its data and puts it in a new *Tensor.
 // The reason why it returns a types.Tensor is to fulfil the types.Tensor interface. Not ideal, I know, but for now it works
 func (t *Tensor) Materialize() (retVal types.Tensor) {
-	if t.viewOf == nil && t.old == nil {
+	if !t.IsMaterializable() {
 		return t
 	}
 

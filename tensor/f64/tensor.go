@@ -235,6 +235,14 @@ func (t *Tensor) Size() int          { return t.Shape().TotalSize() }
 func (t *Tensor) DataSize() int      { return len(t.data) }
 
 func (t *Tensor) Reshape(dims ...int) error {
+	if t.viewOf != nil {
+		return notyetimplemented("Reshape", "views")
+	}
+
+	if t.old != nil {
+		return notyetimplemented("Reshape", "transposes")
+	}
+
 	t.Unlock()
 	t.SetShape(dims...)
 	t.Lock()
@@ -316,8 +324,14 @@ func (t *Tensor) borrowClone() *Tensor {
 	return retVal
 }
 
+//  IsView indicates if the Tensor is a view of another (typically from slicing)
 func (t *Tensor) IsView() bool {
 	return t.viewOf != nil
+}
+
+// IsMaterializeable() indicates if the Tensor is materializable - if it has either gone through some transforms or slicing
+func (t *Tensor) IsMaterializable() bool {
+	return t.viewOf != nil || t.old != nil
 }
 
 /* Misc public API */

@@ -75,15 +75,21 @@ func Add(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	// safe
 	case safe && atok && btok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecAdd(at.data, bt.data, retVal.data)
 	case safe && atok && bfok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecTrans(bf, at.data, retVal.data)
 	case safe && afok && btok:
 		retVal = newBorrowedTensor(len(bt.data))
-		retVal.setShape(bt.Shape()...)
+		if err = retVal.Reshape(bt.Shape()...); err != nil {
+			return
+		}
 		safeVecTrans(af, bt.data, retVal.data)
 
 	// unsafe
@@ -174,15 +180,21 @@ func Sub(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	// safe
 	case safe && atok && btok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecSub(at.data, bt.data, retVal.data)
 	case safe && atok && bfok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecTrans(-bf, at.data, retVal.data)
 	case safe && afok && btok:
 		retVal = newBorrowedTensor(len(bt.data))
-		retVal.setShape(bt.Shape()...)
+		if err = retVal.Reshape(bt.Shape()...); err != nil {
+			return
+		}
 		safeVecTransFrom(af, bt.data, retVal.data)
 
 	// unsafe
@@ -265,15 +277,21 @@ func PointwiseMul(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err 
 	// safe
 	case safe && atok && btok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecMul(at.data, bt.data, retVal.data)
 	case safe && atok && bfok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecScale(bf, at.data, retVal.data)
 	case safe && afok && btok:
 		retVal = newBorrowedTensor(len(bt.data))
-		retVal.setShape(bt.Shape()...)
+		if err = retVal.Reshape(bt.Shape()...); err != nil {
+			return
+		}
 		safeVecScale(af, bt.data, retVal.data)
 
 	// unsafe
@@ -356,15 +374,21 @@ func PointwiseDiv(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err 
 	// safe
 	case safe && atok && btok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecDiv(at.data, bt.data, retVal.data)
 	case safe && atok && bfok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecScale(float64(1)/bf, at.data, retVal.data)
 	case safe && afok && btok:
 		retVal = newBorrowedTensor(len(bt.data))
-		retVal.setShape(bt.Shape()...)
+		if err = retVal.Reshape(bt.Shape()...); err != nil {
+			return
+		}
 		safeVecDivBy(af, bt.data, retVal.data)
 
 	// unsafe
@@ -447,15 +471,21 @@ func PointwisePow(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err 
 	// safe
 	case safe && atok && btok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecPow(at.data, bt.data, retVal.data)
 	case safe && atok && bfok:
 		retVal = newBorrowedTensor(len(at.data))
-		retVal.setShape(at.Shape()...)
+		if err = retVal.Reshape(at.Shape()...); err != nil {
+			return
+		}
 		safeVecPower(bf, at.data, retVal.data)
 	case safe && afok && btok:
 		retVal = newBorrowedTensor(len(bt.data))
-		retVal.setShape(bt.Shape()...)
+		if err = retVal.Reshape(bt.Shape()...); err != nil {
+			return
+		}
 		safeVecPowerFrom(af, bt.data, retVal.data)
 
 	// unsafe
