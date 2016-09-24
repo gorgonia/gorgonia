@@ -162,7 +162,7 @@ Matrix (3, 3) [3 1]
 	var V *Tensor
 	var err error
 
-	V, err = T.Slice(rangedSlice{1, 2})
+	V, err = T.Slice(rs{1, 2, 1})
 	if err != nil {
 		t.Error(err)
 	}
@@ -176,7 +176,7 @@ Matrix (3, 2) [2 1]
 	assert.Equal(expected, res, res)
 
 	// T[:, 1]
-	V, err = T.Slice(nil, singleSlice(1))
+	V, err = T.Slice(nil, ss(1))
 	res = fmt.Sprintf("\n%+s", V)
 	expected = `
 Matrix (2, 2) [6 1]
@@ -186,28 +186,28 @@ Matrix (2, 2) [6 1]
 	assert.Equal(expected, res, res)
 
 	// T[1, :, 1]
-	V, err = T.Slice(singleSlice(1), nil, singleSlice(1))
+	V, err = T.Slice(ss(1), nil, ss(1))
 	if err != nil {
 		t.Error(err)
 	}
-	expected = `Vector (3, 1) [2]
-C[ 111  1001  1011]`
+	expected = `Vector (3) [2]
+[ 111  1001  1011]`
 	res = fmt.Sprintf("%+b", V)
 	assert.Equal(expected, res)
 
 	// T[1, 1, 1] - will result in a scalar
-	V, err = T.Slice(singleSlice(1), singleSlice(1), singleSlice(1))
+	V, err = T.Slice(ss(1), ss(1), ss(1))
 	if err != nil {
 		t.Error(err)
 	}
 
 	// on regular matrices
 	T = NewTensor(WithShape(3, 5), WithBacking(RangeInt(0, 3*5)))
-	V, err = T.Slice(singleSlice(1))
+	V, err = T.Slice(ss(1))
 	if err != nil {
 		t.Error(err)
 	}
-	expected = `R[  5    6    7    8    9]`
+	expected = `[  5    6    7    8    9]`
 	res = fmt.Sprintf("%v", V)
 	assert.Equal(expected, res)
 

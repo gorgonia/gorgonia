@@ -42,9 +42,9 @@ func (t *Tensor) Apply(fn func(int) int, opts ...types.FuncOpt) (retVal *Tensor,
 			res[i] += fn(v)
 		}
 	case t.viewOf != nil && !incr:
-		it := newIterator(t)
+		it := types.NewFlatIterator(t.AP)
 		var next int
-		for next, err = it.next(); err == nil; next, err = it.next() {
+		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			if _, noop := err.(NoOpError); !noop {
 				return
 			}
@@ -52,9 +52,9 @@ func (t *Tensor) Apply(fn func(int) int, opts ...types.FuncOpt) (retVal *Tensor,
 			res[next] = fn(res[next])
 		}
 	case t.viewOf != nil && incr:
-		it := newIterator(t)
+		it := types.NewFlatIterator(t.AP)
 		var next int
-		for next, err = it.next(); err == nil; next, err = it.next() {
+		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			if _, noop := err.(NoOpError); !noop {
 				return
 			}
@@ -424,9 +424,10 @@ func (t *Tensor) Slice(slices ...types.Slice) (view *Tensor, err error) {
 	var ndStart int
 	ndEnd := len(t.data)
 
-	newShape := t.Shape().Clone()
-	opDims := len(t.Shape())
-	dims := t.Dims()
+	newShape := t.Shape().Clone()     // the new shape
+	opDims := len(t.Shape())          // operational dimensions
+	dims := t.Dims()                  // reported dimensions
+	newStrides := make([]int, opDims) // the new strides
 
 	for i := 0; i < opDims; i++ {
 		var sl types.Slice
@@ -439,60 +440,59 @@ func (t *Tensor) Slice(slices ...types.Slice) (view *Tensor, err error) {
 		var stride int
 		if dims < opDims && t.IsVector() {
 			// handles non-vanilla vectors
-			stride = 1
+			stride = t.ostrides()[0]
 		} else {
 			stride = t.ostrides()[i]
 		}
 
-		var start, end int
+		var start, end, step int
 		// a nil slice is equivalent to [:]
 		if sl == nil {
 			start = 0
 			end = size
+			step = 1
 		} else {
 			start = sl.Start()
 			end = sl.End()
+			step = sl.Step()
 
-			if start < 0 {
-				err = types.NewError(types.IndexError, "Slice %d has a Start value of %d, which is an impossible start value", i, start)
+			if err = types.CheckSlice(sl, size); err != nil {
 				return
 			}
 
 			if end > size {
-				err = types.NewError(types.IndexError, "Slice %d has a End value of %d, which is greater than the size, %d", i, end, size)
-				return
+				end = size
 			}
-
-			// sanitize starts and ends instead of erroring out above?
-			/*
-				if start < 0 {
-					start = 0
-				}
-				if end > size {
-					end = size
-				}
-			*/
 		}
 
 		// a slice where start == end is []
 		ndStart = ndStart + start*stride
 		ndEnd = ndEnd - (size-end)*stride
-		newShape[i] = end - start
+		if step > 0 {
+			newShape[i] = (end - start) / step
+			newStrides[i] = stride * step
+
+			//fix
+			if newShape[i] <= 0 {
+				newShape[i] = 1
+			}
+		} else {
+			newShape[i] = (end - start)
+			newStrides[i] = stride
+		}
 	}
 
 	var newAP *types.AP
-
-	// scalars are a special case
 	if ndEnd-ndStart == 1 {
+		// scalars are a special case
 		newAP = new(types.AP)
 		newAP.SetShape() // make it a Scalar
 		newAP.Lock()
 	} else {
-		newStrides := t.oshape().CalcStrides()
 
 		// drop any dimension with size 1, except the last dimension
 		for d := 0; d < dims; d++ {
-			if newShape[d] == 1 /*&& d != t.dims-1 */ && dims > 2 {
+			if newShape[d] == 1 /*&& d != t.dims-1  && dims > 2*/ {
 				newShape = append(newShape[:d], newShape[d+1:]...)
 				newStrides = append(newStrides[:d], newStrides[d+1:]...)
 				d--
@@ -503,8 +503,6 @@ func (t *Tensor) Slice(slices ...types.Slice) (view *Tensor, err error) {
 		//fix up strides
 		if newShape.IsColVec() {
 			newStrides = []int{newStrides[0]}
-		} else if newShape.IsRowVec() {
-			newStrides = []int{1}
 		}
 
 		newAP = types.NewAP(newShape, newStrides)

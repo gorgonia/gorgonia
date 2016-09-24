@@ -96,123 +96,315 @@ func TestTreduce(t *testing.T) {
 	expectedData = []int{0, 60}
 	assert.Equal(expectedShape, T2.Shape())
 	assert.Equal(expectedData, T2.data)
+
+	// idiotsville
+
+	_, err = T.Reduce(add, 5, 10)
+	assert.NotNil(err)
+}
+
+var sumTests = []struct {
+	name  string
+	shape types.Shape
+	axis  int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	// vector
+	{"v.sum(0)", types.Shape{5}, 0, types.ScalarShape(), []int{10}},
+	{"c.sum(0)", types.Shape{5, 1}, 0, types.ScalarShape(), []int{10}},
+	{"c.sum(1)", types.Shape{5, 1}, 1, types.Shape{5}, []int{0, 1, 2, 3, 4}},
+	{"r.sum(0)", types.Shape{5, 1}, 0, types.ScalarShape(), []int{10}},
+	{"r.sum(1)", types.Shape{1, 5}, 1, types.ScalarShape(), []int{10}},
+
+	// matrix
+	{"A.sum(0)", types.Shape{2, 2}, 0, types.Shape{2}, []int{2, 4}},
+	{"A.sum(1)", types.Shape{2, 2}, 1, types.Shape{2}, []int{1, 5}},
+
+	// 3Tensor
+	{"3T.sum(0)", types.Shape{5, 3, 6}, 0, types.Shape{3, 6}, []int{
+		180, 185, 190, 195, 200, 205,
+		210, 215, 220, 225, 230, 235,
+		240, 245, 250, 255, 260, 265,
+	}},
+	{"3T.sum(1)", types.Shape{5, 3, 6}, 1, types.Shape{5, 6}, []int{
+		18, 21, 24, 27, 30, 33,
+		72, 75, 78, 81, 84, 87,
+		126, 129, 132, 135, 138, 141,
+		180, 183, 186, 189, 192, 195,
+		234, 237, 240, 243, 246, 249,
+	}},
+	{"3T.sum(2)", types.Shape{5, 3, 6}, 2, types.Shape{5, 3}, []int{
+		15, 51, 87,
+		123, 159, 195,
+		231, 267, 303,
+		339, 375, 411,
+		447, 483, 519,
+	}},
+}
+
+func TestTsum(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+	for _, sts := range sumTests {
+		T = NewTensor(WithShape(sts.shape...), WithBacking(RangeInt(0, sts.shape.TotalSize())))
+		T2 = T.sum(sts.axis)
+		assert.True(sts.correctShape.Eq(T2.Shape()), "Test %v - Correct shape is %v. Got %v", sts.name, sts.correctShape, T2.Shape())
+		assert.Equal(sts.correctData, T2.data, "Test %v - wrong data", sts.name)
+	}
+
+	// scalar
+	T = NewTensor(AsScalar(int(5)))
+	T2 = T.sum(0)
+	assert.True(types.ScalarShape().Eq(T2.Shape()))
+	assert.Equal(int(5), T.data[0])
+}
+
+var SumTests = []struct {
+	name  string
+	along []int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	{"common case: T.Sum()", []int{}, types.ScalarShape(), []int{15}},
+	{"A.Sum(0)", []int{0}, types.Shape{3}, []int{3, 5, 7}},
+	{"A.Sum(1)", []int{1}, types.Shape{2}, []int{3, 12}},
+	{"A.Sum(0,1)", []int{0, 1}, types.ScalarShape(), []int{15}},
+	{"A.Sum(1,0)", []int{1, 0}, types.ScalarShape(), []int{15}},
 }
 
 func TestTSum(t *testing.T) {
 	assert := assert.New(t)
 	var T, T2 *Tensor
 	var err error
-	var expectedShape types.Shape
-	var expectedData []int
 
-	// Most common use (don't sum along any axis)
-	T = NewTensor(WithShape(2, 2), WithBacking(RangeInt(0, 4)))
-	T2, err = T.Sum()
-	if err != nil {
-		t.Error(err)
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeInt(0, 6)))
+	for _, sts := range SumTests {
+		if T2, err = T.Sum(sts.along...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(T2.Shape()), "Test %v. Correct shape is %v. Got %v", sts.name, sts.correctShape, T2.Shape())
+		assert.Equal(sts.correctData, T2.data, "Test %v - wrong data", sts.name)
 	}
-	expectedShape = types.ScalarShape()
-	expectedData = []int{6}
-	assert.Equal(expectedData, T2.data)
-	assert.True(expectedShape.Eq(T2.Shape()))
-
-	// sum along one axis (see TestTsum for more specific axis related testing)
-	T2, err = T.Sum(0)
-	if err != nil {
+	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeInt(0, 24)))
+	if T2, err = T.Sum(1, 2); err != nil {
 		t.Error(err)
+		goto idiots
 	}
+	assert.True(types.Shape{2}.Eq(T2.Shape()), "3T.Max(1,2) error: Correct shape is (2). Got %v", T.Shape())
+	assert.Equal([]int{66, 210}, T2.data)
 
-	expectedShape = types.Shape{2}
-	expectedData = []int{2, 4}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// Sum along multiple axis
-	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeInt(0, 2*3*4)))
-	T2, err = T.Sum(1, 2)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expectedShape = types.Shape{2}
-	expectedData = []int{66, 210}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// Sum along multiple axes, but larger axis first. Should have the same result as prev
-	T2, err = T.Sum(2, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
+idiots:
 	/* IDIOT TESTING TIME */
 	_, err = T.Sum(3)
 	assert.NotNil(err)
 }
 
-func TestTsum(t *testing.T) {
+var maxTests = []struct {
+	name   string
+	shape  types.Shape
+	modify []int
+	axis   int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	// vector
+	{"v.max(0)", types.Shape{5}, []int{0, 3}, 0, types.ScalarShape(), []int{2000}},
+	{"c.max(0)", types.Shape{5, 1}, []int{0, 3}, 0, types.ScalarShape(), []int{2000}},
+	{"c.max(1)", types.Shape{5, 1}, []int{0, 3}, 1, types.Shape{5}, []int{1000, 1, 2, 2000, 4}},
+	{"r.max(0)", types.Shape{1, 5}, []int{0, 3}, 0, types.Shape{5}, []int{1000, 1, 2, 2000, 4}},
+	{"r.max(1)", types.Shape{1, 5}, []int{0, 3}, 1, types.ScalarShape(), []int{2000}},
+
+	// matrix
+	{"A.max(0)", types.Shape{2, 3}, []int{0, 4}, 0, types.Shape{3}, []int{1000, 2000, 5}},
+	{"A.max(1)", types.Shape{2, 3}, []int{0, 4}, 1, types.Shape{2}, []int{1000, 2000}},
+
+	//3T
+	{"3T.max(0)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 0, types.Shape{3, 4}, []int{
+		1000, 2000, 14, 15,
+		16, 17, 3000, 4000,
+		20, 21, 22, 23,
+	}},
+
+	{"3T.max(1)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 1, types.Shape{2, 4}, []int{
+		1000, 9, 3000, 11,
+		20, 2000, 22, 4000,
+	}},
+
+	{"3T.max(2)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 2, types.Shape{2, 3}, []int{
+		1000, 3000, 11,
+		2000, 4000, 23,
+	}},
+}
+
+func TestTmax(t *testing.T) {
 	assert := assert.New(t)
 	var T, T2 *Tensor
-	var expectedShape types.Shape
-	var expectedData []int
 
-	T = NewTensor(WithShape(2, 2), WithBacking(RangeInt(0, 4)))
-
-	T2 = T.sum(0)
-	expectedShape = types.Shape{2}
-	expectedData = []int{2, 4}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	T2 = T.sum(1)
-	expectedShape = types.Shape{2}
-	expectedData = []int{1, 5}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	/* 3D tensor */
-
-	T = NewTensor(WithShape(5, 3, 6), WithBacking(RangeInt(0, 5*3*6)))
-
-	T2 = T.sum(0)
-	expectedShape = types.Shape{3, 6}
-	expectedData = []int{
-		180, 185, 190, 195, 200, 205,
-		210, 215, 220, 225, 230, 235,
-		240, 245, 250, 255, 260, 265,
+	for _, mts := range maxTests {
+		T = NewTensor(WithShape(mts.shape...), WithBacking(RangeInt(0, mts.shape.TotalSize())))
+		for i, ind := range mts.modify {
+			T.data[ind] = int((i + 1) * 1000)
+		}
+		T2 = T.max(mts.axis)
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v - Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
 	}
 
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+	// scalar
+	T = NewTensor(AsScalar(int(5)))
+	T2 = T.max(0)
+	assert.True(types.ScalarShape().Eq(T2.Shape()))
+	assert.Equal(int(5), T.data[0])
+}
 
-	T2 = T.sum(1)
-	expectedShape = types.Shape{5, 6}
-	expectedData = []int{
-		18, 21, 24, 27, 30, 33,
-		72, 75, 78, 81, 84, 87,
-		126, 129, 132, 135, 138, 141,
-		180, 183, 186, 189, 192, 195,
-		234, 237, 240, 243, 246, 249,
+var MaxTests = []struct {
+	name  string
+	along []int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	{"common case: T.Max()", []int{}, types.ScalarShape(), []int{1000}},
+	{"A.Max(0)", []int{0}, types.Shape{3}, []int{1000, 4, 5}},
+	{"A.Max(1)", []int{1}, types.Shape{2}, []int{1000, 5}},
+	{"A.Max(0,1)", []int{0, 1}, types.ScalarShape(), []int{1000}},
+	{"A.Max(1,0)", []int{1, 0}, types.ScalarShape(), []int{1000}},
+}
+
+func TestTMax(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+	var err error
+
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeInt(0, 6)))
+	T.data[0] = 1000
+	for _, mts := range MaxTests {
+		if T2, err = T.Max(mts.along...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v. Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
 	}
 
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeInt(0, 24)))
+	if T2, err = T.Max(1, 2); err != nil {
+		t.Error(err)
+		goto idiots
+	}
+	assert.True(types.Shape{2}.Eq(T2.Shape()), "3T.Max(1,2) error: Correct shape is (2). Got %v", T.Shape())
+	assert.Equal([]int{11, 23}, T2.data)
 
-	T2 = T.sum(2)
-	expectedShape = types.Shape{5, 3}
-	expectedData = []int{
-		15, 51, 87,
-		123, 159, 195,
-		231, 267, 303,
-		339, 375, 411,
-		447, 483, 519,
+idiots:
+	/* IDIOT TESTING TIME */
+	_, err = T.Max(5)
+	assert.NotNil(err)
+}
+
+var minTests = []struct {
+	name   string
+	shape  types.Shape
+	modify []int
+	axis   int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	// vector
+	{"v.min(0)", types.Shape{5}, []int{0, 3}, 0, types.ScalarShape(), []int{-2000}},
+	{"c.min(0)", types.Shape{5, 1}, []int{0, 3}, 0, types.ScalarShape(), []int{-2000}},
+	{"c.min(1)", types.Shape{5, 1}, []int{0, 3}, 1, types.Shape{5}, []int{-1000, 1, 2, -2000, 4}},
+	{"r.min(0)", types.Shape{1, 5}, []int{0, 3}, 0, types.Shape{5}, []int{-1000, 1, 2, -2000, 4}},
+	{"r.min(1)", types.Shape{1, 5}, []int{0, 3}, 1, types.ScalarShape(), []int{-2000}},
+
+	// matrix
+	{"A.min(0)", types.Shape{2, 3}, []int{0, 4}, 0, types.Shape{3}, []int{-1000, -2000, 2}},
+	{"A.min(1)", types.Shape{2, 3}, []int{0, 4}, 1, types.Shape{2}, []int{-1000, -2000}},
+
+	//3T
+	{"3T.min(0)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 0, types.Shape{3, 4}, []int{
+		-1000, -2000, 2, 3,
+		4, 5, -3000, -4000,
+		8, 9, 10, 11,
+	}},
+
+	{"3T.min(1)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 1, types.Shape{2, 4}, []int{
+		-1000, 1, -3000, 3,
+		12, -2000, 14, -4000,
+	}},
+
+	{"3T.min(2)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 2, types.Shape{2, 3}, []int{
+		-1000, -3000, 8,
+		-2000, -4000, 20,
+	}},
+}
+
+func TestTmin(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+
+	for _, mts := range minTests {
+		T = NewTensor(WithShape(mts.shape...), WithBacking(RangeInt(0, mts.shape.TotalSize())))
+		for i, ind := range mts.modify {
+			T.data[ind] = int((i + 1) * -1000)
+		}
+		T2 = T.min(mts.axis)
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v - Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
 	}
 
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+	// scalar
+	T = NewTensor(AsScalar(int(5)))
+	T2 = T.min(0)
+	assert.True(types.ScalarShape().Eq(T2.Shape()))
+	assert.Equal(int(5), T.data[0])
+}
+
+var MinTests = []struct {
+	name  string
+	along []int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	{"common case: T.Min()", []int{}, types.ScalarShape(), []int{-1000}},
+	{"A.Min(0)", []int{0}, types.Shape{3}, []int{-1000, 1, 2}},
+	{"A.Min(1)", []int{1}, types.Shape{2}, []int{-1000, 3}},
+	{"A.Min(0,1)", []int{0, 1}, types.ScalarShape(), []int{-1000}},
+	{"A.Min(1,0)", []int{1, 0}, types.ScalarShape(), []int{-1000}},
+}
+
+func TestTMin(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+	var err error
+
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeInt(0, 6)))
+	T.data[0] = -1000
+	for _, mts := range MinTests {
+		if T2, err = T.Min(mts.along...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v. Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
+	}
+
+	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeInt(0, 24)))
+	if T2, err = T.Min(1, 2); err != nil {
+		t.Error(err)
+		goto idiots
+	}
+	assert.True(types.Shape{2}.Eq(T2.Shape()), "3T.Min(1,2) error: Correct shape is (2). Got %v", T.Shape())
+	assert.Equal([]int{0, 12}, T2.data)
+
+idiots:
+	/* IDIOT TESTING TIME */
+	_, err = T.Min(5)
+	assert.NotNil(err)
 }

@@ -152,10 +152,10 @@ func (t *Tensor) Format(state fmt.State, c rune) {
 				}
 			}
 		case t.viewOf != nil:
-			it := newIterator(t)
+			it := types.NewFlatIterator(t.AP)
 			var c, i int
 			var err error
-			for i, err = it.next(); err == nil; i, err = it.next() {
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
 
 				buf = strconv.AppendInt(buf[:0], int64(t.data[i]), base)
 				state.Write(buf)
@@ -189,104 +189,129 @@ func (t *Tensor) Format(state fmt.State, c rune) {
 		return
 	}
 
-	var rowStride int
-	var colStride int
-	switch {
-	case t.IsColVec():
-		if t.Strides()[0] != 1 {
-			colStride = t.Strides()[0]
-		} else {
-			colStride = 1
-		}
-		rowStride = len(t.data)
-	case t.IsRowVec():
-		colStride = 1
-		rowStride = len(t.data)
-	case t.IsVector() && !t.IsColVec() && !t.IsColVec():
-		colStride = 1
-		rowStride = len(t.data)
-	default:
-		rowStride = t.Strides()[t.Dims()-2]
-		colStride = t.Strides()[t.Dims()-1]
-	}
+	const (
+		matFirstStart = "⎡"
+		matFirstEnd   = "⎤\n"
+		matLastStart  = "⎣"
+		matLastEnd    = "⎦\n"
+		rowStart      = "⎢"
+		rowEnd        = "⎥\n"
+		vecStart      = "["
+		vecEnd        = "]"
+		colVecStart   = "C["
+		rowVecStart   = "R["
+	)
 
-	first := true
+	it := types.NewFlatIterator(t.AP)
+	coord := it.Coord()
+	firstRow := true
+	firstVal := true
+	var lastRow, lastCol int
 
-	var last string
-	for row := 0; row*rowStride < len(t.data); row++ {
-		switch {
-		case t.IsColVec():
-			fmt.Fprintf(state, "C[")
-			last = "]"
-		case t.IsRowVec():
-			fmt.Fprintf(state, "R[")
-			last = "]"
-		case t.IsVector() && !t.IsColVec() && !t.IsRowVec():
-			fmt.Fprintf(state, "[")
-			last = "]"
-		case first:
-			fmt.Fprintf(state, "⎡")
-			last = "⎤\n"
-			first = false
-		case ((row+1)%rows == 0):
-			fmt.Fprint(state, "⎣")
-
-			var lastBuf bytes.Buffer
-			lastBuf.WriteString("⎦\n")
-			for i := t.Dims(); i > 2; i-- {
-				lastBuf.WriteString("\n") // one new newline for each dimension above 2
-			}
-			if t.Dims() > 2 {
-				first = true
-			}
-
-			last = lastBuf.String()
-		default:
-			fmt.Fprintf(state, "⎢")
-			last = "⎥\n"
+	for next, err := it.Next(); err == nil; next, err = it.Next() {
+		var col, row int
+		row = lastRow
+		col = lastCol
+		if rows > printedRows && row > printedRows/2 && row < rows-printedRows/2 {
+			continue
 		}
 
-		if cols > printedCols {
-			for col := 0; col < printedCols/2; col++ {
-				idx := row*rowStride + col*colStride
-				v := t.data[idx]
-				buf = strconv.AppendInt(buf[:0], int64(v), base)
+		if firstVal {
+			if firstRow {
+				switch {
+				case t.IsColVec():
+					fmt.Fprintf(state, colVecStart)
+				case t.IsRowVec():
+					fmt.Fprintf(state, rowVecStart)
+				case t.IsVector():
+					fmt.Fprintf(state, vecStart)
+				default:
+					fmt.Fprintf(state, matFirstStart)
+				}
 
-				state.Write(pad[:width-len(buf)]) // prepad
-				state.Write(buf)                  // write the number
-				state.Write(pad[:2])              // pad with a space
+			} else {
+				var matLastRow bool
+				if !t.IsVector() {
+					matLastRow = coord[len(coord)-2] == rows-1
+				}
+				if matLastRow {
+					fmt.Fprintf(state, matLastStart)
+				} else {
+					fmt.Fprintf(state, rowStart)
+				}
 			}
+			firstVal = false
+		}
+
+		// actual printing of the value
+		if cols <= printedCols || (col < printedCols/2 || (col >= cols-printedCols/2)) {
+			v := t.data[next]
+			buf = strconv.AppendInt(buf[:0], int64(v), base)
+			state.Write(pad[:width-len(buf)]) // prepad
+			state.Write(buf)                  // write the number
+			if col < cols-1 {                 // pad with a space
+				state.Write(pad[:2])
+			}
+		} else if col == printedCols/2 {
 			fmt.Fprintf(state, hElision)
-			for col := cols - (printedCols / 2); col < cols; col++ {
-				idx := row*rowStride + col*colStride
-				v := t.data[idx]
+		}
 
-				buf = strconv.AppendInt(buf[:0], int64(v), base)
-				state.Write(pad[:width-len(buf)])
-				state.Write(buf)
-				if col < cols-1 {
-					state.Write(pad[:2])
+		// done printing
+
+		// end of row checks
+		if col == cols-1 {
+			eom := row == rows-1
+			switch {
+			case t.IsVector():
+				fmt.Fprintf(state, vecEnd)
+				return
+			case firstRow:
+				fmt.Fprintf(state, matFirstEnd)
+			case eom:
+				fmt.Fprintf(state, matLastEnd)
+				if t.IsMatrix() {
+					return
 				}
+
+				// one newline for every dimension above 2
+				for i := t.Dims(); i > 2; i-- {
+					fmt.Fprintf(state, "\n")
+				}
+
+			default:
+				fmt.Fprintf(state, rowEnd)
 			}
-		} else {
-			for col := 0; col < cols; col++ {
-				idx := row*rowStride + col*colStride
-				v := t.data[idx]
-				buf = strconv.AppendInt(buf[:0], int64(v), base)
-				state.Write(pad[:width-len(buf)])
-				state.Write(buf)
 
-				if col < cols-1 {
-					state.Write(pad[:2])
-				}
+			if firstRow {
+				firstRow = false
+			}
+
+			if eom {
+				firstRow = true
+			}
+
+			firstVal = true
+
+			// figure out elision
+			if rows > printedRows && row+1 == printedRows/2 {
+				coord[len(coord)-2] = rows - (printedRows / 2) //ooh dangerous... modiftying the coordinates!
+				fmt.Fprintf(state, vElision)
 			}
 		}
 
-		fmt.Fprintf(state, last)
-
-		if rows > printedRows && row+1 == printedRows/2 {
-			row = rows - (printedRows / 2) - 1
-			fmt.Fprintf(state, vElision)
+		// cleanup
+		switch {
+		case t.IsRowVec():
+			lastRow = coord[len(coord)-2]
+			lastCol = coord[len(coord)-1]
+		case t.IsColVec():
+			lastRow = coord[len(coord)-1]
+			lastCol = coord[len(coord)-2]
+		case t.IsVector():
+			lastCol = coord[len(coord)-1]
+		default:
+			lastRow = coord[len(coord)-2]
+			lastCol = coord[len(coord)-1]
 		}
 	}
 }

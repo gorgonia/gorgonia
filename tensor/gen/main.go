@@ -56,6 +56,8 @@ var boolignores = []string{
 
 	"utils.go",
 	"utils_test.go",
+
+	"example_reduction_test.go",
 }
 
 var intignores = []string{
@@ -71,9 +73,9 @@ var replacements = map[string]map[string]string{
 	"bool": map[string]string{
 		// matop.go - incr doesn't make sense for bool
 		`	case t.viewOf != nil && incr:
-		it := newIterator(t)
+		it := types.NewFlatIterator(t.AP)
 		var next int
-		for next, err = it.next(); err == nil; next, err = it.next() {
+		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			if _, noop := err.(NoOpError); !noop {
 				return
 			}

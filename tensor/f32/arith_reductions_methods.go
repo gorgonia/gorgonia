@@ -2,6 +2,18 @@ package tensorf32
 
 import "github.com/chewxy/gorgonia/tensor/types"
 
+/*
+This file contains code that deals with the reduction of a Tensor by axis.
+
+
+All of the code in this file is structured in such a way that they're embarassingly parallel.
+This message will serve as a reminder until all the code in this file which are embarassingly parallel
+has been parallelized
+
+List of functions parallalized:
+	<crickets>
+*/
+
 // Reduce takes a function, a default value and reduces the axis using the function.
 func (t *Tensor) Reduce(f func(a, b float32) float32, def float32, axis int) (retVal *Tensor, err error) {
 	if axis >= t.Dims() {
@@ -128,18 +140,75 @@ func (t *Tensor) Reduce(f func(a, b float32) float32, def float32, axis int) (re
 	return
 }
 
-// Sum sums up the elements of the ndarray along the given axes.
-//
-// For example, if you have an ndarray that is shape (2,2):
-// 		0, 1
-//		2, 3
-// T.Sum(0) would sum across dimension 0, which is the rows, leading to this result:
-// 		2, 4
-// T.Sum(1) would sum along dimension 1, which is the columns, leading to this result:
-//		1,
-//		5
-//
-// Sum also takes multiple axes, and will essentially sum the ndarray according to the axis provided
+func (t *Tensor) reduce(axis int, zeroFn func(a, b []float32), oneFn func([]float32) float32, defFn func(a, b float32) float32) (retVal *Tensor) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape types.Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = NewTensor(WithShape(newShape...))
+	size := t.Shape()[axis]
+	switch axis {
+	case 0:
+		// most efficient
+		split := len(t.data) / size
+		copy(retVal.data[0:split], t.data[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			zeroFn(retVal.data, t.data[start:start+split])
+			start += split
+		}
+	case len(t.Shape()) - 1:
+		// second most efficient
+		var at int
+		for start := 0; start <= len(t.data)-size; start += size {
+			s := oneFn(t.data[start : start+size])
+			retVal.data[at] = s
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			data := t.data[start : start+outerStride]
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := retVal.data[writeTo]
+					b := data[readFrom]
+					if k == 0 {
+						retVal.data[writeTo] = b
+					} else {
+						retVal.data[writeTo] = defFn(a, b)
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return
+}
+
+// Sum sums up the elements of the Tensor along the given axes.
+// If multiple axes are given, then this method will sum the Tensor according the the order of the axes provided
 func (t *Tensor) Sum(along ...int) (retVal *Tensor, err error) {
 	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
 	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {
@@ -170,71 +239,74 @@ func (t *Tensor) Sum(along ...int) (retVal *Tensor, err error) {
 
 // sum does work of summing
 func (t *Tensor) sum(axis int) (retVal *Tensor) {
-	if t.IsScalar() {
-		return t
+	return t.reduce(axis, vecAdd, sum, add)
+}
+
+// Max returns the max of the elements of the tensor along the given axes.
+// If multiple axes are given, then this method will return the max of the Tensor according the the order of the axes provided
+func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
+	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
+	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {
+		ret := sliceMax(t.data)
+		retVal = NewTensor(AsScalar(ret))
+		return
 	}
-
-	var newShape types.Shape
-	for i, s := range t.Shape() {
-		if i == axis {
-			continue
+	retVal = t
+	prev := -1
+	dims := len(retVal.Shape())
+	for _, axis := range along {
+		if prev == -1 {
+			prev = axis
 		}
-		newShape = append(newShape, s)
-	}
-	retVal = NewTensor(WithShape(newShape...))
-
-	size := t.Shape()[axis]
-	switch axis {
-	case 0:
-		// most efficient
-		split := len(t.data) / size
-		copy(retVal.data[0:split], t.data[0:split])
-
-		start := split
-		for i := 0; i < size-1; i++ {
-			vecAdd(retVal.data, t.data[start:start+split])
-			start += split
+		if axis > prev {
+			axis--
 		}
-	case len(t.Shape()) - 1:
-		// second most efficient
-		var at int
-		for start := 0; start <= len(t.data)-size; start += size {
-			s := sum(t.data[start : start+size])
-			retVal.data[at] = s
-			at++
-		}
-	default:
-		outerSize := t.Shape()[0]
-		outerStride := t.Strides()[0]
-		stride := t.Strides()[axis]
-		expected := retVal.Strides()[0]
 
-		for i := 0; i < outerSize; i++ {
-			start := i * outerStride
-			data := t.data[start : start+outerStride]
-			var innerStart, strideTrack int
-			for j := 0; j < expected; j++ {
-				for k := 0; k < size; k++ {
-					readFrom := innerStart + k*stride
-					writeTo := i*expected + j
-					retVal.data[writeTo] += data[readFrom]
-				}
-				strideTrack++
-				if strideTrack >= stride {
-					strideTrack = 0
-					innerStart += stride
-				}
-				innerStart++
-			}
+		if axis >= dims {
+			err = types.DimMismatchErr(axis, retVal.Dims())
+			return
 		}
+
+		retVal = retVal.max(axis)
 	}
 	return
 }
 
-func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
-	return nil, nil
+func (t *Tensor) max(axis int) (retVal *Tensor) {
+	return t.reduce(axis, vecMax, sliceMax, max)
 }
 
-func (t *Tensor) max(along int) (retVal *Tensor) {
-	return nil
+// Min returns the max of the elements of the tensor along the given axes.
+// If multiple axes are given, then this method will return the min of the Tensor according the the order of the axes provided
+func (t *Tensor) Min(along ...int) (retVal *Tensor, err error) {
+	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
+	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {
+		ret := sliceMin(t.data)
+		retVal = NewTensor(AsScalar(ret))
+		return
+	}
+	retVal = t
+	prev := -1
+	dims := len(retVal.Shape())
+
+	for _, axis := range along {
+		if prev == -1 {
+			prev = axis
+		}
+		if axis > prev {
+			axis--
+		}
+
+		if axis >= dims {
+			err = types.DimMismatchErr(axis, retVal.Dims())
+			return
+		}
+
+		retVal = retVal.min(axis)
+	}
+	return
+}
+
+func (t *Tensor) min(axis int) (retVal *Tensor) {
+	return t.reduce(axis, vecMin, sliceMin, min)
 }

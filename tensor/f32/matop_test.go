@@ -606,294 +606,60 @@ func TestTRepeat(t *testing.T) {
 	assert.Panics(fails)
 }
 
+var sliceTests = []struct {
+	name string
+
+	shape  types.Shape
+	slices []types.Slice
+
+	correctShape  types.Shape
+	correctStride []int
+	correctData   []float32
+}{
+	{"a[0]", types.Shape{5}, []types.Slice{ss(0)}, types.ScalarShape(), nil, []float32{0}},
+	{"a[0:2]", types.Shape{5}, []types.Slice{makeRS(0, 2)}, types.Shape{2}, []int{1}, []float32{0, 1}},
+	{"a[1:5:2]", types.Shape{5}, []types.Slice{makeRS(0, 5, 2)}, types.Shape{2}, []int{2}, []float32{0, 1, 2, 3, 4}},
+
+	// colvec
+	{"c[0]", types.Shape{5, 1}, []types.Slice{ss(0)}, types.ScalarShape(), nil, []float32{0}},
+	{"c[0:2]", types.Shape{5, 1}, []types.Slice{makeRS(0, 2)}, types.Shape{2, 1}, []int{1}, []float32{0, 1}},
+	{"c[1:5:2]", types.Shape{5, 1}, []types.Slice{makeRS(0, 5, 2)}, types.Shape{2, 1}, []int{2}, []float32{0, 1, 2, 3, 4}},
+
+	// rowvec
+	{"r[0]", types.Shape{1, 5}, []types.Slice{ss(0)}, types.Shape{1, 5}, []int{1}, []float32{0, 1, 2, 3, 4}},
+	{"r[0:2]", types.Shape{1, 5}, []types.Slice{makeRS(0, 2)}, types.Shape{1, 5}, []int{1}, []float32{0, 1, 2, 3, 4}},
+	{"r[0:5:2]", types.Shape{1, 5}, []types.Slice{makeRS(0, 5, 2)}, types.Shape{1, 5}, []int{1}, []float32{0, 1, 2, 3, 4}},
+	{"r[:, 0]", types.Shape{1, 5}, []types.Slice{nil, ss(0)}, types.ScalarShape(), nil, []float32{0}},
+	{"r[:, 0:2]", types.Shape{1, 5}, []types.Slice{nil, makeRS(0, 2)}, types.Shape{1, 2}, []int{1}, []float32{0, 1}},
+	{"r[:, 1:5:2]", types.Shape{1, 5}, []types.Slice{nil, makeRS(1, 5, 2)}, types.Shape{1, 2}, []int{2}, []float32{1, 2, 3, 4}},
+
+	// matrix
+	{"A[0]", types.Shape{2, 3}, []types.Slice{ss(0)}, types.Shape{1, 3}, []int{1}, RangeFloat32(0, 3)},
+	{"A[0:10]", types.Shape{4, 5}, []types.Slice{makeRS(0, 2)}, types.Shape{2, 5}, []int{5, 1}, RangeFloat32(0, 10)},
+	{"A[0, 0]", types.Shape{4, 5}, []types.Slice{ss(0), ss(0)}, types.ScalarShape(), nil, []float32{0}},
+	{"A[0, 1:5]", types.Shape{4, 5}, []types.Slice{ss(0), makeRS(1, 5)}, types.Shape{4}, []int{1}, RangeFloat32(1, 5)},
+	{"A[0, 1:5:2]", types.Shape{4, 5}, []types.Slice{ss(0), makeRS(1, 5, 2)}, types.Shape{1, 2}, []int{2}, RangeFloat32(1, 5)},
+	{"A[:, 0]", types.Shape{4, 5}, []types.Slice{nil, ss(0)}, types.Shape{4, 1}, []int{5}, RangeFloat32(0, 16)},
+	{"A[:, 1:5]", types.Shape{4, 5}, []types.Slice{nil, makeRS(1, 5)}, types.Shape{4, 4}, []int{5, 1}, RangeFloat32(1, 20)},
+	{"A[:, 1:5:2]", types.Shape{4, 5}, []types.Slice{nil, makeRS(1, 5, 2)}, types.Shape{4, 2}, []int{5, 2}, RangeFloat32(1, 20)},
+}
+
 func TestTSlice(t *testing.T) {
 	assert := assert.New(t)
 	var T, V *Tensor
 	var err error
-	var correct []float32
-	var correctShape types.Shape
-	var correctStride []int
 
-	// slicing of vectors
-
-	// vanillavec
-	T = NewTensor(WithBacking(RangeFloat32(0, 4)), WithShape(4))
-	t.Log("T[0]")
-	if V, err = T.Slice(ss(0)); err != nil {
-		t.Error(err)
+	for _, sts := range sliceTests {
+		T = NewTensor(WithShape(sts.shape...), WithBacking(RangeFloat32(0, sts.shape.TotalSize())))
+		t.Log(sts.name)
+		if V, err = T.Slice(sts.slices...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(V.Shape()), "Test: %v - Incorrect Shape. Correct: %v. Got %v", sts.name, sts.correctShape, V.Shape())
+		assert.Equal(sts.correctStride, V.Strides(), "Test: %v - Incorrect Stride", sts.name)
+		assert.Equal(sts.correctData, V.data, "Test: %v - Incorrect Data", sts.name)
 	}
-	assert.Equal([]float32{float32(0)}, V.data)
-
-	t.Log("T[0:2]")
-	V, err = T.Slice(makeRS(0, 2))
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal([]float32{0, 1}, V.data)
-
-	// colvec
-	T = NewTensor(WithBacking(RangeFloat32(0, 4)), WithShape(4, 1))
-	t.Log("T[0]")
-	V, err = T.Slice(ss(0))
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal([]float32{float32(0)}, V.data)
-
-	t.Log("T[1:3]")
-	V, err = T.Slice(makeRS(1, 3))
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal([]float32{1, 2}, V.data)
-
-	// rowvec
-	T = NewTensor(WithBacking(RangeFloat32(0, 4)), WithShape(1, 4))
-	t.Log("T[0]")
-	if V, err = T.Slice(ss(0)); err != nil {
-		t.Error(err)
-	}
-	assert.Equal([]float32{0, 1, 2, 3}, V.data)
-
-	t.Log("T[1:3] - will Error")
-	if _, err = T.Slice(makeRS(1, 3)); err == nil {
-		t.Error("Expected an error - dimension 0 only has a size of 1")
-	}
-
-	t.Log("T[:, 1:3]")
-	if V, err = T.Slice(nil, makeRS(1, 3)); err != nil {
-		t.Error(err)
-	}
-	assert.Equal([]float32{1, 2}, V.data)
-
-	t.Log("T[0, 0]")
-	if V, err = T.Slice(ss(0), ss(0)); err != nil {
-		t.Error(err)
-	}
-	assert.Equal([]float32{float32(0)}, V.data)
-
-	// slicing of matrix
-	t.Log("SLICING MATRICES")
-
-	T = NewTensor(WithBacking(RangeFloat32(0, 12)), WithShape(3, 4))
-
-	/*
-		0,  1,  2,  3
-		4,  5,  6,  7
-		8,  9, 10, 11
-
-		should yield
-
-		0, 1, 2, 3
-		4, 5, 6, 7
-	*/
-	t.Log("T[0:2]")
-	V, err = T.Slice(makeRS(0, 2))
-	if err != nil {
-		t.Error(err)
-	}
-
-	correct = RangeFloat32(0, 8)
-	correctShape = types.Shape{2, 4}
-	correctStride = []int{4, 1}
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	/*
-		0,  1,  2,  3
-		4,  5,  6,  7
-		8,  9, 10, 11
-
-		should yield
-
-		4, 5, 6, 7
-	*/
-	t.Log("T[1]")
-	V, err = T.Slice(ss(1))
-	if err != nil {
-		t.Error(err)
-	}
-
-	correct = RangeFloat32(4, 8)
-	correctShape = types.Shape{1, 4}
-	correctStride = []int{1}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	// should be the same as above - this is more testing rangeSlice and singleSlice similarity than anything
-	t.Log("T[1:2]")
-	V, err = T.Slice(makeRS(1, 2))
-	if err != nil {
-		t.Error(err)
-	}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	/*
-		0,  1,  2,  3
-		4,  5,  6,  7
-		8,  9, 10, 11
-
-		should yield
-
-		C[2, 6, 10]
-	*/
-	t.Log("T[:, 2]")
-	V, err = T.Slice(nil, ss(2))
-	if err != nil {
-		t.Error(err)
-	}
-
-	correct = RangeFloat32(2, 11)
-	correctShape = types.Shape{3, 1}
-	correctStride = []int{4}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	/*
-		0,  1,  2,  3
-		4,  5,  6,  7
-		8,  9, 10, 11
-
-		should yield
-
-		0, 1
-		4, 5
-		8, 9
-	*/
-	t.Log("T[:, 0:2]")
-	V, err = T.Slice(nil, makeRS(0, 2))
-	if err != nil {
-		t.Error(err)
-	}
-
-	correct = RangeFloat32(0, 10)
-	correctShape = types.Shape{3, 2}
-	correctStride = []int{4, 1}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	// please put on your realD)) 3D glasses
-
-	T = NewTensor(WithBacking(RangeFloat32(0, 24)), WithShape(2, 3, 4))
-
-	/*
-		0   1   2   3
-		4   5   6   7
-		8   9  10  11
-
-		12  13  14  15
-		16  17  18  19
-		20  21  22  23
-
-		yields
-
-		13  14
-		17  18
-
-	*/
-	t.Log("T[1, 0:2, 1:3]")
-	V, err = T.Slice(ss(1), makeRS(0, 2), makeRS(1, 3))
-	if err != nil {
-		t.Error(err)
-	}
-	correct = RangeFloat32(13, 19)
-	correctShape = types.Shape{2, 2}
-	correctStride = []int{4, 1}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	/*
-		0   1   2   3
-		4   5   6   7
-		8   9  10  11
-
-		12  13  14  15
-		16  17  18  19
-		20  21  22  23
-
-		yields
-
-		17  18
-
-	*/
-	t.Log("T[1, 1, 1:3]")
-	V, err = T.Slice(makeRS(1, 2), ss(1), makeRS(1, 3))
-	if err != nil {
-		t.Error(err)
-	}
-
-	correct = RangeFloat32(17, 19)
-	correctShape = types.Shape{1, 2}
-	correctStride = []int{1}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	/*
-		0   1   2   3
-		4   5   6   7
-		8   9  10  11
-
-		12  13  14  15
-		16  17  18  19
-		20  21  22  23
-
-		yields
-
-		5    6
-
-		17  18
-
-	*/
-	t.Log("T[:, 1, 1:3]")
-	V, err = T.Slice(nil, ss(1), makeRS(1, 3))
-	if err != nil {
-		t.Error(err)
-	}
-
-	correct = RangeFloat32(5, 19)
-	correctShape = types.Shape{2, 2}
-	correctStride = []int{12, 1}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	// T[0, :, 2]
-	t.Log("T[0, :, 2]")
-	V, err = T.Slice(ss(0), nil, ss(2))
-	if err != nil {
-		t.Error(err)
-	}
-	correct = RangeFloat32(2, 11)
-	correctShape = types.Shape{3, 1}
-	correctStride = []int{4}
-
-	assert.Equal(correct, V.data)
-	assert.Equal(correctShape, V.Shape())
-	assert.Equal(correctStride, V.ostrides())
-
-	// T[0, 1, 2]
-	// willl yield a scalar
-	t.Log("T[0,1,2]")
-	V, err = T.Slice(ss(0), ss(1), ss(2))
-	if err != nil {
-		t.Error(err)
-	}
-	assert.True(V.IsScalar())
 
 	// And now, ladies and gentlemen, the idiots!
 
@@ -904,7 +670,7 @@ func TestTSlice(t *testing.T) {
 	}
 
 	// out of range sliced
-	_, err = T.Slice(makeRS(1, 5))
+	_, err = T.Slice(makeRS(20, 5))
 	if err == nil {
 		t.Error("Expected a IndexError")
 	}

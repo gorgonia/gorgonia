@@ -126,7 +126,7 @@ func I(r, c, k int) (retVal *Tensor) {
 	if end > r {
 		s, err = retVal.Slice(nil)
 	} else {
-		s, err = retVal.Slice(rs{0, end, 0})
+		s, err = retVal.Slice(rs{0, end, 1})
 	}
 	defer ReturnTensor(s)
 
@@ -134,22 +134,12 @@ func I(r, c, k int) (retVal *Tensor) {
 		panic(err)
 	}
 
-	// this method is barbaric. Probably want to write a feature update for iterator?
-	iter := newIterator(s)
-	var count, step int
-	for j, err := iter.next(); err == nil; j, err = iter.next() {
-		if count < i {
-			count++
-			continue
-		}
-		if step == 0 {
-			retVal.data[j] = int(1) //@DEFAULTONE
-		}
-		count++
-		step++
-		if step >= c+1 {
-			step = 0
-		}
+	var nexts []int
+	iter := types.NewFlatIterator(s.AP)
+	nexts, err = iter.Slice(rs{i, s.Size(), c + 1})
+
+	for _, v := range nexts {
+		s.data[v] = int(1) //@DEFAULTONE
 	}
 	return
 }
@@ -170,7 +160,13 @@ func WithBacking(a []int) consOpt {
 func WithShape(dims ...int) consOpt {
 	f := func(t *Tensor) {
 		t.setShape(dims...)
+
+		// special case for scalars
+		if len(dims) == 0 {
+			t.data = make([]int, 1)
+		}
 	}
+
 	return consOpt(f)
 }
 
@@ -245,6 +241,14 @@ func (t *Tensor) Size() int          { return t.Shape().TotalSize() }
 func (t *Tensor) DataSize() int      { return len(t.data) }
 
 func (t *Tensor) Reshape(dims ...int) error {
+	if t.viewOf != nil {
+		return notyetimplemented("Reshape", "views")
+	}
+
+	if t.old != nil {
+		return notyetimplemented("Reshape", "transposes")
+	}
+
 	t.Unlock()
 	t.SetShape(dims...)
 	t.Lock()
@@ -326,8 +330,14 @@ func (t *Tensor) borrowClone() *Tensor {
 	return retVal
 }
 
+//  IsView indicates if the Tensor is a view of another (typically from slicing)
 func (t *Tensor) IsView() bool {
 	return t.viewOf != nil
+}
+
+// IsMaterializeable() indicates if the Tensor is materializable - if it has either gone through some transforms or slicing
+func (t *Tensor) IsMaterializable() bool {
+	return t.viewOf != nil || t.old != nil
 }
 
 /* Misc public API */
