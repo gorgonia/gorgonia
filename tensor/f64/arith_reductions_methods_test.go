@@ -97,6 +97,11 @@ func TestTreduce(t *testing.T) {
 	expectedData = []float64{0, 60}
 	assert.Equal(expectedShape, T2.Shape())
 	assert.Equal(expectedData, T2.data)
+
+	// idiotsville
+
+	_, err = T.Reduce(add, 5, 10)
+	assert.NotNil(err)
 }
 
 var sumTests = []struct {

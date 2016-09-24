@@ -80,18 +80,20 @@ func sum(a []float64) float64 {
 	return reduce(add, float64(0), a...)
 }
 
-// sliceMax finds the max of a []float64. There are some gotchas with this function.
-// An ideal function design would be something like this:
-//		func sliceMax(a []float64) (retVal float64, err error)
-// where an error is returned when the slice is empty.
-// Because I'm mostly lazy there is no such checks.
+// sliceMax finds the max of a []float64. it panics if the slice is empty
 func sliceMax(a []float64) (retVal float64) {
-	for _, v := range a {
-		if v > retVal {
-			retVal = v
-		}
+	if len(a) < 1 {
+		panic("Cannot find the max of an empty slice")
 	}
-	return
+	return reduce(max, a[0], a[1:]...)
+}
+
+// sliceMin finds the max of a []float64. it panics if the slice is empty
+func sliceMin(a []float64) (retVal float64) {
+	if len(a) < 1 {
+		panic("Cannot find the min of an empty slice")
+	}
+	return reduce(min, a[0], a[1:]...)
 }
 
 // vecMax takes two slices, and compares them elementwise. The highest value is put into a
@@ -119,4 +121,18 @@ var (
 	mul = func(a, b float64) float64 { return a * b }
 	div = func(a, b float64) float64 { return a / b }
 	mod = func(a, b float64) float64 { return math.Mod(a, b) }
+
+	min = func(a, b float64) float64 {
+		if a < b {
+			return a
+		}
+		return b
+	}
+
+	max = func(a, b float64) float64 {
+		if a > b {
+			return a
+		}
+		return b
+	}
 )

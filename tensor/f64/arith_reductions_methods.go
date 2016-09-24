@@ -5,12 +5,6 @@ import "github.com/chewxy/gorgonia/tensor/types"
 /*
 This file contains code that deals with the reduction of a Tensor by axis.
 
-There are two general variants of the code - The first variant is in Reduce().
-This is a generic reduction code - you can pass in any reduce function
-	type reduceFn func (a, b float64) float64
-
-The second variant is a more optimized version of the generic one - the same basic frame
-is copied for Sum and Max and Min.
 
 All of the code in this file is structured in such a way that they're embarassingly parallel.
 This message will serve as a reminder until all the code in this file which are embarassingly parallel
@@ -146,6 +140,70 @@ func (t *Tensor) Reduce(f func(a, b float64) float64, def float64, axis int) (re
 	return
 }
 
+func (t *Tensor) reduce(axis int, zeroFn func(a, b []float64), oneFn func([]float64) float64, defFn func(a, b float64) float64) (retVal *Tensor) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape types.Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = NewTensor(WithShape(newShape...))
+
+	size := t.Shape()[axis]
+	switch axis {
+	case 0:
+		// most efficient
+		split := len(t.data) / size
+		copy(retVal.data[0:split], t.data[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			zeroFn(retVal.data, t.data[start:start+split])
+			start += split
+		}
+	case len(t.Shape()) - 1:
+		// second most efficient
+		var at int
+		for start := 0; start <= len(t.data)-size; start += size {
+			s := oneFn(t.data[start : start+size])
+			retVal.data[at] = s
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			data := t.data[start : start+outerStride]
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := retVal.data[writeTo]
+					b := data[readFrom]
+					retVal.data[writeTo] = defFn(a, b)
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return
+}
+
 // Sum sums up the elements of the ndarray along the given axes.
 //
 // For example, if you have an ndarray that is shape (2,2):
@@ -188,65 +246,7 @@ func (t *Tensor) Sum(along ...int) (retVal *Tensor, err error) {
 
 // sum does work of summing
 func (t *Tensor) sum(axis int) (retVal *Tensor) {
-	if t.IsScalar() {
-		return t
-	}
-
-	var newShape types.Shape
-	for i, s := range t.Shape() {
-		if i == axis {
-			continue
-		}
-		newShape = append(newShape, s)
-	}
-	retVal = NewTensor(WithShape(newShape...))
-
-	size := t.Shape()[axis]
-	switch axis {
-	case 0:
-		// most efficient
-		split := len(t.data) / size
-		copy(retVal.data[0:split], t.data[0:split])
-
-		start := split
-		for i := 0; i < size-1; i++ {
-			vecAdd(retVal.data, t.data[start:start+split])
-			start += split
-		}
-	case len(t.Shape()) - 1:
-		// second most efficient
-		var at int
-		for start := 0; start <= len(t.data)-size; start += size {
-			s := sum(t.data[start : start+size])
-			retVal.data[at] = s
-			at++
-		}
-	default:
-		outerSize := t.Shape()[0]
-		outerStride := t.Strides()[0]
-		stride := t.Strides()[axis]
-		expected := retVal.Strides()[0]
-
-		for i := 0; i < outerSize; i++ {
-			start := i * outerStride
-			data := t.data[start : start+outerStride]
-			var innerStart, strideTrack int
-			for j := 0; j < expected; j++ {
-				for k := 0; k < size; k++ {
-					readFrom := innerStart + k*stride
-					writeTo := i*expected + j
-					retVal.data[writeTo] += data[readFrom]
-				}
-				strideTrack++
-				if strideTrack >= stride {
-					strideTrack = 0
-					innerStart += stride
-				}
-				innerStart++
-			}
-		}
-	}
-	return
+	return t.reduce(axis, vecAdd, sum, add)
 }
 
 func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
@@ -278,65 +278,5 @@ func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
 }
 
 func (t *Tensor) max(axis int) (retVal *Tensor) {
-	if t.IsScalar() {
-		return t
-	}
-
-	var newShape types.Shape
-	for i, s := range t.Shape() {
-		if i == axis {
-			continue
-		}
-		newShape = append(newShape, s)
-	}
-	retVal = NewTensor(WithShape(newShape...))
-
-	size := t.Shape()[axis]
-	switch axis {
-	case 0:
-		// most efficient
-		split := len(t.data) / size
-		copy(retVal.data[0:split], t.data[0:split])
-
-		start := split
-		for i := 0; i < size-1; i++ {
-			vecMax(retVal.data, t.data[start:start+split])
-			start += split
-		}
-	case len(t.Shape()) - 1:
-		// second most efficient
-		var at int
-		for start := 0; start <= len(t.data)-size; start += size {
-			s := sliceMax(t.data[start : start+size])
-			retVal.data[at] = s
-			at++
-		}
-	default:
-		outerSize := t.Shape()[0]
-		outerStride := t.Strides()[0]
-		stride := t.Strides()[axis]
-		expected := retVal.Strides()[0]
-
-		for i := 0; i < outerSize; i++ {
-			start := i * outerStride
-			data := t.data[start : start+outerStride]
-			var innerStart, strideTrack int
-			for j := 0; j < expected; j++ {
-				for k := 0; k < size; k++ {
-					readFrom := innerStart + k*stride
-					writeTo := i*expected + j
-					if data[readFrom] > retVal.data[writeTo] {
-						retVal.data[writeTo] = data[readFrom]
-					}
-				}
-				strideTrack++
-				if strideTrack >= stride {
-					strideTrack = 0
-					innerStart += stride
-				}
-				innerStart++
-			}
-		}
-	}
-	return
+	return t.reduce(axis, vecMax, sliceMax, max)
 }
