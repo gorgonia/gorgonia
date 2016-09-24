@@ -2,7 +2,6 @@ package tensorf64
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"testing"
 
@@ -100,7 +99,6 @@ Matrix (2, 2) [2 1]
 	assert.Equal(expected, res, res)
 
 	// vectors
-	log.Printf("HAPPY PIDAY")
 	T = NewTensor(WithShape(3, 1))
 	res = fmt.Sprintf("%v", T)
 	expected = `C[0  0  0]`

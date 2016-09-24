@@ -207,18 +207,8 @@ func (t *Tensor) reduce(axis int, zeroFn func(a, b []float64), oneFn func([]floa
 	return
 }
 
-// Sum sums up the elements of the ndarray along the given axes.
-//
-// For example, if you have an ndarray that is shape (2,2):
-// 		0, 1
-//		2, 3
-// T.Sum(0) would sum across dimension 0, which is the rows, leading to this result:
-// 		2, 4
-// T.Sum(1) would sum along dimension 1, which is the columns, leading to this result:
-//		1,
-//		5
-//
-// Sum also takes multiple axes, and will essentially sum the ndarray according to the axis provided
+// Sum sums up the elements of the Tensor along the given axes.
+// If multiple axes are given, then this method will sum the Tensor according the the order of the axes provided
 func (t *Tensor) Sum(along ...int) (retVal *Tensor, err error) {
 	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
 	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {
@@ -252,6 +242,8 @@ func (t *Tensor) sum(axis int) (retVal *Tensor) {
 	return t.reduce(axis, vecAdd, sum, add)
 }
 
+// Max returns the max of the elements of the tensor along the given axes.
+// If multiple axes are given, then this method will return the max of the Tensor according the the order of the axes provided
 func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
 	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
 	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {
@@ -284,6 +276,8 @@ func (t *Tensor) max(axis int) (retVal *Tensor) {
 	return t.reduce(axis, vecMax, sliceMax, max)
 }
 
+// Min returns the max of the elements of the tensor along the given axes.
+// If multiple axes are given, then this method will return the min of the Tensor according the the order of the axes provided
 func (t *Tensor) Min(along ...int) (retVal *Tensor, err error) {
 	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
 	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {

@@ -342,7 +342,6 @@ func (t *Tensor) IsMaterializable() bool {
 
 /* Misc public API */
 func (t *Tensor) Data() interface{} { return t.data }
-func (t *Tensor) Old() *types.AP    { return t.old }
 
 /* Other Data types */
 
