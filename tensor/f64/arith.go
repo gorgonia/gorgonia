@@ -113,6 +113,23 @@ func vecMax(a, b []float64) {
 	}
 }
 
+// vecMax takes two slices, and compares them elementwise. The lowest value is put into a
+func vecMin(a, b []float64) {
+	if len(a) != len(b) {
+		panic("Index error")
+	}
+
+	a = a[:len(a)]
+	b = b[:len(a)]
+
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+}
+
 /* FUNCTION VARIABLES */
 
 var (

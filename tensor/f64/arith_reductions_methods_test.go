@@ -1,7 +1,6 @@
 package tensorf64
 
 import (
-	"log"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor/types"
@@ -285,7 +284,6 @@ func TestTMax(t *testing.T) {
 	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat64(0, 6)))
 	T.data[0] = 1000
 	for _, mts := range MaxTests {
-		log.Printf("%v", mts.name)
 		if T2, err = T.Max(mts.along...); err != nil {
 			t.Error(err)
 			continue
@@ -305,5 +303,108 @@ func TestTMax(t *testing.T) {
 idiots:
 	/* IDIOT TESTING TIME */
 	_, err = T.Max(5)
+	assert.NotNil(err)
+}
+
+var minTests = []struct {
+	name   string
+	shape  types.Shape
+	modify []int
+	axis   int
+
+	correctShape types.Shape
+	correctData  []float64
+}{
+	// vector
+	{"v.min(0)", types.Shape{5}, []int{0, 3}, 0, types.ScalarShape(), []float64{-2000}},
+	{"c.min(0)", types.Shape{5, 1}, []int{0, 3}, 0, types.ScalarShape(), []float64{-2000}},
+	{"c.min(1)", types.Shape{5, 1}, []int{0, 3}, 1, types.Shape{5}, []float64{-1000, 1, 2, -2000, 4}},
+	{"r.min(0)", types.Shape{1, 5}, []int{0, 3}, 0, types.Shape{5}, []float64{-1000, 1, 2, -2000, 4}},
+	{"r.min(1)", types.Shape{1, 5}, []int{0, 3}, 1, types.ScalarShape(), []float64{-2000}},
+
+	// matrix
+	{"A.min(0)", types.Shape{2, 3}, []int{0, 4}, 0, types.Shape{3}, []float64{-1000, -2000, 2}},
+	{"A.min(1)", types.Shape{2, 3}, []int{0, 4}, 1, types.Shape{2}, []float64{-1000, -2000}},
+
+	//3T
+	{"3T.min(0)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 0, types.Shape{3, 4}, []float64{
+		-1000, -2000, 2, 3,
+		4, 5, -3000, -4000,
+		8, 9, 10, 11,
+	}},
+
+	{"3T.min(1)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 1, types.Shape{2, 4}, []float64{
+		-1000, 1, -3000, 3,
+		12, -2000, 14, -4000,
+	}},
+
+	{"3T.min(2)", types.Shape{2, 3, 4}, []int{0, 13, 6, 19}, 2, types.Shape{2, 3}, []float64{
+		-1000, -3000, 8,
+		-2000, -4000, 20,
+	}},
+}
+
+func TestTmin(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+
+	for _, mts := range minTests {
+		T = NewTensor(WithShape(mts.shape...), WithBacking(RangeFloat64(0, mts.shape.TotalSize())))
+		for i, ind := range mts.modify {
+			T.data[ind] = float64((i + 1) * -1000)
+		}
+		T2 = T.min(mts.axis)
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v - Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
+	}
+
+	// scalar
+	T = NewTensor(AsScalar(float64(5)))
+	T2 = T.min(0)
+	assert.True(types.ScalarShape().Eq(T2.Shape()))
+	assert.Equal(float64(5), T.data[0])
+}
+
+var MinTests = []struct {
+	name  string
+	along []int
+
+	correctShape types.Shape
+	correctData  []float64
+}{
+	{"common case: T.Min()", []int{}, types.ScalarShape(), []float64{-1000}},
+	{"A.Min(0)", []int{0}, types.Shape{3}, []float64{-1000, 1, 2}},
+	{"A.Min(1)", []int{1}, types.Shape{2}, []float64{-1000, 3}},
+	{"A.Min(0,1)", []int{0, 1}, types.ScalarShape(), []float64{-1000}},
+	{"A.Min(1,0)", []int{1, 0}, types.ScalarShape(), []float64{-1000}},
+}
+
+func TestTMin(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2 *Tensor
+	var err error
+
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat64(0, 6)))
+	T.data[0] = -1000
+	for _, mts := range MinTests {
+		if T2, err = T.Min(mts.along...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(mts.correctShape.Eq(T2.Shape()), "Test %v. Correct shape is %v. Got %v", mts.name, mts.correctShape, T2.Shape())
+		assert.Equal(mts.correctData, T2.data, "Test %v - wrong data", mts.name)
+	}
+
+	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeFloat64(0, 24)))
+	if T2, err = T.Min(1, 2); err != nil {
+		t.Error(err)
+		goto idiots
+	}
+	assert.True(types.Shape{2}.Eq(T2.Shape()), "3T.Min(1,2) error: Correct shape is (2). Got %v", T.Shape())
+	assert.Equal([]float64{0, 12}, T2.data)
+
+idiots:
+	/* IDIOT TESTING TIME */
+	_, err = T.Min(5)
 	assert.NotNil(err)
 }

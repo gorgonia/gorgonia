@@ -153,7 +153,6 @@ func (t *Tensor) reduce(axis int, zeroFn func(a, b []float64), oneFn func([]floa
 		newShape = append(newShape, s)
 	}
 	retVal = NewTensor(WithShape(newShape...))
-
 	size := t.Shape()[axis]
 	switch axis {
 	case 0:
@@ -190,7 +189,11 @@ func (t *Tensor) reduce(axis int, zeroFn func(a, b []float64), oneFn func([]floa
 					writeTo := i*expected + j
 					a := retVal.data[writeTo]
 					b := data[readFrom]
-					retVal.data[writeTo] = defFn(a, b)
+					if k == 0 {
+						retVal.data[writeTo] = b
+					} else {
+						retVal.data[writeTo] = defFn(a, b)
+					}
 				}
 				strideTrack++
 				if strideTrack >= stride {
@@ -279,4 +282,37 @@ func (t *Tensor) Max(along ...int) (retVal *Tensor, err error) {
 
 func (t *Tensor) max(axis int) (retVal *Tensor) {
 	return t.reduce(axis, vecMax, sliceMax, max)
+}
+
+func (t *Tensor) Min(along ...int) (retVal *Tensor, err error) {
+	monotonic, incr1 := types.IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
+	if (monotonic && incr1 && len(along) == t.Dims()) || len(along) == 0 {
+		ret := sliceMin(t.data)
+		retVal = NewTensor(AsScalar(ret))
+		return
+	}
+	retVal = t
+	prev := -1
+	dims := len(retVal.Shape())
+
+	for _, axis := range along {
+		if prev == -1 {
+			prev = axis
+		}
+		if axis > prev {
+			axis--
+		}
+
+		if axis >= dims {
+			err = types.DimMismatchErr(axis, retVal.Dims())
+			return
+		}
+
+		retVal = retVal.min(axis)
+	}
+	return
+}
+
+func (t *Tensor) min(axis int) (retVal *Tensor) {
+	return t.reduce(axis, vecMin, sliceMin, min)
 }
