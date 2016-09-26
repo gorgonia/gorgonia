@@ -83,7 +83,7 @@ func argmax(a []float64) int {
 		}
 
 		// TODO: Maybe error instead of this?
-		if math.IsNaN(v) || math.IsInf(v, +1) {
+		if math.IsNaN(v) || math.IsInf(v, 1) {
 			max = i
 			f = v
 			break

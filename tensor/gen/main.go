@@ -67,6 +67,8 @@ var intignores = []string{
 	"arith_linalg_api_test.go",
 	"arith_linalg_methods.go",
 	"arith_linalg_methods_test.go",
+
+	"argmethods_test.go", // because argmethods test is solely float-related
 }
 
 var replacements = map[string]map[string]string{
@@ -100,8 +102,15 @@ var replacements = map[string]map[string]string{
 
 		// utils.go
 		"r[i] = rand.NormInt()": "r[i] = rand.Int()",
-		`		if math.IsNaN(v) || math.IsInf(v, 0) {
+		`		// TODO: Maybe error instead of this?
+		if math.IsNaN(v) || math.IsInf(v, 1) {
 			max = i
+			f = v
+			break
+		}`: "",
+		`		// TODO: Maybe error instead of this?
+		if math.IsNaN(v) || math.IsInf(v, -1) {
+			min = i
 			f = v
 			break
 		}`: "",
@@ -113,8 +122,8 @@ var replacements = map[string]map[string]string{
 		"math.Mod(a, b)":           "int(math.Mod(float64(a), float64(b)))",
 
 		// arith_api_unary.go
-		"|| math.IsInf(v, -1)": "",
-		"|| math.IsInf(v, 1)":  "",
+		"if v < min || math.IsInf(v, -1)": "if v < min",
+		"if v > max || math.IsInf(v, 1)":  "if v > max",
 
 		// arith_api_unary_test.go
 		"correct[i] = math.Sqrt(v)": "correct[i] = int(math.Sqrt(float64(v)))",
@@ -164,40 +173,17 @@ var replacements = map[string]map[string]string{
 		"// +build !avx,!sse": "",
 	},
 	"float32": map[string]string{
+		// general
+		"math.IsNaN(": "math32.IsNaN(",
+		"math.IsInf(": "math32.IsInf(",
+		"math.Pow(":   "math32.Pow(",
+		"math.Mod(":   "math32.Mod(",
+		"math.Sqrt(":  "math32.Sqrt(",
+		"math.Inf(":   "math32.Inf(",
+		"math.NaN()":  "math32.NaN()",
+
 		// utils.go
-		"r[i] = rand.NormFloat32()":            "r[i] = float32(rand.NormFloat64())",
-		"if math.IsNaN(v) || math.IsInf(v, 0)": "if math32.IsNaN(v) || math32.IsInf(v, 0)",
-
-		// arith.go
-		"a[i] = math.Pow(v, b[i])": "a[i] = math32.Pow(v, b[i])",
-		"a[i] = math.Pow(v, s)":    "a[i] = math32.Pow(v, s)",
-		"a[i] = math.Pow(s, v)":    "a[i] = math32.Pow(s, v)",
-		"math.Mod(a, b)":           "math32.Mod(a,b)",
-
-		// arith_api_unary.go
-		"math.IsInf(v, -1)": "math32.IsInf(v, -1)",
-		"math.IsInf(v, 1)":  "math32.IsInf(v, 1)",
-
-		// arith_api_unary_test.go
-		"correct[i] = math.Sqrt(v)": "correct[i] = math32.Sqrt(v)",
-
-		// arith_floats.go
-		"math.IsNaN(d)":      "math32.IsNaN(d)",
-		"if !math.IsNaN(v) ": "if !math32.IsNaN(v) ",
-
-		// arith_go.go
-		"a[i] = math.Inf(0)":               "a[i] = math32.Inf(0)",
-		"a[i] = math.Sqrt(v)":              "a[i] = math32.Sqrt(v)",
-		"a[i] = float32(1) / math.Sqrt(v)": "a[i] = float32(1) / math32.Sqrt(v)",
-
-		// arith_incr.go
-		"a[i] += math.Pow(v, c[i])": "a[i] += math32.Pow(v, c[i])",
-		"a[i] += math.Pow(v, c)":    "a[i] += math32.Pow(v, c)",
-		"a[i] += math.Pow(c, v)":    "a[i] += math32.Pow(c, v)",
-
-		// arith_safe.go
-		"retVal[i] = math.Pow(v, s)": "retVal[i] = math32.Pow(v, s)",
-		"retVal[i] = math.Pow(s, v)": "retVal[i] = math32.Pow(s, v)",
+		"r[i] = rand.NormFloat32()": "r[i] = float32(rand.NormFloat64())",
 
 		// BLAS stuff
 		"Ddot":       "Sdot",

@@ -79,12 +79,31 @@ func argmax(a []int) int {
 			continue
 		}
 
-		// TODO: Maybe error instead of this?
-
 		if v > f {
 			max = i
 			f = v
 		}
 	}
 	return max
+}
+
+func argmin(a []int) int {
+	var f int
+	var min int
+	var set bool
+	for i, v := range a {
+		if !set {
+			f = v
+			min = i
+			set = true
+
+			continue
+		}
+
+		if v < f {
+			min = i
+			f = v
+		}
+	}
+	return min
 }

@@ -84,7 +84,7 @@ func argmax(a []float32) int {
 		}
 
 		// TODO: Maybe error instead of this?
-		if math32.IsNaN(v) || math32.IsInf(v, 0) {
+		if math32.IsNaN(v) || math32.IsInf(v, 1) {
 			max = i
 			f = v
 			break
@@ -96,4 +96,32 @@ func argmax(a []float32) int {
 		}
 	}
 	return max
+}
+
+func argmin(a []float32) int {
+	var f float32
+	var min int
+	var set bool
+	for i, v := range a {
+		if !set {
+			f = v
+			min = i
+			set = true
+
+			continue
+		}
+
+		// TODO: Maybe error instead of this?
+		if math32.IsNaN(v) || math32.IsInf(v, -1) {
+			min = i
+			f = v
+			break
+		}
+
+		if v < f {
+			min = i
+			f = v
+		}
+	}
+	return min
 }
