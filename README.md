@@ -271,8 +271,8 @@ Here are the goals for Gorgonia, sorted by importance
 
 - [ ] 90+% test coverage. Current coverage is 50% for Gorgonia and 75% for the Tensor packages.
 - [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
-- [ ] TravisCI for this package.
-- [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely.
+- [x] TravisCI for this package.
+- [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely. Use table driven tests where possible.
 - [ ] Improve performance especially re: allocation, minimize impact of type system.
 - [ ] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
 - [ ] Refactor the CuBLAS package as well as the Blase package.
