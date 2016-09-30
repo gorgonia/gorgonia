@@ -26,6 +26,7 @@ type randomness byte
 const (
 	uniform randomness = iota
 	gaussian
+	binomial
 )
 
 type randomOp struct {
@@ -73,6 +74,10 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 				rand := rng.NewGaussianGenerator(time.Now().UnixNano())
 				v := rand.Gaussian(op.a, op.b)
 				return anyToValue(v)
+			case binomial:
+				rand := rng.NewBinomialGenerator(time.Now().UnixNano())
+				v := float64(rand.Binomial(int64(op.a), op.b))
+				return anyToValue(v)
 			}
 		case Float32:
 			switch op.which {
@@ -83,6 +88,10 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 			case gaussian:
 				rand := rng.NewGaussianGenerator(time.Now().UnixNano())
 				v := float32(rand.Gaussian(op.a, op.b))
+				return anyToValue(v)
+			case binomial:
+				rand := rng.NewBinomialGenerator(time.Now().UnixNano())
+				v := float32(rand.Binomial(int64(op.a), op.b))
 				return anyToValue(v)
 			}
 		default:
@@ -101,6 +110,10 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 			backing := Gaussian64(op.a, op.b, op.shape...)
 			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 			return anyToValue(v)
+		case binomial:
+			backing := Binomial64(op.a, op.b, op.shape...)
+			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
+			return anyToValue(v)
 		}
 	case Float32:
 		switch op.which {
@@ -110,6 +123,10 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 			return anyToValue(v)
 		case gaussian:
 			backing := Gaussian32(op.a, op.b, op.shape...)
+			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
+			return anyToValue(v)
+		case binomial:
+			backing := Binomial32(op.a, op.b, op.shape...)
 			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 			return anyToValue(v)
 		}

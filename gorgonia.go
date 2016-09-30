@@ -124,6 +124,21 @@ func GaussianRandomNode(dt Dtype, mean, stdev float64, shape ...int) *Node {
 	return retVal
 }
 
+// BinomialRandomNode creates an input node that has a random op so that everytime the node is passed, random values will be plucked from
+// a binomial distribution with the mean and stdev provided. The type of the node depends on the
+// shape passed in. To get a scalar value at run time, don't pass in any shapes
+//
+// Whilst technically the number of trials of a binomal distribution should be a discrete value (you can't have half a trial), to keep with
+// API uniformity, trials is passed in as a float64, but will be truncated to an int at runtime.
+func BinomialRandomNode(dt Dtype, trials, prob float64, shape ...int) *Node {
+	op := makeRandomOp(binomial, dt, trials, prob, shape...)
+	retVal, err := applyOp(op)
+	if err != nil {
+		panic(err)
+	}
+	return retVal
+}
+
 // OneHotVector creates a node representing a one hot vector
 func OneHotVector(id, classes int, t Dtype, opts ...NodeConsOpt) *Node {
 	switch t {

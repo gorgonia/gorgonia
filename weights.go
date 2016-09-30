@@ -145,6 +145,30 @@ func Uniform32(low, high float64, s ...int) []float32 {
 	return retVal
 }
 
+func Binomial64(trials, prob float64, s ...int) []float64 {
+	size := types.Shape(s).TotalSize()
+	t := int64(trials)
+
+	rand := rng.NewBinomialGenerator(time.Now().UnixNano())
+	retVal := make([]float64, size)
+	for i := range retVal {
+		retVal[i] = float64(rand.Binomial(t, prob))
+	}
+	return retVal
+}
+
+func Binomial32(trials, prob float64, s ...int) []float32 {
+	size := types.Shape(s).TotalSize()
+	t := int64(trials)
+
+	rand := rng.NewBinomialGenerator(time.Now().UnixNano())
+	retVal := make([]float32, size)
+	for i := range retVal {
+		retVal[i] = float32(rand.Binomial(t, prob))
+	}
+	return retVal
+}
+
 /* SOPHISTICATED INITIALIZATION STRATEGIES */
 
 // Glorot et. al weight sampled from the normal distro.
