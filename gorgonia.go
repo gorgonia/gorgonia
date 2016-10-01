@@ -141,24 +141,36 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 // UniformRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
 // a uniform distribution. The type of the node depends on the
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
-func UniformRandomNode(dt Dtype, low, high float64, shape ...int) *Node {
+func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) *Node {
 	op := makeRandomOp(uniform, dt, low, high, shape...)
-	retVal, err := applyOp(op)
-	if err != nil {
-		panic(err)
+	s := types.Shape(shape)
+
+	var t Type
+	if s.Eq(scalarShape) {
+		t = dt
+	} else {
+		t = newTensorType(s.Dims(), dt)
 	}
+
+	retVal := newUniqueNode(withType(t), withOp(op), withGraph(g), WithShape(shape...))
 	return retVal
 }
 
 // GaussianRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
 // a gaussian distribution with the mean and stdev provided. The type of the node depends on the
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
-func GaussianRandomNode(dt Dtype, mean, stdev float64, shape ...int) *Node {
+func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...int) *Node {
 	op := makeRandomOp(gaussian, dt, mean, stdev, shape...)
-	retVal, err := applyOp(op)
-	if err != nil {
-		panic(err)
+	s := types.Shape(shape)
+
+	var t Type
+	if s.Eq(scalarShape) {
+		t = dt
+	} else {
+		t = newTensorType(s.Dims(), dt)
 	}
+
+	retVal := newUniqueNode(withType(t), withOp(op), withGraph(g), WithShape(shape...))
 	return retVal
 }
 
@@ -168,12 +180,18 @@ func GaussianRandomNode(dt Dtype, mean, stdev float64, shape ...int) *Node {
 //
 // Whilst technically the number of trials of a binomal distribution should be a discrete value (you can't have half a trial), to keep with
 // API uniformity, trials is passed in as a float64, but will be truncated to an int at runtime.
-func BinomialRandomNode(dt Dtype, trials, prob float64, shape ...int) *Node {
+func BinomialRandomNode(g *ExprGraph, dt Dtype, trials, prob float64, shape ...int) *Node {
 	op := makeRandomOp(binomial, dt, trials, prob, shape...)
-	retVal, err := applyOp(op)
-	if err != nil {
-		panic(err)
+	s := types.Shape(shape)
+
+	var t Type
+	if s.Eq(scalarShape) {
+		t = dt
+	} else {
+		t = newTensorType(s.Dims(), dt)
 	}
+
+	retVal := newUniqueNode(withType(t), withOp(op), withGraph(g), WithShape(shape...))
 	return retVal
 }
 

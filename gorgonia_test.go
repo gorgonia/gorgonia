@@ -62,6 +62,7 @@ func TestNewNodeFromAny(t *testing.T) {
 	for _, a := range anyNodeTest {
 		n := NewNodeFromAny(g, a.any, WithName(a.name))
 		assert.Equal(a.name, n.name)
+		assert.Equal(g, n.g)
 		assert.True(typeEq(a.correctType, n.t), "%v type error: Want %v. Got %v", a.name, a.correctType, n.t)
 		assert.True(a.correctShape.Eq(n.shape), "%v shape error: Want %v. Got %v", a.name, a.correctShape, n.shape)
 	}
