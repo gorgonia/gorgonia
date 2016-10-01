@@ -688,7 +688,7 @@ func (op sliceOp) String() string {
 	if op.all() {
 		buf.WriteString(":")
 	} else {
-		fmt.Fprintf(&buf, "%d:%d%d", op.Start(), op.End(), op.Step())
+		fmt.Fprintf(&buf, "%d:%d:%d", op.Start(), op.End(), op.Step())
 	}
 
 	buf.WriteString("...]")
