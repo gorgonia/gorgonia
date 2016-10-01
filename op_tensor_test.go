@@ -403,3 +403,18 @@ func TestSliceOpDiff(t *testing.T) {
 	// t.Logf("%+v", A.Value())
 	// t.Logf("%+v", A.Grad())
 }
+
+func TestTransposeOp(t *testing.T) {
+	assert := assert.New(t)
+	g := NewGraph()
+	A := NewMatrix(g, Float64, WithShape(2, 3), WithInit(RangedFrom(0)))
+	AT := Must(Transpose(A))
+	Must(Sum(AT))
+
+	m := NewLispMachine(g)
+	if err := m.RunAll(); err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(types.Shape{3, 2}, AT.shape)
+}

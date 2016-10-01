@@ -913,3 +913,131 @@ func (op sliceIncrOp) String() string {
 	buf.WriteString("...]+=...")
 	return buf.String()
 }
+
+type transposeOp struct {
+	pattern []int
+	d       int
+}
+
+// transposing a tensor has type
+// 		transpose :: Tensor a → Tensor a
+func (op transposeOp) Type() Type {
+	a := newTypeVariable("a", withTVConstraints(floats))
+	tt := newTensorType(op.d, a)
+
+	return newFunctionType(tt, tt)
+}
+
+func (op transposeOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
+	if len(inputs) != 1 {
+		err = NewError(GraphError, "transposeOp should only have one inputs. Got %v instead", len(inputs))
+		return
+	}
+
+	t := inputs[0]
+	if t.shape.IsScalar() {
+		err = NewError(ShapeError, "transposeOp undefined on scalar shapes")
+		return
+	}
+
+	s = make(types.Shape, len(t.shape))
+	copy(s, t.shape)
+	err = types.UnsafePermute(op.pattern, s)
+	return
+}
+
+func (op transposeOp) DiffWRT(i int) []bool {
+	if i > 1 {
+		// error
+		err := NewError(GraphError, "transposeOp should only have 1 inputs. Got %v instead", i)
+		panic(err)
+	}
+
+	return []bool{true}
+}
+
+func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
+	newPattern := make([]int, len(op.pattern))
+	for i, p := range op.pattern {
+		newPattern[p] = i
+	}
+	op2 := transposeOp{pattern: newPattern, d: op.d}
+
+	retVal = make(Nodes, 1)
+	retVal[0], err = applyOp(op2, gradNode)
+	return
+}
+
+func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
+	xdv := inputs[0].boundTo.(*dualValue)
+	zdv := output.boundTo.(*dualValue)
+
+	newPattern := make([]int, len(op.pattern))
+	for i, p := range op.pattern {
+		newPattern[p] = i
+	}
+
+	var zdvdT Tensor
+	var ok bool
+	if zdvdT, ok = zdv.d.(Tensor); !ok {
+		err = NewError(TypeError, "Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
+		return
+	}
+
+	if err = zdvdT.T(newPattern...); err != nil {
+		return
+	}
+
+	d := FromTensor(zdvdT.Materialize())
+
+	add := newEBOByType(addOpType, inputs[0].t, zdvdT.Type())
+	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
+		err = errors.Wrapf(err, doFail, add)
+	}
+	return
+}
+
+func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
+	machineLogf("Doing %v", op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
+	if len(inputs) != 1 {
+		err = NewError(GraphError, "transposeOp should only have one or more inputs. Got %v instead", len(inputs))
+		return
+	}
+
+	t := inputs[0].(Tensor).Tensor
+	t.T(op.pattern...)
+	ret := t.Materialize()
+	return anyToValue(ret)
+}
+
+func (op transposeOp) returnsPtr() bool    { return true }
+func (op transposeOp) callsExtern() bool   { return false }
+func (op transposeOp) overwriteInput() int { return 0 }
+
+func (op transposeOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("transposeOp"))
+	fmt.Fprintf(h, "%v", op.pattern)
+	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
+		panic(err)
+	}
+}
+
+func (op transposeOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op transposeOp) String() string {
+	var buf bytes.Buffer
+	buf.WriteString("Aᵀ{")
+	for _, ax := range op.pattern {
+		fmt.Fprintf(&buf, "%d, ", ax)
+	}
+
+	buf.WriteString("}")
+	return buf.String()
+}

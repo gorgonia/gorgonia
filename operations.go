@@ -558,3 +558,30 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 	}
 	return
 }
+
+func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
+	// prep axes
+	if len(axes) > 0 && len(axes) != n.Dims() {
+		err = NewError(ShapeError, "n has %d dims, while requested transposes is %d", n.Dims(), len(axes))
+		return
+	}
+	dims := len(n.shape)
+	if len(axes) == 0 || axes == nil {
+		axes = make([]int, dims)
+		for i := 0; i < dims; i++ {
+			axes[i] = dims - 1 - i
+		}
+	}
+
+	// if axes is 0, 1, 2, 3... then no op
+	if monotonic, incr1 := types.IsMonotonicInts(axes); monotonic && incr1 && axes[0] == 0 {
+		retVal = n
+		return
+	}
+	op := transposeOp{
+		pattern: axes,
+		d:       len(axes),
+	}
+
+	return applyOp(op, n)
+}
