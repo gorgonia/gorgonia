@@ -17,6 +17,7 @@ const (
 
 type Tensor interface {
 	// info about the ndarray
+	Info() *AP
 	Shape() Shape
 	Strides() []int
 	Dtype() Dtype

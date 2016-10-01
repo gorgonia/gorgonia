@@ -236,6 +236,7 @@ func (t *Tensor) ostrides() []int {
 	return t.Strides()
 }
 
+func (t *Tensor) Info() *types.AP    { return t.AP }
 func (t *Tensor) Dtype() types.Dtype { return types.Float64 }
 func (t *Tensor) Size() int          { return t.Shape().TotalSize() }
 func (t *Tensor) DataSize() int      { return len(t.data) }
