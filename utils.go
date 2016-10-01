@@ -52,21 +52,6 @@ func cloneNodes(node Nodes, replacements map[*Node]*Node) Nodes {
 	return nil
 }
 
-// takes any value and returns the Node equivalent
-func anyToNode(val interface{}) *Node {
-	switch v := val.(type) {
-	case *Node:
-		return v
-	case types.Tensor:
-	case Tensor:
-	/*case Tuple:*/
-	default:
-		s := NewScalarValue(val)
-		return NewConstant(s)
-	}
-	return nil
-}
-
 func anyToValue(any interface{}) (val Value, err error) {
 	switch a := any.(type) {
 	case float64, float32, int, int64, int32, byte, bool:

@@ -22,9 +22,47 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 	return n
 }
 
+// NewNodeFromAny creates a Node from a types.Tensor, automatically filling in shape and type info
+func NewNodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
+	v, err := anyToValue(any)
+	if err != nil {
+		panic(err)
+	}
+	opts = append(opts, WithValue(v))
+	switch a := any.(type) {
+	case float32:
+		return NewScalar(g, Float32, opts...)
+	case float64:
+		return NewScalar(g, Float64, opts...)
+	case int:
+		return NewScalar(g, Int, opts...)
+	case bool:
+		return NewScalar(g, Bool, opts...)
+	case types.Tensor:
+		dt := dtypeToDtype(a.Dtype())
+		opts = append(opts, nil)
+		copy(opts[1:], opts[0:len(opts)-1])
+		opts[0] = WithShape(a.Shape()...)
+		return NewTensor(g, dt, a.Dims(), opts...)
+	case Scalar:
+		dt := a.Dtype()
+		return NewScalar(g, dt, opts...)
+	case Tensor:
+		dt := a.Dtype()
+		dims := a.Dims()
+		opts = append(opts, nil)
+		copy(opts[1:], opts[0:len(opts)-1])
+		opts[0] = WithShape(a.Shape()...)
+		return NewTensor(g, dt, dims, opts...)
+	default:
+		panic(nyi("NewNodeFromAny", any))
+	}
+	panic("Unreachable")
+}
+
 // NewScalar creates a Node representing a variable that holds a scalar value
 func NewScalar(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
-	curOpts := []NodeConsOpt{withType(t), withGraph(g)}
+	curOpts := []NodeConsOpt{withType(t), withGraph(g), WithShape()}
 	curOpts = append(curOpts, opts...)
 
 	return newUniqueNode(curOpts...)
