@@ -618,7 +618,7 @@ func (op linAlgBinOp) inferShape(retType Type, inputs ...*Node) (retVal types.Sh
 		if op.transA {
 			xshape = transpose(xshape)
 		}
-		if xshape[1] != y.shape[0] && xshape[1] != y.shape[1] {
+		if xshape[0] != y.shape[0] && xshape[1] != y.shape[0] {
 			err = NewError(ShapeError, "Incompatible shapes: %v and %v", xshape, y.shape)
 			return
 		}

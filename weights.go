@@ -95,6 +95,21 @@ func Uniform(low, high float64) InitWFn {
 	return f
 }
 
+func GlorotN(gain float64) InitWFn {
+	f := func(dt Dtype, s ...int) interface{} {
+		switch dt {
+		case Float64:
+			return GlorotEtAlN64(gain, s...)
+		case Float32:
+			return GlorotEtAlN32(gain, s...)
+		default:
+			panic(nyi("GlorotN", dt))
+		}
+		panic("unreachable")
+	}
+	return f
+}
+
 // Gausian64 returns a []float64 drawn from a gaussian distribution as defined by the mean and stdev
 func Gaussian64(mean, stdev float64, s ...int) []float64 {
 	size := types.Shape(s).TotalSize()
@@ -193,6 +208,15 @@ func GlorotEtAlN64(gain float64, s ...int) []float64 {
 	retVal := make([]float64, size)
 	for i := range retVal {
 		retVal[i] = rand.Gaussian(0.0, stdev)
+	}
+	return retVal
+}
+
+func GlorotEtAlN32(gain float64, s ...int) []float32 {
+	f64 := GlorotEtAlN64(gain, s...)
+	retVal := make([]float32, len(f64))
+	for i, v := range f64 {
+		retVal[i] = float32(v)
 	}
 	return retVal
 }

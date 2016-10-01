@@ -520,6 +520,13 @@ func (op sliceOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err erro
 		s = scalarShape
 	}
 
+	switch {
+	case s.IsRowVec():
+		s = s[1:]
+	case s.IsColVec():
+		s = s[:1]
+	}
+
 	return
 }
 
