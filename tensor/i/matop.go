@@ -30,7 +30,6 @@ func (t *Tensor) Apply(fn func(int) int, opts ...types.FuncOpt) (retVal *Tensor,
 	default:
 		res = make([]int, len(t.data))
 	}
-
 	// do
 	switch {
 	case t.viewOf == nil && !incr:
@@ -42,27 +41,31 @@ func (t *Tensor) Apply(fn func(int) int, opts ...types.FuncOpt) (retVal *Tensor,
 			res[i] += fn(v)
 		}
 	case t.viewOf != nil && !incr:
+
 		it := types.NewFlatIterator(t.AP)
 		var next int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
-			if _, noop := err.(NoOpError); !noop {
+			if _, noop := err.(NoOpError); err != nil && !noop {
 				return
 			}
 
 			res[next] = fn(res[next])
 		}
+		err = nil
 	case t.viewOf != nil && incr:
 		it := types.NewFlatIterator(t.AP)
 		var next int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
-			if _, noop := err.(NoOpError); !noop {
+			if _, noop := err.(NoOpError); err != nil && !noop {
 				return
 			}
 
 			res[next] += fn(res[next])
 		}
+		err = nil
 	default:
-		notyetimplemented("Apply not implemented for this state: isView: %t and incr: %t", t.viewOf == nil, incr)
+		err = notyetimplemented("Apply not implemented for this state: isView: %t and incr: %t", t.viewOf == nil, incr)
+		return
 	}
 
 	// set retVal
@@ -77,7 +80,6 @@ func (t *Tensor) Apply(fn func(int) int, opts ...types.FuncOpt) (retVal *Tensor,
 		retVal = t
 	default:
 		retVal = NewTensor(WithBacking(res), WithShape(t.Shape()...))
-
 	}
 	return
 }

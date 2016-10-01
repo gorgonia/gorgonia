@@ -78,7 +78,7 @@ var replacements = map[string]map[string]string{
 		it := types.NewFlatIterator(t.AP)
 		var next int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
-			if _, noop := err.(NoOpError); !noop {
+			if _, noop := err.(NoOpError); err != nil && !noop {
 				return
 			}
 
