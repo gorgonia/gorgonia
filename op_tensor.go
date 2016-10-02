@@ -989,6 +989,7 @@ func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	}
 
 	d := FromTensor(zdvdT.Materialize())
+	zdvdT.UT()
 
 	add := newEBOByType(addOpType, inputs[0].t, zdvdT.Type())
 	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
@@ -1008,8 +1009,16 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	t := inputs[0].(Tensor).Tensor
-	t.T(op.pattern...)
+
+	// the reason for this is because the .T() method of a Tensor
+	// will use the axes in the .transposedWith field
+	// Later when .UT() is called, the .transposedWith field is recycled into the pool
+	throwaway := types.BorrowInts(len(op.pattern))
+	copy(throwaway, op.pattern)
+
+	t.T(throwaway...)
 	ret := t.Materialize()
+	t.UT()
 	return anyToValue(ret)
 }
 
@@ -1034,8 +1043,11 @@ func (op transposeOp) Hashcode() uint32 {
 func (op transposeOp) String() string {
 	var buf bytes.Buffer
 	buf.WriteString("Aᵀ{")
-	for _, ax := range op.pattern {
-		fmt.Fprintf(&buf, "%d, ", ax)
+	for i, ax := range op.pattern {
+		fmt.Fprintf(&buf, "%d", ax)
+		if i < len(op.pattern)-1 {
+			buf.WriteString(", ")
+		}
 	}
 
 	buf.WriteString("}")
