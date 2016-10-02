@@ -41,7 +41,6 @@ func (t *Tensor) Apply(fn func(float32) float32, opts ...types.FuncOpt) (retVal 
 			res[i] += fn(v)
 		}
 	case t.viewOf != nil && !incr:
-
 		it := types.NewFlatIterator(t.AP)
 		var next int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -49,7 +48,7 @@ func (t *Tensor) Apply(fn func(float32) float32, opts ...types.FuncOpt) (retVal 
 				return
 			}
 
-			res[next] = fn(res[next])
+			res[next] = fn(t.data[next])
 		}
 		err = nil
 	case t.viewOf != nil && incr:
@@ -60,7 +59,7 @@ func (t *Tensor) Apply(fn func(float32) float32, opts ...types.FuncOpt) (retVal 
 				return
 			}
 
-			res[next] += fn(res[next])
+			res[next] += fn(t.data[next])
 		}
 		err = nil
 	default:

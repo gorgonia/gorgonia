@@ -28,6 +28,7 @@ type Tensor interface {
 	// ops
 	Reshape(...int) error
 	T(axes ...int) error
+	UT()
 	Zero()
 
 	// Equality

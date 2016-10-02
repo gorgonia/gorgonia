@@ -82,7 +82,7 @@ var replacements = map[string]map[string]string{
 				return
 			}
 
-			res[next] += fn(res[next])
+			res[next] += fn(t.data[next])
 		}`: "",
 		`	case t.viewOf == nil && incr:
 		for i, v := range t.data {

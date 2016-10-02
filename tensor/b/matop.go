@@ -38,7 +38,6 @@ func (t *Tensor) Apply(fn func(bool) bool, opts ...types.FuncOpt) (retVal *Tenso
 		}
 
 	case t.viewOf != nil && !incr:
-
 		it := types.NewFlatIterator(t.AP)
 		var next int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -46,7 +45,7 @@ func (t *Tensor) Apply(fn func(bool) bool, opts ...types.FuncOpt) (retVal *Tenso
 				return
 			}
 
-			res[next] = fn(res[next])
+			res[next] = fn(t.data[next])
 		}
 		err = nil
 
