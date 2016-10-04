@@ -6,8 +6,9 @@ import (
 	"os"
 )
 
-type vm interface {
+type VM interface {
 	RunAll() error
+	Reset()
 }
 
 const (
@@ -22,11 +23,11 @@ const (
 )
 
 // VMOpt is a VM creation option
-type VMOpt func(m vm)
+type VMOpt func(m VM)
 
 // WithLogger creates a VM with the supplied logger. If the logger is nil, a default logger, writing to os.stderr will be created.
 func WithLogger(logger *log.Logger) VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		if logger == nil {
 			logger = log.New(os.Stderr, "", 0)
 		}
@@ -46,7 +47,7 @@ func WithLogger(logger *log.Logger) VMOpt {
 
 // WithValueFmt defines how the logger will output the values. It defaults to "%3.3f"
 func WithValueFmt(format string) VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.valueFmt = format
@@ -67,7 +68,7 @@ func WithValueFmt(format string) VMOpt {
 //		*lispMachine will ONLY take *Node
 //		*tapeMachine will take int (for register IDs) or *Node.
 func WithWatchlist(list ...interface{}) VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			if len(list) == 0 {
@@ -104,7 +105,7 @@ func WithWatchlist(list ...interface{}) VMOpt {
 
 // WithNaNWatch creates a VM that will watch for NaNs when executing. This slows the execution down.
 func WithNaNWatch() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.doWatchNaN()
@@ -119,7 +120,7 @@ func WithNaNWatch() VMOpt {
 
 // WithInfWatch creates a VM that will watch for Infs when executing. It watches for +Inf, -Inf and Inf. No choice there. This slows the execution down.
 func WithInfWatch() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.doWatchInf()
@@ -135,7 +136,7 @@ func WithInfWatch() VMOpt {
 // ExecuteFwdOnly creates a VM that will execute a graph forwards only - it will not do back propagation.
 // This option is only for *lispMachine. Try it on any other VMs and it will panic.
 func ExecuteFwdOnly() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.doExecFwd()
@@ -152,7 +153,7 @@ func ExecuteFwdOnly() VMOpt {
 // are already values associated with the nodes.
 // This option is only for *lispMachine. Try it on any other VMs and it will panic.
 func ExecuteBwdOnly() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.doExecBwd()
@@ -167,7 +168,7 @@ func ExecuteBwdOnly() VMOpt {
 // LogFwd logs the forward execution of a graph.
 // This option is only for *lispMachine. Try it on any other VMs and it will panic.
 func LogFwd() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.doLogFwd()
@@ -181,7 +182,7 @@ func LogFwd() VMOpt {
 // LogBwd logs the backwards execution of a graph.
 // This option is only for *lispMachine. Try it on any other VMs and it will panic.
 func LogBwd() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.doLogBwd()
@@ -195,7 +196,7 @@ func LogBwd() VMOpt {
 // LogBothDir logs both directions of the execution of the graph.
 // This option is only available for *lispMachine.
 func LogBothDir() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *lispMachine:
 			v.doLogFwd()
@@ -210,7 +211,7 @@ func LogBothDir() VMOpt {
 // TraceExec is an option for *tapeMachine only.
 // It stores an immutable copy of the executed value into the node, instead of a mutable value, which may be clobbered
 func TraceExec() VMOpt {
-	f := func(m vm) {
+	f := func(m VM) {
 		switch v := m.(type) {
 		case *tapeMachine:
 			v.doTrace()
