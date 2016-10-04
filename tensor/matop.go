@@ -21,6 +21,23 @@ func Repeat(t types.Tensor, axis int, repeats ...int) (retVal types.Tensor, err 
 	default:
 		panic("Not yet implemented")
 	}
+	panic("unreachable")
+}
+
+func Slice(t types.Tensor, slices ...types.Slice) (retVal types.Tensor, err error) {
+	switch tt := t.(type) {
+	case *tf64.Tensor:
+		return tt.Slice(slices...)
+	case *tf32.Tensor:
+		return tt.Slice(slices...)
+	case *ti.Tensor:
+		return tt.Slice(slices...)
+	case *tb.Tensor:
+		return tt.Slice(slices...)
+	default:
+		panic("Not yet implemented")
+	}
+	panic("unreachable")
 }
 
 func Argmax(t types.Tensor, axis int) (*ti.Tensor, error) {

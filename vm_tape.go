@@ -162,6 +162,10 @@ func (m *tapeMachine) RunAll() (err error) {
 	return
 }
 
+func (m *tapeMachine) Reset() {
+	m.pc = 0
+}
+
 func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
 	instr := m.p.instructions[m.pc]
 	reads := instr.reads()
