@@ -10,21 +10,21 @@ import (
 type ActivationFunction func(*Node) (*Node, error)
 
 type Layer interface {
-	Activate(x *Node) *Node
+	Activate() (*Node, error)
 }
 
 // LayerConsOpt is a option for constructing a layer
 type LayerConsOpt func(l Layer)
 
-func WithConf(inputs, outputs int) LayerConsOpt {
+func WithConf(inputs, outputs, batchSize int) LayerConsOpt {
 	f := func(lay Layer) {
 		switch l := lay.(type) {
 		case *DenoisingAutoencoder:
-			l.LayerConfig = LayerConfig{Inputs: inputs, Outputs: outputs, BatchSize: 1}
+			l.LayerConfig = LayerConfig{Inputs: inputs, Outputs: outputs, BatchSize: batchSize}
 		case *FC:
-			l.LayerConfig = LayerConfig{Inputs: inputs, Outputs: outputs, BatchSize: 1}
+			l.LayerConfig = LayerConfig{Inputs: inputs, Outputs: outputs, BatchSize: batchSize}
 		case *SoftmaxLayer:
-			l.LayerConfig = LayerConfig{Inputs: inputs, Outputs: outputs, BatchSize: 1}
+			l.LayerConfig = LayerConfig{Inputs: inputs, Outputs: outputs, BatchSize: batchSize}
 		default:
 			panic(fmt.Sprintf("WithConf not implemented yet for %T", l))
 		}
@@ -65,9 +65,11 @@ type FC struct {
 	*Neuron
 	LayerConfig
 
-	g *ExprGraph
-
 	af ActivationFunction
+
+	input  *Node
+	output *Node
+	g      *ExprGraph
 }
 
 func NewFC(opts ...LayerConsOpt) *FC {
@@ -78,32 +80,38 @@ func NewFC(opts ...LayerConsOpt) *FC {
 	}
 
 	u := func() InitWFn {
-		high := 1 / float64(fc.Inputs)
-		low := -high
-		return Uniform(low, high)
+		return GlorotU(1.0)
 	}
-
-	fc.Neuron = NewNeuron(fc.Inputs, fc.Outputs, fc.g, u)
+	fc.Neuron = NewNeuron(fc.Inputs, fc.Outputs, fc.BatchSize, fc.g, u)
 	return fc
 }
 
-func (l *FC) Activate(x *Node) *Node {
-	xw := Must(Mul(x, l.w))
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("xw.shape: %v l.b.shape: %v", xw.Shape(), l.b.Shape())
-			panic(r)
-		}
-	}()
-	xwb := Must(Add(xw, l.b))
-	act := Must(l.af(xwb))
-	return act
+func (l *FC) Activate() (retVal *Node, err error) {
+	log.Printf("l.input: %v, l.w: %v l.b %v", l.input.Shape(), l.w.Shape(), l.b.Shape())
+	var xw, xwb *Node
+	if xw, err = Mul(l.input, l.w); err != nil {
+		return
+	}
+
+	if xwb, err = Add(xw, l.b); err != nil {
+		return
+	}
+
+	if retVal, err = l.af(xwb); err != nil {
+		return
+	}
+
+	l.output = retVal
+	return
 }
 
 type SoftmaxLayer struct {
 	*Neuron
 	LayerConfig
-	g *ExprGraph
+
+	input  *Node
+	output *Node
+	g      *ExprGraph
 }
 
 func NewSoftmaxLayer(opts ...LayerConsOpt) *SoftmaxLayer {
@@ -113,18 +121,24 @@ func NewSoftmaxLayer(opts ...LayerConsOpt) *SoftmaxLayer {
 	}
 
 	u := func() InitWFn {
-		high := 1 / float64(sm.Inputs)
-		low := -high
-		return Uniform(low, high)
+		return GlorotU(1.0)
 	}
 
-	sm.Neuron = NewNeuron(sm.Inputs, sm.Outputs, sm.g, u)
+	sm.Neuron = NewNeuron(sm.Inputs, sm.Outputs, sm.BatchSize, sm.g, u)
 	return sm
 }
 
-func (l *SoftmaxLayer) Activate(x *Node) *Node {
-	xw := Must(Mul(x, l.w))
-	xwb := Must(Add(xw, l.b))
-	act := Must(SoftMax(xwb))
-	return act
+func (l *SoftmaxLayer) Activate() (retVal *Node, err error) {
+	var xw, xwb *Node
+	if xw, err = Mul(l.input, l.w); err != nil {
+		return
+	}
+	if xwb, err = Add(xw, l.b); err != nil {
+		return
+	}
+	if retVal, err = SoftMax(xwb); err != nil {
+		return
+	}
+	l.output = retVal
+	return
 }

@@ -2,8 +2,7 @@ package main
 
 type LayerConfig struct {
 	Inputs, Outputs int
-
-	BatchSize int
+	BatchSize       int
 }
 
 type DeepConfig struct {

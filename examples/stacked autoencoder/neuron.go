@@ -11,11 +11,16 @@ type Neuron struct {
 
 type initFn func() InitWFn
 
-func NewNeuron(inputs, outputs int, g *ExprGraph, fn initFn) *Neuron {
+func NewNeuron(inputs, outputs, batchSize int, g *ExprGraph, fn initFn) *Neuron {
 	w := NewMatrix(g, Float64, WithShape(inputs, outputs), WithInit(fn()))
-	b := NewVector(g, Float64, WithShape(outputs), WithInit(Zeroes()))
-	// w := NewVector(g, Float64, WithShape(outputs), WithInit(fn()), WithName("w"))
-	// b := NewScalar(g, Float64, WithValue(0.0), WithName("b"))
+
+	var b *Node
+	if batchSize == 1 {
+		b = NewVector(g, Float64, WithShape(outputs), WithInit(Zeroes()))
+	} else {
+		b = NewMatrix(g, Float64, WithShape(batchSize, outputs), WithInit(Zeroes()))
+	}
+
 	return &Neuron{
 		w: w,
 		b: b,
