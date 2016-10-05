@@ -100,7 +100,11 @@ func open(path string) *os.File {
 }
 
 func pixelWeight(px byte) float64 {
-	return float64(px)/pixelRange*0.9 + 0.1
+	retVal := float64(px)/pixelRange*0.9 + 0.1
+	if retVal == 1.0 {
+		return 0.999
+	}
+	return retVal
 }
 
 func reversePixelWeight(px float64) byte {

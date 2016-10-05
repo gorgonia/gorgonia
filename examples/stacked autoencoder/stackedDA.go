@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	. "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
@@ -79,15 +81,15 @@ func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hi
 	}
 }
 
-func (sda *StackedDA) Pretrain(x types.Tensor) (err error) {
+func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 	var inputs, model Nodes
 	var machines []VM
 
-	// logfile, err := os.OpenFile("exec.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	// logger := log.New(logfile, "", 0)
+	logfile, err := os.OpenFile("exec.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	logger := log.New(logfile, "", 0)
 
 	inputs = Nodes{sda.input}
-	for _, da := range sda.autoencoders {
+	for i, da := range sda.autoencoders {
 		var cost *Node
 		var grads Nodes
 		cost, err = da.Cost(sda.input)
@@ -100,11 +102,17 @@ func (sda *StackedDA) Pretrain(x types.Tensor) (err error) {
 		if err != nil {
 			return err
 		}
-
-		// log.Printf("%v, %d", prog, FmtNodeMap(locMap))
-		// logger.SetPrefix(fmt.Sprintf("Train Layer %d:\t", i))
-		// m := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist(3), WithValueFmt("%+1.1s"))
-		m := NewTapeMachine(prog, locMap)
+		if epoch == 0 {
+			log.Printf("Layer: %d \n%v, %d", i, prog, FmtNodeMap(locMap))
+		}
+		logger.SetPrefix(fmt.Sprintf("Train Layer %d:\t", i))
+		var m VM
+		if epoch == 1 {
+			m = NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist(), WithValueFmt("%+1.1s"), WithInfWatch())
+		} else {
+			m = NewTapeMachine(prog, locMap, WithNaNWatch(), WithInfWatch())
+		}
+		// m := NewTapeMachine(prog, locMap)
 		machines = append(machines, m)
 	}
 
@@ -115,12 +123,16 @@ func (sda *StackedDA) Pretrain(x types.Tensor) (err error) {
 	var start int
 
 	for batch := 0; batch < batches; batch++ {
+		log.Printf("Batch %d", batch)
 		var input types.Tensor
 		if input, err = tensor.Slice(x, S(start, start+sda.BatchSize)); err != nil {
 			return
 		}
 
 		for i, da := range sda.autoencoders {
+			logfile.Truncate(0)
+			logfile.Seek(0, 0)
+			log.Printf("Layer %d", i)
 			model = model[:0]
 
 			Let(sda.input, input)
