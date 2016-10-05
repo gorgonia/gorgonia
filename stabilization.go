@@ -54,7 +54,8 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 
 	g := a.g
 	g.removeAllEdgesFrom(a) // remove all references
-	defer returnNode(a)     // send it back to the pool, since it is literally useless now
+	g.RemoveNode(a)
+	defer returnNode(a) // send it back to the pool, since it is literally useless now
 
 	if bot == subOpType {
 		if retVal, err = Neg(x); err == nil {

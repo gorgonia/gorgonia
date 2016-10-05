@@ -115,6 +115,7 @@ func (g *ExprGraph) RemoveNode(node graph.Node) {
 
 	delete(g.byHash, hash)
 	delete(g.to, n)
+	g.evac[hash] = g.evac[hash].remove(n)
 	g.all = g.all.remove(n)
 }
 
@@ -195,9 +196,18 @@ func (g *ExprGraph) ToDot() string {
 	}
 
 	groups := make(map[string]struct{})
-	for _, n := range g.byHash {
-		group := n.dotCluster()
-		groups[group] = struct{}{}
+	for h, n := range g.byHash {
+		if n != nil {
+			group := n.dotCluster()
+			groups[group] = struct{}{}
+			continue
+		}
+		// other wise it'se a clash of hash
+		for _, n := range g.evac[h] {
+			group := n.dotCluster()
+			groups[group] = struct{}{}
+
+		}
 	}
 
 	for grp := range groups {
