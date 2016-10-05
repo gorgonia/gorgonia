@@ -32,7 +32,7 @@ func main() {
 
 	/* EXAMPLE TIME */
 
-	xV, err := inputs.Slice(T.S(0, 100))
+	xV, err := inputs.Slice(T.S(0, 10000))
 	if err != nil {
 		log.Println(err)
 	}
@@ -43,9 +43,9 @@ func main() {
 	size := inputs.Shape()[0]
 	inputSize := 784
 	outputSize := 10
-	hiddenSizes := []int{1000}
+	hiddenSizes := []int{1000, 1000}
 	layers := len(hiddenSizes)
-	corruptions := []float64{0.1}
+	corruptions := []float64{0.1, 0.2}
 	batchSize := 100
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)
 
@@ -73,15 +73,18 @@ func main() {
 	 */
 
 	log.Printf("sda.autoencoders[0].w: %+1.1s", sda.autoencoders[0].w.Value())
-	for i := 0; i < 1; i++ {
-		if err = sda.Pretrain(inputs); err != nil {
-			ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
+	for i := 0; i < 10; i++ {
+		log.Printf("Pretrain: %d", i)
+		if err = sda.Pretrain(xV); err != nil {
+			ioutil.WriteFile("fullGraph_err.dot", []byte(g.ToDot()), 0644)
 			log.Fatalf("%d %v", i, err)
 		}
+
+		ioutil.WriteFile("fullGraph_0.dot", []byte(g.ToDot()), 0644)
 	}
 
-	yV, _ := targets.Slice(T.S(0, 100))
-	ys := make([]int, 100)
+	yV, _ := targets.Slice(T.S(0, 10000))
+	ys := make([]int, 10000)
 	ys = ys[:0]
 	for i := 0; i < yV.Shape()[0]; i++ {
 		ysl, _ := yV.Slice(T.S(i))
@@ -94,10 +97,15 @@ func main() {
 		}
 	}
 	log.Printf("Starting to finetune now")
-	sda.Finetune(xV, ys)
+	for i := 0; i < 10; i++ {
+		sda.Finetune(xV, ys)
+	}
 	log.Printf("Writing images now")
 
 	finalWeights := sda.autoencoders[0].w.Value().(T.Tensor).Tensor.(*tf64.Tensor)
+	finalWeights.T()
+	finalWeights.Transpose()
+	log.Printf("finalWeights: %v | %v", finalWeights.Shape(), finalWeights.Shape()[0])
 	for i := 0; i < finalWeights.Shape()[0]; i++ {
 		rowT, _ := finalWeights.Slice(T.S(i))
 		row := rowT.Data().([]float64)

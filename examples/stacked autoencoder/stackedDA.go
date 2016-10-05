@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	. "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
@@ -31,6 +30,7 @@ func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hi
 	} else {
 		input = NewMatrix(g, Float64, WithShape(batchSize, inputs), WithName("x"))
 	}
+	firstInput := input
 
 	for i := 0; i < layers; i++ {
 		var inputSize, outputSize int
@@ -74,7 +74,7 @@ func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hi
 		autoencoders: autoencoders,
 		hiddenLayers: hiddenLayers,
 		final:        final,
-		input:        input,
+		input:        firstInput,
 		g:            g,
 	}
 }
@@ -91,9 +91,6 @@ func (sda *StackedDA) Pretrain(x types.Tensor) (err error) {
 		var cost *Node
 		var grads Nodes
 		cost, err = da.Cost(sda.input)
-		// costs = append(costs, cost)
-
-		// model = append(model, da.w, da.b, da.h.b)
 
 		if grads, err = Grad(cost, da.w, da.b, da.h.b); err != nil {
 			return
@@ -104,9 +101,9 @@ func (sda *StackedDA) Pretrain(x types.Tensor) (err error) {
 			return err
 		}
 
-		log.Printf("%v, %d", prog, FmtNodeMap(locMap))
+		// log.Printf("%v, %d", prog, FmtNodeMap(locMap))
 		// logger.SetPrefix(fmt.Sprintf("Train Layer %d:\t", i))
-		// m := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist(), WithValueFmt("%+1.1s"))
+		// m := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist(3), WithValueFmt("%+1.1s"))
 		m := NewTapeMachine(prog, locMap)
 		machines = append(machines, m)
 	}

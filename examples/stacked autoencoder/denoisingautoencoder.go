@@ -74,11 +74,16 @@ func (l *DenoisingAutoencoder) Activate() (retVal *Node, err error) {
 	return l.af(xwb)
 }
 
-func (l *DenoisingAutoencoder) Reconstruct(y *Node) *Node {
-	yw := Must(Mul(y, l.h.w))
-	ywb := Must(Add(yw, l.h.b))
-	act := Must(l.af(ywb))
-	return act
+func (l *DenoisingAutoencoder) Reconstruct(y *Node) (retVal *Node, err error) {
+	var yw, ywb *Node
+	if yw, err = Mul(y, l.h.w); err != nil {
+		return
+	}
+
+	if ywb, err = Add(yw, l.h.b); err != nil {
+		return
+	}
+	return l.af(ywb)
 }
 
 func (l *DenoisingAutoencoder) Corrupt() (*Node, error) {
@@ -86,15 +91,22 @@ func (l *DenoisingAutoencoder) Corrupt() (*Node, error) {
 }
 
 func (l *DenoisingAutoencoder) Cost(x *Node) (retVal *Node, err error) {
+	var hidden, y, loss *Node
+
 	if l.corrupted, err = l.Corrupt(); err != nil {
 		return
 	}
-	var hidden *Node
 	if hidden, err = l.Activate(); err != nil {
 		return
 	}
 
-	y := l.Reconstruct(hidden)
-	loss := Must(BinaryXent(l.input, y))
+	if y, err = l.Reconstruct(hidden); err != nil {
+		return
+	}
+
+	if loss, err = BinaryXent(l.input, y); err != nil {
+		return
+	}
+
 	return Mean(loss)
 }

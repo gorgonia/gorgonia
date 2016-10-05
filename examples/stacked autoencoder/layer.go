@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	. "github.com/chewxy/gorgonia"
 )
@@ -87,7 +86,6 @@ func NewFC(opts ...LayerConsOpt) *FC {
 }
 
 func (l *FC) Activate() (retVal *Node, err error) {
-	log.Printf("l.input: %v, l.w: %v l.b %v", l.input.Shape(), l.w.Shape(), l.b.Shape())
 	var xw, xwb *Node
 	if xw, err = Mul(l.input, l.w); err != nil {
 		return
