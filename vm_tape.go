@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 )
 
 type tapeMachine struct {
@@ -333,14 +334,25 @@ func (instr alloc) writes() register  { return instr.writeTo }
 
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
-	if !m.alloc() {
-		machineLogf("Already preallocated!")
-		m.logf("Already prealloc")
-		return
-	}
 
 	dest := instr.writeTo.id
 
+	// check
+	var have, want Type
+	if m.storage[dest] == nil {
+		goto mustalloc
+	}
+	have = m.storage[dest].Type()
+	want = instr.t
+
+	if !m.alloc() && typeEq(have, want) {
+		machineLogf("Already preallocated!")
+		m.logf("Already prealloc")
+
+		return
+	}
+
+mustalloc:
 	// check first if there is already a value bound to the node.
 	node := m.p.g.Node(instr.id).(*Node)
 	if node.boundTo != nil {
@@ -397,7 +409,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	node := m.p.g.Node(instr.index).(*Node)
 
 	if node.boundTo == nil {
-		return NewError(RuntimeError, "No value bound to node %v", node)
+		return NewError(RuntimeError, "No value bound to node %v (%x)", node, node.ID())
 	}
 
 	var v Value
@@ -472,6 +484,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p := m.storage[instr.writeTo.id]
 			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
+				err = errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
 				return
 			}
 		} else {

@@ -18,10 +18,10 @@ var (
 	compileDev        = false
 	shapeInferenceDev = false
 	typeSystemDev     = false
-	symdiffDev        = false
+	symdiffDev        = true
 	autodiffDev       = false
 	machineDev        = true
-	stabilizationDev  = false
+	stabilizationDev  = true
 	solverDev         = true
 )
 

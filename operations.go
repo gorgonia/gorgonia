@@ -193,7 +193,7 @@ func Gte(a, b *Node, retSame bool) (retVal *Node, err error) {
 /* UNARY STUFF */
 
 func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
-	stabLogf("Creating node for %v, a: %p", op, a)
+	stabLogf("Creating node for %v, a: %p %v", op, a, a)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 	if stabilization {
@@ -204,19 +204,22 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 		ot := op.(elemUnaryOp).unaryOpType()
 		for _, fn := range unaryOpStabilizationFns[ot] {
 			if retVal, err = fn(a); err == nil {
+				stabLogf("stabilized")
 				leaveLoggingContext()
 				return
 			}
 
 			if _, ok := err.(errNoStabilization); !ok {
+				stabLogf("Actual error")
 				leaveLoggingContext()
 				return
 			} else {
+				stabLogf("No stabilization found")
 				err = nil // reset err
 			}
 		}
 		leaveLoggingContext()
-		stabLogf("No stabilizations")
+		stabLogf("No stabilizations - retVal: %v", retVal)
 	}
 
 	return applyOp(op, a)
