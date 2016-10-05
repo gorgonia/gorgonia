@@ -111,7 +111,9 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 
 func (m *tapeMachine) Run(frag fragment) (err error) {
 	defer func() {
-		m.dontAlloc()
+		if err == nil {
+			m.dontAlloc()
+		}
 	}()
 
 	for _, instr := range frag {
@@ -144,6 +146,34 @@ func (m *tapeMachine) RunAll() (err error) {
 		instr := m.p.instructions[m.pc]
 		if err = instr.exec(m); err != nil {
 			return
+		}
+
+		if m.watchNaN() {
+			writeTo := instr.writes().id
+			id := instr.ID()
+			if writeTo > 0 && id > 0 {
+				v := m.storage[writeTo]
+				n := m.p.g.Node(id).(*Node)
+
+				if hasNaN(v) {
+					err = newValueErr(n, "NaN found in value. Node: %v(%x)", n, n.ID())
+					return
+				}
+			}
+		}
+
+		if m.watchInf() {
+			writeTo := instr.writes().id
+			id := instr.ID()
+			if writeTo > 0 && id > 0 {
+				v := m.storage[writeTo]
+				n := m.p.g.Node(id).(*Node)
+				if hasInf(v) {
+					log.Printf("Reads: %v", instr.reads())
+					err = newValueErr(n, "Inf found in value. Node: %v(%x)", n, n.ID())
+					return
+				}
+			}
 		}
 	}
 
@@ -295,6 +325,7 @@ func (r register) String() string { return fmt.Sprintf("%s%d", r.device, r.id) }
 /* INSTRUCTIONS */
 
 type tapeInstr interface {
+	ID() int
 	reads() []register
 	writes() register
 	exec(*tapeMachine) error
@@ -329,6 +360,7 @@ func newAlloc(n *Node, writeTo register) alloc {
 	}
 }
 
+func (instr alloc) ID() int           { return instr.id }
 func (instr alloc) reads() []register { return instr.readFrom }
 func (instr alloc) writes() register  { return instr.writeTo }
 
@@ -398,6 +430,7 @@ type loadArg struct {
 	writeTo register
 }
 
+func (instr loadArg) ID() int           { return instr.index }
 func (instr loadArg) reads() []register { return nil }
 func (instr loadArg) writes() register  { return instr.writeTo }
 
@@ -444,6 +477,7 @@ type execOp struct {
 	useUnsafe    bool
 }
 
+func (instr execOp) ID() int           { return instr.id }
 func (instr execOp) reads() []register { return instr.readFrom }
 func (instr execOp) writes() register  { return instr.writeTo }
 
@@ -562,6 +596,7 @@ func (instr flushInstr) exec(m *tapeMachine) error {
 	return nil
 }
 
+func (instr flushInstr) ID() int           { return -1 }
 func (instr flushInstr) reads() []register { return nil }
 func (instr flushInstr) writes() register  { return register{-1, CPU} }
 func (instr flushInstr) String() string    { return "Do Batched BLAS" }
@@ -571,6 +606,7 @@ type letInstr struct {
 	writeTo  register
 }
 
+func (instr letInstr) ID() int                 { return -1 }
 func (instr letInstr) reads() []register       { return []register{instr.readFrom} }
 func (instr letInstr) writes() register        { return instr.writeTo }
 func (instr letInstr) exec(*tapeMachine) error { return nil }
@@ -584,6 +620,7 @@ type readInstr struct {
 	into     *Value
 }
 
+func (instr readInstr) ID() int           { return -1 }
 func (instr readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr readInstr) writes() register  { return register{-1, CPU} }
 func (instr readInstr) exec(m *tapeMachine) error {

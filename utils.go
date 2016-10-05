@@ -8,6 +8,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/math32"
 	"github.com/gonum/graph"
 )
 
@@ -151,13 +152,49 @@ func ones(dt Dtype, sizes ...int) (retVal Value) {
 	return
 }
 
-func hasInf(a []float64) bool {
-	for _, v := range a {
-		if math.IsInf(v, 0) {
-			return true
+func hasInf(v Value) bool {
+	switch vt := v.(type) {
+	case Tensor:
+		switch vt.Dtype() {
+		case Float64:
+			T := vt.Tensor.(*tf64.Tensor)
+			data := T.Data().([]float64)
+			for _, datum := range data {
+				if math.IsInf(datum, 0) {
+					return true
+				}
+			}
+			return false
+		case Float32:
+			T := vt.Tensor.(*tf32.Tensor)
+			data := T.Data().([]float32)
+			for _, datum := range data {
+				if math32.IsInf(datum, 0) {
+					return true
+				}
+			}
+			return false
+		default:
+			err := nyi("hasInf", vt.Dtype())
+			panic(err)
 		}
+	case Scalar:
+		switch f := vt.v.(type) {
+		case float32:
+			return math32.IsInf(f, 0)
+		case float64:
+			return math.IsInf(f, 0)
+		default:
+			return false
+		}
+	case *dualValue:
+		return hasInf(vt.Value) || hasInf(vt.d)
+	default:
+		err := nyi("hasInf", vt)
+		panic(err)
 	}
-	return false
+
+	panic("Unreachable")
 }
 
 func hasNaN(v Value) bool {
@@ -177,7 +214,7 @@ func hasNaN(v Value) bool {
 			T := vt.Tensor.(*tf64.Tensor)
 			data := T.Data().([]float32)
 			for _, datum := range data {
-				if math.IsNaN(float64(datum)) {
+				if math32.IsNaN(datum) {
 					return true
 				}
 			}
@@ -189,7 +226,7 @@ func hasNaN(v Value) bool {
 	case Scalar:
 		switch f := vt.v.(type) {
 		case float32:
-			return math.IsNaN(float64(f))
+			return math32.IsNaN(f)
 		case float64:
 			return math.IsNaN(f)
 		default:
