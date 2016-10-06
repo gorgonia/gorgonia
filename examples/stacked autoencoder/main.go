@@ -11,16 +11,15 @@ import (
 	"runtime/pprof"
 
 	T "github.com/chewxy/gorgonia"
+	"github.com/chewxy/gorgonia/tensor"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor/types"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write memory profile to this file")
 
-func main() {
-	flag.Parse()
-	rand.Seed(1337)
-
+func loadMNIST() (inputs, targets types.Tensor) {
 	fmt.Println("Loading Training Data..")
 
 	labelData, err := readLabelFile(open("train-labels.idx1-ubyte"))
@@ -33,14 +32,44 @@ func main() {
 	fmt.Printf("Images: %d. | Width: %d, Height: %d\n", len(imageData), width, height)
 	fmt.Printf("Labels: %d. ", len(labelData))
 
-	inputs := prepareX(imageData) // transform into floats
-	targets := prepareY(labelData)
+	inputs = prepareX(imageData) // transform into floats
+	targets = prepareY(labelData)
 	fmt.Printf("inputs: %+s\n", inputs)
 	fmt.Printf("targets: %+s\n", targets)
 
-	/* EXAMPLE TIME */
+	return inputs, targets
+}
 
-	xV, err := inputs.Slice(T.S(0, 10000))
+func loadShared() (inputs, targets types.Tensor) {
+	fx, err := os.OpenFile("shared/x.npy", os.O_RDONLY, 0644)
+	fy, err := os.OpenFile("shared/y.npy", os.O_RDONLY, 0644)
+
+	xV := new(tf64.Tensor)
+	yV := new(tf64.Tensor)
+
+	err = xV.ReadNpy(fx)
+	if err != nil {
+		panic(err)
+	}
+	err = yV.ReadNpy(fy)
+	if err != nil {
+		panic(err)
+	}
+	inputs = xV
+	targets = yV
+
+	return
+}
+
+func main() {
+	flag.Parse()
+	rand.Seed(1337)
+
+	/* EXAMPLE TIME */
+	inputs, targets := loadMNIST()
+	// inputs, targets := loadShared()
+
+	xV, err := tensor.Slice(inputs, nil)
 	if err != nil {
 		log.Println(err)
 	}
@@ -48,14 +77,17 @@ func main() {
 
 	g := T.NewGraph()
 
+	T.UseNonStable()
+
 	size := inputs.Shape()[0]
 	inputSize := 784
 	outputSize := 10
-	hiddenSizes := []int{1000, 1000, 1000}
+	hiddenSizes := []int{1000}
 	layers := len(hiddenSizes)
 	corruptions := []float64{0.1, 0.2, 0.3}
 	batchSize := 100
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)
+	pretrainEpoch := 5
 
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -71,9 +103,7 @@ func main() {
 		log.Fatal("WTF????!!!!")
 	}
 
-	log.Printf("sda.autoencoders[0].w: %+1.1s", sda.autoencoders[0].w.Value())
-	for i := 0; i < 10; i++ {
-		log.Printf("Pretrain: %d", i)
+	for i := 0; i < pretrainEpoch; i++ {
 		if err = sda.Pretrain(xV, i); err != nil {
 			ioutil.WriteFile("fullGraph_err.dot", []byte(g.ToDot()), 0644)
 
@@ -86,11 +116,11 @@ func main() {
 		ioutil.WriteFile("fullGraph_0.dot", []byte(g.ToDot()), 0644)
 	}
 
-	yV, _ := targets.Slice(T.S(0, 10000))
+	yV, _ := tensor.Slice(targets, T.S(0, 10000))
 	ys := make([]int, 10000)
 	ys = ys[:0]
 	for i := 0; i < yV.Shape()[0]; i++ {
-		ysl, _ := yV.Slice(T.S(i))
+		ysl, _ := tensor.Slice(yV, T.S(i))
 		raw := ysl.Data().([]float64)
 		for i, v := range raw {
 			if v == 0.9 {
@@ -100,18 +130,17 @@ func main() {
 		}
 	}
 
-	log.Printf("Starting to finetune now")
-	for i := 0; i < 10; i++ {
-		log.Printf("Finetune iter: %d", i)
-		sda.Finetune(xV, ys)
-	}
-	log.Printf("Writing images now")
+	// log.Printf("Starting to finetune now")
+	// for i := 0; i < 10; i++ {
+	// 	log.Printf("Finetune iter: %d", i)
+	// 	sda.Finetune(xV, ys)
+	// }
+	// log.Printf("Writing images now")
 
 	// Visualize
 	finalWeights := sda.autoencoders[0].w.Value().(T.Tensor).Tensor.(*tf64.Tensor)
 	finalWeights.T()
 	finalWeights.Transpose()
-	log.Printf("finalWeights: %v | %v", finalWeights.Shape(), finalWeights.Shape()[0])
 	for i := 0; i < finalWeights.Shape()[0]; i++ {
 		rowT, _ := finalWeights.Slice(T.S(i))
 		row := rowT.Data().([]float64)
@@ -121,8 +150,5 @@ func main() {
 		jpeg.Encode(f, img, &jpeg.Options{jpeg.DefaultQuality})
 		f.Close()
 	}
-
-	log.Printf("xV: %+0.1s", xV)
-	log.Printf("sda.autoencoders[0].w: %+1.1s", sda.autoencoders[0].w.Value())
 	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 }

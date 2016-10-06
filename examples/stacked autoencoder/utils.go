@@ -24,3 +24,11 @@ func hasOne(a []float64) bool {
 	}
 	return false
 }
+
+func avgF64s(a []float64) (retVal float64) {
+	for _, v := range a {
+		retVal += v
+	}
+	retVal /= float64(len(a))
+	return
+}

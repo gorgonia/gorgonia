@@ -89,10 +89,12 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 	logger := log.New(logfile, "", 0)
 
 	inputs = Nodes{sda.input}
+	var costValue Value
 	for i, da := range sda.autoencoders {
 		var cost *Node
 		var grads Nodes
 		cost, err = da.Cost(sda.input)
+		Read(cost, &costValue)
 
 		if grads, err = Grad(cost, da.w, da.b, da.h.b); err != nil {
 			return
@@ -105,44 +107,49 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 		if epoch == 0 {
 			log.Printf("Layer: %d \n%v, %d", i, prog, FmtNodeMap(locMap))
 		}
-		logger.SetPrefix(fmt.Sprintf("Train Layer %d:\t", i))
+		// logger.SetPrefix(fmt.Sprintf("Train Layer %d:\t", i))
 		var m VM
-		if epoch == 1 {
-			m = NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist(), WithValueFmt("%+1.1s"), WithInfWatch())
+		if epoch == 0 {
+			// m = NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist(), WithValueFmt("%+1.1s"), WithInfWatch())
+			m = NewTapeMachine(prog, locMap, WithLogger(logger), WithValueFmt("%+1.1s"), WithWatchlist(), TraceExec())
+			// m = NewTapeMachine(prog, locMap, WithNaNWatch(), WithInfWatch())
 		} else {
 			m = NewTapeMachine(prog, locMap, WithNaNWatch(), WithInfWatch())
 		}
-		// m := NewTapeMachine(prog, locMap)
+		m = NewTapeMachine(prog, locMap)
 		machines = append(machines, m)
 	}
 
-	solver := NewVanillaSolver()
+	solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
 	model = make(Nodes, 3)
 
 	batches := x.Shape()[0] / sda.BatchSize
 	var start int
 
-	for batch := 0; batch < batches; batch++ {
-		log.Printf("Batch %d", batch)
-		var input types.Tensor
-		if input, err = tensor.Slice(x, S(start, start+sda.BatchSize)); err != nil {
-			return
-		}
+	for i, da := range sda.autoencoders {
+		var layerCosts []float64
+		for batch := 0; batch < batches; batch++ {
+			var input types.Tensor
+			if input, err = tensor.Slice(x, S(start, start+sda.BatchSize)); err != nil {
+				return
+			}
 
-		for i, da := range sda.autoencoders {
-			logfile.Truncate(0)
-			logfile.Seek(0, 0)
-			log.Printf("Layer %d", i)
+			// logfile.Truncate(0)
+			// logfile.Seek(0, 0)
+			// log.Printf("Layer %d", i)
 			model = model[:0]
-
 			Let(sda.input, input)
 			if err = machines[i].RunAll(); err != nil {
 				return
 			}
+			c := costValue.(Scalar).V().(float64)
+			layerCosts = append(layerCosts, c)
 			model = append(model, da.w, da.b, da.h.b)
+
 			solver.Step(model)
 			machines[i].Reset()
 		}
+		log.Printf("Avg Cost: %v", avgF64s(layerCosts))
 	}
 
 	return nil

@@ -104,7 +104,7 @@ func (l *DenoisingAutoencoder) Cost(x *Node) (retVal *Node, err error) {
 		return
 	}
 
-	if loss, err = BinaryXent(l.input, y); err != nil {
+	if loss, err = BinaryXent(y, l.input); err != nil {
 		return
 	}
 
