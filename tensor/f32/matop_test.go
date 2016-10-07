@@ -57,248 +57,96 @@ func TestT_transposeIndex(t *testing.T) {
 	}
 }
 
+var transposeTests = []struct {
+	name          string
+	shape         types.Shape
+	transposeWith []int
+
+	correctShape    types.Shape
+	correctStrides  []int     // after .T()
+	correctStrides2 []int     // after .Transpose()
+	correctData     []float32 // after .Transpose()
+}{
+	{"c.T()", types.Shape{4, 1}, nil, types.Shape{1, 4}, []int{1}, []int{1}, RangeFloat32(0, 4)},
+	{"r.T()", types.Shape{1, 4}, nil, types.Shape{4, 1}, []int{1}, []int{1}, RangeFloat32(0, 4)},
+	{"v.T()", types.Shape{4}, nil, types.Shape{4}, []int{1}, []int{1}, RangeFloat32(0, 4)},
+	{"M.T()", types.Shape{2, 3}, nil, types.Shape{3, 2}, []int{1, 3}, []int{2, 1}, []float32{0, 3, 1, 4, 2, 5}},
+	{"M.T(0,1) (NOOP)", types.Shape{2, 3}, []int{0, 1}, types.Shape{2, 3}, []int{3, 1}, []int{3, 1}, RangeFloat32(0, 6)},
+	{"3T.T()", types.Shape{2, 3, 4}, nil, types.Shape{4, 3, 2}, []int{1, 4, 12}, []int{6, 2, 1}, []float32{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}},
+	{"3T.T(2, 1, 0) (Same as .T())", types.Shape{2, 3, 4}, []int{2, 1, 0}, types.Shape{4, 3, 2}, []int{1, 4, 12}, []int{6, 2, 1}, []float32{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}},
+	{"3T.T(0, 2, 1)", types.Shape{2, 3, 4}, []int{0, 2, 1}, types.Shape{2, 4, 3}, []int{12, 1, 4}, []int{12, 3, 1}, []float32{0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11, 12, 16, 20, 13, 17, 21, 14, 18, 22, 15, 19, 23}},
+	{"3T.T{1, 0, 2)", types.Shape{2, 3, 4}, []int{1, 0, 2}, types.Shape{3, 2, 4}, []int{4, 12, 1}, []int{8, 4, 1}, []float32{0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7, 16, 17, 18, 19, 8, 9, 10, 11, 20, 21, 22, 23}},
+	{"3T.T{1, 2, 0)", types.Shape{2, 3, 4}, []int{1, 2, 0}, types.Shape{3, 4, 2}, []int{4, 1, 12}, []int{8, 2, 1}, []float32{0, 12, 1, 13, 2, 14, 3, 15, 4, 16, 5, 17, 6, 18, 7, 19, 8, 20, 9, 21, 10, 22, 11, 23}},
+	{"3T.T{2, 0, 1)", types.Shape{2, 3, 4}, []int{2, 0, 1}, types.Shape{4, 2, 3}, []int{1, 12, 4}, []int{6, 3, 1}, []float32{0, 4, 8, 12, 16, 20, 1, 5, 9, 13, 17, 21, 2, 6, 10, 14, 18, 22, 3, 7, 11, 15, 19, 23}},
+	{"3T.T{0, 1, 2} (NOOP)", types.Shape{2, 3, 4}, []int{0, 1, 2}, types.Shape{2, 3, 4}, []int{12, 4, 1}, []int{12, 4, 1}, RangeFloat32(0, 24)},
+}
+
 func TestTranspose(t *testing.T) {
 	assert := assert.New(t)
-	var backing []float32
-	var correct []float32
 	var T *Tensor
 	var err error
-	backing = []float32{1, 2, 3, 4}
 
-	t.Log("Testing 4x1 column vector transpose")
-	T = NewTensor(WithShape(4, 1), WithBacking(backing))
-	T.T()
-	// don't actually have to do transpose. We can hence test to see if the thunking works
-	assert.Equal(types.Shape{1, 4}, T.Shape())
-	assert.Equal([]int{1}, T.Strides())
+	// standard transposes
+	for _, tts := range transposeTests {
+		T = NewTensor(WithShape(tts.shape...), WithBacking(RangeFloat32(0, tts.shape.TotalSize())))
+		if err = T.T(tts.transposeWith...); err != nil {
+			t.Errorf("%v - %v", tts.name, err)
+			continue
+		}
 
-	t.Log("Testing untransposing of a thunk'd 1x4 vector transpose - tests thunk")
-	T.T()
-	assert.Equal(types.Shape{4, 1}, T.Shape())
-	assert.Equal([]int{1}, T.Strides())
-	assert.Nil(T.old)
+		assert.True(tts.correctShape.Eq(T.Shape()), "Transpose %v Expected shape: %v. Got %v", tts.name, tts.correctShape, T.Shape())
+		assert.Equal(tts.correctStrides, T.Strides())
+		T.Transpose()
+		assert.True(tts.correctShape.Eq(T.Shape()), "Transpose %v Expected shape: %v. Got %v", tts.name, tts.correctShape, T.Shape())
+		assert.Equal(tts.correctStrides2, T.Strides())
+		assert.Equal(tts.correctData, T.data)
+	}
 
-	t.Log("Testing actually transposing a column vector into a row vector")
-	T.T()
-	T.Transpose()
-	assert.Nil(T.old)
-	assert.Equal(types.Shape{1, 4}, T.Shape()) // note, not the getter... but the actual data
-	assert.Equal([]int{1}, T.ostrides())
+	// test stacked .T() calls
 
-	t.Log("Testing 2x2 matrix: standard transpose")
-	T = NewTensor(WithShape(2, 2), WithBacking(backing))
-	T.T()
-	T.Transpose()
-
-	correct = []float32{1, 3, 2, 4}
-	assert.Equal(correct, T.data, "Transpose of 2x2 matrix isn't correct")
-	assert.Nil(T.old, "Expected transposeInfo to be nil after a DoTranspose()")
-	assert.Nil(T.transposeWith)
-
-	t.Log("Testing 2x2 Matrix: untransposing previously transposed")
-	T.T()
-	T.Transpose()
-	assert.Equal(backing, T.data)
-	assert.Nil(T.transposeWith)
-
-	t.Log("Testing Transposing a transpose that is purely thunked")
-	T.T()
-	T.T()
+	// column vector
+	T = NewTensor(WithShape(4, 1), WithBacking(RangeFloat32(0, 4)))
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #1 for vector. Error: %v", err)
+		goto matrev
+	}
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #1 for vector. Error: %v", err)
+		goto matrev
+	}
 	assert.Nil(T.old)
 	assert.Nil(T.transposeWith)
-	assert.Equal(backing, T.data, "Thunk'd transpose should have the same data as the original")
+	assert.True(T.IsColVec())
 
-	t.Log("Texting 2x2 Matrix: do-nothing transpose")
-	T.T(0, 1) // the axis is exactly the same as the axis
-	t.Logf("%v", T.old)
-	T.Transpose()
-	assert.Equal(backing, T.data, "Do-Nothing transpose of 2x2 matrix isn't correct")
+matrev:
+	// matrix, reversed
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat32(0, 6)))
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #1 for matrix reverse. Error: %v", err)
+		goto matnorev
+	}
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #2 for matrix reverse. Error: %v", err)
+		goto matnorev
+	}
+	assert.Nil(T.old)
 	assert.Nil(T.transposeWith)
+	assert.True(types.Shape{2, 3}.Eq(T.Shape()))
 
-	t.Log("Testing 2x2 Matrix: impossible axes")
-	err = T.T(1, 2, 3, 4) // waay more axes than what the matrix has
-	assert.NotNil(err, "Transpose should have failed")
-
-	t.Log("Testing 2x2 Matrix: invalid axes")
-	err = T.T(0, 5) // one of the axes is invalid
-	assert.NotNil(err, "Transpose should have failed - one of the axes were invalid")
-
-	t.Log("Testing 2x2 Matrix: repeated axes")
-	T.T(0, 0) // meaningless permutation
-	assert.NotNil(err, "Transpose should have failed - the axes were repeated")
-
-	// This part onwards actually fully stress tests the algorithm
-	// Basically trying on different variations of tensors.
-	t.Log("Testing 4x2 Matrix: standard transpose")
-	backing = RangeFloat32(0, 8)
-	T = NewTensor(WithShape(4, 2), WithBacking(backing))
-	t.Log("\tTesting thunked info while we're at it...")
-	T.T()
-	assert.Equal([]int{1, 0}, T.transposeWith, "Expected the transpose axes to be {1,0}")
+matnorev:
+	// 3-tensor, non reversed
+	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeFloat32(0, 24)))
+	if err = T.T(); err != nil {
+		t.Fatalf("Stacked .T() #1 for tensor with no reverse. Error: %v", err)
+	}
+	if err = T.T(2, 0, 1); err != nil {
+		t.Fatalf("Stacked .T() #2 for tensor with no reverse. Error: %v", err)
+	}
+	correctData := []float32{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}
+	assert.Equal(correctData, T.data)
+	assert.Equal([]int{2, 0, 1}, T.transposeWith)
 	assert.NotNil(T.old)
 
-	correct = []float32{
-		0, 2, 4, 6,
-		1, 3, 5, 7,
-	}
-	T.Transpose()
-	assert.Equal(correct, T.data, "Transpose of 4x2 matrix isn't correct")
-
-	t.Log("Testing 3-Tensor (2x3x4): standard transpose")
-	backing = RangeFloat32(0, 24)
-	T = NewTensor(WithShape(2, 3, 4), WithBacking(backing))
-
-	correct = []float32{
-		0, 12,
-		4, 16,
-		8, 20,
-
-		1, 13,
-		5, 17,
-		9, 21,
-
-		2, 14,
-		6, 18,
-		10, 22,
-
-		3, 15,
-		7, 19,
-		11, 23,
-	}
-	T.T()
-	T.Transpose()
-	assert.Equal(correct, T.data, "Transpose of a (2,3,4) 3-tensor was incorrect")
-
-	// backing has changed, so we need to actually create a new one
-	t.Log("Testing 3-Tensor (2x3x4): (2,0,1) transpose")
-	backing = RangeFloat32(0, 24)
-	T = NewTensor(WithShape(2, 3, 4), WithBacking(backing))
-
-	correct = []float32{
-		0, 4, 8,
-		12, 16, 20,
-
-		1, 5, 9,
-		13, 17, 21,
-
-		2, 6, 10,
-		14, 18, 22,
-
-		3, 7, 11,
-		15, 19, 23,
-	}
-	T.T(2, 0, 1)
-	T.Transpose()
-	assert.Equal(correct, T.data, "Transpose(2,0,1) of a (2,3,4) 3-tensor was incorrect")
-
-	t.Log("Testing Thunk'd transpose where it's a direct reverse")
-	backing = RangeFloat32(0, 24)
-	T = NewTensor(WithShape(2, 3, 4), WithBacking(backing))
-	T.T(2, 0, 1)
-	T.T(1, 2, 0) // reverse of 201
-	assert.Nil(T.old)
-	assert.Nil(T.transposeWith)
-
-	t.Log("Testing Thunk'd transpose where it's NOT a direct reverse")
-	T.T(2, 0, 1)
-	T.T(1, 0, 2) // needs the result of the previous transpose before this can be done
-	assert.Equal(correct, T.data, "The data should be as if a (2,0,1) transpose was done")
-	assert.Equal(types.Shape{2, 4, 3}, T.Shape(), "The Shape() should be 2x4x3")
-	assert.NotNil(T.old)
-	assert.NotNil(T.transposeWith)
-
-	t.Log("Testing 4-Tensor (2x3x4x5): Basic Transpose")
-	backing = RangeFloat32(0, 2*3*4*5)
-	T = NewTensor(WithShape(2, 3, 4, 5), WithBacking(backing))
-
-	correct = []float32{
-		0, 60,
-		20, 80,
-		40, 100,
-
-		5, 65,
-		25, 85,
-		45, 105,
-
-		10, 70,
-		30, 90,
-		50, 110,
-
-		15, 75,
-		35, 95,
-		55, 115,
-
-		// new layer
-		1, 61,
-		21, 81,
-		41, 101,
-
-		6, 66,
-		26, 86,
-		46, 106,
-
-		11, 71,
-		31, 91,
-		51, 111,
-
-		16, 76,
-		36, 96,
-		56, 116,
-
-		// new layer
-		2, 62,
-		22, 82,
-		42, 102,
-
-		7, 67,
-		27, 87,
-		47, 107,
-
-		12, 72,
-		32, 92,
-		52, 112,
-
-		17, 77,
-		37, 97,
-		57, 117,
-
-		// new layer
-		3, 63,
-		23, 83,
-		43, 103,
-
-		8, 68,
-		28, 88,
-		48, 108,
-
-		13, 73,
-		33, 93,
-		53, 113,
-
-		18, 78,
-		38, 98,
-		58, 118,
-
-		// new layer
-		4, 64,
-		24, 84,
-		44, 104,
-
-		9, 69,
-		29, 89,
-		49, 109,
-
-		14, 74,
-		34, 94,
-		54, 114,
-
-		19, 79,
-		39, 99,
-		59, 119,
-	}
-	T.T()
-	T.Transpose()
-	assert.Equal(correct, T.data, "Transpose of (2,3,4,5) 4-tensor isn't correct")
 }
 
 func TestTUT(t *testing.T) {
