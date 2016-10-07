@@ -247,9 +247,13 @@ func (t *Tensor) Reshape(dims ...int) error {
 	}
 
 	if t.old != nil {
-		return notyetimplemented("Reshape", "transposes")
+		t.Transpose()
 	}
 
+	return t.reshape(dims...)
+}
+
+func (t *Tensor) reshape(dims ...int) error {
 	t.Unlock()
 	t.SetShape(dims...)
 	t.Lock()

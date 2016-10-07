@@ -14,7 +14,8 @@ func (t *Tensor) Materialize() (retVal types.Tensor) {
 
 	iter := types.NewFlatIterator(t.AP)
 
-	var newBack []float64
+	newBack := make([]float64, t.Shape().TotalSize())
+	newBack = newBack[:0]
 	for i, err := iter.Next(); err == nil; i, err = iter.Next() {
 		newBack = append(newBack, t.data[i])
 	}

@@ -1,9 +1,6 @@
 package tensorf64
 
-import (
-	"github.com/chewxy/gorgonia/tensor/types"
-	"github.com/pkg/errors"
-)
+import "github.com/chewxy/gorgonia/tensor/types"
 
 // Dot is a highly opinionated API for performing dot product operations on two *Tensors, a and b.
 // This function is opinionated with regard to the vector operations because of how it treats operations with vectors.
@@ -64,13 +61,8 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 
 	if incr != nil {
 		defer func() {
-			if incr.Size() != retVal.Size() {
+			if !retVal.Shape().Eq(incr.Shape()) {
 				err = shapeMismatchError(retVal.Shape(), incr.Shape())
-				return
-			}
-
-			if err = incr.Reshape(retVal.Shape()...); err != nil {
-				err = errors.Wrapf(err, incrReshapeErr, retVal.Shape(), reuse.DataSize())
 				return
 			}
 			vecAdd(incr.data, retVal.data)
