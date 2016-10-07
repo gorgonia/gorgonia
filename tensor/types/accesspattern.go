@@ -115,6 +115,7 @@ func (ap *AP) Clone() (retVal *AP) {
 	// handle vectors
 	retVal.shape = retVal.shape[:len(ap.shape)]
 	retVal.strides = retVal.strides[:len(ap.strides)]
+	retVal.fin = ap.fin
 	return
 }
 
@@ -247,30 +248,29 @@ func (it *FlatIterator) Next() (int, error) {
 		return -1, noopError{}
 	}
 
-	defer func() {
-		if it.IsScalar() {
-			it.done = true
-			return
-		}
-
-		for d := len(it.shape) - 1; d >= 0; d-- {
-			if d == 0 && it.track[0]+1 >= it.shape[0] {
-				it.done = true
-				it.track[d] = 0 // overflow it
-				break
-			}
-
-			if it.track[d] < it.shape[d]-1 {
-				it.track[d]++
-				break
-			}
-			// overflow
-			it.track[d] = 0
-		}
-	}()
-
 	retVal, err := Ltoi(it.shape, it.strides, it.track...)
 	it.lastIndex = retVal
+
+	if it.IsScalar() {
+		it.done = true
+		return retVal, err
+	}
+
+	for d := len(it.shape) - 1; d >= 0; d-- {
+		if d == 0 && it.track[0]+1 >= it.shape[0] {
+			it.done = true
+			it.track[d] = 0 // overflow it
+			break
+		}
+
+		if it.track[d] < it.shape[d]-1 {
+			it.track[d]++
+			break
+		}
+		// overflow
+		it.track[d] = 0
+	}
+
 	return retVal, err
 }
 
