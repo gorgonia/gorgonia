@@ -308,10 +308,17 @@ func (t *Tensor) Clone() *Tensor {
 		retVal.old = t.old.Clone()
 	}
 
+	if t.transposeWith != nil {
+		retVal.transposeWith = types.BorrowInts(len(t.transposeWith))
+		for i, v := range t.transposeWith {
+			retVal.transposeWith[i] = v
+		}
+	}
+
 	newdata := make([]float32, len(t.data))
 	copy(newdata, t.data)
 	retVal.data = newdata
-	retVal.Lock()
+	// retVal.Lock()
 	return retVal
 }
 
