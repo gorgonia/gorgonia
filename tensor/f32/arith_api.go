@@ -30,13 +30,11 @@ func Add(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 
 	switch {
 	case toReuse && atok:
-		if !at.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", at.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, at); err != nil {
 			return
 		}
 	case toReuse && btok:
-		if !bt.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", bt.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, bt); err != nil {
 			return
 		}
 	}
@@ -135,13 +133,11 @@ func Sub(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 
 	switch {
 	case toReuse && atok:
-		if !at.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", at.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, at); err != nil {
 			return
 		}
 	case toReuse && btok:
-		if !bt.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", bt.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, bt); err != nil {
 			return
 		}
 	}
@@ -240,13 +236,11 @@ func PointwiseMul(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err 
 
 	switch {
 	case toReuse && atok:
-		if !at.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", at.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, at); err != nil {
 			return
 		}
 	case toReuse && btok:
-		if !bt.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", bt.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, bt); err != nil {
 			return
 		}
 	}
@@ -337,13 +331,11 @@ func PointwiseDiv(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err 
 
 	switch {
 	case toReuse && atok:
-		if !at.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", at.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, at); err != nil {
 			return
 		}
 	case toReuse && btok:
-		if !bt.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", bt.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, bt); err != nil {
 			return
 		}
 	}
@@ -434,13 +426,11 @@ func PointwisePow(a, b interface{}, opts ...types.FuncOpt) (retVal *Tensor, err 
 
 	switch {
 	case toReuse && atok:
-		if !at.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", at.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, at); err != nil {
 			return
 		}
 	case toReuse && btok:
-		if !bt.Shape().Eq(reuse.Shape()) {
-			err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", bt.Shape(), reuse.Shape())
+		if err = reuseCheck(reuse, bt); err != nil {
 			return
 		}
 	}
