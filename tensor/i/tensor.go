@@ -241,21 +241,27 @@ func (t *Tensor) Dtype() types.Dtype { return types.Int }
 func (t *Tensor) Size() int          { return t.Shape().TotalSize() }
 func (t *Tensor) DataSize() int      { return len(t.data) }
 
+// Reshape reshapes a *Tensor. If the tensors need to be materialized (either it's a view or transpose), it will be materialized before the reshape happens
 func (t *Tensor) Reshape(dims ...int) error {
 	if t.viewOf != nil {
 		return notyetimplemented("Reshape", "views")
 	}
 
 	if t.old != nil {
-		return notyetimplemented("Reshape", "transposes")
+		t.Transpose()
 	}
 
+	return t.reshape(dims...)
+}
+
+func (t *Tensor) reshape(dims ...int) error {
 	t.Unlock()
 	t.SetShape(dims...)
 	t.Lock()
 	return t.sanity()
 }
 
+// Zero zeroes a *Tensor.
 func (t *Tensor) Zero() {
 	for i := range t.data {
 		t.data[i] = int(0) //@DEFAULTZERO
@@ -275,6 +281,7 @@ func (t *Tensor) ScalarValue() interface{} {
 	return t.data[0]
 }
 
+// Eq checks that two types.Tensor are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
 func (t *Tensor) Eq(other types.Tensor) bool {
 	if ot, ok := other.(*Tensor); ok {
 		if ot == t {
@@ -301,6 +308,7 @@ func (t *Tensor) Eq(other types.Tensor) bool {
 	return false
 }
 
+// Clone clones the *Tensor. It creates a copy of the data. A new underlying array will be allocated
 func (t *Tensor) Clone() *Tensor {
 	retVal := new(Tensor)
 	retVal.AP = t.AP.Clone()

@@ -1,9 +1,6 @@
 package tensori
 
-import (
-	"github.com/chewxy/gorgonia/tensor/types"
-	"github.com/pkg/errors"
-)
+import "github.com/chewxy/gorgonia/tensor/types"
 
 // PointwiseSquare squares the elements of the ndarray. The reason why it's called PointwiseSquare instead of Square is because
 // A^2 = A · A, and is a valid linalg operation for square matrices (ndarrays with dims() of 2, and both shapes (m, m)).
@@ -14,16 +11,8 @@ func PointwiseSquare(a *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err erro
 	toReuse := reuse != nil
 
 	if toReuse {
-		if a.Size() != reuse.Size() {
-			err = types.NewError(types.SizeMismatch, "Cannot reuse %v. Expected size of %v. Got %v instead", reuse, a.Size(), reuse.Size())
+		if err = reuseCheck(reuse, a); err != nil {
 			return
-		}
-
-		if !a.Shape().Eq(reuse.Shape()) {
-			if err = reuse.Reshape(a.Shape()...); err != nil {
-				err = errors.Wrapf(err, reuseReshapeErr, a.Shape(), reuse.DataSize())
-				return
-			}
 		}
 	}
 
@@ -49,16 +38,8 @@ func Sqrt(a *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	toReuse := reuse != nil
 
 	if toReuse {
-		if a.Size() != reuse.Size() {
-			err = types.NewError(types.SizeMismatch, "Cannot reuse %v. Expected size of %v. Got %v instead", reuse, a.Size(), reuse.Size())
+		if err = reuseCheck(reuse, a); err != nil {
 			return
-		}
-
-		if !a.Shape().Eq(reuse.Shape()) {
-			if err = reuse.Reshape(a.Shape()...); err != nil {
-				err = errors.Wrapf(err, reuseReshapeErr, a.Shape(), reuse.DataSize())
-				return
-			}
 		}
 	}
 
@@ -84,16 +65,8 @@ func InvSqrt(a *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	toReuse := reuse != nil
 
 	if toReuse {
-		if a.Size() != reuse.Size() {
-			err = types.NewError(types.SizeMismatch, "Cannot reuse %v. Expected size of %v. Got %v instead", reuse, a.Size(), reuse.Size())
+		if err = reuseCheck(reuse, a); err != nil {
 			return
-		}
-
-		if !a.Shape().Eq(reuse.Shape()) {
-			if err = reuse.Reshape(a.Shape()...); err != nil {
-				err = errors.Wrapf(err, reuseReshapeErr, a.Shape(), reuse.DataSize())
-				return
-			}
 		}
 	}
 
@@ -119,16 +92,8 @@ func Clamp(a *Tensor, min, max int, opts ...types.FuncOpt) (retVal *Tensor, err 
 	toReuse := reuse != nil
 
 	if toReuse {
-		if a.Size() != reuse.Size() {
-			err = types.NewError(types.SizeMismatch, "Cannot reuse %v. Expected size of %v. Got %v instead", reuse, a.Size(), reuse.Size())
+		if err = reuseCheck(reuse, a); err != nil {
 			return
-		}
-
-		if !a.Shape().Eq(reuse.Shape()) {
-			if err = reuse.Reshape(a.Shape()...); err != nil {
-				err = errors.Wrapf(err, reuseReshapeErr, a.Shape(), reuse.DataSize())
-				return
-			}
 		}
 	}
 
@@ -170,16 +135,8 @@ func Sign(a *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 	toReuse := reuse != nil
 
 	if toReuse {
-		if a.Size() != reuse.Size() {
-			err = types.NewError(types.SizeMismatch, "Cannot reuse %v. Expected size of %v. Got %v instead", reuse, a.Size(), reuse.Size())
+		if err = reuseCheck(reuse, a); err != nil {
 			return
-		}
-
-		if !a.Shape().Eq(reuse.Shape()) {
-			if err = reuse.Reshape(a.Shape()...); err != nil {
-				err = errors.Wrapf(err, reuseReshapeErr, a.Shape(), reuse.DataSize())
-				return
-			}
 		}
 	}
 

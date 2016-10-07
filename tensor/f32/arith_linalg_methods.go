@@ -113,15 +113,10 @@ func (t *Tensor) MatVecMul(other *Tensor, opts ...types.FuncOpt) (retVal *Tensor
 
 	// handle increments
 	if incr != nil {
-		if incr.Size() != m {
+		if !expectedShape.Eq(incr.Shape()) {
 			err = shapeMismatchError(expectedShape, incr.Shape())
 			return
 		}
-		if err = incr.Reshape(expectedShape...); err != nil {
-			err = errors.Wrapf(err, incrReshapeErr, expectedShape, reuse.DataSize())
-			return
-		}
-
 		vecAdd(incr.data, retVal.data)
 
 		// return retVal to pool - if and only if retVal is not reuse
@@ -213,12 +208,8 @@ func (t *Tensor) MatMul(other *Tensor, opts ...types.FuncOpt) (retVal *Tensor, e
 
 	// handle increments
 	if incr != nil {
-		if incr.Size() != expectedSize {
+		if !expectedShape.Eq(incr.Shape()) {
 			err = shapeMismatchError(types.Shape{m, n}, incr.Shape())
-			return
-		}
-		if err = incr.Reshape(m, n); err != nil {
-			err = errors.Wrapf(err, incrReshapeErr, expectedShape, incr.DataSize())
 			return
 		}
 
@@ -311,12 +302,8 @@ func (t *Tensor) Outer(other *Tensor, opts ...types.FuncOpt) (retVal *Tensor, er
 
 	// handle increments
 	if incr != nil {
-		if incr.Size() != expectedSize {
+		if !expectedShape.Eq(incr.Shape()) {
 			err = shapeMismatchError(types.Shape{m, n}, incr.Shape())
-			return
-		}
-		if err = incr.Reshape(m, n); err != nil {
-			err = errors.Wrapf(err, incrReshapeErr, expectedShape, incr.DataSize())
 			return
 		}
 

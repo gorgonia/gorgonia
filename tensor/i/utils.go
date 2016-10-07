@@ -1,6 +1,10 @@
 package tensori
 
-import "math/rand"
+import (
+	"math/rand"
+
+	"github.com/chewxy/gorgonia/tensor/types"
+)
 
 func RandomInt(size int) []int {
 	r := make([]int, size)
@@ -106,4 +110,28 @@ func argmin(a []int) int {
 		}
 	}
 	return min
+}
+
+// reuseCheck checks a reuse tensor, and reshapes it to be the correct one
+func reuseCheck(reuse *Tensor, as *Tensor) (err error) {
+	if len(reuse.data) != as.Size() {
+		err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", as.Shape(), reuse.Shape())
+		return
+	}
+	reuse.reshape(as.Shape()...)
+
+	// clean up any funny things that may be in the reuse
+	if reuse.old != nil {
+		types.ReturnAP(reuse.old)
+		reuse.old = nil
+	}
+
+	if reuse.transposeWith != nil {
+		types.ReturnInts(reuse.transposeWith)
+	}
+
+	if reuse.viewOf != nil {
+		reuse.viewOf = nil
+	}
+	return nil
 }
