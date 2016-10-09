@@ -199,7 +199,7 @@ var repeatTestSlice = []struct {
 		false,
 	},
 	{
-		"Vector repeats on acis 1: colvec",
+		"Vector repeats on axis 1: colvec",
 		NewTensor(WithShape(2, 1), WithBacking([]float64{1, 2})),
 		false,
 		1,
@@ -489,7 +489,7 @@ var sliceTests = []struct {
 }{
 	{"a[0]", types.Shape{5}, []types.Slice{ss(0)}, types.ScalarShape(), nil, []float64{0}},
 	{"a[0:2]", types.Shape{5}, []types.Slice{makeRS(0, 2)}, types.Shape{2}, []int{1}, []float64{0, 1}},
-	{"a[1:5:2]", types.Shape{5}, []types.Slice{makeRS(0, 5, 2)}, types.Shape{2}, []int{2}, []float64{0, 1, 2, 3, 4}},
+	{"a[1:5:2]", types.Shape{5}, []types.Slice{makeRS(1, 5, 2)}, types.Shape{2}, []int{2}, []float64{1, 2, 3, 4}},
 
 	// colvec
 	{"c[0]", types.Shape{5, 1}, []types.Slice{ss(0)}, types.ScalarShape(), nil, []float64{0}},
@@ -506,7 +506,7 @@ var sliceTests = []struct {
 
 	// matrix
 	{"A[0]", types.Shape{2, 3}, []types.Slice{ss(0)}, types.Shape{1, 3}, []int{1}, RangeFloat64(0, 3)},
-	{"A[0:10]", types.Shape{4, 5}, []types.Slice{makeRS(0, 2)}, types.Shape{2, 5}, []int{5, 1}, RangeFloat64(0, 10)},
+	{"A[0:2]", types.Shape{4, 5}, []types.Slice{makeRS(0, 2)}, types.Shape{2, 5}, []int{5, 1}, RangeFloat64(0, 10)},
 	{"A[0, 0]", types.Shape{4, 5}, []types.Slice{ss(0), ss(0)}, types.ScalarShape(), nil, []float64{0}},
 	{"A[0, 1:5]", types.Shape{4, 5}, []types.Slice{ss(0), makeRS(1, 5)}, types.Shape{4}, []int{1}, RangeFloat64(1, 5)},
 	{"A[0, 1:5:2]", types.Shape{4, 5}, []types.Slice{ss(0), makeRS(1, 5, 2)}, types.Shape{1, 2}, []int{2}, RangeFloat64(1, 5)},
@@ -531,6 +531,20 @@ func TestTSlice(t *testing.T) {
 		assert.Equal(sts.correctStride, V.Strides(), "Test: %v - Incorrect Stride", sts.name)
 		assert.Equal(sts.correctData, V.data, "Test: %v - Incorrect Data", sts.name)
 	}
+
+	// Transposed slice
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat64(0, 6)))
+	T.T()
+	V, err = T.Slice(ss(0))
+	assert.True(types.Shape{2}.Eq(V.Shape()))
+	assert.Equal([]int{3}, V.Strides())
+	assert.Equal([]float64{0, 1, 2, 3}, V.data)
+	assert.Nil(V.old)
+
+	// slice a sliced
+	V, err = V.Slice(makeRS(1, 2))
+	assert.True(types.ScalarShape().Eq(V.Shape()))
+	assert.Equal([]float64{3}, V.data)
 
 	// And now, ladies and gentlemen, the idiots!
 

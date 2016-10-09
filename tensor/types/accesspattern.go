@@ -119,6 +119,111 @@ func (ap *AP) Clone() (retVal *AP) {
 	return
 }
 
+// C() returns true if the access pattern is C-contiguous array
+func (ap *AP) C() bool {
+	return ap.strides[len(ap.strides)-1] == 1
+}
+
+// F() returns true if the access pattern is Fortran contiguous array
+func (ap *AP) F() bool {
+	return ap.strides[0] == 1
+}
+
+// S returns the metadata of the sliced tensor.
+func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err error) {
+	if len(slices) > len(ap.shape) {
+		// error
+		err = DimMismatchErr(len(ap.shape), len(slices))
+		return
+	}
+
+	ndEnd = size
+
+	newShape := ap.shape.Clone()      // the new shape
+	opDims := len(ap.shape)           // operational dimensions
+	dims := ap.dims                   // reported dimensions
+	newStrides := make([]int, opDims) // the new strides
+
+	for i := 0; i < opDims; i++ {
+		var sl Slice
+		if i <= len(slices)-1 {
+			sl = slices[i]
+		}
+
+		size := ap.shape[i]
+
+		var stride int
+		if dims < opDims && ap.IsVector() {
+			// handles non-vanilla vectors
+			stride = ap.strides[0]
+		} else {
+			stride = ap.strides[i]
+		}
+
+		var start, end, step int
+		// a nil slice is equivalent to [:]
+		if sl == nil {
+			start = 0
+			end = size
+			step = 1
+		} else {
+			start = sl.Start()
+			end = sl.End()
+			step = sl.Step()
+
+			if err = CheckSlice(sl, size); err != nil {
+				return
+			}
+
+			if end > size {
+				end = size
+			}
+		}
+
+		// a slice where start == end is []
+		ndStart = ndStart + start*stride
+		ndEnd = ndEnd - (size-end)*stride
+		if step > 0 {
+			newShape[i] = (end - start) / step
+			newStrides[i] = stride * step
+
+			//fix
+			if newShape[i] <= 0 {
+				newShape[i] = 1
+			}
+		} else {
+			newShape[i] = (end - start)
+			newStrides[i] = stride
+		}
+	}
+
+	if ndEnd-ndStart == 1 {
+		// scalars are a special case
+		newAP = new(AP)
+		newAP.SetShape() // make it a Scalar
+		newAP.Lock()
+	} else {
+
+		// drop any dimension with size 1, except the last dimension
+		for d := 0; d < dims; d++ {
+			if newShape[d] == 1 /*&& d != t.dims-1  && dims > 2*/ {
+				newShape = append(newShape[:d], newShape[d+1:]...)
+				newStrides = append(newStrides[:d], newStrides[d+1:]...)
+				d--
+				dims--
+			}
+		}
+
+		//fix up strides
+		if newShape.IsColVec() {
+			newStrides = []int{newStrides[0]}
+		}
+
+		newAP = NewAP(newShape, newStrides)
+	}
+	return
+}
+
 // T returns the transposed metadata based on the given input
 func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 	// prep axes
@@ -180,16 +285,6 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 	}
 
 	return
-}
-
-// F() returns true if the access pattern is Fortran contiguous array
-func (ap *AP) F() bool {
-	return ap.strides[0] == 1
-}
-
-// C() returns true if the access pattern is C-contiguous array
-func (ap *AP) C() bool {
-	return ap.strides[len(ap.strides)-1] == 1
 }
 
 // TransposeIndex returns the new index given the old index
