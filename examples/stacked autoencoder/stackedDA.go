@@ -105,7 +105,7 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 			return err
 		}
 		if epoch == 0 {
-			log.Printf("Layer: %d \n%v, %d", i, prog, FmtNodeMap(locMap))
+			log.Printf("Layer: %d \n%v, %-#v", i, prog, FmtNodeMap(locMap))
 		}
 		// logger.SetPrefix(fmt.Sprintf("Train Layer %d:\t", i))
 		var m VM
@@ -142,14 +142,14 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 			if err = machines[i].RunAll(); err != nil {
 				return
 			}
-			c := costValue.(Scalar).V().(float64)
+			c := costValue.Data().(float64)
 			layerCosts = append(layerCosts, c)
 			model = append(model, da.w, da.b, da.h.b)
 
 			solver.Step(model)
 			machines[i].Reset()
 		}
-		log.Printf("Avg Cost: %v", avgF64s(layerCosts))
+		log.Printf("Epoch: %d Avg Cost (Layer %d): %v", epoch, i, avgF64s(layerCosts))
 	}
 
 	return nil
@@ -171,20 +171,30 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int) (err error) {
 	if probs, err = sda.final.Activate(); err != nil {
 		return
 	}
-
 	logprobs := Must(Neg(Must(Log(probs))))
-	for _, correct := range y {
-		cost := Must(Slice(logprobs, S(correct)))
-		costs = append(costs, cost)
-	}
-
-	g := sda.g.SubgraphRoots(costs...)
-	machine := NewLispMachine(g)
-	if err = machine.RunAll(); err != nil {
-		return
-	}
 
 	solver := NewVanillaSolver()
-	solver.Step(model)
+	for batch := 0; batch < sda.BatchSize; batch++ {
+		start := batch * sda.BatchSize
+		end := start + sda.BatchSize
+
+		for i, correct := range y[start:end] {
+			var cost *Node
+			if cost, err = Slice(logprobs, S(i), S(correct)); err != nil {
+				log.Printf("i %d, len(y): %d; %v; err: %v", i, len(y), logprobs.Shape(), err)
+				return
+			}
+			costs = append(costs, cost)
+		}
+
+		g := sda.g.SubgraphRoots(costs...)
+		machine := NewLispMachine(g)
+		if err = machine.RunAll(); err != nil {
+			return
+		}
+
+		solver.Step(model)
+
+	}
 	return nil
 }

@@ -87,7 +87,8 @@ func main() {
 	corruptions := []float64{0.1, 0.2, 0.3}
 	batchSize := 100
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)
-	pretrainEpoch := 5
+	pretrainEpoch := 1
+	finetuneEpoch := 10
 
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -130,12 +131,12 @@ func main() {
 		}
 	}
 
-	// log.Printf("Starting to finetune now")
-	// for i := 0; i < 10; i++ {
-	// 	log.Printf("Finetune iter: %d", i)
-	// 	sda.Finetune(xV, ys)
-	// }
-	// log.Printf("Writing images now")
+	log.Printf("Starting to finetune now")
+	for i := 0; i < finetuneEpoch; i++ {
+		log.Printf("Finetune iter: %d", i)
+		sda.Finetune(xV, ys)
+	}
+	log.Printf("Writing images now")
 
 	// Visualize
 	finalWeights := sda.autoencoders[0].w.Value().(T.Tensor).Tensor.(*tf64.Tensor)
