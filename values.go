@@ -17,6 +17,7 @@ type Value interface {
 	Size() int
 	Dtype() Dtype
 	Eq(other Value) bool
+	Data() interface{}
 
 	clone() (Value, error)
 	zero() Value
