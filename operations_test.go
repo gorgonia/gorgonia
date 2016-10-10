@@ -116,7 +116,7 @@ func TestSlice(t *testing.T) {
 	}
 
 	assert.Equal([]float64{0, 1, 2, 3}, x0.Value().(Tensor).Data())
-	assert.Equal(tf64.RangeFloat64(0, 8), x_0.Value().(Tensor).Data()) // but it is [0,4,8]
+	assert.Equal(tf64.RangeFloat64(0, 9), x_0.Value().(Tensor).Data()) // but it is [0,4,8]
 	assert.Equal(0.0, x00.Value().(Scalar).Data())
 
 	t.Logf("x: %+v", xV)
