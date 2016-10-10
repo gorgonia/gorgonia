@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -59,7 +61,7 @@ func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hi
 	}
 
 	final := NewSoftmaxLayer(WithGraph(g), WithConf(hiddenSizes[len(hiddenSizes)-1], outputs, batchSize))
-	final.input = input
+	final.input = hiddenLayers[len(hiddenLayers)-1].output
 	WithName("Softmax_w")(final.w)
 	WithName("Softmax_b")(final.b)
 
@@ -124,8 +126,9 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 	model = make(Nodes, 3)
 
 	batches := x.Shape()[0] / sda.BatchSize
-	var start int
+	avgCosts := make([]float64, len(sda.autoencoders))
 
+	var start int
 	for i, da := range sda.autoencoders {
 		var layerCosts []float64
 		for batch := 0; batch < batches; batch++ {
@@ -149,14 +152,27 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 			solver.Step(model)
 			machines[i].Reset()
 		}
-		log.Printf("Epoch: %d Avg Cost (Layer %d): %v", epoch, i, avgF64s(layerCosts))
+		avgC := avgF64s(layerCosts)
+		avgCosts[i] = avgC
 	}
+
+	// nicely format our costs
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%d\t", epoch)
+	for i, ac := range avgCosts {
+		if i < len(avgCosts)-1 {
+			fmt.Fprintf(&buf, "%v\t", ac)
+		} else {
+			fmt.Fprintf(&buf, "%v", ac)
+		}
+	}
+	log.Println(buf.String())
 
 	return nil
 }
 
-func (sda *StackedDA) Finetune(x types.Tensor, y []int) (err error) {
-	var costs, model Nodes
+func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
+	var model Nodes
 	for i, da := range sda.autoencoders {
 		if i > 0 {
 			hidden := sda.hiddenLayers[i-1]
@@ -174,9 +190,21 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int) (err error) {
 	logprobs := Must(Neg(Must(Log(probs))))
 
 	solver := NewVanillaSolver()
+	costs := make(Nodes, sda.BatchSize)
+	costValues := make([]float64, len(y))
+	costValues = costValues[:0]
 	for batch := 0; batch < sda.BatchSize; batch++ {
+		costs = costs[:0]
+
 		start := batch * sda.BatchSize
 		end := start + sda.BatchSize
+
+		if start >= len(y) {
+			break
+		}
+
+		// logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
+		// logger := log.New(logfile, "", 0)
 
 		for i, correct := range y[start:end] {
 			var cost *Node
@@ -188,13 +216,45 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int) (err error) {
 		}
 
 		g := sda.g.SubgraphRoots(costs...)
-		machine := NewLispMachine(g)
-		if err = machine.RunAll(); err != nil {
+
+		var input types.Tensor
+		if input, err = tensor.Slice(x, S(start, end)); err != nil {
+			log.Printf("start %d, end %d, len(y) %d", start, end, len(y))
 			return
 		}
 
-		solver.Step(model)
+		// machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), ExecuteFwdOnly(), WithValueFmt("%+s"))
+		machine := NewLispMachine(g)
+		Let(sda.input, input)
+		if err = machine.RunAll(); err != nil {
+			ioutil.WriteFile("fullGraphWTF.dot", []byte(g.ToDot()), 0644)
+			return
+		}
 
+		for _, cost := range costs {
+			cv := cost.Value().Data().(float64)
+			costValues = append(costValues, cv)
+		}
+
+		solver.Step(model)
 	}
+	log.Printf("Finetune Epoch\t%d\t%v", epoch, avgF64s(costValues))
 	return nil
+}
+
+func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
+	logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
+	logger := log.New(logfile, "", 0)
+	g := sda.g.SubgraphRoots(sda.final.output)
+	machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), ExecuteFwdOnly(), WithValueFmt("%+s"))
+	// machine := NewLispMachine(g, ExecuteFwdOnly())
+
+	Let(sda.input, x)
+	if err = machine.RunAll(); err != nil {
+		return
+	}
+
+	res = sda.final.output.Value().(Tensor).Tensor
+
+	return
 }
