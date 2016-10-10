@@ -282,3 +282,25 @@ func CheckSlice(s Slice, size int) error {
 
 	return nil
 }
+
+// SliceDetails is a function that takes a slice and spits out its details. The whole reason for this is to handle the nil Slice, which is this: a[:]
+func SliceDetails(s Slice, size int) (start, end, step int, err error) {
+	if s == nil {
+		start = 0
+		end = size
+		step = 1
+	} else {
+		if err = CheckSlice(s, size); err != nil {
+			return
+		}
+
+		start = s.Start()
+		end = s.End()
+		step = s.Step()
+
+		if end > size {
+			end = size
+		}
+	}
+	return
+}

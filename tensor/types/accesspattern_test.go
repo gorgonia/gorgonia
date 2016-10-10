@@ -6,6 +6,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type dummySlice struct {
+	start, end, step int
+}
+
+func (s dummySlice) Start() int { return s.start }
+func (s dummySlice) End() int   { return s.end }
+func (s dummySlice) Step() int  { return s.step }
+
+func sli(start int, opt ...int) dummySlice {
+	var end, step int
+	switch len(opt) {
+	case 0:
+		end = start + 1
+		step = 0
+	case 1:
+		end = opt[0]
+		step = 1
+	default:
+		end = opt[0]
+		step = opt[1]
+
+	}
+	return dummySlice{start: start, end: end, step: step}
+}
+
 func dummyScalar1() *AP {
 	return &AP{}
 }
@@ -136,6 +161,48 @@ func TestAccessPatternT(t *testing.T) {
 	_, _, err = ap.T(1, 2, 3)
 	if err == nil {
 		t.Error("Expected an error")
+	}
+}
+
+var sliceTests = []struct {
+	name   string
+	shape  Shape
+	slices []Slice
+
+	correctStart  int
+	correctEnd    int
+	correctShape  Shape
+	correctStride []int
+}{
+	// vectors
+	{"a[0]", Shape{5}, []Slice{sli(0)}, 0, 1, ScalarShape(), nil},
+	{"a[0:2]", Shape{5}, []Slice{sli(0, 2)}, 0, 2, Shape{2}, []int{1}},
+	{"a[1:3]", Shape{5}, []Slice{sli(1, 3)}, 1, 3, Shape{2}, []int{1}},
+	{"a[1:5:2]", Shape{5}, []Slice{sli(1, 5, 2)}, 1, 5, Shape{2}, []int{2}},
+
+	// matrix
+	{"A[0]", Shape{2, 3}, []Slice{sli(0)}, 0, 3, Shape{1, 3}, []int{1}},
+	{"A[1:3]", Shape{4, 5}, []Slice{sli(1, 3)}, 5, 15, Shape{2, 5}, []int{5, 1}},
+	{"A[0:10] (intentionally over)", Shape{4, 5}, []Slice{sli(0, 10)}, 0, 20, Shape{4, 5}, []int{5, 1}}, // as if nothing happened
+
+}
+
+func TestAccessPatternS(t *testing.T) {
+	assert := assert.New(t)
+	var ap, apS *AP
+	var ndStart, ndEnd int
+	var err error
+
+	for _, sts := range sliceTests {
+		ap = NewAP(sts.shape, sts.shape.CalcStrides())
+		if apS, ndStart, ndEnd, err = ap.S(sts.shape.TotalSize(), sts.slices...); err != nil {
+			t.Errorf("%v errored: %v", sts.name, err)
+			continue
+		}
+		assert.Equal(sts.correctStart, ndStart, "Wrong start: %v. Want %d Got %d", sts.name, sts.correctStart, ndStart)
+		assert.Equal(sts.correctEnd, ndEnd, "Wrong end: %v. Want %d Got %d", sts.name, sts.correctEnd, ndEnd)
+		assert.True(sts.correctShape.Eq(apS.shape), "Wrong shape: %v. Want %v. Got %v", sts.name, sts.correctShape, apS.shape)
+		assert.Equal(sts.correctStride, apS.strides, "Wrong strides: %v. Want %v. Got %v", sts.name, sts.correctStride, apS.strides)
 	}
 }
 
