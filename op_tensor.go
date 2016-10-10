@@ -483,7 +483,13 @@ func (op sliceOp) Type() Type {
 	a := newTypeVariable("a", withTVConstraints(floats))
 	tt := newTensorType(op.d, a)
 
-	selection := op.End() - op.Start()
+	var selection int
+
+	if op.Slice == nil {
+		selection = -1
+	} else {
+		selection = op.End() - op.Start()
+	}
 
 	if selection == 1 {
 		if op.d == 1 {
@@ -505,22 +511,7 @@ func (op sliceOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err erro
 	}
 
 	t := inputs[0]
-
-	s = make(types.Shape, len(t.shape))
-	for i, v := range t.shape {
-		s[i] = v
-	}
-	if op.all() {
-		return
-	}
-
-	s[op.along] = op.End() - op.Start()
-
-	if s.Eq(types.Shape{1, 1}) || s.IsScalar() {
-		s = scalarShape
-	}
-
-	return
+	return t.shape.S(op.Slice)
 }
 
 func (op sliceOp) DiffWRT(i int) []bool {
@@ -655,6 +646,11 @@ func (op sliceOp) WriteHash(h hash.Hash) {
 		panic(err)
 	}
 	fmt.Fprintf(h, "%v", op.along)
+	if op.Slice == nil {
+		fmt.Fprintf(h, ":")
+		return
+	}
+
 	if err := binary.Write(h, binary.LittleEndian, byte(op.Start())); err != nil {
 		panic(err)
 	}
@@ -664,6 +660,7 @@ func (op sliceOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, byte(op.Step())); err != nil {
 		panic(err)
 	}
+
 }
 func (op sliceOp) Hashcode() uint32 {
 	h := fnv.New32a()
@@ -681,14 +678,14 @@ func (op sliceOp) String() string {
 	if op.all() {
 		buf.WriteString(":")
 	} else {
-		fmt.Fprintf(&buf, "%d:%d%d", op.Start(), op.End(), op.Step())
+		fmt.Fprintf(&buf, "%d:%d:%d", op.Start(), op.End(), op.Step())
 	}
 
 	buf.WriteString("...]")
 	return buf.String()
 }
 
-func (op sliceOp) all() bool { return op.End() <= op.Start() }
+func (op sliceOp) all() bool { return op.Slice == nil || op.End() <= op.Start() }
 
 // T[:] +=incr
 // THIS IS AN UNSAFE OPERATION
@@ -873,6 +870,12 @@ func (op sliceIncrOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, byte(op.along)); err != nil {
 		panic(err)
 	}
+
+	if op.Slice == nil {
+		fmt.Fprintf(h, ":")
+		return
+	}
+
 	if err := binary.Write(h, binary.LittleEndian, byte(op.Start())); err != nil {
 		panic(err)
 	}
@@ -904,5 +907,145 @@ func (op sliceIncrOp) String() string {
 	}
 
 	buf.WriteString("...]+=...")
+	return buf.String()
+}
+
+type transposeOp struct {
+	pattern []int
+	d       int
+}
+
+// transposing a tensor has type
+// 		transpose :: Tensor a → Tensor a
+func (op transposeOp) Type() Type {
+	a := newTypeVariable("a", withTVConstraints(floats))
+	tt := newTensorType(op.d, a)
+
+	return newFunctionType(tt, tt)
+}
+
+func (op transposeOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
+	if len(inputs) != 1 {
+		err = NewError(GraphError, "transposeOp should only have one inputs. Got %v instead", len(inputs))
+		return
+	}
+
+	t := inputs[0]
+	if t.shape.IsScalar() {
+		err = NewError(ShapeError, "transposeOp undefined on scalar shapes")
+		return
+	}
+
+	s = make(types.Shape, len(t.shape))
+	copy(s, t.shape)
+	err = types.UnsafePermute(op.pattern, s)
+	return
+}
+
+func (op transposeOp) DiffWRT(i int) []bool {
+	if i > 1 {
+		// error
+		err := NewError(GraphError, "transposeOp should only have 1 inputs. Got %v instead", i)
+		panic(err)
+	}
+
+	return []bool{true}
+}
+
+func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
+	newPattern := make([]int, len(op.pattern))
+	for i, p := range op.pattern {
+		newPattern[p] = i
+	}
+	op2 := transposeOp{pattern: newPattern, d: op.d}
+
+	retVal = make(Nodes, 1)
+	retVal[0], err = applyOp(op2, gradNode)
+	return
+}
+
+func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
+	xdv := inputs[0].boundTo.(*dualValue)
+	zdv := output.boundTo.(*dualValue)
+
+	newPattern := make([]int, len(op.pattern))
+	for i, p := range op.pattern {
+		newPattern[p] = i
+	}
+
+	var zdvdT Tensor
+	var ok bool
+	if zdvdT, ok = zdv.d.(Tensor); !ok {
+		err = NewError(TypeError, "Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
+		return
+	}
+
+	if err = zdvdT.T(newPattern...); err != nil {
+		return
+	}
+
+	d := FromTensor(zdvdT.Materialize())
+	zdvdT.UT()
+
+	add := newEBOByType(addOpType, inputs[0].t, zdvdT.Type())
+	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
+		err = errors.Wrapf(err, doFail, add)
+	}
+	return
+}
+
+func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
+	machineLogf("Doing %v", op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
+	if len(inputs) != 1 {
+		err = NewError(GraphError, "transposeOp should only have one or more inputs. Got %v instead", len(inputs))
+		return
+	}
+
+	t := inputs[0].(Tensor).Tensor
+
+	// the reason for this is because the .T() method of a Tensor
+	// will use the axes in the .transposedWith field
+	// Later when .UT() is called, the .transposedWith field is recycled into the pool
+	throwaway := types.BorrowInts(len(op.pattern))
+	copy(throwaway, op.pattern)
+
+	t.T(throwaway...)
+	ret := t.Materialize()
+	t.UT()
+	return anyToValue(ret)
+}
+
+func (op transposeOp) returnsPtr() bool    { return true }
+func (op transposeOp) callsExtern() bool   { return false }
+func (op transposeOp) overwriteInput() int { return 0 }
+
+func (op transposeOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("transposeOp"))
+	fmt.Fprintf(h, "%v", op.pattern)
+	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
+		panic(err)
+	}
+}
+
+func (op transposeOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op transposeOp) String() string {
+	var buf bytes.Buffer
+	buf.WriteString("Aᵀ{")
+	for i, ax := range op.pattern {
+		fmt.Fprintf(&buf, "%d", ax)
+		if i < len(op.pattern)-1 {
+			buf.WriteString(", ")
+		}
+	}
+
+	buf.WriteString("}")
 	return buf.String()
 }

@@ -107,6 +107,58 @@ func (s Shape) Dims() int {
 	panic("Unreachable")
 }
 
+// S gives the new shape after a shape has been sliced. It's repeated from the AP S() method mainly because there are other functions in Gorgonia that uses only shape
+func (s Shape) S(slices ...Slice) (retVal Shape, err error) {
+	opDims := len(s)
+	if len(slices) > opDims {
+		err = DimMismatchErr(opDims, len(slices))
+		return
+	}
+
+	retVal = s.Clone()
+
+	for d, size := range s {
+		var sl Slice // default is a nil Slice
+		if d <= len(slices)-1 {
+			sl = slices[d]
+		}
+
+		var start, end, step int
+		if start, end, step, err = SliceDetails(sl, size); err != nil {
+			return
+		}
+
+		if step > 0 {
+			retVal[d] = (end - start) / step
+
+			//fix
+			if retVal[d] <= 0 {
+				retVal[d] = 1
+			}
+		} else {
+			retVal[d] = (end - start)
+		}
+
+	}
+
+	// drop any dimension with size 1, except the last dimension
+	dims := s.Dims()
+	for d := 0; d < dims; d++ {
+		if retVal[d] == 1 /*&& d != t.dims-1  && dims > 2*/ {
+			retVal = append(retVal[:d], retVal[d+1:]...)
+			d--
+			dims--
+		}
+	}
+
+	if retVal.IsScalar() {
+		ReturnInts(retVal)
+		return ScalarShape(), nil
+	}
+
+	return
+}
+
 func (s Shape) Format(st fmt.State, r rune) {
 	switch r {
 	case 'v', 's':

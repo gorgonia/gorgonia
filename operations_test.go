@@ -87,13 +87,42 @@ func TestSoftMax(t *testing.T) {
 }
 
 func TestSlice(t *testing.T) {
+	assert := assert.New(t)
 	g := NewGraph()
-	x := NewVector(g, Float64, WithShape(2, 1))
-	y, err := Slice(x, S(0))
+	x := NewMatrix(g, Float64, WithShape(3, 3))
+	x0, err := Slice(x, S(0))
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
-	t.Log(y)
+	WithName("x[0]")(x0)
+
+	x_0, err := Slice(x, nil, S(0))
+	if err != nil {
+		t.Log(err)
+	}
+	WithName("x[:, 0]")(x_0)
+
+	x00, err := Slice(x, S(0), S(0))
+	if err != nil {
+		t.Log(err)
+	}
+	WithName("x[0,0]")(x00)
+
+	xV := tf64.NewTensor(tf64.WithShape(3, 4), tf64.WithBacking(tf64.RangeFloat64(0, 12)))
+	Let(x, xV)
+	m := NewLispMachine(g, ExecuteFwdOnly())
+	if err = m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal([]float64{0, 1, 2, 3}, x0.Value().(Tensor).Data())
+	assert.Equal(tf64.RangeFloat64(0, 9), x_0.Value().(Tensor).Data()) // but it is [0,4,8]
+	assert.Equal(0.0, x00.Value().(Scalar).Data())
+
+	t.Logf("x: %+v", xV)
+	t.Logf("x[0]: %v ", x0.Value())
+	t.Logf("x[:, 0]: %v ", x_0.Value())
+	t.Logf("x[0, 0]: %v ", x00.Value())
 }
 
 func TestSum(t *testing.T) {

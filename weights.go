@@ -95,6 +95,36 @@ func Uniform(low, high float64) InitWFn {
 	return f
 }
 
+func GlorotN(gain float64) InitWFn {
+	f := func(dt Dtype, s ...int) interface{} {
+		switch dt {
+		case Float64:
+			return GlorotEtAlN64(gain, s...)
+		case Float32:
+			return GlorotEtAlN32(gain, s...)
+		default:
+			panic(nyi("GlorotN", dt))
+		}
+		panic("unreachable")
+	}
+	return f
+}
+
+func GlorotU(gain float64) InitWFn {
+	f := func(dt Dtype, s ...int) interface{} {
+		switch dt {
+		case Float64:
+			return GlorotEtAlU64(gain, s...)
+		case Float32:
+			return GlorotEtAlU32(gain, s...)
+		default:
+			panic(nyi("GlorotU", dt))
+		}
+		panic("unreachable")
+	}
+	return f
+}
+
 // Gausian64 returns a []float64 drawn from a gaussian distribution as defined by the mean and stdev
 func Gaussian64(mean, stdev float64, s ...int) []float64 {
 	size := types.Shape(s).TotalSize()
@@ -197,6 +227,15 @@ func GlorotEtAlN64(gain float64, s ...int) []float64 {
 	return retVal
 }
 
+func GlorotEtAlN32(gain float64, s ...int) []float32 {
+	f64 := GlorotEtAlN64(gain, s...)
+	retVal := make([]float32, len(f64))
+	for i, v := range f64 {
+		retVal[i] = float32(v)
+	}
+	return retVal
+}
+
 // Glorot et. al weight sampled from a uniform distro.
 // See also: http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
 //
@@ -226,6 +265,15 @@ func GlorotEtAlU64(gain float64, s ...int) []float64 {
 	retVal := make([]float64, size)
 	for i := range retVal {
 		retVal[i] = rand.Float64Range(lo, hi)
+	}
+	return retVal
+}
+
+func GlorotEtAlU32(gain float64, s ...int) []float32 {
+	f64 := GlorotEtAlN64(gain, s...)
+	retVal := make([]float32, len(f64))
+	for i, v := range f64 {
+		retVal[i] = float32(v)
 	}
 	return retVal
 }

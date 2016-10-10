@@ -263,7 +263,7 @@ func TestSliceOp(t *testing.T) {
 
 	assert.Equal(1.0, extractF64(v))
 
-	// T[0] again, but this time, with a rowvec
+	// T[0] again, but this time, with a rowvec, and on axis 0
 	T = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{1, 2}))
 	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 0, T.Dims())
@@ -273,7 +273,7 @@ func TestSliceOp(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(types.Shape{1, 2}, shape)
+	assert.Equal(types.Shape{2}, shape)
 
 	if v, err = slice.Do(TT); err != nil {
 		t.Fatal(err)
@@ -291,7 +291,7 @@ func TestSliceOp(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(scalarShape, shape)
+	assert.Equal(types.Shape{2}, shape)
 
 	if v, err = slice.Do(TT); err != nil {
 		t.Fatal(err)
@@ -402,4 +402,19 @@ func TestSliceOpDiff(t *testing.T) {
 	// t.Logf("Visual confirmation")
 	// t.Logf("%+v", A.Value())
 	// t.Logf("%+v", A.Grad())
+}
+
+func TestTransposeOp(t *testing.T) {
+	assert := assert.New(t)
+	g := NewGraph()
+	A := NewMatrix(g, Float64, WithShape(2, 3), WithInit(RangedFrom(0)))
+	AT := Must(Transpose(A))
+	Must(Sum(AT))
+
+	m := NewLispMachine(g)
+	if err := m.RunAll(); err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(types.Shape{3, 2}, AT.shape)
 }

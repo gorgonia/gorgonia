@@ -74,7 +74,7 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 				}
 			}
 			g.evac[hash] = append(g.evac[hash], n)
-			g.all = append(g.all, n)
+			g.addToAll(n)
 			incrCC() // collision counter
 			return n
 		}
@@ -82,7 +82,7 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 		if !nodeEq(n, existing) {
 			g.evac[hash] = Nodes{existing, n}
 			g.byHash[hash] = nil // to signal that it's collided
-			g.all = append(g.all, n)
+			g.addToAll(n)
 			incrCC()
 			return n
 		}
@@ -95,9 +95,16 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 		n.g = g
 	}
 
-	g.all = append(g.all, n)
+	g.addToAll(n)
 	g.byHash[hash] = n
 	return n
+}
+
+func (g *ExprGraph) addToAll(n *Node) {
+	if n == nil {
+		panic("HELP! trying to add nil")
+	}
+	g.all = append(g.all, n)
 }
 
 // RemoveNode removes n from the graph, as well as any edges attached to it. If the node
@@ -108,6 +115,7 @@ func (g *ExprGraph) RemoveNode(node graph.Node) {
 
 	delete(g.byHash, hash)
 	delete(g.to, n)
+	g.evac[hash] = g.evac[hash].remove(n)
 	g.all = g.all.remove(n)
 }
 
@@ -188,9 +196,18 @@ func (g *ExprGraph) ToDot() string {
 	}
 
 	groups := make(map[string]struct{})
-	for _, n := range g.byHash {
-		group := n.dotCluster()
-		groups[group] = struct{}{}
+	for h, n := range g.byHash {
+		if n != nil {
+			group := n.dotCluster()
+			groups[group] = struct{}{}
+			continue
+		}
+		// other wise it'se a clash of hash
+		for _, n := range g.evac[h] {
+			group := n.dotCluster()
+			groups[group] = struct{}{}
+
+		}
 	}
 
 	for grp := range groups {

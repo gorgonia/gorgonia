@@ -141,7 +141,7 @@ func TestTMatVecMul(t *testing.T) {
 	assert.Equal(expectedData, r.data)
 
 	// standard basic test with incr tensor provided
-	incr = NewTensor(WithShape(2, 1), WithBacking([]float64{50, 100}))
+	incr = NewTensor(WithShape(2), WithBacking([]float64{50, 100}))
 	r1, err = A.MatVecMul(b, types.WithIncr(incr))
 	if err != nil {
 		t.Error(err)
@@ -157,7 +157,7 @@ func TestTMatVecMul(t *testing.T) {
 	assert.Equal(expectedData, r1.data)
 
 	// standard basic test with incr and reuse provided
-	incr = NewTensor(WithShape(2, 1), WithBacking([]float64{50, 100}))
+	incr = NewTensor(WithShape(2), WithBacking([]float64{50, 100}))
 	r1, err = A.MatVecMul(b, types.WithIncr(incr), types.WithReuse(r))
 	if err != nil {
 		t.Error(err)

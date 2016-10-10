@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 )
 
 type tapeMachine struct {
@@ -110,7 +111,9 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 
 func (m *tapeMachine) Run(frag fragment) (err error) {
 	defer func() {
-		m.dontAlloc()
+		if err == nil {
+			m.dontAlloc()
+		}
 	}()
 
 	for _, instr := range frag {
@@ -144,6 +147,34 @@ func (m *tapeMachine) RunAll() (err error) {
 		if err = instr.exec(m); err != nil {
 			return
 		}
+
+		if m.watchNaN() {
+			writeTo := instr.writes().id
+			id := instr.ID()
+			if writeTo > 0 && id > 0 {
+				v := m.storage[writeTo]
+				n := m.p.g.Node(id).(*Node)
+
+				if hasNaN(v) {
+					err = newValueErr(n, "NaN found in value. Node: %v(%x)", n, n.ID())
+					return
+				}
+			}
+		}
+
+		if m.watchInf() {
+			writeTo := instr.writes().id
+			id := instr.ID()
+			if writeTo > 0 && id > 0 {
+				v := m.storage[writeTo]
+				n := m.p.g.Node(id).(*Node)
+				if hasInf(v) {
+					log.Printf("Reads: %v", instr.reads())
+					err = newValueErr(n, "Inf found in value. Node: %v(%x)", n, n.ID())
+					return
+				}
+			}
+		}
 	}
 
 	// re-bind the values to the nodes
@@ -160,6 +191,10 @@ func (m *tapeMachine) RunAll() (err error) {
 	// }
 	// leaveLoggingContext()
 	return
+}
+
+func (m *tapeMachine) Reset() {
+	m.pc = 0
 }
 
 func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
@@ -290,6 +325,7 @@ func (r register) String() string { return fmt.Sprintf("%s%d", r.device, r.id) }
 /* INSTRUCTIONS */
 
 type tapeInstr interface {
+	ID() int
 	reads() []register
 	writes() register
 	exec(*tapeMachine) error
@@ -324,19 +360,31 @@ func newAlloc(n *Node, writeTo register) alloc {
 	}
 }
 
+func (instr alloc) ID() int           { return instr.id }
 func (instr alloc) reads() []register { return instr.readFrom }
 func (instr alloc) writes() register  { return instr.writeTo }
 
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
-	if !m.alloc() {
-		machineLogf("Already preallocated!")
-		m.logf("Already prealloc")
-		return
-	}
 
 	dest := instr.writeTo.id
 
+	// check
+	var have, want Type
+	if m.storage[dest] == nil {
+		goto mustalloc
+	}
+	have = m.storage[dest].Type()
+	want = instr.t
+
+	if !m.alloc() && typeEq(have, want) {
+		machineLogf("Already preallocated!")
+		m.logf("Already prealloc")
+
+		return
+	}
+
+mustalloc:
 	// check first if there is already a value bound to the node.
 	node := m.p.g.Node(instr.id).(*Node)
 	if node.boundTo != nil {
@@ -382,6 +430,7 @@ type loadArg struct {
 	writeTo register
 }
 
+func (instr loadArg) ID() int           { return instr.index }
 func (instr loadArg) reads() []register { return nil }
 func (instr loadArg) writes() register  { return instr.writeTo }
 
@@ -393,7 +442,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	node := m.p.g.Node(instr.index).(*Node)
 
 	if node.boundTo == nil {
-		return NewError(RuntimeError, "No value bound to node %v", node)
+		return NewError(RuntimeError, "No value bound to node %v (%x)", node, node.ID())
 	}
 
 	var v Value
@@ -428,6 +477,7 @@ type execOp struct {
 	useUnsafe    bool
 }
 
+func (instr execOp) ID() int           { return instr.id }
 func (instr execOp) reads() []register { return instr.readFrom }
 func (instr execOp) writes() register  { return instr.writeTo }
 
@@ -468,6 +518,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p := m.storage[instr.writeTo.id]
 			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
+				err = errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
 				return
 			}
 		} else {
@@ -545,6 +596,7 @@ func (instr flushInstr) exec(m *tapeMachine) error {
 	return nil
 }
 
+func (instr flushInstr) ID() int           { return -1 }
 func (instr flushInstr) reads() []register { return nil }
 func (instr flushInstr) writes() register  { return register{-1, CPU} }
 func (instr flushInstr) String() string    { return "Do Batched BLAS" }
@@ -554,6 +606,7 @@ type letInstr struct {
 	writeTo  register
 }
 
+func (instr letInstr) ID() int                 { return -1 }
 func (instr letInstr) reads() []register       { return []register{instr.readFrom} }
 func (instr letInstr) writes() register        { return instr.writeTo }
 func (instr letInstr) exec(*tapeMachine) error { return nil }
@@ -567,6 +620,7 @@ type readInstr struct {
 	into     *Value
 }
 
+func (instr readInstr) ID() int           { return -1 }
 func (instr readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr readInstr) writes() register  { return register{-1, CPU} }
 func (instr readInstr) exec(m *tapeMachine) error {

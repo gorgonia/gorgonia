@@ -17,6 +17,7 @@ const (
 
 type Tensor interface {
 	// info about the ndarray
+	Info() *AP
 	Shape() Shape
 	Strides() []int
 	Dtype() Dtype
@@ -27,6 +28,7 @@ type Tensor interface {
 	// ops
 	Reshape(...int) error
 	T(axes ...int) error
+	UT()
 	Zero()
 
 	// Equality

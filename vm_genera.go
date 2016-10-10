@@ -167,6 +167,14 @@ func (m *lispMachine) forward() (err error) {
 
 	case n.boundTo == nil:
 		machineLogf("Fresh, unencountered node, so dvBind(%v)", op)
+		machineLogf("Inputs")
+		enterLoggingContext()
+		for i, in := range inputs {
+			if inT, ok := in.Value.(Tensor); ok {
+				machineLogf("%d; %v", i, inT.Tensor.Info())
+			}
+		}
+		leaveLoggingContext()
 		if output, err = dvBind(op, inputs); err != nil {
 			err = errors.Wrapf(err, execFail, op)
 			return
@@ -312,6 +320,32 @@ func (m *lispMachine) Free() {
 			}
 		}
 	}
+}
+
+func (m *lispMachine) Reset() {
+	m.fwd = len(m.sorted)
+	m.bwd = len(m.q)
+}
+
+func (m *lispMachine) LastRun() (n *Node, backprop bool) {
+	if m.fwd < 0 && m.runBwd() {
+		goto backward
+	} else if !m.runBwd() {
+		n = m.sorted[0] // last to run
+		return
+	} else {
+		n = m.sorted[m.fwd]
+		return
+	}
+
+backward:
+	backprop = true
+	if m.bwd < 0 {
+		n = m.q[0].output
+		return
+	}
+	n = m.q[m.bwd].output
+	return
 }
 
 func (m *lispMachine) watchedLogf(format string, attrs ...interface{}) {

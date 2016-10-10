@@ -68,7 +68,13 @@ func CompileFunctionNEW(g *ExprGraph, inputs, outputs Nodes) (prog *program, loc
 	}
 
 	if !seen.ContainsAll(inputs...) {
-		err = NewError(CompileError, "Not all the inputs are used")
+		var unused Nodes
+		for _, in := range inputs {
+			if !seen.Contains(in) {
+				unused = append(unused, in)
+			}
+		}
+		err = NewError(CompileError, "Not all the inputs are used: %v", unused)
 		return
 	}
 

@@ -3,7 +3,7 @@ package tensorf32
 import "github.com/chewxy/gorgonia/tensor/types"
 
 const (
-	reuseReshapeErr  = "Failed to reshape the reuse *Tensor into %v. Size was: %d"
+	reuseReshapeErr  = "Failed to reshape the reuse *Tensor from into %v. Size was: %d"
 	incrReshapeErr   = "Failed to reshape the incr *Tensor into %v. Size was: %d"
 	retValReshapeErr = "Failed to reshape the retVal *Tensor into %v. Size was: %d"
 )

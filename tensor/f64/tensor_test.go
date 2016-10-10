@@ -104,6 +104,19 @@ func TestClone(t *testing.T) {
 	// BUT the value must be the same
 	assert.EqualValues(T.AP, T1000.AP)
 	assert.Equal(T.data, T1000.data)
+
+	// test transposes
+	T.T()
+	T1000 = T.Clone()
+	if T.AP == T1000.AP {
+		t.Error("AccessPatterns must be two different objects")
+	}
+	assert.EqualValues(T.AP, T1000.AP)
+	assert.Equal(T.data, T1000.data)
+	assert.EqualValues(T.old, T1000.old)
+	assert.Equal(T.transposeWith, T1000.transposeWith)
+
+	// TODO: test views
 }
 
 func TestI(t *testing.T) {
