@@ -483,16 +483,13 @@ func (op sliceOp) Type() Type {
 	a := newTypeVariable("a", withTVConstraints(floats))
 	tt := newTensorType(op.d, a)
 
-	var start, end, size int
-	var err error
+	var selection int
 
-	size = 5
-
-	if start, end, _, err = types.SliceDetails(op.Slice, size); err != nil {
-		panic(err)
+	if op.Slice == nil {
+		selection = -1
+	} else {
+		selection = op.End() - op.Start()
 	}
-
-	selection := end - start
 
 	if selection == 1 {
 		if op.d == 1 {
