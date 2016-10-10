@@ -546,12 +546,12 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 	for i, slice := range slices {
 		var op sliceOp
 
-		// a nil slice represents ":"
-		if slice == nil {
-			// op = newSliceOp(0, -1, i, retVal.Dims())
-			continue
-		} else {
+		switch {
+		case retVal.shape.IsVector():
+			op = newSliceOp(slice, 0, retVal.Dims())
+		default:
 			op = newSliceOp(slice, i, retVal.Dims())
+
 		}
 
 		if retVal, err = applyOp(op, retVal); err != nil {

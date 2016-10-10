@@ -122,7 +122,7 @@ func (s Scalar) Type() Type         { return s.t }
 func (s Scalar) Dtype() Dtype       { return s.t }
 func (s Scalar) Shape() types.Shape { return types.ScalarShape() }
 func (s Scalar) Size() int          { return 1 }
-func (s Scalar) V() interface{}     { return s.v }
+func (s Scalar) Data() interface{}  { return s.v }
 
 func (s Scalar) Eq(other Value) bool {
 	os, ok := other.(Scalar)

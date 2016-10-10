@@ -161,23 +161,8 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		}
 
 		var start, end, step int
-		// a nil slice is equivalent to [:]
-		if sl == nil {
-			start = 0
-			end = size
-			step = 1
-		} else {
-			start = sl.Start()
-			end = sl.End()
-			step = sl.Step()
-
-			if err = CheckSlice(sl, size); err != nil {
-				return
-			}
-
-			if end > size {
-				end = size
-			}
+		if start, end, step, err = SliceDetails(sl, size); err != nil {
+			return
 		}
 
 		// a slice where start == end is []
