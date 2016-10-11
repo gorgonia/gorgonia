@@ -240,3 +240,39 @@ func hasNaN(v Value) bool {
 	}
 	panic("Unreachable")
 }
+
+func setZero(val Value) (retVal Value) {
+	switch v := val.(type) {
+	case Zeroer:
+		v.Zero()
+		return v
+	case Scalar:
+		cloned, err := v.clone()
+		if err != nil {
+			panic(err)
+		}
+
+		s2 := cloned.(Scalar)
+
+		switch v.t {
+		case Float64:
+			s2.v = 0.0
+		case Float32:
+			s2.v = float32(0.0)
+		case Int:
+			s2.v = 0
+		case Int64:
+			s2.v = int64(0)
+		case Int32:
+			s2.v = int32(0)
+		case Byte:
+			s2.v = byte(0)
+		case Bool:
+			s2.v = false
+		}
+		return s2
+	default:
+		panic(fmt.Sprintf("setZero not implemented yet for %T", v))
+	}
+	panic("unreachable")
+}

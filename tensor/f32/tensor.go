@@ -268,6 +268,18 @@ func (t *Tensor) Zero() {
 	}
 }
 
+func (t *Tensor) SetAll(val interface{}) error {
+	v, ok := val.(float32)
+	if !ok {
+		return types.NewError(types.DtypeMismatch, "Cannot set val of %T. Expected Float32", val)
+	}
+
+	for i := range t.data {
+		t.data[i] = v
+	}
+	return nil
+}
+
 // ScalarValue() returns the scalar value of a *Tensor,
 // IF and ONLY IF it's a Tensor representation of a scalar value.
 // This is required because operations like a (vec · vec) would return a scalar value.

@@ -151,7 +151,7 @@ func (m *lispMachine) forward() (err error) {
 			}
 		} else {
 			dv := n.boundTo.(*dualValue)
-			if err = dvBind0(op, dv, inputs); err != nil {
+			if err = dvBindVar0(op, dv, inputs); err != nil {
 				return
 			}
 		}
@@ -249,9 +249,6 @@ func (m *lispMachine) backward() (err error) {
 
 	// actual differentiation
 	if err = instr.do(); err != nil {
-		log.Printf("ERR  %v shape: %v", instr.inputs[0].Shape(), instr.inputs[0])
-		log.Printf("ERR  %v shape: %v", instr.inputs[0].Shape(), instr.inputs[1])
-		log.Printf("op %v", instr.AdOp)
 		err = errors.Wrapf(err, autodiffFail, instr.AdOp)
 		return
 	}

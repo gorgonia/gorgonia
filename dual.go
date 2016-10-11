@@ -265,3 +265,48 @@ func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	retVal.SetDeriv(retVal.d.zero())
 	return
 }
+
+func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
+	prealloc := retVal.Value
+
+	vals := idValue(inputs)
+
+	if pd, ok := op.(UsePreallocDoer); ok {
+		_, err = pd.UsePreallocDo(prealloc, vals...)
+	} else {
+		var ret Value
+		if ret, err = op.Do(vals...); err != nil {
+			return
+		}
+		err = retVal.SetValue(ret)
+	}
+
+	var d Value
+	switch v := retVal.Value.(type) {
+	case Tensor:
+		switch v.Dtype() {
+		case Float64:
+			err = v.SetAll(float64(1.0))
+		case Float32:
+			err = v.SetAll(float32(1.0))
+		case Int:
+			err = v.SetAll(int(1))
+		default:
+			panic(fmt.Sprintf("Tensor of type %v not yet handled", v.Dtype()))
+		}
+		d = v
+	case Scalar:
+		switch v.t {
+		case Float64:
+			d = NewScalarValue(float64(1.0))
+		case Float32:
+			d = NewScalarValue(float32(1.0))
+		case Int:
+			d = NewScalarValue(int(1))
+		default:
+			panic(fmt.Sprintf("Scalar of type %v not yet handled", v.t))
+		}
+	}
+	retVal.d = d
+	return
+}
