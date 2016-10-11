@@ -165,214 +165,197 @@ func TestTUT(t *testing.T) {
 	assert.Nil(T.transposeWith)
 }
 
-func TestTRepeat(t *testing.T) {
-	assert := assert.New(t)
-	var T, T2 *Tensor
-	var expectedShape types.Shape
-	var expectedData []float32
-	var err error
-
-	// SCALARS
-
-	T = NewTensor(AsScalar(float32(3)))
-	T2, err = T.Repeat(0, 3)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if T == T2 {
-		t.Error("Not supposed to be the same pointer")
-	}
-	expectedShape = types.Shape{3}
-	expectedData = []float32{3, 3, 3}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	T2, err = T.Repeat(1, 3)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expectedShape = types.Shape{1, 3}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// VECTORS
-
-	// These are the rules for vector repeats:
-	// 	- Vectors can repeat on axis 0 and 1
-	// 	- For vanilla vectors, repeating on axis 0 and 1 is as if it were a colvec
-	// 	- For non vanilla vectors, it's as if it were a matrix being repeated
-
-	var backing = []float32{1, 2}
-
-	// repeats on axis 1: colvec
-	T = NewTensor(WithShape(2, 1), WithBacking(backing))
-	T2, err = T.Repeat(1, 3)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expectedShape = types.Shape{2, 3}
-	expectedData = []float32{1, 1, 1, 2, 2, 2}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// repeats on axis 1: vanilla vector
-	T = NewTensor(WithShape(2), WithBacking(backing))
-	T2, err = T.Repeat(1, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// repeats on axis 1: rowvec
-	T = NewTensor(WithShape(1, 2), WithBacking(backing))
-	T2, err = T.Repeat(1, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{1, 6}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// repeats on axis 0: vanilla vectors
-	T = NewTensor(WithShape(2), WithBacking(backing))
-	T2, err = T.Repeat(0, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{6}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// repeats on axis 0: colvec
-	T = NewTensor(WithShape(2, 1), WithBacking(backing))
-	T2, err = T.Repeat(0, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{6, 1}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// repeats on axis 0: rowvec
-	T = NewTensor(WithShape(1, 2), WithBacking(backing))
-	T2, err = T.Repeat(0, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedData = []float32{1, 2, 1, 2, 1, 2}
-	expectedShape = types.Shape{3, 2}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// repeats on -1 : all should have shape of (6)
-	T = NewTensor(WithShape(2, 1), WithBacking(backing))
-	T2, err = T.Repeat(-1, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedData = []float32{1, 1, 1, 2, 2, 2}
-	expectedShape = types.Shape{6}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	T = NewTensor(WithShape(1, 2), WithBacking(backing))
-	T2, err = T.Repeat(-1, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	T = NewTensor(WithShape(2), WithBacking(backing))
-	T2, err = T.Repeat(-1, 3)
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// MATRICES
-
-	backing = []float32{1, 2, 3, 4}
-
-	/*
-		1, 2,
-		3, 4
-	*/
-
-	T = NewTensor(WithShape(2, 2), WithBacking(backing))
-	T2, err = T.Repeat(-1, 1, 2, 1, 1)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expectedShape = types.Shape{5}
-	expectedData = []float32{1, 2, 2, 3, 4}
-
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	/*
-		1, 1, 2
-		3, 3, 4
-	*/
-	T2, err = T.Repeat(1, 2, 1)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{2, 3}
-	expectedData = []float32{1, 1, 2, 3, 3, 4}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	/*
-		1, 2, 2,
-		3, 4, 4
-	*/
-	T2, err = T.Repeat(1, 1, 2)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{2, 3}
-	expectedData = []float32{1, 2, 2, 3, 4, 4}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	/*
-		1, 2,
-		3, 4,
-		3, 4
-	*/
-	T2, err = T.Repeat(0, 1, 2)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{3, 2}
-	expectedData = []float32{1, 2, 3, 4, 3, 4}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	/*
-		1, 2,
-		1, 2,
-		3, 4
-	*/
-	T2, err = T.Repeat(0, 2, 1)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{3, 2}
-	expectedData = []float32{1, 2, 1, 2, 3, 4}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
-
-	// MORE THAN 2D!!
-	/*
-		In:
+var repeatTestSlice = []struct {
+	name                       string
+	tensor                     *Tensor
+	shouldAssertTensorNotEqual bool
+	axis                       int
+	repeats                    []int
+	dataExpected               []float32
+	shapeExpected              types.Shape
+	isErrExpected              bool
+	isPanicExpected            bool
+}{
+	{
+		"Scalar repeats on axis 0",
+		NewTensor(AsScalar(float32(3))),
+		true,
+		0,
+		[]int{3},
+		[]float32{3, 3, 3},
+		types.Shape{3},
+		false,
+		false,
+	},
+	{
+		"Scalar repeats on axis 1",
+		NewTensor(AsScalar(float32(3))),
+		false,
+		1,
+		[]int{3},
+		[]float32{3, 3, 3},
+		types.Shape{1, 3},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis 1: colvec",
+		NewTensor(WithShape(2, 1), WithBacking([]float32{1, 2})),
+		false,
+		1,
+		[]int{3},
+		[]float32{1, 1, 1, 2, 2, 2},
+		types.Shape{2, 3},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis 1:rowvec",
+		NewTensor(WithShape(1, 2), WithBacking([]float32{1, 2})),
+		false,
+		1,
+		[]int{3},
+		[]float32{1, 1, 1, 2, 2, 2},
+		types.Shape{1, 6},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis 0: vanilla vectors",
+		NewTensor(WithShape(2), WithBacking([]float32{1, 2})),
+		false,
+		0,
+		[]int{3},
+		[]float32{1, 1, 1, 2, 2, 2},
+		types.Shape{6},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis 0: colvec",
+		NewTensor(WithShape(2, 1), WithBacking([]float32{1, 2})),
+		false,
+		0,
+		[]int{3},
+		[]float32{1, 1, 1, 2, 2, 2},
+		types.Shape{6, 1},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis 0: rowvec",
+		NewTensor(WithShape(1, 2), WithBacking([]float32{1, 2})),
+		false,
+		0,
+		[]int{3},
+		[]float32{1, 2, 1, 2, 1, 2},
+		types.Shape{3, 2},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis -1: Shape(6) #1",
+		NewTensor(WithShape(2, 1), WithBacking([]float32{1, 2})),
+		false,
+		-1,
+		[]int{3},
+		[]float32{1, 1, 1, 2, 2, 2},
+		types.Shape{6},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis -1: Shape(6) #2",
+		NewTensor(WithShape(1, 2), WithBacking([]float32{1, 2})),
+		false,
+		-1,
+		[]int{3},
+		[]float32{1, 1, 1, 2, 2, 2},
+		types.Shape{6},
+		false,
+		false,
+	},
+	{
+		"Vector repeats on axis -1: Shape(6) #3",
+		NewTensor(WithShape(2), WithBacking([]float32{1, 2})),
+		false,
+		-1,
+		[]int{3},
+		[]float32{1, 1, 1, 2, 2, 2},
+		types.Shape{6},
+		false,
+		false,
+	},
+	{
+		`Matrix:
+		  1, 2,
+		  3, 4`,
+		NewTensor(WithShape(2, 2), WithBacking([]float32{1, 2, 3, 4})),
+		false,
+		-1,
+		[]int{1, 2, 1, 1},
+		[]float32{1, 2, 2, 3, 4},
+		types.Shape{5},
+		false,
+		false,
+	},
+	{
+		`Matrix:
+		  1, 1, 2,
+		  3, 3, 4`,
+		NewTensor(WithShape(2, 2), WithBacking([]float32{1, 2, 3, 4})),
+		false,
+		1,
+		[]int{2, 1},
+		[]float32{1, 1, 2, 3, 3, 4},
+		types.Shape{2, 3},
+		false,
+		false,
+	},
+	{
+		`Matrix:
+		  1, 2, 2,
+		  3, 4, 4`,
+		NewTensor(WithShape(2, 2), WithBacking([]float32{1, 2, 3, 4})),
+		false,
+		1,
+		[]int{1, 2},
+		[]float32{1, 2, 2, 3, 4, 4},
+		types.Shape{2, 3},
+		false,
+		false,
+	},
+	{
+		`Matrix:
+		  1, 2,
+		  3, 4,
+		  3, 4`,
+		NewTensor(WithShape(2, 2), WithBacking([]float32{1, 2, 3, 4})),
+		false,
+		0,
+		[]int{1, 2},
+		[]float32{1, 2, 3, 4, 3, 4},
+		types.Shape{3, 2},
+		false,
+		false,
+	},
+	{
+		`Matrix:
+		  1, 2,
+		  1, 2,
+		  3, 4`,
+		NewTensor(WithShape(2, 2), WithBacking([]float32{1, 2, 3, 4})),
+		false,
+		0,
+		[]int{2, 1},
+		[]float32{1, 2, 1, 2, 3, 4},
+		types.Shape{3, 2},
+		false,
+		false,
+	},
+	{
+		`> 2D Matrix:
+			In:
 			1, 2,
 			3, 4,
 			5, 6,
@@ -389,69 +372,109 @@ func TestTRepeat(t *testing.T) {
 			7, 8,
 			9, 10,
 			9, 10,
-			11, 12
-	*/
-	T = NewTensor(WithShape(2, 3, 2), WithBacking(RangeFloat32(1, 2*3*2+1)))
-	T2, err = T.Repeat(1, 1, 2, 1)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{2, 4, 2}
-	expectedData = []float32{1, 2, 3, 4, 3, 4, 5, 6, 7, 8, 9, 10, 9, 10, 11, 12}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+			11, 12`,
+		NewTensor(WithShape(2, 3, 2), WithBacking(RangeFloat32(1, 2*3*2+1))),
+		false,
+		1,
+		[]int{1, 2, 1},
+		[]float32{1, 2, 3, 4, 3, 4, 5, 6, 7, 8, 9, 10, 9, 10, 11, 12},
+		types.Shape{2, 4, 2},
+		false,
+		false,
+	},
+	{
+		"> 2D Matrix broadcast errors",
+		NewTensor(WithShape(2, 3, 2), WithBacking(RangeFloat32(1, 2*3*2+1))),
+		false,
+		0,
+		[]int{1, 2, 1},
+		nil,
+		nil,
+		true,
+		false,
+	},
+	{
+		"> 2D Matrix generic repeat - repeat EVERYTHING by 2",
+		NewTensor(WithShape(2, 3, 2), WithBacking(RangeFloat32(1, 2*3*2+1))),
+		false,
+		types.AllAxes,
+		[]int{2},
+		[]float32{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12},
+		types.Shape{24},
+		false,
+		false,
+	},
+	{
+		"> 2D Matrix generic repeat, axis specified",
+		NewTensor(WithShape(2, 3, 2), WithBacking(RangeFloat32(1, 2*3*2+1))),
+		false,
+		2,
+		[]int{2},
+		[]float32{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12},
+		types.Shape{2, 3, 4},
+		false,
+		false,
+	},
+	{
+		"Repeat Scalars",
+		NewTensor(AsScalar(float32(3))),
+		false,
+		0,
+		[]int{5},
+		[]float32{3, 3, 3, 3, 3},
+		types.Shape{5},
+		false,
+		false,
+	},
+	{
+		"IDIOTS SECTION - Trying to repeat on a nonexistent axis - Vector #1",
+		NewTensor(WithShape(2, 1), WithBacking([]float32{1, 2})),
+		false,
+		2,
+		[]int{3},
+		nil,
+		nil,
+		false,
+		true,
+	},
+	{
+		"IDIOTS SECTION - Trying to repeat on a nonexistent axis - Vector #2",
+		NewTensor(WithShape(2, 3), WithBacking([]float32{1, 2, 3, 4, 5, 6})),
+		false,
+		3,
+		[]int{3},
+		nil,
+		nil,
+		false,
+		true,
+	},
+}
 
-	// broadcast errors
-	T2, err = T.Repeat(0, 1, 2, 1)
-	if err == nil {
-		t.Error("Expected a broadacast/shapeMismatch error")
-	}
+func TestTRepeat(t *testing.T) {
+	assert := assert.New(t)
 
-	// generic repeat - repeat EVERYTHING by 2
-	T2, err = T.Repeat(types.AllAxes, 2)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{24}
-	expectedData = []float32{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+	for _, test := range repeatTestSlice {
+		if test.isPanicExpected {
+			fail := func() {
+				test.tensor.Repeat(test.axis, test.repeats...)
+			}
+			assert.Panics(fail, test.name)
+			continue
+		}
 
-	// generic repeat, axis specified
-	T2, err = T.Repeat(2, 2)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedShape = types.Shape{2, 3, 4}
-	expectedData = []float32{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+		checkTensor, err := test.tensor.Repeat(test.axis, test.repeats...)
+		if test.isErrExpected {
+			assert.NotNil(err, test.name)
+			continue
+		}
 
-	// repeat scalars!
-	T = NewTensor(AsScalar(float32(3)))
-	T2, err = T.Repeat(0, 5)
-	if err != nil {
-		t.Error(err)
-	}
-	expectedData = []float32{3, 3, 3, 3, 3}
-	expectedShape = types.Shape{5}
-	assert.Equal(expectedData, T2.data)
-	assert.Equal(expectedShape, T2.Shape())
+		if test.shouldAssertTensorNotEqual {
+			assert.NotEqual(test.tensor, checkTensor, test.name)
+		}
 
-	/* IDIOTS SECTION */
-
-	// trying to repeat on a nonexistant axis - Vector
-	T = NewTensor(WithShape(2, 1), WithBacking([]float32{1, 2}))
-	fails := func() {
-		T.Repeat(2, 3)
+		assert.Equal(test.dataExpected, checkTensor.data, test.name)
+		assert.Equal(test.shapeExpected, checkTensor.Shape(), test.name)
 	}
-	assert.Panics(fails)
-
-	T = NewTensor(WithShape(2, 3), WithBacking([]float32{1, 2, 3, 4, 5, 6}))
-	fails = func() {
-		T.Repeat(3, 3)
-	}
-	assert.Panics(fails)
 }
 
 var sliceTests = []struct {
@@ -466,7 +489,7 @@ var sliceTests = []struct {
 }{
 	{"a[0]", types.Shape{5}, []types.Slice{ss(0)}, types.ScalarShape(), nil, []float32{0}},
 	{"a[0:2]", types.Shape{5}, []types.Slice{makeRS(0, 2)}, types.Shape{2}, []int{1}, []float32{0, 1}},
-	{"a[1:5:2]", types.Shape{5}, []types.Slice{makeRS(0, 5, 2)}, types.Shape{2}, []int{2}, []float32{0, 1, 2, 3, 4}},
+	{"a[1:5:2]", types.Shape{5}, []types.Slice{makeRS(1, 5, 2)}, types.Shape{2}, []int{2}, []float32{1, 2, 3, 4}},
 
 	// colvec
 	{"c[0]", types.Shape{5, 1}, []types.Slice{ss(0)}, types.ScalarShape(), nil, []float32{0}},
@@ -483,7 +506,7 @@ var sliceTests = []struct {
 
 	// matrix
 	{"A[0]", types.Shape{2, 3}, []types.Slice{ss(0)}, types.Shape{1, 3}, []int{1}, RangeFloat32(0, 3)},
-	{"A[0:10]", types.Shape{4, 5}, []types.Slice{makeRS(0, 2)}, types.Shape{2, 5}, []int{5, 1}, RangeFloat32(0, 10)},
+	{"A[0:2]", types.Shape{4, 5}, []types.Slice{makeRS(0, 2)}, types.Shape{2, 5}, []int{5, 1}, RangeFloat32(0, 10)},
 	{"A[0, 0]", types.Shape{4, 5}, []types.Slice{ss(0), ss(0)}, types.ScalarShape(), nil, []float32{0}},
 	{"A[0, 1:5]", types.Shape{4, 5}, []types.Slice{ss(0), makeRS(1, 5)}, types.Shape{4}, []int{1}, RangeFloat32(1, 5)},
 	{"A[0, 1:5:2]", types.Shape{4, 5}, []types.Slice{ss(0), makeRS(1, 5, 2)}, types.Shape{1, 2}, []int{2}, RangeFloat32(1, 5)},
@@ -508,6 +531,20 @@ func TestTSlice(t *testing.T) {
 		assert.Equal(sts.correctStride, V.Strides(), "Test: %v - Incorrect Stride", sts.name)
 		assert.Equal(sts.correctData, V.data, "Test: %v - Incorrect Data", sts.name)
 	}
+
+	// Transposed slice
+	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat32(0, 6)))
+	T.T()
+	V, err = T.Slice(ss(0))
+	assert.True(types.Shape{2}.Eq(V.Shape()))
+	assert.Equal([]int{3}, V.Strides())
+	assert.Equal([]float32{0, 1, 2, 3}, V.data)
+	assert.Nil(V.old)
+
+	// slice a sliced
+	V, err = V.Slice(makeRS(1, 2))
+	assert.True(types.ScalarShape().Eq(V.Shape()))
+	assert.Equal([]float32{3}, V.data)
 
 	// And now, ladies and gentlemen, the idiots!
 

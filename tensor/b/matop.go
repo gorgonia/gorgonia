@@ -403,98 +403,10 @@ func (t *Tensor) CopyTo(other *Tensor) error {
 //
 // The method treats <nil> as equivalent to a colon slice. T.Slice(nil) is equivalent to T[:] in Numpy syntax
 func (t *Tensor) Slice(slices ...types.Slice) (view *Tensor, err error) {
-	// slices can only be len=1 or the operational shape
-	if len(slices) > len(t.Shape()) {
-		// error
-		err = types.DimMismatchErr(t.Dims(), len(slices))
-		return
-	}
-
-	var ndStart int
-	ndEnd := len(t.data)
-
-	newShape := t.Shape().Clone()     // the new shape
-	opDims := len(t.Shape())          // operational dimensions
-	dims := t.Dims()                  // reported dimensions
-	newStrides := make([]int, opDims) // the new strides
-
-	for i := 0; i < opDims; i++ {
-		var sl types.Slice
-		if i <= len(slices)-1 {
-			sl = slices[i]
-		}
-
-		size := t.oshape()[i]
-
-		var stride int
-		if dims < opDims && t.IsVector() {
-			// handles non-vanilla vectors
-			stride = t.ostrides()[0]
-		} else {
-			stride = t.ostrides()[i]
-		}
-
-		var start, end, step int
-		// a nil slice is equivalent to [:]
-		if sl == nil {
-			start = 0
-			end = size
-			step = 1
-		} else {
-			start = sl.Start()
-			end = sl.End()
-			step = sl.Step()
-
-			if err = types.CheckSlice(sl, size); err != nil {
-				return
-			}
-
-			if end > size {
-				end = size
-			}
-		}
-
-		// a slice where start == end is []
-		ndStart = ndStart + start*stride
-		ndEnd = ndEnd - (size-end)*stride
-		if step > 0 {
-			newShape[i] = (end - start) / step
-			newStrides[i] = stride * step
-
-			//fix
-			if newShape[i] <= 0 {
-				newShape[i] = 1
-			}
-		} else {
-			newShape[i] = (end - start)
-			newStrides[i] = stride
-		}
-	}
-
 	var newAP *types.AP
-	if ndEnd-ndStart == 1 {
-		// scalars are a special case
-		newAP = new(types.AP)
-		newAP.SetShape() // make it a Scalar
-		newAP.Lock()
-	} else {
-
-		// drop any dimension with size 1, except the last dimension
-		for d := 0; d < dims; d++ {
-			if newShape[d] == 1 /*&& d != t.dims-1  && dims > 2*/ {
-				newShape = append(newShape[:d], newShape[d+1:]...)
-				newStrides = append(newStrides[:d], newStrides[d+1:]...)
-				d--
-				dims--
-			}
-		}
-
-		//fix up strides
-		if newShape.IsColVec() {
-			newStrides = []int{newStrides[0]}
-		}
-
-		newAP = types.NewAP(newShape, newStrides)
+	var ndStart, ndEnd int
+	if newAP, ndStart, ndEnd, err = t.AP.S(len(t.data), slices...); err != nil {
+		return
 	}
 
 	view = new(Tensor)
