@@ -187,15 +187,19 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 	if probs, err = sda.final.Activate(); err != nil {
 		return
 	}
+
+	log.Printf("model %v", model)
 	logprobs := Must(Neg(Must(Log(probs))))
 
 	solver := NewVanillaSolver()
-	costs := make(Nodes, sda.BatchSize)
-	costValues := make([]float64, len(y))
-	costValues = costValues[:0]
-	for batch := 0; batch < sda.BatchSize; batch++ {
-		costs = costs[:0]
 
+	costValues := make([]*Value, len(y))
+	costValues = costValues[:0]
+
+	batches := x.Shape()[0] / sda.BatchSize
+	costs := make(Nodes, sda.BatchSize)
+	for batch := 0; batch < batches; batch++ {
+		costs = costs[:0]
 		start := batch * sda.BatchSize
 		end := start + sda.BatchSize
 
@@ -203,16 +207,29 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 			break
 		}
 
-		// logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
-		// logger := log.New(logfile, "", 0)
+		logfile, _ := os.OpenFile(fmt.Sprintf("execlog/exec_%v_%v.log", epoch, batch), os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
+		logger := log.New(logfile, "", 0)
 
 		for i, correct := range y[start:end] {
 			var cost *Node
-			if cost, err = Slice(logprobs, S(i), S(correct)); err != nil {
-				log.Printf("i %d, len(y): %d; %v; err: %v", i, len(y), logprobs.Shape(), err)
-				return
+			var costValue Value
+
+			if sda.BatchSize == 1 {
+				if cost, err = Slice(logprobs, S(correct)); err != nil {
+					log.Printf("i %d, len(y): %d; %v; err: %v", i, len(y), logprobs.Shape(), err)
+					return
+				}
+			} else {
+				if cost, err = Slice(logprobs, S(i), S(correct)); err != nil {
+					log.Printf("i %d, len(y): %d; %v; err: %v", i, len(y), logprobs.Shape(), err)
+					return
+				}
 			}
-			costs = append(costs, cost)
+
+			readCost := Read(cost, &costValue)
+
+			costValues = append(costValues, &costValue)
+			costs = append(costs, readCost)
 		}
 
 		g := sda.g.SubgraphRoots(costs...)
@@ -223,22 +240,44 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 			return
 		}
 
-		// machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), ExecuteFwdOnly(), WithValueFmt("%+s"))
-		machine := NewLispMachine(g)
+		machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), WithValueFmt("%+s"))
+		// machine := NewLispMachine(g)
 		Let(sda.input, input)
 		if err = machine.RunAll(); err != nil {
 			ioutil.WriteFile("fullGraphWTF.dot", []byte(g.ToDot()), 0644)
 			return
 		}
 
-		for _, cost := range costs {
-			cv := cost.Value().Data().(float64)
-			costValues = append(costValues, cv)
+		if batch == 0 {
+			log.Println("BEFORE STEP")
+			log.Printf("model[0].v %+s", model[0].Value())
+			gr, _ := model[0].Grad()
+			log.Printf("model[0].d %+s", gr)
 		}
 
 		solver.Step(model)
+
+		if batch == 0 {
+			log.Println("AFTER STEP")
+			log.Printf("model[0].v %+s", model[0].Value())
+			gr, _ := model[0].Grad()
+			log.Printf("model[0].d %+s", gr)
+		}
 	}
-	log.Printf("Finetune Epoch\t%d\t%v", epoch, avgF64s(costValues))
+
+	cvs := make([]float64, len(y))
+	cvs = cvs[:0]
+	for _, cv := range costValues {
+		v := (*cv)
+		if v == nil {
+			log.Printf("nil")
+			continue
+		}
+		c := v.Data().(float64)
+		cvs = append(cvs, c)
+	}
+
+	log.Printf("Finetune Epoch\t%d\t%v", epoch, avgF64s(cvs))
 	return nil
 }
 

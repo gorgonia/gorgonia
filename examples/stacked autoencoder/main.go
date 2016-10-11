@@ -13,6 +13,7 @@ import (
 	T "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
 )
 
@@ -61,8 +62,13 @@ func loadMNIST(t string) (inputs, targets types.Tensor) {
 	return inputs, targets
 }
 
-func predictTen(logprobs types.Tensor) (guesses []int, err error) {
-	argmax, err := tensor.Argmax(logprobs, 1)
+func predictBatch(logprobs types.Tensor, batchSize int) (guesses []int, err error) {
+	var argmax *ti.Tensor
+	if batchSize == 1 {
+		argmax, err = tensor.Argmax(logprobs, 0)
+	} else {
+		argmax, err = tensor.Argmax(logprobs, 1)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -83,9 +89,9 @@ func main() {
 	hiddenSizes := []int{1000, 1000, 1000}
 	layers := len(hiddenSizes)
 	corruptions := []float64{0.1, 0.2, 0.3}
-	batchSize := 1
-	pretrainEpoch := 20
-	finetuneEpoch := 20
+	batchSize := 10
+	pretrainEpoch := 3
+	finetuneEpoch := 3
 
 	g := T.NewGraph()
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)
@@ -107,7 +113,6 @@ func main() {
 			log.Fatalf("i: %d err :%v", i, err)
 		}
 	}
-
 	ys := make([]int, targets.Shape()[0])
 	ys = ys[:0]
 	for i := 0; i < targets.Shape()[0]; i++ {
@@ -120,7 +125,6 @@ func main() {
 			}
 		}
 	}
-	fmt.Printf("ys: %v\n", ys[0:100])
 
 	log.Printf("Starting to finetune now")
 	for i := 0; i < finetuneEpoch; i++ {
@@ -130,9 +134,9 @@ func main() {
 	}
 
 	// Visualize
-	var visualizeLayer int
+	var visualizeLayer int = 2
 	log.Printf("Visualizing %dth layer", visualizeLayer)
-	finalWeights := sda.autoencoders[0].w.Value().(T.Tensor).Tensor.(*tf64.Tensor).Clone()
+	finalWeights := sda.autoencoders[visualizeLayer].w.Value().(T.Tensor).Tensor.(*tf64.Tensor).Clone()
 	finalWeights.T()
 	finalWeights.Transpose()
 	for i := 0; i < finalWeights.Shape()[0]; i++ {
@@ -166,7 +170,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if predictions, err = predictTen(lp); err != nil {
+	if predictions, err = predictBatch(lp, batchSize); err != nil {
 		log.Fatal(err)
 	}
 
