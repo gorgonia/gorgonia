@@ -541,8 +541,12 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 
 	retVal = n
 	for i, slice := range slices {
-		var op sliceOp
+		if retVal.IsScalar() {
+			err = NewError(ShapeError, "cannot slice a scalar value (%v). Slice %d (%v)", retVal, i, slice)
+			return
+		}
 
+		var op sliceOp
 		switch {
 		case retVal.shape.IsVector():
 			op = newSliceOp(slice, 0, retVal.Dims())
