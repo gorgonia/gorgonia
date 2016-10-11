@@ -18,11 +18,11 @@ var (
 	compileDev        = false
 	shapeInferenceDev = false
 	typeSystemDev     = false
-	symdiffDev        = true
+	symdiffDev        = false
 	autodiffDev       = false
 	machineDev        = true
-	stabilizationDev  = true
-	solverDev         = true
+	stabilizationDev  = false
+	solverDev         = false
 )
 
 var READMEMSTATS = true
