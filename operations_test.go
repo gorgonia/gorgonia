@@ -38,6 +38,126 @@ func TestApplyOp(t *testing.T) {
 	}
 }
 
+var mulTests = []struct {
+	name   string
+	xshape types.Shape
+	wshape types.Shape
+
+	gradX []float64
+	gradW []float64
+}{
+	{"x vector", types.Shape{2}, types.Shape{2, 3}, []float64{3, 12}, []float64{0, 0, 0, 1, 1, 1}},
+	{"x mat", types.Shape{3, 2}, types.Shape{2, 3}, []float64{3, 12, 3, 12, 3, 12}, []float64{6, 6, 6, 9, 9, 9}},
+	{"x_vec_w_vec", types.Shape{6}, types.Shape{6}, []float64{0, 1, 2, 3, 4, 5}, []float64{0, 1, 2, 3, 4, 5}},
+}
+
+func TestMul(t *testing.T) {
+	assert := assert.New(t)
+
+	t.Logf("Testing Mul with TapeMachine")
+	for _, mts := range mulTests {
+		g := NewGraph()
+		x := NewTensor(g, Float64, mts.xshape.Dims(), WithName(mts.name), WithShape(mts.xshape...), WithInit(RangedFrom(0)))
+		w := NewTensor(g, Float64, mts.wshape.Dims(), WithName("w"), WithShape(mts.wshape...), WithInit(RangedFrom(0)))
+
+		xw, err := Mul(x, w)
+		if err != nil {
+			t.Errorf("Error when testing %q. Err: %v", mts.name, err)
+			continue
+		}
+
+		if mts.xshape.IsVector() && mts.wshape.IsVector() {
+			if _, err = Grad(xw, x, w); err != nil {
+				t.Errorf("Error while differentiating %q, Err: %v", mts.name, err)
+				continue
+			}
+		} else {
+			cost, err := Sum(xw)
+			if err != nil {
+				t.Errorf("Error when summing %q. Err: %v", mts.name, err)
+				continue
+			}
+
+			if _, err = Grad(cost, x, w); err != nil {
+				t.Errorf("Error while differentiating %q, Err: %v", mts.name, err)
+				continue
+			}
+		}
+
+		prog, locMap, err := Compile(g)
+		if err != nil {
+			t.Errorf("Error while compiling %q. Err: %v", mts.name, err)
+			continue
+		}
+
+		m := NewTapeMachine(prog, locMap)
+		if err = m.RunAll(); err != nil {
+			t.Errorf("Error while executing %q. Err: %v", mts.name, err)
+			continue
+		}
+
+		gradX, err := x.Grad()
+		if err != nil {
+			t.Errorf("Error while getting gradient of x %q. Err: %v", mts.name, err)
+		}
+
+		gradW, err := w.Grad()
+		if err != nil {
+			t.Errorf("Error while getting gradient of w %q. Err: %v", mts.name, err)
+		}
+
+		assert.Equal(mts.gradX, gradX.Data().([]float64))
+		assert.Equal(mts.gradW, gradW.Data().([]float64))
+		assert.True(mts.xshape.Eq(gradX.Shape()))
+		assert.True(mts.wshape.Eq(gradW.Shape()))
+	}
+
+	t.Logf("Testing Mul with LispMachine")
+	for _, mts := range mulTests {
+		g := NewGraph()
+		x := NewTensor(g, Float64, mts.xshape.Dims(), WithName(mts.name), WithShape(mts.xshape...), WithInit(RangedFrom(0)))
+		w := NewTensor(g, Float64, mts.wshape.Dims(), WithName("w"), WithShape(mts.wshape...), WithInit(RangedFrom(0)))
+
+		xw, err := Mul(x, w)
+		if err != nil {
+			t.Errorf("Error when testing %q. Err: %v", mts.name, err)
+			continue
+		}
+
+		if mts.xshape.IsVector() && mts.wshape.IsVector() {
+
+		} else {
+			if _, err = Sum(xw); err != nil {
+				t.Errorf("Error when summing %q. Err: %v", mts.name, err)
+				continue
+			}
+		}
+
+		m := NewLispMachine(g)
+
+		if err = m.RunAll(); err != nil {
+			// ioutil.WriteFile(fmt.Sprintf("fullGraph_%v.dot", mts.name), []byte(g.ToDot()), 0644)
+			t.Errorf("Error while executing %q. Err: %v", mts.name, err)
+			continue
+		}
+
+		gradX, err := x.Grad()
+		if err != nil {
+			t.Errorf("Error while getting gradient of x %q. Err: %v", mts.name, err)
+		}
+
+		gradW, err := w.Grad()
+		if err != nil {
+			t.Errorf("Error while getting gradient of w %q. Err: %v", mts.name, err)
+		}
+
+		assert.Equal(mts.gradX, gradX.Data().([]float64))
+		assert.Equal(mts.gradW, gradW.Data().([]float64))
+		assert.True(mts.xshape.Eq(gradX.Shape()))
+		assert.True(mts.wshape.Eq(gradW.Shape()))
+	}
+}
+
 func TestSoftMax(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()

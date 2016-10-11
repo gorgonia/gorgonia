@@ -245,6 +245,9 @@ func (m *lispMachine) backward() (err error) {
 
 	// actual differentiation
 	if err = instr.do(); err != nil {
+		log.Printf("ERR  %v shape: %v", instr.inputs[0].Shape(), instr.inputs[0])
+		log.Printf("ERR  %v shape: %v", instr.inputs[0].Shape(), instr.inputs[1])
+		log.Printf("op %v", instr.AdOp)
 		err = errors.Wrapf(err, autodiffFail, instr.AdOp)
 		return
 	}
