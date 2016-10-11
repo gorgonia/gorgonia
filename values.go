@@ -29,6 +29,15 @@ type Valuer interface {
 	Value() Value
 }
 
+type Zeroer interface {
+	Value
+	Zero()
+}
+
+type Setter interface {
+	SetAll(interface{}) error
+}
+
 // Tensor is a Value. It wraps over types.Tensor
 type Tensor struct {
 	types.Tensor

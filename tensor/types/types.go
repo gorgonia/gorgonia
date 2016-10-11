@@ -29,12 +29,14 @@ type Tensor interface {
 	Reshape(...int) error
 	T(axes ...int) error
 	UT()
+
+	// data related interface
 	Zero()
+	SetAll(interface{}) error
+	Data() interface{}
 
 	// Equality
 	Eq(other Tensor) bool
-
-	Data() interface{}
 
 	// type overloading shit
 	IsScalar() bool
