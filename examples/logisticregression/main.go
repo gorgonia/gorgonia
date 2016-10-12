@@ -145,6 +145,7 @@ func main() {
 		machine.Set(b, bUpd)
 	}
 	fmt.Printf("Time taken: %v\n", time.Since(start))
+<<<<<<< HEAD
 	fmt.Printf("Final Model: \nw: %3.3s\nb: %+3.3s\n", w.Value(), b.Value())
 
 	fmt.Printf("Target values: %#v\n", yT)
@@ -158,4 +159,6 @@ func main() {
 	handleError(machine.RunAll())
 	fmt.Printf("Predicted: %#v\n", pred.Value())
 
+=======
+>>>>>>> Huge change - removed old CompileFunction and renamed CompileFunctionNew into CompileFunction
 }
