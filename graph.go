@@ -156,6 +156,16 @@ func (g *ExprGraph) Roots() (retVal Nodes) {
 	return retVal
 }
 
+// Inputs returns a list of nodes which are inputs (that is to say, the user is required to set a value in it)
+func (g *ExprGraph) Inputs() (retVal Nodes) {
+	for _, n := range g.all {
+		if n.isInput() {
+			retVal = append(retVal, n)
+		}
+	}
+	return
+}
+
 // ByName returns nodes that have the name provided.
 // Bear in mind that the name that is compared to is the internal name,
 // not the result of calling node.Name(). The reason for doing this is

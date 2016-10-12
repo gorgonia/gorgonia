@@ -54,32 +54,23 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	return
 }
 
-func CompileFunctionNEW(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
+func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("CompileFunctionNEW. Inputs: %d; outputs: %d", inputs, outputs)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	seen := NewNodeSet()
-	for _, output := range outputs {
-		ch := WalkGraph(output)
-		for n := range ch {
-			seen.Add(n)
+	subgraph := g.SubgraphRoots(outputs...)
+	var unused Nodes
+	for _, in := range inputs {
+		if !subgraph.all.Contains(in) {
+			unused = append(unused, in)
 		}
 	}
 
-	if !seen.ContainsAll(inputs...) {
-		var unused Nodes
-		for _, in := range inputs {
-			if !seen.Contains(in) {
-				unused = append(unused, in)
-			}
-		}
+	if len(unused) > 0 {
 		err = NewError(CompileError, "Not all the inputs are used: %v", unused)
 		return
 	}
-
-	ns := seen.ToSlice()
-	subgraph := g.subgraph(ns)
 
 	var sortedNodes Nodes
 	if sortedNodes, err = Sort(g); err != nil {
@@ -98,55 +89,6 @@ func CompileFunctionNEW(g *ExprGraph, inputs, outputs Nodes) (prog *program, loc
 	prog.df = df
 	prog.g = g
 	prog.sorted = sortedNodes
-
-	return
-}
-
-func CompileFunction(g *ExprGraph, prog *program, inputs, outputs Nodes) (frag fragment, err error) {
-	compileLogf("CompileFunction. Inputs: %d; outputs: %d", inputs, outputs)
-	enterLoggingContext()
-	defer leaveLoggingContext()
-
-	compileLogf("Finding subgraphs. Outputs: %d; inputs: %d", len(outputs), len(inputs))
-	// Find the subgraph that contain inputs and outputs. The number of subgraphs is the number of outputs
-	// This entire bit is so fugly. Should find a way to sort nodes and filter at the same time
-
-	seen := NewNodeSet()
-	for _, output := range outputs {
-		ch := WalkGraph(output)
-		for n := range ch {
-			seen.Add(n)
-		}
-	}
-
-	compileLogf("seen: %d | all : %d", len(seen), len(g.byHash))
-	if !seen.ContainsAll(inputs...) {
-		err = NewError(CompileError, "Not all the inputs are used")
-		return
-	}
-
-	// since we've already sorted earlier, we'll use the subgraph to filter the sorted nodes - we only want nodes that are
-	// relevant to the inputs and outputs
-
-	sortedNodes := prog.sorted
-
-	var combined Nodes
-	for _, n := range sortedNodes {
-		if _, ok := seen[n]; ok {
-			combined = append(combined, n)
-		}
-	}
-
-	df := prog.df
-
-	// "codegen" (codegen had previously happened)
-	for i := len(combined) - 1; i >= 0; i-- {
-		n := combined[i]
-		replacement := df.replacements[n]
-		instr := prog.m[replacement]
-		// instr := prog.m[n.ID()]
-		frag = append(frag, instr...)
-	}
 
 	return
 }
