@@ -159,10 +159,12 @@ func WithBacking(a []float64) consOpt {
 // WithShape is a construction option for NewNDArray - it creates the ndarray in the required shape
 func WithShape(dims ...int) consOpt {
 	f := func(t *Tensor) {
-		t.setShape(dims...)
+		throw := types.BorrowInts(len(dims))
+		copy(throw, dims)
+		t.setShape(throw...)
 
 		// special case for scalars
-		if len(dims) == 0 {
+		if len(throw) == 0 {
 			t.data = make([]float64, 1)
 		}
 	}
@@ -255,9 +257,7 @@ func (t *Tensor) Reshape(dims ...int) error {
 }
 
 func (t *Tensor) reshape(dims ...int) error {
-	t.Unlock()
-	t.SetShape(dims...)
-	t.Lock()
+	t.setShape(dims...)
 	return t.sanity()
 }
 

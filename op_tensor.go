@@ -1006,15 +1006,22 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	t := inputs[0].(Tensor).Tensor
 
+	throwaway := types.BorrowInts(len(op.pattern))
+	copy(throwaway, op.pattern)
+	var ret types.Tensor
+	if ret, err = tensor.T(t, throwaway...); err != nil {
+		return
+	}
+
 	// the reason for this is because the .T() method of a Tensor
 	// will use the axes in the .transposedWith field
 	// Later when .UT() is called, the .transposedWith field is recycled into the pool
-	throwaway := types.BorrowInts(len(op.pattern))
-	copy(throwaway, op.pattern)
+	// throwaway := types.BorrowInts(len(op.pattern))
+	// copy(throwaway, op.pattern)
 
-	t.T(throwaway...)
-	ret := t.Materialize()
-	t.UT()
+	// t.T(throwaway...)
+	// ret := t.Materialize()
+	// t.UT()
 	return anyToValue(ret)
 }
 

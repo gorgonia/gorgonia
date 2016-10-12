@@ -58,8 +58,7 @@ func (t *Tensor) Apply(fn func(bool) bool, opts ...types.FuncOpt) (retVal *Tenso
 	// set retVal
 	switch {
 	case reuse != nil:
-		if err = reuse.Reshape(t.Shape()...); err != nil {
-			err = errors.Wrapf(err, reuseReshapeErr, t.Shape(), reuse.DataSize())
+		if err = reuseCheckShape(reuse, t.Shape()); err != nil {
 			return
 		}
 		retVal = reuse
@@ -138,6 +137,25 @@ func (t *Tensor) UT() {
 		t.old = nil
 		t.transposeWith = nil
 	}
+}
+
+func (t *Tensor) SafeT(axes ...int) (retVal *Tensor, err error) {
+	var transform *types.AP
+	if transform, axes, err = t.AP.T(axes...); err != nil {
+		if _, ok := err.(NoOpError); !ok {
+			return
+		}
+		err = nil
+		return
+	}
+
+	retVal = newBorrowedTensor(len(t.data))
+	copy(retVal.data, t.data)
+	retVal.AP = transform
+	retVal.old = t.AP.Clone()
+	retVal.transposeWith = axes
+
+	return
 }
 
 // Transpose() actually transposes the data.

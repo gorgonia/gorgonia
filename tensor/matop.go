@@ -24,6 +24,22 @@ func Repeat(t types.Tensor, axis int, repeats ...int) (retVal types.Tensor, err 
 	panic("unreachable")
 }
 
+func T(t types.Tensor, axes ...int) (retVal types.Tensor, err error) {
+	switch tt := t.(type) {
+	case *tf64.Tensor:
+		return tt.SafeT(axes...)
+	case *tf32.Tensor:
+		return tt.SafeT(axes...)
+	case *ti.Tensor:
+		return tt.SafeT(axes...)
+	case *tb.Tensor:
+		return tt.SafeT(axes...)
+	default:
+		panic("Not yet implemented")
+	}
+	panic("unreachable")
+}
+
 func Slice(t types.Tensor, slices ...types.Slice) (retVal types.Tensor, err error) {
 	switch tt := t.(type) {
 	case *tf64.Tensor:
