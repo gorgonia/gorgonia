@@ -20,9 +20,10 @@ import (
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write memory profile to this file")
 
-func loadMNIST(t string) (inputs, targets types.Tensor) {
-	fmt.Println("Loading Training Data..")
+var trainingViz = os.OpenFile("trainingViz.log", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
+var trainingLog = log.New(trainingViz, "", log.Ltime|log.Lmicroseconds)
 
+func loadMNIST(t string) (inputs, targets types.Tensor) {
 	var labelData []Label
 	var imageData []RawImage
 	var height, width int
@@ -51,8 +52,8 @@ func loadMNIST(t string) (inputs, targets types.Tensor) {
 	targets = prepareY(labelData)
 
 	if t == "dev" {
-		inputs, _ = tensor.Slice(inputs, T.S(0, 1000))
-		targets, _ = tensor.Slice(targets, T.S(0, 1000))
+		inputs, _ = tensor.Slice(inputs, T.S(0, 100))
+		targets, _ = tensor.Slice(targets, T.S(0, 100))
 	}
 
 	log.Printf("%s Images: %d. | Width: %d, Height: %d\n", t, len(imageData), width, height)
@@ -81,7 +82,8 @@ func main() {
 	rand.Seed(1337)
 
 	/* EXAMPLE TIME */
-	inputs, targets := loadMNIST("dev")
+	trainOn := "train"
+	inputs, targets := loadMNIST(trainOn)
 
 	size := inputs.Shape()[0]
 	inputSize := 784
@@ -89,9 +91,21 @@ func main() {
 	hiddenSizes := []int{1000, 1000, 1000}
 	layers := len(hiddenSizes)
 	corruptions := []float64{0.1, 0.2, 0.3}
-	batchSize := 10
-	pretrainEpoch := 3
-	finetuneEpoch := 3
+	batchSize := 100
+	pretrainEpoch := 15
+	finetuneEpoch := 36
+
+	deets := ` Stacked Denoising AutoEncoder
+	============================
+	Train on: %v
+	Training Size: %v
+	Hidden Sizes: %v
+	Corruptions: %v
+	Batch Size: %v
+	Pretraining Epoch: %v
+	Finetuning Epoch %v
+`
+	fmt.Printf(deets, trainOn, size, hiddenSizes, corruptions, batchSize, pretrainEpoch, finetuneEpoch)
 
 	g := T.NewGraph()
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -87,9 +86,6 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 	var inputs, model Nodes
 	var machines []VM
 
-	logfile, err := os.OpenFile("exec.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	logger := log.New(logfile, "", 0)
-
 	inputs = Nodes{sda.input}
 	var costValue Value
 	for i, da := range sda.autoencoders {
@@ -106,18 +102,8 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 		if err != nil {
 			return err
 		}
-		if epoch == 0 {
-			log.Printf("Layer: %d \n%v, %-#v", i, prog, FmtNodeMap(locMap))
-		}
-		// logger.SetPrefix(fmt.Sprintf("Train Layer %d:\t", i))
+
 		var m VM
-		if epoch == 0 {
-			// m = NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist(), WithValueFmt("%+1.1s"), WithInfWatch())
-			m = NewTapeMachine(prog, locMap, WithLogger(logger), WithValueFmt("%+1.1s"), WithWatchlist(), TraceExec())
-			// m = NewTapeMachine(prog, locMap, WithNaNWatch(), WithInfWatch())
-		} else {
-			m = NewTapeMachine(prog, locMap, WithNaNWatch(), WithInfWatch())
-		}
 		m = NewTapeMachine(prog, locMap)
 		machines = append(machines, m)
 	}
@@ -137,9 +123,6 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 				return
 			}
 
-			// logfile.Truncate(0)
-			// logfile.Seek(0, 0)
-			// log.Printf("Layer %d", i)
 			model = model[:0]
 			Let(sda.input, input)
 			if err = machines[i].RunAll(); err != nil {
@@ -166,7 +149,7 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 			fmt.Fprintf(&buf, "%v", ac)
 		}
 	}
-	log.Println(buf.String())
+	trainingLog.Println(buf.String())
 
 	return nil
 }
@@ -188,7 +171,6 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 		return
 	}
 
-	log.Printf("model %v", model)
 	logprobs := Must(Neg(Must(Log(probs))))
 
 	solver := NewVanillaSolver()
@@ -207,8 +189,8 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 			break
 		}
 
-		logfile, _ := os.OpenFile(fmt.Sprintf("execlog/exec_%v_%v.log", epoch, batch), os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
-		logger := log.New(logfile, "", 0)
+		// logfile, _ := os.OpenFile(fmt.Sprintf("execlog/exec_%v_%v.log", epoch, batch), os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
+		// logger := log.New(logfile, "", 0)
 
 		for i, correct := range y[start:end] {
 			var cost *Node
@@ -216,12 +198,10 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 
 			if sda.BatchSize == 1 {
 				if cost, err = Slice(logprobs, S(correct)); err != nil {
-					log.Printf("i %d, len(y): %d; %v; err: %v", i, len(y), logprobs.Shape(), err)
 					return
 				}
 			} else {
 				if cost, err = Slice(logprobs, S(i), S(correct)); err != nil {
-					log.Printf("i %d, len(y): %d; %v; err: %v", i, len(y), logprobs.Shape(), err)
 					return
 				}
 			}
@@ -236,33 +216,17 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 
 		var input types.Tensor
 		if input, err = tensor.Slice(x, S(start, end)); err != nil {
-			log.Printf("start %d, end %d, len(y) %d", start, end, len(y))
 			return
 		}
 
-		machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), WithValueFmt("%+s"))
-		// machine := NewLispMachine(g)
+		// machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), WithValueFmt("%+s"))
+		machine := NewLispMachine(g)
 		Let(sda.input, input)
 		if err = machine.RunAll(); err != nil {
-			ioutil.WriteFile("fullGraphWTF.dot", []byte(g.ToDot()), 0644)
 			return
-		}
-
-		if batch == 0 {
-			log.Println("BEFORE STEP")
-			log.Printf("model[0].v %+s", model[0].Value())
-			gr, _ := model[0].Grad()
-			log.Printf("model[0].d %+s", gr)
 		}
 
 		solver.Step(model)
-
-		if batch == 0 {
-			log.Println("AFTER STEP")
-			log.Printf("model[0].v %+s", model[0].Value())
-			gr, _ := model[0].Grad()
-			log.Printf("model[0].d %+s", gr)
-		}
 	}
 
 	cvs := make([]float64, len(y))
@@ -270,21 +234,35 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 	for _, cv := range costValues {
 		v := (*cv)
 		if v == nil {
-			log.Printf("nil")
 			continue
 		}
 		c := v.Data().(float64)
 		cvs = append(cvs, c)
 	}
 
-	log.Printf("Finetune Epoch\t%d\t%v", epoch, avgF64s(cvs))
+	trainingLog.Printf("%d\t%v", epoch, avgF64s(cvs))
 	return nil
 }
 
 func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
 	logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
 	logger := log.New(logfile, "", 0)
-	g := sda.g.SubgraphRoots(sda.final.output)
+
+	for i := range sda.autoencoders {
+		if i > 0 {
+			hidden := sda.hiddenLayers[i-1]
+			if _, err = hidden.Activate(); err != nil {
+				return
+			}
+		}
+	}
+	var probs *Node
+	if probs, err = sda.final.Activate(); err != nil {
+		return
+	}
+
+	logprobs := Must(Neg(Must(Log(probs))))
+	g := sda.g.SubgraphRoots(logprobs)
 	machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), ExecuteFwdOnly(), WithValueFmt("%+s"))
 	// machine := NewLispMachine(g, ExecuteFwdOnly())
 
@@ -293,7 +271,7 @@ func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
 		return
 	}
 
-	res = sda.final.output.Value().(Tensor).Tensor
+	res = logprobs.Value().(Tensor).Tensor
 
 	return
 }
