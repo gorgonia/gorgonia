@@ -294,6 +294,10 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 		return
 	}
 
+	if err != nil {
+		return
+	}
+
 	var d Value
 	switch v := retVal.d.(type) {
 	case Tensor:
