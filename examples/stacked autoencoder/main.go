@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"image/jpeg"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -20,8 +21,17 @@ import (
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write memory profile to this file")
 
-var trainingViz = os.OpenFile("trainingViz.log", os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644)
-var trainingLog = log.New(trainingViz, "", log.Ltime|log.Lmicroseconds)
+var trainingWriter io.Writer
+var trainingLog *log.Logger
+
+func init() {
+	var err error
+	if trainingWriter, err = os.OpenFile("training.viz", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644); err != nil {
+		log.Fatal(err)
+	}
+
+	trainingLog = log.New(trainingWriter, "", log.Ltime|log.Lmicroseconds)
+}
 
 func loadMNIST(t string) (inputs, targets types.Tensor) {
 	var labelData []Label
@@ -82,7 +92,7 @@ func main() {
 	rand.Seed(1337)
 
 	/* EXAMPLE TIME */
-	trainOn := "train"
+	trainOn := "dev"
 	inputs, targets := loadMNIST(trainOn)
 
 	size := inputs.Shape()[0]
@@ -91,12 +101,12 @@ func main() {
 	hiddenSizes := []int{1000, 1000, 1000}
 	layers := len(hiddenSizes)
 	corruptions := []float64{0.1, 0.2, 0.3}
-	batchSize := 100
-	pretrainEpoch := 15
-	finetuneEpoch := 36
+	batchSize := 1
+	pretrainEpoch := 200
+	finetuneEpoch := 100
 
-	deets := ` Stacked Denoising AutoEncoder
-	============================
+	deets := `Stacked Denoising AutoEncoder
+==============================
 	Train on: %v
 	Training Size: %v
 	Hidden Sizes: %v
@@ -121,6 +131,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	log.Printf("Pretraining...")
 	for i := 0; i < pretrainEpoch; i++ {
 		if err = sda.Pretrain(inputs, i); err != nil {
 			ioutil.WriteFile("fullGraph_err.dot", []byte(g.ToDot()), 0644)

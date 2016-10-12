@@ -88,7 +88,7 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 
 	inputs = Nodes{sda.input}
 	var costValue Value
-	for i, da := range sda.autoencoders {
+	for _, da := range sda.autoencoders {
 		var cost *Node
 		var grads Nodes
 		cost, err = da.Cost(sda.input)
@@ -98,7 +98,7 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 			return
 		}
 
-		prog, locMap, err := CompileFunctionNEW(sda.g, inputs, grads)
+		prog, locMap, err := CompileFunction(sda.g, inputs, grads)
 		if err != nil {
 			return err
 		}
