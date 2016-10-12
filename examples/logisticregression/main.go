@@ -136,6 +136,7 @@ func main() {
 
 	start := time.Now()
 	for i := 0; i < trainIter; i++ {
+		machine.Reset()
 		machine.Let(x, xT)
 		machine.Let(y, yT)
 		handleError(machine.RunAll())
@@ -144,4 +145,17 @@ func main() {
 		machine.Set(b, bUpd)
 	}
 	fmt.Printf("Time taken: %v\n", time.Since(start))
+	fmt.Printf("Final Model: \nw: %3.3s\nb: %+3.3s\n", w.Value(), b.Value())
+
+	fmt.Printf("Target values: %#v\n", yT)
+	prog, locMap, err = T.CompileFunction(g, T.Nodes{x}, T.Nodes{pred})
+	handleError(err)
+	machine = T.NewTapeMachine(prog, locMap)
+
+	machine.Let(w, wT)
+	machine.Let(b, 0.0)
+	machine.Let(x, xT)
+	handleError(machine.RunAll())
+	fmt.Printf("Predicted: %#v\n", pred.Value())
+
 }

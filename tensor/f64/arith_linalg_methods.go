@@ -3,7 +3,6 @@ package tensorf64
 import (
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/gonum/blas"
-	"github.com/pkg/errors"
 )
 
 /*
@@ -89,24 +88,14 @@ func (t *Tensor) MatVecMul(other *Tensor, opts ...types.FuncOpt) (retVal *Tensor
 	// check whether retVal has the same size as the resulting matrix would be: mx1
 	reuse, incr := parseReuseIncr(opts...)
 	if reuse != nil {
-		if reuse.Size() != m {
-			err = shapeMismatchError(expectedShape, reuse.Shape())
-			return
-		}
-		if err = reuse.Reshape(m); err != nil {
-			err = errors.Wrapf(err, reuseReshapeErr, expectedShape, reuse.DataSize())
+		if err = reuseCheckShape(reuse, expectedShape); err != nil {
 			return
 		}
 		retVal = reuse
 	}
 
 	if retVal == nil {
-		retVal = BorrowTensor(m)
-		if err = retVal.Reshape(expectedShape...); err != nil {
-			err = errors.Wrapf(err, retValReshapeErr, expectedShape, retVal.DataSize())
-			return
-		}
-		// retVal = NewTensor(WithShape(m, 1))
+		retVal = newBorrowedTensor(m, WithShape(expectedShape...))
 	}
 
 	t.matVecMul(other, retVal)
@@ -183,25 +172,14 @@ func (t *Tensor) MatMul(other *Tensor, opts ...types.FuncOpt) (retVal *Tensor, e
 
 	reuse, incr := parseReuseIncr(opts...)
 	if reuse != nil {
-		if reuse.Size() != expectedSize {
-			err = shapeMismatchError(expectedShape, reuse.Shape())
-			return
-		}
-		if err = reuse.Reshape(m, n); err != nil {
-			err = errors.Wrapf(err, reuseReshapeErr, expectedShape, reuse.DataSize())
+		if err = reuseCheckShape(reuse, expectedShape); err != nil {
 			return
 		}
 		retVal = reuse
 	}
 
 	if retVal == nil {
-		retVal = BorrowTensor(expectedSize)
-		if err = retVal.Reshape(m, n); err != nil {
-			err = errors.Wrapf(err, retValReshapeErr, expectedShape, retVal.DataSize())
-			return
-		}
-
-		// retVal = NewTensor(WithShape(m, n))
+		retVal = newBorrowedTensor(expectedSize, WithShape(expectedShape...))
 	}
 
 	t.matMul(other, retVal)
@@ -276,25 +254,14 @@ func (t *Tensor) Outer(other *Tensor, opts ...types.FuncOpt) (retVal *Tensor, er
 
 	reuse, incr := parseReuseIncr(opts...)
 	if reuse != nil {
-		if reuse.Size() != expectedSize {
-			err = shapeMismatchError(types.Shape{m, n}, reuse.Shape())
+		if err = reuseCheckShape(reuse, expectedShape); err != nil {
 			return
 		}
-		if err = reuse.Reshape(m, n); err != nil {
-			err = errors.Wrapf(err, reuseReshapeErr, expectedShape, reuse.DataSize())
-			return
-		}
-
 		retVal = reuse
 	}
 
 	if retVal == nil {
-		retVal = BorrowTensor(expectedSize)
-		if err = retVal.Reshape(m, n); err != nil {
-			err = errors.Wrapf(err, retValReshapeErr, expectedShape, retVal.DataSize())
-			return
-		}
-		// retVal = NewTensor(WithShape(m, n))
+		retVal = newBorrowedTensor(expectedSize, WithShape(expectedShape...))
 	}
 	// DGER does not have any beta. So the values have to be zeroed first if the tensor is to be reused
 	zeroAll(retVal.data)

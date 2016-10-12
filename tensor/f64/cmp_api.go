@@ -33,12 +33,14 @@ func Lt(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	case !boolT && afok && btok:
 		var b []bool
 		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	default:
 		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T", a, b)
 		return
@@ -73,12 +75,14 @@ func Gt(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	case !boolT && afok && btok:
 		var b []bool
 		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	default:
 		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T", a, b)
 		return
@@ -115,12 +119,14 @@ func Lte(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err erro
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	case !boolT && afok && btok:
 		var b []bool
 		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	default:
 		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T", a, b)
 		return
@@ -157,12 +163,14 @@ func Gte(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err erro
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	case !boolT && afok && btok:
 		var b []bool
 		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	default:
 		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T", a, b)
 		return
@@ -199,12 +207,14 @@ func Eq(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	case !boolT && afok && btok:
 		var b []bool
 		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	default:
 		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T", a, b)
 		return
@@ -241,12 +251,14 @@ func Ne(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	case !boolT && afok && btok:
 		var b []bool
 		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
 			backing := boolsToFloat64s(b)
 			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
 		}
+		return
 	default:
 		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T", a, b)
 		return

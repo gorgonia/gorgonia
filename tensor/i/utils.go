@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 )
 
 func RandomInt(size int) []int {
@@ -118,7 +119,18 @@ func reuseCheck(reuse *Tensor, as *Tensor) (err error) {
 		err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", as.Shape(), reuse.Shape())
 		return
 	}
-	reuse.reshape(as.Shape()...)
+	return reuseCheckShape(reuse, as.Shape())
+
+}
+
+func reuseCheckShape(reuse *Tensor, s types.Shape) (err error) {
+	throw := types.BorrowInts(len(s))
+	copy(throw, s)
+
+	if err = reuse.reshape(throw...); err != nil {
+		err = errors.Wrapf(err, reuseReshapeErr, s, reuse.DataSize())
+		return
+	}
 
 	// clean up any funny things that may be in the reuse
 	if reuse.old != nil {
