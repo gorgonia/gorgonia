@@ -159,7 +159,7 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 	z := Must(Mul(x, y))
 	cost := Must(Slice(z, S(1))) // this simulates the more complex cost functions
 
-	reps := 2
+	reps := 10
 
 	for i := 0; i < reps; i++ {
 		m := NewLispMachine(g)
@@ -190,6 +190,12 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 		assert.Equal([]float64{0, 0, 0, 0, 1, 0}, gradY.Data())
 		assert.Equal([]float64{0, 1, 0}, gradZ.Data())
 		assert.Equal(1.0, gradC.Data())
+
+		// assert that the data has been unchanged
+		assert.Equal([]float64{0, 1}, x.Value().Data())
+		assert.Equal([]float64{0, 1, 2, 3, 4, 5}, y.Value().Data())
+		assert.Equal([]float64{3, 4, 5}, z.Value().Data())
+		assert.Equal(float64(4), cost.Value().Data())
 
 		// This simulates the cloberring of of the gradients of the nodes. The next iteration should STILL reveal the same results
 		model := Nodes{x, y, z, cost}

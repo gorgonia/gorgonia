@@ -281,8 +281,12 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 		err = retVal.SetValue(ret)
 	}
 
+	if err != nil {
+		return
+	}
+
 	var d Value
-	switch v := retVal.Value.(type) {
+	switch v := retVal.d.(type) {
 	case Tensor:
 		switch v.Dtype() {
 		case Float64:
