@@ -1,5 +1,7 @@
 package main
 
+import "C"
+
 import (
 	"flag"
 	"fmt"
@@ -12,10 +14,12 @@ import (
 	"runtime/pprof"
 
 	T "github.com/chewxy/gorgonia"
+	"github.com/chewxy/gorgonia/blase"
 	"github.com/chewxy/gorgonia/tensor"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/gonum/blas/native"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -90,9 +94,10 @@ func predictBatch(logprobs types.Tensor, batchSize int) (guesses []int, err erro
 func main() {
 	flag.Parse()
 	rand.Seed(1337)
+	T.Use(blase.Implementation())
 
 	/* EXAMPLE TIME */
-	trainOn := "dev"
+	trainOn := "train"
 	inputs, targets := loadMNIST(trainOn)
 
 	size := inputs.Shape()[0]
@@ -101,9 +106,9 @@ func main() {
 	hiddenSizes := []int{1000, 1000, 1000}
 	layers := len(hiddenSizes)
 	corruptions := []float64{0.1, 0.2, 0.3}
-	batchSize := 1
-	pretrainEpoch := 200
-	finetuneEpoch := 100
+	batchSize := 1000
+	pretrainEpoch := 50
+	finetuneEpoch := 40
 
 	deets := `Stacked Denoising AutoEncoder
 ==============================
@@ -151,6 +156,8 @@ func main() {
 		}
 	}
 
+	// Because for now LispMachine doesn't support batched BLAS
+	T.Use(native.Implementation{})
 	log.Printf("Starting to finetune now")
 	for i := 0; i < finetuneEpoch; i++ {
 		if err = sda.Finetune(inputs, ys, i); err != nil {
@@ -180,7 +187,7 @@ func main() {
 	// in real life you should probably be doing crossvalidations and whatnots
 	// but in this demo, we're going to skip all those
 	log.Println("pred")
-	testX, testY := loadMNIST("dev")
+	testX, testY := loadMNIST("test")
 	var one, correct, lp types.Tensor
 	if one, err = tensor.Slice(testX, T.S(0, batchSize)); err != nil {
 		log.Fatal(err)

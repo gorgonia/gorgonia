@@ -108,7 +108,8 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 		machines = append(machines, m)
 	}
 
-	solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
+	// solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
+	solver := NewVanillaSolver()
 	model = make(Nodes, 3)
 
 	batches := x.Shape()[0] / sda.BatchSize
@@ -173,6 +174,7 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 
 	logprobs := Must(Neg(Must(Log(probs))))
 
+	// solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
 	solver := NewVanillaSolver()
 
 	costValues := make([]*Value, len(y))

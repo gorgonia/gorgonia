@@ -11,7 +11,7 @@ package blase
 uintptr_t process(struct fnargs* fa, int count) {
 	uintptr_t ret;
 
-	printf("How much work: %d\n", count);
+	// printf("How much work: %d\n", count);
 
 	ret = processFn(&fa[0]);
 	if (count > 1) {
