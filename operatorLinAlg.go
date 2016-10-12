@@ -46,30 +46,32 @@ func matMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 	op := linAlgBinOp{
 		āBinaryOperator: matMulOperator,
 	}
+
 	switch {
 	case transA && transB:
 		op.transA = transA
 		op.transB = transB
-		if dzdx, err = binOpNode(op, y, z); err == nil {
-			dzdy, err = binOpNode(op, z, x)
+		if dzdx, err = binOpNode(op, y, gradZ); err == nil {
+			dzdy, err = binOpNode(op, gradZ, x)
 		}
 	case !transA && transB:
-		if dzdx, err = binOpNode(op, z, y); err == nil {
+		if dzdx, err = binOpNode(op, gradZ, y); err == nil {
 			op.transA = true
-			dzdy, err = binOpNode(op, z, x)
+			dzdy, err = binOpNode(op, gradZ, x)
 		}
 	case transA && !transB:
 		op.transB = true
-		if dzdx, err = binOpNode(op, y, z); err == nil {
+		if dzdx, err = binOpNode(op, y, gradZ); err == nil {
 			op.transB = false
-			dzdy, err = binOpNode(op, x, z)
+			dzdy, err = binOpNode(op, x, gradZ)
 		}
 	case !transA && !transB:
+		op.transA = false
 		op.transB = true
-		if dzdx, err = binOpNode(op, z, y); err == nil {
+		if dzdx, err = binOpNode(op, gradZ, y); err == nil {
 			op.transA = true
 			op.transB = false
-			dzdy, err = binOpNode(op, x, z)
+			dzdy, err = binOpNode(op, x, gradZ)
 		}
 	}
 	retVal = Nodes{dzdx, dzdy}
@@ -91,7 +93,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 		op.transB = transB
 
 		// dzdx
-		err = op.IncrDo(xdv.d, ydv.Value, zdv.Value)
+		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
 		if ver, ok := err.(Valuer); ok {
 			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 		} else if err != nil {
@@ -99,7 +101,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 		}
 
 		// dzdy
-		err = op.IncrDo(ydv.d, zdv.Value, xdv.Value)
+		err = op.IncrDo(ydv.d, zdv.d, xdv.Value)
 		if ver, ok := err.(Valuer); ok {
 			ydv.SetDeriv(ver.Value()) // ignore errors on purpose
 			return nil
@@ -108,7 +110,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 
 	case !transA && transB:
 		// dzdx
-		err = op.IncrDo(xdv.d, zdv.Value, ydv.Value)
+		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
 		if ver, ok := err.(Valuer); ok {
 			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 		} else if err != nil {
@@ -117,7 +119,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 
 		// dzdy
 		op.transA = true
-		err = op.IncrDo(ydv.d, zdv.Value, xdv.Value)
+		err = op.IncrDo(ydv.d, zdv.d, xdv.Value)
 		if ver, ok := err.(Valuer); ok {
 			ydv.SetDeriv(ver.Value()) // ignore errors on purpose
 			return nil
@@ -127,7 +129,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 	case transA && !transB:
 		// dzdx
 		op.transB = true
-		err = op.IncrDo(xdv.d, ydv.Value, zdv.Value)
+		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
 		if ver, ok := err.(Valuer); ok {
 			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 			return nil
@@ -136,7 +138,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 		// dzdy
 		op.transA = false
 		op.transB = false
-		err = op.IncrDo(ydv.d, xdv.Value, zdv.Value)
+		err = op.IncrDo(ydv.d, xdv.Value, zdv.d)
 		if ver, ok := err.(Valuer); ok {
 			ydv.SetDeriv(ver.Value()) // ignore errors on purpose
 		} else if err != nil {
@@ -146,7 +148,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 		return
 	case !transA && !transB:
 		op.transB = true
-		err = op.IncrDo(xdv.d, zdv.Value, ydv.Value)
+		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
 		if ver, ok := err.(Valuer); ok {
 			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 		} else if err != nil {
@@ -155,7 +157,7 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 
 		op.transA = true
 		op.transB = false
-		err = op.IncrDo(ydv.d, xdv.Value, zdv.Value)
+		err = op.IncrDo(ydv.d, xdv.Value, zdv.d)
 		if ver, ok := err.(Valuer); ok {
 			ydv.SetDeriv(ver.Value()) // ignore errors on purpose
 			return nil
@@ -168,16 +170,35 @@ func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 
 func matVecMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
-	if dzdx, err = OuterProd(gradZ, y); err == nil {
-		op := linAlgBinOp{
-			āBinaryOperator: matVecMulOperator,
-			transA:          !transA,
-		}
-
-		if dzdy, err = binOpNode(op, x, gradZ); err == nil {
-			retVal = Nodes{dzdx, dzdy}
-		}
+	if transA {
+		dzdx, err = OuterProd(y, gradZ)
+	} else {
+		dzdx, err = OuterProd(gradZ, y)
 	}
+
+	if err != nil {
+		return
+	}
+
+	op := linAlgBinOp{
+		āBinaryOperator: matVecMulOperator,
+		transA:          !transA,
+	}
+
+	if dzdy, err = binOpNode(op, x, gradZ); err == nil {
+		retVal = Nodes{dzdx, dzdy}
+	}
+
+	// if dzdx, err = OuterProd(gradZ, y); err == nil {
+	// 	op := linAlgBinOp{
+	// 		āBinaryOperator: matVecMulOperator,
+	// 		transA:          !transA,
+	// 	}
+
+	// 	if dzdy, err = binOpNode(op, x, gradZ); err == nil {
+	// 		retVal = Nodes{dzdx, dzdy}
+	// 	}
+	// }
 	return
 }
 
@@ -190,7 +211,13 @@ func matVecMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 		āBinaryOperator: outerProdOperator,
 	}
 
-	err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
+	if transA {
+		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
+	} else {
+		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
+
+	}
+
 	if ver, ok := err.(Valuer); ok {
 		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 	} else if err != nil {
@@ -212,8 +239,8 @@ func matVecMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 
 func vecDotDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
-	if dzdx, err = Mul(y, gradZ); err == nil {
-		if dzdy, err = Mul(x, gradZ); err == nil {
+	if dzdx, err = HadamardProd(y, gradZ); err == nil {
+		if dzdy, err = HadamardProd(x, gradZ); err == nil {
 			retVal = Nodes{dzdx, dzdy}
 		}
 	}

@@ -150,6 +150,62 @@ func TestLispMachineMechanics(t *testing.T) {
 	}
 }
 
-func TestLispMachineCorrectness(t *testing.T) {
+func TestLispMachineRepeatedRuns(t *testing.T) {
+	assert := assert.New(t)
+	var err error
+	g := NewGraph()
+	x := NewVector(g, Float64, WithShape(2), WithName("x"), WithInit(RangedFrom(0)))
+	y := NewMatrix(g, Float64, WithShape(2, 3), WithName("y"), WithInit(RangedFrom(0)))
+	z := Must(Mul(x, y))
+	cost := Must(Slice(z, S(1))) // this simulates the more complex cost functions
+
+	reps := 10
+
+	for i := 0; i < reps; i++ {
+		m := NewLispMachine(g)
+		if err := m.RunAll(); err != nil {
+			t.Errorf("Repetition %d error: %v", i, err)
+			continue
+		}
+
+		var gradX, gradY, gradZ, gradC Value
+		if gradX, err = x.Grad(); err != nil {
+			t.Errorf("No gradient for x in repetition %d. Error: %v", i, err)
+			continue
+		}
+		if gradY, err = y.Grad(); err != nil {
+			t.Errorf("No gradient for y in repetition %d. Error: %v", i, err)
+			continue
+		}
+		if gradZ, err = z.Grad(); err != nil {
+			t.Errorf("No gradient for z in repetition %d. Error: %v", i, err)
+			continue
+		}
+		if gradC, err = cost.Grad(); err != nil {
+			t.Errorf("No gradient for cost in repetition %d. Error: %v", i, err)
+			continue
+		}
+
+		assert.Equal([]float64{1, 4}, gradX.Data())
+		assert.Equal([]float64{0, 0, 0, 0, 1, 0}, gradY.Data())
+		assert.Equal([]float64{0, 1, 0}, gradZ.Data())
+		assert.Equal(1.0, gradC.Data())
+
+		// assert that the data has been unchanged
+		assert.Equal([]float64{0, 1}, x.Value().Data())
+		assert.Equal([]float64{0, 1, 2, 3, 4, 5}, y.Value().Data())
+		assert.Equal([]float64{3, 4, 5}, z.Value().Data())
+		assert.Equal(float64(4), cost.Value().Data())
+
+		// This simulates the cloberring of of the gradients of the nodes. The next iteration should STILL reveal the same results
+		model := Nodes{x, y, z, cost}
+		for _, n := range model {
+			dv := n.boundTo.(*dualValue)
+			if err = dv.SetDeriv(dv.d.zero()); err != nil {
+				t.Errorf("Unable to set the gradient to 0 for %v. Error : %v", n, err)
+				continue
+			}
+		}
+	}
 
 }

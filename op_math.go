@@ -641,7 +641,10 @@ func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 
 	o := op.āBinaryOperator
 
-	retVal, err = āBinOpDiffExprs[o](op.transA, op.transB, inputs[0], inputs[1], output, gradNode)
+	if retVal, err = āBinOpDiffExprs[o](op.transA, op.transB, inputs[0], inputs[1], output, gradNode); err != nil {
+		return
+	}
+
 	for _, n := range retVal {
 		n.setGroup(gradClust)
 	}
@@ -661,7 +664,12 @@ func (op linAlgBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
 func (op linAlgBinOp) returnsPtr() bool                             { return true }
 func (op linAlgBinOp) overwriteInput() int                          { return -1 }
-func (op linAlgBinOp) callsExtern() bool                            { return true }
+func (op linAlgBinOp) callsExtern() bool {
+	if op.āBinaryOperator != vecDotOperator {
+		return true
+	}
+	return false
+}
 
 func (op linAlgBinOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, op.āBinaryOperator); err != nil {
@@ -784,20 +792,22 @@ func (op linAlgBinOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, e
 		defer b.Tensor.T()
 	}
 
-	var r types.Tensor
+	var r interface{}
 	switch op.āBinaryOperator {
 	case matMulOperator:
 		r, err = tensor.MatMul(a.Tensor, b.Tensor, opts...)
 	case matVecMulOperator:
 		r, err = tensor.MatVecMul(a.Tensor, b.Tensor, opts...)
 	case vecDotOperator:
-		r, err = tensor.Inner(a.Tensor, b.Tensor)
-		// TODO EXTRACT VALUE
+		var ret types.Tensor
+		ret, err = tensor.Inner(a.Tensor, b.Tensor)
+		r = ret.ScalarValue()
 	case outerProdOperator:
 		r, err = tensor.Outer(a.Tensor, b.Tensor, opts...)
 	}
 	if err == nil {
-		retVal = FromTensor(r)
+		// retVal = FromTensor(r)
+		retVal, err = anyToValue(r)
 	}
 	return
 }

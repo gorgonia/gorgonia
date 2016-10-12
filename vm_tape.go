@@ -405,6 +405,8 @@ mustalloc:
 	var ok bool
 	if tt, ok = instr.t.(*TensorType); !ok {
 		return NewError(RuntimeError, "Alloc only allocates tensor types")
+
+		// allocate a "scalar" vector
 	}
 
 	var dt Dtype

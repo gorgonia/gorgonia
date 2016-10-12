@@ -126,7 +126,7 @@ func (m *lispMachine) forward() (err error) {
 	}
 
 	// other wise it's time to execute the op
-	machineLogf("execute Op")
+	m.watchedLogf("execute Op")
 	op := n.op
 	var output *dualValue
 
@@ -135,6 +135,9 @@ func (m *lispMachine) forward() (err error) {
 		dv := child.boundTo.(*dualValue)
 		inputs[i] = dv
 	}
+
+	m.watchedLogf("Before:")
+	m.watchedLogf(m.valueFmt, n.boundTo)
 
 	switch {
 	case (m.g.roots.Contains(n) || n.isRoot()) && !n.isStmt:
@@ -148,7 +151,7 @@ func (m *lispMachine) forward() (err error) {
 			}
 		} else {
 			dv := n.boundTo.(*dualValue)
-			if err = dvBind0(op, dv, inputs); err != nil {
+			if err = dvBindVar0(op, dv, inputs); err != nil {
 				return
 			}
 		}
@@ -204,6 +207,7 @@ func (m *lispMachine) forward() (err error) {
 			return
 		}
 	}
+	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
 
 	if aop, ok := op.(AdOp); ok && m.runBwd() {
@@ -306,7 +310,6 @@ backward:
 	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
 		err = m.backward()
 	}
-
 	return
 }
 

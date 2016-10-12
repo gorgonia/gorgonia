@@ -33,7 +33,7 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 			retVal = incr
 		case reuse != nil:
 			retVal = reuse
-			retVal.Reshape()
+			retVal.reshape()
 			retVal.data[0] = res
 		default:
 			retVal = NewTensor(AsScalar(res))
@@ -88,19 +88,13 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 
 			expectedShape := types.Shape{b.Shape()[1]}
 			if reuse != nil {
+				if err = reuseCheckShape(reuse, expectedShape); err != nil {
+					return
+				}
 				retVal = reuse
-				// check that retVal has the correct shape
-				if retVal.Size() != expectedShape.TotalSize() {
-					err = shapeMismatchError(expectedShape, retVal.Shape())
-					return
-				}
-
-				if err = retVal.Reshape(expectedShape...); err != nil {
-					return
-				}
 
 			} else {
-				retVal = NewTensor(WithShape(expectedShape...))
+				retVal = newBorrowedTensor(expectedShape.TotalSize(), WithShape(expectedShape...))
 			}
 			b.T()
 			b.matVecMul(a, retVal)
@@ -118,18 +112,12 @@ func Dot(a, b *Tensor, opts ...types.FuncOpt) (retVal *Tensor, err error) {
 			}
 			expectedShape := types.Shape{a.Shape()[0]}
 			if reuse != nil {
+				if err = reuseCheckShape(reuse, expectedShape); err != nil {
+					return
+				}
 				retVal = reuse
-				// check that retVal has the correct shape
-				if retVal.Size() != expectedShape.TotalSize() {
-					err = shapeMismatchError(expectedShape, retVal.Shape())
-					return
-				}
-
-				if err = retVal.Reshape(expectedShape...); err != nil {
-					return
-				}
 			} else {
-				retVal = NewTensor(WithShape(expectedShape...))
+				retVal = newBorrowedTensor(expectedShape.TotalSize(), WithShape(expectedShape...))
 			}
 			a.matVecMul(b, retVal)
 			return

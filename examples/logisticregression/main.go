@@ -117,14 +117,10 @@ func main() {
 
 	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 
-	prog, locMap, err := T.Compile(g)
+	prog, locMap, err := T.CompileFunction(g, T.Nodes{x, y}, T.Nodes{wUpd, bUpd})
 	handleError(err)
 	fmt.Printf("%v", prog)
 	machine := T.NewTapeMachine(prog, locMap)
-
-	updateFn, err := T.CompileFunction(g, prog, T.Nodes{x, y}, T.Nodes{wUpd, bUpd})
-	handleError(err)
-	fmt.Printf("%v", updateFn)
 
 	machine.Let(w, wT)
 	machine.Let(b, 0.0)
@@ -140,15 +136,26 @@ func main() {
 
 	start := time.Now()
 	for i := 0; i < trainIter; i++ {
+		machine.Reset()
 		machine.Let(x, xT)
 		machine.Let(y, yT)
-		handleError(machine.Run(updateFn))
+		handleError(machine.RunAll())
 
 		machine.Set(w, wUpd)
 		machine.Set(b, bUpd)
 	}
 	fmt.Printf("Time taken: %v\n", time.Since(start))
-	fmt.Printf("%+#v\n", w.Value())
-	fmt.Printf("%v\n", b.Value())
+	fmt.Printf("Final Model: \nw: %3.3s\nb: %+3.3s\n", w.Value(), b.Value())
+
+	fmt.Printf("Target values: %#v\n", yT)
+	prog, locMap, err = T.CompileFunction(g, T.Nodes{x}, T.Nodes{pred})
+	handleError(err)
+	machine = T.NewTapeMachine(prog, locMap)
+
+	machine.Let(w, wT)
+	machine.Let(b, 0.0)
+	machine.Let(x, xT)
+	handleError(machine.RunAll())
+	fmt.Printf("Predicted: %#v\n", pred.Value())
 
 }
