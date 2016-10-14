@@ -93,8 +93,7 @@ func readImageFile(r io.Reader) (rows, cols int, imgs []RawImage, err error) {
 func open(path string) *os.File {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Printf("path: %q err: %v", path, err)
-		os.Exit(-1)
+		log.Fatalf("path: %q err: %v", path, err)
 	}
 	return file
 }

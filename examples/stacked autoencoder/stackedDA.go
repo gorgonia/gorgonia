@@ -2,8 +2,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/gob"
 	"fmt"
-	"log"
+	"io"
 	"os"
 
 	. "github.com/chewxy/gorgonia"
@@ -247,26 +248,20 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 }
 
 func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
-	logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
-	logger := log.New(logfile, "", 0)
+	// logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
+	// logger := log.New(logfile, "", 0)
 
-	for i := range sda.autoencoders {
-		if i > 0 {
-			hidden := sda.hiddenLayers[i-1]
-			if _, err = hidden.Activate(); err != nil {
-				return
-			}
-		}
-	}
-	var probs *Node
-	if probs, err = sda.final.Activate(); err != nil {
-		return
+	if sda.final.output == nil {
+		panic("sda.final not set!")
 	}
 
+	probs := sda.final.output
 	logprobs := Must(Neg(Must(Log(probs))))
+
+	// subgraph, and create a machine
 	g := sda.g.SubgraphRoots(logprobs)
-	machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), ExecuteFwdOnly(), WithValueFmt("%+s"))
-	// machine := NewLispMachine(g, ExecuteFwdOnly())
+	// machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), ExecuteFwdOnly(), WithValueFmt("%+s"))
+	machine := NewLispMachine(g, ExecuteFwdOnly())
 
 	Let(sda.input, x)
 	if err = machine.RunAll(); err != nil {
@@ -274,6 +269,54 @@ func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
 	}
 
 	res = logprobs.Value().(Tensor).Tensor
+	return
+}
 
+// Save saves the model
+func (sda *StackedDA) Save(filename string) (err error) {
+	var f io.WriteCloser
+	if f, err = os.OpenFile(filename, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0644); err != nil {
+		return
+	}
+
+	encoder := gob.NewEncoder(f)
+	for _, da := range sda.autoencoders {
+		if err = encoder.Encode(da.Neuron); err != nil {
+			return
+		}
+
+		if err = encoder.Encode(da.h); err != nil {
+			return
+		}
+	}
+
+	if err = encoder.Encode(sda.final.Neuron); err != nil {
+		return
+	}
+	f.Close()
+	return
+}
+
+func (sda *StackedDA) Load(filename string) (err error) {
+	var f io.ReadCloser
+	if f, err = os.Open(filename); err != nil {
+		return
+	}
+
+	decoder := gob.NewDecoder(f)
+	for _, da := range sda.autoencoders {
+		if err = decoder.Decode(&da.Neuron); err != nil {
+			return
+		}
+
+		if err = decoder.Decode(&da.h); err != nil {
+			return
+		}
+	}
+
+	if err = decoder.Decode(&sda.final.Neuron); err != nil {
+		return
+	}
+	f.Close()
 	return
 }

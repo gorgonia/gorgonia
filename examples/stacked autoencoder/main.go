@@ -24,6 +24,13 @@ import (
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write memory profile to this file")
+var dataset = flag.String("dataset", "dev", "which data set to train on? Valid options: \"train\" or \"dev\"")
+var bs = flag.Int("bs", 1, "training batch size (doesn't affect sgd batch size)")
+var ptEpoch = flag.Int("pt", 16, "pretraining epoch")
+var ftEpoch = flag.Int("ft", 40, "finetuning epoch")
+var viz = flag.Int("viz", 0, "Visualize which layer?")
+var save = flag.String("save", "", "Save file as")
+var verbose = flag.Bool("v", false, "Verbose?")
 
 var trainingWriter io.Writer
 var trainingLog *log.Logger
@@ -70,10 +77,11 @@ func loadMNIST(t string) (inputs, targets types.Tensor) {
 		targets, _ = tensor.Slice(targets, T.S(0, 100))
 	}
 
-	log.Printf("%s Images: %d. | Width: %d, Height: %d\n", t, len(imageData), width, height)
-	log.Printf("%s Labels: %d. ", t, len(labelData))
-	log.Printf("Inputs: %+s", inputs)
-	log.Printf("targets: %+s", targets)
+	verboseLog("%s Images: %d. | Width: %d, Height: %d\n", t, len(imageData), width, height)
+	verboseLog("%s Labels: %d. ", t, len(labelData))
+	verboseLog("Inputs: %+s", inputs)
+	verboseLog("targets: %+s", targets)
+
 	return inputs, targets
 }
 
@@ -91,13 +99,35 @@ func predictBatch(logprobs types.Tensor, batchSize int) (guesses []int, err erro
 	return
 }
 
+func makeTargets(targets types.Tensor) []int {
+	ys := make([]int, targets.Shape()[0])
+	ys = ys[:0]
+	for i := 0; i < targets.Shape()[0]; i++ {
+		ysl, _ := tensor.Slice(targets, T.S(i))
+		raw := ysl.Data().([]float64)
+		for i, v := range raw {
+			if v == 0.9 {
+				ys = append(ys, i)
+				break
+			}
+		}
+	}
+	return ys
+}
+
+func verboseLog(format string, attrs ...interface{}) {
+	if *verbose {
+		log.Printf(format, attrs...)
+	}
+}
+
 func main() {
 	flag.Parse()
 	rand.Seed(1337)
 	T.Use(blase.Implementation())
 
 	/* EXAMPLE TIME */
-	trainOn := "train"
+	trainOn := *dataset
 	inputs, targets := loadMNIST(trainOn)
 
 	size := inputs.Shape()[0]
@@ -106,9 +136,9 @@ func main() {
 	hiddenSizes := []int{1000, 1000, 1000}
 	layers := len(hiddenSizes)
 	corruptions := []float64{0.1, 0.2, 0.3}
-	batchSize := 1000
-	pretrainEpoch := 50
-	finetuneEpoch := 40
+	batchSize := *bs
+	pretrainEpoch := *ptEpoch
+	finetuneEpoch := *ftEpoch
 
 	deets := `Stacked Denoising AutoEncoder
 ==============================
@@ -120,7 +150,7 @@ func main() {
 	Pretraining Epoch: %v
 	Finetuning Epoch %v
 `
-	fmt.Printf(deets, trainOn, size, hiddenSizes, corruptions, batchSize, pretrainEpoch, finetuneEpoch)
+	verboseLog(deets, trainOn, size, hiddenSizes, corruptions, batchSize, pretrainEpoch, finetuneEpoch)
 
 	g := T.NewGraph()
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)
@@ -136,38 +166,35 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	log.Printf("Pretraining...")
+	verboseLog("Pretraining...")
 	for i := 0; i < pretrainEpoch; i++ {
 		if err = sda.Pretrain(inputs, i); err != nil {
 			ioutil.WriteFile("fullGraph_err.dot", []byte(g.ToDot()), 0644)
 			log.Fatalf("i: %d err :%v", i, err)
 		}
 	}
-	ys := make([]int, targets.Shape()[0])
-	ys = ys[:0]
-	for i := 0; i < targets.Shape()[0]; i++ {
-		ysl, _ := tensor.Slice(targets, T.S(i))
-		raw := ysl.Data().([]float64)
-		for i, v := range raw {
-			if v == 0.9 {
-				ys = append(ys, i)
-				break
-			}
-		}
-	}
 
 	// Because for now LispMachine doesn't support batched BLAS
+	verboseLog("Starting to finetune now")
+
 	T.Use(native.Implementation{})
-	log.Printf("Starting to finetune now")
+	ys := makeTargets(targets)
 	for i := 0; i < finetuneEpoch; i++ {
 		if err = sda.Finetune(inputs, ys, i); err != nil {
 			log.Fatal(err)
 		}
 	}
 
+	// save model
+	if *save != "" {
+		if err = sda.Save(*save); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	// Visualize
-	var visualizeLayer int = 2
-	log.Printf("Visualizing %dth layer", visualizeLayer)
+	visualizeLayer := *viz
+	verboseLog("Visualizing %dth layer", visualizeLayer)
 	finalWeights := sda.autoencoders[visualizeLayer].w.Value().(T.Tensor).Tensor.(*tf64.Tensor).Clone()
 	finalWeights.T()
 	finalWeights.Transpose()
@@ -186,7 +213,7 @@ func main() {
 	// here I'm using the test dataset as prediction.
 	// in real life you should probably be doing crossvalidations and whatnots
 	// but in this demo, we're going to skip all those
-	log.Println("pred")
+	verboseLog("pred")
 	testX, testY := loadMNIST("test")
 	var one, correct, lp types.Tensor
 	if one, err = tensor.Slice(testX, T.S(0, batchSize)); err != nil {
@@ -197,6 +224,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	correctYs := makeTargets(correct)
+
 	var predictions []int
 	if lp, err = sda.Forwards(one); err != nil {
 		log.Fatal(err)
@@ -206,5 +235,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Correct: \n%+#3.3s. \nPredicted: %v. \nLogprobs: \n%+#3.3s", correct, predictions, lp)
+	fmt.Printf("Correct: \n%+v. \nPredicted: %v. \nLogprobs: \n%+#3.3s", correctYs, predictions, lp)
 }
