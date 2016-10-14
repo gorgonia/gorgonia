@@ -423,6 +423,26 @@ func TestFlatIterator(t *testing.T) {
 	}
 }
 
+func TestFlatIterator_Chan(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap *AP
+	var it *FlatIterator
+	var nexts []int
+
+	// basic shit
+	for i, fit := range flatIterTests1 {
+		nexts = nexts[:0]
+		ap = NewAP(fit.shape, fit.strides)
+		it = NewFlatIterator(ap)
+		ch := it.Chan()
+		for next := range ch {
+			nexts = append(nexts, next)
+		}
+		assert.Equal(fit.correct, nexts, "Test %d", i)
+	}
+}
+
 func TestFlatIterator_Slice(t *testing.T) {
 	assert := assert.New(t)
 
@@ -522,7 +542,6 @@ func TestFlatIterator_Reset(t *testing.T) {
 	assert.Equal(0, it.lastIndex)
 	assert.Equal(false, it.done)
 	assert.Equal([]int{0, 0, 0}, it.track)
-
 }
 
 /* BENCHMARK */

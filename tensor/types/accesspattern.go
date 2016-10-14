@@ -518,3 +518,17 @@ func (it *FlatIterator) Reset() {
 		it.track[i] = 0
 	}
 }
+
+// Chan returns a channel of ints. This is useful for iterating multiple Tensors at the same time.
+func (it *FlatIterator) Chan() (retVal chan int) {
+	retVal = make(chan int)
+
+	go func() {
+		for next, err := it.Next(); err == nil; next, err = it.Next() {
+			retVal <- next
+		}
+		close(retVal)
+	}()
+
+	return
+}
