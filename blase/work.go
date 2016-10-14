@@ -126,3 +126,5 @@ func (ctx *context) DoWork() {
 }
 
 func (ctx *context) WorkAvailable() int { return len(ctx.queue) }
+
+func (ctxt *context) String() string { return "Blase" }

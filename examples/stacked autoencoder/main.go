@@ -14,7 +14,6 @@ import (
 	"runtime/pprof"
 
 	T "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/blase"
 	"github.com/chewxy/gorgonia/tensor"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
@@ -124,7 +123,6 @@ func verboseLog(format string, attrs ...interface{}) {
 func main() {
 	flag.Parse()
 	rand.Seed(1337)
-	T.Use(blase.Implementation())
 
 	/* EXAMPLE TIME */
 	trainOn := *dataset
@@ -148,9 +146,10 @@ func main() {
 	Corruptions: %v
 	Batch Size: %v
 	Pretraining Epoch: %v
-	Finetuning Epoch %v
+	Finetuning Epoch: %v
+	BLAS used: %v
 `
-	verboseLog(deets, trainOn, size, hiddenSizes, corruptions, batchSize, pretrainEpoch, finetuneEpoch)
+	fmt.Printf(deets, trainOn, size, hiddenSizes, corruptions, batchSize, pretrainEpoch, finetuneEpoch, T.WhichBLAS())
 
 	g := T.NewGraph()
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)
