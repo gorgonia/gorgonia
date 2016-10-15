@@ -356,6 +356,19 @@ func TestUntransposeIndex(t *testing.T) {
 	}
 }
 
+func TestBroadcastStrides(t *testing.T) {
+	ds := Shape{4, 4}
+	ss := Shape{4}
+	dst := []int{4, 1}
+	sst := []int{1}
+
+	st, err := BroadcastStrides(ds, ss, dst, sst)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(st)
+}
+
 var flatIterTests1 = []struct {
 	shape   Shape
 	strides []int
@@ -405,6 +418,26 @@ func TestFlatIterator(t *testing.T) {
 		}
 		if _, ok := err.(NoOpError); err != nil && !ok {
 			t.Error(err)
+		}
+		assert.Equal(fit.correct, nexts, "Test %d", i)
+	}
+}
+
+func TestFlatIterator_Chan(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap *AP
+	var it *FlatIterator
+	var nexts []int
+
+	// basic shit
+	for i, fit := range flatIterTests1 {
+		nexts = nexts[:0]
+		ap = NewAP(fit.shape, fit.strides)
+		it = NewFlatIterator(ap)
+		ch := it.Chan()
+		for next := range ch {
+			nexts = append(nexts, next)
 		}
 		assert.Equal(fit.correct, nexts, "Test %d", i)
 	}
@@ -509,5 +542,106 @@ func TestFlatIterator_Reset(t *testing.T) {
 	assert.Equal(0, it.lastIndex)
 	assert.Equal(false, it.done)
 	assert.Equal([]int{0, 0, 0}, it.track)
+}
 
+/* BENCHMARK */
+type oldFlatIterator struct {
+	*AP
+
+	//state
+	lastIndex int
+	track     []int
+	done      bool
+}
+
+// NewFlatIterator creates a new FlatIterator
+func newOldFlatIterator(ap *AP) *oldFlatIterator {
+	return &oldFlatIterator{
+		AP:    ap,
+		track: make([]int, len(ap.shape)),
+	}
+}
+
+func (it *oldFlatIterator) Next() (int, error) {
+	if it.done {
+		return -1, noopError{}
+	}
+
+	retVal, err := Ltoi(it.shape, it.strides, it.track...)
+	it.lastIndex = retVal
+
+	if it.IsScalar() {
+		it.done = true
+		return retVal, err
+	}
+
+	for d := len(it.shape) - 1; d >= 0; d-- {
+		if d == 0 && it.track[0]+1 >= it.shape[0] {
+			it.done = true
+			it.track[d] = 0 // overflow it
+			break
+		}
+
+		if it.track[d] < it.shape[d]-1 {
+			it.track[d]++
+			break
+		}
+		// overflow
+		it.track[d] = 0
+	}
+
+	return retVal, err
+}
+
+func (it *oldFlatIterator) Reset() {
+	it.done = false
+	it.lastIndex = 0
+
+	if it.done {
+		return
+	}
+
+	for i := range it.track {
+		it.track[i] = 0
+	}
+}
+
+func BenchmarkOldFlatIterator(b *testing.B) {
+	var err error
+
+	// as if T = NewTensor(WithShape(30, 1000, 1000))
+	// then T[:, 0:900:15, 250:750:50]
+	ap := NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
+	it := newOldFlatIterator(ap)
+
+	for n := 0; n < b.N; n++ {
+		for _, err := it.Next(); err == nil; _, err = it.Next() {
+
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			b.Error(err)
+		}
+
+		it.Reset()
+	}
+}
+
+func BenchmarkFlatIterator(b *testing.B) {
+	var err error
+
+	// as if T = NewTensor(WithShape(30, 1000, 1000))
+	// then T[:, 0:900:15, 250:750:50]
+	ap := NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
+	it := NewFlatIterator(ap)
+
+	for n := 0; n < b.N; n++ {
+		for _, err := it.Next(); err == nil; _, err = it.Next() {
+
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			b.Error(err)
+		}
+
+		it.Reset()
+	}
 }
