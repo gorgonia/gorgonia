@@ -62,3 +62,10 @@ func Argmax(t types.Tensor, axis int) (*ti.Tensor, error) {
 	}
 	return nil, types.NewError(types.DtypeMismatch, "Cannot argmax %T", t)
 }
+
+func Argmin(t types.Tensor, axis int) (*ti.Tensor, error) {
+	if am, ok := t.(Argminer); ok {
+		return am.Argmin(axis)
+	}
+	return nil, types.NewError(types.DtypeMismatch, "Cannot argmin %T", t)
+}
