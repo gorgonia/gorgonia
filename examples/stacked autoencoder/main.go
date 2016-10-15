@@ -87,9 +87,9 @@ func loadMNIST(t string) (inputs, targets types.Tensor) {
 func predictBatch(logprobs types.Tensor, batchSize int) (guesses []int, err error) {
 	var argmax *ti.Tensor
 	if batchSize == 1 {
-		argmax, err = tensor.Argmax(logprobs, 0)
+		argmax, err = tensor.Argmin(logprobs, 0)
 	} else {
-		argmax, err = tensor.Argmax(logprobs, 1)
+		argmax, err = tensor.Argmin(logprobs, 1)
 	}
 	if err != nil {
 		return nil, err

@@ -178,13 +178,16 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 	// solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
 	solver := NewVanillaSolver()
 
-	costValues := make([]*Value, len(y))
-	costValues = costValues[:0]
-
 	batches := x.Shape()[0] / sda.BatchSize
-	costs := make(Nodes, sda.BatchSize)
+
+	var cost *Node
+	bs := NewConstant(float64(sda.BatchSize))
+	losses := make(Nodes, sda.BatchSize)
+	losses = losses[:0]
+	cvs := make([]float64, batches)
+	cvs = cvs[:0]
 	for batch := 0; batch < batches; batch++ {
-		costs = costs[:0]
+		losses = losses[:0]
 		start := batch * sda.BatchSize
 		end := start + sda.BatchSize
 
@@ -196,33 +199,38 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 		// logger := log.New(logfile, "", 0)
 
 		for i, correct := range y[start:end] {
-			var cost *Node
-			var costValue Value
+			var loss *Node
 
 			if sda.BatchSize == 1 {
-				if cost, err = Slice(logprobs, S(correct)); err != nil {
+				if loss, err = Slice(logprobs, S(correct)); err != nil {
 					return
 				}
 			} else {
-				if cost, err = Slice(logprobs, S(i), S(correct)); err != nil {
+				if loss, err = Slice(logprobs, S(i), S(correct)); err != nil {
 					return
 				}
 			}
 
-			readCost := Read(cost, &costValue)
-
-			costValues = append(costValues, &costValue)
-			costs = append(costs, readCost)
+			losses = append(losses, loss)
 		}
 
-		g := sda.g.SubgraphRoots(costs...)
+		// Manual way of meaning the costs: we first sum them up, then div by the batch size
+		if cost, err = ReduceAdd(losses); err != nil {
+			return
+		}
+
+		if cost, err = Div(cost, bs); err != nil {
+			return
+		}
+
+		g := sda.g.SubgraphRoots(cost)
 
 		var input types.Tensor
 		if input, err = tensor.Slice(x, S(start, end)); err != nil {
 			return
 		}
 
-		// machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), WithValueFmt("%+s"))
+		// machine := NewLispMachine(g, WithLogger(logger), LogBothDir(), WithWatchlist(), WithValueFmt("%+1.1s"))
 		machine := NewLispMachine(g)
 		Let(sda.input, input)
 		if err = machine.RunAll(); err != nil {
@@ -230,19 +238,10 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 		}
 
 		solver.Step(model)
+		cvs = append(cvs, cost.Value().(Scalar).Data().(float64))
 	}
 
-	cvs := make([]float64, len(y))
-	cvs = cvs[:0]
-	for _, cv := range costValues {
-		v := (*cv)
-		if v == nil {
-			continue
-		}
-		c := v.Data().(float64)
-		cvs = append(cvs, c)
-	}
-
+	// log.Printf("cvs(%d): %v", len(cvs), cvs)
 	trainingLog.Printf("%d\t%v", epoch, avgF64s(cvs))
 	return nil
 }
