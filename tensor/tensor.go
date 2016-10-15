@@ -14,6 +14,10 @@ type Argmaxer interface {
 	Argmax(int) (*ti.Tensor, error)
 }
 
+type Argminer interface {
+	Argmin(int) (*ti.Tensor, error)
+}
+
 func Clone(t types.Tensor) types.Tensor {
 	switch tt := t.(type) {
 	case *tf64.Tensor:
