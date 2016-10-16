@@ -68,7 +68,7 @@ var materializeTests2 = []struct {
 func TestMaterialize(t *testing.T) {
 	assert := assert.New(t)
 
-	var T, T2, T3 *Tensor
+	var T, T2, _ *Tensor
 	var err error
 
 	for i, mts := range materializeTests1 {
