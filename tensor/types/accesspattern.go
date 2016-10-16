@@ -425,7 +425,19 @@ func (it *FlatIterator) singleNext() (int, error) {
 	retVal := it.lastIndex
 	it.lastIndex += it.strides[0]
 
-	if it.lastIndex >= it.shape.TotalSize() {
+	var tracked int
+	switch {
+	case it.IsRowVec():
+		it.track[1]++
+		tracked = it.track[1]
+	case it.IsColVec(), it.IsVector():
+		it.track[0]++
+		tracked = it.track[0]
+	default:
+		panic("This ain't supposed to happen")
+	}
+
+	if tracked >= it.shape.TotalSize() {
 		it.done = true
 	}
 
