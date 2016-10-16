@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 // An AP is an access pattern. It tells the various ndarrays how to access their data through the use of strides
 // Through the AP, there are several definitions of things, most notably there are two very specific "special cases":
@@ -70,6 +73,7 @@ func (ap *AP) Unlock() { ap.fin = false }
 func (ap *AP) Shape() Shape   { return ap.shape }
 func (ap *AP) Strides() []int { return ap.strides }
 func (ap *AP) Dims() int      { return ap.dims }
+func (ap *AP) Opdims() int    { return len(ap.shape) }
 
 func (ap *AP) String() string {
 	return fmt.Sprintf("Shape: %v, Stride: %v, Dims: %v, Lock: %t", ap.shape, ap.strides, ap.dims, ap.fin)
@@ -272,6 +276,55 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 	return
 }
 
+// SortedMultiStridePerm takes multiple input strides, and creates a sorted stride permutation.
+// It's based very closely on Numpy's PyArray_CreateMultiSortedStridePerm, where a stable insertion sort is used
+// to create the permutations.
+func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
+	retVal = BorrowInts(dims)
+	for i := 0; i < dims; i++ {
+		retVal[i] = i
+	}
+
+	for i := 1; i < dims; i++ {
+		ipos := i
+		axisi := retVal[i]
+
+		for j := i - 1; j >= 0; j-- {
+			log.Printf("j : %d ipos %d", j, ipos)
+			var ambig, swap bool
+			ambig = true
+			axisj := retVal[j]
+
+			log.Printf("looping APs")
+			for _, ap := range aps {
+				if ap.shape[axisi] != 1 && ap.shape[axisj] != 1 {
+					if ap.strides[axisi] <= ap.strides[axisj] {
+						swap = true
+					} else if ambig {
+						swap = true
+					}
+					ambig = false
+				}
+			}
+			log.Printf("ambig: %v, swap: %v", ambig, swap)
+
+			if !ambig && swap {
+				ipos = j
+			} else {
+				break
+			}
+
+		}
+		if ipos != i {
+			for j := i; j > ipos; j-- {
+				retVal[j] = retVal[j-1]
+			}
+			retVal[ipos] = axisi
+		}
+	}
+	return
+}
+
 // TransposeIndex returns the new index given the old index
 func TransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) int {
 	oldCoord, err := Itol(i, oldShape, oldStrides)
@@ -301,6 +354,35 @@ func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) in
 	return TransposeIndex(i, oldShape, newPattern, oldStrides, newStrides)
 }
 
+// Broadcasting related stuff
+func BroadcastStrides(destShape, srcShape Shape, destStrides, srcStrides []int) (retVal []int, err error) {
+	dims := len(destShape)
+	start := dims - len(srcShape)
+
+	if start < 0 {
+		//error
+		err = DimMismatchErr(dims, len(srcShape))
+		return
+	}
+
+	retVal = BorrowInts(len(destStrides))
+	for i := dims - 1; i >= start; i-- {
+		s := srcShape[i-start]
+		switch {
+		case s == 1:
+			retVal[i] = 0
+		case s != destShape[i]:
+			// error
+		default:
+			retVal[i] = srcStrides[i-start]
+		}
+	}
+	for i := 0; i > start; i++ {
+		retVal[i] = 0
+	}
+	return
+}
+
 // FlatIterator is an iterator that iterates over Tensors. It utilizes the *AP
 // of a Tensor to determine what the next index is.
 // This data structure is similar to Numpy's flatiter, with some standard Go based restrictions of course
@@ -328,30 +410,56 @@ func (it *FlatIterator) Next() (int, error) {
 		return -1, noopError{}
 	}
 
-	retVal, err := Ltoi(it.shape, it.strides, it.track...)
-	it.lastIndex = retVal
-
-	if it.IsScalar() {
+	switch {
+	case it.IsScalar():
 		it.done = true
-		return retVal, err
+		return 0, nil
+	case it.IsVector():
+		return it.singleNext()
+	default:
+		return it.ndNext()
+	}
+}
+
+func (it *FlatIterator) singleNext() (int, error) {
+	retVal := it.lastIndex
+	it.lastIndex += it.strides[0]
+
+	var tracked int
+	switch {
+	case it.IsRowVec():
+		it.track[1]++
+		tracked = it.track[1]
+	case it.IsColVec(), it.IsVector():
+		it.track[0]++
+		tracked = it.track[0]
+	default:
+		panic("This ain't supposed to happen")
 	}
 
-	for d := len(it.shape) - 1; d >= 0; d-- {
-		if d == 0 && it.track[0]+1 >= it.shape[0] {
-			it.done = true
-			it.track[d] = 0 // overflow it
-			break
-		}
-
-		if it.track[d] < it.shape[d]-1 {
-			it.track[d]++
-			break
-		}
-		// overflow
-		it.track[d] = 0
+	if tracked >= it.shape.TotalSize() {
+		it.done = true
 	}
 
-	return retVal, err
+	return retVal, nil
+}
+
+func (it *FlatIterator) ndNext() (int, error) {
+	retVal := it.lastIndex
+	for i := len(it.shape) - 1; i >= 0; i-- {
+		it.track[i]++
+		if it.track[i] == it.shape[i] {
+			if i == 0 {
+				it.done = true
+			}
+			it.track[i] = 0
+			it.lastIndex -= (it.shape[i] - 1) * it.strides[i]
+			continue
+		}
+		it.lastIndex += it.strides[i]
+		break
+	}
+	return retVal, nil
 }
 
 // Coord returns the next coordinate.
@@ -421,4 +529,18 @@ func (it *FlatIterator) Reset() {
 	for i := range it.track {
 		it.track[i] = 0
 	}
+}
+
+// Chan returns a channel of ints. This is useful for iterating multiple Tensors at the same time.
+func (it *FlatIterator) Chan() (retVal chan int) {
+	retVal = make(chan int)
+
+	go func() {
+		for next, err := it.Next(); err == nil; next, err = it.Next() {
+			retVal <- next
+		}
+		close(retVal)
+	}()
+
+	return
 }
