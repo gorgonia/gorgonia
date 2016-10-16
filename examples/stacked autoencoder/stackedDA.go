@@ -213,7 +213,6 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 
 			losses = append(losses, loss)
 		}
-
 		// Manual way of meaning the costs: we first sum them up, then div by the batch size
 		if cost, err = ReduceAdd(losses); err != nil {
 			return
@@ -241,7 +240,6 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 		cvs = append(cvs, cost.Value().(Scalar).Data().(float64))
 	}
 
-	// log.Printf("cvs(%d): %v", len(cvs), cvs)
 	trainingLog.Printf("%d\t%v", epoch, avgF64s(cvs))
 	return nil
 }
