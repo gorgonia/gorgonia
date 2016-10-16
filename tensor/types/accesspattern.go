@@ -410,11 +410,11 @@ func (it *FlatIterator) Next() (int, error) {
 		return -1, noopError{}
 	}
 
-	switch it.dims {
-	case 0:
+	switch {
+	case it.IsScalar():
 		it.done = true
 		return 0, nil
-	case 1:
+	case it.IsVector():
 		return it.singleNext()
 	default:
 		return it.ndNext()
