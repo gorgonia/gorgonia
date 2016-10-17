@@ -16,6 +16,10 @@ func notyetimplemented(format string, attrs ...interface{}) error {
 	return types.NewError(types.NotYetImplemented, format, attrs...)
 }
 
+func dimMismatchError(expected, got int) error {
+	return types.NewError(types.DimensionMismatch, "Dimension mismatch. Expected %d. Got %d instead", expected, got)
+}
+
 type noopError struct{}
 
 func (e noopError) NoOp() bool    { return true }

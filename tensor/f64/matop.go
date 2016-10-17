@@ -484,3 +484,80 @@ func (t *Tensor) itol(i int) (coords []int, err error) {
 	}
 	return
 }
+
+func (t *Tensor) concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
+	// check that all tensors to be concatenated have the same number of dimensions
+	dims := t.Dims()
+	for _, T := range Ts {
+		if T.Dims() != dims {
+			err = dimMismatchError(dims, T.Dims())
+			return
+		}
+	}
+
+	if axis < 0 {
+		err = types.AxisErr("Axis %d is less than 0", axis)
+		return
+	}
+
+	var newStrides []int
+	newShape := types.Shape(types.BorrowInts(dims))
+	copy(newShape, t.Shape())
+	for _, T := range Ts {
+		for d := 0; d < dims; d++ {
+			if d == axis {
+				newShape[d] += T.Shape()[d]
+			} else {
+				// validate that the rest of the dimensions match up
+				if newShape[d] != T.Shape()[d] {
+					err = dimMismatchError(newShape[d], T.Shape()[d])
+					return
+				}
+			}
+		}
+	}
+
+	aps := make([]*types.AP, len(Ts)+1)
+	aps[0] = t.AP
+	for i, T := range Ts {
+		aps[i+1] = T.AP
+	}
+
+	// newStrides = types.BorrowInts(dims)
+	// strideperms := types.SortedMultiStridePerm(dims, aps)
+	// s := 1
+	// for d := dims - 1; d >= 0; d-- {
+	// 	perm := strideperms[d]
+	// 	newStrides[perm] = s
+	// 	s *= newShape[perm]
+	// }
+	newStrides = newShape.CalcStrides()
+
+	data := make([]float64, newShape.TotalSize())
+
+	retVal = new(Tensor)
+	retVal.AP = types.NewAP(newShape, newStrides)
+	retVal.data = data
+
+	all := make([]*Tensor, len(Ts)+1)
+	all[0] = t
+	copy(all[1:], Ts)
+
+	var start, end int
+	for _, T := range all {
+		end += T.Shape()[axis]
+		slices := make([]types.Slice, axis+1)
+		slices[axis] = makeRS(start, end)
+
+		var v *Tensor
+		if v, err = retVal.Slice(slices...); err != nil {
+			return
+		}
+		if err = assignArray(v, T); err != nil {
+			return
+		}
+		start = end
+	}
+
+	return
+}

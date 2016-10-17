@@ -703,3 +703,31 @@ func TestCopyTo(t *testing.T) {
 	}
 
 }
+
+var concatTests = []struct {
+	name  string
+	shape types.Shape
+	axis  int
+
+	correctShape types.Shape
+	correctData  []float64
+}{}
+
+func TestTconcat(t *testing.T) {
+	assert := assert.New(t)
+	T0 := NewTensor(WithShape(2, 2), WithBacking(RangeFloat64(0, 4)))
+	T1 := NewTensor(WithShape(2, 2), WithBacking(RangeFloat64(5, 9)))
+	T2, err := T0.concat(0, T1)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	assert.Equal([]float64{0, 1, 2, 3, 5, 6, 7, 8}, T2.data)
+
+	T2, err = T0.concat(1, T1)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	assert.Equal([]float64{0, 1, 5, 6, 2, 3, 7, 8}, T2.data)
+}

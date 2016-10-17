@@ -176,3 +176,25 @@ func TestI(t *testing.T) {
 	T = I(4, 4, -1)
 	t.Logf("%+#v", T)
 }
+
+func TestAssignArray(t *testing.T) {
+	assert := assert.New(t)
+	T := NewTensor(WithShape(2, 2), WithBacking(RangeFloat64(0, 4)))
+	T2 := NewTensor(WithShape(4, 4), WithBacking(RangeFloat64(0, 16)))
+	S, _ := T2.Slice(makeRS(1, 3), makeRS(1, 3))
+
+	err := assignArray(S, T)
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal([]float64{0, 1, 2, 3, 4, 0, 1, 7, 8, 2, 3, 11, 12, 13, 14, 15}, T2.data)
+
+	// this should error? I dunno
+	err = assignArray(T, T2)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("T: %+v", T)
+	t.Logf("T2: %+v", T2)
+}

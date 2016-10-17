@@ -1,9 +1,6 @@
 package types
 
-import (
-	"fmt"
-	"log"
-)
+import "fmt"
 
 // An AP is an access pattern. It tells the various ndarrays how to access their data through the use of strides
 // Through the AP, there are several definitions of things, most notably there are two very specific "special cases":
@@ -290,12 +287,10 @@ func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
 		axisi := retVal[i]
 
 		for j := i - 1; j >= 0; j-- {
-			log.Printf("j : %d ipos %d", j, ipos)
 			var ambig, swap bool
 			ambig = true
 			axisj := retVal[j]
 
-			log.Printf("looping APs")
 			for _, ap := range aps {
 				if ap.shape[axisi] != 1 && ap.shape[axisj] != 1 {
 					if ap.strides[axisi] <= ap.strides[axisj] {
@@ -306,7 +301,6 @@ func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
 					ambig = false
 				}
 			}
-			log.Printf("ambig: %v, swap: %v", ambig, swap)
 
 			if !ambig && swap {
 				ipos = j
