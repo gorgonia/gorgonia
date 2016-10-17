@@ -711,23 +711,24 @@ var concatTests = []struct {
 
 	correctShape types.Shape
 	correctData  []float64
-}{}
+}{
+	{"vector", types.Shape{2}, 0, types.Shape{4}, []float64{0, 1, 0, 1}},
+	{"matrix; axis 0 ", types.Shape{2, 2}, 0, types.Shape{4, 2}, []float64{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", types.Shape{2, 2}, 1, types.Shape{2, 4}, []float64{0, 1, 0, 1, 2, 3, 2, 3}},
+}
 
 func TestTconcat(t *testing.T) {
 	assert := assert.New(t)
-	T0 := NewTensor(WithShape(2, 2), WithBacking(RangeFloat64(0, 4)))
-	T1 := NewTensor(WithShape(2, 2), WithBacking(RangeFloat64(5, 9)))
-	T2, err := T0.concat(0, T1)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	assert.Equal([]float64{0, 1, 2, 3, 5, 6, 7, 8}, T2.data)
 
-	T2, err = T0.concat(1, T1)
-	if err != nil {
-		t.Error(err)
-		return
+	for _, cts := range concatTests {
+		T0 := NewTensor(WithShape(cts.shape...), WithBacking(RangeFloat64(0, cts.shape.TotalSize())))
+		T1 := NewTensor(WithShape(cts.shape...), WithBacking(RangeFloat64(0, cts.shape.TotalSize())))
+		T2, err := T0.concat(cts.axis, T1)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(cts.correctShape.Eq(T2.Shape()))
+		assert.Equal(cts.correctData, T2.data)
 	}
-	assert.Equal([]float64{0, 1, 5, 6, 2, 3, 7, 8}, T2.data)
 }
