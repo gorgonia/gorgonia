@@ -17,7 +17,7 @@ Gorgonia:
 
 The main reason to use Gorgonia is developer comfort. If you're using a Go stack extensively, now you have access to the ability to create production-ready machine learning systems in an environment that you are already familiar and comfortable with. 
 
-ML/AI at large is usually split into two stages: the experimental stage where one builds various models, test and retest; and the deployed state where a model after being tested and played with, is deployed. This necessitate different roles like data scientist and data engineer.
+ML/AI at large is usually split into two stages: the experimental stage where one builds various models, test and retest; and the deployed state where a model after being tested and played with, is deployed. This necessitates different roles like data scientist and data engineer.
 
 Typically the two phases have different tools: Python/Lua (using [Theano](http://deeplearning.net/software/theano/), [Torch](http://torch.ch/), etc) is commonly used for the experimental stage, and then the model is rewritten in some more performant language like C++ (using [dlib](http://dlib.net/ml.html), [mlpack](http://mlpack.org) etc). Of course, nowadays the gap is closing and people frequently share the tools between them. Tensorflow is one such tool that bridges the gap.
 
@@ -27,7 +27,7 @@ Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently 
 
 The package is go-gettable: `go get -u github.com/chewxy/gorgonia`. 
 
-There are very few dependencies that Gorgonia uses - and they're all pretty stable, so as of now, there isn't a need for vendoring tools. These are the list of external packages that Gorgonia calls, ranked in order of reliance that this package has (subpackages are omitted):
+There are very few dependencies that Gorgonia uses - and they're all pretty stable, so as of now, there isn't a need for vendor tools. These are the list of external packages that Gorgonia calls, ranked in order of reliance that this package has (sub packages are omitted):
 
 |Package|Used For|Vitality|Notes|Licence|
 |-------|--------|--------|-----|-------|
@@ -46,7 +46,7 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 
 #Usage#
 
-Gorgonia works by creating a computation graph, and then executing it. Think of it as a programming language, but is limited to mathematical functions. In fact this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree). 
+Gorgonia works by creating a computation graph and then executing it. Think of it as a programming language, but is limited to mathematical functions. Infact, this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree). 
 
 Microsoft's [CNTK](https://github.com/Microsoft/CNTK), with its BrainScript, is perhaps the best at exemplifying the idea that building of a computation graph and running of the computation graphs are different things, and that the user should be in different modes of thoughts when going about them. 
 
@@ -110,15 +110,15 @@ There are two VMs in the current version of Gorgonia:
 
 They function differently and take different inputs. The `TapeMachine` is useful for executing expressions that are generally static (that is to say the computation graph does not change). Due to its static nature, the `TapeMachine` is good for running expressions that are compiled-once-run-many-times (such as linear regression, SVM and the like).
 
-The `LispMachine` on the other hand was designed to take a graph as an input, and executes directly on the nodes of the graph. If the graph change, simply create a new lightweight `LispMachine` to execute it on. The `LispMachine` is suitable for tasks such as creating recurrent neural networks without a fixed size.
+The `LispMachine`, on the other hand, was designed to take a graph as an input and executes directly on the nodes of the graph. If the graph change, simply create a new lightweight `LispMachine` to execute it on. The `LispMachine` is suitable for tasks such as creating recurrent neural networks without a fixed size.
 
-Prior to release of Gorgonia, there was a third VM - a stack based VM that is similar to `TapeMachine` but deals with artificial gradients better. It may see light of day again, once this author has managed to fix all the kinks.
+Prior to the release of Gorgonia, there was a third VM - a stack-based VM that is similar to `TapeMachine` but deals with artificial gradients better. It may see the light of day again, once this author has managed to fix all the kinks.
 
 ##Differentiation##
 
 Gorgonia performs both symbolic and automatic differentiation. There are subtle differences between the two processes. The author has found that it's best to think of it this way - Automatic differentiation is differentiation that happens at runtime, concurrently with the execution of the graph, while symbolic differentiation is differentiation that happens during the compilation phase. 
 
-Runtime of course, refers to the execution of the expression graph, not the program's actual runtime.
+Runtime, of course, refers to the execution of the expression graph, not the program's actual runtime.
 
 With the introduction to the two VMs, it's easy to see how Gorgonia can perform both symbolic and automatic differentiation. Using the same example as above, the reader should note that there was no differentiation done. Instead, let's try with a `LispMachine`:
 
@@ -223,7 +223,7 @@ Of course, Gorgonia also supports the more traditional symbolic differentiation 
 	// dz/dy: 1 | 1
 ```
 
-Currently Gorgonia only performs backwards mode automatic differentiation (aka backpropagation), although one may observe the vestiges of an older version which supported forwards mode differentiation in the existence of `*dualValue`. It may return in the future.
+Currently, Gorgonia only performs backward mode automatic differentiation (aka backpropagation), although one may observe the vestiges of an older version which supported forwards mode differentiation in the existence of `*dualValue`. It may return in the future.
 
 ##Graph##
 
@@ -235,7 +235,7 @@ By the way, Gorgonia comes with nice-ish graph printing abilities. Here's an exa
 
 ![graph1](https://raw.githubusercontent.com/chewxy/gorgonia/master/media/exprGraph_example2.png)
 
-To read the graph is easy. The expression builds from bottom up, while the derivations build from top down. This way the derivative of each node is roughly on the same level. 
+To read the graph is easy. The expression builds from bottom up, while the derivations build from the top down. This way the derivative of each node is roughly on the same level. 
 
 Red-outlined nodes indicate that it's a root node. Green outlined nodes indicate that they're a leaf node. Nodes with a yellow background indicate that it's an input node. The dotted arrows indicate which node is the gradient node for the pointed-to node.
 
