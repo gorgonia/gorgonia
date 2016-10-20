@@ -55,6 +55,8 @@ Whilst Gorgonia's implementation doesn't enforce the separation of thought as fa
 Here's an example - say you want to define a math expression `z = x + y`. Here's how you'd do it:
 
 ```go
+package main
+
 import (
 	"fmt"
 	"log"
@@ -71,7 +73,8 @@ func main() {
 	// define the expression
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	if z, err = Add(x, y); err != nil {
+	z, err = Add(x, y)
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -87,14 +90,13 @@ func main() {
 	// set initial values then run
 	Let(x, 2.0)
 	Let(y, 2.5)
-	if err = machine.RunAll(); err != nil {
+	if machine.RunAll() != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("%v", z.Value())
 	// Output: 4.5
 }
-
 ```
 
 You might note that it's a little more verbose than other packages of similar nature. For example, instead of compiling to a callable function, Gorgonia specifically compiles into a `*program` which requires a `*TapeMachine` to run. It also requires manual a `Let(...)` call.
@@ -123,6 +125,8 @@ Runtime of course, refers to the execution of the expression graph, not the prog
 With the introduction to the two VMs, it's easy to see how Gorgonia can perform both symbolic and automatic differentiation. Using the same example as above, the reader should note that there was no differentiation done. Instead, let's try with a `LispMachine`:
 
 ```go
+package main
+
 import (
 	"fmt"
 	"log"
@@ -139,7 +143,8 @@ func main() {
 	// define the expression
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	if z, err = Add(x, y); err != nil {
+	z, err = Add(x, y)
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -149,19 +154,23 @@ func main() {
 
 	// by default, LispMachine performs forward mode and backwards mode execution
 	m := NewLispMachine(g)
-	if err = m.RunAll(); err != nil {
+	if m.RunAll() != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("z: %v", z.Value())
+	fmt.Printf("z: %v\n", z.Value())
 
-	if xgrad, err := x.Grad(); err != nil {
-		fmt.Printf("dz/dx: %v", xgrad)
+	xgrad, err := x.Grad()
+	if err != nil {
+		log.Fatal(err)
 	}
+	fmt.Printf("dz/dx: %v\n", xgrad)
 
-	if ygrad, err := y.Grad(); err != nil {
-		fmt.Printf("dz/dy: %v", ygrad)
+	ygrad, err := y.Grad()
+	if err != nil {
+		log.Fatal(err)
 	}
+	fmt.Printf("dz/dy: %v\n", ygrad)
 
 	// Output:
 	// z: 4.5
@@ -173,6 +182,16 @@ func main() {
 Of course, Gorgonia also supports the more traditional symbolic differentiation like in Theano:
 
 ```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	. "github.com/chewxy/gorgonia"
+)
+
+func main() {
 	g := NewGraph()
 
 	var x, y, z *Node
@@ -181,14 +200,16 @@ Of course, Gorgonia also supports the more traditional symbolic differentiation 
 	// define the expression
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	if z, err = Add(x, y); err != nil {
+	z, err = Add(x, y)
+	if err != nil {
 		log.Fatal(err)
 	}
 
 	// symbolically differentiate z with regards to x and y
 	// this adds the gradient nodes to the graph g
-	var Grads Nodes
-	if grads, err = Grad(z, x, y); err != nil {
+	var grads Nodes
+	grads, err = Grad(z, x, y)
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -204,23 +225,29 @@ Of course, Gorgonia also supports the more traditional symbolic differentiation 
 	// set initial values then run
 	Let(x, 2.0)
 	Let(y, 2.5)
-	if err = machine.RunAll(); err != nil {
+	if machine.RunAll() != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("%v", z.Value())
-	if xgrad, err := x.Grad(); err != nil {
-		fmt.Printf("dz/dx: %v", xgrad)
-	}
+	fmt.Printf("z: %v\n", z.Value())
 
-	if ygrad, err := y.Grad(); err != nil {
-		fmt.Printf("dz/dy: %v", ygrad)
+	xgrad, err := x.Grad()
+	if err != nil {
+		log.Fatal(err)
 	}
+	fmt.Printf("dz/dx: %v | %v\n", xgrad, grads[0])
+
+	ygrad, err := y.Grad()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("dz/dy: %v | %v\n", ygrad, grads[1])
 
 	// Output:
 	// z: 4.5
 	// dz/dx: 1 | 1
 	// dz/dy: 1 | 1
+}
 ```
 
 Currently Gorgonia only performs backwards mode automatic differentiation (aka backpropagation), although one may observe the vestiges of an older version which supported forwards mode differentiation in the existence of `*dualValue`. It may return in the future.
