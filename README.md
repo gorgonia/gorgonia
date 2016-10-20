@@ -55,6 +55,8 @@ Whilst Gorgonia's implementation doesn't enforce the separation of thought as fa
 Here's an example - say you want to define a math expression `z = x + y`. Here's how you'd do it:
 
 ```go
+package main
+
 import (
 	"fmt"
 	"log"
@@ -71,7 +73,8 @@ func main() {
 	// define the expression
 	x = NewScalar(g, Float64, WithName("x"))
 	y = NewScalar(g, Float64, WithName("y"))
-	if z, err = Add(x, y); err != nil {
+	z, err = Add(x, y)
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -87,14 +90,13 @@ func main() {
 	// set initial values then run
 	Let(x, 2.0)
 	Let(y, 2.5)
-	if err = machine.RunAll(); err != nil {
+	if machine.RunAll() != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("%v", z.Value())
 	// Output: 4.5
 }
-
 ```
 
 You might note that it's a little more verbose than other packages of similar nature. For example, instead of compiling to a callable function, Gorgonia specifically compiles into a `*program` which requires a `*TapeMachine` to run. It also requires manual a `Let(...)` call.
