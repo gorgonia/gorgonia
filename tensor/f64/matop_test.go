@@ -732,3 +732,37 @@ func TestTconcat(t *testing.T) {
 		assert.Equal(cts.correctData, T2.data)
 	}
 }
+
+var stackTests = []struct {
+	name       string
+	shape      types.Shape
+	axis       int
+	stackCount int
+
+	correctShape types.Shape
+	correctData  []float64
+}{
+	{"matrix, axis 0", types.Shape{2, 3}, 0, 2, types.Shape{2, 2, 3}, []float64{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
+}
+
+func TestTstack(t *testing.T) {
+	assert := assert.New(t)
+	for _, sts := range stackTests {
+		T := NewTensor(WithShape(sts.shape...), WithBacking(RangeFloat64(0, sts.shape.TotalSize())))
+
+		var stacked []*Tensor
+		for i := 0; i < sts.stackCount-1; i++ {
+			offset := (i + 1) * 100
+			T1 := NewTensor(WithShape(sts.shape...), WithBacking(RangeFloat64(offset, sts.shape.TotalSize()+offset)))
+			stacked = append(stacked, T1)
+		}
+
+		T2, err := T.stack(sts.axis, stacked...)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(T2.Shape()))
+		assert.Equal(sts.correctData, T2.data)
+	}
+}

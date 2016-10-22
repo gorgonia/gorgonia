@@ -240,7 +240,6 @@ func (t *Tensor) ostrides() []int {
 
 func (t *Tensor) Info() *types.AP    { return t.AP }
 func (t *Tensor) Dtype() types.Dtype { return types.Float64 }
-func (t *Tensor) Size() int          { return t.Shape().TotalSize() }
 func (t *Tensor) DataSize() int      { return len(t.data) }
 
 // Reshape reshapes a *Tensor. If the tensors need to be materialized (either it's a view or transpose), it will be materialized before the reshape happens

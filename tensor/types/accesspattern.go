@@ -71,6 +71,7 @@ func (ap *AP) Shape() Shape   { return ap.shape }
 func (ap *AP) Strides() []int { return ap.strides }
 func (ap *AP) Dims() int      { return ap.dims }
 func (ap *AP) Opdims() int    { return len(ap.shape) }
+func (ap *AP) Size() int      { return ap.shape.TotalSize() }
 
 func (ap *AP) String() string {
 	return fmt.Sprintf("Shape: %v, Stride: %v, Dims: %v, Lock: %t", ap.shape, ap.strides, ap.dims, ap.fin)

@@ -2,6 +2,7 @@ package tensorf64
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/pkg/errors"
@@ -559,5 +560,121 @@ func (t *Tensor) concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 		start = end
 	}
 
+	return
+}
+
+func (t *Tensor) stack(axis int, others ...*Tensor) (retVal *Tensor, err error) {
+	opdims := t.Opdims()
+	if axis >= opdims+1 {
+		// error
+	}
+
+	newShape := types.Shape(types.BorrowInts(opdims + 1))
+	newShape[axis] = len(others) + 1
+	shape := t.Shape()
+	var cur int
+	for i, s := range shape {
+		if i == axis {
+			cur++
+		}
+		newShape[cur] = s
+		cur++
+	}
+
+	newStrides := newShape.CalcStrides()
+	// newSize := t.Size()
+	ap := types.NewAP(newShape, newStrides)
+
+	allNoMat := !t.IsMaterializable()
+	for _, ot := range others {
+		// newSize += ot.Size()
+
+		if allNoMat && ot.IsMaterializable() {
+			allNoMat = false
+		}
+	}
+
+	var data []float64
+	if allNoMat {
+		// do easy mat
+		data = t.simpleStack(axis, ap, others...)
+	} else {
+		// do viewstack
+		data = t.viewStack(axis, ap, others...)
+	}
+	retVal = new(Tensor)
+	retVal.AP = ap
+	retVal.data = data
+	return
+}
+
+func (t *Tensor) simpleStack(axis int, ap *types.AP, others ...*Tensor) (data []float64) {
+	data = make([]float64, ap.Size())
+	// log.Printf("len(data) %v || %v", len(data), ap)
+	// switch axis {
+	// case 0:
+	// 	copy(data, t.data)
+	// 	next := len(t.data)
+	// 	for _, ot := range others {
+	// 		copy(data[next:], ot.data)
+	// 		next += len(ot.data)
+	// 	}
+	// 	return
+	// }
+
+	axisStride := ap.Strides()[axis]
+	batches := len(data) / axisStride
+
+	destStart := 0
+	start := 0
+	end := start + axisStride
+
+	for i := 0; i < batches; i++ {
+		copy(data[destStart:], t.data[start:end])
+		for _, ot := range others {
+			destStart += axisStride
+			copy(data[destStart:], ot.data[start:end])
+			i++
+		}
+		start += axisStride
+		end += axisStride
+	}
+	return
+}
+
+func (t *Tensor) viewStack(axis int, ap *types.AP, others ...*Tensor) (data []float64) {
+	data = make([]float64, ap.Size())
+
+	axisStride := ap.Strides()[axis]
+	batches := len(data) / axisStride
+
+	it := types.NewFlatIterator(t.AP)
+	ch := it.Chan()
+	chs := make([]chan int, len(others))
+	chs = chs[:0]
+	for _, ot := range others {
+		oter := types.NewFlatIterator(ot.AP)
+		chs = append(chs, oter.Chan())
+	}
+	log.Printf("batches: %v, %d", batches, len(data))
+	data = data[:0]
+	for i := 0; i < batches; i++ {
+		for j := 0; j < axisStride; j++ {
+			id, ok := <-ch
+			if !ok {
+				break
+			}
+			data = append(data, t.data[id])
+		}
+		for j, ot := range others {
+			for k := 0; k < axisStride; k++ {
+				id, ok := <-chs[j]
+				if !ok {
+					break
+				}
+				data = append(data, ot.data[id])
+			}
+		}
+	}
 	return
 }
