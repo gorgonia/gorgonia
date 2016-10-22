@@ -2,7 +2,6 @@ package tensorf64
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/pkg/errors"
@@ -608,40 +607,41 @@ func (t *Tensor) stack(axis int, others ...*Tensor) (retVal *Tensor, err error) 
 	return
 }
 
+// simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
 func (t *Tensor) simpleStack(axis int, ap *types.AP, others ...*Tensor) (data []float64) {
 	data = make([]float64, ap.Size())
-	// log.Printf("len(data) %v || %v", len(data), ap)
-	// switch axis {
-	// case 0:
-	// 	copy(data, t.data)
-	// 	next := len(t.data)
-	// 	for _, ot := range others {
-	// 		copy(data[next:], ot.data)
-	// 		next += len(ot.data)
-	// 	}
-	// 	return
-	// }
-
-	axisStride := ap.Strides()[axis]
-	batches := len(data) / axisStride
-
-	destStart := 0
-	start := 0
-	end := start + axisStride
-
-	for i := 0; i < batches; i++ {
-		copy(data[destStart:], t.data[start:end])
+	switch axis {
+	case 0:
+		copy(data, t.data)
+		next := len(t.data)
 		for _, ot := range others {
-			destStart += axisStride
-			copy(data[destStart:], ot.data[start:end])
-			i++
+			copy(data[next:], ot.data)
+			next += len(ot.data)
 		}
-		start += axisStride
-		end += axisStride
+	default:
+		axisStride := ap.Strides()[axis]
+		batches := len(data) / axisStride
+
+		destStart := 0
+		start := 0
+		end := start + axisStride
+
+		for i := 0; i < batches; i++ {
+			copy(data[destStart:], t.data[start:end])
+			for _, ot := range others {
+				destStart += axisStride
+				copy(data[destStart:], ot.data[start:end])
+				i++
+			}
+			destStart += axisStride
+			start += axisStride
+			end += axisStride
+		}
 	}
 	return
 }
 
+// viewStack is the data movement function for Stack(), applied on views
 func (t *Tensor) viewStack(axis int, ap *types.AP, others ...*Tensor) (data []float64) {
 	data = make([]float64, ap.Size())
 
@@ -656,7 +656,7 @@ func (t *Tensor) viewStack(axis int, ap *types.AP, others ...*Tensor) (data []fl
 		oter := types.NewFlatIterator(ot.AP)
 		chs = append(chs, oter.Chan())
 	}
-	log.Printf("batches: %v, %d", batches, len(data))
+
 	data = data[:0]
 	for i := 0; i < batches; i++ {
 		for j := 0; j < axisStride; j++ {
