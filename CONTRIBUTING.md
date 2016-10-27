@@ -10,10 +10,10 @@ Here's the current explanation of the labels:
 <thead><th>Label</th><th>Expertise Required</th><th>Notes</th></thead>
 <tbody>
 <tr><td>easy</td><td>Familiar with Go</td><td>Usually there would be a link to an existing implementation that is similar</td></tr>
-<tr><td>requires linalg knowledge</td><td>Linear algebra knowledge required on top of being familiar with Go</td><td>Linalg knowledge will go a long way in helping identify subtler bugs</td></tr>
+<tr><td>requires Linear Algebra knowledge</td><td>Linear algebra knowledge required on top of being familiar with Go</td><td>Linear Algebra knowledge will go a long way in helping identify subtler bugs</td></tr>
 <tr><td>no label</td><td>Knowledge about Gorgonia</td><td></td></tr>
-<tr><td>help wanted</td><td>Various expertise</td><td>Typically it means the task requires extranormal specialty that the author doesn't possess</td></tr>
-<tr><td>complicated</td><td>-</td><td>The code change will affect and involve many files</td></tr>
+<tr><td>help wanted</td><td>Various expertise</td><td>Typically it means the task requires extranormal speciality that the author doesn't possess</td></tr>
+<tr><td>complicated</td><td>-</td><td>The code change will affect, and involve many files</td></tr>
 </tbody>
 </table>
 
