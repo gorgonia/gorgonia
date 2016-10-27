@@ -69,7 +69,7 @@ Matrix (2, 2) [2 1]
 ⎢196  197  198  199  ... 206  207  208  209⎥
 ⎣210  211  212  213  ... 220  221  222  223⎦
 `
-	assert.Equal(expected, res, res)
+	assert.Equal(expected, res, "expected %v. Got %v", expected, res)
 
 	// many cols, rows, compressed
 	T = NewTensor(WithShape(16, 14), WithBacking(RangeFloat64(0, 16*14)))
@@ -81,7 +81,7 @@ Matrix (2, 2) [2 1]
 ⎢196  197  ⋯ 208  209⎥
 ⎣210  211  ⋯ 222  223⎦
 `
-	assert.Equal(expected, res, res)
+	assert.Equal(expected, res, "expected %v. Got %v", expected, res)
 
 	// many cols, full
 	T = NewTensor(WithShape(8, 9), WithBacking(RangeFloat64(0, 8*9)))
@@ -189,6 +189,7 @@ Matrix (2, 2) [1 6]
 ⎡2  8⎤
 ⎣3  9⎦
 `
+
 	res = fmt.Sprintf("\n%+s", V)
 	assert.Equal(expected, res, res)
 
