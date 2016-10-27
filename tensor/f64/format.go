@@ -50,16 +50,13 @@ func (t *Tensor) Format(state fmt.State, c rune) {
 		return
 	}
 
-	// var rows, cols, stride int
 	var rows, cols int
 	if t.IsVector() {
 		rows = 1
 		cols = t.Size()
-		// stride = t.Strides()[0]
 	} else {
 		rows = t.Shape()[t.Dims()-2]
 		cols = t.Shape()[t.Dims()-1]
-		// stride = t.Strides()[t.Dims()-1]
 	}
 
 	precision, ok := state.Precision()

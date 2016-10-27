@@ -206,8 +206,12 @@ func (t *Tensor) Format(state fmt.State, c rune) {
 	firstRow := true
 	firstVal := true
 	var lastRow, lastCol int
+	var expected int
 
 	for next, err := it.Next(); err == nil; next, err = it.Next() {
+		if next < expected {
+			continue
+		}
 		var col, row int
 		row = lastRow
 		col = lastCol
@@ -293,7 +297,12 @@ func (t *Tensor) Format(state fmt.State, c rune) {
 
 			// figure out elision
 			if rows > printedRows && row+1 == printedRows/2 {
-				coord[len(coord)-2] = rows - (printedRows / 2) //ooh dangerous... modiftying the coordinates!
+				expectedCoord := types.BorrowInts(len(coord))
+				copy(expectedCoord, coord)
+				expectedCoord[len(expectedCoord)-2] = rows - (printedRows / 2)
+				expected, _ = types.Ltoi(t.Shape(), t.Strides(), expectedCoord...)
+				types.ReturnInts(expectedCoord)
+
 				fmt.Fprintf(state, vElision)
 			}
 		}
