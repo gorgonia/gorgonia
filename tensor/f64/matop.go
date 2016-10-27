@@ -562,10 +562,12 @@ func (t *Tensor) concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 	return
 }
 
-func (t *Tensor) stack(axis int, others ...*Tensor) (retVal *Tensor, err error) {
+// Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
+func (t *Tensor) Stack(axis int, others ...*Tensor) (retVal *Tensor, err error) {
 	opdims := t.Opdims()
 	if axis >= opdims+1 {
-		// error
+		err = dimMismatchError(opdims+1, axis)
+		return
 	}
 
 	newShape := types.Shape(types.BorrowInts(opdims + 1))
@@ -581,26 +583,26 @@ func (t *Tensor) stack(axis int, others ...*Tensor) (retVal *Tensor, err error) 
 	}
 
 	newStrides := newShape.CalcStrides()
-	// newSize := t.Size()
 	ap := types.NewAP(newShape, newStrides)
 
 	allNoMat := !t.IsMaterializable()
 	for _, ot := range others {
-		// newSize += ot.Size()
-
 		if allNoMat && ot.IsMaterializable() {
 			allNoMat = false
 		}
 	}
 
 	var data []float64
+
+	// the "viewStack" method is the more generalized method
+	// and will work for all Tensors, regardless of whether it's a view
+	// But the simpleStack is faster, and is an optimization
 	if allNoMat {
-		// do easy mat
 		data = t.simpleStack(axis, ap, others...)
 	} else {
-		// do viewstack
 		data = t.viewStack(axis, ap, others...)
 	}
+
 	retVal = new(Tensor)
 	retVal.AP = ap
 	retVal.data = data

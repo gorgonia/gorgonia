@@ -769,7 +769,7 @@ var viewStackTests = []struct {
 	{"matrix(4x4)[1:3, 1:3] axis 2", types.Shape{4, 4}, nil, []types.Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, types.Shape{2, 2, 2}, []float64{5, 105, 6, 106, 9, 109, 10, 110}},
 }
 
-func TestTstack(t *testing.T) {
+func TestTensor_Stack(t *testing.T) {
 	assert := assert.New(t)
 	var err error
 	for _, sts := range simpleStackTests {
@@ -782,7 +782,7 @@ func TestTstack(t *testing.T) {
 			stacked = append(stacked, T1)
 		}
 
-		T2, err := T.stack(sts.axis, stacked...)
+		T2, err := T.Stack(sts.axis, stacked...)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -819,7 +819,7 @@ func TestTstack(t *testing.T) {
 
 			stacked = append(stacked, T1)
 		}
-		T2, err := T.stack(sts.axis, stacked...)
+		T2, err := T.Stack(sts.axis, stacked...)
 		if err != nil {
 			t.Error(err)
 			continue
