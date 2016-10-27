@@ -485,7 +485,8 @@ func (t *Tensor) itol(i int) (coords []int, err error) {
 	return
 }
 
-func (t *Tensor) concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
+// Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
+func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 	// check that all tensors to be concatenated have the same number of dimensions
 	dims := t.Dims()
 	for _, T := range Ts {

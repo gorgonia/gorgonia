@@ -717,13 +717,13 @@ var concatTests = []struct {
 	{"matrix; axis 1 ", types.Shape{2, 2}, 1, types.Shape{2, 4}, []float64{0, 1, 0, 1, 2, 3, 2, 3}},
 }
 
-func TestTconcat(t *testing.T) {
+func TestTensor_Concat(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, cts := range concatTests {
 		T0 := NewTensor(WithShape(cts.shape...), WithBacking(RangeFloat64(0, cts.shape.TotalSize())))
 		T1 := NewTensor(WithShape(cts.shape...), WithBacking(RangeFloat64(0, cts.shape.TotalSize())))
-		T2, err := T0.concat(cts.axis, T1)
+		T2, err := T0.Concat(cts.axis, T1)
 		if err != nil {
 			t.Error(err)
 			continue
