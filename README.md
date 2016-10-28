@@ -27,7 +27,7 @@ Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently 
 
 The package is go-gettable: `go get -u github.com/chewxy/gorgonia`. 
 
-There are very few dependencies that Gorgonia uses - and they're all pretty stable, so as of now, there isn't a need for vendoring tools. These are the list of external packages that Gorgonia calls, ranked in order of reliance that this package has (subpackages are omitted):
+There are very few dependencies that Gorgonia uses - and they're all pretty stable, so as of now there isn't a need for vendoring tools. These are the list of external packages that Gorgonia calls, ranked in order of reliance that this package has (subpackages are omitted):
 
 |Package|Used For|Vitality|Notes|Licence|
 |-------|--------|--------|-----|-------|
