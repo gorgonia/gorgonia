@@ -157,5 +157,4 @@ func main() {
 	machine.Let(x, xT)
 	handleError(machine.RunAll())
 	fmt.Printf("Predicted: %#v\n", pred.Value())
-
 }

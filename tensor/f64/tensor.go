@@ -240,7 +240,6 @@ func (t *Tensor) ostrides() []int {
 
 func (t *Tensor) Info() *types.AP    { return t.AP }
 func (t *Tensor) Dtype() types.Dtype { return types.Float64 }
-func (t *Tensor) Size() int          { return t.Shape().TotalSize() }
 func (t *Tensor) DataSize() int      { return len(t.data) }
 
 // Reshape reshapes a *Tensor. If the tensors need to be materialized (either it's a view or transpose), it will be materialized before the reshape happens
@@ -370,6 +369,91 @@ func (t *Tensor) IsMaterializable() bool {
 
 /* Misc public API */
 func (t *Tensor) Data() interface{} { return t.data }
+
+func assignArray(dest, src *Tensor) (err error) {
+	// var copiedSrc bool
+
+	if src.IsScalar() {
+		panic("HELP")
+	}
+
+	dd := dest.Opdims()
+	sd := src.Opdims()
+
+	ds := dest.Strides()
+	ss := src.Strides()
+
+	// when dd == 1, and the strides point in the same direction
+	// we copy to a temporary if there is an overlap of data
+	if ((dd == 1 && sd >= 1 && ds[0]*ss[sd-1] < 0) || dd > 1) && overlaps(dest.data, src.data) {
+		// create temp
+		// copiedSrc = true
+	}
+
+	// broadcast src to dest for raw iteration
+	tmpShape := types.Shape(types.BorrowInts(sd))
+	tmpStrides := types.BorrowInts(len(src.Strides()))
+	copy(tmpShape, src.Shape())
+	copy(tmpStrides, src.Strides())
+	defer types.ReturnInts(tmpShape)
+	defer types.ReturnInts(tmpStrides)
+
+	if sd > dd {
+		tmpDim := sd
+		for tmpDim > dd && tmpShape[0] == 1 {
+			tmpDim--
+
+			// this is better than tmpShape = tmpShape[1:]
+			// because we are going to return these ints later
+			copy(tmpShape, tmpShape[1:])
+			copy(tmpStrides, tmpStrides[1:])
+		}
+	}
+
+	var newStrides []int
+	if newStrides, err = types.BroadcastStrides(dest.Shape(), tmpShape, ds, tmpStrides); err != nil {
+		return
+	}
+
+	dap := dest.AP
+	sap := types.NewAP(tmpShape, newStrides)
+
+	diter := types.NewFlatIterator(dap)
+	siter := types.NewFlatIterator(sap)
+	dch := diter.Chan()
+	sch := siter.Chan()
+
+	var i, j int
+	var ok bool
+	for {
+		if i, ok = <-dch; !ok {
+			break
+		}
+		if j, ok = <-sch; !ok {
+			break
+		}
+
+		dest.data[i] = src.data[j]
+	}
+
+	return
+}
+
+// courtesy of roger pepe: https://groups.google.com/d/msg/golang-nuts/_Pj9S_Ljp9o/GMo5uPzHbeAJ
+func overlaps(a, b []float64) bool {
+	if cap(a) == 0 || cap(b) == 0 {
+		return false
+	}
+	if &a[0:cap(a)][cap(a)-1] != &b[0:cap(b)][cap(b)-1] {
+		return false
+	}
+
+	a0 := -cap(a)
+	a1 := a0 + len(a)
+	b0 := -cap(b)
+	b1 := b0 + len(b)
+	return a1 > b0 && b1 > a0
+}
 
 /* Other Data types */
 
