@@ -484,3 +484,200 @@ func (t *Tensor) itol(i int) (coords []int, err error) {
 	}
 	return
 }
+
+// Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
+func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
+	// check that all tensors to be concatenated have the same number of dimensions
+	dims := t.Dims()
+	for _, T := range Ts {
+		if T.Dims() != dims {
+			err = dimMismatchError(dims, T.Dims())
+			return
+		}
+	}
+
+	if axis < 0 {
+		err = types.AxisErr("Axis %d is less than 0", axis)
+		return
+	}
+
+	var newStrides []int
+	newShape := types.Shape(types.BorrowInts(dims))
+	copy(newShape, t.Shape())
+	for _, T := range Ts {
+		for d := 0; d < dims; d++ {
+			if d == axis {
+				newShape[d] += T.Shape()[d]
+			} else {
+				// validate that the rest of the dimensions match up
+				if newShape[d] != T.Shape()[d] {
+					err = dimMismatchError(newShape[d], T.Shape()[d])
+					return
+				}
+			}
+		}
+	}
+
+	aps := make([]*types.AP, len(Ts)+1)
+	aps[0] = t.AP
+	for i, T := range Ts {
+		aps[i+1] = T.AP
+	}
+
+	// newStrides = types.BorrowInts(dims)
+	// strideperms := types.SortedMultiStridePerm(dims, aps)
+	// s := 1
+	// for d := dims - 1; d >= 0; d-- {
+	// 	perm := strideperms[d]
+	// 	newStrides[perm] = s
+	// 	s *= newShape[perm]
+	// }
+	newStrides = newShape.CalcStrides()
+
+	data := make([]int, newShape.TotalSize())
+
+	retVal = new(Tensor)
+	retVal.AP = types.NewAP(newShape, newStrides)
+	retVal.data = data
+
+	all := make([]*Tensor, len(Ts)+1)
+	all[0] = t
+	copy(all[1:], Ts)
+
+	var start, end int
+	for _, T := range all {
+		end += T.Shape()[axis]
+		slices := make([]types.Slice, axis+1)
+		slices[axis] = makeRS(start, end)
+
+		var v *Tensor
+		if v, err = retVal.Slice(slices...); err != nil {
+			return
+		}
+		if err = assignArray(v, T); err != nil {
+			return
+		}
+		start = end
+	}
+
+	return
+}
+
+// Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
+func (t *Tensor) Stack(axis int, others ...*Tensor) (retVal *Tensor, err error) {
+	opdims := t.Opdims()
+	if axis >= opdims+1 {
+		err = dimMismatchError(opdims+1, axis)
+		return
+	}
+
+	newShape := types.Shape(types.BorrowInts(opdims + 1))
+	newShape[axis] = len(others) + 1
+	shape := t.Shape()
+	var cur int
+	for i, s := range shape {
+		if i == axis {
+			cur++
+		}
+		newShape[cur] = s
+		cur++
+	}
+
+	newStrides := newShape.CalcStrides()
+	ap := types.NewAP(newShape, newStrides)
+
+	allNoMat := !t.IsMaterializable()
+	for _, ot := range others {
+		if allNoMat && ot.IsMaterializable() {
+			allNoMat = false
+		}
+	}
+
+	var data []int
+
+	// the "viewStack" method is the more generalized method
+	// and will work for all Tensors, regardless of whether it's a view
+	// But the simpleStack is faster, and is an optimization
+	if allNoMat {
+		data = t.simpleStack(axis, ap, others...)
+	} else {
+		data = t.viewStack(axis, ap, others...)
+	}
+
+	retVal = new(Tensor)
+	retVal.AP = ap
+	retVal.data = data
+	return
+}
+
+// simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
+func (t *Tensor) simpleStack(axis int, ap *types.AP, others ...*Tensor) (data []int) {
+	data = make([]int, ap.Size())
+	switch axis {
+	case 0:
+		copy(data, t.data)
+		next := len(t.data)
+		for _, ot := range others {
+			copy(data[next:], ot.data)
+			next += len(ot.data)
+		}
+	default:
+		axisStride := ap.Strides()[axis]
+		batches := len(data) / axisStride
+
+		destStart := 0
+		start := 0
+		end := start + axisStride
+
+		for i := 0; i < batches; i++ {
+			copy(data[destStart:], t.data[start:end])
+			for _, ot := range others {
+				destStart += axisStride
+				copy(data[destStart:], ot.data[start:end])
+				i++
+			}
+			destStart += axisStride
+			start += axisStride
+			end += axisStride
+		}
+	}
+	return
+}
+
+// viewStack is the data movement function for Stack(), applied on views
+func (t *Tensor) viewStack(axis int, ap *types.AP, others ...*Tensor) (data []int) {
+	data = make([]int, ap.Size())
+
+	axisStride := ap.Strides()[axis]
+	batches := len(data) / axisStride
+
+	it := types.NewFlatIterator(t.AP)
+	ch := it.Chan()
+	chs := make([]chan int, len(others))
+	chs = chs[:0]
+	for _, ot := range others {
+		oter := types.NewFlatIterator(ot.AP)
+		chs = append(chs, oter.Chan())
+	}
+
+	data = data[:0]
+	for i := 0; i < batches; i++ {
+		for j := 0; j < axisStride; j++ {
+			id, ok := <-ch
+			if !ok {
+				break
+			}
+			data = append(data, t.data[id])
+		}
+		for j, ot := range others {
+			for k := 0; k < axisStride; k++ {
+				id, ok := <-chs[j]
+				if !ok {
+					break
+				}
+				data = append(data, ot.data[id])
+			}
+		}
+	}
+	return
+}

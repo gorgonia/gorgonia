@@ -703,3 +703,128 @@ func TestCopyTo(t *testing.T) {
 	}
 
 }
+
+var concatTests = []struct {
+	name  string
+	shape types.Shape
+	axis  int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	{"vector", types.Shape{2}, 0, types.Shape{4}, []int{0, 1, 0, 1}},
+	{"matrix; axis 0 ", types.Shape{2, 2}, 0, types.Shape{4, 2}, []int{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", types.Shape{2, 2}, 1, types.Shape{2, 4}, []int{0, 1, 0, 1, 2, 3, 2, 3}},
+}
+
+func TestTensor_Concat(t *testing.T) {
+	assert := assert.New(t)
+
+	for _, cts := range concatTests {
+		T0 := NewTensor(WithShape(cts.shape...), WithBacking(RangeInt(0, cts.shape.TotalSize())))
+		T1 := NewTensor(WithShape(cts.shape...), WithBacking(RangeInt(0, cts.shape.TotalSize())))
+		T2, err := T0.Concat(cts.axis, T1)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(cts.correctShape.Eq(T2.Shape()))
+		assert.Equal(cts.correctData, T2.data)
+	}
+}
+
+var simpleStackTests = []struct {
+	name       string
+	shape      types.Shape
+	axis       int
+	stackCount int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	{"vector, axis 0, stack 2", types.Shape{2}, 0, 2, types.Shape{2, 2}, []int{0, 1, 100, 101}},
+	{"vector, axis 1, stack 2", types.Shape{2}, 1, 2, types.Shape{2, 2}, []int{0, 100, 1, 101}},
+
+	{"matrix, axis 0, stack 2", types.Shape{2, 3}, 0, 2, types.Shape{2, 2, 3}, []int{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
+	{"matrix, axis 1, stack 2", types.Shape{2, 3}, 1, 2, types.Shape{2, 2, 3}, []int{0, 1, 2, 100, 101, 102, 3, 4, 5, 103, 104, 105}},
+	{"matrix, axis 2, stack 2", types.Shape{2, 3}, 2, 2, types.Shape{2, 3, 2}, []int{0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105}},
+	{"matrix, axis 0, stack 3", types.Shape{2, 3}, 0, 3, types.Shape{3, 2, 3}, []int{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205}},
+	{"matrix, axis 1, stack 3", types.Shape{2, 3}, 1, 3, types.Shape{2, 3, 3}, []int{0, 1, 2, 100, 101, 102, 200, 201, 202, 3, 4, 5, 103, 104, 105, 203, 204, 205}},
+	{"matrix, axis 2, stack 3", types.Shape{2, 3}, 2, 3, types.Shape{2, 3, 3}, []int{0, 100, 200, 1, 101, 201, 2, 102, 202, 3, 103, 203, 4, 104, 204, 5, 105, 205}},
+}
+
+var viewStackTests = []struct {
+	name       string
+	shape      types.Shape
+	transform  []int
+	slices     []types.Slice
+	axis       int
+	stackCount int
+
+	correctShape types.Shape
+	correctData  []int
+}{
+	{"matrix(4x4)[1:3, 1:3] axis 0", types.Shape{4, 4}, nil, []types.Slice{makeRS(1, 3), makeRS(1, 3)}, 0, 2, types.Shape{2, 2, 2}, []int{5, 6, 9, 10, 105, 106, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 1", types.Shape{4, 4}, nil, []types.Slice{makeRS(1, 3), makeRS(1, 3)}, 1, 2, types.Shape{2, 2, 2}, []int{5, 6, 105, 106, 9, 10, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 2", types.Shape{4, 4}, nil, []types.Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, types.Shape{2, 2, 2}, []int{5, 105, 6, 106, 9, 109, 10, 110}},
+}
+
+func TestTensor_Stack(t *testing.T) {
+	assert := assert.New(t)
+	var err error
+	for _, sts := range simpleStackTests {
+		T := NewTensor(WithShape(sts.shape...), WithBacking(RangeInt(0, sts.shape.TotalSize())))
+
+		var stacked []*Tensor
+		for i := 0; i < sts.stackCount-1; i++ {
+			offset := (i + 1) * 100
+			T1 := NewTensor(WithShape(sts.shape...), WithBacking(RangeInt(offset, sts.shape.TotalSize()+offset)))
+			stacked = append(stacked, T1)
+		}
+
+		T2, err := T.Stack(sts.axis, stacked...)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(T2.Shape()))
+		assert.Equal(sts.correctData, T2.data)
+	}
+
+	for _, sts := range viewStackTests {
+		T := NewTensor(WithShape(sts.shape...), WithBacking(RangeInt(0, sts.shape.TotalSize())))
+		switch {
+		case sts.slices != nil && sts.transform == nil:
+			if T, err = T.Slice(sts.slices...); err != nil {
+				t.Error(err)
+				continue
+			}
+		case sts.transform != nil && sts.slices == nil:
+			T.T(sts.transform...)
+		}
+
+		var stacked []*Tensor
+		for i := 0; i < sts.stackCount-1; i++ {
+			offset := (i + 1) * 100
+			T1 := NewTensor(WithShape(sts.shape...), WithBacking(RangeInt(offset, sts.shape.TotalSize()+offset)))
+			switch {
+			case sts.slices != nil && sts.transform == nil:
+				if T1, err = T1.Slice(sts.slices...); err != nil {
+					t.Error(err)
+					continue
+				}
+			case sts.transform != nil && sts.slices == nil:
+				T1.T(sts.transform...)
+			}
+
+			stacked = append(stacked, T1)
+		}
+		T2, err := T.Stack(sts.axis, stacked...)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(T2.Shape()))
+		assert.Equal(sts.correctData, T2.data)
+	}
+}
