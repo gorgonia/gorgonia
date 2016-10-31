@@ -57,6 +57,8 @@ var boolignores = []string{
 	"utils.go",
 	"utils_test.go",
 
+	"test_test.go",
+
 	"example_reduction_test.go",
 }
 
@@ -67,7 +69,10 @@ var intignores = []string{
 	"arith_linalg_api_test.go",
 	"arith_linalg_methods.go",
 	"arith_linalg_methods_test.go",
+	"arith_linalg_norms.go",
+	"arith_linalg_norms_test.go",
 
+	"test_test.go",
 	"argmethods_test.go", // because argmethods test is solely float-related
 }
 
@@ -181,6 +186,7 @@ var replacements = map[string]map[string]string{
 		"math.Sqrt(":  "math32.Sqrt(",
 		"math.Inf(":   "math32.Inf(",
 		"math.NaN()":  "math32.NaN()",
+		"math.Abs":    "math32.Abs",
 
 		// utils.go
 		"r[i] = rand.NormFloat32()": "r[i] = float32(rand.NormFloat64())",
