@@ -1,6 +1,7 @@
 package tensorf64
 
 import (
+	"log"
 	"math"
 
 	"github.com/chewxy/gorgonia/tensor/types"
@@ -64,14 +65,19 @@ func (t *Tensor) Norm(ord types.NormOrder, axes []int) (retVal *Tensor, err erro
 			}
 			return retVal.Sum(axes...)
 		default:
-			ord++
 			fn := func(x float64) float64 {
 				return math.Pow(math.Abs(x), float64(ord))
 			}
 			if retVal, err = cloned.Apply(fn, types.UseUnsafe()); err != nil {
 				return
 			}
-			return retVal.Sum(axes...)
+
+			if retVal, err = retVal.Sum(axes...); err != nil {
+				return
+			}
+
+			retVal.data[0] = math.Pow(retVal.data[0], float64(1)/float64(ord))
+			return
 		}
 	case 2:
 		rowAx := axes[0]
@@ -92,10 +98,10 @@ func (t *Tensor) Norm(ord types.NormOrder, axes []int) (retVal *Tensor, err erro
 		switch {
 		case ord == types.Norm(2):
 			// svd norm
-			return nil, nil
+			return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
 		case ord == types.Norm(-2):
 			// svd norm
-			return nil, nil
+			return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
 		case ord == types.Norm(1):
 			if colAx > rowAx {
 				colAx--
@@ -151,8 +157,12 @@ func (t *Tensor) Norm(ord types.NormOrder, axes []int) (retVal *Tensor, err erro
 				return
 			}
 			return Sqrt(retVal)
-			// case types.NuclearNorm:
+		case ord.IsNuclear():
 			// svd norm
+			return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
+		default:
+			log.Printf("ORD: %v", ord)
+			return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
 		}
 	default:
 		err = dimMismatchError(2, len(axes))
