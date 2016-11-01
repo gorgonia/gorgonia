@@ -828,3 +828,47 @@ func TestTensor_Stack(t *testing.T) {
 		assert.Equal(sts.correctData, T2.data)
 	}
 }
+
+var rollaxistests = []struct {
+	axis, start int
+
+	correctShape types.Shape
+}{
+	{0, 0, types.Shape{1, 2, 3, 4}},
+	{0, 1, types.Shape{1, 2, 3, 4}},
+	{0, 2, types.Shape{2, 1, 3, 4}},
+	{0, 3, types.Shape{2, 3, 1, 4}},
+	{0, 4, types.Shape{2, 3, 4, 1}},
+
+	{1, 0, types.Shape{2, 1, 3, 4}},
+	{1, 1, types.Shape{1, 2, 3, 4}},
+	{1, 2, types.Shape{1, 2, 3, 4}},
+	{1, 3, types.Shape{1, 3, 2, 4}},
+	{1, 4, types.Shape{1, 3, 4, 2}},
+
+	{2, 0, types.Shape{3, 1, 2, 4}},
+	{2, 1, types.Shape{1, 3, 2, 4}},
+	{2, 2, types.Shape{1, 2, 3, 4}},
+	{2, 3, types.Shape{1, 2, 3, 4}},
+	{2, 4, types.Shape{1, 2, 4, 3}},
+
+	{3, 0, types.Shape{4, 1, 2, 3}},
+	{3, 1, types.Shape{1, 4, 2, 3}},
+	{3, 2, types.Shape{1, 2, 4, 3}},
+	{3, 3, types.Shape{1, 2, 3, 4}},
+	{3, 4, types.Shape{1, 2, 3, 4}},
+}
+
+// The RollAxis tests are directly adapted from Numpy's test cases.
+func TestTensor_Rollaxis(t *testing.T) {
+	assert := assert.New(t)
+	var T *Tensor
+	var err error
+
+	for _, rats := range rollaxistests {
+		T = NewTensor(WithShape(1, 2, 3, 4))
+		if _, err = T.RollAxis(rats.axis, rats.start, false); assert.NoError(err) {
+			assert.True(rats.correctShape.Eq(T.Shape()), "%d %d Expected %v, got %v", rats.axis, rats.start, rats.correctShape, T.Shape())
+		}
+	}
+}
