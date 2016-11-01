@@ -11,6 +11,7 @@ var normtests = []struct {
 	val   float64
 	valid bool
 }{
+	{float64(UnorderedNorm()), true},
 	{float64(FrobeniusNorm()), true},
 	{float64(NuclearNorm()), true},
 	{float64(InfNorm()), true},
@@ -20,9 +21,9 @@ var normtests = []struct {
 	{-1.0, true},
 	{3.14, false},
 	{-3.14, false},
-	{math.Float64frombits(0x7ff8000000000003), false},
-	{math.Float64frombits(0x7ff8000000000003), false},
-	{math.Float64frombits(0x7ff8000000000003), false},
+	{math.Float64frombits(0x7ff8000000000004), false},
+	{math.Float64frombits(0x7ff8000000000004), false},
+	{math.Float64frombits(0x7ff8000000000004), false},
 }
 
 func TestNorms(t *testing.T) {
