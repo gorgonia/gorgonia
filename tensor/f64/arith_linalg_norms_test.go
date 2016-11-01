@@ -216,7 +216,66 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		types.Norm(2),
 	}
 
+	axeses := [][]int{
+		{0, 0},
+		{0, 1},
+		{0, 2},
+		{1, 0},
+		{1, 1},
+		{1, 2},
+		{2, 0},
+		{2, 1},
+		{2, 2},
+	}
+
 	backing = RangeFloat64(1, 25)
 	T = NewTensor(WithShape(2, 3, 4), WithBacking(backing))
+
+	dims := T.Opdims()
+	for _, ord := range ords {
+		for _, axes := range axeses {
+			rowAxis := axes[0]
+			colAxis := axes[1]
+
+			if rowAxis < 0 {
+				rowAxis += dims
+			}
+			if colAxis < 0 {
+				colAxis += dims
+			}
+
+			if rowAxis == colAxis {
+
+			} else {
+				kthIndex := dims - (rowAxis + colAxis)
+				var expecteds []*Tensor
+
+				for k := 0; k < T.Shape()[kthIndex]; k++ {
+					var slices []types.Slice
+					for s := 0; s < kthIndex; s++ {
+						slices = append(slices, nil)
+					}
+					slices = append(slices, ss(k))
+					sliced, _ = T.Slice(slices...)
+					if rowAxis > colAxis {
+						sliced.T()
+					}
+					sliced = sliced.Materialize().(*Tensor)
+					expected, _ = sliced.Norm(ord)
+					expecteds = append(expecteds, expected)
+				}
+
+				if retVal, err = T.Norm(ord, rowAxis, colAxis); err != nil {
+					t.Error(err)
+					continue
+				}
+
+				for i, e := range expecteds {
+					sliced, _ = retVal.Slice(ss(i))
+					assert.Equal(e.data, sliced.data, "ord %v, rowAxis: %v, colAxis %v", ord, rowAxis, colAxis)
+				}
+			}
+		}
+	}
 
 }

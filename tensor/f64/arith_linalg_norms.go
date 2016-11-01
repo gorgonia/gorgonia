@@ -20,10 +20,38 @@ func (t *Tensor) multiSVDNorm(rowAxis, colAxis int) (retVal *Tensor, err error) 
 		return
 	}
 
-	retVal, _, _, err = retVal.SVD(false, false)
+	// manual, since SVD only works on matrices. In the future, this needs to be fixed when gonum's lapack works for float32
+	// TODO: SVDFuture
+	switch dims {
+	case 2:
+		retVal, _, _, err = retVal.SVD(false, false)
+	case 3:
+		toStack := make([]*Tensor, retVal.Shape()[0])
+		for i := 0; i < retVal.Shape()[0]; i++ {
+			var sliced, ithS *Tensor
+			if sliced, err = retVal.Slice(ss(i)); err != nil {
+				return
+			}
+
+			if ithS, _, _, err = sliced.SVD(false, false); err != nil {
+				return
+			}
+
+			toStack[i] = ithS
+		}
+
+		retVal, err = toStack[0].Stack(0, toStack[1:]...)
+		return
+	default:
+		err = notyetimplemented("multiSVDNorm for dimensions greater than 3")
+	}
+
 	return
 }
 
+// Norm returns the p-ordered norm of the *Tensor, given the axes.
+//
+// This implementation is directly adapted from Numpy, which is licenced under a BSD-like licence, and can be found here: https://docs.scipy.org/doc/numpy-1.9.1/license.html
 func (t *Tensor) Norm(ord types.NormOrder, axes ...int) (retVal *Tensor, err error) {
 	dims := t.Opdims()
 
@@ -107,87 +135,89 @@ func (t *Tensor) Norm(ord types.NormOrder, axes ...int) (retVal *Tensor, err err
 			return
 		}
 	case 2:
-		rowAx := axes[0]
-		colAx := axes[1]
+		rowAxis := axes[0]
+		colAxis := axes[1]
 
-		if rowAx < 0 {
-			// no negative indexing. error
+		// checks
+		if rowAxis < 0 {
+			err = types.NewError(types.IndexError, "Row Axis %d is < 0", rowAxis)
+			return
 		}
-		if colAx < 0 {
-			// no negative indexing. error
+		if colAxis < 0 {
+			err = types.NewError(types.IndexError, "Col Axis %d is < 0", colAxis)
+			return
 		}
 
-		if rowAx == colAx {
-			// duplicate axes given, error
+		if rowAxis == colAxis {
+			err = types.NewError(types.AxisError, "Duplicate axes found. Row Axis: %d, Col Axis %d", rowAxis, colAxis)
+			return
 		}
 
 		cloned := t.Clone()
 		switch {
 		case ord == types.Norm(2):
 			// svd norm
-			if retVal, err = t.multiSVDNorm(rowAx, colAx); err != nil {
+			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
 				return
 			}
-			return retVal.Max(len(t.Shape()) - 1)
-
-			// return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
+			dims := retVal.Opdims()
+			return retVal.Max(dims - 1)
 		case ord == types.Norm(-2):
 			// svd norm
-			if retVal, err = t.multiSVDNorm(rowAx, colAx); err != nil {
+			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
 				return
 			}
-			return retVal.Min(len(t.Shape()) - 1)
-
-			// return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
+			dims := retVal.Opdims()
+			return retVal.Min(dims - 1)
 		case ord == types.Norm(1):
-			if colAx > rowAx {
-				colAx--
+			if colAxis > rowAxis {
+				colAxis--
 			}
 			if retVal, err = cloned.Apply(math.Abs); err != nil {
 				return
 			}
-			if retVal, err = retVal.Sum(rowAx); err != nil {
+			if retVal, err = retVal.Sum(rowAxis); err != nil {
 				return
 			}
-			return retVal.Max(colAx)
+			return retVal.Max(colAxis)
 		case ord == types.Norm(-1):
-			if colAx > rowAx {
-				colAx--
+			if colAxis > rowAxis {
+				colAxis--
 			}
 			if retVal, err = cloned.Apply(math.Abs); err != nil {
 				return
 			}
-			if retVal, err = retVal.Sum(rowAx); err != nil {
+			if retVal, err = retVal.Sum(rowAxis); err != nil {
 				return
 			}
-			return retVal.Min(colAx)
+			return retVal.Min(colAxis)
 		case ord == types.Norm(0):
 			err = types.NewError(types.OpError, "Norm of order 0 undefined for matrices")
 			return
 
 		case ord.IsInf(1):
-			if rowAx > colAx {
-				rowAx--
+			if rowAxis > colAxis {
+				rowAxis--
 			}
 			if retVal, err = cloned.Apply(math.Abs); err != nil {
 				return
 			}
-			if retVal, err = retVal.Sum(colAx); err != nil {
+			if retVal, err = retVal.Sum(colAxis); err != nil {
 				return
 			}
-			return retVal.Max(rowAx)
+			return retVal.Max(rowAxis)
 		case ord.IsInf(-1):
-			if rowAx > colAx {
-				rowAx--
+			if rowAxis > colAxis {
+				rowAxis--
 			}
 			if retVal, err = cloned.Apply(math.Abs); err != nil {
 				return
 			}
-			if retVal, err = retVal.Sum(colAx); err != nil {
+			if retVal, err = retVal.Sum(colAxis); err != nil {
 				return
 			}
-			return retVal.Min(rowAx)
-		case ord.IsFrobenius():
+			return retVal.Min(rowAxis)
+		case ord.IsUnordered() || ord.IsFrobenius():
 			if retVal, err = cloned.Apply(math.Abs); err != nil {
 				return
 			}
@@ -200,14 +230,12 @@ func (t *Tensor) Norm(ord types.NormOrder, axes ...int) (retVal *Tensor, err err
 			return Sqrt(retVal)
 		case ord.IsNuclear():
 			// svd norm
-			if retVal, err = t.multiSVDNorm(rowAx, colAx); err != nil {
+			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
 				return
 			}
 			return retVal.Sum(len(t.Shape()) - 1)
-			// return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
 		case ord == types.Norm(0):
-			// NaN because it's undefined
-			retVal = NewTensor(AsScalar(math.NaN()))
+			err = types.NewError(types.OpError, "Norm order 0 undefined for matrices")
 			return
 		default:
 			return nil, notyetimplemented("Axes %v, ord %v", axes, ord)
