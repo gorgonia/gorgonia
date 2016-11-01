@@ -151,6 +151,7 @@ func (t *Tensor) UT() {
 	}
 }
 
+// SafeT is exactly like T(), except it returns a new *Tensor. The data is also copied over, unmoved.
 func (t *Tensor) SafeT(axes ...int) (retVal *Tensor, err error) {
 	var transform *types.AP
 	if transform, axes, err = t.AP.T(axes...); err != nil {
@@ -247,43 +248,6 @@ func (t *Tensor) Transpose() {
 
 	t.setShape(expShape...)
 	t.sanity()
-}
-
-// returns the new index given the old index
-func (t *Tensor) transposeIndex(i int, transposePat, strides []int) int {
-	oldCoord, err := types.Itol(i, t.oshape(), t.ostrides())
-	if err != nil {
-		panic(err)
-	}
-
-	/*
-		coordss, _ := types.Permute(transposePat, oldCoord)
-		coords := coordss[0]
-		expShape := t.Shape()
-		index, _ := types.Ltoi(expShape, strides, coords...)
-	*/
-
-	// The above is the "conceptual" algorithm.
-	// Too many checks above slows things down, so the below is the "optimized" edition
-	var index int
-	for i, axis := range transposePat {
-		index += oldCoord[axis] * strides[i]
-	}
-	return index
-}
-
-func (t *Tensor) transposeCoord(i int, transposePat []int) ([]int, []int) {
-	oldCoord, err := types.Itol(i, t.oshape(), t.ostrides())
-	if err != nil {
-		panic(err)
-	}
-
-	coordss, err := types.Permute(transposePat, oldCoord)
-	if err != nil {
-		panic(err)
-	}
-
-	return oldCoord, coordss[0]
 }
 
 func (t *Tensor) At(coords ...int) float64 {
@@ -446,45 +410,6 @@ func (t *Tensor) Slice(slices ...types.Slice) (view *Tensor, err error) {
 	return
 }
 
-/* Private Methods */
-
-// at returns the index at which the coordinate is refering to.
-// This function encapsulates the addressing of elements in a contiguous block.
-// For a 2D ndarray, ndarray.at(i,j) is
-//		at = ndarray.strides[0]*i + ndarray.strides[1]*j
-// This is of course, extensible to any number of dimensions.
-func (t *Tensor) at(coords ...int) (at int, err error) {
-	return types.Ltoi(t.Shape(), t.Strides(), coords...)
-}
-
-// iToCoord is the inverse function of at().
-func (t *Tensor) itol(i int) (coords []int, err error) {
-	var oShape types.Shape
-	var oStrides []int
-
-	if t.old != nil {
-		oShape = t.old.Shape()
-		oStrides = t.old.Strides()
-	} else {
-		oShape = t.Shape()
-		oStrides = t.Strides()
-	}
-
-	// use the original shape, permute the coordinates later
-	if coords, err = types.Itol(i, oShape, oStrides); err != nil {
-		err = errors.Wrapf(err, "Failed to do Itol with i: %d, oShape: %v; oStrides: %v", i, oShape, oStrides)
-		return
-	}
-
-	if t.transposeWith != nil {
-		var res [][]int
-		if res, err = types.Permute(t.transposeWith, coords); err == nil {
-			coords = res[0]
-		}
-	}
-	return
-}
-
 // Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
 func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 	// check that all tensors to be concatenated have the same number of dimensions
@@ -524,16 +449,7 @@ func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 		aps[i+1] = T.AP
 	}
 
-	// newStrides = types.BorrowInts(dims)
-	// strideperms := types.SortedMultiStridePerm(dims, aps)
-	// s := 1
-	// for d := dims - 1; d >= 0; d-- {
-	// 	perm := strideperms[d]
-	// 	newStrides[perm] = s
-	// 	s *= newShape[perm]
-	// }
 	newStrides = newShape.CalcStrides()
-
 	data := make([]float64, newShape.TotalSize())
 
 	retVal = new(Tensor)
@@ -607,6 +523,68 @@ func (t *Tensor) Stack(axis int, others ...*Tensor) (retVal *Tensor, err error) 
 	retVal = new(Tensor)
 	retVal.AP = ap
 	retVal.data = data
+	return
+}
+
+/* Private Methods */
+
+// returns the new index given the old index
+func (t *Tensor) transposeIndex(i int, transposePat, strides []int) int {
+	oldCoord, err := types.Itol(i, t.oshape(), t.ostrides())
+	if err != nil {
+		panic(err)
+	}
+
+	/*
+		coordss, _ := types.Permute(transposePat, oldCoord)
+		coords := coordss[0]
+		expShape := t.Shape()
+		index, _ := types.Ltoi(expShape, strides, coords...)
+	*/
+
+	// The above is the "conceptual" algorithm.
+	// Too many checks above slows things down, so the below is the "optimized" edition
+	var index int
+	for i, axis := range transposePat {
+		index += oldCoord[axis] * strides[i]
+	}
+	return index
+}
+
+// at returns the index at which the coordinate is refering to.
+// This function encapsulates the addressing of elements in a contiguous block.
+// For a 2D ndarray, ndarray.at(i,j) is
+//		at = ndarray.strides[0]*i + ndarray.strides[1]*j
+// This is of course, extensible to any number of dimensions.
+func (t *Tensor) at(coords ...int) (at int, err error) {
+	return types.Ltoi(t.Shape(), t.Strides(), coords...)
+}
+
+// iToCoord is the inverse function of at().
+func (t *Tensor) itol(i int) (coords []int, err error) {
+	var oShape types.Shape
+	var oStrides []int
+
+	if t.old != nil {
+		oShape = t.old.Shape()
+		oStrides = t.old.Strides()
+	} else {
+		oShape = t.Shape()
+		oStrides = t.Strides()
+	}
+
+	// use the original shape, permute the coordinates later
+	if coords, err = types.Itol(i, oShape, oStrides); err != nil {
+		err = errors.Wrapf(err, "Failed to do Itol with i: %d, oShape: %v; oStrides: %v", i, oShape, oStrides)
+		return
+	}
+
+	if t.transposeWith != nil {
+		var res [][]int
+		if res, err = types.Permute(t.transposeWith, coords); err == nil {
+			coords = res[0]
+		}
+	}
 	return
 }
 
