@@ -34,16 +34,10 @@ var generates = map[string]string{
 var manualcopy = []string{
 	"format.go",
 	"format_test.go",
-}
-
-var allignores = []string{
 	"compat.go",
 	"compat_test.go",
 	"io.go",
 	"io_test.go",
-
-	"matrix.go",
-	"matrix_test.go",
 }
 
 var boolignores = []string{
@@ -180,14 +174,15 @@ var replacements = map[string]map[string]string{
 	},
 	"float32": map[string]string{
 		// general
-		"math.IsNaN(": "math32.IsNaN(",
-		"math.IsInf(": "math32.IsInf(",
-		"math.Pow(":   "math32.Pow(",
-		"math.Mod(":   "math32.Mod(",
-		"math.Sqrt(":  "math32.Sqrt(",
-		"math.Inf(":   "math32.Inf(",
-		"math.NaN()":  "math32.NaN()",
-		"math.Abs":    "math32.Abs",
+		"math.IsNaN":   "math32.IsNaN",
+		"math.IsInf":   "math32.IsInf",
+		"math.Pow":     "math32.Pow",
+		"math.Mod":     "math32.Mod",
+		"math.Sqrt":    "math32.Sqrt",
+		"math.Inf":     "math32.Inf",
+		"math.NaN()":   "math32.NaN()",
+		"math.Abs":     "math32.Abs",
+		"math.Signbit": "math32.Signbit",
 
 		// utils.go
 		"r[i] = rand.NormFloat32()": "r[i] = float32(rand.NormFloat64())",
@@ -199,8 +194,23 @@ var replacements = map[string]map[string]string{
 		"Dger":       "Sger",
 		"blas64.Use": "blas32.Use",
 
+		// svd
+		"ToMat64(t, false)":     "ToMat64(t)",
+		"ToMat64(T, false)":     "ToMat64(T)", // in tests
+		"ToMat64(T, true)":      "ToMat64(T)", // in tests
+		"FromMat64(&um, false)": "FromMat64(&um)",
+		"FromMat64(&vm, false)": "FromMat64(&vm)",
+		"svd.Values(s.data)": `values := svd.Values(nil)
+	s.data = fromFloat64s(values, s.data)`,
+		"!sliceApprox(s.data, svd.Values(nil)": "!sliceApprox(s.data, fromFloat64s(svd.Values(nil), nil)",
+
 		// Flags stuff
 		"AsTensorF64": "AsTensorF32",
+
+		// test tolerances
+		"tolerance(a, b, 1e-8)":  "tolerance(a, b, 1e-6)",
+		"tolerance(a, b, 1e-14)": "tolerance(a, b, 1e-8)",
+		"tolerance(a, b, 4e-16)": "tolerance(a, b, 4e-10)",
 	},
 }
 
@@ -227,16 +237,13 @@ func includes(t string) (retVal []string) {
 func ignores(t string) (retVal []string) {
 	switch t {
 	case "bool":
-		retVal = append(retVal, allignores...)
 		retVal = append(retVal, manualcopy...)
 		retVal = append(retVal, boolignores...)
 	case "int":
-		retVal = append(retVal, allignores...)
 		retVal = append(retVal, manualcopy...)
 		retVal = append(retVal, intignores...)
 		retVal = append(retVal, linalgs...)
 	case "float32":
-		retVal = append(retVal, allignores...)
 		retVal = append(retVal, manualcopy...)
 	}
 	return
@@ -333,7 +340,7 @@ func walk(dir string, info os.FileInfo, _ error) (err error) {
 		return nil
 	}
 
-	if matchedLinalg, err = filpath.Match("*linalg*.go", info, Name()); err == nil && matchedLinalg {
+	if matchedLinalg, err = filepath.Match("*linalg*.go", info.Name()); err == nil && matchedLinalg {
 		linalgs = append(linalgs, fn)
 		return nil
 	}
@@ -391,5 +398,11 @@ func main() {
 		}
 		pasta(t)
 
+		for _, f := range manualcopy {
+			manualcopiedname := fmt.Sprintf("../%s/%s", short, f)
+			if _, err := os.Stat(manualcopiedname); os.IsNotExist(err) {
+				log.Printf("%v should exist", manualcopiedname)
+			}
+		}
 	}
 }

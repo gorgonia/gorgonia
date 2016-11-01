@@ -25,22 +25,37 @@ func toFloat64s(data []float32) (retVal []float64) {
 	return
 }
 
+func fromFloat64s(data []float64, r []float32) (retVal []float32) {
+	if r == nil {
+		retVal = make([]float32, len(data))
+	} else {
+		if len(r) != len(data) {
+			panic("Differing lengths!")
+		}
+
+		retVal = r
+	}
+
+	for i, v := range data {
+		switch {
+		case math.IsNaN(v):
+			retVal[i] = math32.NaN()
+		case math.IsInf(v, 1):
+			retVal[i] = math32.Inf(1)
+		case math.IsInf(v, -1):
+			retVal[i] = math32.Inf(-1)
+		default:
+			retVal[i] = float32(v)
+		}
+	}
+	return
+}
+
 func FromMat64(m *mat64.Dense) *Tensor {
 	r, c := m.Dims()
 
 	backing := make([]float32, len(m.RawMatrix().Data))
-	for i, v := range m.RawMatrix().Data {
-		switch {
-		case math.IsNaN(v):
-			backing[i] = math32.NaN()
-		case math.IsInf(v, 1):
-			backing[i] = math32.Inf(1)
-		case math.IsInf(v, -1):
-			backing[i] = math32.Inf(-1)
-		default:
-			backing[i] = float32(v)
-		}
-	}
+	backing = fromFloat64s(m.RawMatrix().Data, backing)
 
 	return NewTensor(WithBacking(backing), WithShape(r, c))
 }
