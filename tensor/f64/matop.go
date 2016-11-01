@@ -410,6 +410,51 @@ func (t *Tensor) Slice(slices ...types.Slice) (view *Tensor, err error) {
 	return
 }
 
+// RollAxis rolls the axis backwards until it lies in the given position.
+//
+// This method was adapted from Numpy's Rollaxis. The licence for Numpy is a BSD-like licence and can be found here: https://github.com/numpy/numpy/blob/master/LICENSE.txt
+//
+// As a result of being adapted from Numpy, the quirks are also adapted. A good guide reducing the confusion around rollaxis can be found here: http://stackoverflow.com/questions/29891583/reason-why-numpy-rollaxis-is-so-confusing (see answer by hpaulj)
+func (t *Tensor) RollAxis(axis, start int, safe bool) (retVal *Tensor, err error) {
+	dims := t.Opdims()
+
+	if !(axis >= 0 && axis < dims) {
+		err = types.NewError(types.OpError, "rollaxis cannot be completed. Axis(%d) must be >= 0 and < %d", axis, dims)
+		return
+	}
+
+	if !(start >= 0 && start <= dims) {
+		err = types.NewError(types.OpError, "rollaxis cannot be completed. Start(%d) must be >= 0 and <= %d", start, dims)
+		return
+	}
+
+	if axis < start {
+		start--
+	}
+
+	if axis == start {
+		retVal = t
+		return
+	}
+
+	axes := types.BorrowInts(dims)
+	defer types.ReturnInts(axes)
+
+	for i := 0; i < dims; i++ {
+		axes[i] = i
+	}
+	copy(axes[axis:], axes[axis+1:])
+	copy(axes[start+1:], axes[start:])
+	axes[start] = axis
+
+	if safe {
+		return t.SafeT(axes...)
+	}
+	err = t.T(axes...)
+	retVal = t
+	return
+}
+
 // Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
 func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 	// check that all tensors to be concatenated have the same number of dimensions
