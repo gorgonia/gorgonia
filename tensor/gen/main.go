@@ -20,6 +20,7 @@ var verbose = flag.Bool("v", false, "verbose")
 
 var arithables []string
 var matop []string
+var linalgs []string
 var cmp []string
 var asm []string
 
@@ -216,6 +217,7 @@ func includes(t string) (retVal []string) {
 	case "float32":
 		retVal = append(retVal, matop...)
 		retVal = append(retVal, arithables...)
+		retVal = append(retVal, linalgs...)
 		retVal = append(retVal, cmp...)
 		// case "byte":
 	}
@@ -232,6 +234,7 @@ func ignores(t string) (retVal []string) {
 		retVal = append(retVal, allignores...)
 		retVal = append(retVal, manualcopy...)
 		retVal = append(retVal, intignores...)
+		retVal = append(retVal, linalgs...)
 	case "float32":
 		retVal = append(retVal, allignores...)
 		retVal = append(retVal, manualcopy...)
@@ -324,9 +327,14 @@ func walk(dir string, info os.FileInfo, _ error) (err error) {
 	}
 
 	fn := path.Base(dir)
-	var matchedasm, matchedArith, matchedCmp, matchedGo bool
+	var matchedasm, matchedArith, matchedLinalg, matchedCmp, matchedGo bool
 	if matchedasm, err = filepath.Match("*asm*", info.Name()); err == nil && matchedasm {
 		asm = append(asm, fn)
+		return nil
+	}
+
+	if matchedLinalg, err = filpath.Match("*linalg*.go", info, Name()); err == nil && matchedLinalg {
+		linalgs = append(linalgs, fn)
 		return nil
 	}
 
