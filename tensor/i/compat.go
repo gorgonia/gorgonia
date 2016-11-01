@@ -31,6 +31,9 @@ func toBools(data []int) (retVal []bool) {
 	return
 }
 
+// FromMat64 converts a *"gonum/matrix/mat64".Dense into a *tensorf64.Tensor.
+//
+// Special cases of Inf, -Inf and NaN() are unhandled, and will be returned as the values that int(math.NaN()) or int(math.Inf(1)) or int(math.Inf(-1)) returns
 func FromMat64(m *mat64.Dense) *Tensor {
 	r, c := m.Dims()
 
@@ -42,25 +45,20 @@ func FromMat64(m *mat64.Dense) *Tensor {
 	return NewTensor(WithBacking(backing), WithShape(r, c))
 }
 
+// ToMat64 converts a *Tensor to a "gonum/matrix/mat64".Dense. All values are converted from int to float64
+//
+// Does not work on IsMaterializable() *Tensors yet
 func ToMat64(t *Tensor) (retVal *mat64.Dense, err error) {
-	// fix dims
-	var r, c int
-	switch t.Dims() {
-	case 2:
-		r = t.Shape()[0]
-		c = t.Shape()[1]
-	case 1:
-		if t.Shape().IsColVec() {
-			r = t.Shape()[0]
-			c = 1
-		} else {
-			r = 1
-			c = t.Shape()[1]
-		}
-	default:
-		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions", t.Dims())
+	// checks:
+	if !t.IsMatrix() {
+		// error
+		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Opdims(), t.Shape())
 		return
 	}
+
+	// fix dims
+	r := t.Shape()[0]
+	c := t.Shape()[1]
 
 	data := toFloat64s(t.data)
 	retVal = mat64.NewDense(r, c, data)

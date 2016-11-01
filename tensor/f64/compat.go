@@ -5,6 +5,8 @@ import (
 	"github.com/gonum/matrix/mat64"
 )
 
+// FromMat64 converts a *"gonum/matrix/mat64".Dense into a *tensorf64.Tensor.
+// toCopy indicates if the values should be copied, otherwise it will share the same backing as the *mat64.Dense
 func FromMat64(m *mat64.Dense, toCopy bool) *Tensor {
 	r, c := m.Dims()
 
@@ -19,25 +21,21 @@ func FromMat64(m *mat64.Dense, toCopy bool) *Tensor {
 	return NewTensor(WithBacking(backing), WithShape(r, c))
 }
 
+// ToMat64 converts a *Tensor to a "gonum/matrix/mat64".Dense.
+// toCopy indicates if the values should be copied over, otherwise, the gonum matrix will share the same backing as the Tensor
+//
+// Does not work on IsMaterializable() *Tensors yet
 func ToMat64(t *Tensor, toCopy bool) (retVal *mat64.Dense, err error) {
-	// fix dims
-	var r, c int
-	switch t.Dims() {
-	case 2:
-		r = t.Shape()[0]
-		c = t.Shape()[1]
-	case 1:
-		if t.Shape().IsColVec() {
-			r = t.Shape()[0]
-			c = 1
-		} else {
-			r = 1
-			c = t.Shape()[1]
-		}
-	default:
-		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions", t.Dims())
+	// checks:
+	if !t.IsMatrix() {
+		// error
+		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Opdims(), t.Shape())
 		return
 	}
+
+	// fix dims
+	r := t.Shape()[0]
+	c := t.Shape()[1]
 
 	var data []float64
 	if toCopy {
