@@ -103,9 +103,9 @@ func (ap *AP) IsScalar() bool {
 	return ap.dims == 0 || (len(ap.shape) == 1 && ap.shape[0] == 1)
 }
 
-// IsMatrix returns true if it's a matrix. This is mostly a convenience method
+// IsMatrix returns true if it's a matrix. This is mostly a convenience method. RowVec and ColVecs are also considered matrices
 func (ap *AP) IsMatrix() bool {
-	return ap.dims == 2
+	return len(ap.shape) == 2
 }
 
 // Clone clones the *AP. Clearly.

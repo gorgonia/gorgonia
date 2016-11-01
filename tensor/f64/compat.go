@@ -20,24 +20,16 @@ func FromMat64(m *mat64.Dense, toCopy bool) *Tensor {
 }
 
 func ToMat64(t *Tensor, toCopy bool) (retVal *mat64.Dense, err error) {
-	// fix dims
-	var r, c int
-	switch t.Dims() {
-	case 2:
-		r = t.Shape()[0]
-		c = t.Shape()[1]
-	case 1:
-		if t.Shape().IsColVec() {
-			r = t.Shape()[0]
-			c = 1
-		} else {
-			r = 1
-			c = t.Shape()[1]
-		}
-	default:
-		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions", t.Dims())
+	// checks:
+	if !t.IsMatrix() {
+		// error
+		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Opdims(), t.Shape())
 		return
 	}
+
+	// fix dims
+	r := t.Shape()[0]
+	c := t.Shape()[1]
 
 	var data []float64
 	if toCopy {

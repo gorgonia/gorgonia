@@ -39,8 +39,7 @@ func TestToMat64(t *testing.T) {
 	backing = RangeFloat64(0, 6)
 
 	T = NewTensor(WithShape(2, 3), WithBacking(backing))
-	m, err = ToMat64(T, true)
-	if err != nil {
+	if m, err = ToMat64(T, true); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,6 +50,28 @@ func TestToMat64(t *testing.T) {
 	backing[0] = 0
 	m, err = ToMat64(T, false)
 	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(backing, m.RawMatrix().Data)
+	backing[0] = 1000
+	assert.Equal(backing, m.RawMatrix().Data)
+
+	// test cols
+
+	// rowVec
+	backing = []float64{0, 1}
+	T = NewTensor(WithShape(2, 1), WithBacking(backing))
+	if m, err = ToMat64(T, false); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(backing, m.RawMatrix().Data)
+	backing[0] = 1000
+	assert.Equal(backing, m.RawMatrix().Data)
+
+	// colVec
+	backing = []float64{0, 1}
+	T = NewTensor(WithShape(1, 2), WithBacking(backing))
+	if m, err = ToMat64(T, false); err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(backing, m.RawMatrix().Data)
