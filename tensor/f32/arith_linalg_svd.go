@@ -21,7 +21,10 @@ func (t *Tensor) SVD(uv, full bool) (s, u, v *Tensor, err error) {
 	var svd mat64.SVD
 	var ok bool
 
-	mat, err = ToMat64(t)
+	if mat, err = ToMat64(t); err != nil {
+		return
+	}
+
 	switch {
 	case full && uv:
 		ok = svd.Factorize(mat, matrix.SVDFull)

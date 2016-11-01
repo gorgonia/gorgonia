@@ -76,14 +76,16 @@ var replacements = map[string]map[string]string{
 		// matop.go - incr doesn't make sense for bool
 		`	case t.viewOf != nil && incr:
 		it := types.NewFlatIterator(t.AP)
-		var next int
+		var next, i int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			if _, noop := err.(NoOpError); err != nil && !noop {
 				return
 			}
 
-			res[next] += fn(t.data[next])
-		}`: "",
+			res[i] += fn(t.data[next])
+			i++
+		}
+		err = nil`: "",
 		`	case t.viewOf == nil && incr:
 		for i, v := range t.data {
 			res[i] += fn(v)
