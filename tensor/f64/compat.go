@@ -38,11 +38,23 @@ func ToMat64(t *Tensor, toCopy bool) (retVal *mat64.Dense, err error) {
 	c := t.Shape()[1]
 
 	var data []float64
-	if toCopy {
+
+	switch {
+	case toCopy && !t.IsMaterializable():
 		data = make([]float64, len(t.data))
 		copy(data, t.data)
-	} else {
+	case !t.IsMaterializable():
 		data = t.data
+	default:
+		it := types.NewFlatIterator(t.AP)
+		var next int
+		for next, err = it.Next(); err == nil; next, err = it.Next() {
+			if _, noop := err.(NoOpError); err != nil && !noop {
+				return
+			}
+			data = append(data, float64(t.data[next]))
+		}
+		err = nil
 	}
 
 	retVal = mat64.NewDense(r, c, data)

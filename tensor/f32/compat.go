@@ -63,8 +63,6 @@ func FromMat64(m *mat64.Dense) *Tensor {
 
 // ToMat64 converts a *Tensor to a *"gonum/matrix/mat64".Dense. All the values are converted into float64s.
 // This function will only convert matrices. Anything *Tensor with dimensions larger than 2 will cause an error.
-//
-// Does not work on IsMaterializable() *Tensors yet
 func ToMat64(t *Tensor) (retVal *mat64.Dense, err error) {
 	// checks:
 	if !t.IsMatrix() {
@@ -77,7 +75,20 @@ func ToMat64(t *Tensor) (retVal *mat64.Dense, err error) {
 	r := t.Shape()[0]
 	c := t.Shape()[1]
 
-	data := toFloat64s(t.data)
+	var data []float64
+	if !t.IsMaterializable() {
+		data = toFloat64s(t.data)
+	} else {
+		it := types.NewFlatIterator(t.AP)
+		var next int
+		for next, err = it.Next(); err == nil; next, err = it.Next() {
+			if _, noop := err.(NoOpError); err != nil && !noop {
+				return
+			}
+			data = append(data, float64(t.data[next]))
+		}
+		err = nil
+	}
 	retVal = mat64.NewDense(r, c, data)
 	return
 }
