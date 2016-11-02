@@ -306,7 +306,7 @@ func (op elemBinOp) ReturnsPtr() bool {
 }
 
 func (op elemBinOp) CallsExtern() bool { return false } // for now
-func (op elemBinOp) overwriteInput() int {
+func (op elemBinOp) OverwritesInput() int {
 	if _, ok := op.arg0.(*TensorType); ok {
 		return 0
 	}
@@ -487,7 +487,7 @@ func (op elemUnaryOp) ReturnsPtr() bool {
 	return false
 }
 
-func (op elemUnaryOp) overwriteInput() int {
+func (op elemUnaryOp) OverwritesInput() int {
 	if op.argTensor {
 		return 0
 	}
@@ -663,7 +663,7 @@ func (op linAlgBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
 func (op linAlgBinOp) ReturnsPtr() bool                             { return true }
-func (op linAlgBinOp) overwriteInput() int                          { return -1 }
+func (op linAlgBinOp) OverwritesInput() int                         { return -1 }
 func (op linAlgBinOp) CallsExtern() bool {
 	if op.āBinaryOperator != vecDotOperator {
 		return true

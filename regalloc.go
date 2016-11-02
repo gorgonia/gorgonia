@@ -297,7 +297,7 @@ func (ra *regalloc) alloc(sorted Nodes, df *dataflow) {
 					}
 				}
 
-				overwrites := node.op.overwriteInput()
+				overwrites := node.op.OverwritesInput()
 				if overwrites >= 0 {
 					overwrittenIsLive := reads[overwrites].liveAt(instructionID)
 					compileLogf("Overwrites : %v ", overwrites)

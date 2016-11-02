@@ -87,9 +87,9 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 	return nil, NewError(NotYetImplemented, "maxOp")
 }
 
-func (op maxOp) ReturnsPtr() bool    { return true }
-func (op maxOp) overwriteInput() int { return 0 }
-func (op maxOp) CallsExtern() bool   { return false }
+func (op maxOp) ReturnsPtr() bool     { return true }
+func (op maxOp) OverwritesInput() int { return 0 }
+func (op maxOp) CallsExtern() bool    { return false }
 
 func (op maxOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("max"))
@@ -322,9 +322,9 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sumOp) ReturnsPtr() bool    { return true }
-func (op sumOp) overwriteInput() int { return 0 }
-func (op sumOp) CallsExtern() bool   { return false }
+func (op sumOp) ReturnsPtr() bool     { return true }
+func (op sumOp) OverwritesInput() int { return 0 }
+func (op sumOp) CallsExtern() bool    { return false }
 
 func (op sumOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("sum"))

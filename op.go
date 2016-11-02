@@ -53,7 +53,7 @@ type Op interface {
 	// the IncrementOp would be a unary operator, and assuming we would like to overwrite the input,
 	// the retVal of overwriteInput() will be 0 (inputs[0]).
 	// -1 is returned if overwriting of input is disallowed
-	overwriteInput() int
+	OverwritesInput() int
 
 	/* Other methods */
 	WriteHash(h hash.Hash)
@@ -127,7 +127,7 @@ type constantScalar struct {
 func (c constantScalar) Type() Type                                 { return c.v.Type() }
 func (c constantScalar) ReturnsPtr() bool                           { return false }
 func (c constantScalar) CallsExtern() bool                          { return false }
-func (c constantScalar) overwriteInput() int                        { return -1 }
+func (c constantScalar) OverwritesInput() int                       { return -1 }
 func (c constantScalar) DiffWRT(i int) []bool                       { return nil }
 func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
 
@@ -164,7 +164,7 @@ func (c constantTensor) Type() Type { return c.v.Type() }
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
 // constants should return value but for the sake of memory, we're going to return pointers
 func (c constantTensor) ReturnsPtr() bool                               { return true }
-func (c constantTensor) overwriteInput() int                            { return -1 }
+func (c constantTensor) OverwritesInput() int                           { return -1 }
 func (c constantTensor) CallsExtern() bool                              { return false }
 func (c constantTensor) DiffWRT(i int) []bool                           { return nil }
 func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nil }

@@ -32,9 +32,9 @@ func (op atOp) Type() Type {
 	return newFunctionType(tt, a)
 }
 
-func (op atOp) ReturnsPtr() bool    { return false }
-func (op atOp) overwriteInput() int { return -1 }
-func (op atOp) CallsExtern() bool   { return false }
+func (op atOp) ReturnsPtr() bool     { return false }
+func (op atOp) OverwritesInput() int { return -1 }
+func (op atOp) CallsExtern() bool    { return false }
 
 func (op atOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	if len(inputs) < 1 {
@@ -101,7 +101,7 @@ func (op sizeOp) Type() Type {
 }
 
 func (op sizeOp) ReturnsPtr() bool                               { return false }
-func (op sizeOp) overwriteInput() int                            { return -1 }
+func (op sizeOp) OverwritesInput() int                           { return -1 }
 func (op sizeOp) CallsExtern() bool                              { return false }
 func (op sizeOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO: return error
 func (op sizeOp) DiffWRT(i int) []bool                           { return []bool{false} }
@@ -237,9 +237,9 @@ func (op repeatOp) Type() Type {
 	return newFunctionType(ft...)
 }
 
-func (op repeatOp) ReturnsPtr() bool    { return true }
-func (op repeatOp) overwriteInput() int { return -1 }
-func (op repeatOp) CallsExtern() bool   { return false }
+func (op repeatOp) ReturnsPtr() bool     { return true }
+func (op repeatOp) OverwritesInput() int { return -1 }
+func (op repeatOp) CallsExtern() bool    { return false }
 
 func (op repeatOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	if len(inputs) < 2 {
@@ -637,9 +637,9 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sliceOp) ReturnsPtr() bool    { return true }
-func (op sliceOp) CallsExtern() bool   { return false }
-func (op sliceOp) overwriteInput() int { return -1 }
+func (op sliceOp) ReturnsPtr() bool     { return true }
+func (op sliceOp) CallsExtern() bool    { return false }
+func (op sliceOp) OverwritesInput() int { return -1 }
 func (op sliceOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("slice"))
 	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
@@ -860,7 +860,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sliceIncrOp) overwriteInput() int { return 0 }
+func (op sliceIncrOp) OverwritesInput() int { return 0 }
 
 func (op sliceIncrOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("sliceIncr"))
@@ -1025,9 +1025,9 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	return anyToValue(ret)
 }
 
-func (op transposeOp) ReturnsPtr() bool    { return true }
-func (op transposeOp) CallsExtern() bool   { return false }
-func (op transposeOp) overwriteInput() int { return 0 }
+func (op transposeOp) ReturnsPtr() bool     { return true }
+func (op transposeOp) CallsExtern() bool    { return false }
+func (op transposeOp) OverwritesInput() int { return 0 }
 
 func (op transposeOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("transposeOp"))

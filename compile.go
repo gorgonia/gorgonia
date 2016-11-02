@@ -252,7 +252,7 @@ func codegen(inputs, sorted Nodes, df *dataflow) (prog *program, locationMap map
 
 				// check the overwrites - if the overwrite and the resulting register is the same,
 				// then use unsafe options when available
-				overwrites := node.op.overwriteInput()
+				overwrites := node.op.OverwritesInput()
 				if overwrites >= 0 {
 					compileLogf("Overwrites %d", overwrites)
 					overwritten := reads[overwrites]
@@ -309,7 +309,7 @@ func compileState(w io.Writer, g *ExprGraph, df *dataflow) {
 
 		if n.op != nil {
 			row[1] = fmt.Sprintf("%s", n.op)
-			overwrites := n.op.overwriteInput()
+			overwrites := n.op.OverwritesInput()
 			if overwrites >= 0 {
 				row[7] = fmt.Sprintf("%d", n.children[overwrites].ID())
 			}
