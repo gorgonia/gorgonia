@@ -87,7 +87,7 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 	return nil, NewError(NotYetImplemented, "maxOp")
 }
 
-func (op maxOp) returnsPtr() bool    { return true }
+func (op maxOp) ReturnsPtr() bool    { return true }
 func (op maxOp) overwriteInput() int { return 0 }
 func (op maxOp) callsExtern() bool   { return false }
 
@@ -322,7 +322,7 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sumOp) returnsPtr() bool    { return true }
+func (op sumOp) ReturnsPtr() bool    { return true }
 func (op sumOp) overwriteInput() int { return 0 }
 func (op sumOp) callsExtern() bool   { return false }
 

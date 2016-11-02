@@ -134,7 +134,7 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 	panic("Unreachable")
 }
 
-func (op randomOp) returnsPtr() bool    { return false }
+func (op randomOp) ReturnsPtr() bool    { return false }
 func (op randomOp) callsExtern() bool   { return false }
 func (op randomOp) overwriteInput() int { return -1 }
 func (op randomOp) WriteHash(h hash.Hash) {

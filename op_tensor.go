@@ -32,7 +32,7 @@ func (op atOp) Type() Type {
 	return newFunctionType(tt, a)
 }
 
-func (op atOp) returnsPtr() bool    { return false }
+func (op atOp) ReturnsPtr() bool    { return false }
 func (op atOp) overwriteInput() int { return -1 }
 func (op atOp) callsExtern() bool   { return false }
 
@@ -100,7 +100,7 @@ func (op sizeOp) Type() Type {
 	return newFunctionType(tt, a)
 }
 
-func (op sizeOp) returnsPtr() bool                               { return false }
+func (op sizeOp) ReturnsPtr() bool                               { return false }
 func (op sizeOp) overwriteInput() int                            { return -1 }
 func (op sizeOp) callsExtern() bool                              { return false }
 func (op sizeOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO: return error
@@ -237,7 +237,7 @@ func (op repeatOp) Type() Type {
 	return newFunctionType(ft...)
 }
 
-func (op repeatOp) returnsPtr() bool    { return true }
+func (op repeatOp) ReturnsPtr() bool    { return true }
 func (op repeatOp) overwriteInput() int { return -1 }
 func (op repeatOp) callsExtern() bool   { return false }
 
@@ -371,7 +371,7 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	add := newElemBinOp(addOpType, inputs[0], output)
 	d, err = add.UnsafeDo(xdv.d, d)
 
-	if !add.returnsPtr() || inputs[0].IsScalar() {
+	if !add.ReturnsPtr() || inputs[0].IsScalar() {
 		err = xdv.SetDeriv(d)
 	}
 
@@ -637,7 +637,7 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sliceOp) returnsPtr() bool    { return true }
+func (op sliceOp) ReturnsPtr() bool    { return true }
 func (op sliceOp) callsExtern() bool   { return false }
 func (op sliceOp) overwriteInput() int { return -1 }
 func (op sliceOp) WriteHash(h hash.Hash) {
@@ -1025,7 +1025,7 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	return anyToValue(ret)
 }
 
-func (op transposeOp) returnsPtr() bool    { return true }
+func (op transposeOp) ReturnsPtr() bool    { return true }
 func (op transposeOp) callsExtern() bool   { return false }
 func (op transposeOp) overwriteInput() int { return 0 }
 

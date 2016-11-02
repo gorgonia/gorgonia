@@ -295,7 +295,7 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	return
 }
 
-func (op elemBinOp) returnsPtr() bool {
+func (op elemBinOp) ReturnsPtr() bool {
 	if _, ok := op.arg0.(*TensorType); ok {
 		return true
 	} else if _, ok := op.arg1.(*TensorType); ok {
@@ -333,7 +333,7 @@ func (op elemBinOp) Hashcode() uint32 {
 
 // Fulfils UsePreallocDoer interface
 func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
-	if !op.returnsPtr() {
+	if !op.ReturnsPtr() {
 		return op.Do(inputs...)
 	}
 
@@ -346,7 +346,7 @@ func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value
 
 // Fulfils UnsafeDoer interface
 func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
-	if !op.returnsPtr() {
+	if !op.ReturnsPtr() {
 		return op.Do(inputs...)
 	}
 
@@ -359,7 +359,7 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 
 // Fulfils the IncrDoer interface
 func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
-	if !op.returnsPtr() {
+	if !op.ReturnsPtr() {
 		var retVal Value
 		if retVal, err = op.Do(inputs...); err != nil {
 			err = errors.Wrapf(err, doFail, op)
@@ -480,7 +480,7 @@ func (op elemUnaryOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
 
-func (op elemUnaryOp) returnsPtr() bool {
+func (op elemUnaryOp) ReturnsPtr() bool {
 	if op.argTensor {
 		return true
 	}
@@ -662,7 +662,7 @@ func (op linAlgBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
-func (op linAlgBinOp) returnsPtr() bool                             { return true }
+func (op linAlgBinOp) ReturnsPtr() bool                             { return true }
 func (op linAlgBinOp) overwriteInput() int                          { return -1 }
 func (op linAlgBinOp) callsExtern() bool {
 	if op.āBinaryOperator != vecDotOperator {

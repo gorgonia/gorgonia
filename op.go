@@ -41,7 +41,7 @@ type Op interface {
 
 	// indicates if the Op will return a pointer (allowing possible inplace edits) or by value
 	// if it's false, the return value of the Op will be a copy of its input
-	returnsPtr() bool
+	ReturnsPtr() bool
 
 	// Does this op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
 	callsExtern() bool
@@ -125,7 +125,7 @@ type constantScalar struct {
 }
 
 func (c constantScalar) Type() Type                                 { return c.v.Type() }
-func (c constantScalar) returnsPtr() bool                           { return false }
+func (c constantScalar) ReturnsPtr() bool                           { return false }
 func (c constantScalar) callsExtern() bool                          { return false }
 func (c constantScalar) overwriteInput() int                        { return -1 }
 func (c constantScalar) DiffWRT(i int) []bool                       { return nil }
@@ -163,7 +163,7 @@ func (c constantTensor) Type() Type { return c.v.Type() }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
 // constants should return value but for the sake of memory, we're going to return pointers
-func (c constantTensor) returnsPtr() bool                               { return true }
+func (c constantTensor) ReturnsPtr() bool                               { return true }
 func (c constantTensor) overwriteInput() int                            { return -1 }
 func (c constantTensor) callsExtern() bool                              { return false }
 func (c constantTensor) DiffWRT(i int) []bool                           { return nil }

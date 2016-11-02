@@ -319,7 +319,7 @@ func addDiff(x, y, z *Node) (err error) {
 		}
 	}
 
-	if !add.returnsPtr() || x.IsScalar() {
+	if !add.ReturnsPtr() || x.IsScalar() {
 		xdv.SetDeriv(d) // ignore sanity check error on purpose
 	}
 
@@ -336,7 +336,7 @@ func addDiff(x, y, z *Node) (err error) {
 			return
 		}
 	}
-	if !add.returnsPtr() || y.IsScalar() {
+	if !add.ReturnsPtr() || y.IsScalar() {
 		ydv.SetDeriv(d) // ignore errors on purpose
 	}
 
@@ -375,7 +375,7 @@ func subDiff(x, y, z *Node) (err error) {
 		}
 	}
 
-	if !sub.returnsPtr() || y.IsScalar() {
+	if !sub.ReturnsPtr() || y.IsScalar() {
 		ydv.SetDeriv(d) // ignore errors on purpose
 	}
 
@@ -392,7 +392,7 @@ func subDiff(x, y, z *Node) (err error) {
 		}
 	}
 
-	if !add.returnsPtr() || x.IsScalar() {
+	if !add.ReturnsPtr() || x.IsScalar() {
 		xdv.SetDeriv(d) // ignore errors on purpose
 	}
 
