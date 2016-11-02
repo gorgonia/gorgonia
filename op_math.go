@@ -382,7 +382,7 @@ func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 }
 
 // Fulfils the BinaryOp interface
-func (op elemBinOp) isBinary() bool { return true }
+func (op elemBinOp) IsBinary() bool { return true }
 
 /* ELEMENTWISE UNARY OP */
 
@@ -762,7 +762,7 @@ func (op linAlgBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Val
 }
 
 // fulfils BinaryOp
-func (op linAlgBinOp) isBinary() bool { return true }
+func (op linAlgBinOp) IsBinary() bool { return true }
 
 /* PRIVATE METHODS */
 

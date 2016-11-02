@@ -65,21 +65,21 @@ type Op interface {
 type UnaryOp interface {
 	Op
 
-	isUnary() bool
+	IsUnary() bool
 }
 
 // A BinaryOp is an Op that takes only two inputs
 type BinaryOp interface {
 	Op
 
-	isBinary() bool
+	IsBinary() bool
 }
 
 // A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
 type NoRetOp interface {
 	Op
 
-	returnsNothing() bool
+	ReturnsNothing() bool
 }
 
 // An AdOp is an Op that supports automatic differentiation.
