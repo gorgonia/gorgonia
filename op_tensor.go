@@ -23,6 +23,8 @@ type atOp struct {
 	d           int
 }
 
+func (op atOp) Arity() int { return 1 }
+
 // atOp has this type
 //		op :: Tensor a → a
 func (op atOp) Type() Type {
@@ -85,6 +87,8 @@ type sizeOp struct {
 	axis, d int
 	val     int // if we know ahead of time what the size is...
 }
+
+func (op sizeOp) Arity() int { return 1 }
 
 // sizeOp is a function with this type:
 //		sizeOp :: Tensor d a → a
@@ -201,6 +205,8 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 
 	return retVal
 }
+
+func (op repeatOp) Arity() int { return -1 }
 
 // repeat is an overload of three functions:
 //		repeat :: a → a → a → Tensor a
@@ -473,6 +479,8 @@ func newSliceOp(s types.Slice, along, d int) sliceOp {
 		d:     d,
 	}
 }
+
+func (op sliceOp) Arity() int { return 1 }
 
 // slicing a tensor value T[:] has type
 // 		slice :: Tensor a → Tensor a
@@ -914,6 +922,8 @@ type transposeOp struct {
 	pattern []int
 	d       int
 }
+
+func (op transposeOp) Arity() int { return 1 }
 
 // transposing a tensor has type
 // 		transpose :: Tensor a → Tensor a

@@ -23,6 +23,7 @@ type stmtOp interface {
 // However, it's implemented as a Op so that it can be counted for register allocation and liveness
 type letOp struct{}
 
+func (op letOp) Arity() int                                                      { return 0 }
 func (op letOp) Type() Type                                                      { return nil }
 func (op letOp) ReturnsPtr() bool                                                { return true }
 func (op letOp) OverwritesInput() int                                            { return 0 }
@@ -46,6 +47,7 @@ type readOp struct {
 	into *Value // no, it's not a mistake. It's a pointer to a Value (which is an interface{} type)
 }
 
+func (op readOp) Arity() int                                                      { return 0 }
 func (op readOp) Type() Type                                                      { return nil }
 func (op readOp) ReturnsPtr() bool                                                { return true }
 func (op readOp) OverwritesInput() int                                            { return 0 }

@@ -76,6 +76,8 @@ func newElemBinOp(ot ʘBinaryOperatorType, a, b *Node) elemBinOp {
 	return newEBOByType(ot, at, bt)
 }
 
+func (op elemBinOp) Arity() int { return 2 }
+
 // elemBinOp has either of these types:
 // 		elemBinOp :: (Floats a) ⇒ Tensor a → Tensor a → Tensor a
 // 		elemBinOp :: (Floats a) ⇒ Tensor a → a → Tensor a
@@ -415,6 +417,8 @@ func newElemUnaryOp(op ʘUnaryOperatorType, a *Node) elemUnaryOp {
 	}
 }
 
+func (op elemUnaryOp) Arity() int { return 1 }
+
 // all pointwise unary operations have this type:
 //		op :: (Arithable a) ⇒ a → a
 func (op elemUnaryOp) Type() Type {
@@ -581,6 +585,8 @@ type linAlgBinOp struct {
 	āBinaryOperator
 	transA, transB bool
 }
+
+func (op linAlgBinOp) Arity() int { return 2 }
 
 func (op linAlgBinOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)

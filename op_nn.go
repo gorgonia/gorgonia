@@ -47,6 +47,8 @@ func makeRandomOp(which randomness, dt Dtype, a, b float64, shape ...int) random
 	}
 }
 
+func (op randomOp) Arity() int { return 0 }
+
 // randomOp :: a
 // randomOp :: Tensor a
 func (op randomOp) Type() Type {

@@ -17,6 +17,9 @@ import (
 type Op interface {
 	/* Graph Building Related Methods */
 
+	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime
+	Arity() int
+
 	// Informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node
 	Type() Type
 
@@ -124,16 +127,16 @@ type constantScalar struct {
 	v Scalar
 }
 
-func (c constantScalar) Type() Type                                 { return c.v.Type() }
+func (c constantScalar) Arity() int { return 0 }
+func (c constantScalar) Type() Type { return c.v.Type() }
+func (c constantScalar) InferShape(Type, ...*Node) (types.Shape, error) {
+	return types.ScalarShape(), nil
+}
 func (c constantScalar) ReturnsPtr() bool                           { return false }
 func (c constantScalar) CallsExtern() bool                          { return false }
 func (c constantScalar) OverwritesInput() int                       { return -1 }
 func (c constantScalar) DiffWRT(i int) []bool                       { return nil }
 func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
-
-func (c constantScalar) InferShape(Type, ...*Node) (types.Shape, error) {
-	return types.ScalarShape(), nil
-}
 
 func (c constantScalar) Do(...Value) (Value, error) { return c.v, nil }
 func (c constantScalar) String() string             { return fmt.Sprintf("const %s", c.v) }
@@ -159,18 +162,19 @@ type constantTensor struct {
 	v Tensor
 }
 
-func (c constantTensor) Type() Type { return c.v.Type() }
+func (c constantTensor) Arity() int                                     { return 1 }
+func (c constantTensor) Type() Type                                     { return c.v.Type() }
+func (c constantTensor) InferShape(Type, ...*Node) (types.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
 // constants should return value but for the sake of memory, we're going to return pointers
-func (c constantTensor) ReturnsPtr() bool                               { return true }
-func (c constantTensor) OverwritesInput() int                           { return -1 }
-func (c constantTensor) CallsExtern() bool                              { return false }
-func (c constantTensor) DiffWRT(i int) []bool                           { return nil }
-func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nil }
-func (c constantTensor) InferShape(Type, ...*Node) (types.Shape, error) { return c.v.Shape(), nil }
-func (c constantTensor) Do(...Value) (Value, error)                     { return c.v, nil }
-func (c constantTensor) String() string                                 { return fmt.Sprintf("const %s", c.v.Type()) }
+func (c constantTensor) ReturnsPtr() bool                           { return true }
+func (c constantTensor) OverwritesInput() int                       { return -1 }
+func (c constantTensor) CallsExtern() bool                          { return false }
+func (c constantTensor) DiffWRT(i int) []bool                       { return nil }
+func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
+func (c constantTensor) Do(...Value) (Value, error)                 { return c.v, nil }
+func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", c.v.Type()) }
 
 func (c constantTensor) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "const %v", c.Type())

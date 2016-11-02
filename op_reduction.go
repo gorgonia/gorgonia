@@ -32,6 +32,8 @@ func newMaxOp(along axes, dim int) *maxOp {
 	}
 }
 
+func (op maxOp) Arity() int { return 1 }
+
 func (op maxOp) Type() Type {
 	a := newTypeVariable("a", withTVConstraints(summable))
 	t := newTensorType(op.d, a)
@@ -133,6 +135,8 @@ func newSumOp(along axes, s types.Shape, d int) sumOp {
 		inputShape: s,
 	}
 }
+
+func (op sumOp) Arity() int { return 1 }
 
 // sumOp is a function with this type:
 //		sumOp :: (Summable a) ⇒ Tensor d a → Tensor d-1 a
