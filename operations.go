@@ -451,8 +451,20 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 	return applyOp(op, a)
 }
 
-// Pnorm returns the p-norm of a Value. Use 2 as the p if you want to use unordered norms
-func Pnorm(a *Node, axis, p int) (retVal *Node, err error) {
+// Norm returns the p-norm of a Value. Use p=2 if you want to use unordered norms.
+//
+// This is a simpler version of the norms found in the Tensor package, which specializes and optimizes even more
+// (well, given it's adapted from Numpy, it is clearly way more optimized)
+func Norm(a *Node, axis, p int) (retVal *Node, err error) {
+	if p == 2 {
+		if retVal, err = Square(a); err == nil {
+			if retVal, err = Sum(retVal); err == nil {
+				retVal, err = Sqrt(retVal)
+			}
+		}
+		return
+	}
+
 	var dt Dtype
 	if dt, err = dtypeOf(a.t); err != nil {
 		return
