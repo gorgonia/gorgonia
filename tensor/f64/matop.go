@@ -28,7 +28,12 @@ func (t *Tensor) Apply(fn func(float64) float64, opts ...types.FuncOpt) (retVal 
 	case !safe:
 		res = t.data
 	default:
-		res = make([]float64, len(t.data))
+		if t.IsMaterializable() {
+			res = make([]float64, t.Shape().TotalSize())
+
+		} else {
+			res = make([]float64, len(t.data))
+		}
 	}
 	// do
 	switch {
@@ -42,31 +47,31 @@ func (t *Tensor) Apply(fn func(float64) float64, opts ...types.FuncOpt) (retVal 
 		}
 	case t.viewOf != nil && !incr:
 		it := types.NewFlatIterator(t.AP)
-		var next int
+		var next, i int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			if _, noop := err.(NoOpError); err != nil && !noop {
 				return
 			}
-
-			res[next] = fn(t.data[next])
+			res[i] = fn(t.data[next])
+			i++
 		}
 		err = nil
 	case t.viewOf != nil && incr:
 		it := types.NewFlatIterator(t.AP)
-		var next int
+		var next, i int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			if _, noop := err.(NoOpError); err != nil && !noop {
 				return
 			}
 
-			res[next] += fn(t.data[next])
+			res[i] += fn(t.data[next])
+			i++
 		}
 		err = nil
 	default:
 		err = notyetimplemented("Apply not implemented for this state: isView: %t and incr: %t", t.viewOf == nil, incr)
 		return
 	}
-
 	// set retVal
 	switch {
 	case reuse != nil:

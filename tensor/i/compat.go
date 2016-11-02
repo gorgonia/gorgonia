@@ -60,7 +60,20 @@ func ToMat64(t *Tensor) (retVal *mat64.Dense, err error) {
 	r := t.Shape()[0]
 	c := t.Shape()[1]
 
-	data := toFloat64s(t.data)
+	var data []float64
+	if !t.IsMaterializable() {
+		data = toFloat64s(t.data)
+	} else {
+		it := types.NewFlatIterator(t.AP)
+		var next int
+		for next, err = it.Next(); err == nil; next, err = it.Next() {
+			if _, noop := err.(NoOpError); err != nil && !noop {
+				return
+			}
+			data = append(data, float64(t.data[next]))
+		}
+		err = nil
+	}
 	retVal = mat64.NewDense(r, c, data)
 	return
 }
