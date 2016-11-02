@@ -34,7 +34,7 @@ func (op atOp) Type() Type {
 
 func (op atOp) ReturnsPtr() bool    { return false }
 func (op atOp) overwriteInput() int { return -1 }
-func (op atOp) callsExtern() bool   { return false }
+func (op atOp) CallsExtern() bool   { return false }
 
 func (op atOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	if len(inputs) < 1 {
@@ -102,7 +102,7 @@ func (op sizeOp) Type() Type {
 
 func (op sizeOp) ReturnsPtr() bool                               { return false }
 func (op sizeOp) overwriteInput() int                            { return -1 }
-func (op sizeOp) callsExtern() bool                              { return false }
+func (op sizeOp) CallsExtern() bool                              { return false }
 func (op sizeOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO: return error
 func (op sizeOp) DiffWRT(i int) []bool                           { return []bool{false} }
 func (op sizeOp) String() string {
@@ -239,7 +239,7 @@ func (op repeatOp) Type() Type {
 
 func (op repeatOp) ReturnsPtr() bool    { return true }
 func (op repeatOp) overwriteInput() int { return -1 }
-func (op repeatOp) callsExtern() bool   { return false }
+func (op repeatOp) CallsExtern() bool   { return false }
 
 func (op repeatOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	if len(inputs) < 2 {
@@ -638,7 +638,7 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 }
 
 func (op sliceOp) ReturnsPtr() bool    { return true }
-func (op sliceOp) callsExtern() bool   { return false }
+func (op sliceOp) CallsExtern() bool   { return false }
 func (op sliceOp) overwriteInput() int { return -1 }
 func (op sliceOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("slice"))
@@ -1026,7 +1026,7 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 }
 
 func (op transposeOp) ReturnsPtr() bool    { return true }
-func (op transposeOp) callsExtern() bool   { return false }
+func (op transposeOp) CallsExtern() bool   { return false }
 func (op transposeOp) overwriteInput() int { return 0 }
 
 func (op transposeOp) WriteHash(h hash.Hash) {

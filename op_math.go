@@ -305,7 +305,7 @@ func (op elemBinOp) ReturnsPtr() bool {
 	return false
 }
 
-func (op elemBinOp) callsExtern() bool { return false } // for now
+func (op elemBinOp) CallsExtern() bool { return false } // for now
 func (op elemBinOp) overwriteInput() int {
 	if _, ok := op.arg0.(*TensorType); ok {
 		return 0
@@ -494,7 +494,7 @@ func (op elemUnaryOp) overwriteInput() int {
 	return -1
 }
 
-func (op elemUnaryOp) callsExtern() bool { return false }
+func (op elemUnaryOp) CallsExtern() bool { return false }
 
 func (op elemUnaryOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, op.unaryOpType()); err != nil {
@@ -664,7 +664,7 @@ func (op linAlgBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
 func (op linAlgBinOp) ReturnsPtr() bool                             { return true }
 func (op linAlgBinOp) overwriteInput() int                          { return -1 }
-func (op linAlgBinOp) callsExtern() bool {
+func (op linAlgBinOp) CallsExtern() bool {
 	if op.āBinaryOperator != vecDotOperator {
 		return true
 	}

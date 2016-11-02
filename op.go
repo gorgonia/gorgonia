@@ -44,7 +44,7 @@ type Op interface {
 	ReturnsPtr() bool
 
 	// Does this op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
-	callsExtern() bool
+	CallsExtern() bool
 
 	// overwriteInput() is a method which states which input the output will be overwriting.
 	// This allows for some efficiency gains as the underlying arrays wouldn't have to be re-allocated.
@@ -126,7 +126,7 @@ type constantScalar struct {
 
 func (c constantScalar) Type() Type                                 { return c.v.Type() }
 func (c constantScalar) ReturnsPtr() bool                           { return false }
-func (c constantScalar) callsExtern() bool                          { return false }
+func (c constantScalar) CallsExtern() bool                          { return false }
 func (c constantScalar) overwriteInput() int                        { return -1 }
 func (c constantScalar) DiffWRT(i int) []bool                       { return nil }
 func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
@@ -165,7 +165,7 @@ func (c constantTensor) Type() Type { return c.v.Type() }
 // constants should return value but for the sake of memory, we're going to return pointers
 func (c constantTensor) ReturnsPtr() bool                               { return true }
 func (c constantTensor) overwriteInput() int                            { return -1 }
-func (c constantTensor) callsExtern() bool                              { return false }
+func (c constantTensor) CallsExtern() bool                              { return false }
 func (c constantTensor) DiffWRT(i int) []bool                           { return nil }
 func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nil }
 func (c constantTensor) InferShape(Type, ...*Node) (types.Shape, error) { return c.v.Shape(), nil }

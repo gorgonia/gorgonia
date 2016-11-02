@@ -26,7 +26,7 @@ type letOp struct{}
 func (op letOp) Type() Type                                                      { return nil }
 func (op letOp) ReturnsPtr() bool                                                { return true }
 func (op letOp) overwriteInput() int                                             { return 0 }
-func (op letOp) callsExtern() bool                                               { return false }
+func (op letOp) CallsExtern() bool                                               { return false }
 func (op letOp) InferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
 func (op letOp) DiffWRT(int) []bool                                              { return nil }
 func (op letOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
@@ -49,7 +49,7 @@ type readOp struct {
 func (op readOp) Type() Type                                                      { return nil }
 func (op readOp) ReturnsPtr() bool                                                { return true }
 func (op readOp) overwriteInput() int                                             { return 0 }
-func (op readOp) callsExtern() bool                                               { return false }
+func (op readOp) CallsExtern() bool                                               { return false }
 func (op readOp) InferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
 func (op readOp) DiffWRT(int) []bool                                              { return nil }
 func (op readOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }

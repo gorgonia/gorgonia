@@ -584,7 +584,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	return nil
 }
 func (instr execOp) String() string {
-	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.inputTypes, instr.op.callsExtern(), instr.useUnsafe, instr.preAllocated)
+	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.inputTypes, instr.op.CallsExtern(), instr.useUnsafe, instr.preAllocated)
 }
 
 // flushInstr is for blastoise and cubone

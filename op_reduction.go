@@ -89,7 +89,7 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 
 func (op maxOp) ReturnsPtr() bool    { return true }
 func (op maxOp) overwriteInput() int { return 0 }
-func (op maxOp) callsExtern() bool   { return false }
+func (op maxOp) CallsExtern() bool   { return false }
 
 func (op maxOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("max"))
@@ -324,7 +324,7 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 
 func (op sumOp) ReturnsPtr() bool    { return true }
 func (op sumOp) overwriteInput() int { return 0 }
-func (op sumOp) callsExtern() bool   { return false }
+func (op sumOp) CallsExtern() bool   { return false }
 
 func (op sumOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("sum"))
