@@ -57,7 +57,7 @@ func (op randomOp) Type() Type {
 	return tt
 }
 
-func (op randomOp) inferShape(Type, ...*Node) (types.Shape, error) { return op.shape, nil }
+func (op randomOp) InferShape(Type, ...*Node) (types.Shape, error) { return op.shape, nil }
 func (op randomOp) DiffWRT(i int) []bool                           { r := make([]bool, i); return r }
 func (op randomOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nondiffErr(op) }
 

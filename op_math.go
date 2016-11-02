@@ -145,7 +145,7 @@ func (op elemBinOp) Type() Type {
 // 		op :: () → () → ()
 //		op :: () → (...) → (...)
 //		op :: (...) → () → (...)
-func (op elemBinOp) inferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
+func (op elemBinOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
 	enterLoggingContext()
 	defer leaveLoggingContext()
@@ -422,7 +422,7 @@ func (op elemUnaryOp) Type() Type {
 	return newFunctionType(a, a)
 }
 
-func (op elemUnaryOp) inferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
+func (op elemUnaryOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	if len(inputs) != 1 {
 		err = NewError(GraphError, "Pointwise unary operations only take ONE input. Got %d inputs instead", len(inputs))
 		return
@@ -582,7 +582,7 @@ type linAlgBinOp struct {
 	transA, transB bool
 }
 
-func (op linAlgBinOp) inferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
+func (op linAlgBinOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
 	enterLoggingContext()
 	defer leaveLoggingContext()

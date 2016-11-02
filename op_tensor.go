@@ -36,7 +36,7 @@ func (op atOp) returnsPtr() bool    { return false }
 func (op atOp) overwriteInput() int { return -1 }
 func (op atOp) callsExtern() bool   { return false }
 
-func (op atOp) inferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
+func (op atOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	if len(inputs) < 1 {
 		err = NewError(GraphError, "repeatOp should only have one or more inputs. Got %v instead", len(inputs))
 	}
@@ -103,7 +103,7 @@ func (op sizeOp) Type() Type {
 func (op sizeOp) returnsPtr() bool                               { return false }
 func (op sizeOp) overwriteInput() int                            { return -1 }
 func (op sizeOp) callsExtern() bool                              { return false }
-func (op sizeOp) inferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO: return error
+func (op sizeOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO: return error
 func (op sizeOp) DiffWRT(i int) []bool                           { return []bool{false} }
 func (op sizeOp) String() string {
 	if op.val != 0 {
@@ -194,7 +194,7 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 		children: len(children),
 		arg0Dim:  children[0].Dims(),
 	}
-	if s, err := retVal.inferShape(nil, children...); err == nil {
+	if s, err := retVal.InferShape(nil, children...); err == nil {
 		retVal.inputShape = s
 		retVal.d = s.Dims()
 	}
@@ -241,7 +241,7 @@ func (op repeatOp) returnsPtr() bool    { return true }
 func (op repeatOp) overwriteInput() int { return -1 }
 func (op repeatOp) callsExtern() bool   { return false }
 
-func (op repeatOp) inferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
+func (op repeatOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
 	if len(inputs) < 2 {
 		err = NewError(GraphError, "repeatOp should only have two or more inputs. Got %v instead", len(inputs))
 	}
@@ -503,7 +503,7 @@ func (op sliceOp) Type() Type {
 	return newFunctionType(tt, tt)
 }
 
-func (op sliceOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
+func (op sliceOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
 	if len(inputs) > 1 {
 		// error
 		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
@@ -705,7 +705,7 @@ func (op sliceIncrOp) Type() Type {
 	return newFunctionType(tt, b, tt)
 }
 
-func (op sliceIncrOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
+func (op sliceIncrOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
 	if len(inputs) != 2 {
 		// error
 		err = NewError(GraphError, "sliceIncrOp should only have one or more inputs. Got %v instead", len(inputs))
@@ -924,7 +924,7 @@ func (op transposeOp) Type() Type {
 	return newFunctionType(tt, tt)
 }
 
-func (op transposeOp) inferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
+func (op transposeOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
 	if len(inputs) != 1 {
 		err = NewError(GraphError, "transposeOp should only have one inputs. Got %v instead", len(inputs))
 		return

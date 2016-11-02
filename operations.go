@@ -52,7 +52,7 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	// infer shapes, but print errors instead of returning
 	shapeLogf("op: %v(%T) inferring shape", op, op)
 	var s types.Shape
-	if s, err = op.inferShape(retType, children...); err == nil {
+	if s, err = op.InferShape(retType, children...); err == nil {
 		typeSysLogf("inferred type: %v", retType)
 		shapeLogf("inferred shape %v", s)
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g), WithShape(s...))

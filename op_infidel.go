@@ -27,7 +27,7 @@ func (op letOp) Type() Type                                                     
 func (op letOp) returnsPtr() bool                                                { return true }
 func (op letOp) overwriteInput() int                                             { return 0 }
 func (op letOp) callsExtern() bool                                               { return false }
-func (op letOp) inferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
+func (op letOp) InferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
 func (op letOp) DiffWRT(int) []bool                                              { return nil }
 func (op letOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
 func (op letOp) Do(vals ...Value) (Value, error)                                 { return nil, nil }
@@ -50,7 +50,7 @@ func (op readOp) Type() Type                                                    
 func (op readOp) returnsPtr() bool                                                { return true }
 func (op readOp) overwriteInput() int                                             { return 0 }
 func (op readOp) callsExtern() bool                                               { return false }
-func (op readOp) inferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
+func (op readOp) InferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
 func (op readOp) DiffWRT(int) []bool                                              { return nil }
 func (op readOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
 func (op readOp) Do(vals ...Value) (Value, error)                                 { return nil, nil }

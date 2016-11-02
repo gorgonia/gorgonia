@@ -21,7 +21,7 @@ type Op interface {
 	Type() Type
 
 	// returns the output shape as a function of the inputs
-	inferShape(Type, ...*Node) (types.Shape, error)
+	InferShape(Type, ...*Node) (types.Shape, error)
 
 	/* Differentiation related fields */
 
@@ -131,7 +131,7 @@ func (c constantScalar) overwriteInput() int                        { return -1 
 func (c constantScalar) DiffWRT(i int) []bool                       { return nil }
 func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
 
-func (c constantScalar) inferShape(Type, ...*Node) (types.Shape, error) {
+func (c constantScalar) InferShape(Type, ...*Node) (types.Shape, error) {
 	return types.ScalarShape(), nil
 }
 
@@ -168,7 +168,7 @@ func (c constantTensor) overwriteInput() int                            { return
 func (c constantTensor) callsExtern() bool                              { return false }
 func (c constantTensor) DiffWRT(i int) []bool                           { return nil }
 func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nil }
-func (c constantTensor) inferShape(Type, ...*Node) (types.Shape, error) { return c.v.Shape(), nil }
+func (c constantTensor) InferShape(Type, ...*Node) (types.Shape, error) { return c.v.Shape(), nil }
 func (c constantTensor) Do(...Value) (Value, error)                     { return c.v, nil }
 func (c constantTensor) String() string                                 { return fmt.Sprintf("const %s", c.v.Type()) }
 

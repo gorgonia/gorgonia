@@ -47,7 +47,7 @@ func (op maxOp) Type() Type {
 	return newFunctionType(t, retType)
 }
 
-func (op maxOp) inferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
+func (op maxOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
 func (op maxOp) DiffWRT(i int) []bool                           { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
@@ -150,7 +150,7 @@ func (op sumOp) Type() Type {
 	return newFunctionType(t, retType)
 }
 
-func (op sumOp) inferShape(t Type, inputs ...*Node) (shape types.Shape, err error) {
+func (op sumOp) InferShape(t Type, inputs ...*Node) (shape types.Shape, err error) {
 	if len(inputs) != 1 {
 		err = NewError(GraphError, "sumOp requires only one input")
 		return
