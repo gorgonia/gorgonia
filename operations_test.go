@@ -401,3 +401,23 @@ mattest3:
 	assert.Equal([]float64{-1.49, -1}, extractF64s(sz.Value()))
 
 }
+
+func TestPnorm(t *testing.T) {
+	assert := assert.New(t)
+	g := NewGraph()
+	x := NewMatrix(g, Float64, WithShape(3, 3))
+	norm, err := Pnorm(x, 0, 2)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	m := NewLispMachine(g, ExecuteFwdOnly())
+
+	xT := tf64.NewTensor(tf64.WithShape(3, 3), tf64.WithBacking(tf64.RangeFloat64(0, 9)))
+	Let(x, xT)
+	m.RunAll()
+
+	correct := []float64{6.708203932499369, 8.12403840463596, 9.643650760992955}
+	assert.Equal(correct, extractF64s(norm.Value()))
+
+}

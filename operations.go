@@ -173,6 +173,11 @@ func Div(a, b *Node) (retVal *Node, err error) {
 	panic("Unhandled")
 }
 
+func Pow(a, b *Node) (retVal *Node, err error) {
+	op := newElemBinOp(powOpType, a, b)
+	return binOpNode(op, a, b)
+}
+
 // Gt: pointwise a > b. retSame indicates if the return value should be the same type as the input values
 func Gt(a, b *Node, retSame bool) (retVal *Node, err error) {
 	op := newElemBinOp(gtOpType, a, b)
@@ -444,6 +449,34 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 
 	op := newSumOp(along, a.shape, dims)
 	return applyOp(op, a)
+}
+
+// Pnorm returns the p-norm of a Value. Use 2 as the p if you want to use unordered norms
+func Pnorm(a *Node, axis, p int) (retVal *Node, err error) {
+	var dt Dtype
+	if dt, err = dtypeOf(a.t); err != nil {
+		return
+	}
+
+	var b, inv *Node
+	switch dt {
+	case Float32:
+		b = NewConstant(float32(p))
+		inv = NewConstant(float32(1) / float32(p))
+	case Float64:
+		b = NewConstant(float64(p))
+		inv = NewConstant(float64(1) / float64(p))
+	default:
+		err = NewError(TypeError, "Cannot norm a non-floating point type")
+		return
+	}
+
+	if retVal, err = Pow(a, b); err == nil {
+		if retVal, err = Sum(retVal, axis); err == nil {
+			retVal, err = Pow(retVal, inv)
+		}
+	}
+	return
 }
 
 // Reduction
