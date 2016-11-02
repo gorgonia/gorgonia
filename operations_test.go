@@ -402,11 +402,11 @@ mattest3:
 
 }
 
-func TestPnorm(t *testing.T) {
+func TestNorm(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
 	x := NewMatrix(g, Float64, WithShape(3, 3))
-	norm, err := Pnorm(x, 0, 2)
+	norm, err := Norm(x, 0, 2)
 	if err != nil {
 		t.Error(err)
 		return

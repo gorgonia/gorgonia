@@ -458,7 +458,7 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 	if p == 2 {
 		if retVal, err = Square(a); err == nil {
-			if retVal, err = Sum(retVal); err == nil {
+			if retVal, err = Sum(retVal, axis); err == nil {
 				retVal, err = Sqrt(retVal)
 			}
 		}
