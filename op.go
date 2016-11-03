@@ -9,6 +9,10 @@ import (
 	"github.com/chewxy/gorgonia/tensor/types"
 )
 
+type DimSizer interface {
+	DimSize(int) (int, error)
+}
+
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
@@ -24,7 +28,7 @@ type Op interface {
 	Type() Type
 
 	// returns the output shape as a function of the inputs
-	InferShape(Type, ...*Node) (types.Shape, error)
+	InferShape(...DimSizer) (types.Shape, error)
 
 	/* Differentiation related fields */
 

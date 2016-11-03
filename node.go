@@ -311,7 +311,7 @@ func (n *Node) Grad() (Value, error) {
 func (n *Node) Dims() int { return n.t.dims() }
 
 // Shape returns the shape of the node
-func (n *Node) Shape() types.Shape { return n.shape }
+func (n *Node) Shape() types.Shape { return n.shape.Clone() }
 
 // IsVec returns whether this node is a vector
 func (n *Node) IsVec() bool { return n.IsVector() }
