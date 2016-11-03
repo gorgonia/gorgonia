@@ -12,15 +12,15 @@ import (
 
 // Value represents a value that Gorgonia accepts
 type Value interface {
-	Type() Type
+	// Type() Type
 	Shape() types.Shape
 	Size() int
-	Dtype() Dtype
-	Eq(other Value) bool
+	// Dtype() Dtype
+	// Eq(other Value) bool
 	Data() interface{}
 
-	clone() (Value, error)
-	zero() Value
+	// clone() (Value, error)
+	// zero() Value
 
 	fmt.Formatter
 }
