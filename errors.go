@@ -115,10 +115,9 @@ func nyi(what string, implFor interface{}) error {
 	e := Error{
 		errorType: NotYetImplemented,
 		msg:       fmt.Sprintf("%s not yet implemented for %v of %T", what, implFor, implFor),
-
-		fnName: fn.Name(),
-		file:   file,
-		line:   line,
+		fnName:    fn.Name(),
+		file:      file,
+		line:      line,
 	}
 	return e
 }

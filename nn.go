@@ -16,8 +16,7 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 	// which constant one to use?
 	var dt Dtype
 	if dt, err = dtypeOf(output.t); err != nil {
-		err = errors.Wrapf(err, dtypeExtractionFail, output.t)
-		return
+		return nil, errors.Wrapf(err, dtypeExtractionFail, output.t)
 	}
 
 	switch dt {
@@ -26,40 +25,35 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 	case Float32:
 		one = onef32
 	default:
-		err = nyi("BinaryXEnt", dt)
-		return
+		return nil, errors.Errorf(nyiFail, "BinaryXEnt", dt)
 	}
 
 	if logO, err = Log(output); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	if omt, err = Sub(one, target); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	if omo, err = Sub(one, output); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	if tLogO, err = HadamardProd(target, logO); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	if retVal, err = Log(omo); err != nil {
-		err = errors.Wrap(err, operationError)
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	if retVal, err = HadamardProd(omt, retVal); err != nil {
-		err = errors.Wrap(err, operationError)
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	if retVal, err = Add(tLogO, retVal); err != nil {
-		err = errors.Wrap(err, operationError)
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	return Neg(retVal)
@@ -84,12 +78,12 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 
 	var dt Dtype
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	m := UniformRandomNode(x.g, dt, low, high, x.shape...)
 	if retVal, err = Mul(x, m); err != nil {
-		return
+		return nil, errors.Wrap(err, mulFail)
 	}
 
 	var v Value
@@ -99,6 +93,7 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	case Float32:
 		v, _ = anyToValue(float32(1.0 / prob))
 	default:
+		// TODO: use errors package for this panic?
 		panic(fmt.Sprintf("Dtype %v not yet implemented for dropout", dt))
 	}
 
@@ -116,7 +111,7 @@ func Rectify(x *Node) (retVal *Node, err error) {
 
 	// which zero to use?
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 	switch dt {
 	case Float64:
@@ -124,15 +119,14 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	case Float32:
 		zero = zerof32
 	default:
-		err = nyi("ReLu", dt)
-		return
+		return nil, errors.Errorf(nyiFail, "ReLu", dt)
 	}
 
 	cmp := newElemBinOp(gteOpType, x, zero)
 	cmp.retSame = true
 
 	if retVal, err = applyOp(cmp, x); err != nil {
-		return
+		return nil, errors.Wrap(err, applyOpFail)
 	}
 
 	return HadamardProd(x, retVal)

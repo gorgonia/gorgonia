@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,27 +23,27 @@ func ssBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, x, y, z *No
 
 	var v Value
 	if v, err = binOp.Do(x.boundTo, y.boundTo); err != nil {
-		return
+		return randX, randY, x, y, z, errors.Wrap(err, binOpDoFail)
 	}
 	zdv := variableDV(v)
 
 	if err = z.bind(zdv); err != nil {
-		return
+		return randX, randY, x, y, z, errors.Wrap(err, bindFail)
 	}
 
 	if err = x.bind(dvUnit(x.boundTo)); err != nil {
-		return
+		return randX, randY, x, y, z, errors.Wrap(err, bindFail)
 	}
 
 	if err = y.bind(dvUnit(y.boundTo)); err != nil {
-		return
+		return randX, randY, x, y, z, errors.Wrap(err, bindFail)
 	}
 
 	err = diff(x, y, z)
 	if err != nil {
-		return
+		return randX, randY, x, y, z, errors.Wrap(err, "Failed to carry diff")
 	}
-	return
+	return randX, randY, x, y, z, nil
 }
 
 func stBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, x, yT, zT *Node, err error) {
@@ -62,27 +63,27 @@ func stBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, x, yT, zT *
 
 	var v Value
 	if v, err = binOp.Do(x.boundTo, yT.boundTo); err != nil {
-		return
+		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
 	}
 	zdv := variableDV(v)
 
 	if err = zT.bind(zdv); err != nil {
-		return
+		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
 	}
 
 	if err = x.bind(dvUnit(x.boundTo)); err != nil {
-		return
+		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
 	}
 
 	if err = yT.bind(dvUnit(yT.boundTo)); err != nil {
-		return
+		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
 	}
 
 	err = diff(x, yT, zT)
 	if err != nil {
-		return
+		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
 	}
-	return
+	return randX, randY, x, yT, zT, nil
 }
 
 func tsBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, xT, y, zT *Node, err error) {

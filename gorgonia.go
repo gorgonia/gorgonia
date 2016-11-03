@@ -219,20 +219,19 @@ func OneHotVector(id, classes int, t Dtype, opts ...NodeConsOpt) *Node {
 func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 	symdiffLogf("Cost:%v", cost)
 	if !cost.IsScalar() {
-		err = NewError(SymbDiffError, "Expected Cost to be a scalar. Got %v instead", cost)
-		return
+		return nil, errors.Errorf("Expected Cost to be a scalar. Got %v instead", cost)
 	}
 
 	for i, n := range WRTs {
 		if !n.isInput() {
-			err = NewError(SymbDiffError, "Can only differentiate with regards to input nodes. Node %d isn't an input", i)
+			errors.Wrapf(err, "Can only differentiate with regards to input nodes. Node %d isn't an input", i)
 		}
 	}
 
 	var dt Dtype
 	var ok bool
 	if dt, ok = cost.t.(Dtype); !ok {
-		err = NewError(TypeError, "Expected a scalar dtype for cost")
+		errors.Wrap(err, "Expected a scalar dtype for cost")
 	}
 
 	var gradOut *Node
@@ -242,8 +241,7 @@ func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 	case Float32:
 		gradOut = onef32
 	default:
-		err = nyi(dt.String(), "Grad()'s gradOut")
-		return
+		return nil, errors.Wrapf(err, "%s not yet implemented for %v of %T", dt.String(), "Grad()'s gradOut")
 	}
 
 	gradOut = cost.g.AddNode(gradOut)
@@ -255,14 +253,12 @@ func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 //		x = 2
 func Let(n *Node, be interface{}) (err error) {
 	if !n.isInput() {
-		err = NewError(RuntimeError, "Cannot bind a value to a non input node")
-		return
+		return errors.New("Cannot bind a value to a non input node")
 	}
 
 	var val Value
 	if val, err = anyToValue(be); err != nil {
-		err = errors.Wrapf(err, anyToValueFail, be, be)
-		return
+		return errors.Wrapf(err, anyToValueFail, be, be)
 	}
 
 	n.bind(val)

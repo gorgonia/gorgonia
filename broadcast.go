@@ -70,15 +70,13 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 		for _, a := range broadcastOn[0] {
 			var size *Node
 			if size, err = SizeOf(a, y); err != nil {
-				err = errors.Wrap(err, operationError)
-				return
+				return nil, errors.Wrap(err, operationError)
 			}
 			children = append(children, size)
 		}
 		rep := newRepeatOp(broadcastOn[0], children)
 		if x, err = applyOp(rep, children...); err != nil {
-			err = errors.Wrap(err, operationError)
-			return
+			return nil, errors.Wrap(err, operationError)
 		}
 	}
 
@@ -87,15 +85,13 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 		for _, a := range broadcastOn[1] {
 			var size *Node
 			if size, err = SizeOf(a, x); err != nil {
-				err = errors.Wrap(err, operationError)
-				return
+				return nil, errors.Wrap(err, operationError)
 			}
 			children = append(children, size)
 		}
 		rep := newRepeatOp(broadcastOn[1], children)
 		if y, err = applyOp(rep, children...); err != nil {
-			err = errors.Wrap(err, operationError)
-			return
+			return nil, errors.Wrap(err, operationError)
 		}
 	}
 

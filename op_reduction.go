@@ -71,11 +71,13 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	var eq *Node
 	bcpat := NewBroadcastPattern(leftAxes, nil)
 	if eq, err = Broadcast(eqOpType, output, t, bcpat); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	retVal[0], err = Broadcast(mulOpType, gradNode, eq, bcpat)
+	if err != nil {
+		return nil, errors.Wrap(err, operationError)
+	}
 	return
 }
 
@@ -96,7 +98,7 @@ func (op maxOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
 		panic(err)
 	}
-	fmt.Fprintf(h, "%v", op.d, op.along)
+	fmt.Fprintf(h, "%v->%v", op.d, op.along)
 }
 
 func (op maxOp) Hashcode() uint32 {
@@ -164,15 +166,13 @@ func (op sumOp) inferShape(t Type, inputs ...*Node) (shape types.Shape, err erro
 		shape = scalarShape
 	case in.IsVector() && !in.IsRowVec() && !in.IsColVec():
 		if len(op.along) > 1 || (len(op.along) == 1 && op.along[0] != 0) {
-			err = NewError(ShapeError, "Shape mismatch: along is %v. Shape is %v", op.along, in.shape)
-			return
+			return nil, errors.Errorf("Shape mismatch: along is %v. Shape is %v", op.along, in.shape)
 		}
 		shape = scalarShape
 	default:
 		shape = in.Shape().Clone()
 		if len(op.along) > len(shape) {
-			err = NewError(ShapeError, "Shape mismatch: %v and %v", shape, op.along)
-			return
+			return nil, errors.Errorf("Shape mismatch: %v and %v", shape, op.along)
 		}
 
 		if monotonic, incr1 := types.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(shape) {
@@ -182,8 +182,7 @@ func (op sumOp) inferShape(t Type, inputs ...*Node) (shape types.Shape, err erro
 
 		for _, a := range op.along {
 			if a >= len(shape) {
-				err = NewError(ShapeError, "Axis %d is greater or equal to the length of the shape %v", a, shape)
-				return
+				return nil, errors.Errorf("Axis %d is greater or equal to the length of the shape %v", a, shape)
 			}
 			shape[a] = 1
 		}
@@ -208,8 +207,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	for i, a := range op.along {
 		var n *Node
 		if n, err = SizeOf(a, inputs[0]); err != nil {
-			err = errors.Wrap(err, operationError)
-			return
+			return nil, errors.Wrap(err, operationError)
 		}
 		WithGroupName(gradClust)(n)
 		children[i+1] = n
@@ -222,6 +220,9 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	symdiffLogf("children %#Y", children)
 	symdiffLogf("children: %v", children)
 	retVal[0], err = applyOp(repeat, children...)
+	if err != nil {
+		return nil, errors.Wrap(err, applyOpFail)
+	}
 	retVal[0].setGroup(gradClust)
 	return
 }
@@ -247,8 +248,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 			f := ydvd.v.(float32)
 			T = tf32.NewTensor(tf32.AsScalar(f))
 		default:
-			err = nyi("sumOp.DoDiff", ydvd.t)
-			return
+			return errors.Errorf(nyiFail, "sumOp.DoDiff", ydvd.t)
 		}
 	case Tensor:
 		T = ydvd.Tensor
@@ -262,8 +262,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 				continue // don't need to repeat
 			}
 			if T, err = tensor.Repeat(T, a, xShape[a]); err != nil {
-				err = errors.Wrapf(err, repFail, a, xShape[a])
-				return
+				return errors.Wrapf(err, repFail, a, xShape[a])
 			}
 		}
 
@@ -277,8 +276,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	var d Value
 	if d, err = add.UnsafeDo(xdv.d, val); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, add)
-		return
+		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	// check if xdv.d is scalar
@@ -306,6 +304,8 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 			} else {
 				retVal = FromTensor(ret)
 			}
+		} else {
+			return nil, errors.Wrap(err, "failed to apply *tf64.Tensor.Sum()")
 		}
 	case *tf32.Tensor:
 		var ret *tf32.Tensor
@@ -315,9 +315,11 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 			} else {
 				retVal = FromTensor(ret)
 			}
+		} else {
+			return nil, errors.Wrap(err, "failed to apply *tf32.Tensor.Sum()")
 		}
 	default:
-		err = nyi("sumOp.Do", at.Tensor)
+		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at.Tensor)
 	}
 	return
 }
