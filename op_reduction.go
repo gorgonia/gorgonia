@@ -49,8 +49,8 @@ func (op maxOp) Type() Type {
 	return newFunctionType(t, retType)
 }
 
-func (op maxOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
-func (op maxOp) DiffWRT(i int) []bool                           { return []bool{true} }
+func (op maxOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
+func (op maxOp) DiffWRT(i int) []bool                        { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
 	if len(inputs) != 1 {
@@ -154,26 +154,20 @@ func (op sumOp) Type() Type {
 	return newFunctionType(t, retType)
 }
 
-func (op sumOp) InferShape(t Type, inputs ...*Node) (shape types.Shape, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sumOp requires only one input")
-		return
-	}
-
-	in := inputs[0]
-	shapeLogf("Infering... Type: %v", t)
-	shapeLogf("input shape: %v", in.shape)
+func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
+	in := inputs[0].(types.Shape)
+	shapeLogf("input shape: %v", in)
 	switch {
 	case in.IsScalar():
 		shape = scalarShape
 	case in.IsVector() && !in.IsRowVec() && !in.IsColVec():
 		if len(op.along) > 1 || (len(op.along) == 1 && op.along[0] != 0) {
-			err = NewError(ShapeError, "Shape mismatch: along is %v. Shape is %v", op.along, in.shape)
+			err = NewError(ShapeError, "Shape mismatch: along is %v. Shape is %v", op.along, in)
 			return
 		}
 		shape = scalarShape
 	default:
-		shape = in.Shape().Clone()
+		shape = in.Clone()
 		if len(op.along) > len(shape) {
 			err = NewError(ShapeError, "Shape mismatch: %v and %v", shape, op.along)
 			return

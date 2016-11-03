@@ -147,58 +147,29 @@ func (op elemBinOp) Type() Type {
 // 		op :: () → () → ()
 //		op :: () → (...) → (...)
 //		op :: (...) → () → (...)
-func (op elemBinOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
+func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "Pointwise binary operations only take TWO inputs. Got %d inputs instead", len(inputs))
-		return
-	}
-
-	if inputs[0].shape == nil && inputs[1].shape == nil {
+	if inputs[0] == nil || inputs[1] == nil {
 		err = nyi("elemBinOp.inferShape", "runtime impl")
 		return
 	}
 
-	x, y := inputs[0], inputs[1]
-	switch retType.(type) {
-	case Dtype:
-		retVal = types.ScalarShape()
-	case *TensorType:
-		// make sure that x, y have the same type
-		if xs, ys := x.IsScalar(), y.IsScalar(); xs || ys {
-			if xs && y.shape != nil {
-				shapeLogf("x is scalar. y.shape: %v", y.shape)
-				retVal = y.shape
-				x.setShape(scalarShape, false)
-			} else if ys && x.shape != nil {
-				shapeLogf("y is scalar, x.shape: %v", x.shape)
-				retVal = x.shape
-				y.setShape(scalarShape, false)
-			} else {
-				err = NewError(ShapeError, "One of x or y does not have a shape. %v, %v", x.shape, y.shape)
-			}
-		} else {
-			// x and y are both tensors
-			// both x and y have to have the same size
-			if !x.shape.Eq(y.shape) {
-				// one of them has to be nil
-				if x.shape == nil {
-					retVal = y.shape
-					x.setShape(y.shape, true)
-				} else if y.shape == nil {
-					retVal = x.shape
-					y.setShape(x.shape, true)
-				} else {
-					// WTF? who has the right shape???!
-					err = NewError(ShapeError, "Conflicting shapes: %v and %v | x: %v, y: %v", x.shape, y.shape, x.ID(), y.ID())
-				}
-			} else {
-				retVal = x.shape
-			}
+	x, y := inputs[0].(types.Shape), inputs[1].(types.Shape) // passing any other types of DimSizer will cause panics. Which is a Good Thing
+	switch {
+	case x.IsScalar() && y.IsScalar():
+		retVal = scalarShape
+	case x.IsScalar() && !y.IsScalar():
+		retVal = y
+	case !x.IsScalar() && y.IsScalar():
+		retVal = x
+	case !x.IsScalar() && !y.IsScalar():
+		if !x.Eq(y) {
+			// error
 		}
+		retVal = x
 	}
 	return
 }
@@ -426,18 +397,13 @@ func (op elemUnaryOp) Type() Type {
 	return newFunctionType(a, a)
 }
 
-func (op elemUnaryOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Pointwise unary operations only take ONE input. Got %d inputs instead", len(inputs))
+func (op elemUnaryOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
+	if inputs[0] == nil {
+		err = nyi("InferShape for elemUnaryOp", "runtime impl")
 		return
 	}
 
-	if inputs[0].shape == nil {
-		err = NewError(ShapeError, "Not yet implemneted")
-		return
-	}
-
-	return inputs[0].shape, nil
+	return inputs[0].(types.Shape), nil
 }
 
 // diffWRT gives info on whether or not the operation is actually differentiable wrt to its inputs
@@ -588,53 +554,48 @@ type linAlgBinOp struct {
 
 func (op linAlgBinOp) Arity() int { return 2 }
 
-func (op linAlgBinOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
+func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "linalg binary operations only take TWO inputs. Got %d inputs instead", len(inputs))
-		return
+	if inputs[0] == nil || inputs[1] == nil {
+		return nil, nyi("InferShape for linalgBinOp", "runtime impl")
 	}
 
-	x, y := inputs[0], inputs[1]
-	if x.shape == nil || y.shape == nil {
-		return nil, NewError(ShapeError, "Cannot infer shape from %v %v", x.shape, y.shape)
+	x, y := inputs[0].(types.Shape), inputs[1].(types.Shape)
+	if x == nil || y == nil {
+		return nil, NewError(ShapeError, "Cannot infer shape from %v %v", x, y)
 	}
 
-	shapeLogf("x.shape: %v; y.shape: %v", x.shape, y.shape)
+	shapeLogf("x.shape: %v; y.shape: %v", x, y)
 	// TODO: add checks for tensors greater than 2 d
 
 	switch op.āBinaryOperator {
 	case matMulOperator:
-		xshape := x.shape
-		yshape := y.shape
-
 		if op.transA {
-			xshape = transpose(xshape)
+			x = transpose(x)
 		}
 		if op.transB {
-			yshape = transpose(yshape)
+			y = transpose(y)
 		}
 
-		retVal = types.Shape{xshape[0], yshape[1]}
+		retVal = types.Shape{x[0], y[1]}
 	case matVecMulOperator:
-		xshape := x.shape
 		if op.transA {
-			xshape = transpose(xshape)
+			x = transpose(x)
 		}
-		if xshape[0] != y.shape[0] && xshape[1] != y.shape[0] {
-			err = NewError(ShapeError, "Incompatible shapes: %v and %v", xshape, y.shape)
+		if x[0] != y[0] && x[1] != y[0] {
+			err = NewError(ShapeError, "Incompatible shapes: %v and %v", x, y)
 			return
 		}
 
-		retVal = types.Shape{xshape[0], 1}
+		retVal = types.Shape{x[0], 1}
 	case vecDotOperator:
 		retVal = scalarShape
 	case outerProdOperator:
 		// outerprods only handles vec x vec for now
-		retVal = types.Shape{x.shape.TotalSize(), y.shape.TotalSize()}
+		retVal = types.Shape{x.TotalSize(), y.TotalSize()}
 	}
 	return
 }

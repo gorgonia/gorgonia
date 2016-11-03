@@ -34,20 +34,13 @@ func (op atOp) Type() Type {
 	return newFunctionType(tt, a)
 }
 
-func (op atOp) ReturnsPtr() bool     { return false }
-func (op atOp) OverwritesInput() int { return -1 }
-func (op atOp) CallsExtern() bool    { return false }
-
-func (op atOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
-	if len(inputs) < 1 {
-		err = NewError(GraphError, "repeatOp should only have one or more inputs. Got %v instead", len(inputs))
-	}
-	return scalarShape, nil
-}
-
-func (op atOp) DiffWRT(i int) []bool                       { return make([]bool, i) }
-func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nondiffErr(op) }
-func (op atOp) String() string                             { return fmt.Sprintf("At(%v)", op.coordinates) }
+func (op atOp) ReturnsPtr() bool                                       { return false }
+func (op atOp) OverwritesInput() int                                   { return -1 }
+func (op atOp) CallsExtern() bool                                      { return false }
+func (op atOp) InferShape(...DimSizer) (retVal types.Shape, err error) { return scalarShape, nil }
+func (op atOp) DiffWRT(i int) []bool                                   { return make([]bool, i) }
+func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)             { return nil, nondiffErr(op) }
+func (op atOp) String() string                                         { return fmt.Sprintf("At(%v)", op.coordinates) }
 
 func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
 	if len(inputs) != 1 {
@@ -104,11 +97,11 @@ func (op sizeOp) Type() Type {
 	return newFunctionType(tt, a)
 }
 
-func (op sizeOp) ReturnsPtr() bool                               { return false }
-func (op sizeOp) OverwritesInput() int                           { return -1 }
-func (op sizeOp) CallsExtern() bool                              { return false }
-func (op sizeOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO: return error
-func (op sizeOp) DiffWRT(i int) []bool                           { return []bool{false} }
+func (op sizeOp) ReturnsPtr() bool                            { return false }
+func (op sizeOp) OverwritesInput() int                        { return -1 }
+func (op sizeOp) CallsExtern() bool                           { return false }
+func (op sizeOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil } // TODO: return error
+func (op sizeOp) DiffWRT(i int) []bool                        { return []bool{false} }
 func (op sizeOp) String() string {
 	if op.val != 0 {
 		return fmt.Sprintf("SizeOf=%d", op.val)
@@ -182,6 +175,13 @@ func (op sizeOp) Hashcode() uint32 {
 	return h.Sum32()
 }
 
+func (op sizeOp) DimSize(d int) (int, error) {
+	if d != op.axis {
+		return -1, NewError(ShapeError, "Dimension mismatch. Size Op is for axis %d. Want Dim Size of %d", op.axis, d)
+	}
+	return op.val, nil
+}
+
 type repeatOp struct {
 	along axes
 
@@ -247,30 +247,27 @@ func (op repeatOp) ReturnsPtr() bool     { return true }
 func (op repeatOp) OverwritesInput() int { return -1 }
 func (op repeatOp) CallsExtern() bool    { return false }
 
-func (op repeatOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
-	if len(inputs) < 2 {
-		err = NewError(GraphError, "repeatOp should only have two or more inputs. Got %v instead", len(inputs))
-	}
-
+func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
 	if op.inputShape != nil {
 		retVal = op.inputShape
 		return
 	}
 
-	input := inputs[0]
+	input := inputs[0].(types.Shape)
 	repeats := inputs[1:]
 
 	knownRepeats := make([]int, len(repeats))
 	for i, rep := range repeats {
-		if size, ok := rep.op.(sizeOp); ok && size.val > 0 {
-			knownRepeats[i] = size.val
+		var size int
+		if size, err = rep.DimSize(i); err == nil {
+			knownRepeats[i] = size
 		}
 	}
 
 	if input.IsScalar() {
 		retVal = types.Shape{1, 1} // fill it up just in case
 	} else {
-		retVal = input.shape.Clone()
+		retVal = input.Clone()
 	}
 
 	for i, axis := range op.along {
@@ -511,15 +508,9 @@ func (op sliceOp) Type() Type {
 	return newFunctionType(tt, tt)
 }
 
-func (op sliceOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
-	if len(inputs) > 1 {
-		// error
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
-		return
-	}
-
-	t := inputs[0]
-	return t.shape.S(op.Slice)
+func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
+	input := inputs[0].(types.Shape)
+	return input.S(op.Slice)
 }
 
 func (op sliceOp) DiffWRT(i int) []bool {
@@ -713,15 +704,8 @@ func (op sliceIncrOp) Type() Type {
 	return newFunctionType(tt, b, tt)
 }
 
-func (op sliceIncrOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
-	if len(inputs) != 2 {
-		// error
-		err = NewError(GraphError, "sliceIncrOp should only have one or more inputs. Got %v instead", len(inputs))
-		return
-	}
-
-	t := inputs[0]
-	s = t.shape
+func (op sliceIncrOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
+	retVal = inputs[0].(types.Shape)
 	return
 }
 
@@ -934,21 +918,16 @@ func (op transposeOp) Type() Type {
 	return newFunctionType(tt, tt)
 }
 
-func (op transposeOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "transposeOp should only have one inputs. Got %v instead", len(inputs))
-		return
-	}
-
-	t := inputs[0]
-	if t.shape.IsScalar() {
+func (op transposeOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
+	input := inputs[0].(types.Shape)
+	if input.IsScalar() {
 		err = NewError(ShapeError, "transposeOp undefined on scalar shapes")
 		return
 	}
 
-	s = make(types.Shape, len(t.shape))
-	copy(s, t.shape)
-	err = types.UnsafePermute(op.pattern, s)
+	retVal = make(types.Shape, len(input))
+	copy(retVal, input)
+	err = types.UnsafePermute(op.pattern, retVal)
 	return
 }
 

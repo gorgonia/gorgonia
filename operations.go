@@ -51,6 +51,10 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 
 	// infer shapes, but print errors instead of returning
 	shapeLogf("op: %v(%T) inferring shape", op, op)
+	if err = checkArity(op, len(children)); err != nil {
+		return
+	}
+
 	var s types.Shape
 	if s, err = op.InferShape(retType, children...); err == nil {
 		typeSysLogf("inferred type: %v", retType)
