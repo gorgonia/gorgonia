@@ -6,6 +6,7 @@ import (
 	"sort"
 	"unsafe"
 
+	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/xtgo/set"
 )
 
@@ -178,6 +179,22 @@ func (ns Nodes) remove(what *Node) Nodes {
 		ns = ns[:len(ns)-1]
 	}
 	return ns
+}
+
+func (ns Nodes) shapes() []types.Shape {
+	retVal := make([]types.Shape, len(ns))
+	for i, n := range ns {
+		retVal[i] = n.shape
+	}
+	return retVal
+}
+
+func (ns Nodes) dimSizers() []DimSizer {
+	retVal := make([]DimSizer, len(ns))
+	for i, n := range ns {
+		retVal[i] = n.shape
+	}
+	return retVal
 }
 
 /* TYPES */

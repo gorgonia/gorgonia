@@ -198,7 +198,8 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 		children: len(children),
 		arg0Dim:  children[0].Dims(),
 	}
-	if s, err := retVal.InferShape(nil, children...); err == nil {
+
+	if s, err := retVal.InferShape(children.dimSizers()...); err == nil {
 		retVal.inputShape = s
 		retVal.d = s.Dims()
 	}

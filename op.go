@@ -13,6 +13,14 @@ type DimSizer interface {
 	DimSize(int) (int, error)
 }
 
+func ShapesToDimSizers(shapes []types.Shape) []DimSizer {
+	retVal := make([]DimSizer, len(shapes))
+	for i, s := range shapes {
+		retVal[i] = s
+	}
+	return retVal
+}
+
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
