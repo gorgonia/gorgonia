@@ -108,11 +108,17 @@ func (s Shape) Dims() int {
 }
 
 func (s Shape) DimSize(d int) (size int, err error) {
-	if d >= len(s) {
+	if (s.IsScalar() && d != 0) || d >= len(s) {
 		err = DimMismatchErr(len(s), d)
 		return
 	}
-	return s[d], nil
+
+	switch {
+	case s.IsScalar():
+		return 0, nil
+	default:
+		return s[d], nil
+	}
 }
 
 // S gives the new shape after a shape has been sliced. It's repeated from the AP S() method mainly because there are other functions in Gorgonia that uses only shape

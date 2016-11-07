@@ -192,7 +192,11 @@ func (ns Nodes) shapes() []types.Shape {
 func (ns Nodes) dimSizers() []DimSizer {
 	retVal := make([]DimSizer, len(ns))
 	for i, n := range ns {
-		retVal[i] = n.shape
+		if s, ok := n.op.(sizeOp); ok {
+			retVal[i] = s
+		} else {
+			retVal[i] = n.shape
+		}
 	}
 	return retVal
 }

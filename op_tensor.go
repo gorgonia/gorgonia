@@ -259,9 +259,8 @@ func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error
 
 	knownRepeats := make([]int, len(repeats))
 	for i, rep := range repeats {
-		var size int
-		if size, err = rep.DimSize(i); err == nil {
-			knownRepeats[i] = size
+		if r, ok := rep.(sizeOp); ok {
+			knownRepeats[i] = r.val
 		}
 	}
 
@@ -704,6 +703,8 @@ func (op sliceIncrOp) Type() Type {
 
 	return newFunctionType(tt, b, tt)
 }
+
+func (op sliceIncrOp) Arity() int { return 2 }
 
 func (op sliceIncrOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
 	retVal = inputs[0].(types.Shape)

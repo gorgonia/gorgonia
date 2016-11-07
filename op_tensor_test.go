@@ -222,7 +222,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
@@ -251,7 +251,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
@@ -269,7 +269,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
@@ -287,7 +287,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 1, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
