@@ -72,7 +72,13 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 	for i := len(sortedNodes) - 1; i >= 0; i-- {
 		n := sortedNodes[i]
 		symdiffLogf("working on %v. Has %d children", n, len(n.children))
-		diffs := n.diffWRT()
+
+		var op SDOp
+		var ok bool
+		var diffs []bool
+		if op, ok = n.op.(SDOp); ok {
+			diffs = op.DiffWRT(len(n.children))
+		}
 
 		symdiffLogf("differentiable WRT: %v", diffs)
 		enterLoggingContext()
@@ -272,9 +278,17 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		if !node.isInput() {
 			symdiffLogf("differentiating %x (%v)", node.ID(), node.op)
 			enterLoggingContext()
+
+			var op SDOp
 			var childrenGrads Nodes
+			var ok bool
+
+			if op, ok = node.op.(SDOp); !ok {
+				// error
+			}
+
 			symdiffLogf("op: %v || optype: %v ||  node: %v || Children: %#Y || Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
-			if childrenGrads, err = node.op.SymDiff(node.children, node, gradNode); err != nil {
+			if childrenGrads, err = op.SymDiff(node.children, node, gradNode); err != nil {
 				err = errors.Wrapf(err, "SymDiff for %v. OpType: %v. Node Type: %v. Children: %#v. Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
 				return
 			}

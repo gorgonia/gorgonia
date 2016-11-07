@@ -613,11 +613,10 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 }
 
 func (n *Node) diffWRT() []bool {
-	if n.op == nil {
-		return nil
+	if sdop, ok := n.op.(SDOp); ok {
+		return sdop.DiffWRT(len(n.children))
 	}
-
-	return n.op.DiffWRT(len(n.children))
+	return nil
 }
 
 // dfs but does not use channels. useful for extracting paths. used particularly in test

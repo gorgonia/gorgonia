@@ -38,15 +38,6 @@ type Op interface {
 	// returns the output shape as a function of the inputs
 	InferShape(...DimSizer) (types.Shape, error)
 
-	/* Differentiation related fields */
-
-	// diffWRT indicates if the op is differentiable with regards to the number of inputs
-	// returns []bool to indicate which input it is differentiable to
-	DiffWRT(int) []bool
-
-	// symbolically differentiates the op
-	SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error)
-
 	/* Machine related */
 
 	// executes the op
@@ -104,16 +95,16 @@ type ADOp interface {
 	DoDiff(inputs Nodes, output *Node) error
 }
 
-// type SDOp interface {
-// 	Op
+type SDOp interface {
+	Op
 
-// 	// DiffWRT indicates if the op is differentiable with regards to the given number of inputs
-// 	// returns []bool to indicate which input it is differentiable to
-// 	DiffWRT(inputs int) []bool
+	// DiffWRT indicates if the op is differentiable with regards to the given number of inputs
+	// returns []bool to indicate which input it is differentiable to
+	DiffWRT(inputs int) []bool
 
-// 	// SymDiff symbolically differentiates the op
-// 	SymDiff(inputs Nodes, output, grad *Node) (Nodes, err error)
-// }
+	// SymDiff symbolically differentiates the op
+	SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error)
+}
 
 // a ReductionOp changes the shape of the node
 type ReductionOp interface {
