@@ -53,10 +53,10 @@ func (op maxOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShap
 func (op maxOp) DiffWRT(i int) []bool                        { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Expect at least 1 input. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+
 	t := inputs[0]
 	opDim := len(t.Shape())
 
@@ -82,10 +82,10 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Expected only one input for maxop. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+
 	return nil, NewError(NotYetImplemented, "maxOp")
 }
 
@@ -197,10 +197,10 @@ func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
 func (op sumOp) DiffWRT(i int) []bool { return []bool{true} }
 
 func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Requires only one input to differentiate sumop")
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+
 	children := make(Nodes, len(op.along)+1)
 	children[0] = gradNode
 	for i, a := range op.along {
@@ -225,8 +225,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Requires only one input to differentiate sumop")
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -288,8 +287,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Expect only one input for sumOp. GOt %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 

@@ -43,8 +43,7 @@ func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)             { return 
 func (op atOp) String() string                                         { return fmt.Sprintf("At(%v)", op.coordinates) }
 
 func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "AtOp only expects one input. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -114,8 +113,7 @@ func (op sizeOp) SymDiff(inputs Nodes, output, gradNode *Node) (Nodes, error) {
 }
 
 func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sizeOp only takes one input. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -304,8 +302,7 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 }
 
 func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) < 2 {
-		err = NewError(GraphError, "repeat expects at least 2 inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -384,8 +381,7 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 func (op repeatOp) String() string { return fmt.Sprintf("Repeat%v", op.along) }
 
 func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) < 2 {
-		err = NewError(GraphError, "repeat expects at least 2 inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -524,8 +520,7 @@ func (op sliceOp) DiffWRT(i int) []bool {
 }
 
 func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -538,8 +533,7 @@ func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Node
 }
 
 func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -563,8 +557,7 @@ func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -763,8 +756,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "sliceIncrOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -990,8 +982,7 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "transposeOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 

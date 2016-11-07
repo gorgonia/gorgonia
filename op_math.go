@@ -203,8 +203,7 @@ func (op elemBinOp) DiffWRT(inputs int) []bool {
 }
 
 func (op elemBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "differentiating binary operations only takes 2 nodes. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -234,8 +233,7 @@ func (op elemBinOp) Do(values ...Value) (Value, error) {
 }
 
 func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "differentiating binary operations only takes 2 nodes. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -423,8 +421,7 @@ func (op elemUnaryOp) DiffWRT(inputs int) []bool {
 }
 
 func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Differentiating unary operation expects only one input. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -439,8 +436,7 @@ func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 }
 
 func (op elemUnaryOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "differentiating binary operations only takes 1 node. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -496,8 +492,7 @@ func (op elemUnaryOp) isUnary() bool { return true }
 // misc private methods
 
 func (op elemUnaryOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Executing unary operation expects only one input. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -601,8 +596,7 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err er
 }
 
 func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "Differentiating binary linear algebra operators expects exactly two inputs. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -619,8 +613,7 @@ func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 }
 
 func (op linAlgBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "Differentiating binary linear algebra operators expects exactly two inputs. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -734,8 +727,7 @@ func (op linAlgBinOp) IsBinary() bool { return true }
 /* PRIVATE METHODS */
 
 func (op linAlgBinOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, err error) {
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "linalg binary operations only take TWO inputs. Got %d inputs instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 

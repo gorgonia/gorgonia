@@ -210,9 +210,9 @@ func (m *lispMachine) forward() (err error) {
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
 
-	if aop, ok := op.(AdOp); ok && m.runBwd() {
+	if aop, ok := op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
-			AdOp: aop,
+			ADOp: aop,
 
 			inputs: n.children,
 			output: n,
@@ -249,7 +249,7 @@ func (m *lispMachine) backward() (err error) {
 
 	// actual differentiation
 	if err = instr.do(); err != nil {
-		err = errors.Wrapf(err, autodiffFail, instr.AdOp)
+		err = errors.Wrapf(err, autodiffFail, instr.ADOp)
 		return
 	}
 
@@ -444,12 +444,12 @@ func (m *lispMachine) leaveLoggingContext() {
 
 // adInstr is an autodifferentiation instruction
 type adInstr struct {
-	AdOp
+	ADOp
 
 	inputs Nodes
 	output *Node
 }
 
 func (instr adInstr) do() error {
-	return instr.AdOp.DoDiff(instr.inputs, instr.output)
+	return instr.ADOp.DoDiff(instr.inputs, instr.output)
 }

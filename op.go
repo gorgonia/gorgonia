@@ -97,12 +97,23 @@ type NoRetOp interface {
 	ReturnsNothing() bool
 }
 
-// An AdOp is an Op that supports automatic differentiation.
-type AdOp interface {
+// An ADOp is an Op that supports automatic differentiation.
+type ADOp interface {
 	Op
 
 	DoDiff(inputs Nodes, output *Node) error
 }
+
+// type SDOp interface {
+// 	Op
+
+// 	// DiffWRT indicates if the op is differentiable with regards to the given number of inputs
+// 	// returns []bool to indicate which input it is differentiable to
+// 	DiffWRT(inputs int) []bool
+
+// 	// SymDiff symbolically differentiates the op
+// 	SymDiff(inputs Nodes, output, grad *Node) (Nodes, err error)
+// }
 
 // a ReductionOp changes the shape of the node
 type ReductionOp interface {
