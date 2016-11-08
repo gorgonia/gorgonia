@@ -15,7 +15,7 @@ goveralls -coverprofile=./test.cover -service=travis-ci
 goveralls -coverprofile=./tensor/f64/test.cover -service=travis-ci
 goveralls -coverprofile=./tensor/f32/test.cover -service=travis-ci
 goveralls -coverprofile=./tensor/i/test.cover -service=travis-ci
-goveralls -coverprofile=./tensor/n/test.cover -service=travis-ci
+goveralls -coverprofile=./tensor/b/test.cover -service=travis-ci
 
 
 #if [[ $TRAVIS_SECURE_ENV_VARS = "true" ]]; then bash -c "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG/.travis/test-coverage.sh"; fi
