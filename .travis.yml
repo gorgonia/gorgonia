@@ -6,8 +6,9 @@ branches:
   only:
     - master
 go:
+  - 1.5.4
   - 1.6.3
-  - 1.7.1
+  - 1.7.3
   - tip
 
 env:
@@ -20,6 +21,9 @@ env:
 cache:
   directories:
   - .travis/OpenBLAS.cache
+
+before_install:
+  - go get github.com/mattn/goveralls
 
 # Install the appropriate blas library (if any) and associated gonum software.
 install:
