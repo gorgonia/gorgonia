@@ -12,7 +12,7 @@ go test -tags='avx' -v -a  ./...
 
 # because coveralls only accepts one coverage file at one time... we combine them into one gigantic one
 covers=(./test.cover ./tensor/f64/test.cover ./tensor/f32/test.cover ./tensor/i/test.cover ./tensor/b/test.cover)
-echo "mode:set" > ./final.cover
+echo "mode: set" > ./final.cover
 tail -q -n +2 "${covers[@]}" >> ./final.cover
 goveralls -coverprofile=./final.cover -service=travis-ci
 
