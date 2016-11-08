@@ -2,17 +2,24 @@ set -ex
 
 go env
 
-go test -v -a ./...
-go test -v -a ./tensor/f64
-go test -v -a ./tensor/f32
-go test -v -a ./tensor/i
-go test -v -a ./tensor/b
-go test -tags='sse' -v -a ./...
-go test -tags='sse' -v -a ./tensor/f64
-go test -tags='sse' -v -a ./tensor/f32
-go test -tags='avx' -v -a ./...
-go test -tags='avx' -v -a ./tensor/f64
-go test -tags='avx' -v -a ./tensor/f32
+go test -v -a -coverprofile=test.cover ./...
+go test -v -a -coverprofile=test.cover ./tensor/f64
+go test -v -a -coverprofile=test.cover ./tensor/f32
+go test -v -a -coverprofile=test.cover ./tensor/i
+go test -v -a -coverprofile=test.cover ./tensor/b
+go test -tags='sse' -v -a  ./...
+go test -tags='sse' -v -a  ./tensor/f64
+go test -tags='sse' -v -a  ./tensor/f32
+go test -tags='avx' -v -a  ./...
+go test -tags='avx' -v -a  ./tensor/f64
+go test -tags='avx' -v -a  ./tensor/f32
+
+goveralls -coverprofile=./test.cover -service=travis-ci
+goveralls -coverprofile=./tensor/f64/test.cover -service=travis-ci
+goveralls -coverprofile=./tensor/f32/test.cover -service=travis-ci
+goveralls -coverprofile=./tensor/i/test.cover -service=travis-ci
+goveralls -coverprofile=./tensor/n/test.cover -service=travis-ci
+
 
 #if [[ $TRAVIS_SECURE_ENV_VARS = "true" ]]; then bash -c "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG/.travis/test-coverage.sh"; fi
 
