@@ -3,10 +3,10 @@ set -ex
 go env
 
 go test -v -a -coverprofile=test.cover .
-go test -v -a -coverprofile=test.cover ./tensor/f64
-go test -v -a -coverprofile=test.cover ./tensor/f32
-go test -v -a -coverprofile=test.cover ./tensor/i
-go test -v -a -coverprofile=test.cover ./tensor/b
+go test -v -a -coverprofile=./tensor/f64/test.cover ./tensor/f64
+go test -v -a -coverprofile=./tensor/f32/test.cover ./tensor/f32
+go test -v -a -coverprofile=./tensor/i/test.cover ./tensor/i
+go test -v -a -coverprofile=./tensor/b/test.cover ./tensor/b
 go test -tags='sse' -v -a  ./...
 go test -tags='avx' -v -a  ./...
 
