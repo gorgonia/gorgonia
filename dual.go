@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor"
+	"github.com/pkg/errors"
 )
 
 type dualValue struct {
@@ -25,7 +26,7 @@ func (dv *dualValue) sanity() error {
 	// check that d and v are the same type
 
 	if !typeEq(dv.Value.Type(), dv.d.Type()) {
-		return NewError(AutoDiffError, "DualValues do not have the same types")
+		return errors.New("DualValues do not have the same types")
 	}
 
 	// TODO: check that the shapes are the same
@@ -36,11 +37,11 @@ func (dv *dualValue) sanity() error {
 func (dv *dualValue) clone() (retVal Value, err error) {
 	var v, d Value
 	if v, err = dv.Value.clone(); err != nil {
-		return
+		return nil, errors.Wrap(err, cloneFail)
 	}
 
 	if d, err = dv.d.clone(); err != nil {
-		return
+		return nil, errors.Wrap(err, cloneFail)
 	}
 
 	dv2 := borrowDV()
@@ -54,11 +55,11 @@ func (dv *dualValue) clone() (retVal Value, err error) {
 func (dv *dualValue) clone0() (retVal *dualValue, err error) {
 	var v, d Value
 	if v, err = dv.Value.clone(); err != nil {
-		return
+		return nil, errors.Wrap(err, cloneFail)
 	}
 
 	if d, err = dv.d.clone(); err != nil {
-		return
+		return nil, errors.Wrap(err, cloneFail)
 	}
 
 	switch vt := v.(type) {
@@ -229,9 +230,10 @@ func dvBind(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 
 	var ret Value
 	if ret, err = op.Do(vals...); err == nil {
-		retVal = dvUnit(ret)
+		return dvUnit(ret), nil
+	} else {
+		return nil, errors.Wrap(err, opDoFail)
 	}
-	return
 }
 
 // dvBindVar returns a dvUnitVar instead of dvUnit (which zeroes the derivative).
@@ -241,9 +243,10 @@ func dvBindVar(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 
 	var ret Value
 	if ret, err = op.Do(vals...); err == nil {
-		retVal = dvUnitVar(ret)
+		return dvUnitVar(ret), nil
+	} else {
+		return nil, errors.Wrap(err, opDoFail)
 	}
-	return
 }
 
 // doesn't alloc a dualValue, and reuses whatever that is there, and zeroes out the deriv
@@ -257,7 +260,7 @@ func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
 	} else {
 		if ret, err = op.Do(vals...); err != nil {
-			return
+			return errors.Wrap(err, opDoFail)
 		}
 	}
 	if err != nil {
@@ -282,16 +285,16 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
 	} else {
 		if ret, err = op.Do(vals...); err != nil {
-			return
+			return errors.Wrap(err, opDoFail)
 		}
 	}
 
 	if err != nil {
-		return
+		return errors.Wrapf(err, opDoFail)
 	}
 
 	if err = retVal.SetValue(ret); err != nil {
-		return
+		return errors.Wrap(err, "Failed at setting the value")
 	}
 
 	var d Value

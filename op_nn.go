@@ -10,6 +10,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/leesper/go_rng"
+	"github.com/pkg/errors"
 )
 
 /*
@@ -95,7 +96,7 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 				return anyToValue(v)
 			}
 		default:
-			err = nyi("randomOp.do", op.dt)
+			return nil, errors.Errorf(nyiFail, "randomOp.do()", op.dt)
 		}
 	}
 

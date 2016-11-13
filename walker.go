@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/topo"
+	"github.com/pkg/errors"
 )
 
 func WalkGraph(start *Node) <-chan *Node {
@@ -35,7 +36,7 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 func Sort(g *ExprGraph) (sorted Nodes, err error) {
 	var sortedNodes []graph.Node
 	if sortedNodes, err = topo.Sort(g); err != nil {
-		return
+		return nil, errors.Wrap(err, sortFail)
 	}
 
 	sorted = graphNodeToNode(sortedNodes)

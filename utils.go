@@ -10,6 +10,7 @@ import (
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/math32"
 	"github.com/gonum/graph"
+	"github.com/pkg/errors"
 )
 
 func graphNodeToNode(in []graph.Node) (out Nodes) {
@@ -62,8 +63,7 @@ func anyToValue(any interface{}) (val Value, err error) {
 	case Value:
 		return a, nil
 	default:
-		err = NewError(NotYetImplemented, "value %v of %T not yet handled", any, any)
-		return
+		return nil, errors.Errorf("value %v of %T not yet handled", any, any)
 	}
 	panic("Unreachable")
 }
@@ -74,8 +74,7 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 	for i, v := range values {
 		sv, ok := v.(Scalar)
 		if !ok {
-			err = NewError(typeError, "Expected values to be all Scalar Value. Got %v of %T instead", v, v)
-			return
+			return nil, errors.Errorf("Expected values to be all Scalar Value. Got %v of %T instead", v, v)
 		}
 
 		var intV int
@@ -87,8 +86,7 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 		case int:
 			intV = vt
 		default:
-			err = NewError(TypeError, "Expected ScalarValue to have Int type. Got %v of %v(%T) instead", sv.v, sv.t, sv.v)
-			return
+			return nil, errors.Errorf("Expected ScalarValue to have Int type. Got %v of %v(%T) instead", sv.v, sv.t, sv.v)
 
 		}
 

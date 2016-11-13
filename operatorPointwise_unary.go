@@ -136,6 +136,11 @@ func absDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	if retVal, err = Sign(x); err == nil {
 		WithGroupName(gradClust)(retVal)
 		retVal, err = HadamardProd(gradY, retVal)
+		if err != nil {
+			return nil, errors.Wrap(err, hadamardProdFail)
+		}
+	} else {
+		return nil, errors.Wrap(err, "Failed to call Sign()")
 	}
 	return
 }
@@ -168,6 +173,11 @@ func sinDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	if retVal, err = Cos(x); err == nil {
 		WithGroupName(gradClust)(retVal)
 		retVal, err = HadamardProd(retVal, gradY)
+		if err != nil {
+			return nil, errors.Wrap(err, hadamardProdFail)
+		}
+	} else {
+		return nil, errors.Wrap(err, "Failed to carry Cos()")
 	}
 	return
 }
@@ -202,7 +212,14 @@ func cosDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 		if retVal, err = Neg(retVal); err == nil {
 			WithGroupName(gradClust)(retVal)
 			retVal, err = HadamardProd(retVal, gradY)
+			if err != nil {
+				return nil, errors.Wrap(err, hadamardProdFail)
+			}
+		} else {
+			return nil, errors.Wrap(err, negFail)
 		}
+	} else {
+		return nil, errors.Wrap(err, "Failed to call Sin()")
 	}
 	return
 }
@@ -277,7 +294,7 @@ func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -286,13 +303,17 @@ func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	case Float64:
 		log2 = ln2f64
 	default:
-		err = NewError(typeError, "log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return nil, errors.Errorf("log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	if retVal, err = HadamardProd(x, log2); err == nil {
 		WithGroupName(gradClust)(retVal)
 		retVal, err = HadamardDiv(gradY, retVal)
+		if err != nil {
+			return nil, errors.Wrap(err, hadamardDivFail)
+		}
+	} else {
+		return nil, errors.Wrap(err, hadamardProdFail)
 	}
 	return
 }
@@ -305,7 +326,7 @@ func log2Diff(x, y *Node) (err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -314,15 +335,13 @@ func log2Diff(x, y *Node) (err error) {
 	case Float64:
 		log2 = ln2f64
 	default:
-		err = NewError(typeError, "log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return errors.Errorf("log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	mul := newElemBinOp(mulOpType, x, log2)
 	var d Value
 	if d, err = mul.Do(xdv.Value, log2.boundTo); err != nil {
-		err = errors.Wrapf(err, doFail, mul)
-		return
+		return errors.Wrapf(err, doFail, mul)
 	}
 
 	if dT, ok := d.(Tensor); ok {
@@ -360,7 +379,7 @@ func squareDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -369,15 +388,19 @@ func squareDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	case Float64:
 		two = twof64
 	default:
-		err = NewError(typeError, "squareDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return nil, errors.Errorf("squareDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	if retVal, err = HadamardProd(x, two); err == nil {
 		symdiffLogf("Spawned: %d", retVal.ID())
 		WithGroupName(gradClust)(retVal)
 		retVal, err = HadamardProd(retVal, gradY)
+		if err != nil {
+			return nil, errors.Wrap(err, hadamardProdFail)
+		}
 		symdiffLogf("Spawned: %d", retVal.ID())
+	} else {
+		return nil, errors.Wrap(err, hadamardProdFail)
 	}
 	return
 }
@@ -390,7 +413,7 @@ func squareDiff(x, y *Node) (err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -399,8 +422,7 @@ func squareDiff(x, y *Node) (err error) {
 	case Float64:
 		two = twof64
 	default:
-		err = NewError(typeError, "squareDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return errors.Errorf("squareDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
@@ -425,7 +447,7 @@ func sqrtDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -434,13 +456,17 @@ func sqrtDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	case Float64:
 		two = twof64
 	default:
-		err = NewError(typeError, "sqrtDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return nil, errors.Errorf("sqrtDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	if retVal, err = HadamardProd(two, y); err == nil {
 		WithGroupName(gradClust)(retVal)
 		retVal, err = HadamardDiv(gradY, retVal)
+		if err != nil {
+			return nil, errors.Wrap(err, hadamardDivFail)
+		}
+	} else {
+		return nil, errors.Wrap(err, hadamardProdFail)
 	}
 	return
 }
@@ -453,7 +479,7 @@ func sqrtDiff(x, y *Node) (err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -462,8 +488,7 @@ func sqrtDiff(x, y *Node) (err error) {
 	case Float64:
 		two = twof64
 	default:
-		err = NewError(typeError, "sqrtDiff does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return errors.Errorf("sqrtDiff does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
@@ -490,7 +515,14 @@ func inverseDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 		if retVal, err = Neg(retVal); err == nil {
 			WithGroupName(gradClust)(retVal)
 			retVal, err = HadamardProd(retVal, gradY)
+			if err != nil {
+				return nil, errors.Wrap(err, hadamardProdFail)
+			}
+		} else {
+			return nil, errors.Wrap(err, negFail)
 		}
+	} else {
+		return nil, errors.Wrap(err, hadamardProdFail)
 	}
 	return
 }
@@ -503,14 +535,12 @@ func inverseDiff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = sq.Do(ydv.Value); err != nil {
-		err = errors.Wrapf(err, doFail, sq)
-		return
+		return errors.Wrapf(err, doFail, sq)
 	}
 
 	neg := newElemUnaryOp(negOpType, y)
 	if d, err = neg.Do(d); err != nil {
-		err = errors.Wrapf(err, doFail, neg)
-		return
+		return errors.Wrapf(err, doFail, neg)
 	}
 	if dT, ok := d.(Tensor); ok {
 		defer returnTensor(dT)
@@ -530,7 +560,7 @@ func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -539,8 +569,7 @@ func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	case Float64:
 		three = threef64
 	default:
-		err = NewError(typeError, "cubeDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return nil, errors.Errorf("cubeDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	if retVal, err = HadamardProd(x, x); err == nil {
@@ -548,7 +577,14 @@ func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 		if retVal, err = HadamardProd(retVal, three); err == nil {
 			WithGroupName(gradClust)(retVal)
 			retVal, err = HadamardProd(retVal, gradY)
+			if err != nil {
+				return nil, errors.Wrap(err, hadamardProdFail)
+			}
+		} else {
+			return nil, errors.Wrap(err, hadamardProdFail)
 		}
+	} else {
+		return nil, errors.Wrap(err, hadamardProdFail)
 	}
 	return
 }
@@ -561,7 +597,7 @@ func cubeDiff(x, y *Node) (err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -570,15 +606,13 @@ func cubeDiff(x, y *Node) (err error) {
 	case Float64:
 		three = threef64
 	default:
-		err = NewError(typeError, "cubeDiff does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return errors.Errorf("cubeDiff does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
 	var d Value
 	if d, err = mul.Do(xdv.Value, xdv.Value); err != nil {
-		err = errors.Wrapf(err, doFail, mul)
-		return
+		return errors.Wrapf(err, doFail, mul)
 	}
 
 	if dT, ok := d.(Tensor); ok {
@@ -586,8 +620,7 @@ func cubeDiff(x, y *Node) (err error) {
 	}
 
 	if d, err = mul.UnsafeDo(d, three.boundTo); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, mul)
-		return
+		return errors.Wrapf(err, unsafeDoFail, mul)
 	}
 
 	err = mul.IncrDo(xdv.d, d, ydv.d)
@@ -603,7 +636,7 @@ func tanhDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -612,8 +645,7 @@ func tanhDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	case Float64:
 		one = onef64
 	default:
-		err = NewError(typeError, "tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return nil, errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	if retVal, err = HadamardProd(y, y); err == nil {
@@ -621,7 +653,14 @@ func tanhDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 		if retVal, err = Sub(one, retVal); err == nil {
 			WithGroupName(gradClust)(retVal)
 			retVal, err = HadamardProd(retVal, gradY)
+			if err != nil {
+				return nil, errors.Wrap(err, hadamardProdFail)
+			}
+		} else {
+			return nil, errors.Wrap(err, subFail)
 		}
+	} else {
+		return nil, errors.Wrap(err, hadamardProdFail)
 	}
 	return
 }
@@ -634,7 +673,7 @@ func tanhDiff(x, y *Node) (err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -643,16 +682,14 @@ func tanhDiff(x, y *Node) (err error) {
 	case Float64:
 		one = onef64
 	default:
-		err = NewError(typeError, "tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	sq := newElemUnaryOp(squareOpType, y)
 
 	var d Value
 	if d, err = sq.Do(ydv.Value); err != nil {
-		err = errors.Wrapf(err, doFail, sq)
-		return
+		return errors.Wrapf(err, doFail, sq)
 	}
 
 	if dT, ok := d.(Tensor); ok {
@@ -661,8 +698,7 @@ func tanhDiff(x, y *Node) (err error) {
 
 	sub := newElemBinOp(subOpType, one, y)
 	if d, err = sub.UnsafeDo(one.boundTo, d); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, sub)
-		return
+		return errors.Wrapf(err, unsafeDoFail, sub)
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
@@ -679,7 +715,7 @@ func sigmoidDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -688,8 +724,7 @@ func sigmoidDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	case Float64:
 		one = onef64
 	default:
-		err = NewError(typeError, "tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return nil, errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	if retVal, err = Sub(one, y); err == nil {
@@ -697,7 +732,14 @@ func sigmoidDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 		if retVal, err = HadamardProd(y, retVal); err == nil {
 			WithGroupName(gradClust)(retVal)
 			retVal, err = HadamardProd(retVal, gradY)
+			if err != nil {
+				return nil, errors.Wrap(err, hadamardProdFail)
+			}
+		} else {
+			return nil, errors.Wrap(err, hadamardProdFail)
 		}
+	} else {
+		return nil, errors.Wrap(err, subFail)
 	}
 	return
 }
@@ -710,7 +752,7 @@ func sigmoidDiff(x, y *Node) (err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -719,16 +761,14 @@ func sigmoidDiff(x, y *Node) (err error) {
 	case Float64:
 		one = onef64
 	default:
-		err = NewError(typeError, "tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	sub := newElemBinOp(subOpType, one, y)
 
 	var d Value
 	if d, err = sub.Do(one.boundTo, ydv.Value); err != nil {
-		err = errors.Wrapf(err, doFail, sub)
-		return
+		return errors.Wrapf(err, doFail, sub)
 	}
 
 	if dT, ok := d.(Tensor); ok {
@@ -737,8 +777,7 @@ func sigmoidDiff(x, y *Node) (err error) {
 
 	mul := newElemBinOp(mulOpType, x, y)
 	if d, err = mul.UnsafeDo(d, ydv.Value); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, mul)
-		return
+		return errors.Wrapf(err, unsafeDoFail, mul)
 	}
 
 	err = mul.IncrDo(xdv.d, d, ydv.d)
@@ -755,7 +794,7 @@ func log1pDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -764,13 +803,17 @@ func log1pDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	case Float64:
 		one = onef64
 	default:
-		err = NewError(typeError, "log1pDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return nil, errors.Errorf("log1pDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	if retVal, err = Add(x, one); err == nil {
 		WithGroupName(gradClust)(retVal)
 		retVal, err = HadamardDiv(gradY, retVal)
+		if err != nil {
+			return nil, errors.Wrap(err, hadamardProdFail)
+		}
+	} else {
+		return nil, errors.Wrap(err, "Failed to carry Add()")
 	}
 	return
 }
@@ -783,7 +826,7 @@ func log1pDiff(x, y *Node) (err error) {
 	var dt Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
-		return
+		return errors.Wrap(err, dtypeOfFail)
 	}
 
 	switch dt {
@@ -792,16 +835,14 @@ func log1pDiff(x, y *Node) (err error) {
 	case Float64:
 		one = onef64
 	default:
-		err = NewError(typeError, "log1pDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-		return
+		return errors.Errorf("log1pDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
 
 	add := newElemBinOp(addOpType, x, one)
 
 	var d Value
 	if d, err = add.Do(xdv.Value, one.boundTo); err != nil {
-		err = errors.Wrapf(err, doFail, add)
-		return
+		return errors.Wrapf(err, doFail, add)
 	}
 
 	if dT, ok := d.(Tensor); ok {
@@ -821,8 +862,9 @@ func expm1DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	if retVal, err = Exp(x); err == nil {
 		WithGroupName(gradClust)(retVal)
 		return HadamardProd(gradY, retVal)
+	} else {
+		return nil, errors.Wrap(err, "Failled to carry Exp()")
 	}
-	return
 }
 
 func expm1Diff(x, y *Node) (err error) {
@@ -833,8 +875,7 @@ func expm1Diff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = exp.Do(xdv.Value); err != nil {
-		err = errors.Wrapf(err, doFail, exp)
-		return
+		return errors.Wrapf(err, doFail, exp)
 	}
 
 	if dT, ok := d.(Tensor); ok {
@@ -854,8 +895,9 @@ func softplusDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	if retVal, err = Sigmoid(x); err == nil {
 		WithGroupName(gradClust)(retVal)
 		return HadamardProd(retVal, gradY)
+	} else {
+		return nil, errors.Wrap(err, "Failed to carry Sigmoid()")
 	}
-	return
 }
 
 func softplusDiff(x, y *Node) (err error) {
@@ -866,8 +908,7 @@ func softplusDiff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = sigmoid.Do(xdv.Value); err != nil {
-		err = errors.Wrapf(err, doFail, sigmoid)
-		return
+		return errors.Wrapf(err, doFail, sigmoid)
 	}
 
 	if dT, ok := d.(Tensor); ok {
