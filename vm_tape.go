@@ -83,8 +83,7 @@ func (m *tapeMachine) dontTrace()  { m.runFlags &= (^(byte(1) << spare2)) }
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
 func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
 	if !m.p.g.Has(n) {
-		err = NewError(RuntimeError, "Node %v does not exist in this graph", n)
-		return
+		return errors.Errorf("Node %v does not exist in this graph", n)
 	}
 
 	return Let(n, be)
@@ -92,12 +91,10 @@ func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
 
 func (m *tapeMachine) Set(a, b *Node) (err error) {
 	if !m.p.g.Has(a) {
-		err = NewError(RuntimeError, "Node %v does not exist in this graph", a)
-		return
+		return errors.Errorf("Node %v does not exist in this graph", a)
 	}
 	if !m.p.g.Has(b) {
-		err = NewError(RuntimeError, "Node %v does not exist in this graph", b)
-		return
+		return errors.Errorf("Node %v does not exist in this graph", b)
 	}
 
 	// get the registry location
@@ -118,7 +115,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 
 	for _, instr := range frag {
 		if err = instr.exec(m); err != nil {
-			return
+			return errors.Wrap(err, "Failed to carry exec()")
 		}
 	}
 	machineLogf("Binding values based on final output")
@@ -129,7 +126,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 		}
 
 		if err = n.bind(m.storage[r.id]); err != nil {
-			return
+			return errors.Wrap(err, bindFail)
 		}
 	}
 	leaveLoggingContext()
@@ -145,7 +142,7 @@ func (m *tapeMachine) RunAll() (err error) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		if err = instr.exec(m); err != nil {
-			return
+			return errors.Wrap(err, "Failed to carry exec()")
 		}
 
 		if m.watchNaN() {
@@ -156,8 +153,7 @@ func (m *tapeMachine) RunAll() (err error) {
 				n := m.p.g.Node(id).(*Node)
 
 				if hasNaN(v) {
-					err = newValueErr(n, "NaN found in value. Node: %v(%x)", n, n.ID())
-					return
+					return errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 				}
 			}
 		}
@@ -170,8 +166,7 @@ func (m *tapeMachine) RunAll() (err error) {
 				n := m.p.g.Node(id).(*Node)
 				if hasInf(v) {
 					log.Printf("Reads: %v", instr.reads())
-					err = newValueErr(n, "Inf found in value. Node: %v(%x)", n, n.ID())
-					return
+					return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
 				}
 			}
 		}
@@ -404,14 +399,14 @@ mustalloc:
 	var tt *TensorType
 	var ok bool
 	if tt, ok = instr.t.(*TensorType); !ok {
-		return NewError(RuntimeError, "Alloc only allocates tensor types")
+		return errors.New("Alloc only allocates tensor types")
 
 		// allocate a "scalar" vector
 	}
 
 	var dt Dtype
 	if dt, ok = prune(tt.of).(Dtype); !ok {
-		return NewError(RuntimeError, "No dtype to allocate. Type: %T", tt.of)
+		return errors.Errorf("No dtype to allocate. Type: %T", tt.of)
 	}
 
 	//TODO: runtime shape check
@@ -444,7 +439,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	node := m.p.g.Node(instr.index).(*Node)
 
 	if node.boundTo == nil {
-		return NewError(RuntimeError, "No value bound to node %v (%x)", node, node.ID())
+		return errors.Errorf("No value bound to node %v (%x)", node, node.ID())
 	}
 
 	var v Value
@@ -520,29 +515,28 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p := m.storage[instr.writeTo.id]
 			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
-				err = errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
-				return
+				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
 			}
 		} else {
 			// TODO: maybe warn?
 			if v, err = instr.op.Do(inputs...); err != nil {
-				return
+				return errors.Wrap(err, opDoFail)
 			}
 		}
 	case instr.useUnsafe:
 		if ud, ok := instr.op.(UnsafeDoer); ok {
 			if v, err = ud.UnsafeDo(inputs...); err != nil {
-				return
+				return errors.Wrap(err, "Failed to carry UnsafeDo()")
 			}
 		} else {
 			// TODO: warn?
 			if v, err = instr.op.Do(inputs...); err != nil {
-				return
+				return errors.Wrap(err, opDoFail)
 			}
 		}
 	default:
 		if v, err = instr.op.Do(inputs...); err != nil {
-			return
+			return errors.Wrap(err, opDoFail)
 		}
 	}
 
@@ -560,7 +554,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	if m.trace() {
 		var cloned Value
 		if cloned, err = v.clone(); err != nil {
-			return
+			return errors.Wrap(err, cloneFail)
 		}
 		node.bind(cloned)
 	} else {
@@ -629,7 +623,7 @@ func (instr readInstr) exec(m *tapeMachine) error {
 	v := m.storage[instr.readFrom.id]
 	v2, err := v.clone()
 	if err != nil {
-		return err
+		return errors.Wrap(err, cloneFail)
 	}
 
 	*instr.into = v2

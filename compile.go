@@ -20,8 +20,7 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	compileLogf("sorting")
 	var sortedNodes Nodes
 	if sortedNodes, err = Sort(g); err != nil {
-		err = errors.Wrap(err, sortFail)
-		return
+		return nil, nil, errors.Wrap(err, sortFail)
 	}
 
 	var inputs Nodes
@@ -68,14 +67,12 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	}
 
 	if len(unused) > 0 {
-		err = NewError(CompileError, "Not all the inputs are used: %v", unused)
-		return
+		return nil, nil, errors.Errorf("Not all the inputs are used: %v", unused)
 	}
 
 	var sortedNodes Nodes
 	if sortedNodes, err = Sort(g); err != nil {
-		err = errors.Wrap(err, sortFail)
-		return
+		return nil, nil, errors.Wrap(err, sortFail)
 	}
 
 	df := analyze(subgraph, sortedNodes)
@@ -323,6 +320,7 @@ func compileState(w io.Writer, g *ExprGraph, df *dataflow) {
 	}
 	cw := csv.NewWriter(w)
 	cw.Comma = ';'
+	// TODO: Check errors on writes here.
 	cw.Write(header)
 	cw.WriteAll(rows)
 }

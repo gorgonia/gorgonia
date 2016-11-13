@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"testing"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
@@ -54,6 +55,7 @@ func TestBroadcast2(t *testing.T) {
 	y = NewVector(g, Float64, WithShape(2, 1), WithValue(yT), WithName("y"))
 	z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1}))
 	if err != nil {
+		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)
 	}
 

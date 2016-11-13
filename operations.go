@@ -14,6 +14,8 @@ import (
 func applyOpWithName(op Op, name string, children ...*Node) (retVal *Node, err error) {
 	if retVal, err = applyOp(op, children...); err == nil {
 		WithName(name)(retVal)
+	} else {
+		return nil, errors.Wrap(err, applyOpFail)
 	}
 	return
 }
@@ -30,29 +32,30 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	}
 
 	if g == nil {
-		err = NewError(GraphError, "No Graph Supplied")
-		return
+		return nil, errors.New("No Graph Supplied")
 	}
 
 	if !Nodes(children).AllSameGraph() {
-		err = NewError(GraphError, "Not all children have the same graph")
-		return
+		return nil, errors.New("Not all children have the same graph")
 	}
 
 	// typecheck  before creating
 	typeSysLogf("Inferring node type of %v with children: %#Y", op, Nodes(children))
 	var retType Type
 	if retType, err = inferNodeType(op, children...); err != nil {
-		err = errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
-		return
+		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
 	}
 	// retType = pruneCompletely(retType)
 	typeSysLogf("Done inferring. Return type is: %v %#v", retType, retType)
 
 	// infer shapes, but print errors instead of returning
 	shapeLogf("op: %v(%T) inferring shape", op, op)
+	if err = checkArity(op, len(children)); err != nil {
+		return
+	}
+
 	var s types.Shape
-	if s, err = op.InferShape(retType, children...); err == nil {
+	if s, err = op.InferShape(Nodes(children).dimSizers()...); err == nil {
 		typeSysLogf("inferred type: %v", retType)
 		shapeLogf("inferred shape %v", s)
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g), WithShape(s...))
@@ -140,8 +143,7 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 		op = linAlgBinOp{āBinaryOperator: matMulOperator}
 		return binOpNode(op, a, b)
 	default:
-		err = nyi("Mul", fmt.Sprintf("a %v b %v", a.shape, b.shape))
-		return
+		return nil, errors.Errorf(nyiFail, "Mul", fmt.Sprintf("a %v b %v", a.shape, b.shape))
 	}
 	panic("unreachable")
 
@@ -149,8 +151,7 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 
 func OuterProd(a, b *Node) (retVal *Node, err error) {
 	if !a.IsVector() || !b.IsVector() {
-		err = NewError(GraphError, "Expected only vectors to be able to do OuterProd") //for now
-		return
+		return nil, errors.New("Expected only vectors to be able to do OuterProd") //for now
 	}
 
 	// TODO: maybe align shapes?
@@ -329,7 +330,11 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 				return HadamardDiv(exp, sum)
 			}
 			return Broadcast(divOpType, exp, sum, NewBroadcastPattern(nil, []byte{1}))
+		} else {
+			return nil, errors.Wrap(err, operationError)
 		}
+	} else {
+		return nil, errors.Wrap(err, operationError)
 	}
 	return
 }
@@ -337,15 +342,20 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 func StableSoftMax(a *Node) (retVal *Node, err error) {
 	var max, exp, sum *Node
 	if max, err = Max(a); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 	if retVal, err = Sub(a, max); err == nil {
 		if exp, err = Exp(retVal); err == nil {
 			if sum, err = Sum(exp, 1); err == nil {
 				return HadamardDiv(exp, sum)
+			} else {
+				return nil, errors.Wrap(err, operationError)
 			}
+		} else {
+			return nil, errors.Wrap(err, operationError)
 		}
+	} else {
+		return nil, errors.Wrap(err, operationError)
 	}
 	return
 }
@@ -361,8 +371,7 @@ func At(a *Node, coords ...int) (retVal *Node, err error) {
 	if a.IsScalar() {
 		for _, c := range coords {
 			if c != 0 {
-				err = NewError(GraphError, "At() only works with scalars when the coordinates are (0...0). Got %v instead", coords)
-				return
+				return nil, errors.Errorf("At() only works with scalars when the coordinates are (0...0). Got %v instead", coords)
 			}
 		}
 		return a, nil
@@ -410,21 +419,21 @@ func Mean(a *Node, along ...int) (retVal *Node, err error) {
 
 	var s *Node
 	if s, err = Sum(a, along...); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 
 	sizes := make(Nodes, len(along))
 	for i, axis := range along {
 		if sizes[i], err = SizeOf(axis, a); err != nil {
-			err = errors.Wrap(err, operationError)
-			return
+			return nil, errors.Wrap(err, operationError)
 		}
 	}
 
 	var counts *Node
 	if counts, err = ReduceMul(sizes); err == nil {
 		retVal, err = HadamardDiv(s, counts)
+	} else {
+		return nil, errors.Wrap(err, operationError)
 	}
 	return
 }
@@ -460,14 +469,21 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 		if retVal, err = Square(a); err == nil {
 			if retVal, err = Sum(retVal, axis); err == nil {
 				retVal, err = Sqrt(retVal)
+				if err != nil {
+					return nil, errors.Wrap(err, operationError)
+				}
+			} else {
+				return nil, errors.Wrap(err, operationError)
 			}
+		} else {
+			return nil, errors.Wrap(err, operationError)
 		}
 		return
 	}
 
 	var dt Dtype
 	if dt, err = dtypeOf(a.t); err != nil {
-		return
+		return nil, errors.Wrapf(err, "Failed to determine the dtype of %T", a.t)
 	}
 
 	var b, inv *Node
@@ -479,14 +495,20 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 		b = NewConstant(float64(p))
 		inv = NewConstant(float64(1) / float64(p))
 	default:
-		err = NewError(TypeError, "Cannot norm a non-floating point type")
-		return
+		return nil, errors.New("Cannot norm a non-floating point type")
 	}
 
 	if retVal, err = Pow(a, b); err == nil {
 		if retVal, err = Sum(retVal, axis); err == nil {
 			retVal, err = Pow(retVal, inv)
+			if err != nil {
+				return nil, errors.Wrap(err, operationError)
+			}
+		} else {
+			return nil, errors.Wrap(err, operationError)
 		}
+	} else {
+		return nil, errors.Wrap(err, operationError)
 	}
 	return
 }
@@ -505,6 +527,8 @@ func ReduceAdd(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 			for _, opt := range opts {
 				opt(retVal)
 			}
+		} else {
+			return nil, errors.Wrap(err, operationError)
 		}
 		return
 	}
@@ -539,6 +563,8 @@ func ReduceMul(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 			for _, opt := range opts {
 				opt(retVal)
 			}
+		} else {
+			return nil, errors.Wrap(err, operationError)
 		}
 		return
 	}
@@ -550,8 +576,7 @@ func ReduceMul(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 		}
 
 		if retVal, err = Mul(retVal, n); err != nil {
-			err = errors.Wrap(err, operationError)
-			return
+			return nil, errors.Wrap(err, operationError)
 		}
 		for _, opt := range opts {
 			opt(retVal)
@@ -580,15 +605,13 @@ func SizeOf(axis int, x *Node) (retVal *Node, err error) {
 // Slice slices a *Node. For T[:] slices, pass in nil. Will error out if node's type is not a Tensor
 func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 	if _, ok := n.t.(*TensorType); !ok {
-		err = NewError(GraphError, "Cannot slice on non Tensor types. Got %T", n.t)
-		return
+		return nil, errors.Errorf("Cannot slice on non Tensor types. Got %T", n.t)
 	}
 
 	retVal = n
 	for i, slice := range slices {
 		if retVal.IsScalar() {
-			err = NewError(ShapeError, "cannot slice a scalar value (%v). Slice %d (%v)", retVal, i, slice)
-			return
+			return nil, errors.Errorf("cannot slice a scalar value (%v). Slice %d (%v)", retVal, i, slice)
 		}
 
 		var op sliceOp
@@ -601,8 +624,7 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 		}
 
 		if retVal, err = applyOp(op, retVal); err != nil {
-			err = errors.Wrap(err, operationError)
-			return
+			return nil, errors.Wrap(err, operationError)
 		}
 	}
 	return
@@ -611,8 +633,7 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 	// prep axes
 	if len(axes) > 0 && len(axes) != n.Dims() {
-		err = NewError(ShapeError, "n has %d dims, while requested transposes is %d", n.Dims(), len(axes))
-		return
+		return nil, errors.Errorf("n has %d dims, while requested transposes is %d", n.Dims(), len(axes))
 	}
 	dims := len(n.shape)
 	if len(axes) == 0 || axes == nil {

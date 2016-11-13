@@ -107,6 +107,20 @@ func (s Shape) Dims() int {
 	panic("Unreachable")
 }
 
+func (s Shape) DimSize(d int) (size int, err error) {
+	if (s.IsScalar() && d != 0) || d >= len(s) {
+		err = DimMismatchErr(len(s), d)
+		return
+	}
+
+	switch {
+	case s.IsScalar():
+		return 0, nil
+	default:
+		return s[d], nil
+	}
+}
+
 // S gives the new shape after a shape has been sliced. It's repeated from the AP S() method mainly because there are other functions in Gorgonia that uses only shape
 func (s Shape) S(slices ...Slice) (retVal Shape, err error) {
 	opDims := len(s)

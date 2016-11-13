@@ -8,6 +8,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 )
 
 // Value represents a value that Gorgonia accepts
@@ -147,34 +148,34 @@ func (s Scalar) sanity() (err error) {
 	switch s.v.(type) {
 	case float64:
 		if s.t != Float64 {
-			err = NewError(RuntimeError, "Type mismatch. Want Float64. Got %v instead", s.t)
+			return errors.Errorf("Type mismatch. Want Float64. Got %v instead", s.t)
 		}
 	case float32:
 		if s.t != Float32 {
-			err = NewError(RuntimeError, "Type mismatch. Want Float32. Got %v instead", s.t)
+			return errors.Errorf("Type mismatch. Want Float32. Got %v instead", s.t)
 		}
 	case int:
 		if s.t != Int {
-			err = NewError(RuntimeError, "Type mismatch. Want Int. Got %v instead", s.t)
+			return errors.Errorf("Type mismatch. Want Int. Got %v instead", s.t)
 		}
 	case int64:
 		if s.t != Int64 {
-			err = NewError(RuntimeError, "Type mismatch. Want Int64. Got %v instead", s.t)
+			return errors.Errorf("Type mismatch. Want Int64. Got %v instead", s.t)
 		}
 	case int32:
 		if s.t != Int32 {
-			err = NewError(RuntimeError, "Type mismatch. Want Int32. Got %v instead", s.t)
+			return errors.Errorf("Type mismatch. Want Int32. Got %v instead", s.t)
 		}
 	case byte:
 		if s.t != Byte {
-			err = NewError(RuntimeError, "Type mismatch. Want Byte. Got %v instead", s.t)
+			return errors.Errorf("Type mismatch. Want Byte. Got %v instead", s.t)
 		}
 	case bool:
 		if s.t != Bool {
-			err = NewError(RuntimeError, "Type mismatch. Want Bool. Got %v instead", s.t)
+			return errors.Errorf("Type mismatch. Want Bool. Got %v instead", s.t)
 		}
 	default:
-		err = NewError(RuntimeError, "Scalar %v is of Unsupported type %T", s.v, s.v)
+		return errors.Errorf("Scalar %v is of Unsupported type %T", s.v, s.v)
 	}
 	return
 }

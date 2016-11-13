@@ -10,6 +10,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/leesper/go_rng"
+	"github.com/pkg/errors"
 )
 
 /*
@@ -59,9 +60,9 @@ func (op randomOp) Type() Type {
 	return tt
 }
 
-func (op randomOp) InferShape(Type, ...*Node) (types.Shape, error) { return op.shape, nil }
-func (op randomOp) DiffWRT(i int) []bool                           { r := make([]bool, i); return r }
-func (op randomOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nondiffErr(op) }
+func (op randomOp) InferShape(...DimSizer) (types.Shape, error) { return op.shape, nil }
+func (op randomOp) DiffWRT(i int) []bool                        { r := make([]bool, i); return r }
+func (op randomOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)  { return nil, nondiffErr(op) }
 
 func (op randomOp) Do(...Value) (retVal Value, err error) {
 	if op.shape.IsScalar() {
@@ -97,7 +98,7 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 				return anyToValue(v)
 			}
 		default:
-			err = nyi("randomOp.do", op.dt)
+			return nil, errors.Errorf(nyiFail, "randomOp.do()", op.dt)
 		}
 	}
 

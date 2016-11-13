@@ -85,7 +85,7 @@ func (m *lispMachine) checkRoots() (err error) {
 		machineLogf("roots: %v", m.g.Roots())
 		for _, root := range m.g.Roots() {
 			if !root.IsScalar() && !root.isStmt {
-				err = NewError(AutoDiffError, "Expected cost to be a scalar. Got %v with shape %v instead", root, root.Shape())
+				err = errors.Errorf("Expected cost to be a scalar. Got %v with shape %v instead", root, root.Shape())
 				ioutil.WriteFile("err.dot", []byte(root.RestrictedToDot(2, 10)), 0644)
 				return
 			}
@@ -97,8 +97,7 @@ func (m *lispMachine) checkRoots() (err error) {
 func (m *lispMachine) prepGraph() (err error) {
 	if m.sorted == nil {
 		if m.sorted, err = Sort(m.g); err != nil {
-			err = errors.Wrap(err, sortFail)
-			return
+			return errors.Wrap(err, sortFail)
 		}
 
 		m.fwd = len(m.sorted) - 1
@@ -119,7 +118,7 @@ func (m *lispMachine) forward() (err error) {
 	if n.isInput() {
 		machineLogf("Unit() on input node")
 		if err = n.bind(dvUnit(n.boundTo)); err != nil {
-			return
+			return errors.Wrap(err, bindFail)
 		}
 		m.watchedLogf(m.valueFmt, n.boundTo)
 		return
@@ -144,15 +143,15 @@ func (m *lispMachine) forward() (err error) {
 		machineLogf("Applying op %v to root", op)
 		if n.boundTo == nil {
 			if output, err = dvBindVar(op, inputs); err != nil {
-				return
+				return errors.Wrapf(err, execFail, op)
 			}
 			if err = n.bind(output); err != nil {
-				return
+				return errors.Wrap(err, bindFail)
 			}
 		} else {
 			dv := n.boundTo.(*dualValue)
 			if err = dvBindVar0(op, dv, inputs); err != nil {
-				return
+				return errors.Wrapf(err, execFail, op)
 			}
 		}
 
@@ -179,12 +178,11 @@ func (m *lispMachine) forward() (err error) {
 		}
 		leaveLoggingContext()
 		if output, err = dvBind(op, inputs); err != nil {
-			err = errors.Wrapf(err, execFail, op)
-			return
+			return errors.Wrapf(err, execFail, op)
 		}
 
 		if err = n.bind(output); err != nil {
-			return
+			return errors.Wrap(err, bindFail)
 		}
 
 	default:
@@ -192,27 +190,25 @@ func (m *lispMachine) forward() (err error) {
 		// reuse as much as possible
 		output := dvUnit(n.boundTo)
 		if err = n.bind(output); err != nil {
-			return
+			return errors.Wrap(err, bindFail)
 		}
 
 		err = dvBind0(op, output, inputs)
 		if et, ok := errors.Cause(err).(errorTyper); ok {
 			if et.ErrorType() != AutoDiffError {
-				err = errors.Wrapf(err, execFail, op)
-				return
+				return errors.Wrapf(err, execFail, op)
 			}
 			err = nil
 		} else if err != nil {
-			err = errors.Wrapf(err, execFail, op)
-			return
+			return errors.Wrapf(err, execFail, op)
 		}
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
 
-	if aop, ok := op.(AdOp); ok && m.runBwd() {
+	if aop, ok := op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
-			AdOp: aop,
+			ADOp: aop,
 
 			inputs: n.children,
 			output: n,
@@ -222,8 +218,7 @@ func (m *lispMachine) forward() (err error) {
 
 	if m.watchNaN() && !n.isStmt {
 		if hasNaN(n.boundTo) {
-			err = newValueErr(n, "NaN found in value")
-			return
+			return errors.New("NaN found in value")
 		}
 	}
 
@@ -232,7 +227,7 @@ func (m *lispMachine) forward() (err error) {
 
 func (m *lispMachine) backward() (err error) {
 	if m.bwd < 0 {
-		return NewError(RuntimeError, "no backprop queue")
+		return errors.New("no backprop queue")
 	}
 
 	instr := m.q[m.bwd]
@@ -249,8 +244,8 @@ func (m *lispMachine) backward() (err error) {
 
 	// actual differentiation
 	if err = instr.do(); err != nil {
-		err = errors.Wrapf(err, autodiffFail, instr.AdOp)
-		return
+
+		return errors.Wrapf(err, autodiffFail, instr.ADOp)
 	}
 
 	m.watchedLogf("After:")
@@ -263,14 +258,12 @@ func (m *lispMachine) backward() (err error) {
 
 	if m.watchNaN() {
 		if hasNaN(instr.output.boundTo) {
-			err = newValueErr(instr.output, "NaN found in value")
-			return
+			return errors.New("NaN found in value")
 		}
 
 		for _, in := range instr.inputs {
 			if hasNaN(in.boundTo) {
-				err = newValueErr(in, "NaN found in value")
-				return
+				return errors.New("NaN found in value")
 			}
 		}
 	}
@@ -279,11 +272,11 @@ func (m *lispMachine) backward() (err error) {
 
 func (m *lispMachine) RunAll() (err error) {
 	if err = m.prepGraph(); err != nil {
-		return
+		return errors.Wrap(err, "Could not prepGraph()")
 	}
 
 	if err = m.checkRoots(); err != nil {
-		return
+		return errors.Wrap(err, "Could not checkRoots()")
 	}
 
 	if !m.runFwd() {
@@ -444,12 +437,12 @@ func (m *lispMachine) leaveLoggingContext() {
 
 // adInstr is an autodifferentiation instruction
 type adInstr struct {
-	AdOp
+	ADOp
 
 	inputs Nodes
 	output *Node
 }
 
 func (instr adInstr) do() error {
-	return instr.AdOp.DoDiff(instr.inputs, instr.output)
+	return instr.ADOp.DoDiff(instr.inputs, instr.output)
 }

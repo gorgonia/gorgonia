@@ -1,5 +1,7 @@
 package gorgonia
 
+import "github.com/pkg/errors"
+
 // inferType infers the type of the expression
 func inferType(expr interface{}, nonGenerics typeSet) (retVal Type, err error) {
 	switch e := expr.(type) {
@@ -48,7 +50,7 @@ func inferNodeType(op Op, children ...*Node) (retVal Type, err error) {
 	for i, child := range children {
 		typeSysLogf("child %d %v type: %v;", i, child, child.t)
 		if argTypes[i], err = inferType(child, nil); err != nil {
-			return
+			return nil, errors.Wrap(err, "Failled to carry inferType()")
 		}
 	}
 
@@ -61,7 +63,7 @@ func inferNodeType(op Op, children ...*Node) (retVal Type, err error) {
 	typeSysLogf("realized fnType: %v; opType: %v", fnType, optype)
 
 	if err = unify(fnType, optype); err != nil {
-		return
+		return nil, errors.Wrap(err, "Failed to carry unify()")
 	}
 
 	retVal = pruneCompletely(retType)

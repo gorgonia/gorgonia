@@ -34,24 +34,16 @@ func (op atOp) Type() Type {
 	return newFunctionType(tt, a)
 }
 
-func (op atOp) ReturnsPtr() bool     { return false }
-func (op atOp) OverwritesInput() int { return -1 }
-func (op atOp) CallsExtern() bool    { return false }
-
-func (op atOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
-	if len(inputs) < 1 {
-		err = NewError(GraphError, "repeatOp should only have one or more inputs. Got %v instead", len(inputs))
-	}
-	return scalarShape, nil
-}
-
-func (op atOp) DiffWRT(i int) []bool                       { return make([]bool, i) }
-func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nondiffErr(op) }
-func (op atOp) String() string                             { return fmt.Sprintf("At(%v)", op.coordinates) }
+func (op atOp) ReturnsPtr() bool                                       { return false }
+func (op atOp) OverwritesInput() int                                   { return -1 }
+func (op atOp) CallsExtern() bool                                      { return false }
+func (op atOp) InferShape(...DimSizer) (retVal types.Shape, err error) { return scalarShape, nil }
+func (op atOp) DiffWRT(i int) []bool                                   { return make([]bool, i) }
+func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)             { return nil, nondiffErr(op) }
+func (op atOp) String() string                                         { return fmt.Sprintf("At(%v)", op.coordinates) }
 
 func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "AtOp only expects one input. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -104,11 +96,11 @@ func (op sizeOp) Type() Type {
 	return newFunctionType(tt, a)
 }
 
-func (op sizeOp) ReturnsPtr() bool                               { return false }
-func (op sizeOp) OverwritesInput() int                           { return -1 }
-func (op sizeOp) CallsExtern() bool                              { return false }
-func (op sizeOp) InferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO: return error
-func (op sizeOp) DiffWRT(i int) []bool                           { return []bool{false} }
+func (op sizeOp) ReturnsPtr() bool                            { return false }
+func (op sizeOp) OverwritesInput() int                        { return -1 }
+func (op sizeOp) CallsExtern() bool                           { return false }
+func (op sizeOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil } // TODO: return error
+func (op sizeOp) DiffWRT(i int) []bool                        { return []bool{false} }
 func (op sizeOp) String() string {
 	if op.val != 0 {
 		return fmt.Sprintf("SizeOf=%d", op.val)
@@ -121,8 +113,7 @@ func (op sizeOp) SymDiff(inputs Nodes, output, gradNode *Node) (Nodes, error) {
 }
 
 func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sizeOp only takes one input. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -131,7 +122,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 	case Tensor:
 		sh := t.Shape()
 		if op.axis >= len(sh) {
-			err = NewError(ShapeError, "Shape is %v. Want size of %d", sh, op.axis)
+			return nil, errors.Errorf("Shape is %v. Want size of %d", sh, op.axis)
 		}
 		size := sh[op.axis]
 
@@ -144,8 +135,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		case Int:
 			val = size
 		default:
-			err = nyi("sizeOf.Do() Tensor input", t.Dtype())
-			return
+			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
 		}
 
 	case Scalar:
@@ -157,8 +147,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		case Int:
 			val = 1
 		default:
-			err = nyi("sizeOf.Do() Scalar input", t.t)
-			return
+			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.t)
 		}
 	}
 
@@ -182,6 +171,13 @@ func (op sizeOp) Hashcode() uint32 {
 	return h.Sum32()
 }
 
+func (op sizeOp) DimSize(d int) (int, error) {
+	if d != op.axis {
+		return -1, NewError(ShapeError, "Dimension mismatch. Size Op is for axis %d. Want Dim Size of %d", op.axis, d)
+	}
+	return op.val, nil
+}
+
 type repeatOp struct {
 	along axes
 
@@ -198,9 +194,12 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 		children: len(children),
 		arg0Dim:  children[0].Dims(),
 	}
-	if s, err := retVal.InferShape(nil, children...); err == nil {
+
+	if s, err := retVal.InferShape(children.dimSizers()...); err == nil {
 		retVal.inputShape = s
 		retVal.d = s.Dims()
+	} else {
+		panic(err)
 	}
 
 	return retVal
@@ -247,30 +246,26 @@ func (op repeatOp) ReturnsPtr() bool     { return true }
 func (op repeatOp) OverwritesInput() int { return -1 }
 func (op repeatOp) CallsExtern() bool    { return false }
 
-func (op repeatOp) InferShape(retType Type, inputs ...*Node) (retVal types.Shape, err error) {
-	if len(inputs) < 2 {
-		err = NewError(GraphError, "repeatOp should only have two or more inputs. Got %v instead", len(inputs))
-	}
-
+func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
 	if op.inputShape != nil {
 		retVal = op.inputShape
 		return
 	}
 
-	input := inputs[0]
+	input := inputs[0].(types.Shape)
 	repeats := inputs[1:]
 
 	knownRepeats := make([]int, len(repeats))
 	for i, rep := range repeats {
-		if size, ok := rep.op.(sizeOp); ok && size.val > 0 {
-			knownRepeats[i] = size.val
+		if r, ok := rep.(sizeOp); ok {
+			knownRepeats[i] = r.val
 		}
 	}
 
 	if input.IsScalar() {
 		retVal = types.Shape{1, 1} // fill it up just in case
 	} else {
-		retVal = input.shape.Clone()
+		retVal = input.Clone()
 	}
 
 	for i, axis := range op.along {
@@ -307,8 +302,7 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 }
 
 func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) < 2 {
-		err = NewError(GraphError, "repeat expects at least 2 inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -387,8 +381,7 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 func (op repeatOp) String() string { return fmt.Sprintf("Repeat%v", op.along) }
 
 func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) < 2 {
-		err = NewError(GraphError, "repeat expects at least 2 inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -511,21 +504,15 @@ func (op sliceOp) Type() Type {
 	return newFunctionType(tt, tt)
 }
 
-func (op sliceOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
-	if len(inputs) > 1 {
-		// error
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
-		return
-	}
-
-	t := inputs[0]
-	return t.shape.S(op.Slice)
+func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
+	input := inputs[0].(types.Shape)
+	return input.S(op.Slice)
 }
 
 func (op sliceOp) DiffWRT(i int) []bool {
 	if i > 1 {
 		// error
-		err := NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", i)
+		err := errors.Errorf("sliceOp should only have one or more inputs. Got %v instead", i)
 		panic(err)
 	}
 
@@ -533,8 +520,7 @@ func (op sliceOp) DiffWRT(i int) []bool {
 }
 
 func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -547,8 +533,7 @@ func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Node
 }
 
 func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -558,22 +543,20 @@ func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	var d Value
 	if d, err = incrOp.Do(xdv.Value, ydv.d); err != nil {
-		err = errors.Wrapf(err, doFail, incrOp)
-		return
+		return errors.Wrapf(err, doFail, incrOp)
 	}
 
 	// there is no need to handle scalars, because you can never slice a scalar
 	add := newElemBinOp(addOpType, inputs[0], output)
 	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, add)
+		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	return
 }
 
 func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -592,13 +575,15 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 			// actually do shit
 			var v64 *tf64.Tensor // it's a view though
 			if v64, err = tt.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			// prep retVal
 			if v64.IsScalar() {
 				retVal, err = anyToValue(v64.ScalarValue())
+				if err != nil {
+					return nil, errors.Wrapf(err, anyToValueFail, v64, v64)
+				}
 			} else {
 				retVal = FromTensor(v64)
 			}
@@ -606,13 +591,15 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 			// actually do shit
 			var v32 *tf32.Tensor // it's a view though
 			if v32, err = tt.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			// prep retVal
 			if v32.IsScalar() {
 				retVal, err = anyToValue(v32.ScalarValue())
+				if err != nil {
+					return nil, errors.Wrapf(err, anyToValueFail, v32, v32)
+				}
 			} else {
 				retVal = FromTensor(v32)
 			}
@@ -620,27 +607,26 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 			// actually do shit
 			var vi *ti.Tensor // it's a view though
 			if vi, err = tt.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			// prep retVal
 			if vi.IsScalar() {
 				retVal, err = anyToValue(vi.ScalarValue())
+				if err != nil {
+					return nil, errors.Wrapf(err, anyToValueFail, vi, vi)
+				}
 			} else {
 				retVal = FromTensor(vi)
 			}
 		// case *tb.Tensor:
 		default:
-			err = nyi("sliceOp.Do() Tensor Input", T)
-			return
+			return nil, errors.Errorf(nyiFail, "sliceOp.Do()", T)
 		}
 	case Scalar:
-		err = NewError(RuntimeError, "Cannot slice a scalar value")
-		return
+		return nil, errors.New("Cannot slice a scalar value")
 	default:
-		err = nyi("sliceOp.Do() Unknown Input", t)
-		return
+		return nil, errors.Errorf(nyiFail, "sliceOp.Do()", t)
 	}
 	return
 }
@@ -713,15 +699,10 @@ func (op sliceIncrOp) Type() Type {
 	return newFunctionType(tt, b, tt)
 }
 
-func (op sliceIncrOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
-	if len(inputs) != 2 {
-		// error
-		err = NewError(GraphError, "sliceIncrOp should only have one or more inputs. Got %v instead", len(inputs))
-		return
-	}
+func (op sliceIncrOp) Arity() int { return 2 }
 
-	t := inputs[0]
-	s = t.shape
+func (op sliceIncrOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
+	retVal = inputs[0].(types.Shape)
 	return
 }
 
@@ -738,8 +719,7 @@ func (op sliceIncrOp) DiffWRT(i int) []bool {
 func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
 	var slicedRes *Node
 	if slicedRes, err = applyOp(op.sliceOp, gradNode); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 	retVal = Nodes{gradNode, slicedRes}
 	return
@@ -754,20 +734,18 @@ func (op sliceIncrOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	add := newElemBinOp(addOpType, inputs[0], output)
 
 	if _, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, add)
-		return
+		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	// dzdy
 	var d Value
 	if d, err = op.sliceOp.Do(zdv.d); err != nil {
-		err = errors.Wrapf(err, doFail, op)
-		return
+		return errors.Wrapf(err, doFail, op)
 	}
 
 	add = newElemBinOp(addOpType, inputs[1], output)
 	if _, err = add.UnsafeDo(ydv.d, d); err != nil {
-		err = errors.Wrapf(err, doFail, add)
+		return errors.Wrapf(err, doFail, add)
 	}
 	return
 }
@@ -777,8 +755,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	if len(inputs) != 2 {
-		err = NewError(GraphError, "sliceIncrOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -799,8 +776,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			cloned := tf64.NewTensor(tf64.WithShape(tt.Shape()...))
 			var v64 *tf64.Tensor
 			if v64, err = cloned.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			var val interface{}
@@ -819,8 +795,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			cloned := tf32.NewTensor(tf32.WithShape(tt.Shape()...))
 			var v32 *tf32.Tensor
 			if v32, err = cloned.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			var val interface{}
@@ -838,8 +813,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			cloned := ti.NewTensor(ti.WithShape(tt.Shape()...))
 			var vi *ti.Tensor
 			if vi, err = cloned.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			var val interface{}
@@ -854,15 +828,12 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			retVal = FromTensor(cloned)
 		// case *tb.Tensor:
 		default:
-			err = nyi("sliceIncrOp Tensor Input", T)
-			return
+			return nil, errors.Errorf(nyiFail, "sliceIncrOp()", T)
 		}
 	case Scalar:
-		err = NewError(RuntimeError, "Cannot slice a scalar value")
-		return
+		return nil, errors.New("Cannot slice a scalar value")
 	default:
-		err = nyi("sliceIncrOp Unknown Input", t)
-		return
+		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", t)
 	}
 	logf("returning?")
 	return
@@ -934,21 +905,15 @@ func (op transposeOp) Type() Type {
 	return newFunctionType(tt, tt)
 }
 
-func (op transposeOp) InferShape(typ Type, inputs ...*Node) (s types.Shape, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "transposeOp should only have one inputs. Got %v instead", len(inputs))
-		return
+func (op transposeOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
+	input := inputs[0].(types.Shape)
+	if input.IsScalar() {
+		return nil, errors.Errorf(undefinedOnShape, op, input)
 	}
 
-	t := inputs[0]
-	if t.shape.IsScalar() {
-		err = NewError(ShapeError, "transposeOp undefined on scalar shapes")
-		return
-	}
-
-	s = make(types.Shape, len(t.shape))
-	copy(s, t.shape)
-	err = types.UnsafePermute(op.pattern, s)
+	retVal = make(types.Shape, len(input))
+	copy(retVal, input)
+	err = types.UnsafePermute(op.pattern, retVal)
 	return
 }
 
@@ -986,12 +951,11 @@ func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	var zdvdT Tensor
 	var ok bool
 	if zdvdT, ok = zdv.d.(Tensor); !ok {
-		err = NewError(TypeError, "Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
-		return
+		return errors.Errorf("Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
 	}
 
 	if err = zdvdT.T(newPattern...); err != nil {
-		return
+		return errors.Wrap(err, "Failed to T()")
 	}
 
 	d := FromTensor(zdvdT.Materialize())
@@ -1009,8 +973,7 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "transposeOp should only have one or more inputs. Got %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -1020,7 +983,7 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	copy(throwaway, op.pattern)
 	var ret types.Tensor
 	if ret, err = tensor.T(t, throwaway...); err != nil {
-		return
+		return nil, errors.Wrap(err, "Failed to T()")
 	}
 
 	// the reason for this is because the .T() method of a Tensor

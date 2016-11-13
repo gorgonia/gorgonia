@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,6 +56,8 @@ func TestSumOpDiff(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	ioutil.WriteFile("SumOp.dot", []byte(g.ToDot()), 0644)
 
 	m = NewTapeMachine(prog, locMap)
 	err = m.RunAll()

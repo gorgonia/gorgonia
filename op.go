@@ -13,6 +13,14 @@ type DimSizer interface {
 	DimSize(int) (int, error)
 }
 
+func ShapesToDimSizers(shapes []types.Shape) []DimSizer {
+	retVal := make([]DimSizer, len(shapes))
+	for i, s := range shapes {
+		retVal[i] = s
+	}
+	return retVal
+}
+
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
@@ -29,15 +37,6 @@ type Op interface {
 
 	// returns the output shape as a function of the inputs
 	InferShape(...DimSizer) (types.Shape, error)
-
-	/* Differentiation related fields */
-
-	// diffWRT indicates if the op is differentiable with regards to the number of inputs
-	// returns []bool to indicate which input it is differentiable to
-	DiffWRT(int) []bool
-
-	// symbolically differentiates the op
-	SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error)
 
 	/* Machine related */
 
@@ -89,11 +88,22 @@ type NoRetOp interface {
 	ReturnsNothing() bool
 }
 
-// An AdOp is an Op that supports automatic differentiation.
-type AdOp interface {
+// An ADOp is an Op that supports automatic differentiation.
+type ADOp interface {
 	Op
 
 	DoDiff(inputs Nodes, output *Node) error
+}
+
+type SDOp interface {
+	Op
+
+	// DiffWRT indicates if the op is differentiable with regards to the given number of inputs
+	// returns []bool to indicate which input it is differentiable to
+	DiffWRT(inputs int) []bool
+
+	// SymDiff symbolically differentiates the op
+	SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error)
 }
 
 // a ReductionOp changes the shape of the node
@@ -131,16 +141,14 @@ type constantScalar struct {
 	v Scalar
 }
 
-func (c constantScalar) Arity() int { return 0 }
-func (c constantScalar) Type() Type { return c.v.Type() }
-func (c constantScalar) InferShape(Type, ...*Node) (types.Shape, error) {
-	return types.ScalarShape(), nil
-}
-func (c constantScalar) ReturnsPtr() bool                           { return false }
-func (c constantScalar) CallsExtern() bool                          { return false }
-func (c constantScalar) OverwritesInput() int                       { return -1 }
-func (c constantScalar) DiffWRT(i int) []bool                       { return nil }
-func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
+func (c constantScalar) Arity() int                                  { return 0 }
+func (c constantScalar) Type() Type                                  { return c.v.Type() }
+func (c constantScalar) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil }
+func (c constantScalar) ReturnsPtr() bool                            { return false }
+func (c constantScalar) CallsExtern() bool                           { return false }
+func (c constantScalar) OverwritesInput() int                        { return -1 }
+func (c constantScalar) DiffWRT(i int) []bool                        { return nil }
+func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error)  { return nil, nil }
 
 func (c constantScalar) Do(...Value) (Value, error) { return c.v, nil }
 func (c constantScalar) String() string             { return fmt.Sprintf("const %s", c.v) }
@@ -166,9 +174,9 @@ type constantTensor struct {
 	v Tensor
 }
 
-func (c constantTensor) Arity() int                                     { return 1 }
-func (c constantTensor) Type() Type                                     { return c.v.Type() }
-func (c constantTensor) InferShape(Type, ...*Node) (types.Shape, error) { return c.v.Shape(), nil }
+func (c constantTensor) Arity() int                                  { return 1 }
+func (c constantTensor) Type() Type                                  { return c.v.Type() }
+func (c constantTensor) InferShape(...DimSizer) (types.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
 // constants should return value but for the sake of memory, we're going to return pointers

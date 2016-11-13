@@ -12,6 +12,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 )
 
 // A Node is a node in the computation graph
@@ -304,7 +305,7 @@ func (n *Node) Grad() (Value, error) {
 		return n.deriv.Value(), nil
 	}
 
-	return nil, NewError(GraphError, "No Gradient node/value found for %v", n)
+	return nil, errors.Errorf("No Gradient node/value found for %v", n)
 }
 
 // Dims indicates how many dimensions the node's result has
@@ -613,11 +614,10 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 }
 
 func (n *Node) diffWRT() []bool {
-	if n.op == nil {
-		return nil
+	if sdop, ok := n.op.(SDOp); ok {
+		return sdop.DiffWRT(len(n.children))
 	}
-
-	return n.op.DiffWRT(len(n.children))
+	return nil
 }
 
 // dfs but does not use channels. useful for extracting paths. used particularly in test

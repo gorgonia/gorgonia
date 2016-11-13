@@ -1,10 +1,12 @@
 package gorgonia
 
 import (
+	"fmt"
 	"testing"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -222,7 +224,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
@@ -251,7 +253,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
@@ -269,7 +271,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 0, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
@@ -287,7 +289,7 @@ func TestSliceOp(t *testing.T) {
 	slice = newSliceOp(S(0), 1, T.Dims())
 
 	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.InferShape(TT.Type(), n); err != nil {
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
@@ -396,6 +398,8 @@ func TestSliceOpDiff(t *testing.T) {
 	m2 := NewLispMachine(g2)
 	err = m2.RunAll()
 	if err != nil {
+		fmt.Printf("Errors found. here it is:\n%s", err)
+		fmt.Printf("Error was caused by %s", errors.Cause(err))
 		t.Error(err)
 	}
 
