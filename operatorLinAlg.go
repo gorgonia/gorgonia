@@ -1,5 +1,7 @@
 package gorgonia
 
+import "github.com/pkg/errors"
+
 // ā and Ā are used to denote that it's a matrix/vector type.
 // if you want to type it, it's Latin Letter A with Macron (lowercase and capital)
 // Codepoints : U+101 for the small one, and U+100 for the capital one
@@ -53,17 +55,29 @@ func matMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 		op.transB = transB
 		if dzdx, err = binOpNode(op, y, gradZ); err == nil {
 			dzdy, err = binOpNode(op, gradZ, x)
+		} else {
+			return nil, errors.Wrapf(err, binOpNodeFail, op)
 		}
 	case !transA && transB:
 		if dzdx, err = binOpNode(op, gradZ, y); err == nil {
 			op.transA = true
 			dzdy, err = binOpNode(op, gradZ, x)
+			if err != nil {
+				return nil, errors.Wrapf(err, binOpNodeFail, op)
+			}
+		} else {
+			return nil, errors.Wrapf(err, binOpNodeFail, op)
 		}
 	case transA && !transB:
 		op.transB = true
 		if dzdx, err = binOpNode(op, y, gradZ); err == nil {
 			op.transB = false
 			dzdy, err = binOpNode(op, x, gradZ)
+			if err != nil {
+				return nil, errors.Wrapf(err, binOpNodeFail, op)
+			}
+		} else {
+			return nil, errors.Wrapf(err, binOpNodeFail, op)
 		}
 	case !transA && !transB:
 		op.transA = false
@@ -72,6 +86,11 @@ func matMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 			op.transA = true
 			op.transB = false
 			dzdy, err = binOpNode(op, x, gradZ)
+			if err != nil {
+				return nil, errors.Wrapf(err, binOpNodeFail, op)
+			}
+		} else {
+			return nil, errors.Wrapf(err, binOpNodeFail, op)
 		}
 	}
 	retVal = Nodes{dzdx, dzdy}
@@ -177,7 +196,7 @@ func matVecMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 	}
 
 	if err != nil {
-		return
+		return nil, errors.Wrap(err, "Failed to carry outper product")
 	}
 
 	op := linAlgBinOp{
@@ -187,6 +206,8 @@ func matVecMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 
 	if dzdy, err = binOpNode(op, x, gradZ); err == nil {
 		retVal = Nodes{dzdx, dzdy}
+	} else {
+		return nil, errors.Wrapf(err, binOpNodeFail, op)
 	}
 
 	// if dzdx, err = OuterProd(gradZ, y); err == nil {
@@ -215,7 +236,6 @@ func matVecMulDiff(transA, transB bool, x, y, z *Node) (err error) {
 		err = op.IncrDo(xdv.d, ydv.Value, zdv.d)
 	} else {
 		err = op.IncrDo(xdv.d, zdv.d, ydv.Value)
-
 	}
 
 	if ver, ok := err.(Valuer); ok {
@@ -242,7 +262,11 @@ func vecDotDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 	if dzdx, err = HadamardProd(y, gradZ); err == nil {
 		if dzdy, err = HadamardProd(x, gradZ); err == nil {
 			retVal = Nodes{dzdx, dzdy}
+		} else {
+			return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 		}
+	} else {
+		return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 	}
 	return
 }
@@ -273,7 +297,11 @@ func outerProdDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 	if dzdx, err = Mul(x, gradZ); err == nil {
 		if dzdy, err = Mul(y, gradZ); err == nil {
 			retVal = Nodes{dzdx, dzdy}
+		} else {
+			return nil, errors.Wrap(err, "Failed to carry Mul()")
 		}
+	} else {
+		return nil, errors.Wrap(err, "Failed to carry Mul()")
 	}
 	return
 }

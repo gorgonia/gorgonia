@@ -122,7 +122,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 	case Tensor:
 		sh := t.Shape()
 		if op.axis >= len(sh) {
-			err = NewError(ShapeError, "Shape is %v. Want size of %d", sh, op.axis)
+			return nil, errors.Errorf("Shape is %v. Want size of %d", sh, op.axis)
 		}
 		size := sh[op.axis]
 
@@ -135,8 +135,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		case Int:
 			val = size
 		default:
-			err = nyi("sizeOf.Do() Tensor input", t.Dtype())
-			return
+			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
 		}
 
 	case Scalar:
@@ -148,8 +147,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		case Int:
 			val = 1
 		default:
-			err = nyi("sizeOf.Do() Scalar input", t.t)
-			return
+			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.t)
 		}
 	}
 
@@ -200,6 +198,8 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 	if s, err := retVal.InferShape(children.dimSizers()...); err == nil {
 		retVal.inputShape = s
 		retVal.d = s.Dims()
+	} else {
+		panic(err)
 	}
 
 	return retVal
@@ -512,7 +512,7 @@ func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
 func (op sliceOp) DiffWRT(i int) []bool {
 	if i > 1 {
 		// error
-		err := NewError(GraphError, "sliceOp should only have one or more inputs. Got %v instead", i)
+		err := errors.Errorf("sliceOp should only have one or more inputs. Got %v instead", i)
 		panic(err)
 	}
 
@@ -543,14 +543,13 @@ func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	var d Value
 	if d, err = incrOp.Do(xdv.Value, ydv.d); err != nil {
-		err = errors.Wrapf(err, doFail, incrOp)
-		return
+		return errors.Wrapf(err, doFail, incrOp)
 	}
 
 	// there is no need to handle scalars, because you can never slice a scalar
 	add := newElemBinOp(addOpType, inputs[0], output)
 	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, add)
+		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	return
@@ -576,13 +575,15 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 			// actually do shit
 			var v64 *tf64.Tensor // it's a view though
 			if v64, err = tt.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			// prep retVal
 			if v64.IsScalar() {
 				retVal, err = anyToValue(v64.ScalarValue())
+				if err != nil {
+					return nil, errors.Wrapf(err, anyToValueFail, v64, v64)
+				}
 			} else {
 				retVal = FromTensor(v64)
 			}
@@ -590,13 +591,15 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 			// actually do shit
 			var v32 *tf32.Tensor // it's a view though
 			if v32, err = tt.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			// prep retVal
 			if v32.IsScalar() {
 				retVal, err = anyToValue(v32.ScalarValue())
+				if err != nil {
+					return nil, errors.Wrapf(err, anyToValueFail, v32, v32)
+				}
 			} else {
 				retVal = FromTensor(v32)
 			}
@@ -604,27 +607,26 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 			// actually do shit
 			var vi *ti.Tensor // it's a view though
 			if vi, err = tt.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			// prep retVal
 			if vi.IsScalar() {
 				retVal, err = anyToValue(vi.ScalarValue())
+				if err != nil {
+					return nil, errors.Wrapf(err, anyToValueFail, vi, vi)
+				}
 			} else {
 				retVal = FromTensor(vi)
 			}
 		// case *tb.Tensor:
 		default:
-			err = nyi("sliceOp.Do() Tensor Input", T)
-			return
+			return nil, errors.Errorf(nyiFail, "sliceOp.Do()", T)
 		}
 	case Scalar:
-		err = NewError(RuntimeError, "Cannot slice a scalar value")
-		return
+		return nil, errors.New("Cannot slice a scalar value")
 	default:
-		err = nyi("sliceOp.Do() Unknown Input", t)
-		return
+		return nil, errors.Errorf(nyiFail, "sliceOp.Do()", t)
 	}
 	return
 }
@@ -717,8 +719,7 @@ func (op sliceIncrOp) DiffWRT(i int) []bool {
 func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
 	var slicedRes *Node
 	if slicedRes, err = applyOp(op.sliceOp, gradNode); err != nil {
-		err = errors.Wrap(err, operationError)
-		return
+		return nil, errors.Wrap(err, operationError)
 	}
 	retVal = Nodes{gradNode, slicedRes}
 	return
@@ -733,20 +734,18 @@ func (op sliceIncrOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	add := newElemBinOp(addOpType, inputs[0], output)
 
 	if _, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
-		err = errors.Wrapf(err, unsafeDoFail, add)
-		return
+		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	// dzdy
 	var d Value
 	if d, err = op.sliceOp.Do(zdv.d); err != nil {
-		err = errors.Wrapf(err, doFail, op)
-		return
+		return errors.Wrapf(err, doFail, op)
 	}
 
 	add = newElemBinOp(addOpType, inputs[1], output)
 	if _, err = add.UnsafeDo(ydv.d, d); err != nil {
-		err = errors.Wrapf(err, doFail, add)
+		return errors.Wrapf(err, doFail, add)
 	}
 	return
 }
@@ -777,8 +776,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			cloned := tf64.NewTensor(tf64.WithShape(tt.Shape()...))
 			var v64 *tf64.Tensor
 			if v64, err = cloned.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			var val interface{}
@@ -797,8 +795,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			cloned := tf32.NewTensor(tf32.WithShape(tt.Shape()...))
 			var v32 *tf32.Tensor
 			if v32, err = cloned.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			var val interface{}
@@ -816,8 +813,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			cloned := ti.NewTensor(ti.WithShape(tt.Shape()...))
 			var vi *ti.Tensor
 			if vi, err = cloned.Slice(slices...); err != nil {
-				err = errors.Wrapf(err, sliceFail, slices)
-				return
+				return nil, errors.Wrapf(err, sliceFail, slices)
 			}
 
 			var val interface{}
@@ -832,15 +828,12 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			retVal = FromTensor(cloned)
 		// case *tb.Tensor:
 		default:
-			err = nyi("sliceIncrOp Tensor Input", T)
-			return
+			return nil, errors.Errorf(nyiFail, "sliceIncrOp()", T)
 		}
 	case Scalar:
-		err = NewError(RuntimeError, "Cannot slice a scalar value")
-		return
+		return nil, errors.New("Cannot slice a scalar value")
 	default:
-		err = nyi("sliceIncrOp Unknown Input", t)
-		return
+		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", t)
 	}
 	logf("returning?")
 	return
@@ -915,8 +908,7 @@ func (op transposeOp) Type() Type {
 func (op transposeOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
 	input := inputs[0].(types.Shape)
 	if input.IsScalar() {
-		err = NewError(ShapeError, "transposeOp undefined on scalar shapes")
-		return
+		return nil, errors.Errorf(undefinedOnShape, op, input)
 	}
 
 	retVal = make(types.Shape, len(input))
@@ -959,12 +951,11 @@ func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	var zdvdT Tensor
 	var ok bool
 	if zdvdT, ok = zdv.d.(Tensor); !ok {
-		err = NewError(TypeError, "Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
-		return
+		return errors.Errorf("Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
 	}
 
 	if err = zdvdT.T(newPattern...); err != nil {
-		return
+		return errors.Wrap(err, "Failed to T()")
 	}
 
 	d := FromTensor(zdvdT.Materialize())
@@ -992,7 +983,7 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	copy(throwaway, op.pattern)
 	var ret types.Tensor
 	if ret, err = tensor.T(t, throwaway...); err != nil {
-		return
+		return nil, errors.Wrap(err, "Failed to T()")
 	}
 
 	// the reason for this is because the .T() method of a Tensor

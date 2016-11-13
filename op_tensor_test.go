@@ -1,10 +1,12 @@
 package gorgonia
 
 import (
+	"fmt"
 	"testing"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -396,6 +398,8 @@ func TestSliceOpDiff(t *testing.T) {
 	m2 := NewLispMachine(g2)
 	err = m2.RunAll()
 	if err != nil {
+		fmt.Printf("Errors found. here it is:\n%s", err)
+		fmt.Printf("Error was caused by %s", errors.Cause(err))
 		t.Error(err)
 	}
 
