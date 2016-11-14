@@ -1,15 +1,27 @@
 package gorgonia
 
-import "github.com/chewxy/hm"
+import (
+	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
+)
 
 func isScalarType(t hm.Type) bool {
 	switch tt := t.(type) {
 	case Dtype:
 		return true
+	case TensorType:
+		if tt.d == 0 {
+			return true
+		}
+		return false
 	case hm.TypeVariable:
+		if tt.Instance() == nil {
+			panic("Undefined Instance")
+		}
+
 		return isScalarType(hm.Prune(tt))
 	default:
-		return false
+		panic("Unhandled type")
 	}
 }
 
@@ -18,16 +30,17 @@ func dtypeOf(t hm.Type) (retVal Dtype, err error) {
 	switch p := pruned.(type) {
 	case Dtype:
 		retVal = p
-	case *TensorType:
+	case TensorType:
 		return dtypeOf(p.of)
 	case hm.TypeVariable:
 		if p.Instance() == nil {
-			err = NewError(typeError, "instance %v does not have a dtype", p)
+			err = errors.Errorf("instance %v does not have a dtype", p)
+			return
 		}
 
 		return dtypeOf(p.Instance())
 	default:
-		err = NewError(NotYetImplemented, "dtypeOf of %v not yet implemented", t)
+		err = errors.Errorf(nyiFail, "dtypeOf", p)
 		return
 	}
 
@@ -35,6 +48,9 @@ func dtypeOf(t hm.Type) (retVal Dtype, err error) {
 
 }
 
+// DEPRECATED
+
+/*
 func runtimeTypeCheck(expected, got hm.Types) (of Dtype, err error) {
 	if len(expected) != len(got) {
 		err = NewError(RuntimeError, "Input length mismatch")
@@ -66,3 +82,4 @@ func runtimeTypeCheck(expected, got hm.Types) (of Dtype, err error) {
 	}
 	return
 }
+*/
