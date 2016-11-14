@@ -5,6 +5,7 @@ import (
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +29,7 @@ func TestApplyOp(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(g, added.g)
-	assert.Equal(Float64, prune(added.t))
+	assert.Equal(Float64, hm.Prune(added.t))
 
 	ct = NewConstant(tf64.Ones(3, 3)) // no graph set for ct
 	op = newElemBinOp(addOpType, cpi, ct)

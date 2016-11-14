@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -339,7 +340,7 @@ func (f fragment) String() string {
 
 type alloc struct {
 	id int // node ID
-	t  Type
+	t  hm.Type
 	s  types.Shape
 
 	readFrom []register
@@ -349,7 +350,7 @@ type alloc struct {
 func newAlloc(n *Node, writeTo register) alloc {
 	return alloc{
 		id:      n.ID(),
-		t:       prune(n.t),
+		t:       hm.Prune(n.t),
 		s:       n.shape,
 		writeTo: writeTo,
 	}
@@ -365,14 +366,14 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	dest := instr.writeTo.id
 
 	// check
-	var have, want Type
+	var have, want hm.Type
 	if m.storage[dest] == nil {
 		goto mustalloc
 	}
 	have = m.storage[dest].Type()
 	want = instr.t
 
-	if !m.alloc() && typeEq(have, want) {
+	if !m.alloc() && have.Eq(want) {
 		machineLogf("Already preallocated!")
 		m.logf("Already prealloc")
 
@@ -405,7 +406,7 @@ mustalloc:
 	}
 
 	var dt Dtype
-	if dt, ok = prune(tt.of).(Dtype); !ok {
+	if dt, ok = hm.Prune(tt.of).(Dtype); !ok {
 		return errors.Errorf("No dtype to allocate. Type: %T", tt.of)
 	}
 
@@ -461,8 +462,8 @@ func (instr loadArg) String() string {
 
 type execOp struct {
 	op          Op
-	inputTypes  Types
-	outputType  Type
+	inputTypes  hm.Types
+	outputType  hm.Type
 	outputShape types.Shape
 
 	id int
@@ -479,7 +480,7 @@ func (instr execOp) reads() []register { return instr.readFrom }
 func (instr execOp) writes() register  { return instr.writeTo }
 
 func newExecOp(n *Node) execOp {
-	var inputTypes Types
+	var inputTypes hm.Types
 	for _, child := range n.children {
 		inputTypes = append(inputTypes, child.t)
 	}

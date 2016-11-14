@@ -8,12 +8,13 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
 // Value represents a value that Gorgonia accepts
 type Value interface {
-	Type() Type
+	Type() hm.Type
 	Shape() types.Shape
 	Size() int
 	Dtype() Dtype
@@ -65,7 +66,7 @@ func FromTensor(t types.Tensor) Tensor {
 }
 
 // lazy values - this allows for pooling of tensorTypes
-func (t Tensor) Type() Type {
+func (t Tensor) Type() hm.Type {
 	dt, dim := tensorInfo(t.Tensor)
 	shp := t.Tensor.Shape()
 	tt := newTensorType(dim, dt)
@@ -129,7 +130,7 @@ func NewScalarValue(val interface{}) Scalar {
 	return retVal
 }
 
-func (s Scalar) Type() Type         { return s.t }
+func (s Scalar) Type() hm.Type      { return s.t }
 func (s Scalar) Dtype() Dtype       { return s.t }
 func (s Scalar) Shape() types.Shape { return types.ScalarShape() }
 func (s Scalar) Size() int          { return 1 }

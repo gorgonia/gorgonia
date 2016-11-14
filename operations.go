@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -41,7 +42,7 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 
 	// typecheck  before creating
 	typeSysLogf("Inferring node type of %v with children: %#Y", op, Nodes(children))
-	var retType Type
+	var retType hm.Type
 	if retType, err = inferNodeType(op, children...); err != nil {
 		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
 	}

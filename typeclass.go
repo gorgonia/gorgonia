@@ -1,44 +1,34 @@
 package gorgonia
 
-type typeClass interface {
-	addInstance(t Type)
-}
-
-type simpleTC struct {
-	instances typeSet
-}
-
-func (tc *simpleTC) addInstance(t Type) {
-	tc.instances = tc.instances.Add(t)
-}
+import "github.com/chewxy/hm"
 
 /* CONSTANTS */
 
-var arithable *simpleTC
-var floats *simpleTC
-var summable *simpleTC
-var scalarOrTensor *simpleTC
+var arithable *hm.SimpleTypeClass
+var floats *hm.SimpleTypeClass
+var summable *hm.SimpleTypeClass
+var scalarOrTensor *hm.SimpleTypeClass
 
 func init() {
-	arithable = new(simpleTC)
-	arithable.addInstance(Int)
-	arithable.addInstance(Int32)
-	arithable.addInstance(Int64)
-	arithable.addInstance(Float64)
-	arithable.addInstance(Float32)
+	arithable = new(hm.SimpleTypeClass)
+	arithable.AddInstance(Int)
+	arithable.AddInstance(Int32)
+	arithable.AddInstance(Int64)
+	arithable.AddInstance(Float64)
+	arithable.AddInstance(Float32)
 
-	floats = new(simpleTC)
-	floats.addInstance(Float64)
-	floats.addInstance(Float32)
+	floats = new(hm.SimpleTypeClass)
+	floats.AddInstance(Float64)
+	floats.AddInstance(Float32)
 
-	summable = new(simpleTC)
-	summable.addInstance(Int)
-	summable.addInstance(Int32)
-	summable.addInstance(Int64)
-	summable.addInstance(Float64)
-	summable.addInstance(Float32)
+	summable = new(hm.SimpleTypeClass)
+	summable.AddInstance(Int)
+	summable.AddInstance(Int32)
+	summable.AddInstance(Int64)
+	summable.AddInstance(Float64)
+	summable.AddInstance(Float32)
 
-	scalarOrTensor = new(simpleTC)
-	scalarOrTensor.addInstance(Float64)
-	scalarOrTensor.addInstance(Float32)
+	scalarOrTensor = new(hm.SimpleTypeClass)
+	scalarOrTensor.AddInstance(Float64)
+	scalarOrTensor.AddInstance(Float32)
 }

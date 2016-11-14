@@ -9,6 +9,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 )
@@ -52,7 +53,7 @@ func (op randomOp) Arity() int { return 0 }
 
 // randomOp :: a
 // randomOp :: Tensor a
-func (op randomOp) Type() Type {
+func (op randomOp) Type() hm.Type {
 	if op.shape.IsScalar() {
 		return op.dt
 	}

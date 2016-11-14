@@ -91,7 +91,7 @@ func nodeEq(a, b *Node) bool {
 		return false
 	}
 
-	if !typeEq(a.t, b.t) {
+	if !a.t.Eq(b.t) {
 		return false
 	}
 

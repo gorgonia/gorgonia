@@ -7,6 +7,7 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 )
 
 type DimSizer interface {
@@ -33,7 +34,7 @@ type Op interface {
 	Arity() int
 
 	// Informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node
-	Type() Type
+	Type() hm.Type
 
 	// returns the output shape as a function of the inputs
 	InferShape(...DimSizer) (types.Shape, error)
@@ -142,7 +143,7 @@ type constantScalar struct {
 }
 
 func (c constantScalar) Arity() int                                  { return 0 }
-func (c constantScalar) Type() Type                                  { return c.v.Type() }
+func (c constantScalar) Type() hm.Type                               { return c.v.Type() }
 func (c constantScalar) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil }
 func (c constantScalar) ReturnsPtr() bool                            { return false }
 func (c constantScalar) CallsExtern() bool                           { return false }
@@ -175,7 +176,7 @@ type constantTensor struct {
 }
 
 func (c constantTensor) Arity() int                                  { return 1 }
-func (c constantTensor) Type() Type                                  { return c.v.Type() }
+func (c constantTensor) Type() hm.Type                               { return c.v.Type() }
 func (c constantTensor) InferShape(...DimSizer) (types.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.

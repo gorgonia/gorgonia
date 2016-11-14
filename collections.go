@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
 	"unsafe"
@@ -199,21 +198,4 @@ func (ns Nodes) dimSizers() []DimSizer {
 		}
 	}
 	return retVal
-}
-
-/* TYPES */
-
-type Types []Type
-
-func (ts Types) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("[")
-	for i, t := range ts {
-		buf.WriteString(t.String())
-		if i < len(ts)-1 {
-			buf.WriteString(", ")
-		}
-	}
-	buf.WriteString("]")
-	return buf.String()
 }

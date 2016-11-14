@@ -1,6 +1,9 @@
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
+)
 
 // ā and Ā are used to denote that it's a matrix/vector type.
 // if you want to type it, it's Latin Letter A with Macron (lowercase and capital)
@@ -24,7 +27,7 @@ func (op āBinaryOperator) String() string {
 	return āBinOpStrs[op]
 }
 
-func (op āBinaryOperator) Type() Type {
+func (op āBinaryOperator) Type() hm.Type {
 	if op >= maxĀBinaryOperator {
 		panic("UNSUPPORTED LINEAR ALGEBRA OPERATOR")
 	}

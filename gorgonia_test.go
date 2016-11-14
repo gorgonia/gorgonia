@@ -6,13 +6,14 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewConstant(t *testing.T) {
 	assert := assert.New(t)
 
-	var expectedType Type
+	var expectedType hm.Type
 
 	t.Log("Testing New Constant Tensors")
 	backing := tf64.RandomFloat64(9)
@@ -43,7 +44,7 @@ var anyNodeTest = []struct {
 	name string
 	any  interface{}
 
-	correctType  Type
+	correctType  hm.Type
 	correctShape types.Shape
 }{
 	{"float32", float32(3.14), Float32, scalarShape},
@@ -63,7 +64,7 @@ func TestNewNodeFromAny(t *testing.T) {
 		n := NewNodeFromAny(g, a.any, WithName(a.name))
 		assert.Equal(a.name, n.name)
 		assert.Equal(g, n.g)
-		assert.True(typeEq(a.correctType, n.t), "%v type error: Want %v. Got %v", a.name, a.correctType, n.t)
+		assert.True(a.correctType.Eq(n.t), "%v type error: Want %v. Got %v", a.name, a.correctType, n.t)
 		assert.True(a.correctShape.Eq(n.shape), "%v shape error: Want %v. Got %v", a.name, a.correctShape, n.shape)
 	}
 }

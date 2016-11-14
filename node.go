@@ -12,13 +12,14 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
 // A Node is a node in the computation graph
 type Node struct {
 	// metadata of the node
-	t     Type // pruned types only plz
+	t     hm.Type // pruned types only plz
 	shape types.Shape
 
 	// this node is the result of applying the op to the children
@@ -53,7 +54,7 @@ type Node struct {
 // NodeConsOpt is a function that provides construction options for any Node
 type NodeConsOpt func(*Node)
 
-func withType(t Type) NodeConsOpt {
+func withType(t hm.Type) NodeConsOpt {
 	f := func(n *Node) {
 		n.t = t
 	}
@@ -100,9 +101,10 @@ func WithValue(any interface{}) NodeConsOpt {
 	}
 
 	f := func(n *Node) {
-		if !typeEq(v.Type(), n.t) {
+		if !n.t.Eq(v.Type()) {
 			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead", n.t, v.Type())) // yes this is a runtime error
 		}
+
 		n.bind(v)
 		if n.shape == nil {
 			n.shape = v.Shape()
@@ -309,7 +311,16 @@ func (n *Node) Grad() (Value, error) {
 }
 
 // Dims indicates how many dimensions the node's result has
-func (n *Node) Dims() int { return n.t.dims() }
+func (n *Node) Dims() int {
+	switch nt := n.t.(type) {
+	case TensorType:
+		return nt.d
+	case Dtype:
+		return 0
+	default:
+		panic(fmt.Sprintf("Dims undefined for %v", nt))
+	}
+}
 
 // Shape returns the shape of the node
 func (n *Node) Shape() types.Shape { return n.shape.Clone() }

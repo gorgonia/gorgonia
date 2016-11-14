@@ -12,6 +12,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -27,11 +28,11 @@ func (op atOp) Arity() int { return 1 }
 
 // atOp has this type
 //		op :: Tensor a → a
-func (op atOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func (op atOp) Type() hm.Type {
+	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
 	tt := newTensorType(op.d, a)
 
-	return newFunctionType(tt, a)
+	return hm.NewFnType(tt, a)
 }
 
 func (op atOp) ReturnsPtr() bool                                       { return false }
@@ -84,16 +85,16 @@ func (op sizeOp) Arity() int { return 1 }
 
 // sizeOp is a function with this type:
 //		sizeOp :: Tensor d a → a
-func (op sizeOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func (op sizeOp) Type() hm.Type {
+	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
 
 	// handle scalar cases
 	if op.d == 0 {
-		return newFunctionType(a, a)
+		return hm.NewFnType(a, a)
 	}
 
 	tt := newTensorType(op.d, a)
-	return newFunctionType(tt, a)
+	return hm.NewFnType(tt, a)
 }
 
 func (op sizeOp) ReturnsPtr() bool                            { return false }
@@ -214,10 +215,10 @@ func (op repeatOp) Arity() int { return -1 }
 //
 // The last of which is a special case of the first. But I didn't want to create a dependent-type system
 // for a trivial language, so I'll just hardcode this in
-func (op repeatOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
-	var i0t Type
-	var rt Type
+func (op repeatOp) Type() hm.Type {
+	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	var i0t hm.Type
+	var rt hm.Type
 
 	if op.arg0Dim == 0 {
 		i0t = a
@@ -232,14 +233,14 @@ func (op repeatOp) Type() Type {
 		rt = newTensorType(op.d, a)
 	}
 
-	var ft Types
+	var ft hm.Types
 	ft = append(ft, i0t)
 
 	for i := 1; i < op.children; i++ {
 		ft = append(ft, a)
 	}
 	ft = append(ft, rt)
-	return newFunctionType(ft...)
+	return hm.NewFnType(ft...)
 }
 
 func (op repeatOp) ReturnsPtr() bool     { return true }
@@ -480,8 +481,8 @@ func (op sliceOp) Arity() int { return 1 }
 // 		slice :: Tensor a → a
 //
 // The latter is in the case where the resulting dimensions is 0, returning a scalar
-func (op sliceOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func (op sliceOp) Type() hm.Type {
+	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
 	tt := newTensorType(op.d, a)
 
 	var selection int
@@ -494,14 +495,14 @@ func (op sliceOp) Type() Type {
 
 	if selection == 1 {
 		if op.d == 1 {
-			return newFunctionType(tt, a)
+			return hm.NewFnType(tt, a)
 		}
 
 		tt2 := newTensorType(op.d-1, a)
-		return newFunctionType(tt, tt2)
+		return hm.NewFnType(tt, tt2)
 	}
 
-	return newFunctionType(tt, tt)
+	return hm.NewFnType(tt, tt)
 }
 
 func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
@@ -691,12 +692,12 @@ type sliceIncrOp struct {
 // 		slice :: Tensor a → b → Tensor a
 //
 // b can be a or Vector a
-func (op sliceIncrOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
-	b := newTypeVariable("b", withTVConstraints(floats))
+func (op sliceIncrOp) Type() hm.Type {
+	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	b := hm.NewTypeVar("b", hm.WithConstraints(floats))
 	tt := newTensorType(op.d, a)
 
-	return newFunctionType(tt, b, tt)
+	return hm.NewFnType(tt, b, tt)
 }
 
 func (op sliceIncrOp) Arity() int { return 2 }
@@ -898,11 +899,11 @@ func (op transposeOp) Arity() int { return 1 }
 
 // transposing a tensor has type
 // 		transpose :: Tensor a → Tensor a
-func (op transposeOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func (op transposeOp) Type() hm.Type {
+	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
 	tt := newTensorType(op.d, a)
 
-	return newFunctionType(tt, tt)
+	return hm.NewFnType(tt, tt)
 }
 
 func (op transposeOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
