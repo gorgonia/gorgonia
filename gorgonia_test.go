@@ -21,7 +21,6 @@ func TestNewConstant(t *testing.T) {
 
 	ct := NewConstant(T)
 	expectedTT := newTensorType(2, Float64)
-	expectedTT.shape = types.Shape{3, 3}
 	expectedType = expectedTT
 
 	assert.Equal(types.Shape{3, 3}, ct.shape)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"log"
 	"unsafe"
 
 	"github.com/awalterschulze/gographviz"
@@ -13,6 +14,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
+	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 )
 
@@ -102,7 +104,8 @@ func WithValue(any interface{}) NodeConsOpt {
 
 	f := func(n *Node) {
 		if !n.t.Eq(v.Type()) {
-			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead", n.t, v.Type())) // yes this is a runtime error
+			log.Printf("%# v || %# v", pretty.Formatter(n.t), pretty.Formatter(v.Type()))
+			panic(fmt.Sprintf("TypeError: Want %#v, Got %#v instead", n.t, v.Type())) // yes this is a runtime error
 		}
 
 		n.bind(v)

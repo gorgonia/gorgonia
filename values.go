@@ -68,10 +68,7 @@ func FromTensor(t types.Tensor) Tensor {
 // lazy values - this allows for pooling of tensorTypes
 func (t Tensor) Type() hm.Type {
 	dt, dim := tensorInfo(t.Tensor)
-	shp := t.Tensor.Shape()
-	tt := newTensorType(dim, dt)
-	tt.shape = shp
-	return tt
+	return newTensorType(dim, dt)
 }
 
 func (t Tensor) Dtype() Dtype {

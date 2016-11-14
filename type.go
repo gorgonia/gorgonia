@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 )
 
@@ -48,15 +47,13 @@ func (t Dtype) IsConstant() bool                           { return true }
 // The shape of the Tensor is not part of TensorType.
 // Shape checking is relegated to the dynamic part of the program run
 type TensorType struct {
-	d     int // dims
-	shape types.Shape
+	d int // dims
 
 	of hm.Type
 }
 
 func fromTensorType(t TensorType, tv hm.TypeVariable) TensorType {
 	retVal := newTensorType(t.d, tv)
-	retVal.shape = t.shape.Clone()
 	return retVal
 }
 
@@ -78,7 +75,7 @@ func (t TensorType) Name() string                     { return fmt.Sprintf("Tens
 func (t TensorType) Contains(tv hm.TypeVariable) bool { return t.of.Eq(tv) }
 func (t TensorType) Eq(other hm.Type) bool {
 	if ott, ok := other.(TensorType); ok {
-		if t.of.Eq(ott.of) && t.shape.Eq(ott.shape) && t.d == ott.d {
+		if t.of.Eq(ott.of) && t.d == ott.d {
 			return true
 		}
 	}
@@ -102,9 +99,8 @@ func (t TensorType) Clone() hm.TypeOp {
 	}
 
 	return TensorType{
-		d:     t.d,
-		shape: t.shape.Clone(),
-		of:    of,
+		d:  t.d,
+		of: of,
 	}
 }
 
