@@ -57,19 +57,23 @@ func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
 		}
 	}
 
-	retType := hm.NewTypeVar("b")
+	var retType, fnType hm.Type
+	retType = hm.NewTypeVar("b")
 	argTypes[len(argTypes)-1] = retType
 
-	fnType := hm.NewFnType(argTypes...)
+	fnType = hm.NewFnType(argTypes...)
 	// defer returnFnType(fnType)
 
-	typeSysLogf("realized fnType: %v; opType: %v", fnType, optype)
+	typeSysLogf("realized fnType: %#v; opType: %#v", fnType, optype)
 
 	// var fnT, opT hm.Type
-	if _, _, _, err = hm.Unify(fnType, optype); err != nil {
+	if fnType, optype, _, err = hm.Unify(fnType, optype); err != nil {
 		return nil, errors.Wrap(err, "Failed to carry unify()")
 	}
 
-	retVal = hm.Prune(retType)
+	logf("fnType %v || %v", fnType, optype)
+	retVal = hm.Prune(fnType.(*hm.FunctionType).ReturnType())
+
+	// retVal = hm.Prune(retType)
 	return
 }

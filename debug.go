@@ -17,10 +17,10 @@ const DEBUG = true
 var (
 	compileDev        = false
 	shapeInferenceDev = false
-	typeSystemDev     = false
+	typeSystemDev     = true
 	symdiffDev        = false
 	autodiffDev       = false
-	machineDev        = true
+	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
 )

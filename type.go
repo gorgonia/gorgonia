@@ -71,7 +71,7 @@ func newTensorType(dims int, typ hm.Type) TensorType {
 	return t
 }
 
-func (t TensorType) Name() string                     { return fmt.Sprintf("Tensor %v", t.of) }
+func (t TensorType) Name() string                     { return "Tensor" }
 func (t TensorType) Contains(tv hm.TypeVariable) bool { return t.of.Eq(tv) }
 func (t TensorType) Eq(other hm.Type) bool {
 	if ott, ok := other.(TensorType); ok {
