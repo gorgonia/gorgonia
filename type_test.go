@@ -110,6 +110,13 @@ func TestTensorTypeBasics(t *testing.T) {
 		}
 	}
 
+	t0 := newTensorType(1, malformed{})
+	f := func() {
+		t0.Clone()
+	}
+
+	assert.Panics(f)
+
 }
 
 var tensorOpsTest []struct {
@@ -136,6 +143,20 @@ func TestTensorTypeOps(t *testing.T) {
 		assert.True(tots.bPrime.Eq(hm.Prune(bp)), "Test %q: Wanted: %#v. Got %#v", tots.name, tots.bPrime, bp)
 	}
 
+	t0 := newTensorType(0, newTensorType(1, Float64))
+	t1 := t0.Replace(newTensorType(1, Float64), newTensorType(1, Float32))
+	assert.Equal(newTensorType(0, newTensorType(1, Float32)), t1)
+
+	t0 = newTensorType(0, newTensorType(1, hm.NewTypeVar("a")))
+	t1 = t0.Replace(hm.NewTypeVar("a"), Float32)
+	assert.Equal(newTensorType(0, newTensorType(1, Float32)), t1)
+
+	// bad shit
+	t0 = newTensorType(0, malformed{})
+	f := func() {
+		t0.Replace(hm.NewTypeVar("a"), hm.NewTypeVar("b"))
+	}
+	assert.Panics(f)
 }
 
 // tests more complicated stuff
