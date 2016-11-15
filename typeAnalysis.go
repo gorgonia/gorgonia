@@ -39,41 +39,28 @@ func inferType(expr interface{}, nonGenerics hm.Types) (retVal hm.Type, err erro
 }
 
 func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
-	optype := op.Type()
-	// if fnt, ok := optype.(*hm.FunctionType); ok {
-	// defer returnFnType(fnt)
-	// }
-	typeSysLogf("optype: %v", optype)
-
-	enterLoggingContext()
-	defer leaveLoggingContext()
-
-	// nonGenerics := NewTypeSet()
+	fnType := op.Type()
 	argTypes := make(hm.Types, len(children)+1)
 	for i, child := range children {
-		typeSysLogf("child %d %v type: %v;", i, child, child.t)
 		if argTypes[i], err = inferType(child, nil); err != nil {
 			return nil, errors.Wrap(err, "Failled to carry inferType()")
 		}
 	}
+	argTypes[len(argTypes)-1] = hm.NewTypeVar("b")
 
-	var retType, fnType hm.Type
-	retType = hm.NewTypeVar("b")
-	argTypes[len(argTypes)-1] = retType
+	fn := hm.NewFnType(argTypes...)
 
-	fnType = hm.NewFnType(argTypes...)
-	// defer returnFnType(fnType)
-
-	typeSysLogf("realized fnType: %#v; opType: %#v", fnType, optype)
-
-	// var fnT, opT hm.Type
-	if fnType, optype, _, err = hm.Unify(fnType, optype); err != nil {
-		return nil, errors.Wrap(err, "Failed to carry unify()")
+	var t0 hm.Type
+	var r map[hm.TypeVariable]hm.Type
+	if t0, _, r, err = hm.Unify(fn, fnType); err != nil {
+		return nil, errors.Wrap(err, "Unable to unify")
 	}
+	retVal = t0.(*hm.FunctionType).ReturnType()
 
-	logf("fnType %v || %v", fnType, optype)
-	retVal = hm.Prune(fnType.(*hm.FunctionType).ReturnType())
-
-	// retVal = hm.Prune(retType)
+	logf("argtypes %v", argTypes)
+	logf("t0 %v", t0)
+	logf("r: %v", r)
+	logf("retVal %v", retVal)
 	return
+
 }

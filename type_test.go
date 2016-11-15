@@ -104,9 +104,9 @@ func TestTensorTypeBasics(t *testing.T) {
 		// string and format for completeness sake
 		assert.Equal("Tensor", ttts.a.Name())
 		if ttts.containsA {
-			assert.Equal("Tensor a", ttts.a.String())
+			assert.Equal("Vector a", ttts.a.String())
 		} else {
-			assert.Equal("Tensor Float64", ttts.a.String())
+			assert.Equal("Vector Float64", ttts.a.String())
 		}
 	}
 
@@ -136,6 +136,20 @@ func TestTensorTypeOps(t *testing.T) {
 		assert.True(tots.bPrime.Eq(hm.Prune(bp)), "Test %q: Wanted: %#v. Got %#v", tots.name, tots.bPrime, bp)
 	}
 
+}
+
+// tests more complicated stuff
+func TestComplexTypeOps(t *testing.T) {
+	fn0 := hm.NewFnType(newTensorType(1, Float64), hm.NewTypeVar("b"))
+	fn1 := hm.NewFnType(newTensorType(1, hm.NewTypeVar("a")), hm.NewTypeVar("a"))
+
+	t0, t1, r, err := hm.Unify(fn0, fn1)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("t0: %v", t0)
+	t.Logf("t1: %v", t1)
+	t.Logf("r: %v", r)
 }
 
 func init() {

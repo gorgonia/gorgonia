@@ -84,10 +84,10 @@ func init() {
 		correct Dtype
 		err     bool
 	}{
-		// {Float64, Float64, false},
-		// {newTensorType(1, Float64), Float64, false},
-		// {hm.NewTypeVar("a", hm.WithInstance(Float64)), Float64, false},
-		// {hm.NewTypeVar("a", hm.WithInstance(newTensorType(1, Float64))), Float64, false},
+		{Float64, Float64, false},
+		{newTensorType(1, Float64), Float64, false},
+		{hm.NewTypeVar("a", hm.WithInstance(Float64)), Float64, false},
+		{hm.NewTypeVar("a", hm.WithInstance(newTensorType(1, Float64))), Float64, false},
 
 		// bad shit
 		{hm.NewTypeVar("a"), MAXDTYPE, true},

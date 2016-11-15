@@ -47,7 +47,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 				ʘBinaryOperatorType: ot,
 				t:                   att,
 			}
-		case *TensorType:
+		case TensorType:
 			binOp = tBinOp{
 				ʘBinaryOperatorType: ot,
 				tensorLeft:          false,
@@ -55,7 +55,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 		default:
 			panic(fmt.Sprintf("Unsupported type of b %v!", bt))
 		}
-	case *TensorType:
+	case TensorType:
 		binOp = tBinOp{
 			ʘBinaryOperatorType: ot,
 			tensorLeft:          true,
@@ -265,9 +265,9 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op elemBinOp) ReturnsPtr() bool {
-	if _, ok := op.arg0.(*TensorType); ok {
+	if _, ok := op.arg0.(TensorType); ok {
 		return true
-	} else if _, ok := op.arg1.(*TensorType); ok {
+	} else if _, ok := op.arg1.(TensorType); ok {
 		return true
 	}
 
@@ -366,7 +366,7 @@ func newElemUnaryOp(op ʘUnaryOperatorType, a *Node) elemUnaryOp {
 		panic(err)
 	}
 
-	_, isTensor := a.t.(*TensorType)
+	_, isTensor := a.t.(TensorType)
 
 	var operator ʘUnaryOperator
 	switch dt {

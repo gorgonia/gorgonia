@@ -694,10 +694,12 @@ type sliceIncrOp struct {
 // b can be a or Vector a
 func (op sliceIncrOp) Type() hm.Type {
 	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
-	b := hm.NewTypeVar("b", hm.WithConstraints(floats))
+	b := hm.NewTypeVar("c", hm.WithConstraints(floats))
 	tt := newTensorType(op.d, a)
 
-	return hm.NewFnType(tt, b, tt)
+	retVal := hm.NewFnType(tt, b, tt)
+	logf("RETVAL %v", retVal)
+	return retVal
 }
 
 func (op sliceIncrOp) Arity() int { return 2 }

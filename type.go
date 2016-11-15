@@ -31,11 +31,11 @@ func (t Dtype) Eq(other hm.Type) bool {
 	return false
 }
 
-func (t Dtype) Format(state fmt.State, c rune)             { state.Write([]byte(t.String())) }
-func (t Dtype) Types() hm.Types                            { return nil }
-func (t Dtype) Clone() hm.TypeOp                           { return t }
-func (t Dtype) Replace(hm.TypeVariable, hm.Type) hm.TypeOp { return t }
-func (t Dtype) IsConstant() bool                           { return true }
+func (t Dtype) Format(state fmt.State, c rune)     { state.Write([]byte(t.String())) }
+func (t Dtype) Types() hm.Types                    { return nil }
+func (t Dtype) Clone() hm.TypeOp                   { return t }
+func (t Dtype) Replace(hm.Type, hm.Type) hm.TypeOp { return t }
+func (t Dtype) IsConstant() bool                   { return true }
 
 /*Tensor Type*/
 
@@ -82,8 +82,21 @@ func (t TensorType) Eq(other hm.Type) bool {
 	return false
 }
 
-func (t TensorType) Format(state fmt.State, c rune) { fmt.Fprintf(state, "Tensor %v", t.of) }
-func (t TensorType) String() string                 { return fmt.Sprintf("%v", t) }
+func (t TensorType) Format(state fmt.State, c rune) {
+	if state.Flag('#') {
+		fmt.Fprintf(state, "Tensor-%d %#v", t.d, t.of)
+	} else {
+		switch t.d {
+		case 1:
+			fmt.Fprintf(state, "Vector %v", t.of)
+		case 2:
+			fmt.Fprintf(state, "Matrix %v", t.of)
+		default:
+			fmt.Fprintf(state, "Tensor-%d %v", t.d, t.of)
+		}
+	}
+}
+func (t TensorType) String() string { return fmt.Sprintf("%v", t) }
 
 func (t TensorType) Types() hm.Types { return hm.Types{t.of} }
 
@@ -104,9 +117,22 @@ func (t TensorType) Clone() hm.TypeOp {
 	}
 }
 
-func (t TensorType) Replace(tv hm.TypeVariable, T hm.Type) hm.TypeOp {
-	if ttv, ok := t.of.(hm.TypeVariable); ok && ttv.Name() == tv.Name() {
-		t.of = T
+func (t TensorType) Replace(what, with hm.Type) hm.TypeOp {
+	switch tt := t.of.(type) {
+	case hm.TypeVariable:
+		if tt.Eq(what) {
+			t.of = with
+		}
+	case hm.TypeConst:
+		// do nothing
+	case hm.TypeOp:
+		if tt.Eq(what) {
+			t.of = with
+		} else {
+			t.of = tt.Replace(what, with)
+		}
+	default:
+		panic("WTF")
 	}
 	return t
 }

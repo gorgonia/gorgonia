@@ -41,13 +41,15 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	}
 
 	// typecheck  before creating
-	typeSysLogf("Inferring node type of %v with children: %#Y", op, Nodes(children))
+	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
+	enterLoggingContext()
 	var retType hm.Type
 	if retType, err = inferNodeType(op, children...); err != nil {
 		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
 	}
+	leaveLoggingContext()
 	// retType = pruneCompletely(retType)
-	typeSysLogf("Done inferring. Return type is: %v %#v", retType, retType)
+	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
 
 	// infer shapes, but print errors instead of returning
 	shapeLogf("op: %v(%T) inferring shape", op, op)
@@ -57,8 +59,8 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 
 	var s types.Shape
 	if s, err = op.InferShape(Nodes(children).dimSizers()...); err == nil {
-		typeSysLogf("inferred type: %v", retType)
 		shapeLogf("inferred shape %v", s)
+		logf("Inferred Shape %v | op: %v", s, op)
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g), WithShape(s...))
 	} else {
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
@@ -605,7 +607,7 @@ func SizeOf(axis int, x *Node) (retVal *Node, err error) {
 
 // Slice slices a *Node. For T[:] slices, pass in nil. Will error out if node's type is not a Tensor
 func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
-	if _, ok := n.t.(*TensorType); !ok {
+	if _, ok := n.t.(TensorType); !ok {
 		return nil, errors.Errorf("Cannot slice on non Tensor types. Got %T", n.t)
 	}
 

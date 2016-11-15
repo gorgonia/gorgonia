@@ -148,7 +148,7 @@ func WithShape(shp ...int) NodeConsOpt {
 	s := types.Shape(shp)
 	f := func(n *Node) {
 		if n.Dims() != s.Dims() {
-			panic(fmt.Sprintf("Node %v is a %v, which has %d dimensions. Input shape of %p is %v, which has %d dimensions", n, n.t, n.Dims(), n, s, s.Dims()))
+			panic(fmt.Sprintf("Node %v, has %d dimensions. Input shape is %v, which has %d dimensions", n, n.Dims(), s, s.Dims()))
 		}
 		n.shape = s
 	}
@@ -228,7 +228,7 @@ func (n *Node) IsScalar() bool { _, ok := n.t.(Dtype); return ok }
 
 // IsVector indicates if a node represents a vector value. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsVector() bool {
-	if t, ok := n.t.(*TensorType); ok {
+	if t, ok := n.t.(TensorType); ok {
 		return t.d == 1
 	}
 
@@ -237,7 +237,7 @@ func (n *Node) IsVector() bool {
 
 // IsColVec indicates if a node represents a Column Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsColVec() bool {
-	if _, ok := n.t.(*TensorType); ok {
+	if _, ok := n.t.(TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsColVec()
 		}
@@ -247,7 +247,7 @@ func (n *Node) IsColVec() bool {
 
 // IsRowVec indicates if a node represents a Row Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsRowVec() bool {
-	if _, ok := n.t.(*TensorType); ok {
+	if _, ok := n.t.(TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsRowVec()
 		}
@@ -257,7 +257,7 @@ func (n *Node) IsRowVec() bool {
 
 // IsMatrix indicates if a node represents a matrix. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsMatrix() bool {
-	if t, ok := n.t.(*TensorType); ok {
+	if t, ok := n.t.(TensorType); ok {
 		return t.d == 2
 	}
 	return false

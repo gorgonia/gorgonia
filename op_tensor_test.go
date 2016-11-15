@@ -356,10 +356,11 @@ func TestSliceOp(t *testing.T) {
 func TestSliceOpDiff(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
-	A := NewMatrix(g, Float64, WithShape(2, 2), WithInit(RangedFrom(0)))
+	A := NewMatrix(g, Float64, WithShape(2, 2), WithInit(RangedFrom(0)), WithName("A"))
 	sli := Must(Slice(A, nil, S(1))) // A[:, 1]
 	x := Must(Sum(Must(Mul(sli, twof64))))
 
+	logf("A %v  | %v", A, x)
 	_, err := Grad(x, A)
 	if err != nil {
 		t.Error(err)
