@@ -276,11 +276,11 @@ func (op elemBinOp) ReturnsPtr() bool {
 
 func (op elemBinOp) CallsExtern() bool { return false } // for now
 func (op elemBinOp) OverwritesInput() int {
-	if _, ok := op.arg0.(*TensorType); ok {
+	if _, ok := op.arg0.(TensorType); ok {
 		return 0
 	}
 
-	if _, ok := op.arg1.(*TensorType); ok {
+	if _, ok := op.arg1.(TensorType); ok {
 		return 1
 	}
 	return -1

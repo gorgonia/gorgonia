@@ -129,16 +129,6 @@ func constantDV(val Value) *dualValue {
 		shp := v.Shape()
 		t := tensor.Zeroes(dt, shp...)
 		d = Tensor{Tensor: t}
-		// switch dtypeToDtype(dt) {
-		// case Float64:
-		// 	d = NewScalarValue(float64(0.0))
-		// case Float32:
-		// 	d = NewScalarValue(float32(0.0))
-		// case Int:
-		// 	d = NewScalarValue(int(0))
-		// default:
-		// 	panic(fmt.Sprintf("Scalar of type %v not yet handled", dt))
-		// }
 
 	case Scalar:
 		switch v.t {
@@ -168,8 +158,6 @@ func variableDV(val Value) *dualValue {
 		shp := v.Shape()
 		dt := v.Tensor.Dtype()
 		t := tensor.Ones(dt, shp...)
-		// tt := prune(v.Type()).(*TensorType)
-		// d = newTensorValue(tt, t)
 		d = Tensor{Tensor: t}
 	case Scalar:
 		switch v.t {
