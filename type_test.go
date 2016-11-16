@@ -12,7 +12,7 @@ func TestDtypeBasics(t *testing.T) {
 	assert := assert.New(t)
 
 	var t0 Dtype
-	var a hm.TypeVariable
+	var a *hm.TypeVariable
 
 	t0 = Float64
 	a = hm.NewTypeVar("a")
@@ -23,7 +23,6 @@ func TestDtypeBasics(t *testing.T) {
 	assert.False(t0.Eq(a))
 	assert.Nil(t0.Types())
 	assert.Equal(Float64, t0.Clone())
-	assert.Equal(Float64, t0.Replace(a, Float32))
 	assert.True(t0.IsConstant())
 
 	// for completeness sake
@@ -35,19 +34,19 @@ func TestDtypeOps(t *testing.T) {
 	assert := assert.New(t)
 
 	var t0, t1 hm.Type
-	var a hm.TypeVariable
+	var a *hm.TypeVariable
 	var err error
 
 	a = hm.NewTypeVar("a")
 
-	if t0, t1, _, err = hm.Unify(a, Float64); err != nil {
+	if t0, t1, err = hm.Unify(a, Float64); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(Float64, hm.Prune(t0))
 	assert.Equal(Float64, hm.Prune(t1))
 
-	if t0, t1, _, err = hm.Unify(Float64, a); err != nil {
+	if t0, t1, err = hm.Unify(Float64, a); err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(Float64, hm.Prune(t0))
@@ -55,13 +54,13 @@ func TestDtypeOps(t *testing.T) {
 }
 
 var tensorTypeTests []struct {
-	a, b TensorType
+	a, b *TensorType
 
 	eq        bool
 	containsA bool
 	containsB bool
 	types     hm.Types
-	replaced  TensorType
+	replaced  *TensorType
 }
 
 func TestTensorTypeBasics(t *testing.T) {
@@ -70,7 +69,7 @@ func TestTensorTypeBasics(t *testing.T) {
 	for _, ttts := range tensorTypeTests {
 		// Equality
 		if ttts.eq {
-			assert.True(ttts.a.Eq(ttts.b))
+			assert.True(ttts.a.Eq(ttts.b), "TensorType Equality failed: %#v != %#v", ttts.a, ttts.b)
 		} else {
 			assert.False(ttts.a.Eq(ttts.b))
 		}
@@ -96,10 +95,6 @@ func TestTensorTypeBasics(t *testing.T) {
 
 		// Clone
 		assert.Equal(ttts.a, ttts.a.Clone())
-
-		// Replace
-		tv = hm.NewTypeVar("a")
-		assert.Equal(ttts.replaced, ttts.a.Replace(tv, Float64))
 
 		// string and format for completeness sake
 		assert.Equal("Tensor", ttts.a.Name())
@@ -133,7 +128,7 @@ func TestTensorTypeOps(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, tots := range tensorOpsTest {
-		ap, bp, _, err := hm.Unify(tots.a, tots.b)
+		ap, bp, err := hm.Unify(tots.a, tots.b)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -143,20 +138,6 @@ func TestTensorTypeOps(t *testing.T) {
 		assert.True(tots.bPrime.Eq(hm.Prune(bp)), "Test %q: Wanted: %#v. Got %#v", tots.name, tots.bPrime, bp)
 	}
 
-	t0 := newTensorType(0, newTensorType(1, Float64))
-	t1 := t0.Replace(newTensorType(1, Float64), newTensorType(1, Float32))
-	assert.Equal(newTensorType(0, newTensorType(1, Float32)), t1)
-
-	t0 = newTensorType(0, newTensorType(1, hm.NewTypeVar("a")))
-	t1 = t0.Replace(hm.NewTypeVar("a"), Float32)
-	assert.Equal(newTensorType(0, newTensorType(1, Float32)), t1)
-
-	// bad shit
-	t0 = newTensorType(0, malformed{})
-	f := func() {
-		t0.Replace(hm.NewTypeVar("a"), hm.NewTypeVar("b"))
-	}
-	assert.Panics(f)
 }
 
 // tests more complicated stuff
@@ -164,24 +145,23 @@ func TestComplexTypeOps(t *testing.T) {
 	fn0 := hm.NewFnType(newTensorType(1, Float64), hm.NewTypeVar("b"))
 	fn1 := hm.NewFnType(newTensorType(1, hm.NewTypeVar("a")), hm.NewTypeVar("a"))
 
-	t0, t1, r, err := hm.Unify(fn0, fn1)
+	t0, t1, err := hm.Unify(fn0, fn1)
 	if err != nil {
 		t.Error(err)
 	}
 	t.Logf("t0: %v", t0)
 	t.Logf("t1: %v", t1)
-	t.Logf("r: %v", r)
 }
 
 func init() {
 	tensorTypeTests = []struct {
-		a, b TensorType
+		a, b *TensorType
 
 		eq        bool
 		containsA bool
 		containsB bool
 		types     hm.Types
-		replaced  TensorType
+		replaced  *TensorType
 	}{
 
 		{newTensorType(1, Float64), newTensorType(1, Float64), true, false, false, hm.Types{Float64}, newTensorType(1, Float64)},

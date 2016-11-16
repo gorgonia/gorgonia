@@ -22,8 +22,9 @@ const (
 	MAXDTYPE
 )
 
-func (t Dtype) Name() string                  { return t.String() }
-func (t Dtype) Contains(hm.TypeVariable) bool { return false }
+func (t Dtype) Name() string                   { return t.String() }
+func (t Dtype) Contains(*hm.TypeVariable) bool { return false }
+func (t Dtype) Prune() hm.Type                 { return t }
 func (t Dtype) Eq(other hm.Type) bool {
 	if odt, ok := other.(Dtype); ok {
 		return odt == t
@@ -31,11 +32,11 @@ func (t Dtype) Eq(other hm.Type) bool {
 	return false
 }
 
-func (t Dtype) Format(state fmt.State, c rune)     { state.Write([]byte(t.String())) }
-func (t Dtype) Types() hm.Types                    { return nil }
-func (t Dtype) Clone() hm.TypeOp                   { return t }
-func (t Dtype) Replace(hm.Type, hm.Type) hm.TypeOp { return t }
-func (t Dtype) IsConstant() bool                   { return true }
+func (t Dtype) Format(state fmt.State, c rune) { state.Write([]byte(t.String())) }
+func (t Dtype) Types() hm.Types                { return nil }
+func (t Dtype) Clone() hm.TypeOp               { return t }
+func (t Dtype) New(...hm.Type) hm.TypeOp       { return t }
+func (t Dtype) IsConstant() bool               { return true }
 
 /*Tensor Type*/
 
@@ -52,13 +53,13 @@ type TensorType struct {
 	of hm.Type
 }
 
-func fromTensorType(t TensorType, tv hm.TypeVariable) TensorType {
+func fromTensorType(t *TensorType, tv *hm.TypeVariable) *TensorType {
 	retVal := newTensorType(t.d, tv)
 	return retVal
 }
 
-func newTensorType(dims int, typ hm.Type) TensorType {
-	t := TensorType{
+func newTensorType(dims int, typ hm.Type) *TensorType {
+	t := &TensorType{
 		d:  dims,
 		of: typ,
 	}
@@ -71,10 +72,17 @@ func newTensorType(dims int, typ hm.Type) TensorType {
 	return t
 }
 
-func (t TensorType) Name() string                     { return "Tensor" }
-func (t TensorType) Contains(tv hm.TypeVariable) bool { return t.of.Eq(tv) }
-func (t TensorType) Eq(other hm.Type) bool {
-	if ott, ok := other.(TensorType); ok {
+func (t *TensorType) Name() string                      { return "Tensor" }
+func (t *TensorType) Contains(tv *hm.TypeVariable) bool { return t.of.Eq(tv) }
+func (t *TensorType) Prune() hm.Type {
+	if tv, ok := t.of.(*hm.TypeVariable); ok {
+		t.of = hm.Prune(tv)
+	}
+	return t
+}
+
+func (t *TensorType) Eq(other hm.Type) bool {
+	if ott, ok := other.(*TensorType); ok {
 		if t.of.Eq(ott.of) && t.d == ott.d {
 			return true
 		}
@@ -82,7 +90,7 @@ func (t TensorType) Eq(other hm.Type) bool {
 	return false
 }
 
-func (t TensorType) Format(state fmt.State, c rune) {
+func (t *TensorType) Format(state fmt.State, c rune) {
 	if state.Flag('#') {
 		fmt.Fprintf(state, "Tensor-%d %#v", t.d, t.of)
 	} else {
@@ -96,14 +104,16 @@ func (t TensorType) Format(state fmt.State, c rune) {
 		}
 	}
 }
-func (t TensorType) String() string { return fmt.Sprintf("%v", t) }
+func (t *TensorType) String() string { return fmt.Sprintf("%v", t) }
 
-func (t TensorType) Types() hm.Types { return hm.Types{t.of} }
+/* Type Op impl */
 
-func (t TensorType) Clone() hm.TypeOp {
+func (t *TensorType) Types() hm.Types { ts := hm.BorrowTypes1(); ts[0] = t.of; return ts }
+
+func (t *TensorType) Clone() hm.TypeOp {
 	var of hm.Type
 	switch tt := t.of.(type) {
-	case hm.TypeVariable:
+	case *hm.TypeVariable:
 		of = hm.NewTypeVar(tt.Name())
 	case hm.TypeOp:
 		of = tt.Clone()
@@ -111,28 +121,19 @@ func (t TensorType) Clone() hm.TypeOp {
 		panic("WTF?")
 	}
 
-	return TensorType{
+	return &TensorType{
 		d:  t.d,
 		of: of,
 	}
 }
 
-func (t TensorType) Replace(what, with hm.Type) hm.TypeOp {
-	switch tt := t.of.(type) {
-	case hm.TypeVariable:
-		if tt.Eq(what) {
-			t.of = with
-		}
-	case hm.TypeConst:
-		// do nothing
-	case hm.TypeOp:
-		if tt.Eq(what) {
-			t.of = with
-		} else {
-			t.of = tt.Replace(what, with)
-		}
-	default:
-		panic("WTF")
+func (t *TensorType) New(ts ...hm.Type) hm.TypeOp {
+	if len(ts) != 1 {
+		panic("Expected only 1 parameter for TensorType")
 	}
-	return t
+
+	return &TensorType{
+		d:  t.d,
+		of: ts[0],
+	}
 }

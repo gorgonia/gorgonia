@@ -397,9 +397,9 @@ mustalloc:
 	}
 
 	machineLogf("Have to allocate %v in register %v", instr.t, instr.writeTo)
-	var tt TensorType
+	var tt *TensorType
 	var ok bool
-	if tt, ok = instr.t.(TensorType); !ok {
+	if tt, ok = instr.t.(*TensorType); !ok {
 		return errors.New("Alloc only allocates tensor types")
 
 		// allocate a "scalar" vector

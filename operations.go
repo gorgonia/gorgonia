@@ -607,7 +607,7 @@ func SizeOf(axis int, x *Node) (retVal *Node, err error) {
 
 // Slice slices a *Node. For T[:] slices, pass in nil. Will error out if node's type is not a Tensor
 func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
-	if _, ok := n.t.(TensorType); !ok {
+	if _, ok := n.t.(*TensorType); !ok {
 		return nil, errors.Errorf("Cannot slice on non Tensor types. Got %T", n.t)
 	}
 

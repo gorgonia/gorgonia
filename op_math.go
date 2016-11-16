@@ -47,7 +47,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 				ʘBinaryOperatorType: ot,
 				t:                   att,
 			}
-		case TensorType:
+		case *TensorType:
 			binOp = tBinOp{
 				ʘBinaryOperatorType: ot,
 				tensorLeft:          false,
@@ -55,7 +55,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 		default:
 			panic(fmt.Sprintf("Unsupported type of b %v!", bt))
 		}
-	case TensorType:
+	case *TensorType:
 		binOp = tBinOp{
 			ʘBinaryOperatorType: ot,
 			tensorLeft:          true,
@@ -99,11 +99,11 @@ func (op elemBinOp) Type() hm.Type {
 
 	var a0, a1, retType hm.Type
 	switch arg0 := op.arg0.(type) {
-	case TensorType:
+	case *TensorType:
 		a0 = fromTensorType(arg0, a)
 		retType = fromTensorType(arg0, a)
-	case hm.TypeVariable:
-		if instance, ok := arg0.Instance().(TensorType); ok {
+	case *hm.TypeVariable:
+		if instance, ok := arg0.Instance().(*TensorType); ok {
 			a0 = fromTensorType(instance, a)
 			retType = fromTensorType(instance, a)
 		} else {
@@ -116,11 +116,11 @@ func (op elemBinOp) Type() hm.Type {
 	}
 
 	switch arg1 := op.arg1.(type) {
-	case TensorType:
+	case *TensorType:
 		a1 = fromTensorType(arg1, a)
 		retType = fromTensorType(arg1, a)
-	case hm.TypeVariable:
-		if instance, ok := arg1.Instance().(TensorType); ok {
+	case *hm.TypeVariable:
+		if instance, ok := arg1.Instance().(*TensorType); ok {
 			a1 = fromTensorType(instance, a)
 			retType = fromTensorType(instance, a)
 		} else {
@@ -135,7 +135,7 @@ func (op elemBinOp) Type() hm.Type {
 	}
 
 	switch rt := retType.(type) {
-	case TensorType:
+	case *TensorType:
 		rt.of = Bool
 		retType = rt
 	default:
@@ -265,9 +265,9 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op elemBinOp) ReturnsPtr() bool {
-	if _, ok := op.arg0.(TensorType); ok {
+	if _, ok := op.arg0.(*TensorType); ok {
 		return true
-	} else if _, ok := op.arg1.(TensorType); ok {
+	} else if _, ok := op.arg1.(*TensorType); ok {
 		return true
 	}
 
@@ -276,11 +276,11 @@ func (op elemBinOp) ReturnsPtr() bool {
 
 func (op elemBinOp) CallsExtern() bool { return false } // for now
 func (op elemBinOp) OverwritesInput() int {
-	if _, ok := op.arg0.(TensorType); ok {
+	if _, ok := op.arg0.(*TensorType); ok {
 		return 0
 	}
 
-	if _, ok := op.arg1.(TensorType); ok {
+	if _, ok := op.arg1.(*TensorType); ok {
 		return 1
 	}
 	return -1
@@ -366,7 +366,7 @@ func newElemUnaryOp(op ʘUnaryOperatorType, a *Node) elemUnaryOp {
 		panic(err)
 	}
 
-	_, isTensor := a.t.(TensorType)
+	_, isTensor := a.t.(*TensorType)
 
 	var operator ʘUnaryOperator
 	switch dt {

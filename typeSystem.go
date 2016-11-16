@@ -43,6 +43,10 @@ func inferType(expr interface{}) (retVal hm.Type, err error) {
 // Instead of using hm's Infer function, since all the nodes are pretty much hm.Apply, we write our own.
 func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
 	fnType := op.Type()
+	if fnt, ok := fnType.(*hm.FunctionType); ok {
+		defer hm.ReturnFnType(fnt)
+	}
+
 	argTypes := make(hm.Types, len(children)+1)
 	for i, child := range children {
 		if argTypes[i], err = inferType(child); err != nil {
@@ -53,26 +57,26 @@ func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
 	argTypes[len(argTypes)-1] = hm.NewTypeVar("b")
 
 	fn := hm.NewFnType(argTypes...)
+	defer hm.ReturnFnType(fn)
 
 	var t0 hm.Type
-	// var r map[hm.TypeVariable]hm.Type
-	if t0, _, _, err = hm.Unify(fn, fnType); err != nil {
+	if t0, _, err = hm.Unify(fn, fnType); err != nil {
 		return nil, errors.Wrapf(err, "Unable to unify while inferring type of %v", op)
 	}
 
-	return t0.(*hm.FunctionType).ReturnType(), nil
+	return pruneReturn(t0.(*hm.FunctionType).ReturnType()), nil
 }
 
 func isScalarType(t hm.Type) bool {
 	switch tt := t.(type) {
 	case Dtype:
 		return true
-	case TensorType:
+	case *TensorType:
 		if tt.d == 0 {
 			return true
 		}
 		return false
-	case hm.TypeVariable:
+	case *hm.TypeVariable:
 		if tt.Instance() == nil {
 			panic("Undefined Instance")
 		}
@@ -88,9 +92,9 @@ func dtypeOf(t hm.Type) (retVal Dtype, err error) {
 	switch p := pruned.(type) {
 	case Dtype:
 		retVal = p
-	case TensorType:
+	case *TensorType:
 		return dtypeOf(p.of)
-	case hm.TypeVariable:
+	case *hm.TypeVariable:
 		if p.Instance() == nil {
 			err = errors.Errorf("instance %v does not have a dtype", p)
 			return
@@ -102,7 +106,18 @@ func dtypeOf(t hm.Type) (retVal Dtype, err error) {
 	}
 
 	return
+}
 
+func pruneReturn(t hm.Type) hm.Type {
+	if tv, ok := t.(*hm.TypeVariable); ok {
+		inst := tv.Instance()
+		if inst != nil {
+			inst = hm.Prune(inst)
+			return inst
+		}
+		return tv
+	}
+	return t
 }
 
 // DEPRECATED
