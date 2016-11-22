@@ -5,7 +5,6 @@ import (
 	"sort"
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/xtgo/set"
 )
 
@@ -52,12 +51,12 @@ func (ns Nodes) Contains(want *Node) bool {
 
 // Format implements fmt.Formatter, which allows Nodes to be differently formatted depending on the verbs
 func (ns Nodes) Format(s fmt.State, c rune) {
-	delimiter := ","
+	delimiter := ", "
 	if s.Flag(' ') {
-		delimiter = " "
+		delimiter = "  "
 	}
 	if s.Flag('+') {
-		delimiter = ",\n"
+		delimiter = ", \n"
 	}
 	switch c {
 	case 'd':
@@ -65,7 +64,7 @@ func (ns Nodes) Format(s fmt.State, c rune) {
 		for i, n := range ns {
 			fmt.Fprintf(s, "%x", n.Hashcode())
 			if i < len(ns)-1 {
-				fmt.Fprintf(s, "%s ", delimiter)
+				fmt.Fprintf(s, "%s", delimiter)
 			}
 		}
 		s.Write([]byte("]"))
@@ -78,27 +77,26 @@ func (ns Nodes) Format(s fmt.State, c rune) {
 				fmt.Fprintf(s, "%s", n.Name())
 			}
 			if i < len(ns)-1 {
-				fmt.Fprintf(s, "%s ", delimiter)
+				fmt.Fprintf(s, "%s", delimiter)
 			}
 		}
 		s.Write([]byte("]"))
 	case 'Y':
-		if s.Flag('#') {
-			s.Write([]byte("["))
-			for i, n := range ns {
-				fmt.Fprintf(s, "%v", n.t)
-				if i < len(ns)-1 {
-					fmt.Fprintf(s, "%s ", delimiter)
-				}
+		s.Write([]byte("["))
+		for i, n := range ns {
+			fmt.Fprintf(s, "%v", n.t)
+			if i < len(ns)-1 {
+				fmt.Fprintf(s, "%s", delimiter)
 			}
-			s.Write([]byte("]"))
 		}
+		s.Write([]byte("]"))
+
 	case 'P':
 		s.Write([]byte("["))
 		for i, n := range ns {
 			fmt.Fprintf(s, "%p", n)
 			if i < len(ns)-1 {
-				fmt.Fprintf(s, "%s ", delimiter)
+				fmt.Fprintf(s, "%s", delimiter)
 			}
 		}
 		s.Write([]byte("]"))
@@ -178,14 +176,6 @@ func (ns Nodes) remove(what *Node) Nodes {
 		ns = ns[:len(ns)-1]
 	}
 	return ns
-}
-
-func (ns Nodes) shapes() []types.Shape {
-	retVal := make([]types.Shape, len(ns))
-	for i, n := range ns {
-		retVal[i] = n.shape
-	}
-	return retVal
 }
 
 func (ns Nodes) dimSizers() []DimSizer {

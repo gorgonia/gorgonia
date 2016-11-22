@@ -35,27 +35,6 @@ func _negf64(x float64) float64 { return -x }
 
 /* TODO: write optimized versions of these */
 
-func _sigmoidf64(x float64) float64 {
-	if x < -709 {
-		return 0
-	}
-	if x > 19 {
-		return 1
-	}
-
-	return 1.0 / (1.0 + math.Exp(-x))
-}
-
-func _sigmoidf32(x float32) float32 {
-	if x < -88 {
-		return 0
-	}
-	if x > 15 {
-		return 1
-	}
-	return float32(1.0 / (1.0 + math.Exp(float64(-x))))
-}
-
 // bounds acquired with this:
 /*
 func main() {

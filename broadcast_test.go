@@ -50,20 +50,20 @@ func TestBroadcast2(t *testing.T) {
 	xT := tf64.NewTensor(tf64.WithShape(2, 3), tf64.WithBacking(tf64.RangeFloat64(0, 6)))
 	yT := tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{100, 200}))
 
-	// g = NewGraph()
-	// x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
-	// y = NewVector(g, Float64, WithShape(2, 1), WithValue(yT), WithName("y"))
-	// z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1}))
-	// if err != nil {
-	// 	ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
-	// 	t.Fatal(err)
-	// }
+	g = NewGraph()
+	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
+	y = NewVector(g, Float64, WithShape(2, 1), WithValue(yT), WithName("y"))
+	z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1}))
+	if err != nil {
+		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
+		t.Fatal(err)
+	}
 
-	// m = NewLispMachine(g, ExecuteFwdOnly())
-	// if err := m.RunAll(); err != nil {
-	// 	t.Fatal(err)
-	// }
-	// assert.Equal([]float64{100, 101, 102, 203, 204, 205}, extractF64s(z.Value()))
+	m = NewLispMachine(g, ExecuteFwdOnly())
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal([]float64{100, 101, 102, 203, 204, 205}, extractF64s(z.Value()))
 
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
