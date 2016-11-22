@@ -6,6 +6,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -98,7 +99,7 @@ func NewTensor(g *ExprGraph, t Dtype, dims int, opts ...NodeConsOpt) *Node {
 // NewConstant takes in any reasonable value and makes it a constant node.
 func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var op Op
-	var t Type
+	var t hm.Type
 	var name string
 	var s types.Shape
 	var val Value
@@ -145,7 +146,7 @@ func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) 
 	op := makeRandomOp(uniform, dt, low, high, shape...)
 	s := types.Shape(shape)
 
-	var t Type
+	var t hm.Type
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
@@ -163,7 +164,7 @@ func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...in
 	op := makeRandomOp(gaussian, dt, mean, stdev, shape...)
 	s := types.Shape(shape)
 
-	var t Type
+	var t hm.Type
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
@@ -184,7 +185,7 @@ func BinomialRandomNode(g *ExprGraph, dt Dtype, trials, prob float64, shape ...i
 	op := makeRandomOp(binomial, dt, trials, prob, shape...)
 	s := types.Shape(shape)
 
-	var t Type
+	var t hm.Type
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {

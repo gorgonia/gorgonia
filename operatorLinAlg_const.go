@@ -1,5 +1,7 @@
 package gorgonia
 
+import "github.com/chewxy/hm"
+
 // āBinOpStrs is the string representation for binLAOperator
 // It should be held constant
 var āBinOpStrs = [maxĀBinaryOperator]string{
@@ -24,7 +26,7 @@ var āBinOpDiffs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z *Node) error{
 	outerProdDiff,
 }
 
-var āBinOpTypes = [maxĀBinaryOperator]func() Type{
+var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
 	matMulType,
 	matVecMulType,
 	vecDotType,
@@ -37,44 +39,44 @@ var āBinOpTypes = [maxĀBinaryOperator]func() Type{
 //		matVecMulOp :: (Float a) ⇒ Vector a → Matrix a → Vector a
 //
 // For the moment only floats are allowed
-func matVecMulType() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func matVecMulType() hm.Type {
+	a := hm.TypeVariable('a')
 	v := newTensorType(1, a)
 	m := newTensorType(2, a)
 
-	return newFunctionType(m, v, v)
+	return hm.NewFnType(m, v, v)
 }
 
 // matMulOp is a function with this type:
 //		matMulOp :: (Float a) ⇒ Matrix a → Matrix a → Matrix a
 //
 // For the moment only floats are allowed
-func matMulType() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func matMulType() hm.Type {
+	a := hm.TypeVariable('a')
 	m := newTensorType(2, a)
 
-	return newFunctionType(m, m, m)
+	return hm.NewFnType(m, m, m)
 }
 
 // vecDotOp is a function with this type:
 //		vecDotOp :: (Float a) ⇒ Vector a → Vector a → a
 //
 // For the moment only floats are allowed
-func vecDotType() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func vecDotType() hm.Type {
+	a := hm.TypeVariable('a')
 	v := newTensorType(1, a)
 
-	return newFunctionType(v, v, a)
+	return hm.NewFnType(v, v, a)
 }
 
 // outerProdOp is a function with this type:
 //		outerProdOp :: (Float a) ⇒ Vector a → Vector a → Matrix a
 //
 // For the moment only floats are allowed
-func outerProdType() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func outerProdType() hm.Type {
+	a := hm.TypeVariable('a')
 	v := newTensorType(1, a)
 	m := newTensorType(2, a)
 
-	return newFunctionType(v, v, m)
+	return hm.NewFnType(v, v, m)
 }

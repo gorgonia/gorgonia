@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 )
 
 /*
@@ -24,7 +25,7 @@ type stmtOp interface {
 type letOp struct{}
 
 func (op letOp) Arity() int                                                      { return 0 }
-func (op letOp) Type() Type                                                      { return nil }
+func (op letOp) Type() hm.Type                                                   { return nil }
 func (op letOp) ReturnsPtr() bool                                                { return true }
 func (op letOp) OverwritesInput() int                                            { return 0 }
 func (op letOp) CallsExtern() bool                                               { return false }
@@ -48,7 +49,7 @@ type readOp struct {
 }
 
 func (op readOp) Arity() int                                                      { return 0 }
-func (op readOp) Type() Type                                                      { return nil }
+func (op readOp) Type() hm.Type                                                   { return nil }
 func (op readOp) ReturnsPtr() bool                                                { return true }
 func (op readOp) OverwritesInput() int                                            { return 0 }
 func (op readOp) CallsExtern() bool                                               { return false }

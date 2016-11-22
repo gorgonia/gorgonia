@@ -96,5 +96,6 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 	}
 
 	op := newElemBinOp(binOp, x, y)
+	logf("applying op %v| %#v", op, x.t)
 	return applyOp(op, x, y)
 }

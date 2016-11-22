@@ -17,6 +17,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -34,19 +35,19 @@ func newMaxOp(along axes, dim int) *maxOp {
 
 func (op maxOp) Arity() int { return 1 }
 
-func (op maxOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(summable))
+func (op maxOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
 	t := newTensorType(op.d, a)
 
-	var retType Type
+	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
 		// then it redueces down
 		retType = a
-		return newFunctionType(t, a)
+		return hm.NewFnType(t, a)
 	} else {
 		retType = newTensorType(op.d-1, a)
 	}
-	return newFunctionType(t, retType)
+	return hm.NewFnType(t, retType)
 }
 
 func (op maxOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
@@ -117,8 +118,8 @@ func (op maxOp) isUnary() bool  { return true }
 // 	along int // axis
 // }
 
-// func (op argmaxOp) Type() Type {
-// 	a := newTypeVariable("a")
+// func (op argmaxOp) Type() hm.Type {
+// 	a := hm.TypeVariable('a')
 
 // }
 
@@ -142,18 +143,18 @@ func (op sumOp) Arity() int { return 1 }
 
 // sumOp is a function with this type:
 //		sumOp :: (Summable a) ⇒ Tensor d a → Tensor d-1 a
-func (op sumOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(summable))
+func (op sumOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
 	t := newTensorType(op.d, a)
-	var retType Type
+	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
 		// then it redueces down
 		retType = a
-		return newFunctionType(t, a)
+		return hm.NewFnType(t, a)
 	} else {
 		retType = newTensorType(op.d-1, a)
 	}
-	return newFunctionType(t, retType)
+	return hm.NewFnType(t, retType)
 }
 
 func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
@@ -277,7 +278,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	}
 
 	// check if xdv.d is scalar
-	if xdv.d.Type().isScalar() {
+	if isScalarType(xdv.d.Type()) {
 		return xdv.SetDeriv(d)
 	}
 	return

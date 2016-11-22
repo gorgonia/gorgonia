@@ -28,7 +28,7 @@ func TestApplyOp(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(g, added.g)
-	assert.Equal(Float64, prune(added.t))
+	assert.Equal(Float64, added.t)
 
 	ct = NewConstant(tf64.Ones(3, 3)) // no graph set for ct
 	op = newElemBinOp(addOpType, cpi, ct)
@@ -420,4 +420,17 @@ func TestNorm(t *testing.T) {
 	correct := []float64{6.708203932499369, 8.12403840463596, 9.643650760992955}
 	assert.Equal(correct, extractF64s(norm.Value()))
 
+}
+
+func TestMean(t *testing.T) {
+	g := NewGraph()
+	x := NewMatrix(g, Float64, WithShape(3, 3))
+	m, err := Mean(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !m.IsScalar() {
+		t.Error("Expected result to be scalar")
+	}
 }

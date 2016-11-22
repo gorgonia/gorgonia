@@ -24,6 +24,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -32,11 +33,11 @@ import (
 // elemBinOp is the representation of an operation that is to be performed elementwise
 type elemBinOp struct {
 	ʘBinaryOperator
-	arg0, arg1 Type // pruned types only plz
-	retSame    bool // for comparison ops, return same type?
+	arg0, arg1 hm.Type // pruned types only plz
+	retSame    bool    // for comparison ops, return same type?
 }
 
-func newEBOByType(ot ʘBinaryOperatorType, at, bt Type) elemBinOp {
+func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 	var binOp ʘBinaryOperator
 	switch att := at.(type) {
 	case Dtype:
@@ -46,7 +47,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt Type) elemBinOp {
 				ʘBinaryOperatorType: ot,
 				t:                   att,
 			}
-		case *TensorType:
+		case TensorType:
 			binOp = tBinOp{
 				ʘBinaryOperatorType: ot,
 				tensorLeft:          false,
@@ -54,7 +55,7 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt Type) elemBinOp {
 		default:
 			panic(fmt.Sprintf("Unsupported type of b %v!", bt))
 		}
-	case *TensorType:
+	case TensorType:
 		binOp = tBinOp{
 			ʘBinaryOperatorType: ot,
 			tensorLeft:          true,
@@ -70,10 +71,10 @@ func newEBOByType(ot ʘBinaryOperatorType, at, bt Type) elemBinOp {
 }
 
 func newElemBinOp(ot ʘBinaryOperatorType, a, b *Node) elemBinOp {
-	at := prune(a.t)
-	bt := prune(b.t)
+	// at := hm.Prune(a.t)
+	// bt := hm.Prune(b.t)
 
-	return newEBOByType(ot, at, bt)
+	return newEBOByType(ot, a.t, b.t)
 }
 
 func (op elemBinOp) Arity() int { return 2 }
@@ -93,54 +94,40 @@ func (op elemBinOp) Arity() int { return 2 }
 //
 // At the moment, due to my refusal to create a sum type (which requires more finnicking with data constructors)
 // Type() happens pretty much at close to run time
-func (op elemBinOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(floats))
+func (op elemBinOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
 
-	var a0, a1, retType Type
+	var a0, a1, retType hm.Type
 	switch arg0 := op.arg0.(type) {
-	case *TensorType:
+	case TensorType:
 		a0 = fromTensorType(arg0, a)
 		retType = fromTensorType(arg0, a)
-	case *typeVariable:
-		if instance, ok := arg0.instance.(*TensorType); ok {
-			a0 = fromTensorType(instance, a)
-			retType = fromTensorType(instance, a)
-		} else {
-			a0 = a
-			retType = a
-		}
 	default:
 		a0 = a
 		retType = a
 	}
 
 	switch arg1 := op.arg1.(type) {
-	case *TensorType:
+	case TensorType:
 		a1 = fromTensorType(arg1, a)
 		retType = fromTensorType(arg1, a)
-	case *typeVariable:
-		if instance, ok := arg1.instance.(*TensorType); ok {
-			a1 = fromTensorType(instance, a)
-			retType = fromTensorType(instance, a)
-		} else {
-			a1 = a
-		}
 	default:
 		a1 = a
 	}
 
 	if op.isArith() || (!op.isArith() && op.retSame) {
-		return newFunctionType(a0, a1, retType)
+		return hm.NewFnType(a0, a1, retType)
 	}
 
 	switch rt := retType.(type) {
-	case *TensorType:
+	case TensorType:
 		rt.of = Bool
+		retType = rt
 	default:
 		retType = Bool
 	}
 
-	return newFunctionType(a0, a1, retType)
+	return hm.NewFnType(a0, a1, retType)
 }
 
 // elemBinOp has these allowed shapes:
@@ -156,19 +143,33 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err erro
 		return nil, errors.Errorf(nyiFail, "elemBinOp.inferShape", "runtime impl")
 	}
 
-	x, y := inputs[0].(types.Shape), inputs[1].(types.Shape) // passing any other types of DimSizer will cause panics. Which is a Good Thing
-	switch {
-	case x.IsScalar() && y.IsScalar():
-		retVal = scalarShape
-	case x.IsScalar() && !y.IsScalar():
-		retVal = y
-	case !x.IsScalar() && y.IsScalar():
-		retVal = x
-	case !x.IsScalar() && !y.IsScalar():
-		if !x.Eq(y) {
-			// error
+	switch x := inputs[0].(type) {
+	case types.Shape:
+		switch y := inputs[1].(type) {
+		case types.Shape:
+			switch {
+			case x.IsScalar() && y.IsScalar():
+				retVal = scalarShape
+			case x.IsScalar() && !y.IsScalar():
+				retVal = y
+			case !x.IsScalar() && y.IsScalar():
+				retVal = x
+			case !x.IsScalar() && !y.IsScalar():
+				if !x.Eq(y) {
+					// error
+				}
+				retVal = x
+			}
+		default:
+			retVal = x
 		}
-		retVal = x
+	default:
+		switch y := inputs[1].(type) {
+		case types.Shape:
+			retVal = y
+		default:
+			retVal = scalarShape
+		}
 	}
 	return
 }
@@ -263,9 +264,9 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op elemBinOp) ReturnsPtr() bool {
-	if _, ok := op.arg0.(*TensorType); ok {
+	if _, ok := op.arg0.(TensorType); ok {
 		return true
-	} else if _, ok := op.arg1.(*TensorType); ok {
+	} else if _, ok := op.arg1.(TensorType); ok {
 		return true
 	}
 
@@ -274,11 +275,11 @@ func (op elemBinOp) ReturnsPtr() bool {
 
 func (op elemBinOp) CallsExtern() bool { return false } // for now
 func (op elemBinOp) OverwritesInput() int {
-	if _, ok := op.arg0.(*TensorType); ok {
+	if _, ok := op.arg0.(TensorType); ok {
 		return 0
 	}
 
-	if _, ok := op.arg1.(*TensorType); ok {
+	if _, ok := op.arg1.(TensorType); ok {
 		return 1
 	}
 	return -1
@@ -364,7 +365,7 @@ func newElemUnaryOp(op ʘUnaryOperatorType, a *Node) elemUnaryOp {
 		panic(err)
 	}
 
-	_, isTensor := a.t.(*TensorType)
+	_, isTensor := a.t.(TensorType)
 
 	var operator ʘUnaryOperator
 	switch dt {
@@ -384,9 +385,9 @@ func (op elemUnaryOp) Arity() int { return 1 }
 
 // all pointwise unary operations have this type:
 //		op :: (Arithable a) ⇒ a → a
-func (op elemUnaryOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(arithable))
-	return newFunctionType(a, a)
+func (op elemUnaryOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	return hm.NewFnType(a, a)
 }
 
 func (op elemUnaryOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {

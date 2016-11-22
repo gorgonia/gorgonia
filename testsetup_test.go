@@ -1,6 +1,12 @@
 package gorgonia
 
-import tf64 "github.com/chewxy/gorgonia/tensor/f64"
+import (
+	"fmt"
+
+	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
+)
 
 type errorStacker interface {
 	ErrorStack() string
@@ -92,4 +98,17 @@ func simpleUnaryVecEqn() (g *ExprGraph, x, y *Node) {
 	x = NewVector(g, Float64, WithName("x"), WithShape(2, 1))
 	y = Must(Square(x))
 	return
+}
+
+type malformed struct{}
+
+func (t malformed) Name() string                   { return "malformed" }
+func (t malformed) Format(state fmt.State, c rune) { fmt.Fprintf(state, "malformed") }
+func (t malformed) String() string                 { return "malformed" }
+func (t malformed) Apply(hm.Subs) hm.Substitutable { return t }
+func (t malformed) FreeTypeVar() hm.TypeVarSet     { return nil }
+func (t malformed) Eq(hm.Type) bool                { return false }
+func (t malformed) Types() hm.Types                { return nil }
+func (t malformed) Normalize(a, b hm.TypeVarSet) (hm.Type, error) {
+	return nil, errors.Errorf("cannot normalize malformed")
 }

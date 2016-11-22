@@ -70,7 +70,8 @@ func TestBroadcast2(t *testing.T) {
 	y = NewVector(g, Float64, WithShape(2, 1), WithValue(yT), WithName("y"))
 	z, err = Broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil))
 	if err != nil {
-		t.Fatal(err)
+		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
+		t.Fatalf("%+v", err)
 	}
 
 	m = NewLispMachine(g, ExecuteFwdOnly())

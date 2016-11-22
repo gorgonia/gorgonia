@@ -10,8 +10,8 @@ import "github.com/pkg/errors"
 //		sf32UnaryOperator - scalar float32 unary operator
 //		sf64UnaryOperator - scalar float64 unary operator
 //
-// Because *TensorTypes are parameterized by a scalar type, it isn't necessary to create operators
-// that will work on *TensorTypes. A simple type switch will do.
+// Because TensorTypes are parameterized by a scalar type, it isn't necessary to create operators
+// that will work on TensorTypes. A simple type switch will do.
 //
 // n.b.: ʘ is used to denote pointwiseness of the operator.
 // if you want to type it, it's U+0298 - Latin Letter Bilabial Click
