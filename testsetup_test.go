@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 )
 
 type errorStacker interface {
@@ -103,3 +105,10 @@ type malformed struct{}
 func (t malformed) Name() string                   { return "malformed" }
 func (t malformed) Format(state fmt.State, c rune) { fmt.Fprintf(state, "malformed") }
 func (t malformed) String() string                 { return "malformed" }
+func (t malformed) Apply(hm.Subs) hm.Substitutable { return t }
+func (t malformed) FreeTypeVar() hm.TypeVarSet     { return nil }
+func (t malformed) Eq(hm.Type) bool                { return false }
+func (t malformed) Types() hm.Types                { return nil }
+func (t malformed) Normalize(a, b hm.TypeVarSet) (hm.Type, error) {
+	return nil, errors.Errorf("cannot normalize malformed")
+}

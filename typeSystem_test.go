@@ -165,6 +165,7 @@ func init() {
 
 		// bad shit
 		{"a", hm.TypeVariable('a'), false, true},
+		{"malformed", malformed{}, false, true},
 	}
 
 	dtypeOfTests = []struct {
@@ -180,5 +181,6 @@ func init() {
 		{hm.TypeVariable('a'), MAXDTYPE, true},
 		{hm.TypeVariable('a'), MAXDTYPE, true},
 		{newTensorType(1, hm.TypeVariable('a')), MAXDTYPE, true},
+		{malformed{}, MAXDTYPE, true},
 	}
 }

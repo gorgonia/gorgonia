@@ -85,11 +85,7 @@ func isScalarType(t hm.Type) bool {
 		}
 		return false
 	case hm.TypeVariable:
-		panic("Undefined Instance")
-		// if tt.Instance() == nil {
-		// }
-
-		// return isScalarType(hm.Prune(tt))
+		panic("Type Variable is a type that is not yet known.")
 	default:
 		panic("Unhandled type")
 	}
@@ -103,10 +99,6 @@ func dtypeOf(t hm.Type) (retVal Dtype, err error) {
 		return dtypeOf(p.of)
 	case hm.TypeVariable:
 		err = errors.Errorf("instance %v does not have a dtype", p)
-		// if p.Instance() == nil {
-		// 	return
-		// }
-		// panic("Unreachable")
 	default:
 		err = errors.Errorf(nyiFail, "dtypeOf", p)
 		return
