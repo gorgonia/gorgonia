@@ -421,3 +421,16 @@ func TestNorm(t *testing.T) {
 	assert.Equal(correct, extractF64s(norm.Value()))
 
 }
+
+func TestMean(t *testing.T) {
+	g := NewGraph()
+	x := NewMatrix(g, Float64, WithShape(3, 3))
+	m, err := Mean(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !m.IsScalar() {
+		t.Error("Expected result to be scalar")
+	}
+}

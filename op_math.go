@@ -143,19 +143,33 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err erro
 		return nil, errors.Errorf(nyiFail, "elemBinOp.inferShape", "runtime impl")
 	}
 
-	x, y := inputs[0].(types.Shape), inputs[1].(types.Shape) // passing any other types of DimSizer will cause panics. Which is a Good Thing
-	switch {
-	case x.IsScalar() && y.IsScalar():
-		retVal = scalarShape
-	case x.IsScalar() && !y.IsScalar():
-		retVal = y
-	case !x.IsScalar() && y.IsScalar():
-		retVal = x
-	case !x.IsScalar() && !y.IsScalar():
-		if !x.Eq(y) {
-			// error
+	switch x := inputs[0].(type) {
+	case types.Shape:
+		switch y := inputs[1].(type) {
+		case types.Shape:
+			switch {
+			case x.IsScalar() && y.IsScalar():
+				retVal = scalarShape
+			case x.IsScalar() && !y.IsScalar():
+				retVal = y
+			case !x.IsScalar() && y.IsScalar():
+				retVal = x
+			case !x.IsScalar() && !y.IsScalar():
+				if !x.Eq(y) {
+					// error
+				}
+				retVal = x
+			}
+		default:
+			retVal = x
 		}
-		retVal = x
+	default:
+		switch y := inputs[1].(type) {
+		case types.Shape:
+			retVal = y
+		default:
+			retVal = scalarShape
+		}
 	}
 	return
 }
