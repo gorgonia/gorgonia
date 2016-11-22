@@ -54,70 +54,65 @@ func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
 		}
 	}
 
-	argTypes[len(argTypes)-1] = hm.NewTypeVar("b")
+	b := hm.TypeVariable('b')
+	argTypes[len(argTypes)-1] = b
 
 	fn := hm.NewFnType(argTypes...)
 	defer hm.ReturnFnType(fn)
 
-	var t0 hm.Type
-	if t0, _, err = hm.Unify(fn, fnType); err != nil {
+	// var t0 hm.Type
+	var sub hm.Subs
+	if sub, err = hm.Unify(fn, fnType); err != nil {
 		return nil, errors.Wrapf(err, "Unable to unify while inferring type of %v", op)
 	}
 
-	return pruneReturn(t0.(*hm.FunctionType).ReturnType()), nil
+	var ok bool
+	if retVal, ok = sub.Get(b); !ok {
+		return nil, errors.Errorf("Expected a replacement for %v", b)
+	}
+
+	// return pruneReturn(t0.(*hm.FunctionType).ReturnType()), nil
+	return retVal, nil
 }
 
 func isScalarType(t hm.Type) bool {
 	switch tt := t.(type) {
 	case Dtype:
 		return true
-	case *TensorType:
+	case TensorType:
 		if tt.d == 0 {
 			return true
 		}
 		return false
-	case *hm.TypeVariable:
-		if tt.Instance() == nil {
-			panic("Undefined Instance")
-		}
+	case hm.TypeVariable:
+		panic("Undefined Instance")
+		// if tt.Instance() == nil {
+		// }
 
-		return isScalarType(hm.Prune(tt))
+		// return isScalarType(hm.Prune(tt))
 	default:
 		panic("Unhandled type")
 	}
 }
 
 func dtypeOf(t hm.Type) (retVal Dtype, err error) {
-	pruned := hm.Prune(t)
-	switch p := pruned.(type) {
+	switch p := t.(type) {
 	case Dtype:
 		retVal = p
-	case *TensorType:
+	case TensorType:
 		return dtypeOf(p.of)
-	case *hm.TypeVariable:
-		if p.Instance() == nil {
-			err = errors.Errorf("instance %v does not have a dtype", p)
-			return
-		}
-		panic("Unreachable")
+	case hm.TypeVariable:
+		err = errors.Errorf("instance %v does not have a dtype", p)
+		// if p.Instance() == nil {
+		// 	return
+		// }
+		// panic("Unreachable")
 	default:
 		err = errors.Errorf(nyiFail, "dtypeOf", p)
 		return
 	}
 
 	return
-}
-
-func pruneReturn(t hm.Type) hm.Type {
-	if tv, ok := t.(*hm.TypeVariable); ok {
-		inst := tv.Instance()
-		if inst != nil {
-			inst = hm.Prune(inst)
-			return inst
-		}
-		return tv
-	}
-	return t
 }
 
 // DEPRECATED

@@ -61,7 +61,7 @@ var inferTypeTests = []struct {
 	correct hm.Type
 	err     bool
 }{
-	{newEBOByType(addOpType, Float64, Float64), hm.NewFnType(hm.NewTypeVar("a"), hm.NewTypeVar("a"), hm.NewTypeVar("a")), false},
+	{newEBOByType(addOpType, Float64, Float64), hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a')), false},
 	{float32(0), Float32, false},
 	{float64(0), Float64, false},
 	{0, Int, false},
@@ -74,7 +74,7 @@ var inferTypeTests = []struct {
 }
 
 func TestInferType(t *testing.T) {
-	for _, itts := range inferTypeTests {
+	for i, itts := range inferTypeTests {
 		t0, err := inferType(itts.expr)
 		switch {
 		case itts.err && err == nil:
@@ -86,7 +86,7 @@ func TestInferType(t *testing.T) {
 		if itts.err {
 			continue
 		}
-		assert.True(t, itts.correct.Eq(t0), "%v != %v", t0, itts.correct)
+		assert.True(t, itts.correct.Eq(t0), "Test %d: %v != %v", i, t0, itts.correct)
 	}
 
 	// way out there stuff
@@ -159,14 +159,12 @@ func init() {
 		isScalar bool
 		panics   bool
 	}{
-		{"a:Float64", hm.NewTypeVar("a", hm.WithInstance(Float64)), true, false},
 		{"Float64", Float64, true, false},
 		{"Tensor Float64", newTensorType(1, Float64), false, false},
 		{"Tensor Float64 (special)", newTensorType(0, Float64), true, false},
 
 		// bad shit
-		{"a", hm.NewTypeVar("a"), false, true},
-		{"malformed", malformed{}, false, true},
+		{"a", hm.TypeVariable('a'), false, true},
 	}
 
 	dtypeOfTests = []struct {
@@ -177,12 +175,10 @@ func init() {
 	}{
 		{Float64, Float64, false},
 		{newTensorType(1, Float64), Float64, false},
-		{hm.NewTypeVar("a", hm.WithInstance(Float64)), Float64, false},
-		{hm.NewTypeVar("a", hm.WithInstance(newTensorType(1, Float64))), Float64, false},
-		{hm.NewTypeVar("a", hm.WithInstance(hm.NewTypeVar("b", hm.WithInstance(malformed{})))), Float64, true},
 
 		// bad shit
-		{hm.NewTypeVar("a"), MAXDTYPE, true},
-		{newTensorType(1, hm.NewTypeVar("a")), MAXDTYPE, true},
+		{hm.TypeVariable('a'), MAXDTYPE, true},
+		{hm.TypeVariable('a'), MAXDTYPE, true},
+		{newTensorType(1, hm.TypeVariable('a')), MAXDTYPE, true},
 	}
 }

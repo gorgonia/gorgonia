@@ -350,7 +350,7 @@ type alloc struct {
 func newAlloc(n *Node, writeTo register) alloc {
 	return alloc{
 		id:      n.ID(),
-		t:       hm.Prune(n.t),
+		t:       n.t,
 		s:       n.shape,
 		writeTo: writeTo,
 	}
@@ -373,7 +373,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	have = m.storage[dest].Type()
 	want = instr.t
 
-	if !m.alloc() && have.Eq(want) {
+	if !m.alloc() && have == want {
 		machineLogf("Already preallocated!")
 		m.logf("Already prealloc")
 
@@ -397,16 +397,16 @@ mustalloc:
 	}
 
 	machineLogf("Have to allocate %v in register %v", instr.t, instr.writeTo)
-	var tt *TensorType
+	var tt TensorType
 	var ok bool
-	if tt, ok = instr.t.(*TensorType); !ok {
+	if tt, ok = instr.t.(TensorType); !ok {
 		return errors.New("Alloc only allocates tensor types")
 
 		// allocate a "scalar" vector
 	}
 
 	var dt Dtype
-	if dt, ok = hm.Prune(tt.of).(Dtype); !ok {
+	if dt, ok = tt.of.(Dtype); !ok {
 		return errors.Errorf("No dtype to allocate. Type: %T", tt.of)
 	}
 

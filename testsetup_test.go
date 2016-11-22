@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/hm"
 )
 
 type errorStacker interface {
@@ -101,9 +100,6 @@ func simpleUnaryVecEqn() (g *ExprGraph, x, y *Node) {
 
 type malformed struct{}
 
-func (t malformed) Name() string                      { return "malformed" }
-func (t malformed) Contains(tv *hm.TypeVariable) bool { return false }
-func (t malformed) Eq(other hm.Type) bool             { return false }
-func (t malformed) Format(state fmt.State, c rune)    { fmt.Fprintf(state, "malformed") }
-func (t malformed) String() string                    { return "malformed" }
-func (t malformed) Prune() hm.Type                    { return t }
+func (t malformed) Name() string                   { return "malformed" }
+func (t malformed) Format(state fmt.State, c rune) { fmt.Fprintf(state, "malformed") }
+func (t malformed) String() string                 { return "malformed" }

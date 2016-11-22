@@ -25,7 +25,7 @@ func (dv *dualValue) SetValue(v Value) error {
 func (dv *dualValue) sanity() error {
 	// check that d and v are the same type
 
-	if !dv.Value.Type().Eq(dv.d.Type()) {
+	if dv.Value.Type() != dv.d.Type() {
 		return errors.New("DualValues do not have the same types")
 	}
 

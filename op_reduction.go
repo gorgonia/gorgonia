@@ -36,7 +36,7 @@ func newMaxOp(along axes, dim int) *maxOp {
 func (op maxOp) Arity() int { return 1 }
 
 func (op maxOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(summable))
+	a := hm.TypeVariable('a')
 	t := newTensorType(op.d, a)
 
 	var retType hm.Type
@@ -119,7 +119,7 @@ func (op maxOp) isUnary() bool  { return true }
 // }
 
 // func (op argmaxOp) Type() hm.Type {
-// 	a := hm.NewTypeVar("a")
+// 	a := hm.TypeVariable('a')
 
 // }
 
@@ -144,7 +144,7 @@ func (op sumOp) Arity() int { return 1 }
 // sumOp is a function with this type:
 //		sumOp :: (Summable a) ⇒ Tensor d a → Tensor d-1 a
 func (op sumOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(summable))
+	a := hm.TypeVariable('a')
 	t := newTensorType(op.d, a)
 	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {

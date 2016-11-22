@@ -40,7 +40,7 @@ var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
 //
 // For the moment only floats are allowed
 func matVecMulType() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	v := newTensorType(1, a)
 	m := newTensorType(2, a)
 
@@ -52,7 +52,7 @@ func matVecMulType() hm.Type {
 //
 // For the moment only floats are allowed
 func matMulType() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	m := newTensorType(2, a)
 
 	return hm.NewFnType(m, m, m)
@@ -63,7 +63,7 @@ func matMulType() hm.Type {
 //
 // For the moment only floats are allowed
 func vecDotType() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	v := newTensorType(1, a)
 
 	return hm.NewFnType(v, v, a)
@@ -74,7 +74,7 @@ func vecDotType() hm.Type {
 //
 // For the moment only floats are allowed
 func outerProdType() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	v := newTensorType(1, a)
 	m := newTensorType(2, a)
 

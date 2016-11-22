@@ -103,7 +103,7 @@ func WithValue(any interface{}) NodeConsOpt {
 	}
 
 	f := func(n *Node) {
-		if !n.t.Eq(v.Type()) {
+		if n.t != v.Type() {
 			log.Printf("%# v || %# v", pretty.Formatter(n.t), pretty.Formatter(v.Type()))
 			panic(fmt.Sprintf("TypeError: Want %#v, Got %#v instead", n.t, v.Type())) // yes this is a runtime error
 		}
@@ -228,7 +228,7 @@ func (n *Node) IsScalar() bool { _, ok := n.t.(Dtype); return ok }
 
 // IsVector indicates if a node represents a vector value. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsVector() bool {
-	if t, ok := n.t.(*TensorType); ok {
+	if t, ok := n.t.(TensorType); ok {
 		return t.d == 1
 	}
 
@@ -237,7 +237,7 @@ func (n *Node) IsVector() bool {
 
 // IsColVec indicates if a node represents a Column Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsColVec() bool {
-	if _, ok := n.t.(*TensorType); ok {
+	if _, ok := n.t.(TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsColVec()
 		}
@@ -247,7 +247,7 @@ func (n *Node) IsColVec() bool {
 
 // IsRowVec indicates if a node represents a Row Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsRowVec() bool {
-	if _, ok := n.t.(*TensorType); ok {
+	if _, ok := n.t.(TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsRowVec()
 		}
@@ -257,7 +257,7 @@ func (n *Node) IsRowVec() bool {
 
 // IsMatrix indicates if a node represents a matrix. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsMatrix() bool {
-	if t, ok := n.t.(*TensorType); ok {
+	if t, ok := n.t.(TensorType); ok {
 		return t.d == 2
 	}
 	return false
@@ -316,12 +316,12 @@ func (n *Node) Grad() (Value, error) {
 // Dims indicates how many dimensions the node's result has
 func (n *Node) Dims() int {
 	switch nt := n.t.(type) {
-	case *TensorType:
+	case TensorType:
 		return nt.d
 	case Dtype:
 		return 0
 	default:
-		panic(fmt.Sprintf("Dims undefined for %v", nt))
+		panic(fmt.Sprintf("Dims undefined for %v(%T)", nt, nt))
 	}
 }
 

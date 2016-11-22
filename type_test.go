@@ -12,18 +12,15 @@ func TestDtypeBasics(t *testing.T) {
 	assert := assert.New(t)
 
 	var t0 Dtype
-	var a *hm.TypeVariable
+	var a hm.TypeVariable
 
 	t0 = Float64
-	a = hm.NewTypeVar("a")
+	a = hm.TypeVariable('a')
 
-	assert.False(t0.Contains(a))
 	assert.True(t0.Eq(Float64))
 	assert.False(t0.Eq(Float32))
 	assert.False(t0.Eq(a))
 	assert.Nil(t0.Types())
-	assert.Equal(Float64, t0.Clone())
-	assert.True(t0.IsConstant())
 
 	// for completeness sake
 	assert.Equal("Float64", t0.String())
@@ -31,36 +28,38 @@ func TestDtypeBasics(t *testing.T) {
 }
 
 func TestDtypeOps(t *testing.T) {
-	assert := assert.New(t)
-
-	var t0, t1 hm.Type
-	var a *hm.TypeVariable
+	var sub hm.Subs
+	var a hm.TypeVariable
 	var err error
 
-	a = hm.NewTypeVar("a")
+	a = hm.TypeVariable('a')
 
-	if t0, t1, err = hm.Unify(a, Float64); err != nil {
+	if sub, err = hm.Unify(a, Float64); err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(Float64, hm.Prune(t0))
-	assert.Equal(Float64, hm.Prune(t1))
+	if repl, ok := sub.Get(a); !ok {
+		t.Errorf("Expected a substitution for %v", a)
+	} else if repl != Float64 {
+		t.Errorf("Expecetd substitution for %v to be %v. Got %v instead", a, Float64, repl)
+	}
 
-	if t0, t1, err = hm.Unify(Float64, a); err != nil {
+	if sub, err = hm.Unify(Float64, a); err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(Float64, hm.Prune(t0))
-	assert.Equal(Float64, hm.Prune(t1))
+
+	if repl, ok := sub.Get(a); !ok {
+		t.Errorf("Expected a substitution for %v", a)
+	} else if repl != Float64 {
+		t.Errorf("Expecetd substitution for %v to be %v. Got %v instead", a, Float64, repl)
+	}
 }
 
 var tensorTypeTests []struct {
-	a, b *TensorType
+	a, b TensorType
 
-	eq        bool
-	containsA bool
-	containsB bool
-	types     hm.Types
-	replaced  *TensorType
+	eq    bool
+	types hm.Types
 }
 
 func TestTensorTypeBasics(t *testing.T) {
@@ -71,47 +70,20 @@ func TestTensorTypeBasics(t *testing.T) {
 		if ttts.eq {
 			assert.True(ttts.a.Eq(ttts.b), "TensorType Equality failed: %#v != %#v", ttts.a, ttts.b)
 		} else {
-			assert.False(ttts.a.Eq(ttts.b))
-		}
-
-		// Contains
-		tv := hm.NewTypeVar("a")
-		if ttts.containsA {
-			assert.True(ttts.a.Contains(tv))
-		} else {
-			assert.False(ttts.a.Contains(tv))
-		}
-
-		// Contains
-		tv = hm.NewTypeVar("b")
-		if ttts.containsB {
-			assert.True(ttts.a.Contains(tv))
-		} else {
-			assert.False(ttts.a.Contains(tv))
+			assert.False(ttts.a.Eq(ttts.b), "TensorType Equality: %v == %v should be false", ttts.a, ttts.b)
 		}
 
 		// Types
 		assert.Equal(ttts.types, ttts.a.Types())
 
-		// Clone
-		assert.Equal(ttts.a, ttts.a.Clone())
-
 		// string and format for completeness sake
 		assert.Equal("Tensor", ttts.a.Name())
-		if ttts.containsA {
-			assert.Equal("Vector a", ttts.a.String())
-		} else {
-			assert.Equal("Vector Float64", ttts.a.String())
-		}
+		// if ttts.containsA {
+		// 	assert.Equal("Vector a", ttts.a.String())
+		// } else {
+		// 	assert.Equal("Vector Float64", ttts.a.String())
+		// }
 	}
-
-	t0 := newTensorType(1, malformed{})
-	f := func() {
-		t0.Clone()
-	}
-
-	assert.Panics(f)
-
 }
 
 var tensorOpsTest []struct {
@@ -120,55 +92,40 @@ var tensorOpsTest []struct {
 	a hm.Type
 	b hm.Type
 
-	aPrime hm.Type
-	bPrime hm.Type
+	aSub hm.Type
 }
 
 func TestTensorTypeOps(t *testing.T) {
-	assert := assert.New(t)
-
 	for _, tots := range tensorOpsTest {
-		ap, bp, err := hm.Unify(tots.a, tots.b)
+		sub, err := hm.Unify(tots.a, tots.b)
 		if err != nil {
 			t.Error(err)
 			continue
 		}
 
-		assert.True(tots.aPrime.Eq(hm.Prune(ap)), "Test %q: Wanted: %#v. Got %#v", tots.name, tots.aPrime, ap)
-		assert.True(tots.bPrime.Eq(hm.Prune(bp)), "Test %q: Wanted: %#v. Got %#v", tots.name, tots.bPrime, bp)
+		if subst, ok := sub.Get(hm.TypeVariable('a')); !ok {
+			t.Errorf("Expected a substitution for a")
+		} else if !subst.Eq(tots.aSub) {
+			t.Errorf("Expected substitution to be %v. Got %v instead", tots.aSub, subst)
+		}
+
 	}
 
-}
-
-// tests more complicated stuff
-func TestComplexTypeOps(t *testing.T) {
-	fn0 := hm.NewFnType(newTensorType(1, Float64), hm.NewTypeVar("b"))
-	fn1 := hm.NewFnType(newTensorType(1, hm.NewTypeVar("a")), hm.NewTypeVar("a"))
-
-	t0, t1, err := hm.Unify(fn0, fn1)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Logf("t0: %v", t0)
-	t.Logf("t1: %v", t1)
 }
 
 func init() {
 	tensorTypeTests = []struct {
-		a, b *TensorType
+		a, b TensorType
 
-		eq        bool
-		containsA bool
-		containsB bool
-		types     hm.Types
-		replaced  *TensorType
+		eq    bool
+		types hm.Types
 	}{
 
-		{newTensorType(1, Float64), newTensorType(1, Float64), true, false, false, hm.Types{Float64}, newTensorType(1, Float64)},
-		{newTensorType(1, Float64), newTensorType(1, Float32), false, false, false, hm.Types{Float64}, newTensorType(1, Float64)},
-		{newTensorType(1, Float64), newTensorType(2, Float64), false, false, false, hm.Types{Float64}, newTensorType(1, Float64)},
-		{newTensorType(1, hm.NewTypeVar("a")), newTensorType(1, hm.NewTypeVar("a")), true, true, false, hm.Types{hm.NewTypeVar("a")}, newTensorType(1, Float64)},
-		{newTensorType(1, hm.NewTypeVar("a")), newTensorType(1, hm.NewTypeVar("b")), false, true, false, hm.Types{hm.NewTypeVar("a")}, newTensorType(1, Float64)},
+		{newTensorType(1, Float64), newTensorType(1, Float64), true, hm.Types{Float64}},
+		{newTensorType(1, Float64), newTensorType(1, Float32), false, hm.Types{Float64}},
+		{newTensorType(1, Float64), newTensorType(2, Float64), false, hm.Types{Float64}},
+		{newTensorType(1, hm.TypeVariable('a')), newTensorType(1, hm.TypeVariable('a')), true, hm.Types{hm.TypeVariable('a')}},
+		{newTensorType(1, hm.TypeVariable('a')), newTensorType(1, hm.TypeVariable('b')), false, hm.Types{hm.TypeVariable('a')}},
 	}
 
 	tensorOpsTest = []struct {
@@ -177,12 +134,11 @@ func init() {
 		a hm.Type
 		b hm.Type
 
-		aPrime hm.Type
-		bPrime hm.Type
+		aSub hm.Type
 	}{
-		{"a ⋃ Tensor Float64", hm.NewTypeVar("a"), newTensorType(1, Float64), newTensorType(1, Float64), newTensorType(1, Float64)},
-		{"Tensor Float64 ⋃ a", newTensorType(1, Float64), hm.NewTypeVar("a"), newTensorType(1, Float64), newTensorType(1, Float64)},
-		{"Tensor a ⋃ Tensor Float64", newTensorType(1, hm.NewTypeVar("a")), newTensorType(1, Float64), newTensorType(1, Float64), newTensorType(1, Float64)},
-		{"Tensor a ⋃ Tensor Float64", newTensorType(1, Float64), newTensorType(1, hm.NewTypeVar("a")), newTensorType(1, Float64), newTensorType(1, Float64)},
+		{"a ~ Tensor Float64", hm.TypeVariable('a'), newTensorType(1, Float64), newTensorType(1, Float64)},
+		{"Tensor Float64 ~ a", newTensorType(1, Float64), hm.TypeVariable('a'), newTensorType(1, Float64)},
+		{"Tensor a ~ Tensor Float64", newTensorType(1, hm.TypeVariable('a')), newTensorType(1, Float64), Float64},
+		{"Tensor a ~ Tensor Float64", newTensorType(1, Float64), newTensorType(1, hm.TypeVariable('a')), Float64},
 	}
 }

@@ -29,7 +29,7 @@ func (op atOp) Arity() int { return 1 }
 // atOp has this type
 //		op :: Tensor a → a
 func (op atOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	tt := newTensorType(op.d, a)
 
 	return hm.NewFnType(tt, a)
@@ -86,7 +86,7 @@ func (op sizeOp) Arity() int { return 1 }
 // sizeOp is a function with this type:
 //		sizeOp :: Tensor d a → a
 func (op sizeOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 
 	// handle scalar cases
 	if op.d == 0 {
@@ -216,7 +216,7 @@ func (op repeatOp) Arity() int { return -1 }
 // The last of which is a special case of the first. But I didn't want to create a dependent-type system
 // for a trivial language, so I'll just hardcode this in
 func (op repeatOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	var i0t hm.Type
 	var rt hm.Type
 
@@ -482,7 +482,7 @@ func (op sliceOp) Arity() int { return 1 }
 //
 // The latter is in the case where the resulting dimensions is 0, returning a scalar
 func (op sliceOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	tt := newTensorType(op.d, a)
 
 	var selection int
@@ -693,8 +693,8 @@ type sliceIncrOp struct {
 //
 // b can be a or Vector a
 func (op sliceIncrOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
-	b := hm.NewTypeVar("c", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
+	b := hm.TypeVariable('c')
 	tt := newTensorType(op.d, a)
 
 	retVal := hm.NewFnType(tt, b, tt)
@@ -902,7 +902,7 @@ func (op transposeOp) Arity() int { return 1 }
 // transposing a tensor has type
 // 		transpose :: Tensor a → Tensor a
 func (op transposeOp) Type() hm.Type {
-	a := hm.NewTypeVar("a", hm.WithConstraints(floats))
+	a := hm.TypeVariable('a')
 	tt := newTensorType(op.d, a)
 
 	return hm.NewFnType(tt, tt)
