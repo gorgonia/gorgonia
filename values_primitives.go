@@ -1,8 +1,14 @@
 package gorgonia
 
-import "github.com/chewxy/gorgonia/tensor/types"
+import (
+	"fmt"
+
+	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
+)
 
 type Scalar interface {
+	Value
 	Scalar() Scalar
 }
 
@@ -45,3 +51,26 @@ func (v I64) Scalar() Scalar { return v }
 func (v I32) Scalar() Scalar { return v }
 func (v U8) Scalar() Scalar  { return v }
 func (v B) Scalar() Scalar   { return v }
+
+func anyToScalar(any interface{}) (Scalar, hm.Type) {
+	switch at := any.(type) {
+	case float64:
+		return F64(at), Float64
+	case float32:
+		return F32(at), Float32
+	case int:
+		return I(at), Int
+	case int32:
+		return I32(at), Int32
+	case int64:
+		return I64(at), Int64
+	case byte:
+		return U8(at), Byte
+	case uint8:
+		return U8(at), Byte
+	case bool:
+		return B(at), Bool
+	default:
+		panic(fmt.Sprintf("%v(%T) not scalar/not handled"), any, any)
+	}
+}

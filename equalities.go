@@ -70,13 +70,6 @@ func coordEq(a, b coordinates) bool {
 	return true
 }
 
-func ScalarEq(a, b Scalar) bool {
-	if a.Type() != b.Type() {
-		return false
-	}
-	return a.v == b.v
-}
-
 func constEq(a, b constant) (ok bool) {
 	switch at := a.(type) {
 	case constantScalar:

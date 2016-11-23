@@ -46,15 +46,8 @@ func NewNodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 		opts[0] = WithShape(a.Shape()...)
 		return NewTensor(g, dt, a.Dims(), opts...)
 	case Scalar:
-		dt := a.Dtype()
+		dt := DtypeOf(a)
 		return NewScalar(g, dt, opts...)
-	case Tensor:
-		dt := a.Dtype()
-		dims := a.Dims()
-		opts = append(opts, nil)
-		copy(opts[1:], opts[0:len(opts)-1])
-		opts[0] = WithShape(a.Shape()...)
-		return NewTensor(g, dt, dims, opts...)
 	default:
 		panic(nyi("NewNodeFromAny", any))
 	}
@@ -109,25 +102,16 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	case Scalar:
 		op = constantScalar{a}
 		val = a
-		t = a.Type()
+		t = TypeOf(a)
 		s = scalarShape
-	case Tensor:
-		op = constantTensor{a}
-		val = a
-		t = a.Type()
-		s = a.Shape()
 	case int, int64, float64, float32, byte, bool:
-		sv := NewScalarValue(v)
-		op = constantScalar{sv}
-		val = sv
-		t = sv.Type()
+		val, t = anyToScalar(v)
 		s = scalarShape
 	case types.Tensor:
-		T := FromTensor(a)
-		op = constantTensor{T}
-		val = T
+		op = constantTensor{a}
+		val = a
 		s = a.Shape()
-		t = T.Type()
+		t = DtypeOf(a)
 	}
 
 	if op == nil || t == nil {

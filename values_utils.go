@@ -75,7 +75,7 @@ func ValueEq(a, b Value) bool {
 	switch at := a.(type) {
 	case Scalar:
 		if bt, ok := b.(Scalar); ok {
-			return ScalarEq(at, bt)
+			return scalarEq(at, bt)
 		}
 		return false
 	case types.Tensor:
