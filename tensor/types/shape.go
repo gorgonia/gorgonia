@@ -96,15 +96,7 @@ func (s Shape) IsRowVec() bool {
 }
 
 func (s Shape) Dims() int {
-	switch {
-	case s.IsScalar():
-		return 0
-	case s.IsVector():
-		return 1
-	default:
-		return len(s)
-	}
-	panic("Unreachable")
+	return len(s)
 }
 
 func (s Shape) DimSize(d int) (size int, err error) {

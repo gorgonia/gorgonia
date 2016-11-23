@@ -231,7 +231,7 @@ func TestTensor_Norm_Axis(t *testing.T) {
 	backing = RangeFloat32(1, 25)
 	T = NewTensor(WithShape(2, 3, 4), WithBacking(backing))
 
-	dims := T.Opdims()
+	dims := T.Dims()
 	for _, ord := range ords {
 		for _, axes := range axeses {
 			rowAxis := axes[0]

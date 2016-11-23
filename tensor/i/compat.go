@@ -52,7 +52,7 @@ func ToMat64(t *Tensor) (retVal *mat64.Dense, err error) {
 	// checks:
 	if !t.IsMatrix() {
 		// error
-		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Opdims(), t.Shape())
+		err = types.NewError(types.IOError, "Cannot convert *Tensor to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())
 		return
 	}
 

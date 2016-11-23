@@ -18,7 +18,6 @@ func init() {
 		l := i
 		apPool[i].New = func() interface{} {
 			ap := new(AP)
-			ap.dims = l
 			ap.strides = make([]int, l)
 			ap.shape = make(Shape, l)
 			return ap
@@ -66,8 +65,8 @@ func BorrowAP(dims int) *AP {
 }
 
 func ReturnAP(ap *AP) {
-	if ap.dims >= maxAPDims {
+	if ap.Dims() >= maxAPDims {
 		return
 	}
-	apPool[ap.dims].Put(ap)
+	apPool[ap.Dims()].Put(ap)
 }

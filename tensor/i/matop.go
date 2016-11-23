@@ -421,7 +421,7 @@ func (t *Tensor) Slice(slices ...types.Slice) (view *Tensor, err error) {
 //
 // As a result of being adapted from Numpy, the quirks are also adapted. A good guide reducing the confusion around rollaxis can be found here: http://stackoverflow.com/questions/29891583/reason-why-numpy-rollaxis-is-so-confusing (see answer by hpaulj)
 func (t *Tensor) RollAxis(axis, start int, safe bool) (retVal *Tensor, err error) {
-	dims := t.Opdims()
+	dims := t.Dims()
 
 	if !(axis >= 0 && axis < dims) {
 		err = types.NewError(types.OpError, "rollaxis cannot be completed. Axis(%d) must be >= 0 and < %d", axis, dims)
@@ -531,7 +531,7 @@ func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 
 // Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
 func (t *Tensor) Stack(axis int, others ...*Tensor) (retVal *Tensor, err error) {
-	opdims := t.Opdims()
+	opdims := t.Dims()
 	if axis >= opdims+1 {
 		err = dimMismatchError(opdims+1, axis)
 		return

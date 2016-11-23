@@ -273,7 +273,7 @@ func (t *Tensor) Zero() {
 func (t *Tensor) SetAll(val interface{}) error {
 	if val == 1 {
 		for i := range t.data {
-			t.data[i] = float64(1)
+			t.data[i] = float64(1) //@DEFAULTONE
 		}
 		return nil
 	}
@@ -388,8 +388,8 @@ func assignArray(dest, src *Tensor) (err error) {
 		panic("HELP")
 	}
 
-	dd := dest.Opdims()
-	sd := src.Opdims()
+	dd := dest.Dims()
+	sd := src.Dims()
 
 	ds := dest.Strides()
 	ss := src.Strides()

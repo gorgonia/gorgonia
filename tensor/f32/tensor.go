@@ -18,12 +18,12 @@ type Tensor struct {
 	viewOf *Tensor
 }
 
-// a consOpt is a tensor construction option
+// a ConsOpt is a tensor construction option
 type consOpt func(*Tensor)
 
 func (c consOpt) Opt() {}
 
-// NewTensor creates a new Float64 *Tensor
+// NewTensor creates a new Float32 *Tensor
 func NewTensor(opts ...types.ConsOpt) *Tensor {
 	t := new(Tensor)
 	t.AP = new(types.AP)
@@ -388,8 +388,8 @@ func assignArray(dest, src *Tensor) (err error) {
 		panic("HELP")
 	}
 
-	dd := dest.Opdims()
-	sd := src.Opdims()
+	dd := dest.Dims()
+	sd := src.Dims()
 
 	ds := dest.Strides()
 	ss := src.Strides()
