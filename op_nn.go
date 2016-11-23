@@ -67,40 +67,38 @@ func (op randomOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)  { return nil, no
 
 func (op randomOp) Do(...Value) (retVal Value, err error) {
 	if op.shape.IsScalar() {
+		var v interface{}
 		switch op.dt {
 		case Float64:
 			switch op.which {
 			case uniform:
 				rand := rng.NewUniformGenerator(time.Now().UnixNano())
-				v := rand.Float64Range(op.a, op.b)
-				return anyToValue(v)
+				v = rand.Float64Range(op.a, op.b)
 			case gaussian:
 				rand := rng.NewGaussianGenerator(time.Now().UnixNano())
-				v := rand.Gaussian(op.a, op.b)
-				return anyToValue(v)
+				v = rand.Gaussian(op.a, op.b)
 			case binomial:
 				rand := rng.NewBinomialGenerator(time.Now().UnixNano())
-				v := float64(rand.Binomial(int64(op.a), op.b))
-				return anyToValue(v)
+				v = float64(rand.Binomial(int64(op.a), op.b))
 			}
 		case Float32:
 			switch op.which {
 			case uniform:
 				rand := rng.NewUniformGenerator(time.Now().UnixNano())
-				v := rand.Float32Range(float32(op.a), float32(op.b))
-				return anyToValue(v)
+				v = rand.Float32Range(float32(op.a), float32(op.b))
 			case gaussian:
 				rand := rng.NewGaussianGenerator(time.Now().UnixNano())
-				v := float32(rand.Gaussian(op.a, op.b))
-				return anyToValue(v)
+				v = float32(rand.Gaussian(op.a, op.b))
 			case binomial:
 				rand := rng.NewBinomialGenerator(time.Now().UnixNano())
-				v := float32(rand.Binomial(int64(op.a), op.b))
-				return anyToValue(v)
+				v = float32(rand.Binomial(int64(op.a), op.b))
 			}
 		default:
 			return nil, errors.Errorf(nyiFail, "randomOp.do()", op.dt)
 		}
+
+		retVal, _ = anyToScalar(v)
+		return
 	}
 
 	switch op.dt {
@@ -108,32 +106,28 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 		switch op.which {
 		case uniform:
 			backing := Uniform64(op.a, op.b, op.shape...)
-			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian64(op.a, op.b, op.shape...)
-			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial64(op.a, op.b, op.shape...)
-			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 		}
 	case Float32:
 		switch op.which {
 		case uniform:
 			backing := Uniform32(op.a, op.b, op.shape...)
-			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian32(op.a, op.b, op.shape...)
-			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial32(op.a, op.b, op.shape...)
-			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 		}
+	default:
+		return nil, errors.Errorf(nyiFail, "randomOp.do() for non-scalar", op.dt)
 	}
 	panic("Unreachable")
 }

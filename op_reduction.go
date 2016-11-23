@@ -237,19 +237,16 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	var T types.Tensor
 	switch ydvd := ydv.d.(type) {
-	case Scalar:
-		switch ydvd.t {
-		case Float64:
-			f := ydvd.v.(float64)
-			T = tf64.NewTensor(tf64.AsScalar(f))
-		case Float32:
-			f := ydvd.v.(float32)
-			T = tf32.NewTensor(tf32.AsScalar(f))
-		default:
-			return errors.Errorf(nyiFail, "sumOp.DoDiff", ydvd.t)
-		}
-	case Tensor:
-		T = ydvd.Tensor
+	case F64:
+		f := float64(ydvd)
+		T = tf64.NewTensor(tf64.AsScalar(f))
+	case F32:
+		f := float32(ydvd)
+		T = tf32.NewTensor(tf32.AsScalar(f))
+	case types.Tensor:
+		T = ydvd
+	default:
+		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.d)
 	}
 
 	var val Value
@@ -264,21 +261,20 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 			}
 		}
 
-		val = FromTensor(T)
+		val = T
 	} else {
 		val = ydv.d
 	}
 
 	// then just add the two
-	add := newEBOByType(addOpType, xdv.d.Type(), val.Type())
-
+	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(val))
 	var d Value
 	if d, err = add.UnsafeDo(xdv.d, val); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	// check if xdv.d is scalar
-	if isScalarType(xdv.d.Type()) {
+	if isScalarType(TypeOf(xdv.d)) {
 		return xdv.SetDeriv(d)
 	}
 	return
@@ -291,15 +287,15 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	a := inputs[0]
-	at := a.(Tensor)
-	switch t := at.Tensor.(type) {
+	at := a.(types.Tensor)
+	switch t := at.(type) {
 	case *tf64.Tensor:
 		var ret *tf64.Tensor
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
-				retVal = NewScalarValue(ret.ScalarValue())
+				retVal, _ = anyToScalar(ret.ScalarValue())
 			} else {
-				retVal = FromTensor(ret)
+				retVal = ret
 			}
 		} else {
 			return nil, errors.Wrap(err, "failed to apply *tf64.Tensor.Sum()")
@@ -308,15 +304,15 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 		var ret *tf32.Tensor
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
-				retVal = NewScalarValue(ret.ScalarValue())
+				retVal, _ = anyToScalar(ret.ScalarValue())
 			} else {
-				retVal = FromTensor(ret)
+				retVal = ret
 			}
 		} else {
 			return nil, errors.Wrap(err, "failed to apply *tf32.Tensor.Sum()")
 		}
 	default:
-		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at.Tensor)
+		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at)
 	}
 	return
 }
