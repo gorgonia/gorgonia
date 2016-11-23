@@ -296,7 +296,9 @@ func (o tBinOp) Do(same bool, inputs ...Value) (Value, error) {
 	return o.do(inputs)
 }
 
-func (o tBinOp) UnsafeDo(inputs ...Value) (Value, error) { return o.do(inputs, types.UseUnsafe()) }
+func (o tBinOp) UnsafeDo(inputs ...Value) (Value, error) {
+	return o.do(inputs, types.UseUnsafe())
+}
 func (o tBinOp) UsePreallocDo(v Value, inputs ...Value) (retVal Value, err error) {
 	t, ok := v.(types.Tensor)
 	if !ok {
@@ -329,6 +331,11 @@ func (o tBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 }
 
 func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error) {
+	logf("tBinOp do")
+	enterLoggingContext()
+	defer leaveLoggingContext()
+	logf("opts %v", opts)
+
 	if len(vals) != 2 {
 		err = NewError(GraphError, "Executing a binary operation expects 2 inputs. Got %d instead", len(vals))
 		return
@@ -344,6 +351,7 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 	// extract the goddamn values
 	var a, b interface{}
 	if o.tensorLeft {
+		logf("tensorleft")
 		t, ok := vals[0].(types.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected left value to be Tensor. Got %v of %T instead", vals[0], vals[0])
@@ -361,6 +369,7 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])
 		}
 	} else {
+		logf("tensor right")
 		t, ok := vals[1].(types.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected right value to be Tensor. Got %v of %T instead", vals[1], vals[1])
@@ -441,13 +450,9 @@ func addDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, add)
 		}
 	}
-
-	if !add.ReturnsPtr() || x.IsScalar() {
-		xdv.SetDeriv(d) // ignore sanity check error on purpose
-	}
+	xdv.SetDeriv(d)
 
 	add = newElemBinOp(addOpType, y, z)
-
 	if y.IsScalar() {
 		if d, err = add.Do(ydv.d, zdv.d); err != nil {
 			return errors.Wrapf(err, doFail, add)
@@ -457,9 +462,7 @@ func addDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, add)
 		}
 	}
-	if !add.ReturnsPtr() || y.IsScalar() {
-		ydv.SetDeriv(d) // ignore errors on purpose
-	}
+	ydv.SetDeriv(d) // ignore errors on purpose
 
 	return nil
 }
@@ -495,10 +498,7 @@ func subDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, sub)
 		}
 	}
-
-	if !sub.ReturnsPtr() || y.IsScalar() {
-		ydv.SetDeriv(d) // ignore errors on purpose
-	}
+	ydv.SetDeriv(d) // ignore errors on purpose
 
 	// dz/dx
 	if x.IsScalar() {
@@ -510,10 +510,7 @@ func subDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, add)
 		}
 	}
-
-	if !add.ReturnsPtr() || x.IsScalar() {
-		xdv.SetDeriv(d) // ignore errors on purpose
-	}
+	xdv.SetDeriv(d) // ignore errors on purpose
 
 	return nil
 }

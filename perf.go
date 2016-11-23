@@ -81,6 +81,7 @@ func returnDV(dv *dualValue) {
 }
 
 func returnTensor(t types.Tensor) {
+	logf("returning %T %p ", t, t)
 	switch tt := t.(type) {
 	case *tf64.Tensor:
 		tf64.ReturnTensor(tt)

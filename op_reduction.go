@@ -227,6 +227,11 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
+	logf("SumOp DoDiff")
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
+	logf("Checking Arity")
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -247,10 +252,13 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.d)
 	}
 
+	logf("T %v, xShape %v", T, xShape)
+
 	var val Value
 	if !T.Shape().Eq(xdv.d.Shape()) {
 		// TO DO: Optimize: figure out a way to bunch it all up so you can repeat in one call
 		for _, a := range op.along {
+			logf("xShape[%d] = %v", a, xShape[a])
 			if xShape[a] == 1 {
 				continue // don't need to repeat
 			}
@@ -258,11 +266,14 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 				return errors.Wrapf(err, repFail, a, xShape[a])
 			}
 		}
-
+		logf("T %v", T)
 		val = T
 	} else {
 		val = ydv.d
 	}
+
+	logf("Val %v", val)
+	logf("xdv.d %v", xdv.d)
 
 	// then just add the two
 	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(val))
@@ -270,6 +281,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	if d, err = add.UnsafeDo(xdv.d, val); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
+	logf("xdv.d %v(%v)", xdv.d, TypeOf(xdv.d))
 
 	// check if xdv.d is scalar
 	if isScalarType(TypeOf(xdv.d)) {

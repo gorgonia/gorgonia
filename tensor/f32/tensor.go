@@ -347,7 +347,7 @@ func (t *Tensor) Clone() *Tensor {
 	newdata := make([]float32, len(t.data))
 	copy(newdata, t.data)
 	retVal.data = newdata
-	retVal.viewOf = t
+	// retVal.viewOf = t
 	// retVal.Lock()
 	return retVal
 }

@@ -19,7 +19,7 @@ var (
 	shapeInferenceDev = false
 	typeSystemDev     = false
 	symdiffDev        = false
-	autodiffDev       = false
+	autodiffDev       = true
 	machineDev        = true
 	stabilizationDev  = false
 	solverDev         = false

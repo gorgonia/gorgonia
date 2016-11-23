@@ -321,7 +321,6 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 	if ud, ok := op.ʘBinaryOperator.(UnsafeDoer); ok {
 		return ud.UnsafeDo(inputs...)
 	}
-
 	return op.Do(inputs...)
 }
 

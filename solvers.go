@@ -605,7 +605,7 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 					return errors.Wrap(err, addFail)
 				}
 
-				defer tf64.ReturnTensor(l1regs)
+				defer returnTensor(l1regs)
 			}
 
 			if s.useL2Reg {
@@ -618,7 +618,7 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 					return errors.Wrap(err, addFail)
 				}
 
-				defer tf64.ReturnTensor(l2regs)
+				defer returnTensor(l2regs)
 			}
 
 			if batch > 1 {
