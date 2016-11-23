@@ -246,17 +246,17 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	for _, in := range inputs {
 		indv := in.boundTo.(*dualValue)
 		if _, ok := indv.d.(Scalar); in.IsScalar() && !ok {
-			indvdT := indv.d.(Tensor)
+			indvdT := indv.d.(types.Tensor)
+			defer returnTensor(indvdT)
+
 			var d Value
 			var t types.Tensor
-			if t, err = tensor.Sum(indvdT.Tensor); err != nil {
+			if t, err = tensor.Sum(indvdT); err != nil {
 				return errors.Wrap(err, operationError)
 			}
+			defer returnTensor(t)
 
-			if d, err = anyToValue(t.ScalarValue()); err != nil {
-				return errors.Wrap(err, operationError)
-			}
-			returnTensor(indvdT)
+			d, _ = anyToScalar(t.ScalarValue())
 			indv.SetDeriv(d)
 		}
 	}
@@ -333,7 +333,7 @@ func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 			return errors.Wrapf(err, doFail, op)
 		}
 
-		add := newEBOByType(addOpType, incr.Type(), retVal.Type())
+		add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
 		if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
 			return errors.Wrapf(err, unsafeDoFail, add)
 		}
@@ -492,8 +492,8 @@ func (op elemUnaryOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, e
 
 	a := inputs[0]
 	switch v := a.(type) {
-	case Tensor:
-		switch vt := v.Tensor.(type) {
+	case types.Tensor:
+		switch vt := v.(type) {
 		case *tf64.Tensor:
 			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
 			fn := (func(float64) float64)(*opFn)
@@ -503,7 +503,7 @@ func (op elemUnaryOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, e
 			if t, err = vt.Apply(fn, opts...); err != nil {
 				return nil, errors.Wrap(err, applyFail)
 			}
-			retVal = FromTensor(t)
+			retVal = t
 		case *tf32.Tensor:
 			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
 			fn := (func(float32) float32)(*opFn)
@@ -513,22 +513,23 @@ func (op elemUnaryOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, e
 			if t, err = vt.Apply(fn, opts...); err != nil {
 				return nil, errors.Wrap(err, applyFail)
 			}
-			retVal = FromTensor(t)
+			retVal = t
 		default:
-			return nil, errors.Errorf(nyiFail, "elemUnaryOp.do", v.Tensor)
+			return nil, errors.Errorf(nyiFail, "elemUnaryOp.do", v)
 		}
 	case Scalar:
-		switch v.t {
+		vt := DtypeOf(v)
+		switch vt {
 		case Float32:
-			f := v.v.(float32)
+			f := float32(v.(F32))
 			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
-			retVal = NewScalarValue((*opFn)(f))
+			retVal, _ = anyToScalar((*opFn)(f))
 		case Float64:
-			f := v.v.(float64)
+			f := float64(v.(F64))
 			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
-			retVal = NewScalarValue((*opFn)(f))
+			retVal, _ = anyToScalar((*opFn)(f))
 		default:
-			return nil, errors.Errorf(nyiFail, "elemUnaryOp.do", v.t)
+			return nil, errors.Errorf(nyiFail, "elemUnaryOp.do", vt)
 		}
 	}
 	return
@@ -679,12 +680,10 @@ func (op linAlgBinOp) String() string {
 
 // fulfils IncrDoer
 func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
-	t, ok := incr.(Tensor)
-	var reuse types.Tensor
+	t, ok := incr.(types.Tensor)
 
 	if ok {
-		reuse = t.Tensor
-		_, err = op.do(inputs, types.WithIncr(reuse))
+		_, err = op.do(inputs, types.WithIncr(t))
 		return
 	}
 
@@ -693,7 +692,7 @@ func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 		return errors.Wrapf(err, doFail, op)
 	}
 
-	add := newEBOByType(addOpType, incr.Type(), retVal.Type())
+	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
 	if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
@@ -704,12 +703,12 @@ func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 
 // fulfils UsePreallocDoer
 func (op linAlgBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
-	t, ok := prealloc.(Tensor)
+	t, ok := prealloc.(types.Tensor)
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", prealloc, prealloc)
 	}
 
-	return op.do(inputs, types.WithReuse(t.Tensor))
+	return op.do(inputs, types.WithReuse(t))
 }
 
 // fulfils BinaryOp
@@ -722,41 +721,39 @@ func (op linAlgBinOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, e
 		return
 	}
 
-	a, b := inputs[0].(Tensor), inputs[1].(Tensor)
+	a, b := inputs[0].(types.Tensor), inputs[1].(types.Tensor)
 
 	if op.transA {
-		if err = a.Tensor.T(); err != nil {
+		if err = a.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
 		// untranspose
-		defer a.Tensor.T()
+		defer a.T()
 	}
 
 	if op.transB {
-		if err = b.Tensor.T(); err != nil {
+		if err = b.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
 		// untranspose
-		defer b.Tensor.T()
+		defer b.T()
 	}
 
 	var r interface{}
 	switch op.āBinaryOperator {
 	case matMulOperator:
-		r, err = tensor.MatMul(a.Tensor, b.Tensor, opts...)
+		retVal, err = tensor.MatMul(a, b, opts...)
 	case matVecMulOperator:
-		r, err = tensor.MatVecMul(a.Tensor, b.Tensor, opts...)
+		retVal, err = tensor.MatVecMul(a, b, opts...)
 	case vecDotOperator:
 		var ret types.Tensor
-		ret, err = tensor.Inner(a.Tensor, b.Tensor)
-		r = ret.ScalarValue()
+		if ret, err = tensor.Inner(a, b); err != nil {
+			goto e
+		}
+		retVal, _ = anyToScalar(ret.ScalarValue())
 	case outerProdOperator:
-		r, err = tensor.Outer(a.Tensor, b.Tensor, opts...)
+		retVal, err = tensor.Outer(a, b, opts...)
 	}
-	if err == nil {
-		retVal, err = anyToValue(r)
-	} else {
-		return nil, errors.Wrap(err, "Failed to carry out operation")
-	}
-	return
+e:
+	return nil, errors.Wrapf(err, "Failed to carry out linalgBinOp operation %v", op)
 }
