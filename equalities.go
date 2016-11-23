@@ -2,6 +2,47 @@ package gorgonia
 
 import "reflect"
 
+func scalarEq(a, b Scalar) bool {
+	switch at := a.(type) {
+	case F64:
+		if bt, ok := b.(F64); ok {
+			return at == bt
+		}
+		return false
+	case F32:
+		if bt, ok := b.(F32); ok {
+			return at == bt
+		}
+		return false
+	case I:
+		if bt, ok := b.(I); ok {
+			return at == bt
+		}
+		return false
+	case I32:
+		if bt, ok := b.(I32); ok {
+			return at == bt
+		}
+		return false
+	case I64:
+		if bt, ok := b.(I64); ok {
+			return at == bt
+		}
+		return false
+	case U8:
+		if bt, ok := b.(U8); ok {
+			return at == bt
+		}
+		return false
+	case B:
+		if bt, ok := b.(B); ok {
+			return at == bt
+		}
+		return false
+	}
+	return false
+}
+
 func axesEq(a, b axes) bool {
 	if len(a) != len(b) {
 		return false
@@ -34,14 +75,6 @@ func ScalarEq(a, b Scalar) bool {
 		return false
 	}
 	return a.v == b.v
-}
-
-func tensorEq(a, b Tensor) bool {
-	// now check values
-	if !a.Tensor.Eq(b.Tensor) {
-		return false
-	}
-	return true
 }
 
 func constEq(a, b constant) (ok bool) {

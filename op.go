@@ -143,7 +143,7 @@ type constantScalar struct {
 }
 
 func (c constantScalar) Arity() int                                  { return 0 }
-func (c constantScalar) Type() hm.Type                               { return c.v.Type() }
+func (c constantScalar) Type() hm.Type                               { return TypeOf(c.v) }
 func (c constantScalar) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil }
 func (c constantScalar) ReturnsPtr() bool                            { return false }
 func (c constantScalar) CallsExtern() bool                           { return false }
@@ -172,11 +172,11 @@ func (c constantScalar) isconstant() bool { return true }
 func (c constantScalar) Value() Value     { return c.v }
 
 type constantTensor struct {
-	v Tensor
+	v types.Tensor
 }
 
 func (c constantTensor) Arity() int                                  { return 1 }
-func (c constantTensor) Type() hm.Type                               { return c.v.Type() }
+func (c constantTensor) Type() hm.Type                               { return TypeOf(c.v) }
 func (c constantTensor) InferShape(...DimSizer) (types.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.

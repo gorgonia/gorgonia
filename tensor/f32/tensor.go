@@ -268,6 +268,13 @@ func (t *Tensor) Zero() {
 }
 
 func (t *Tensor) SetAll(val interface{}) error {
+	if val == 1 {
+		for i := range t.data {
+			t.data[i] = float32(1)
+		}
+		return nil
+	}
+
 	v, ok := val.(float32)
 	if !ok {
 		return types.NewError(types.DtypeMismatch, "Cannot set val of %T. Expected Float32", val)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor"
+	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/pkg/errors"
 )
 
@@ -25,7 +26,7 @@ func (dv *dualValue) SetValue(v Value) error {
 func (dv *dualValue) sanity() error {
 	// check that d and v are the same type
 
-	if dv.Value.Type() != dv.d.Type() {
+	if !TypeOf(dv.Value).Eq(TypeOf(dv.d)) {
 		return errors.New("DualValues do not have the same types")
 	}
 
@@ -36,11 +37,11 @@ func (dv *dualValue) sanity() error {
 
 func (dv *dualValue) clone() (retVal Value, err error) {
 	var v, d Value
-	if v, err = dv.Value.clone(); err != nil {
+	if v, err = CloneValue(dv.Value); err != nil {
 		return nil, errors.Wrap(err, cloneFail)
 	}
 
-	if d, err = dv.d.clone(); err != nil {
+	if d, err = CloneValue(dv.d); err != nil {
 		return nil, errors.Wrap(err, cloneFail)
 	}
 
@@ -54,53 +55,16 @@ func (dv *dualValue) clone() (retVal Value, err error) {
 // clones the dualValue and zeroes out the ndarrays
 func (dv *dualValue) clone0() (retVal *dualValue, err error) {
 	var v, d Value
-	if v, err = dv.Value.clone(); err != nil {
+	if v, err = CloneValue(dv.Value); err != nil {
 		return nil, errors.Wrap(err, cloneFail)
 	}
 
-	if d, err = dv.d.clone(); err != nil {
+	if d, err = CloneValue(dv.d); err != nil {
 		return nil, errors.Wrap(err, cloneFail)
 	}
 
-	switch vt := v.(type) {
-	case Tensor:
-		vt.Tensor.Zero()
-	case Scalar:
-		switch vt.t {
-		case Float64:
-			vt.v = 0.0
-		case Float32:
-			vt.v = float32(0.0)
-		case Int:
-			vt.v = 0
-		case Int32:
-			vt.v = int32(0)
-		case Int64:
-			vt.v = int64(0)
-		case Bool:
-			vt.v = false
-		}
-	}
-
-	switch vt := d.(type) {
-	case Tensor:
-		vt.Tensor.Zero()
-	case Scalar:
-		switch vt.t {
-		case Float64:
-			vt.v = 0.0
-		case Float32:
-			vt.v = float32(0.0)
-		case Int:
-			vt.v = 0
-		case Int32:
-			vt.v = int32(0)
-		case Int64:
-			vt.v = int64(0)
-		case Bool:
-			vt.v = false
-		}
-	}
+	v = ZeroValue(v)
+	d = ZeroValue(d)
 
 	dv2 := borrowDV()
 	dv2.Value = v
@@ -122,27 +86,13 @@ func constantDV(val Value) *dualValue {
 	// retVal := &dualValue{Value: val}
 	retVal := borrowDV()
 	retVal.Value = val
-	var d Value
-	switch v := val.(type) {
-	case Tensor:
-		dt := v.Tensor.Dtype()
-		shp := v.Shape()
-		t := tensor.Zeroes(dt, shp...)
-		d = Tensor{Tensor: t}
 
-	case Scalar:
-		switch v.t {
-		case Float64:
-			d = NewScalarValue(float64(0.0))
-		case Float32:
-			d = NewScalarValue(float32(0.0))
-		case Int:
-			d = NewScalarValue(int(0))
-		default:
-			panic(fmt.Sprintf("Scalar of type %v not yet handled", v.t))
-		}
+	var err error
+	if retVal.d, err = CloneValue(val); err != nil {
+		panic(err)
 	}
-	retVal.d = d
+
+	retVal.d = ZeroValue(retVal.d)
 	return retVal
 }
 
@@ -152,26 +102,29 @@ func variableDV(val Value) *dualValue {
 	retVal := borrowDV()
 	retVal.Value = val
 
-	var d Value
 	switch v := val.(type) {
-	case Tensor:
+	case F64:
+		retVal.d = F64(1)
+	case F32:
+		retVal.d = F32(1)
+	case I:
+		retVal.d = I(1)
+	case I32:
+		retVal.d = I32(1)
+	case I64:
+		retVal.d = I64(1)
+	case U8:
+		retVal.d = U8(1)
+	case B:
+		retVal.d = B(true)
+	case types.Tensor:
 		shp := v.Shape()
-		dt := v.Tensor.Dtype()
-		t := tensor.Ones(dt, shp...)
-		d = Tensor{Tensor: t}
-	case Scalar:
-		switch v.t {
-		case Float64:
-			d = NewScalarValue(float64(1.0))
-		case Float32:
-			d = NewScalarValue(float32(1.0))
-		case Int:
-			d = NewScalarValue(int(1))
-		default:
-			panic(fmt.Sprintf("Scalar of type %v not yet handled", v.t))
-		}
+		dt := dtypeToTensorDtype(DtypeOf(v))
+		retVal.d = tensor.Ones(dt, shp...)
+	default:
+		panic(fmt.Sprintf("%v(%T) not handled yet", v, v))
 	}
-	retVal.d = d
+
 	return retVal
 }
 
@@ -259,7 +212,7 @@ func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 		return
 	}
 
-	retVal.SetDeriv(retVal.d.zero())
+	retVal.SetDeriv(ZeroValue(retVal.d))
 	return
 }
 
@@ -287,29 +240,23 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 
 	var d Value
 	switch v := retVal.d.(type) {
-	case Tensor:
-		switch v.Dtype() {
-		case Float64:
-			err = v.SetAll(float64(1.0))
-		case Float32:
-			err = v.SetAll(float32(1.0))
-		case Int:
-			err = v.SetAll(int(1))
-		default:
-			panic(fmt.Sprintf("Tensor of type %v not yet handled", v.Dtype()))
-		}
-		d = v
-	case Scalar:
-		switch v.t {
-		case Float64:
-			d = NewScalarValue(float64(1.0))
-		case Float32:
-			d = NewScalarValue(float32(1.0))
-		case Int:
-			d = NewScalarValue(int(1))
-		default:
-			panic(fmt.Sprintf("Scalar of type %v not yet handled", v.t))
-		}
+	case F64:
+		retVal.d = F64(1)
+	case F32:
+		retVal.d = F32(1)
+	case I:
+		retVal.d = I(1)
+	case I32:
+		retVal.d = I32(1)
+	case I64:
+		retVal.d = I64(1)
+	case U8:
+		retVal.d = U8(1)
+	case B:
+		retVal.d = B(true)
+	case types.Tensor:
+		err = v.SetAll(1)
+		retVal.d = v
 	}
 	retVal.d = d
 	return
