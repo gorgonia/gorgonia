@@ -44,6 +44,10 @@ func (dv *dualValue) Clone() (retVal Value, err error) {
 func (dv *dualValue) Type() hm.Type { return TypeOf(dv.Value) }
 func (dv *dualValue) Dtype() Dtype  { return DtypeOf(dv.Value) }
 
+func (dv *dualValue) String() string {
+	return fmt.Sprintf("%#+v", dv.Value)
+}
+
 func (dv *dualValue) sanity() error {
 	// check that d and v are the same type
 
@@ -75,10 +79,6 @@ func (dv *dualValue) clone0() (retVal *dualValue, err error) {
 	dv2.d = d
 	retVal = dv2
 	return
-}
-
-func (dv *dualValue) String() string {
-	return fmt.Sprintf("%#+v", dv.Value)
 }
 
 // the derivative of a constant is zero.

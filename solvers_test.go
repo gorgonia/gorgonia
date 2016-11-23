@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,9 +25,8 @@ func TestRMSPropSolver(t *testing.T) {
 	backingD := []float64{0.5, -10, 10, 0.5}
 	v := tf64.NewTensor(tf64.WithBacking(backingV), tf64.WithShape(2, 2))
 	d := tf64.NewTensor(tf64.WithBacking(backingD), tf64.WithShape(2, 2))
-	V := FromTensor(v)
-	dv := dvUnit0(V)
-	dv.d = FromTensor(d)
+	dv := dvUnit0(v)
+	dv.d = d
 
 	n := new(Node)
 	n.boundTo = dv
@@ -59,7 +59,7 @@ func TestRMSPropSolver(t *testing.T) {
 			t.Error(err)
 		}
 
-		sCache := s.cache[0].Value.(Tensor).Tensor.(*tf64.Tensor)
+		sCache := s.cache[0].Value.(types.Tensor)
 		assert.Equal(correct, backingV, "Iteration: %d", i)
 		assert.Equal(cached, sCache.Data(), "Iteration: %d", i)
 

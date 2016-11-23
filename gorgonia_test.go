@@ -26,8 +26,7 @@ func TestNewConstant(t *testing.T) {
 	assert.Equal(types.Shape{3, 3}, ct.shape)
 	assert.Equal(expectedType, ct.t)
 
-	TV := FromTensor(T)
-	ct = NewConstant(TV, WithName("From TensorValue"))
+	ct = NewConstant(T, WithName("From TensorValue"))
 	assert.Equal(types.Shape{3, 3}, ct.shape)
 	assert.Equal(expectedType, ct.t)
 	assert.Equal("From TensorValue", ct.name)
@@ -52,8 +51,8 @@ var anyNodeTest = []struct {
 	{"bool", true, Bool, scalarShape},
 	{"tf64.Tensor", tf64.NewTensor(tf64.WithShape(2, 3, 4)), &TensorType{d: 3, of: Float64}, types.Shape{2, 3, 4}},
 	{"tf32.Tensor", tf32.NewTensor(tf32.WithShape(2, 3, 4)), &TensorType{d: 3, of: Float32}, types.Shape{2, 3, 4}},
-	{"ScalarValue", Scalar{v: 3.14, t: Float64}, Float64, scalarShape},
-	{"TensorValue", Tensor{Tensor: tf64.NewTensor(tf64.WithShape(2, 3))}, &TensorType{d: 2, of: Float64}, types.Shape{2, 3}},
+	{"ScalarValue", F64(3.14), Float64, scalarShape},
+	{"TensorValue", tf64.NewTensor(tf64.WithShape(2, 3)), &TensorType{d: 2, of: Float64}, types.Shape{2, 3}},
 }
 
 func TestNewNodeFromAny(t *testing.T) {

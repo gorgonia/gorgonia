@@ -35,14 +35,9 @@ func floatsEqual(a, b []float64) bool {
 }
 
 func extractF64s(v Value) []float64 {
-	var T Tensor
-	var ok bool
-	if T, ok = v.(Tensor); !ok {
-		panic("Only works for Tensor")
-	}
-
 	var t *tf64.Tensor
-	if t, ok = T.Tensor.(*tf64.Tensor); !ok {
+	var ok bool
+	if t, ok = v.(*tf64.Tensor); !ok {
 		panic("Only works for tf64.Tensor")
 	}
 
@@ -50,16 +45,10 @@ func extractF64s(v Value) []float64 {
 }
 
 func extractF64(v Value) float64 {
-	var S Scalar
-	var ok bool
-	if S, ok = v.(Scalar); !ok {
-		panic("only works for Scalars")
+	if f, ok := v.(F64); ok {
+		return float64(f)
 	}
-
-	if S.t != Float64 {
-		panic("Only works for float64!")
-	}
-	return S.v.(float64)
+	panic("Only works for F64!")
 }
 
 func simpleMatEqn() (g *ExprGraph, x, y, z *Node) {

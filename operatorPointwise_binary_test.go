@@ -300,7 +300,7 @@ func TestHadamardProdDiff(t *testing.T) {
 	xdv = x.boundTo.(*dualValue)
 	ydv = y.boundTo.(*dualValue)
 
-	dzdy, err := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{randX, randX})))
+	dzdy, _, _, err := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{randX, randX})))
 	if err != nil {
 		t.Error(err)
 	}
@@ -316,7 +316,7 @@ func TestHadamardProdDiff(t *testing.T) {
 	xdv = x.boundTo.(*dualValue)
 	ydv = y.boundTo.(*dualValue)
 
-	dzdx, err := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{randY, randY})))
+	dzdx, _, _, err := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{randY, randY})))
 	if err != nil {
 		t.Error(err)
 	}

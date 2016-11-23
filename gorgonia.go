@@ -99,12 +99,11 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 		val, t = anyToScalar(v)
 		s = scalarShape
 		op = constantScalar{val.(Scalar)}
-
 	case types.Tensor:
 		op = constantTensor{a}
 		val = a
 		s = a.Shape()
-		t = DtypeOf(a)
+		t = TypeOf(a)
 	}
 
 	if op == nil || t == nil {

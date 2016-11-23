@@ -19,7 +19,7 @@ func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *No
 
 	// let the first stone be cast!
 	Let(x, xRandVal)
-	v, _ := anyToValue(fn(xRandVal)) // as if the graph has been executed upon
+	v, _, _, _ := anyToValue(fn(xRandVal)) // as if the graph has been executed upon
 	ydv := variableDV(v)
 
 	if err = y.bind(ydv); err != nil {
@@ -40,7 +40,7 @@ func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *No
 	xBack := []float64{-xRandVal, xRandVal}
 	yBack := []float64{fn(-xRandVal), fn(xRandVal)}
 	Let(xT, tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking(xBack)))
-	vT, _ := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking(yBack)))
+	vT, _, _, _ := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking(yBack)))
 	yTdv := variableDV(vT)
 
 	if err = yT.bind(yTdv); err != nil {
@@ -64,10 +64,10 @@ func TestAbsDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(1.0, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(1.0, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	assert.Equal([]float64{-1, 1}, xdvd.Data())
 }
 
@@ -79,10 +79,10 @@ func TestSinDiff(t *testing.T) {
 	}
 
 	correct := math.Cos(v)
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correctT := []float64{math.Cos(-v), math.Cos(v)}
 	assert.Equal(correctT, xdvd.Data())
 }
@@ -95,10 +95,10 @@ func TestCosDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(-math.Sin(v), x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(-math.Sin(v), x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correct := []float64{-math.Sin(-v), -math.Sin(v)}
 	assert.Equal(correct, xdvd.Data())
 }
@@ -113,8 +113,8 @@ func TestExpDiff(t *testing.T) {
 	assert.Equal(y.boundTo.(*dualValue).Value, x.boundTo.(*dualValue).d)
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
-	ydvd := yT.boundTo.(*dualValue).Value.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
+	ydvd := yT.boundTo.(*dualValue).Value.(*tf64.Tensor)
 	assert.Equal(ydvd.Data(), xdvd.Data())
 }
 
@@ -126,10 +126,10 @@ func TestLnDiff(t *testing.T) {
 		t.Error(err)
 	}
 	correct := 1.0 / v
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v, "v was %v", v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any(), "v was %v", v)
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correctT := []float64{1.0 / -v, 1.0 / v}
 	assert.Equal(correctT, xdvd.Data())
 }
@@ -141,10 +141,10 @@ func TestLog2Diff(t *testing.T) {
 		t.Error(err)
 	}
 	correct := 1.0 / (v * math.Ln2)
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correctT := []float64{1.0 / (-v * math.Ln2), 1.0 / (v * math.Ln2)}
 	assert.Equal(correctT, xdvd.Data())
 }
@@ -157,10 +157,10 @@ func TestSquareDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(2*v, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(2*v, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correct := []float64{2 * -v, 2 * v}
 	assert.Equal(correct, xdvd.Data())
 }
@@ -172,10 +172,10 @@ func TestSqrtDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(1.0/(2*math.Sqrt(v)), x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(1.0/(2*math.Sqrt(v)), x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correct := []float64{1.0 / (2 * math.Sqrt(-v)), 1.0 / (2 * math.Sqrt(v))}
 	got := xdvd.Data().([]float64)
 	if !math.IsNaN(got[0]) && math.IsNaN(correct[0]) {
@@ -194,10 +194,10 @@ func TestInverseDiff(t *testing.T) {
 	}
 
 	correct := -((1 / v) * (1 / v))
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correctT := []float64{correct, correct}
 	assert.Equal(correctT, xdvd.Data())
 }
@@ -230,10 +230,10 @@ func TestTanhDiff(t *testing.T) {
 	}
 
 	correct := 1.0 - (math.Tanh(v) * math.Tanh(v)) // I'm surprised Golang doesn't have a secant function!
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	assert.Equal([]float64{correct, correct}, xdvd.Data())
 }
 
@@ -263,10 +263,10 @@ func TestLog1pDiff(t *testing.T) {
 	}
 
 	correct := 1 / (1.0 + v)
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correct0 := 1 / (1.0 - v)
 	assert.Equal([]float64{correct0, correct}, xdvd.Data())
 }
@@ -279,10 +279,10 @@ func TestExpm1Diff(t *testing.T) {
 	}
 
 	correct := math.Exp(v)
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correct0 := math.Exp(-v)
 	assert.Equal([]float64{correct0, correct}, xdvd.Data())
 }
@@ -295,10 +295,10 @@ func TestSoftplusDiff(t *testing.T) {
 	}
 
 	correct := sigmoidf64(v)
-	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).v)
+	assert.Equal(correct, x.boundTo.(*dualValue).d.(Scalar).Any())
 
 	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(Tensor).Tensor.(*tf64.Tensor)
+	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)
 	correct0 := sigmoidf64(-v)
 	assert.Equal([]float64{correct0, correct}, xdvd.Data())
 }

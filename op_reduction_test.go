@@ -84,9 +84,9 @@ func TestSumOpDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.True(x.Value().Eq(a.Value()))
-	assert.True(xG.Eq(aG))
-	assert.True(y.Value().Eq(b.Value()))
+	assert.True(ValueEq(x.Value(), a.Value()))
+	assert.True(ValueEq(xG, aG))
+	assert.True(ValueEq(y.Value(), b.Value()))
 
 	// long standing bug: sometimes the derivation will get executed in the machine first
 	// for example, the deriv of y is 1, and occasionally, the machine will choose to

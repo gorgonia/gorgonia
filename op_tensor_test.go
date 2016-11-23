@@ -14,24 +14,23 @@ func TestRepeatOp(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
 
-	rep := NewScalarValue(2) // the number of times an axis will be repeated
-	repN := NewScalar(g, Int, WithValue(rep))
+	rep := I(2)
+	repN := NewScalar(g, Int, WithValue(rep)) // the number of times an axis will be repeated
 
 	// test repeat tensor:
 
 	// repeat on axis 1
 	T := tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}), tf64.WithShape(2, 2))
-	TT := FromTensor(T)
-	TN := NewMatrix(g, Float64, WithValue(TT))
+	TN := NewMatrix(g, Float64, WithValue(T))
 
 	repeat := newRepeatOp([]int{1}, Nodes{TN, repN})
 	correct := tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tf64.WithShape(2, 4))
 
-	res, err := repeat.Do(TT, rep)
+	res, err := repeat.Do(T, rep)
 	if err != nil {
 		t.Error(err)
 	}
-	if !correct.Eq(res.(Tensor).Tensor) {
+	if !correct.Eq(res.(types.Tensor)) {
 		t.Error("Something wrong has happend. Failed to repeat correctly")
 	}
 
@@ -39,27 +38,26 @@ func TestRepeatOp(t *testing.T) {
 	repeat = newRepeatOp([]int{0}, Nodes{TN, repN})
 	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tf64.WithShape(4, 2))
 
-	res, err = repeat.Do(TT, rep)
+	res, err = repeat.Do(T, rep)
 	if err != nil {
 		t.Error(err)
 	}
-	if !correct.Eq(res.(Tensor).Tensor) {
+	if !correct.Eq(res.(types.Tensor)) {
 		t.Error("Failed to repeat correctly")
 	}
 
 	// test repeat vector
 	T = tf64.NewTensor(tf64.WithBacking([]float64{1, 2}), tf64.WithShape(2, 1))
-	TT = FromTensor(T)
-	TN = NewVector(g, Float64, WithValue(TT))
+	TN = NewVector(g, Float64, WithValue(T))
 
 	// repeat on the 0th axis
 	repeat = newRepeatOp([]int{0}, Nodes{TN, repN})
 	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2}), tf64.WithShape(4, 1))
-	res, err = repeat.Do(TT, rep)
+	res, err = repeat.Do(T, rep)
 	if err != nil {
 		t.Error(err)
 	}
-	if !correct.Eq(res.(Tensor).Tensor) {
+	if !correct.Eq(res.(types.Tensor)) {
 		t.Error("Failed to repeat a vector correctly")
 		t.Errorf("%v", res)
 	}
@@ -67,17 +65,17 @@ func TestRepeatOp(t *testing.T) {
 	// repeat on the 1st axis
 	repeat = newRepeatOp([]int{1}, Nodes{TN, repN})
 	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2}), tf64.WithShape(2, 2))
-	res, err = repeat.Do(TT, rep)
+	res, err = repeat.Do(T, rep)
 	if err != nil {
 		t.Error(err)
 	}
-	if !correct.Eq(res.(Tensor).Tensor) {
+	if !correct.Eq(res.(types.Tensor)) {
 		t.Error("Failed to repeat a vector correctly")
 		t.Errorf("%v", res)
 	}
 
 	// test repeat scalar
-	s := NewScalarValue(3.1415)
+	s := F64(3.1415)
 	sn := NewScalar(g, Float64, WithValue(s))
 	repeat = newRepeatOp([]int{0}, Nodes{sn, repN})
 	correct = tf64.NewTensor(tf64.WithBacking([]float64{3.1415, 3.1415}))
@@ -85,7 +83,7 @@ func TestRepeatOp(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !correct.Eq(res.(Tensor).Tensor) {
+	if !correct.Eq(res.(types.Tensor)) {
 		t.Error("Failed to repeat a scalar correctly")
 		t.Errorf("%v", res)
 	}
@@ -94,9 +92,8 @@ func TestRepeatOp(t *testing.T) {
 
 	// impossible axes
 	T = tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}), tf64.WithShape(2, 2))
-	TT = FromTensor(T)
 	repeat = newRepeatOp([]int{3}, Nodes{TN, repN})
-	fails := func() { repeat.Do(TT, rep) }
+	fails := func() { repeat.Do(T, rep) }
 	assert.Panics(fails)
 }
 
@@ -120,8 +117,8 @@ func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprG
 	if y, err = applyOp(repeat, x, repN); err != nil {
 		return
 	}
-	xVal, _ := anyToValue(xV)
-	yVal, _ := anyToValue(yV)
+	xVal, _, _, _ := anyToValue(xV)
+	yVal, _, _, _ := anyToValue(yV)
 	x.bind(dvUnit(xVal))
 	y.bind(dvUnitVar(yVal))
 	if err = repeat.DoDiff(Nodes{x, repN}, y); err != nil {
@@ -207,7 +204,6 @@ func TestRepeatOpDoDiff(t *testing.T) {
 func TestSliceOp(t *testing.T) {
 	assert := assert.New(t)
 	var T *tf64.Tensor
-	var TT Tensor
 	var v Value
 	var slice sliceOp
 	var shape types.Shape
@@ -220,17 +216,16 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] -> Scalar
 	T = tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 0, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
 	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(scalarShape, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
@@ -249,17 +244,16 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] -> Scalar (again, but this time, with a colvec)
 	T = tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 0, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
 	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(scalarShape, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
@@ -267,17 +261,16 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] again, but this time, with a rowvec, and on axis 0
 	T = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 0, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
 	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(types.Shape{2}, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
@@ -285,72 +278,21 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] again, but this time, with a rowvec, this time along axis 1. this should yield a scalar
 	T = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 1, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
 	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(types.Shape{2}, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(1.0, extractF64(v))
 
-	/*
-		// T[:, 1:2, :]
-		T = tf64.NewTensor(tf64.WithBacking(tf64.RangeFloat64(0, 24)), tf64.WithShape(2, 3, 4))
-		TT = FromTensor(T)
-		slice = newSliceOp(1, 2, 1, T.Dims())
-
-		v, err = slice.Do(TT)
-		if err != nil {
-			t.Error(err)
-		}
-
-		vt, ok := v.(Tensor)
-		if !ok {
-			t.Error("Expected result to be a TensorType")
-		}
-
-		correctShape := types.Shape{2, 4}
-		correctStride := []int{12, 1}
-		correctData := tf64.RangeFloat64(4, 20)
-		assert.Equal(correctShape, vt.Tensor.Shape())
-		assert.Equal(correctStride, vt.Tensor.Strides())
-		assert.Equal(correctData, vt.Data())
-
-		backing := tf64.RandomFloat64(3 * 4)
-		backingLW := make([]float64, len(backing))
-		backingLD := make([]float64, len(backing))
-		for i, v := range backing {
-			backingLW[i] = v
-			backingLD[i] = 0.0
-		}
-		G := lstm.NewGraph()
-		L := new(lstm.Layer)
-		L.W = mat64.NewDense(3, 4, backingLW)
-		L.D = mat64.NewDense(3, 4, backingLD)
-		pr := G.PluckRow(L, 1)
-
-		T = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(3, 4))
-		g := NewGraph()
-		x := NewMatrix(g, Float64, WithValue(T), WithShape(3, 4))
-		sl := Must(Slice(x, S(1)))
-
-		machine := NewLispMachine(g)
-		machine.dontExecBwd()
-		err = machine.RunAll()
-		if err != nil {
-			t.Fatal(err)
-		}
-		vvv := sl.boundTo.(*dualValue).Value
-		log.Printf("%#v \n%v", vvv.(Tensor), pr.W.RawMatrix().Data)
-	*/
 }
 
 func TestSliceOpDiff(t *testing.T) {
@@ -377,10 +319,10 @@ func TestSliceOpDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	T := A.Value().(Tensor).Tensor
+	T := A.Value().(types.Tensor)
 	aG, _ := A.Grad()
 
-	G := aG.(Tensor).Tensor.(*tf64.Tensor)
+	G := aG.(types.Tensor)
 	assert.NotEqual(T, G)
 
 	correct := []float64{0, 2, 0, 2}
