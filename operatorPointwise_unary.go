@@ -1,6 +1,9 @@
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
+)
 
 // a ʘUnaryOperator is essentially a function that takes a float32 or float64 and returns the same
 // pros : no overloading = clear understanding
@@ -153,7 +156,7 @@ func absDiff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = sign.Do(xdv.Value); err == nil {
-		if dT, ok := d.(Tensor); ok {
+		if dT, ok := d.(types.Tensor); ok {
 			defer returnTensor(dT)
 		}
 
@@ -190,7 +193,7 @@ func sinDiff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = cos.Do(xdv.Value); err == nil {
-		if dT, ok := d.(Tensor); ok {
+		if dT, ok := d.(types.Tensor); ok {
 			defer returnTensor(dT)
 		}
 
@@ -232,7 +235,7 @@ func cosDiff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = sin.Do(xdv.Value); err == nil {
-		if dT, ok := d.(Tensor); ok {
+		if dT, ok := d.(types.Tensor); ok {
 			defer returnTensor(dT)
 		}
 
@@ -344,7 +347,7 @@ func log2Diff(x, y *Node) (err error) {
 		return errors.Wrapf(err, doFail, mul)
 	}
 
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
@@ -429,7 +432,7 @@ func squareDiff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = mul.Do(xdv.Value, two.boundTo); err == nil {
-		if dT, ok := d.(Tensor); ok {
+		if dT, ok := d.(types.Tensor); ok {
 			defer returnTensor(dT)
 		}
 
@@ -495,7 +498,7 @@ func sqrtDiff(x, y *Node) (err error) {
 
 	var d Value
 	if d, err = mul.Do(ydv.Value, two.boundTo); err == nil {
-		if dT, ok := d.(Tensor); ok {
+		if dT, ok := d.(types.Tensor); ok {
 			defer returnTensor(dT)
 		}
 
@@ -542,7 +545,7 @@ func inverseDiff(x, y *Node) (err error) {
 	if d, err = neg.Do(d); err != nil {
 		return errors.Wrapf(err, doFail, neg)
 	}
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
@@ -615,7 +618,7 @@ func cubeDiff(x, y *Node) (err error) {
 		return errors.Wrapf(err, doFail, mul)
 	}
 
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
@@ -692,7 +695,7 @@ func tanhDiff(x, y *Node) (err error) {
 		return errors.Wrapf(err, doFail, sq)
 	}
 
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
@@ -771,7 +774,7 @@ func sigmoidDiff(x, y *Node) (err error) {
 		return errors.Wrapf(err, doFail, sub)
 	}
 
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
@@ -845,7 +848,7 @@ func log1pDiff(x, y *Node) (err error) {
 		return errors.Wrapf(err, doFail, add)
 	}
 
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
@@ -878,7 +881,7 @@ func expm1Diff(x, y *Node) (err error) {
 		return errors.Wrapf(err, doFail, exp)
 	}
 
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
@@ -911,7 +914,7 @@ func softplusDiff(x, y *Node) (err error) {
 		return errors.Wrapf(err, doFail, sigmoid)
 	}
 
-	if dT, ok := d.(Tensor); ok {
+	if dT, ok := d.(types.Tensor); ok {
 		defer returnTensor(dT)
 	}
 
