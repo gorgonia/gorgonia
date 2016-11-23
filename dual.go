@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -23,18 +24,6 @@ func (dv *dualValue) SetValue(v Value) error {
 	return dv.sanity()
 }
 
-func (dv *dualValue) sanity() error {
-	// check that d and v are the same type
-
-	if !TypeOf(dv.Value).Eq(TypeOf(dv.d)) {
-		return errors.New("DualValues do not have the same types")
-	}
-
-	// TODO: check that the shapes are the same
-
-	return nil
-}
-
 func (dv *dualValue) Clone() (retVal Value, err error) {
 	var v, d Value
 	if v, err = CloneValue(dv.Value); err != nil {
@@ -50,6 +39,21 @@ func (dv *dualValue) Clone() (retVal Value, err error) {
 	dv2.d = d
 	retVal = dv2
 	return
+}
+
+func (dv *dualValue) Type() hm.Type { return TypeOf(dv.Value) }
+func (dv *dualValue) Dtype() Dtype  { return DtypeOf(dv.Value) }
+
+func (dv *dualValue) sanity() error {
+	// check that d and v are the same type
+
+	if !TypeOf(dv.Value).Eq(TypeOf(dv.d)) {
+		return errors.New("DualValues do not have the same types")
+	}
+
+	// TODO: check that the shapes are the same
+
+	return nil
 }
 
 // clones the dualValue and zeroes out the ndarrays
