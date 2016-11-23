@@ -73,7 +73,7 @@ func DtypeOf(v Value) Dtype {
 	case Dtyper:
 		return vt.Dtype()
 	default:
-		panic("Not implemented yet")
+		panic(fmt.Sprintf(nyiTypeFail, "DtypeOf", v))
 	}
 }
 

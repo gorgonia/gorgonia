@@ -739,7 +739,6 @@ func (op linAlgBinOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, e
 		defer b.T()
 	}
 
-	var r interface{}
 	switch op.āBinaryOperator {
 	case matMulOperator:
 		retVal, err = tensor.MatMul(a, b, opts...)
@@ -748,12 +747,12 @@ func (op linAlgBinOp) do(inputs []Value, opts ...types.FuncOpt) (retVal Value, e
 	case vecDotOperator:
 		var ret types.Tensor
 		if ret, err = tensor.Inner(a, b); err != nil {
-			goto e
+			return nil, errors.Wrapf(err, "Failed to carry out linalgBinOp operation %v", op)
 		}
 		retVal, _ = anyToScalar(ret.ScalarValue())
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
 	}
-e:
-	return nil, errors.Wrapf(err, "Failed to carry out linalgBinOp operation %v", op)
+	return
+
 }

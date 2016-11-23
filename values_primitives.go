@@ -55,6 +55,8 @@ func (v B) Any() interface{}   { return bool(v) }
 
 func anyToScalar(any interface{}) (Scalar, Dtype) {
 	switch at := any.(type) {
+	case Scalar:
+		return at, DtypeOf(at)
 	case float64:
 		return F64(at), Float64
 	case float32:
@@ -66,8 +68,6 @@ func anyToScalar(any interface{}) (Scalar, Dtype) {
 	case int64:
 		return I64(at), Int64
 	case byte:
-		return U8(at), Byte
-	case uint8:
 		return U8(at), Byte
 	case bool:
 		return B(at), Bool

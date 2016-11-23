@@ -416,8 +416,9 @@ mustalloc:
 	//TODO: runtime shape check
 	t := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(instr.s...))
 
+	logf("alloc to dest %v", dest)
 	m.storage[dest] = t
-
+	logf("m.storage %v", m.storage[dest])
 	return
 }
 
@@ -517,9 +518,11 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	case instr.preAllocated:
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p := m.storage[instr.writeTo.id]
+			logf("instr.writeTo.id %v || prealloc: %v", instr.writeTo.id, p)
 			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
 			}
+			logf("v %v", v)
 		} else {
 			// TODO: maybe warn?
 			if v, err = instr.op.Do(inputs...); err != nil {

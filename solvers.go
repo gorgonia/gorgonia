@@ -195,8 +195,6 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 			s.cache[i] = cached
 		}
 
-		dt := dv.Dtype()
-
 		grad := dv.d
 		weights := dv.Value
 
@@ -441,11 +439,6 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 				return errors.Wrap(err, "Failed to carry clone0()")
 			}
 			s.cache[i] = cached
-		}
-
-		var dt Dtype
-		if dt, err = dtypeOf(dv.Type()); err != nil {
-			return errors.Wrap(err, dtypeOfFail)
 		}
 
 		grad := dv.d
@@ -857,12 +850,6 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", n, n.Hashcode(), n.boundTo)
 		}
 
-		var dt Dtype
-		dt, err = dtypeOf(dv.Type())
-		if err != nil {
-			return errors.Wrap(err, dtypeOfFail)
-		}
-
 		grad := dv.d
 		weights := dv.Value
 
@@ -1118,11 +1105,6 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 				return errors.Wrap(err, clone0Fail)
 			}
 			s.cache[i] = cached
-		}
-
-		var dt Dtype
-		if dt, err = dtypeOf(dv.Type()); err != nil {
-			return errors.Wrap(err, dtypeOfFail)
 		}
 
 		grad := dv.d

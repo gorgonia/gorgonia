@@ -126,7 +126,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		retVal = one(DtypeOf(t))
 
 		// bools are special
-		if b, ok := t.(B); ok {
+		if _, ok := t.(B); ok {
 			retVal = I(1)
 		}
 	case types.Tensor:

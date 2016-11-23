@@ -98,6 +98,8 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	case int, int64, float64, float32, byte, bool:
 		val, t = anyToScalar(v)
 		s = scalarShape
+		op = constantScalar{val.(Scalar)}
+
 	case types.Tensor:
 		op = constantTensor{a}
 		val = a
@@ -106,7 +108,7 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	}
 
 	if op == nil || t == nil {
-		panic("HELP")
+		panic(fmt.Sprintf("HELP. Op: %v, t: %v", op, t))
 	}
 
 	consOpts := []NodeConsOpt{withOp(op), withType(t), WithName(name), WithShape(s...), WithValue(val)}
