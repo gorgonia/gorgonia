@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"fmt"
+
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
@@ -88,7 +90,7 @@ func ValueEq(a, b Value) bool {
 		}
 		return false
 	case ValueEqualer:
-		return at.ValueEq(bt)
+		return at.ValueEq(b)
 	default:
 		panic("Not implemented yet")
 	}
@@ -139,5 +141,9 @@ func ZeroValue(v Value) Value {
 	case types.Tensor:
 		vt.Zero()
 		return vt
+	case ZeroValuer:
+		return vt.ZeroValue()
+	default:
+		panic(fmt.Sprintf("Cannot return zero value of %T", v))
 	}
 }

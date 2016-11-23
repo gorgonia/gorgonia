@@ -18,6 +18,11 @@ type Zeroer interface {
 	Zero()
 }
 
+type ZeroValuer interface {
+	Value
+	ZeroValue() Value
+}
+
 type Setter interface {
 	SetAll(interface{}) error
 }

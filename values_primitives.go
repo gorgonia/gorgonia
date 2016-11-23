@@ -72,7 +72,7 @@ func anyToScalar(any interface{}) (Scalar, Dtype) {
 	case bool:
 		return B(at), Bool
 	default:
-		panic(fmt.Sprintf("%v(%T) not scalar/not handled"), any, any)
+		panic(fmt.Sprintf("%v(%T) not scalar/not handled", any, any))
 	}
 }
 
