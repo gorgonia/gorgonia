@@ -122,20 +122,13 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	switch t := inputs[0].(type) {
-	case F64:
-		retVal = F64(1)
-	case F32:
-		retVal = F32(1)
-	case I:
-		retVal = I(1)
-	case I32:
-		retVal = I32(1)
-	case I64:
-		retVal = I64(1)
-	case U8:
-		retVal = U8(1)
-	// case B:
-	// 	retVal = B(true)
+	case Scalar:
+		retVal = one(DtypeOf(t))
+
+		// bools are special
+		if b, ok := t.(B); ok {
+			retVal = I(1)
+		}
 	case types.Tensor:
 		sh := t.Shape()
 		if op.axis >= len(sh) {

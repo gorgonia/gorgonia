@@ -103,20 +103,8 @@ func variableDV(val Value) *dualValue {
 	retVal.Value = val
 
 	switch v := val.(type) {
-	case F64:
-		retVal.d = F64(1)
-	case F32:
-		retVal.d = F32(1)
-	case I:
-		retVal.d = I(1)
-	case I32:
-		retVal.d = I32(1)
-	case I64:
-		retVal.d = I64(1)
-	case U8:
-		retVal.d = U8(1)
-	case B:
-		retVal.d = B(true)
+	case Scalar:
+		retVal.d = one(DtypeOf(v))
 	case types.Tensor:
 		shp := v.Shape()
 		dt := dtypeToTensorDtype(DtypeOf(v))
@@ -238,26 +226,14 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 		return errors.Wrap(err, "Failed at setting the value")
 	}
 
-	var d Value
 	switch v := retVal.d.(type) {
-	case F64:
-		retVal.d = F64(1)
-	case F32:
-		retVal.d = F32(1)
-	case I:
-		retVal.d = I(1)
-	case I32:
-		retVal.d = I32(1)
-	case I64:
-		retVal.d = I64(1)
-	case U8:
-		retVal.d = U8(1)
-	case B:
-		retVal.d = B(true)
+	case Scalar:
+		retVal.d = one(DtypeOf(v))
 	case types.Tensor:
 		err = v.SetAll(1)
 		retVal.d = v
+	default:
+		err = errors.Errorf(nyiTypeFail, "dvBindVar0", retVal.d)
 	}
-	retVal.d = d
 	return
 }

@@ -68,10 +68,10 @@ func borrowDV() *dualValue {
 }
 
 func returnDV(dv *dualValue) {
-	if dvdT, ok := dv.d.(Tensor); ok {
+	if dvdT, ok := dv.d.(types.Tensor); ok {
 		returnTensor(dvdT)
 	}
-	if dvvT, ok := dv.Value.(Tensor); ok {
+	if dvvT, ok := dv.Value.(types.Tensor); ok {
 		returnTensor(dvvT)
 	}
 

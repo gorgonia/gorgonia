@@ -238,11 +238,9 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	var T types.Tensor
 	switch ydvd := ydv.d.(type) {
 	case F64:
-		f := float64(ydvd)
-		T = tf64.NewTensor(tf64.AsScalar(f))
+		T = tf64.NewTensor(tf64.AsScalar(ydvd.Any().(float64)))
 	case F32:
-		f := float32(ydvd)
-		T = tf32.NewTensor(tf32.AsScalar(f))
+		T = tf32.NewTensor(tf32.AsScalar(ydvd.Any().(float32)))
 	case types.Tensor:
 		T = ydvd
 	default:
