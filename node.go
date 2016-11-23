@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"log"
 	"unsafe"
 
 	"github.com/awalterschulze/gographviz"
@@ -14,7 +13,6 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
-	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 )
 
@@ -97,15 +95,15 @@ func WithName(name string) NodeConsOpt {
 
 // WithValue is a node creation option that binds the value to the *Node.
 func WithValue(any interface{}) NodeConsOpt {
-	v, err := anyToValue(any)
+	v, t, _, err := anyToValue(any)
 	if err != nil {
 		panic(err)
 	}
 
 	f := func(n *Node) {
-		if n.t != v.Type() {
-			log.Printf("%# v || %# v", pretty.Formatter(n.t), pretty.Formatter(v.Type()))
-			panic(fmt.Sprintf("TypeError: Want %#v, Got %#v instead", n.t, v.Type())) // yes this is a runtime error
+		// TODO: make this a runtime type check?
+		if !n.t.Eq(t) {
+			panic(fmt.Sprintf("TypeError: Want %#v, Got %#v instead", n.t, t)) // yes this is a runtime error
 		}
 
 		n.bind(v)
@@ -124,17 +122,14 @@ func WithInit(fn InitWFn) NodeConsOpt {
 			panic(err)
 		}
 
-		var T types.Tensor
 		var v Value
 		switch dt {
 		case Float64:
 			val := fn(dt, n.shape...).([]float64)
-			T = tf64.NewTensor(tf64.WithShape(n.shape...), tf64.WithBacking(val))
-			v = FromTensor(T)
+			v = tf64.NewTensor(tf64.WithShape(n.shape...), tf64.WithBacking(val))
 		case Float32:
 			val := fn(dt, n.shape...).([]float32)
-			T = tf32.NewTensor(tf32.WithShape(n.shape...), tf32.WithBacking(val))
-			v = FromTensor(T)
+			v = tf32.NewTensor(tf32.WithShape(n.shape...), tf32.WithBacking(val))
 		default:
 			panic("Not handled yet")
 		}
@@ -282,7 +277,7 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 
 	if n.boundTo != nil {
 		var err error
-		if n2.boundTo, err = n.boundTo.clone(); err != nil {
+		if n2.boundTo, err = CloneValue(n.boundTo); err != nil {
 			panic(err)
 		}
 	}
@@ -501,7 +496,7 @@ func (n *Node) unbind() {
 		returnDV(dv)
 	}
 
-	if t, ok := n.boundTo.(Tensor); ok {
+	if t, ok := n.boundTo.(types.Tensor); ok {
 		returnTensor(t)
 	}
 	n.boundTo = nil

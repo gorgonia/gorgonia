@@ -54,20 +54,6 @@ func cloneNodes(node Nodes, replacements map[*Node]*Node) Nodes {
 	return nil
 }
 
-func anyToValue(any interface{}) (val Value, err error) {
-	switch a := any.(type) {
-	case float64, float32, int, int64, int32, byte, bool:
-		return NewScalarValue(any), nil
-	case types.Tensor:
-		return Tensor{Tensor: a}, nil
-	case Value:
-		return a, nil
-	default:
-		return nil, errors.Errorf("value %v of %T not yet handled", any, any)
-	}
-	panic("Unreachable")
-}
-
 // valuesToInts will FORCIBLY cast floats to ints.
 func valuesToInts(values []Value) (retVal []int, err error) {
 	retVal = make([]int, len(values))

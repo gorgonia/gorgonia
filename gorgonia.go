@@ -25,33 +25,24 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 
 // NewNodeFromAny creates a Node from a types.Tensor, automatically filling in shape and type info
 func NewNodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
-	v, err := anyToValue(any)
+	v, t, dt, err := anyToValue(any)
 	if err != nil {
 		panic(err)
 	}
+
 	opts = append(opts, WithValue(v))
-	switch a := any.(type) {
-	case float32:
-		return NewScalar(g, Float32, opts...)
-	case float64:
-		return NewScalar(g, Float64, opts...)
-	case int:
-		return NewScalar(g, Int, opts...)
-	case bool:
-		return NewScalar(g, Bool, opts...)
-	case types.Tensor:
-		dt := dtypeToDtype(a.Dtype())
+
+	switch t.(type) {
+	case Dtype:
+		return NewScalar(g, dt, opts...)
+	case TensorType:
 		opts = append(opts, nil)
 		copy(opts[1:], opts[0:len(opts)-1])
-		opts[0] = WithShape(a.Shape()...)
-		return NewTensor(g, dt, a.Dims(), opts...)
-	case Scalar:
-		dt := DtypeOf(a)
-		return NewScalar(g, dt, opts...)
+		opts[0] = WithShape(v.Shape()...)
+		return NewTensor(g, dt, v.Shape().Dims(), opts...)
 	default:
 		panic(nyi("NewNodeFromAny", any))
 	}
-	panic("Unreachable")
 }
 
 // NewScalar creates a Node representing a variable that holds a scalar value
@@ -242,10 +233,13 @@ func Let(n *Node, be interface{}) (err error) {
 	}
 
 	var val Value
-	if val, err = anyToValue(be); err != nil {
+	// var t hm.Type
+	// var dt Dtype
+	if val, _, _, err = anyToValue(be); err != nil {
 		return errors.Wrapf(err, anyToValueFail, be, be)
 	}
 
+	// TODO: runtime type checking
 	n.bind(val)
 	return
 }

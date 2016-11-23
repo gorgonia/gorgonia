@@ -24,6 +24,10 @@ type ValueEqualer interface {
 	ValueEq(Value) bool
 }
 
+type Cloner interface {
+	Clone() (Value, error)
+}
+
 func TypeOf(v Value) hm.Type {
 	switch t := v.(type) {
 	case types.Tensor:
@@ -108,6 +112,8 @@ func CloneValue(v Value) (Value, error) {
 		return vt, nil
 	case types.Tensor:
 		return tensor.Clone(vt), nil
+	case Cloner:
+		return vt.Clone()
 	default:
 		return nil, errors.Errorf("Unable to clone value of type %T", v)
 	}

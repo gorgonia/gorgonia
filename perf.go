@@ -7,6 +7,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
+	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 )
 
@@ -79,8 +80,8 @@ func returnDV(dv *dualValue) {
 	dvpool.Put(dv)
 }
 
-func returnTensor(t Tensor) {
-	switch tt := t.Tensor.(type) {
+func returnTensor(t types.Tensor) {
+	switch tt := t.(type) {
 	case *tf64.Tensor:
 		tf64.ReturnTensor(tt)
 	case *tf32.Tensor:

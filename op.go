@@ -156,7 +156,7 @@ func (c constantScalar) String() string             { return fmt.Sprintf("const 
 
 func (c constantScalar) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "const ")
-	if err := binary.Write(h, binary.LittleEndian, c.v.t); err != nil {
+	if err := binary.Write(h, binary.LittleEndian, TypeOf(c.v)); err != nil {
 		panic(err)
 	}
 	fmt.Fprintf(h, "of %v", c.v)
@@ -187,7 +187,7 @@ func (c constantTensor) CallsExtern() bool                          { return fal
 func (c constantTensor) DiffWRT(i int) []bool                       { return nil }
 func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
 func (c constantTensor) Do(...Value) (Value, error)                 { return c.v, nil }
-func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", c.v.Type()) }
+func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", TypeOf(c.v)) }
 
 func (c constantTensor) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "const %v", c.Type())

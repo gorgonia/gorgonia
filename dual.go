@@ -35,7 +35,7 @@ func (dv *dualValue) sanity() error {
 	return nil
 }
 
-func (dv *dualValue) clone() (retVal Value, err error) {
+func (dv *dualValue) Clone() (retVal Value, err error) {
 	var v, d Value
 	if v, err = CloneValue(dv.Value); err != nil {
 		return nil, errors.Wrap(err, cloneFail)

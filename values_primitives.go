@@ -5,6 +5,7 @@ import (
 
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 )
 
 type Scalar interface {
@@ -52,7 +53,7 @@ func (v I32) Scalar() Scalar { return v }
 func (v U8) Scalar() Scalar  { return v }
 func (v B) Scalar() Scalar   { return v }
 
-func anyToScalar(any interface{}) (Scalar, hm.Type) {
+func anyToScalar(any interface{}) (Scalar, Dtype) {
 	switch at := any.(type) {
 	case float64:
 		return F64(at), Float64
@@ -72,5 +73,27 @@ func anyToScalar(any interface{}) (Scalar, hm.Type) {
 		return B(at), Bool
 	default:
 		panic(fmt.Sprintf("%v(%T) not scalar/not handled"), any, any)
+	}
+}
+
+func anyToValue(any interface{}) (val Value, t hm.Type, dt Dtype, err error) {
+	switch a := any.(type) {
+	case float64, float32, int, int64, int32, byte, bool:
+		val, dt = anyToScalar(any)
+		t = dt
+		return
+	case types.Tensor:
+		val = a
+		t = TypeOf(a)
+		dt = DtypeOf(a)
+		return
+	case Value:
+		val = a
+		t = TypeOf(a)
+		dt = DtypeOf(a)
+		return
+	default:
+		err = errors.Errorf("value %v of %T not yet handled", any, any)
+		return
 	}
 }
