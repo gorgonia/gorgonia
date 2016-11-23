@@ -18,16 +18,19 @@ type Tensor struct {
 	viewOf *Tensor
 }
 
-// a consOpt is a tensor construction option
+// a ConsOpt is a tensor construction option
 type consOpt func(*Tensor)
 
-// NewTensor creates a new Bool *Tensor
-func NewTensor(opts ...consOpt) *Tensor {
+func (c consOpt) Opt() {}
+
+// NewTensor creates a new Float64 *Tensor
+func NewTensor(opts ...types.ConsOpt) *Tensor {
 	t := new(Tensor)
 	t.AP = new(types.AP)
 
 	for _, opt := range opts {
-		opt(t)
+		o := opt.(consOpt)
+		o(t)
 	}
 	t.fix()
 	// TODO: sanity check

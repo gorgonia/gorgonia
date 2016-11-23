@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -370,7 +371,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	if m.storage[dest] == nil {
 		goto mustalloc
 	}
-	have = m.storage[dest].Type()
+	have = TypeOf(m.storage[dest])
 	want = instr.t
 
 	if !m.alloc() && have == want {
@@ -385,14 +386,16 @@ mustalloc:
 	node := m.p.g.Node(instr.id).(*Node)
 	if node.boundTo != nil {
 		switch v := node.boundTo.(type) {
-		case Tensor:
+		case types.Tensor:
 			m.storage[dest] = v
 			return nil
 		case *dualValue:
-			if tv, ok := v.Value.(Tensor); ok {
+			if tv, ok := v.Value.(types.Tensor); ok {
 				m.storage[dest] = tv
 				return nil
 			}
+		case Scalar:
+			// do nothing
 		}
 	}
 
@@ -411,8 +414,7 @@ mustalloc:
 	}
 
 	//TODO: runtime shape check
-
-	t := NewTensorValue(dt, instr.s...)
+	t := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(instr.s...))
 
 	m.storage[dest] = t
 
@@ -554,7 +556,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 
 	if m.trace() {
 		var cloned Value
-		if cloned, err = v.clone(); err != nil {
+		if cloned, err = CloneValue(v); err != nil {
 			return errors.Wrap(err, cloneFail)
 		}
 		node.bind(cloned)
@@ -622,7 +624,7 @@ func (instr readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr readInstr) writes() register  { return register{-1, CPU} }
 func (instr readInstr) exec(m *tapeMachine) error {
 	v := m.storage[instr.readFrom.id]
-	v2, err := v.clone()
+	v2, err := CloneValue(v)
 	if err != nil {
 		return errors.Wrap(err, cloneFail)
 	}

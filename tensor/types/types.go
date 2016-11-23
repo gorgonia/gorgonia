@@ -13,6 +13,7 @@ const (
 	Int
 	Int64
 	Int32
+	Byte
 	Bool
 
 	MAXDTYPE
@@ -125,6 +126,10 @@ func (n NormOrder) String() string {
 		return fmt.Sprintf("Norm %v", float64(n))
 	}
 	panic("unreachable")
+}
+
+type ConsOpt interface {
+	Opt()
 }
 
 // FunctionFlag are flags for calling Tensor functions. Use only with FuncOpt
