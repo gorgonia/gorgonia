@@ -265,7 +265,7 @@ func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
 		return
 	}
 
-	res = logprobs.Value().(Tensor).Tensor
+	res = logprobs.Value().(types.Tensor)
 	return
 }
 

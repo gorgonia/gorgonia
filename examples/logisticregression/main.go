@@ -51,8 +51,8 @@ func init() {
 	}
 
 	xT = tf64.NewTensor(tf64.WithBacking(xBacking), tf64.WithShape(N, feats))
-	yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N, 1))
-	wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats, 1))
+	yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N))
+	wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats))
 }
 
 func main() {
@@ -63,8 +63,8 @@ func main() {
 	if *static {
 		wBacking, xBacking, yBacking := loadStatic()
 		xT = tf64.NewTensor(tf64.WithBacking(xBacking), tf64.WithShape(N, feats))
-		yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N, 1))
-		wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats, 1))
+		yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N))
+		wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats))
 	}
 
 	// T.Use(cblas.Implementation{})
@@ -72,10 +72,10 @@ func main() {
 
 	g := T.NewGraph()
 	x := T.NewMatrix(g, Float, T.WithName("x"), T.WithShape(N, feats))
-	y := T.NewVector(g, Float, T.WithName("y"), T.WithShape(N, 1))
+	y := T.NewVector(g, Float, T.WithName("y"), T.WithShape(N))
 
-	w := T.NewVector(g, Float, T.WithName("w"), T.WithShape(feats, 1))
-	b := T.NewScalar(g, Float, T.WithName("bias"), T.WithShape(1))
+	w := T.NewVector(g, Float, T.WithName("w"), T.WithShape(feats))
+	b := T.NewScalar(g, Float, T.WithName("bias"))
 
 	one := T.NewConstant(1.0)
 

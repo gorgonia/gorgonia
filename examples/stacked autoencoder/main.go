@@ -15,7 +15,6 @@ import (
 
 	T "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/gonum/blas/native"
@@ -194,11 +193,11 @@ func main() {
 	// Visualize
 	visualizeLayer := *viz
 	verboseLog("Visualizing %dth layer", visualizeLayer)
-	finalWeights := sda.autoencoders[visualizeLayer].w.Value().(T.Tensor).Tensor.(*tf64.Tensor).Clone()
+	finalWeights := tensor.Clone(sda.autoencoders[visualizeLayer].w.Value().(types.Tensor))
 	finalWeights.T()
 	finalWeights.Transpose()
 	for i := 0; i < finalWeights.Shape()[0]; i++ {
-		rowT, _ := finalWeights.Slice(T.S(i))
+		rowT, _ := tensor.Slice(finalWeights, T.S(i))
 		row := rowT.Data().([]float64)
 		img := visualizeRow(row)
 

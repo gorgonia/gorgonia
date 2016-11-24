@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 func ScalarShape() Shape { return Shape{} }
 
@@ -150,6 +153,7 @@ func (s Shape) S(slices ...Slice) (retVal Shape, err error) {
 	// drop any dimension with size 1, except the last dimension
 	dims := s.Dims()
 	for d := 0; d < dims; d++ {
+		log.Printf("d %v", d)
 		if retVal[d] == 1 /*&& d != t.dims-1  && dims > 2*/ {
 			retVal = append(retVal[:d], retVal[d+1:]...)
 			d--

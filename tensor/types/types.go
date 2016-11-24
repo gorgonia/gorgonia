@@ -33,6 +33,7 @@ type Tensor interface {
 	Reshape(...int) error
 	T(axes ...int) error
 	UT()
+	Transpose() // Transpose actually moves the data
 
 	// data related interface
 	Zero()
