@@ -38,7 +38,6 @@ func dummyScalar1() *AP {
 func dummyScalar2() *AP {
 	return &AP{
 		shape: Shape{1},
-		dims:  0,
 	}
 }
 
@@ -46,7 +45,6 @@ func dummyColVec() *AP {
 	return &AP{
 		shape:   Shape{5, 1},
 		strides: []int{1},
-		dims:    1,
 	}
 }
 
@@ -54,7 +52,6 @@ func dummyRowVec() *AP {
 	return &AP{
 		shape:   Shape{1, 5},
 		strides: []int{1},
-		dims:    1,
 	}
 }
 
@@ -62,7 +59,6 @@ func dummyVec() *AP {
 	return &AP{
 		shape:   Shape{5},
 		strides: []int{1},
-		dims:    1,
 	}
 }
 
@@ -70,7 +66,6 @@ func twothree() *AP {
 	return &AP{
 		shape:   Shape{2, 3},
 		strides: []int{3, 1},
-		dims:    2,
 	}
 }
 
@@ -78,8 +73,42 @@ func twothreefour() *AP {
 	return &AP{
 		shape:   Shape{2, 3, 4},
 		strides: []int{12, 4, 1},
-		dims:    3,
 	}
+}
+
+func TestAccessPatternBasics(t *testing.T) {
+	assert := assert.New(t)
+	ap := new(AP)
+
+	ap.SetShape(1, 2)
+	assert.Equal(Shape{1, 2}, ap.Shape())
+	assert.Equal([]int{1}, ap.Strides())
+	assert.Equal(2, ap.Dims())
+	assert.Equal(2, ap.Size())
+
+	ap.SetShape(2, 3, 2)
+	assert.Equal(Shape{2, 3, 2}, ap.Shape())
+	assert.Equal([]int{6, 2, 1}, ap.Strides())
+	assert.Equal(12, ap.Size())
+
+	ap.Lock()
+	ap.SetShape(1, 2, 3)
+	assert.Equal(Shape{2, 3, 2}, ap.shape)
+	assert.Equal([]int{6, 2, 1}, ap.strides)
+
+	ap.Unlock()
+	ap.SetShape(1, 2)
+	assert.Equal(Shape{1, 2}, ap.Shape())
+	assert.Equal([]int{1}, ap.Strides())
+	assert.Equal(2, ap.Dims())
+	assert.Equal(2, ap.Size())
+
+	if ap.String() != "Shape: (1, 2), Stride: [1], Lock: false" {
+		t.Error("AP formatting error. Got %q", ap.String())
+	}
+
+	ap2 := ap.Clone()
+	assert.Equal(ap, ap2)
 }
 
 func TestAccessPatternIsX(t *testing.T) {
@@ -136,7 +165,7 @@ func TestAccessPatternT(t *testing.T) {
 	assert.Equal(Shape{3, 2}, apT.shape)
 	assert.Equal([]int{1, 3}, apT.strides)
 	assert.Equal([]int{1, 0}, axes)
-	assert.Equal(2, apT.dims)
+	assert.Equal(2, apT.Dims())
 
 	// test no op
 	apT, _, err = ap.T(0, 1)
@@ -155,7 +184,7 @@ func TestAccessPatternT(t *testing.T) {
 	assert.Equal(Shape{4, 2, 3}, apT.shape)
 	assert.Equal([]int{1, 12, 4}, apT.strides)
 	assert.Equal([]int{2, 0, 1}, axes)
-	assert.Equal(3, apT.dims)
+	assert.Equal(3, apT.Dims())
 
 	// test stupid axes
 	_, _, err = ap.T(1, 2, 3)

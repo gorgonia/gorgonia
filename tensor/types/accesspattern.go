@@ -68,9 +68,7 @@ func (ap *AP) Strides() []int { return ap.strides }
 func (ap *AP) Dims() int      { return ap.shape.Dims() }
 func (ap *AP) Size() int      { return ap.shape.TotalSize() }
 
-func (ap *AP) String() string {
-	return fmt.Sprintf("Shape: %v, Stride: %v, Lock: %t", ap.shape, ap.strides, ap.fin)
-}
+func (ap *AP) String() string { return fmt.Sprintf("%v", ap) }
 func (ap *AP) Format(state fmt.State, c rune) {
 	fmt.Fprintf(state, "Shape: %v, Stride: %v, Lock: %t", ap.shape, ap.strides, ap.fin)
 }
@@ -255,52 +253,6 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 		retVal.strides = retVal.strides[:1]
 	}
 
-	return
-}
-
-// SortedMultiStridePerm takes multiple input strides, and creates a sorted stride permutation.
-// It's based very closely on Numpy's PyArray_CreateMultiSortedStridePerm, where a stable insertion sort is used
-// to create the permutations.
-func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
-	retVal = BorrowInts(dims)
-	for i := 0; i < dims; i++ {
-		retVal[i] = i
-	}
-
-	for i := 1; i < dims; i++ {
-		ipos := i
-		axisi := retVal[i]
-
-		for j := i - 1; j >= 0; j-- {
-			var ambig, swap bool
-			ambig = true
-			axisj := retVal[j]
-
-			for _, ap := range aps {
-				if ap.shape[axisi] != 1 && ap.shape[axisj] != 1 {
-					if ap.strides[axisi] <= ap.strides[axisj] {
-						swap = true
-					} else if ambig {
-						swap = true
-					}
-					ambig = false
-				}
-			}
-
-			if !ambig && swap {
-				ipos = j
-			} else {
-				break
-			}
-
-		}
-		if ipos != i {
-			for j := i; j > ipos; j-- {
-				retVal[j] = retVal[j-1]
-			}
-			retVal[ipos] = axisi
-		}
-	}
 	return
 }
 
@@ -523,3 +475,51 @@ func (it *FlatIterator) Chan() (retVal chan int) {
 
 	return
 }
+
+/* TEMPORARILY REMOVED
+// SortedMultiStridePerm takes multiple input strides, and creates a sorted stride permutation.
+// It's based very closely on Numpy's PyArray_CreateMultiSortedStridePerm, where a stable insertion sort is used
+// to create the permutations.
+func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
+	retVal = BorrowInts(dims)
+	for i := 0; i < dims; i++ {
+		retVal[i] = i
+	}
+
+	for i := 1; i < dims; i++ {
+		ipos := i
+		axisi := retVal[i]
+
+		for j := i - 1; j >= 0; j-- {
+			var ambig, swap bool
+			ambig = true
+			axisj := retVal[j]
+
+			for _, ap := range aps {
+				if ap.shape[axisi] != 1 && ap.shape[axisj] != 1 {
+					if ap.strides[axisi] <= ap.strides[axisj] {
+						swap = true
+					} else if ambig {
+						swap = true
+					}
+					ambig = false
+				}
+			}
+
+			if !ambig && swap {
+				ipos = j
+			} else {
+				break
+			}
+
+		}
+		if ipos != i {
+			for j := i; j > ipos; j-- {
+				retVal[j] = retVal[j-1]
+			}
+			retVal[ipos] = axisi
+		}
+	}
+	return
+}
+*/

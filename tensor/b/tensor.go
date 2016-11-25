@@ -273,7 +273,7 @@ func (t *Tensor) Zero() {
 func (t *Tensor) SetAll(val interface{}) error {
 	if val == 1 {
 		for i := range t.data {
-			t.data[i] = true
+			t.data[i] = true //@DEFAULTONE
 		}
 		return nil
 	}

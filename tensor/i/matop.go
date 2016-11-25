@@ -273,52 +273,15 @@ func (t *Tensor) At(coords ...int) int {
 // Just like NumPy, the repeats param is broadcasted to fit the size of the given axis.
 func (t *Tensor) Repeat(axis int, repeats ...int) (retVal *Tensor, err error) {
 	var newShape types.Shape
-	// var toBroadcast bool
-	var size, newSize int
-
-	switch {
-	// special case where axis == -1, meaning for all axes
-	case axis == types.AllAxes:
-		size = t.Shape().TotalSize()
-		newShape = types.Shape{size}
-		// newShape = types.Shape(types.BorrowInts(1))
-		// newShape[0] = size
-		axis = 0
-	case t.IsScalar():
-		size = 1
-		// special case for row vecs
-		if axis == 1 {
-			newShape = types.Shape{1, 0}
-		} else {
-			// other wise it gets repeated into a vanilla vector
-			newShape = types.Shape{0}
-		}
-	// vanilla vectors will get treated as if it's a colvec if it's axis 1
-	case t.IsVector() && !t.IsRowVec() && !t.IsColVec() && axis == 1:
-		size = 1
-		newShape = t.Shape().Clone()
-		newShape = append(newShape, 1)
-	default:
-		size = t.Shape()[axis]
-		newShape = t.Shape().Clone()
-	}
-
-	// special case to allow generic repeats
-	if len(repeats) == 1 {
-		rep := repeats[0]
-		repeats = make([]int, size)
-		for i := range repeats {
-			repeats[i] = rep
-		}
-	}
-	reps := len(repeats)
-	if reps != size {
-		err = types.NewError(types.ShapeMismatch, "Cannot broadcast together. Resulting shape will be at least (%d, 1). Repeats is (%d, 1)", size, reps)
+	var size int
+	if newShape, repeats, size, err = t.Shape().Repeat(axis, repeats...); err != nil {
 		return
 	}
 
-	newSize = types.SumInts(repeats)
-	newShape[axis] = newSize
+	if axis == types.AllAxes {
+		axis = 0
+	}
+
 	retVal = NewTensor(WithShape(newShape...))
 
 	var outers int

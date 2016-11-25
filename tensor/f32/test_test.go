@@ -20,7 +20,7 @@ func tolerance(a, b, e float32) bool {
 }
 
 func closeenough(a, b float32) bool { return tolerance(a, b, 1e-6) }
-func isclose(a, b float32) bool     { return tolerance(a, b, 1e-6) }
+func isclose(a, b float32) bool     { return tolerance(a, b, 1e-7) }
 func veryclose(a, b float32) bool   { return tolerance(a, b, 4e-10) }
 func soclose(a, b, e float32) bool  { return tolerance(a, b, e) }
 func alike(a, b float32) bool {
