@@ -344,9 +344,21 @@ func (t *Tensor) Clone() *Tensor {
 		}
 	}
 
-	newdata := make([]int, len(t.data))
-	copy(newdata, t.data)
-	retVal.data = newdata
+	var newData []int
+	if t.viewOf != nil {
+		iter := types.NewFlatIterator(t.AP)
+		newData = make([]int, t.Shape().TotalSize())
+		newData = newData[:0]
+		for i, err := iter.Next(); err == nil; i, err = iter.Next() {
+			newData = append(newData, t.data[i])
+		}
+
+	} else {
+		newData = make([]int, len(t.data))
+		copy(newData, t.data)
+	}
+
+	retVal.data = newData
 	// retVal.viewOf = t
 	// retVal.Lock()
 	return retVal

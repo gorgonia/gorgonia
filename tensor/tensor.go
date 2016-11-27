@@ -40,7 +40,7 @@ func WithShape(s ...int) tensorConsOpt {
 		case types.Float64:
 			return tf64.WithShape(s...)
 		case types.Float32:
-			return tf64.WithShape(s...)
+			return tf32.WithShape(s...)
 		case types.Int:
 			return ti.WithShape(s...)
 		case types.Bool:
