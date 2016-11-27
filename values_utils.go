@@ -41,7 +41,7 @@ func TypeOf(v Value) hm.Type {
 		return t.Type()
 
 	default:
-		panic("Not yet implemented")
+		panic(fmt.Sprintf("TypeOf Not yet implemented for %v %T", v, v))
 	}
 }
 

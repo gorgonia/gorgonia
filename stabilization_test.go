@@ -9,7 +9,7 @@ func TestLogStabilization(t *testing.T) {
 	g := NewGraph()
 
 	// log(a+1)
-	x := NewVector(g, Float64, WithName("x"), WithShape(2, 1))
+	x := NewVector(g, Float64, WithName("x"), WithShape(2))
 	p := Must(Add(x, onef64))
 	lp := Must(Log(p))
 	if lp.children[0] != x {
@@ -56,7 +56,7 @@ func TestLogStabilization(t *testing.T) {
 func TestExpStabilization(t *testing.T) {
 	g := NewGraph()
 
-	x := NewVector(g, Float64, WithName("x"), WithShape(2, 1))
+	x := NewVector(g, Float64, WithName("x"), WithShape(2))
 	e := Must(Exp(x))
 	s := Must(Sub(e, onef64))
 
@@ -77,8 +77,7 @@ func TestLogSigmoidStabilization(t *testing.T) {
 	g := NewGraph()
 
 	stabilization = true
-
-	x := NewVector(g, Float64, WithName("x"), WithShape(2, 1))
+	x := NewVector(g, Float64, WithName("x"), WithShape(2))
 	y := Must(Sigmoid(x))
 	WithName("y")(y)
 	logY := Must(Log(y))

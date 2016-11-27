@@ -1,100 +1,148 @@
 package gorgonia
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/chewxy/gorgonia/tensor"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
+var repeatOpTests = []struct {
+	name string
+	rep  int
+	axes []int
+	val  Value
+
+	correct       Value
+	expectedShape types.Shape
+	err           bool
+}{
+	{
+		"repeat matrix on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tensor.WithShape(4, 2)),
+		types.Shape{4, 2}, false,
+	},
+
+	{
+		"repeat matrix on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tensor.WithShape(2, 4)),
+		types.Shape{2, 4}, false,
+	},
+
+	{
+		"repeat col vec on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4, 1)),
+		types.Shape{4, 1}, false,
+	},
+
+	{
+		"repeat col vec on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
+		types.Shape{2, 2}, false,
+	},
+
+	{
+		"repeat row vec on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 1, 2}), tensor.WithShape(2, 2)),
+		types.Shape{2, 2}, false,
+	},
+
+	{
+		"repeat row vec on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(1, 4)),
+		types.Shape{1, 4}, false,
+	},
+
+	{
+		"repeat vector on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4)),
+		types.Shape{4}, false,
+	},
+
+	{
+		"repeat vector on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
+		types.Shape{2, 2}, false,
+	},
+
+	{
+		"repeat scalar", 2, []int{0},
+		F64(3.14), tensor.New(types.Float64, tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
+		types.Shape{2}, false,
+	},
+}
+
 func TestRepeatOp(t *testing.T) {
-	assert := assert.New(t)
-	g := NewGraph()
+	// assert := assert.New(t)
 
-	rep := I(2)
-	repN := NewScalar(g, Int, WithValue(rep)) // the number of times an axis will be repeated
+	for _, rots := range repeatOpTests {
+		g := NewGraph()
+		var res Value
+		var err error
+		var repeat *repeatOp
 
-	// test repeat tensor:
+		rep := I(rots.rep)
+		repN := NodeFromAny(g, rep)
+		n := NodeFromAny(g, rots.val)
 
-	// repeat on axis 1
-	T := tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}), tf64.WithShape(2, 2))
-	TN := NewMatrix(g, Float64, WithValue(T))
+		repeat = newRepeatOp(rots.axes, Nodes{n, repN})
 
-	repeat := newRepeatOp([]int{1}, Nodes{TN, repN})
-	correct := tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tf64.WithShape(2, 4))
+		res, err = repeat.Do(rots.val, rep)
+		switch {
+		case rots.err:
+			if err == nil {
+				t.Errorf("Test %q: Expected an error", rots.name)
+			}
+			goto infershape
+		case !rots.err && err != nil:
+			t.Errorf("%+v", err)
+			goto infershape
+		}
 
-	res, err := repeat.Do(T, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(types.Tensor)) {
-		t.Error("Something wrong has happend. Failed to repeat correctly")
-	}
+		if !ValueEq(res, rots.correct) {
+			t.Errorf("Test %q: Expected %v. Got %v", rots.name, rots.correct, res)
+		}
 
-	// repeat on axis 0
-	repeat = newRepeatOp([]int{0}, Nodes{TN, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tf64.WithShape(4, 2))
+	infershape:
+		var s types.Shape
+		size := sizeOp{val: rots.rep}
+		s, err = repeat.InferShape(rots.val.Shape(), size)
+		switch {
+		case rots.err:
+			if err == nil {
+				t.Error("Expected an error")
+			}
+			continue
+		case !rots.err && err != nil:
+			t.Errorf("%+v", err)
+			continue
+		}
 
-	res, err = repeat.Do(T, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(types.Tensor)) {
-		t.Error("Failed to repeat correctly")
-	}
+		if !rots.expectedShape.Eq(s) {
+			t.Errorf("Test %q InferShape: Expected %v. Got %v instead", rots.name, rots.expectedShape, s)
+		}
 
-	// test repeat vector
-	T = tf64.NewTensor(tf64.WithBacking([]float64{1, 2}), tf64.WithShape(2, 1))
-	TN = NewVector(g, Float64, WithValue(T))
-
-	// repeat on the 0th axis
-	repeat = newRepeatOp([]int{0}, Nodes{TN, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2}), tf64.WithShape(4, 1))
-	res, err = repeat.Do(T, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(types.Tensor)) {
-		t.Error("Failed to repeat a vector correctly")
-		t.Errorf("%v", res)
-	}
-
-	// repeat on the 1st axis
-	repeat = newRepeatOp([]int{1}, Nodes{TN, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2}), tf64.WithShape(2, 2))
-	res, err = repeat.Do(T, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(types.Tensor)) {
-		t.Error("Failed to repeat a vector correctly")
-		t.Errorf("%v", res)
-	}
-
-	// test repeat scalar
-	s := F64(3.1415)
-	sn := NewScalar(g, Float64, WithValue(s))
-	repeat = newRepeatOp([]int{0}, Nodes{sn, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{3.1415, 3.1415}))
-	res, err = repeat.Do(s, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(types.Tensor)) {
-		t.Error("Failed to repeat a scalar correctly")
-		t.Errorf("%v", res)
 	}
 
 	/* IDIOTS CHOICE AWARD */
 
 	// impossible axes
-	T = tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}), tf64.WithShape(2, 2))
-	repeat = newRepeatOp([]int{3}, Nodes{TN, repN})
-	fails := func() { repeat.Do(T, rep) }
-	assert.Panics(fails)
+	// g := NewGraph()
+	// v := tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2))
+	// n := NodeFromAny(g, v)
+	// repeat := newRepeatOp([]int{3}, Nodes{n, NodeFromAny(g, I(2))})
+	// f := func() { repeat.Do(v, I(2)) }
+	// assert.Panics(t, f)
 }
 
 func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprGraph, x, y *Node, err error) {
@@ -127,6 +175,7 @@ func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprG
 	return
 }
 
+/*
 func TestRepeatOpDoDiff(t *testing.T) {
 	assert := assert.New(t)
 	// var g *ExprGraph
@@ -200,7 +249,7 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal([]float64{2, 2, 2, 2}, extractF64s(xG))
 
 }
-
+*/
 func TestSliceOp(t *testing.T) {
 	assert := assert.New(t)
 	var T *tf64.Tensor
@@ -302,10 +351,10 @@ func TestSliceOpDiff(t *testing.T) {
 	sli := Must(Slice(A, nil, S(1))) // A[:, 1]
 	x := Must(Sum(Must(Mul(sli, twof64))))
 
-	logf("A %v  | %v", A, x)
 	_, err := Grad(x, A)
 	if err != nil {
 		t.Error(err)
+
 	}
 
 	prog, locMap, err := Compile(g)
@@ -334,16 +383,14 @@ func TestSliceOpDiff(t *testing.T) {
 
 	/* Lisp machine version */
 	g2 := NewGraph()
-	A = NewMatrix(g2, Float64, WithShape(2, 2), WithInit(RangedFrom(0)))
+	A = NewMatrix(g2, Float64, WithShape(2, 2), WithInit(RangedFrom(0)), WithName("A"))
 	sli = Must(Slice(A, nil, S(1))) // A[:, 1]
 	x = Must(Sum(Must(Mul(sli, twof64))))
 
 	m2 := NewLispMachine(g2)
 	err = m2.RunAll()
 	if err != nil {
-		fmt.Printf("Errors found. here it is:\n%s", err)
-		fmt.Printf("Error was caused by %s", errors.Cause(err))
-		t.Error(err)
+		t.Errorf("%+v", err)
 	}
 
 	// t.Logf("Visual confirmation")

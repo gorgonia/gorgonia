@@ -162,7 +162,7 @@ func TestSoftMax(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
 	xT := tf64.NewTensor(tf64.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x := NewVector(g, Float64, WithShape(5, 1), WithValue(xT))
+	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
 	sm := Must(SoftMax(x))
 	logsm := Must(Neg(Must(Log(sm))))
 	cost := Must(Slice(logsm, S(2)))
@@ -188,7 +188,7 @@ func TestSoftMax(t *testing.T) {
 
 	g2 := NewGraph()
 	xT2 := tf64.NewTensor(tf64.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x2 := NewVector(g, Float64, WithShape(5, 1), WithValue(xT2))
+	x2 := NewVector(g, Float64, WithShape(5), WithValue(xT2))
 	sm2 := Must(SoftMax(x2))
 	logsm2 := Must(Neg(Must(Log(sm2))))
 	Must(Slice(logsm2, S(2)))

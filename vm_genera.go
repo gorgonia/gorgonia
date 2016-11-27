@@ -245,7 +245,6 @@ func (m *lispMachine) backward() (err error) {
 	}
 	m.leaveLoggingContext()
 
-	logf("instr: %v", instr)
 	// actual differentiation
 	if err = instr.do(); err != nil {
 		return errors.Wrapf(err, autodiffFail, instr.ADOp)

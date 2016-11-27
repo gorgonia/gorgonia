@@ -2,6 +2,8 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
+	"runtime"
 
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/hm"
@@ -45,10 +47,18 @@ func extractF64s(v Value) []float64 {
 }
 
 func extractF64(v Value) float64 {
-	if f, ok := v.(F64); ok {
-		return float64(f)
+	switch vt := v.(type) {
+	case F64:
+		return float64(vt)
+	case *tf64.Tensor:
+		if !vt.IsScalar() {
+			panic("Got a non scalar result!")
+		}
+		pc, _, _, _ := runtime.Caller(1)
+		log.Printf("Better watch it: %v called with a Scalar tensor", runtime.FuncForPC(pc).Name())
+		return vt.ScalarValue().(float64)
 	}
-	panic("Only works for F64!")
+	panic(fmt.Sprintf("Unhandled types! Got %v of %T instead", v, v))
 }
 
 func simpleMatEqn() (g *ExprGraph, x, y, z *Node) {
@@ -61,8 +71,8 @@ func simpleMatEqn() (g *ExprGraph, x, y, z *Node) {
 
 func simpleVecEqn() (g *ExprGraph, x, y, z *Node) {
 	g = NewGraph()
-	x = NewVector(g, Float64, WithName("x"), WithShape(2, 1))
-	y = NewVector(g, Float64, WithName("y"), WithShape(2, 1))
+	x = NewVector(g, Float64, WithName("x"), WithShape(2))
+	y = NewVector(g, Float64, WithName("y"), WithShape(2))
 	z = Must(Add(x, y))
 	return
 }
@@ -84,7 +94,7 @@ func simpleUnaryEqn() (g *ExprGraph, x, y *Node) {
 
 func simpleUnaryVecEqn() (g *ExprGraph, x, y *Node) {
 	g = NewGraph()
-	x = NewVector(g, Float64, WithName("x"), WithShape(2, 1))
+	x = NewVector(g, Float64, WithName("x"), WithShape(2))
 	y = Must(Square(x))
 	return
 }

@@ -43,99 +43,102 @@ func TestSumOpDiff(t *testing.T) {
 	var m2 *lispMachine
 	var err error
 
-	// Basic Test case: a vector is summed
+	/*
+		// Basic Test case: a vector is summed
 
-	g = NewGraph()
-	x = NewVector(g, Float64, WithName("x"), WithShape(5, 1), WithInit(RangedFrom(0)))
-	y = Must(Sum(x))
-	WithName("y")(y)
+		g = NewGraph()
+		x = NewVector(g, Float64, WithName("x"), WithShape(5), WithInit(RangedFrom(0)))
+		y = Must(Sum(x))
+		WithName("y")(y)
 
-	Grad(y, x)
+		Grad(y, x)
 
-	prog, locMap, err = Compile(g)
-	if err != nil {
-		t.Error(err)
-	}
+		prog, locMap, err = Compile(g)
+		if err != nil {
+			t.Error(err)
+		}
 
-	ioutil.WriteFile("SumOp.dot", []byte(g.ToDot()), 0644)
+		ioutil.WriteFile("SumOp.dot", []byte(g.ToDot()), 0644)
 
-	m = NewTapeMachine(prog, locMap)
-	err = m.RunAll()
-	if err != nil {
-		t.Error(err)
-	}
+		m = NewTapeMachine(prog, locMap)
+		err = m.RunAll()
+		if err != nil {
+			t.Error(err)
+		}
 
-	g2 = NewGraph()
-	a = NewVector(g2, Float64, WithShape(5, 1), WithInit(RangedFrom(0)))
-	b = Must(Sum(a))
+		g2 = NewGraph()
+		a = NewVector(g2, Float64, WithShape(5), WithInit(RangedFrom(0)))
+		b = Must(Sum(a))
 
-	m2 = NewLispMachine(g2)
-	m2.doWatchAll()
-	err = m2.RunAll()
-	if err != nil {
-		t.Error(err)
-	}
+		m2 = NewLispMachine(g2)
+		m2.doWatchAll()
+		err = m2.RunAll()
+		if err != nil {
+			t.Error(err)
+		}
 
-	if aG, err = a.Grad(); err != nil {
-		t.Error(err)
-	}
+		if aG, err = a.Grad(); err != nil {
+			t.Error(err)
+		}
 
-	if xG, err = x.Grad(); err != nil {
-		t.Error(err)
-	}
+		if xG, err = x.Grad(); err != nil {
+			t.Error(err)
+		}
 
-	assert.True(ValueEq(x.Value(), a.Value()))
-	assert.True(ValueEq(xG, aG))
-	assert.True(ValueEq(y.Value(), b.Value()))
+		assert.True(ValueEq(x.Value(), a.Value()))
+		assert.True(ValueEq(xG, aG))
+		assert.True(ValueEq(y.Value(), b.Value()))
 
-	// long standing bug: sometimes the derivation will get executed in the machine first
-	// for example, the deriv of y is 1, and occasionally, the machine will choose to
-	// execute const 1 into register 0
-	// It would then fail to bind to y's boundTo, because at that point in time, y is still unknown.
+		// long standing bug: sometimes the derivation will get executed in the machine first
+		// for example, the deriv of y is 1, and occasionally, the machine will choose to
+		// execute const 1 into register 0
+		// It would then fail to bind to y's boundTo, because at that point in time, y is still unknown.
 
-	// assert.Equal(y.Grad(), b.Grad())
+		// assert.Equal(y.Grad(), b.Grad())
 
-	// Slightly more advanced test case: A matrix is summed
-	g = NewGraph()
-	x = NewMatrix(g, Float64, WithName("x"), WithShape(11, 7), WithInit(RangedFrom(0)))
-	y = Must(Sum(x))
-	WithName("y")(y)
+		// Slightly more advanced test case: A matrix is summed
+		g = NewGraph()
+		x = NewMatrix(g, Float64, WithName("x"), WithShape(11, 7), WithInit(RangedFrom(0)))
+		y = Must(Sum(x))
+		WithName("y")(y)
 
-	Grad(y, x)
-	// var prog *program
-	prog, locMap, err = Compile(g)
-	if err != nil {
-		t.Error(err)
-	}
+		Grad(y, x)
+		// var prog *program
+		prog, locMap, err = Compile(g)
+		if err != nil {
+			t.Error(err)
+		}
 
-	m = NewTapeMachine(prog, locMap)
-	err = m.RunAll()
-	if err != nil {
-		t.Error(err)
-	}
+		m = NewTapeMachine(prog, locMap)
+		err = m.RunAll()
+		if err != nil {
+			t.Error(err)
+		}
 
-	g2 = NewGraph()
-	a = NewMatrix(g2, Float64, WithName("x"), WithShape(11, 7), WithInit(RangedFrom(0)))
-	b = Must(Sum(a))
+		g2 = NewGraph()
+		a = NewMatrix(g2, Float64, WithName("x"), WithShape(11, 7), WithInit(RangedFrom(0)))
+		b = Must(Sum(a))
 
-	m2 = NewLispMachine(g2)
-	err = m2.RunAll()
-	if err != nil {
-		t.Error(err)
-	}
+		m2 = NewLispMachine(g2)
+		err = m2.RunAll()
+		if err != nil {
+			t.Error(err)
+		}
 
-	if aG, err = a.Grad(); err != nil {
-		t.Error(err)
-	}
+		if aG, err = a.Grad(); err != nil {
+			t.Error(err)
+		}
 
-	if xG, err = x.Grad(); err != nil {
-		t.Error(err)
-	}
+		if xG, err = x.Grad(); err != nil {
+			t.Error(err)
+		}
 
-	assert.Equal(x.Value(), a.Value())
-	assert.Equal(xG, aG)
-	assert.Equal(y.Value(), b.Value())
+		assert.Equal(x.Value(), a.Value())
+		assert.Equal(xG, aG)
+		assert.Equal(y.Value(), b.Value())
 
+
+	*/
 	/* Sum is not the root node */
 
 	g = NewGraph()
@@ -168,7 +171,8 @@ func TestSumOpDiff(t *testing.T) {
 	m2 = NewLispMachine(g2)
 	err = m2.RunAll()
 	if err != nil {
-		t.Error(err)
+		ioutil.WriteFile("Blah.dot", []byte(g2.ToDot()), 0644)
+		t.Fatalf("%+v", err)
 	}
 
 	if aG, err = a.Grad(); err != nil {

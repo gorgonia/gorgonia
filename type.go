@@ -95,5 +95,9 @@ func (t TensorType) Eq(other hm.Type) bool {
 	if ot, ok := other.(TensorType); ok {
 		return ot.of.Eq(t.of) && ot.d == t.d
 	}
+
+	// if dt, ok := other.(Dtype); ok && t.d == 0 {
+	// 	return t.of.Eq(dt)
+	// }
 	return false
 }

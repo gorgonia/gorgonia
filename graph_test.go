@@ -182,8 +182,8 @@ func TestGraphSubgraphRoots(t *testing.T) {
 	assert := assert.New(t)
 	g, x, y, z := simpleVecEqn()
 	sz := Must(Sum(z))
-	a := NewVector(g, Float64, WithName("a"), WithShape(2, 1))
-	b := NewVector(g, Float64, WithName("b"), WithShape(2, 1))
+	a := NewVector(g, Float64, WithName("a"), WithShape(2))
+	b := NewVector(g, Float64, WithName("b"), WithShape(2))
 	c := Must(Add(a, b))
 	sc := Must(Sum(c))
 

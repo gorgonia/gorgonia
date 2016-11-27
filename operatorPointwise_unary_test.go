@@ -64,7 +64,7 @@ func TestAbsDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(1.0, x.boundTo.(*dualValue).d.(Scalar).Any())
+	assert.Equal(F64(1.0), x.boundTo.(*dualValue).d)
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d.(*tf64.Tensor)

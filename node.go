@@ -56,7 +56,11 @@ type NodeConsOpt func(*Node)
 
 func withType(t hm.Type) NodeConsOpt {
 	f := func(n *Node) {
-		n.t = t
+		if n.t == nil {
+			n.t = t
+		} else if !n.t.Eq(t) {
+			panic(fmt.Sprintf("Node's type is %v. Asking to construct a Node with %v", n.t, t))
+		}
 	}
 	return f
 }
@@ -101,9 +105,10 @@ func WithValue(any interface{}) NodeConsOpt {
 	}
 
 	f := func(n *Node) {
-		// TODO: make this a runtime type check?
-		if !n.t.Eq(t) {
-			panic(fmt.Sprintf("TypeError: Want %#v, Got %#v instead", n.t, t)) // yes this is a runtime error
+		if n.t == nil {
+			n.t = t
+		} else if !n.t.Eq(t) {
+			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead", n.t, t)) // yes this is a runtime error
 		}
 
 		n.bind(v)
@@ -142,9 +147,14 @@ func WithInit(fn InitWFn) NodeConsOpt {
 func WithShape(shp ...int) NodeConsOpt {
 	s := types.Shape(shp)
 	f := func(n *Node) {
-		if n.Dims() != s.Dims() {
-			panic(fmt.Sprintf("Node %v, has %d dimensions. Input shape is %v, which has %d dimensions", n, n.Dims(), s, s.Dims()))
+		nd := n.Dims()
+		// if nd == 1 && s.IsVector() {
+		// 	goto safe
+		// }
+		if nd != s.Dims() {
+			panic(fmt.Sprintf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims()))
 		}
+		// safe:
 		n.shape = s
 	}
 	return f
@@ -160,33 +170,19 @@ func WithGroupName(name string) NodeConsOpt {
 	return f
 }
 
-// the function is here because there are some init() calls that requires it
 func newNode(opts ...NodeConsOpt) *Node {
-	n := new(Node)
-	for _, opt := range opts {
-		opt(n)
-	}
-	n.fix()
-	n.fixChildren()
-	n.fixEdges()
-
-	incrNN()
-	return n
-}
-
-func newNodeFromPool(opts ...NodeConsOpt) *Node {
 	n := borrowNode()
 	for _, opt := range opts {
 		opt(n)
 	}
 	n.fix()
 
-	incrNN() // number of new nodes requested
+	incrNN()
 	return n
 }
 
 func newUniqueNode(opts ...NodeConsOpt) *Node {
-	n := newNodeFromPool(opts...)
+	n := newNode(opts...)
 	if n.g == nil {
 		return n
 	}
@@ -252,8 +248,8 @@ func (n *Node) IsRowVec() bool {
 
 // IsMatrix indicates if a node represents a matrix. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsMatrix() bool {
-	if t, ok := n.t.(TensorType); ok {
-		return t.d == 2
+	if _, ok := n.t.(TensorType); ok {
+		return n.shape.Dims() == 2
 	}
 	return false
 }
@@ -269,7 +265,7 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 		return n
 	}
 
-	n2 := newNodeFromPool(withGraph(g), withOp(n.op), WithName(n.name), withType(n.t))
+	n2 := newNode(withGraph(g), withOp(n.op), WithName(n.name), withType(n.t))
 	if n.shape != nil {
 		n2.shape = n.shape.Clone()
 		n2.inferredShape = n.inferredShape
@@ -310,6 +306,9 @@ func (n *Node) Grad() (Value, error) {
 
 // Dims indicates how many dimensions the node's result has
 func (n *Node) Dims() int {
+	if n.shape != nil {
+		return n.shape.Dims()
+	}
 	switch nt := n.t.(type) {
 	case TensorType:
 		return nt.d
@@ -602,7 +601,7 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 		return n
 	}
 
-	nn := newNodeFromPool(withChildren(n.children),
+	nn := newNode(withChildren(n.children),
 		withType(n.t),
 		withOp(n.op),
 		WithName(n.name),

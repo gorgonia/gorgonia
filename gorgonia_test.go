@@ -55,11 +55,11 @@ var anyNodeTest = []struct {
 	{"TensorValue", tf64.NewTensor(tf64.WithShape(2, 3)), &TensorType{d: 2, of: Float64}, types.Shape{2, 3}},
 }
 
-func TestNewNodeFromAny(t *testing.T) {
+func TestNodeFromAny(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
 	for _, a := range anyNodeTest {
-		n := NewNodeFromAny(g, a.any, WithName(a.name))
+		n := NodeFromAny(g, a.any, WithName(a.name))
 		assert.Equal(a.name, n.name)
 		assert.Equal(g, n.g)
 		assert.True(a.correctType.Eq(n.t), "%v type error: Want %v. Got %v", a.name, a.correctType, n.t)

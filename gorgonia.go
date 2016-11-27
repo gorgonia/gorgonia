@@ -23,8 +23,8 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 	return n
 }
 
-// NewNodeFromAny creates a Node from a types.Tensor, automatically filling in shape and type info
-func NewNodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
+// NodeFromAny creates a Node from a types.Tensor, automatically filling in shape and type info
+func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 	v, t, dt, err := anyToValue(any)
 	if err != nil {
 		panic(err)

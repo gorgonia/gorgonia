@@ -82,13 +82,11 @@ func TestLispMachineMechanics(t *testing.T) {
 	Let(x, tf64.NewTensor(tf64.WithShape(x.shape...), tf64.WithBacking(xBack)))
 	Let(y, tf64.NewTensor(tf64.WithShape(y.shape...), tf64.WithBacking(yBack)))
 
-	logf("Creating Machine")
 	machine := NewLispMachine(g)
 	err = machine.RunAll()
 	if err != nil {
 		t.Error(err)
 	}
-	logf("Ran: err %v | %v %v", err, machine.runFwd(), machine.runBwd())
 
 	gBack := []float64{1, 1}
 	grad := tf64.NewTensor(tf64.WithShape(x.shape...), tf64.WithBacking(gBack))
@@ -105,7 +103,6 @@ func TestLispMachineMechanics(t *testing.T) {
 	var szp2Val Value
 	readSzp2 := Read(szp2, &szp2Val)
 
-	logf("Subgraph")
 	sg := g.SubgraphRoots(readSzp2, szp2)
 	machine = NewLispMachine(sg)
 	err = machine.RunAll()

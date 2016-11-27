@@ -200,7 +200,11 @@ func setZero(val Value) (retVal Value) {
 	panic("unreachable")
 }
 
-func checkArity(op Op, inputs int) error {
+type arityer interface {
+	Arity() int
+}
+
+func checkArity(op arityer, inputs int) error {
 	if inputs != op.Arity() && op.Arity() >= 0 {
 		return NewError(GraphError, "%v has an arity of %d. Got %d instead", op, op.Arity(), inputs)
 	}

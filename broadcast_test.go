@@ -48,11 +48,11 @@ func TestBroadcast2(t *testing.T) {
 	var err error
 
 	xT := tf64.NewTensor(tf64.WithShape(2, 3), tf64.WithBacking(tf64.RangeFloat64(0, 6)))
-	yT := tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{100, 200}))
+	yT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{100, 200}))
 
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
-	y = NewVector(g, Float64, WithShape(2, 1), WithValue(yT), WithName("y"))
+	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
 	z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1}))
 	if err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
@@ -67,7 +67,7 @@ func TestBroadcast2(t *testing.T) {
 
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
-	y = NewVector(g, Float64, WithShape(2, 1), WithValue(yT), WithName("y"))
+	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
 	z, err = Broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil))
 	if err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)

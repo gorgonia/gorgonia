@@ -156,9 +156,13 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err erro
 				retVal = x
 			case !x.IsScalar() && !y.IsScalar():
 				if !x.Eq(y) {
-					// error
+					return nil, errors.Errorf("Shape mismatch: %v and %v", x, y)
 				}
-				retVal = x
+				if x.Dims() > y.Dims() {
+					retVal = x
+				} else {
+					retVal = y
+				}
 			}
 		default:
 			retVal = x
@@ -579,7 +583,7 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err er
 			return nil, errors.Errorf("Incompatible shapes: %v and %v", x, y)
 		}
 
-		retVal = types.Shape{x[0], 1}
+		retVal = types.Shape{x[0]}
 	case vecDotOperator:
 		retVal = scalarShape
 	case outerProdOperator:

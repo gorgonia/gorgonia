@@ -15,7 +15,11 @@ type dualValue struct {
 }
 
 func (dv *dualValue) SetDeriv(d Value) error {
+	if t, ok := d.(types.Tensor); ok && t.IsScalar() {
+		d, _ = anyToScalar(t.ScalarValue())
+	}
 	dv.d = d
+
 	return dv.sanity()
 }
 
@@ -87,6 +91,9 @@ func (dv *dualValue) clone0() (retVal *dualValue, err error) {
 // but as it turns out, as I waws working, the constants turn out to be not so constant afterall.
 // Is this a problem with the graph that leads to derivation of constant values? I don't quite know. TO CHECK
 func constantDV(val Value) *dualValue {
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	// retVal := &dualValue{Value: val}
 	retVal := borrowDV()
 	retVal.Value = val
@@ -123,10 +130,12 @@ func variableDV(val Value) *dualValue {
 // monadic unit() function. This unit() function will allocate a Value for dv.d
 // this is useful for forward mode autodiff
 func dvUnit(v Value) *dualValue {
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	if dv, ok := v.(*dualValue); ok {
 		return dv
 	}
-
 	return constantDV(v)
 }
 
@@ -159,6 +168,9 @@ func idValue(inputs []*dualValue) (retVals []Value) {
 }
 
 func dvBind(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	vals := idValue(inputs)
 
 	var ret Value

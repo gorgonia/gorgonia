@@ -60,7 +60,6 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	var s types.Shape
 	if s, err = op.InferShape(Nodes(children).dimSizers()...); err == nil {
 		shapeLogf("inferred shape %v", s)
-		logf("Inferred Shape %v | op: %v", s, op)
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g), WithShape(s...))
 	} else {
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))

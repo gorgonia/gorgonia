@@ -72,7 +72,7 @@ const (
 	reshapeFail         = "Failed to reshape Tensor into %v. DataSize was: %d"
 	sliceFail           = "Failed to slice Tensor with %v"
 	execFail            = "Failed to execute %v"
-	autodiffFail        = "Failed to differentiate %T"
+	autodiffFail        = "Failed to differentiate %v"
 	undefinedOnShape    = "%v undefined on shape %v"
 )
 

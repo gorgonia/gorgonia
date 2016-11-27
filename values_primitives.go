@@ -37,13 +37,13 @@ func (v I32) Size() int { return 0 }
 func (v U8) Size() int  { return 0 }
 func (v B) Size() int   { return 0 }
 
-func (v F64) Data() interface{} { return v }
-func (v F32) Data() interface{} { return v }
-func (v I) Data() interface{}   { return v }
-func (v I64) Data() interface{} { return v }
-func (v I32) Data() interface{} { return v }
-func (v U8) Data() interface{}  { return v }
-func (v B) Data() interface{}   { return v }
+func (v F64) Data() interface{} { return v.Any() }
+func (v F32) Data() interface{} { return v.Any() }
+func (v I) Data() interface{}   { return v.Any() }
+func (v I64) Data() interface{} { return v.Any() }
+func (v I32) Data() interface{} { return v.Any() }
+func (v U8) Data() interface{}  { return v.Any() }
+func (v B) Data() interface{}   { return v.Any() }
 
 func (v F64) Any() interface{} { return float64(v) }
 func (v F32) Any() interface{} { return float32(v) }
@@ -52,6 +52,20 @@ func (v I64) Any() interface{} { return int64(v) }
 func (v I32) Any() interface{} { return int32(v) }
 func (v U8) Any() interface{}  { return byte(v) }
 func (v B) Any() interface{}   { return bool(v) }
+
+func (v F64) Format(s fmt.State, c rune) {
+	if c == 's' {
+		fmt.Fprintf(s, "%v", float64(v))
+	} else {
+		fmt.Fprint(s, float64(v))
+	}
+}
+func (v F32) Format(s fmt.State, c rune) { fmt.Fprint(s, float32(v)) }
+func (v I) Format(s fmt.State, c rune)   { fmt.Fprint(s, int(v)) }
+func (v I64) Format(s fmt.State, c rune) { fmt.Fprint(s, int64(v)) }
+func (v I32) Format(s fmt.State, c rune) { fmt.Fprint(s, int32(v)) }
+func (v U8) Format(s fmt.State, c rune)  { fmt.Fprint(s, byte(v)) }
+func (v B) Format(s fmt.State, c rune)   { fmt.Fprint(s, bool(v)) }
 
 func anyToScalar(any interface{}) (Scalar, Dtype) {
 	switch at := any.(type) {

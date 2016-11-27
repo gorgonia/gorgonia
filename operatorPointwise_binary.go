@@ -285,6 +285,7 @@ type tBinOp struct {
 	tensorLeft bool
 }
 
+func (o tBinOp) Arity() int                     { return 2 }
 func (o tBinOp) binOpType() ʘBinaryOperatorType { return o.ʘBinaryOperatorType }
 func (o tBinOp) String() string                 { return o.ʘBinaryOperatorType.String() }
 func (o tBinOp) isArith() bool                  { return o.ʘBinaryOperatorType.isArith() }
@@ -331,15 +332,10 @@ func (o tBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 }
 
 func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error) {
-	logf("tBinOp do")
-	enterLoggingContext()
-	defer leaveLoggingContext()
-	logf("opts %v", opts)
-
-	if len(vals) != 2 {
-		err = NewError(GraphError, "Executing a binary operation expects 2 inputs. Got %d instead", len(vals))
+	if err = checkArity(o, len(vals)); err != nil {
 		return
 	}
+
 	// typecheck the operands
 	d0 := DtypeOf(vals[0])
 	d1 := DtypeOf(vals[1])
@@ -351,7 +347,6 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 	// extract the goddamn values
 	var a, b interface{}
 	if o.tensorLeft {
-		logf("tensorleft")
 		t, ok := vals[0].(types.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected left value to be Tensor. Got %v of %T instead", vals[0], vals[0])
@@ -369,7 +364,6 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])
 		}
 	} else {
-		logf("tensor right")
 		t, ok := vals[1].(types.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected right value to be Tensor. Got %v of %T instead", vals[1], vals[1])
@@ -537,35 +531,44 @@ func hadamardProdDiff(x, y, z *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
 
-	// mul := newElemBinOp(mulOpType, x, z)
+	var mul elemBinOp
 	zdvdType := TypeOf(zdv.d)
 
+	if x.isConstant() {
+		goto dzdy
+	}
+
 	//dzdx
-	mul := newEBOByType(mulOpType, TypeOf(ydv.Value), zdvdType)
+	mul = newEBOByType(mulOpType, TypeOf(ydv.Value), zdvdType)
 	err = mul.IncrDo(xdv.d, ydv.Value, zdv.d)
 	if err != nil {
 		var ver Valuer
 		var ok bool
 		if ver, ok = err.(Valuer); !ok {
-			return
+			return errors.Wrap(err, "IncrDo xdv.d failed")
 		}
 
 		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 	}
 
-	//dzdy
+dzdy:
+	if y.isConstant() {
+		goto end
+	}
+
 	mul = newEBOByType(mulOpType, TypeOf(xdv.Value), zdvdType)
 	err = mul.IncrDo(ydv.d, xdv.Value, zdv.d)
 	if err != nil {
 		var ver Valuer
 		var ok bool
 		if ver, ok = err.(Valuer); !ok {
-			return
+			return errors.Wrap(err, "IncrDo ydv.d failed")
 		}
 
 		ydv.SetDeriv(ver.Value()) // ignore errors on purpose
 	}
 
+end:
 	return nil
 }
 

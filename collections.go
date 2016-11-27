@@ -141,6 +141,19 @@ func (ns Nodes) AllSameGraph() bool {
 	return true
 }
 
+func (ns Nodes) Equals(other Nodes) bool {
+	if len(ns) != len(other) {
+		return false
+	}
+
+	for _, n := range ns {
+		if !other.Contains(n) {
+			return false
+		}
+	}
+	return true
+}
+
 func (ns Nodes) mapSet() NodeSet { return NewNodeSet(ns...) }
 
 func (ns Nodes) index(n *Node) int {

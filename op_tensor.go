@@ -195,7 +195,11 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 
 	if s, err := retVal.InferShape(children.dimSizers()...); err == nil {
 		retVal.inputShape = s
-		retVal.d = s.Dims()
+		if s.IsColVec() {
+			retVal.d = 1
+		} else {
+			retVal.d = s.Dims()
+		}
 	} else {
 		panic(err)
 	}
@@ -245,11 +249,6 @@ func (op repeatOp) OverwritesInput() int { return -1 }
 func (op repeatOp) CallsExtern() bool    { return false }
 
 func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
-	if op.inputShape != nil {
-		retVal = op.inputShape
-		return
-	}
-
 	input := inputs[0].(types.Shape)
 	repeats := inputs[1:]
 
@@ -259,24 +258,15 @@ func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error
 			knownRepeats[i] = r.val
 		}
 	}
-
-	if input.IsScalar() {
-		retVal = types.Shape{1, 1} // fill it up just in case
-	} else {
-		retVal = input.Clone()
-	}
-
+	retVal = input
 	for i, axis := range op.along {
 		rep := knownRepeats[i]
 		if rep == 1 || rep == 0 { // 0 means unknown
 			continue
 		}
-
-		retVal[axis] *= rep
-	}
-
-	if oneone.Eq(retVal) {
-		retVal = scalarShape
+		if retVal, _, _, err = retVal.Repeat(axis, rep); err != nil {
+			return
+		}
 	}
 
 	return
@@ -695,7 +685,6 @@ func (op sliceIncrOp) Type() hm.Type {
 	tt := newTensorType(op.d, a)
 
 	retVal := hm.NewFnType(tt, b, tt)
-	logf("RETVAL %v", retVal)
 	return retVal
 }
 
@@ -844,7 +833,6 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	default:
 		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", t)
 	}
-	logf("returning?")
 	return
 }
 

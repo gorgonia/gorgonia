@@ -11,20 +11,18 @@ import (
 	"github.com/chewxy/hm"
 )
 
-var nodePool = new(sync.Pool)
-
-func init() {
-	nodePool.New = func() interface{} { return new(Node) }
-	types1Pool.New = func() interface{} { return make(hm.Types, 1, 1) }
-	dvpool.New = func() interface{} { return new(dualValue) }
+var nodePool = &sync.Pool{
+	New: func() interface{} { return new(Node) },
 }
 
-func borrowNode() *Node {
-	n := nodePool.Get().(*Node)
-	return n
-}
+func borrowNode() *Node { return nodePool.Get().(*Node) }
 
 func returnNode(n *Node) {
+	// if the node is being returned to the pool then it should be removed from the graph that it is linked too as well
+	if n.g != nil {
+		n.g.RemoveNode(n)
+	}
+
 	// zero out any data in the node
 	n.t = nil
 	n.shape = nil
@@ -47,7 +45,9 @@ func returnNode(n *Node) {
 }
 
 // pool for Types with size of 1
-var types1Pool = new(sync.Pool)
+var types1Pool = &sync.Pool{
+	New: func() interface{} { return make(hm.Types, 1, 1) },
+}
 
 func borrowTypes1() hm.Types {
 	return types1Pool.Get().(hm.Types)
@@ -60,12 +60,11 @@ func returnTypes1(ts hm.Types) {
 
 // handles Returning of Values
 
-var dvpool = new(sync.Pool)
-
-func borrowDV() *dualValue {
-	return new(dualValue)
-	// return dvpool.Get().(*dualValue)
+var dvpool = &sync.Pool{
+	New: func() interface{} { return new(dualValue) },
 }
+
+func borrowDV() *dualValue { return dvpool.Get().(*dualValue) }
 
 func returnDV(dv *dualValue) {
 	if dvdT, ok := dv.d.(types.Tensor); ok {
@@ -81,7 +80,7 @@ func returnDV(dv *dualValue) {
 }
 
 func returnTensor(t types.Tensor) {
-	logf("returning %T %p ", t, t)
+	logf("returning Tensor %T %p ", t, t)
 	switch tt := t.(type) {
 	case *tf64.Tensor:
 		tf64.ReturnTensor(tt)
