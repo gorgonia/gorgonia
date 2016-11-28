@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor/types"
@@ -53,19 +54,58 @@ func (v I32) Any() interface{} { return int32(v) }
 func (v U8) Any() interface{}  { return byte(v) }
 func (v B) Any() interface{}   { return bool(v) }
 
-func (v F64) Format(s fmt.State, c rune) {
-	if c == 's' {
-		fmt.Fprintf(s, "%v", float64(v))
-	} else {
-		fmt.Fprint(s, float64(v))
+func (v F64) Format(s fmt.State, c rune) { formatScalar(v, s, c) }
+func (v F32) Format(s fmt.State, c rune) { formatScalar(v, s, c) }
+func (v I) Format(s fmt.State, c rune)   { formatScalar(v, s, c) }
+func (v I64) Format(s fmt.State, c rune) { formatScalar(v, s, c) }
+func (v I32) Format(s fmt.State, c rune) { formatScalar(v, s, c) }
+func (v U8) Format(s fmt.State, c rune)  { formatScalar(v, s, c) }
+func (v B) Format(s fmt.State, c rune)   { formatScalar(v, s, c) }
+
+func formatScalar(v Scalar, s fmt.State, c rune) {
+	var buf bytes.Buffer
+	var ok bool
+
+	buf.WriteRune('%')
+
+	var width int
+	if width, ok = s.Width(); ok {
+		fmt.Fprintf(&buf, "%d", width)
 	}
+
+	var prec int
+	if prec, ok = s.Precision(); ok {
+		fmt.Fprintf(&buf, ".%d", prec)
+	}
+
+	switch c {
+	case 's':
+		buf.WriteRune('v')
+	case 'd':
+		switch v.(type) {
+		case F64, F32, U8, B:
+			buf.WriteRune('v')
+		default:
+			buf.WriteRune(c)
+		}
+	case 'f', 'g':
+		switch v.(type) {
+		case I, I64, I32, U8, B:
+			buf.WriteRune('v')
+		default:
+			buf.WriteRune(c)
+		}
+	default:
+		buf.WriteRune(c)
+	}
+
+	if s.Flag('+') {
+		s.Write([]byte(DtypeOf(v).String()))
+		s.Write([]byte{' '})
+	}
+
+	fmt.Fprintf(s, buf.String(), v.Any())
 }
-func (v F32) Format(s fmt.State, c rune) { fmt.Fprint(s, float32(v)) }
-func (v I) Format(s fmt.State, c rune)   { fmt.Fprint(s, int(v)) }
-func (v I64) Format(s fmt.State, c rune) { fmt.Fprint(s, int64(v)) }
-func (v I32) Format(s fmt.State, c rune) { fmt.Fprint(s, int32(v)) }
-func (v U8) Format(s fmt.State, c rune)  { fmt.Fprint(s, byte(v)) }
-func (v B) Format(s fmt.State, c rune)   { fmt.Fprint(s, bool(v)) }
 
 func anyToScalar(any interface{}) (Scalar, Dtype) {
 	switch at := any.(type) {
@@ -92,16 +132,16 @@ func anyToScalar(any interface{}) (Scalar, Dtype) {
 
 func anyToValue(any interface{}) (val Value, t hm.Type, dt Dtype, err error) {
 	switch a := any.(type) {
+	case Value:
+		val = a
+		t = TypeOf(a)
+		dt = DtypeOf(a)
+		return
 	case float64, float32, int, int64, int32, byte, bool:
 		val, dt = anyToScalar(any)
 		t = dt
 		return
 	case types.Tensor:
-		val = a
-		t = TypeOf(a)
-		dt = DtypeOf(a)
-		return
-	case Value:
 		val = a
 		t = TypeOf(a)
 		dt = DtypeOf(a)

@@ -221,3 +221,17 @@ func TraceExec() VMOpt {
 	}
 	return f
 }
+
+// BindDualValues is an option for *tapeMachine only.
+// This is useful to set when using a Solver
+func BindDualValues() VMOpt {
+	f := func(m VM) {
+		switch v := m.(type) {
+		case *tapeMachine:
+			v.doSaveDV()
+		default:
+			// on by default for LispMachine
+		}
+	}
+	return f
+}

@@ -318,8 +318,8 @@ func (m *lispMachine) Free() {
 }
 
 func (m *lispMachine) Reset() {
-	m.fwd = len(m.sorted)
-	m.bwd = len(m.q)
+	m.fwd = len(m.sorted) - 1
+	m.bwd = len(m.q) - 1
 }
 
 func (m *lispMachine) LastRun() (n *Node, backprop bool) {

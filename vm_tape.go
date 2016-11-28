@@ -82,6 +82,10 @@ func (m *tapeMachine) trace() bool { return (m.runFlags>>spare2)&byte(1) == 1 }
 func (m *tapeMachine) doTrace()    { m.runFlags |= byte(1) << spare2 }
 func (m *tapeMachine) dontTrace()  { m.runFlags &= (^(byte(1) << spare2)) }
 
+func (m *tapeMachine) saveDV() bool { return m.runFlags>>spare3&byte(1) == 1 }
+func (m *tapeMachine) doSaveDV()    { m.runFlags |= byte(1) << spare3 }
+func (m *tapeMachine) dontSaveDV()  { m.runFlags &= (^(byte(1) << spare3)) }
+
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
 func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
 	if !m.p.g.Has(n) {
@@ -564,20 +568,22 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	}
 
 	// this is a gradient node then, we should also bind the value to the node's dualValue
-	// if node.derivOf != nil {
-	// 	for _, src := range node.derivOf {
-	// 		if src.boundTo != nil {
-	// 			dv := dvUnit0(src.boundTo)
+	if m.saveDV() && node.derivOf != nil {
+		for _, src := range node.derivOf {
+			if src.boundTo != nil {
+				dv := dvUnit0(src.boundTo)
 
-	// 			var cloned Value
-	// 			if cloned, err = CloneValue(v); err != nil {
-	// 				return errors.Wrap(err, cloneFail)
-	// 			}
-	// 			dv.SetDeriv(cloned) // important!! do NOT use node.boundTo
-	// 			src.bind(dv)
-	// 		}
-	// 	}
-	// }
+				var cloned Value
+				if cloned, err = CloneValue(v); err != nil {
+					return errors.Wrap(err, cloneFail)
+				}
+				dv.SetDeriv(cloned) // important!! do NOT use node.boundTo
+				src.bind(dv)
+			}
+		}
+
+	}
+
 	m.watchedLogf("Written To: %v", instr.writeTo)
 	m.enterLoggingContext()
 	m.watchedLogf(m.valueFmt, v)
