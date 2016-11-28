@@ -201,16 +201,16 @@ func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 
 	for i, n := range WRTs {
 		if !n.isInput() {
-			errors.Wrapf(err, "Can only differentiate with regards to input nodes. Node %d isn't an input", i)
-			// return
+			err = errors.Errorf("Can only differentiate with regards to input nodes. %dth Node %v isn't an input", i, n)
+			return nil, err
 		}
 	}
 
 	var dt Dtype
 	var ok bool
 	if dt, ok = cost.t.(Dtype); !ok {
-		errors.Wrap(err, "Expected a scalar dtype for cost")
-		// return
+		err = errors.Wrap(err, "Expected a scalar dtype for cost")
+		return
 	}
 
 	var gradOut *Node
@@ -236,8 +236,6 @@ func Let(n *Node, be interface{}) (err error) {
 	}
 
 	var val Value
-	// var t hm.Type
-	// var dt Dtype
 	if val, _, _, err = anyToValue(be); err != nil {
 		return errors.Wrapf(err, anyToValueFail, be, be)
 	}

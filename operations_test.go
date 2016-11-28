@@ -167,7 +167,9 @@ func TestSoftMax(t *testing.T) {
 	logsm := Must(Neg(Must(Log(sm))))
 	cost := Must(Slice(logsm, S(2)))
 
-	grads, _ := Grad(cost, sm)
+	if _, err := Grad(cost, x); err != nil {
+		t.Error(err)
+	}
 	prog, locMap, err := Compile(g)
 	if err != nil {
 		t.Error(err)
@@ -178,9 +180,13 @@ func TestSoftMax(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	var smg Value
-	smg, err = sm.Grad()
-	if err != nil {
+
+	var smg, xG Value
+	if smg, err = sm.Grad(); err != nil {
+		t.Error(err)
+	}
+
+	if xG, err = x.Grad(); err != nil {
 		t.Error(err)
 	}
 
@@ -199,11 +205,17 @@ func TestSoftMax(t *testing.T) {
 		t.Error(err)
 	}
 
-	smg, err = sm2.Grad()
-	if err != nil {
+	var sm2g, x2G Value
+	if sm2g, err = sm2.Grad(); err != nil {
 		t.Error(err)
 	}
-	assert.Equal(smg, grads[0].Value())
+
+	if x2G, err = x2.Grad(); err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(smg, sm2g)
+	assert.Equal(xG, x2G)
 }
 
 func TestSlice(t *testing.T) {
