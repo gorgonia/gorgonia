@@ -3,52 +3,32 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 )
 
-// functionType is a type constructor that builds function types
-type functionType struct {
-	n  *typeVariable
-	ts [2]Type // from → to
-}
+// Dtype is data type
+type Dtype byte
 
-func newFunctionType(params ...Type) *functionType {
-	if len(params) < 2 {
-		panic(fmt.Sprintf("Needs more than 2 params to make a function. Got %v", params))
-	}
+const (
+	Float64 Dtype = iota
+	Float32
+	Int
+	Int64
+	Int32
+	Byte
+	Bool
 
-	t := borrowFnType()
-	t.ts[0] = params[0]
-	if len(params) == 2 {
-		t.ts[1] = params[1]
-		return t
-	}
+	Ptr // equivalent to interface{}. Ugh Ugh Ugh
+	MAXDTYPE
+)
 
-	t.ts[1] = newFunctionType(params[1:]...)
-	return t
-}
-
-func (mt *functionType) types() Types            { return Types(mt.ts[:]) }
-func (mt *functionType) name() *typeVariable     { return mt.n }
-func (mt *functionType) isScalar() bool          { return false }
-func (mt *functionType) dims() int               { return -1 }
-func (mt *functionType) String() string          { return fmt.Sprintf("%s → %s", mt.ts[0], mt.ts[1]) }
-func (mt *functionType) setName(n *typeVariable) { mt.n = n }
-func (mt *functionType) setTypes(ts ...Type) {
-	if len(ts) != 2 {
-		panic("Impossible type")
-	}
-
-	mt.ts[0] = ts[0]
-	mt.ts[1] = ts[1]
-}
-
-func (t *functionType) retType() Type {
-	if r, ok := prune(t.ts[1]).(*functionType); ok {
-		return r.retType()
-	}
-	return t.ts[1]
-}
+func (t Dtype) Name() string                                  { return t.String() }
+func (t Dtype) Apply(hm.Subs) hm.Substitutable                { return t }
+func (t Dtype) FreeTypeVar() hm.TypeVarSet                    { return nil }
+func (t Dtype) Normalize(k, v hm.TypeVarSet) (hm.Type, error) { return t, nil }
+func (t Dtype) Types() hm.Types                               { return nil }
+func (t Dtype) Format(state fmt.State, c rune)                { state.Write([]byte(t.String())) }
+func (t Dtype) Eq(other hm.Type) bool                         { return t == other }
 
 /*Tensor Type*/
 
@@ -60,59 +40,64 @@ func (t *functionType) retType() Type {
 // The shape of the Tensor is not part of TensorType.
 // Shape checking is relegated to the dynamic part of the program run
 type TensorType struct {
-	d     int // dims
-	shape types.Shape
+	d int // dims
 
-	of Type
-	n  *typeVariable
+	of hm.Type
 }
 
-func fromTensorType(t *TensorType, tv *typeVariable) *TensorType {
+func fromTensorType(t TensorType, tv hm.TypeVariable) TensorType {
 	retVal := newTensorType(t.d, tv)
-	retVal.shape = t.shape.Clone()
-	retVal.n = t.n
 	return retVal
 }
 
-func newTensorType(dims int, typ Type) *TensorType {
-	t := new(TensorType)
-	t.d = dims
-	t.of = typ
-
-	if _, ok := t.of.(Dtype); ok {
-		scalarOrTensor.addInstance(t)
-		arithable.addInstance(t)
-		summable.addInstance(t)
+func newTensorType(dims int, typ hm.Type) TensorType {
+	return TensorType{
+		d:  dims,
+		of: typ,
 	}
+}
+
+func (t TensorType) Name() string { return "Tensor" }
+
+func (t TensorType) Format(state fmt.State, c rune) {
+	if state.Flag('#') {
+		fmt.Fprintf(state, "Tensor-%d %#v", t.d, t.of)
+	} else {
+		switch t.d {
+		case 1:
+			fmt.Fprintf(state, "Vector %v", t.of)
+		case 2:
+			fmt.Fprintf(state, "Matrix %v", t.of)
+		default:
+			fmt.Fprintf(state, "Tensor-%d %v", t.d, t.of)
+		}
+	}
+}
+func (t TensorType) String() string  { return fmt.Sprintf("%v", t) }
+func (t TensorType) Types() hm.Types { ts := hm.BorrowTypes(1); ts[0] = t.of; return ts }
+func (t TensorType) Normalize(k, v hm.TypeVarSet) (hm.Type, error) {
+	var err error
+	if t.of, err = t.of.Normalize(k, v); err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+func (t TensorType) Apply(sub hm.Subs) hm.Substitutable {
+	t.of = t.of.Apply(sub).(hm.Type)
 	return t
 }
 
-func (t *TensorType) types() Types {
-	ts := borrowTypes1()
-	ts[0] = t.of
-	return ts
+func (t TensorType) FreeTypeVar() hm.TypeVarSet {
+	return t.of.FreeTypeVar()
 }
-
-func (t *TensorType) name() *typeVariable { return t.n }
-func (t *TensorType) isScalar() bool      { return false }
-func (t *TensorType) dims() int           { return t.d }
-
-func (t *TensorType) String() string {
-	switch t.d {
-	case 1:
-		return fmt.Sprintf("Vector %s", t.of)
-	case 2:
-		return fmt.Sprintf("Matrix %s", t.of)
-	}
-	return fmt.Sprintf("Tensor-%d %s", t.d, t.of)
-}
-
-func (t *TensorType) setName(n *typeVariable) { t.of = n }
-
-func (t *TensorType) setTypes(ts ...Type) {
-	if len(ts) != 1 {
-		panic("Impossible type")
+func (t TensorType) Eq(other hm.Type) bool {
+	if ot, ok := other.(TensorType); ok {
+		return ot.of.Eq(t.of) && ot.d == t.d
 	}
 
-	t.of = ts[0]
+	// if dt, ok := other.(Dtype); ok && t.d == 0 {
+	// 	return t.of.Eq(dt)
+	// }
+	return false
 }

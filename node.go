@@ -12,13 +12,14 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
 // A Node is a node in the computation graph
 type Node struct {
 	// metadata of the node
-	t     Type // pruned types only plz
+	t     hm.Type // pruned types only plz
 	shape types.Shape
 
 	// this node is the result of applying the op to the children
@@ -53,9 +54,13 @@ type Node struct {
 // NodeConsOpt is a function that provides construction options for any Node
 type NodeConsOpt func(*Node)
 
-func withType(t Type) NodeConsOpt {
+func withType(t hm.Type) NodeConsOpt {
 	f := func(n *Node) {
-		n.t = t
+		if n.t == nil {
+			n.t = t
+		} else if !n.t.Eq(t) {
+			panic(fmt.Sprintf("Node's type is %v. Asking to construct a Node with %v", n.t, t))
+		}
 	}
 	return f
 }
@@ -94,15 +99,18 @@ func WithName(name string) NodeConsOpt {
 
 // WithValue is a node creation option that binds the value to the *Node.
 func WithValue(any interface{}) NodeConsOpt {
-	v, err := anyToValue(any)
+	v, t, _, err := anyToValue(any)
 	if err != nil {
 		panic(err)
 	}
 
 	f := func(n *Node) {
-		if !typeEq(v.Type(), n.t) {
-			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead", n.t, v.Type())) // yes this is a runtime error
+		if n.t == nil {
+			n.t = t
+		} else if !n.t.Eq(t) {
+			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead", n.t, t)) // yes this is a runtime error
 		}
+
 		n.bind(v)
 		if n.shape == nil {
 			n.shape = v.Shape()
@@ -119,17 +127,14 @@ func WithInit(fn InitWFn) NodeConsOpt {
 			panic(err)
 		}
 
-		var T types.Tensor
 		var v Value
 		switch dt {
 		case Float64:
 			val := fn(dt, n.shape...).([]float64)
-			T = tf64.NewTensor(tf64.WithShape(n.shape...), tf64.WithBacking(val))
-			v = FromTensor(T)
+			v = tf64.NewTensor(tf64.WithShape(n.shape...), tf64.WithBacking(val))
 		case Float32:
 			val := fn(dt, n.shape...).([]float32)
-			T = tf32.NewTensor(tf32.WithShape(n.shape...), tf32.WithBacking(val))
-			v = FromTensor(T)
+			v = tf32.NewTensor(tf32.WithShape(n.shape...), tf32.WithBacking(val))
 		default:
 			panic("Not handled yet")
 		}
@@ -142,9 +147,14 @@ func WithInit(fn InitWFn) NodeConsOpt {
 func WithShape(shp ...int) NodeConsOpt {
 	s := types.Shape(shp)
 	f := func(n *Node) {
-		if n.Dims() != s.Dims() {
-			panic(fmt.Sprintf("Node %v is a %v, which has %d dimensions. Input shape of %p is %v, which has %d dimensions", n, n.t, n.Dims(), n, s, s.Dims()))
+		nd := n.Dims()
+		// if nd == 1 && s.IsVector() {
+		// 	goto safe
+		// }
+		if nd != s.Dims() {
+			panic(fmt.Sprintf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims()))
 		}
+		// safe:
 		n.shape = s
 	}
 	return f
@@ -160,33 +170,19 @@ func WithGroupName(name string) NodeConsOpt {
 	return f
 }
 
-// the function is here because there are some init() calls that requires it
 func newNode(opts ...NodeConsOpt) *Node {
-	n := new(Node)
-	for _, opt := range opts {
-		opt(n)
-	}
-	n.fix()
-	n.fixChildren()
-	n.fixEdges()
-
-	incrNN()
-	return n
-}
-
-func newNodeFromPool(opts ...NodeConsOpt) *Node {
 	n := borrowNode()
 	for _, opt := range opts {
 		opt(n)
 	}
 	n.fix()
 
-	incrNN() // number of new nodes requested
+	incrNN()
 	return n
 }
 
 func newUniqueNode(opts ...NodeConsOpt) *Node {
-	n := newNodeFromPool(opts...)
+	n := newNode(opts...)
 	if n.g == nil {
 		return n
 	}
@@ -206,7 +202,7 @@ func (n *Node) ID() int { return int(uintptr(unsafe.Pointer(n))) }
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }
 func (n *Node) isInput() bool    { return n.isArg() && !n.isStmt }
-func (n *Node) isMutable() bool  { return !n.isInput() && n.op.returnsPtr() }
+func (n *Node) isMutable() bool  { return !n.isInput() && n.op.ReturnsPtr() }
 func (n *Node) isConstant() bool { _, ok := n.op.(constant); return ok }
 
 func (n *Node) isRoot() bool {
@@ -223,7 +219,7 @@ func (n *Node) IsScalar() bool { _, ok := n.t.(Dtype); return ok }
 
 // IsVector indicates if a node represents a vector value. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsVector() bool {
-	if t, ok := n.t.(*TensorType); ok {
+	if t, ok := n.t.(TensorType); ok {
 		return t.d == 1
 	}
 
@@ -232,7 +228,7 @@ func (n *Node) IsVector() bool {
 
 // IsColVec indicates if a node represents a Column Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsColVec() bool {
-	if _, ok := n.t.(*TensorType); ok {
+	if _, ok := n.t.(TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsColVec()
 		}
@@ -242,7 +238,7 @@ func (n *Node) IsColVec() bool {
 
 // IsRowVec indicates if a node represents a Row Vector. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsRowVec() bool {
-	if _, ok := n.t.(*TensorType); ok {
+	if _, ok := n.t.(TensorType); ok {
 		if n.shape != nil {
 			return n.shape.IsRowVec()
 		}
@@ -252,8 +248,8 @@ func (n *Node) IsRowVec() bool {
 
 // IsMatrix indicates if a node represents a matrix. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsMatrix() bool {
-	if t, ok := n.t.(*TensorType); ok {
-		return t.d == 2
+	if _, ok := n.t.(TensorType); ok {
+		return n.shape.Dims() == 2
 	}
 	return false
 }
@@ -269,7 +265,7 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 		return n
 	}
 
-	n2 := newNodeFromPool(withGraph(g), withOp(n.op), WithName(n.name), withType(n.t))
+	n2 := newNode(withGraph(g), withOp(n.op), WithName(n.name), withType(n.t))
 	if n.shape != nil {
 		n2.shape = n.shape.Clone()
 		n2.inferredShape = n.inferredShape
@@ -277,7 +273,7 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 
 	if n.boundTo != nil {
 		var err error
-		if n2.boundTo, err = n.boundTo.clone(); err != nil {
+		if n2.boundTo, err = CloneValue(n.boundTo); err != nil {
 			panic(err)
 		}
 	}
@@ -302,6 +298,7 @@ func (n *Node) Grad() (Value, error) {
 		return dv.d, nil
 	}
 	if n.deriv != nil {
+		logf("Getting from n.deriv")
 		return n.deriv.Value(), nil
 	}
 
@@ -309,10 +306,22 @@ func (n *Node) Grad() (Value, error) {
 }
 
 // Dims indicates how many dimensions the node's result has
-func (n *Node) Dims() int { return n.t.dims() }
+func (n *Node) Dims() int {
+	if n.shape != nil {
+		return n.shape.Dims()
+	}
+	switch nt := n.t.(type) {
+	case TensorType:
+		return nt.d
+	case Dtype:
+		return 0
+	default:
+		panic(fmt.Sprintf("Dims undefined for %v(%T)", nt, nt))
+	}
+}
 
 // Shape returns the shape of the node
-func (n *Node) Shape() types.Shape { return n.shape }
+func (n *Node) Shape() types.Shape { return n.shape.Clone() }
 
 // IsVec returns whether this node is a vector
 func (n *Node) IsVec() bool { return n.IsVector() }
@@ -487,7 +496,7 @@ func (n *Node) unbind() {
 		returnDV(dv)
 	}
 
-	if t, ok := n.boundTo.(Tensor); ok {
+	if t, ok := n.boundTo.(types.Tensor); ok {
 		returnTensor(t)
 	}
 	n.boundTo = nil
@@ -593,7 +602,7 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 		return n
 	}
 
-	nn := newNodeFromPool(withChildren(n.children),
+	nn := newNode(withChildren(n.children),
 		withType(n.t),
 		withOp(n.op),
 		WithName(n.name),
@@ -614,11 +623,10 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 }
 
 func (n *Node) diffWRT() []bool {
-	if n.op == nil {
-		return nil
+	if sdop, ok := n.op.(SDOp); ok {
+		return sdop.DiffWRT(len(n.children))
 	}
-
-	return n.op.DiffWRT(len(n.children))
+	return nil
 }
 
 // dfs but does not use channels. useful for extracting paths. used particularly in test

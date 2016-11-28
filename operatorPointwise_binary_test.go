@@ -1,401 +1,243 @@
 package gorgonia
 
 import (
+	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"testing"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
-func ssBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, x, y, z *Node, err error) {
-	_, x, y, z = simpleEqn()
+func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
+	assert := assert.New(t)
+	var randX, randY interface{}
+	switch dt {
+	case Float64:
+		randX = rand.ExpFloat64()
+		randY = rand.ExpFloat64()
+	case Float32:
+		randX = float32(rand.ExpFloat64())
+		randY = float32(rand.ExpFloat64())
+	default:
+		return errors.Errorf("op Test not yet implemented for %v ", op, dt)
+	}
 
-	randX = rand.ExpFloat64()
-	randY = rand.ExpFloat64()
+	binOp := newEBOByType(op, dt, dt)
+	t.Logf("%v %v %v", randX, op, randY)
 
-	binOp := newElemBinOp(op, x, y)
-	diff := ʘBinOpDiffFns[op]
+	var g, g2 *ExprGraph
+	var x, y, z *Node
+	var a, b, c *Node
+	g = NewGraph()
+	x = NewScalar(g, dt, WithName("x"))
+	y = NewScalar(g, dt, WithName("y"))
+	if z, err = applyOp(binOp, x, y); err != nil {
+		return err
+	}
+
+	g2 = NewGraph()
+	a = NewScalar(g2, dt, WithName("a"))
+	b = NewScalar(g2, dt, WithName("b"))
+	if c, err = applyOp(binOp, a, b); err != nil {
+		return err
+	}
+
+	// var grads Nodes
+	var m1 VM
+	if op.isArith() {
+		if _, err = Grad(c, a, b); err != nil {
+			return err
+		}
+		m1 = NewLispMachine(g)
+	} else {
+		m1 = NewLispMachine(g, ExecuteFwdOnly())
+	}
+
+	prog, locMap, err := Compile(g2)
+	if err != nil {
+		return err
+	}
+
+	m2 := NewTapeMachine(prog, locMap)
 
 	Let(x, randX)
 	Let(y, randY)
-
-	var v Value
-	if v, err = binOp.Do(x.boundTo, y.boundTo); err != nil {
-		return randX, randY, x, y, z, errors.Wrap(err, binOpDoFail)
-	}
-	zdv := variableDV(v)
-
-	if err = z.bind(zdv); err != nil {
-		return randX, randY, x, y, z, errors.Wrap(err, bindFail)
+	if err = m1.RunAll(); err != nil {
+		return
 	}
 
-	if err = x.bind(dvUnit(x.boundTo)); err != nil {
-		return randX, randY, x, y, z, errors.Wrap(err, bindFail)
+	Let(a, randX)
+	Let(b, randY)
+	if err = m2.RunAll(); err != nil {
+		return
 	}
 
-	if err = y.bind(dvUnit(y.boundTo)); err != nil {
-		return randX, randY, x, y, z, errors.Wrap(err, bindFail)
+	var xG, aG, yG, bG, zG, cG Value
+	if op.isArith() {
+		if xG, err = x.Grad(); err != nil {
+			return
+		}
+		if yG, err = y.Grad(); err != nil {
+			return
+		}
+		if aG, err = a.Grad(); err != nil {
+			return
+		}
+		if bG, err = b.Grad(); err != nil {
+			return
+		}
+
+		if zG, err = z.Grad(); err != nil {
+			return
+		}
+		if cG, err = c.Grad(); err != nil {
+			return
+		}
+		assert.True(ValueEq(xG, aG), "Test Diff of %v. xG != aG. Got %v and %v", op, xG, aG)
+		assert.True(ValueEq(yG, bG), "Test Diff of %v. yG != bG. Got %v and %v", op, yG, bG)
+		assert.True(ValueEq(zG, cG), "Test Diff of %v. zG != cG. Got %v and %v", op, zG, cG)
 	}
 
-	err = diff(x, y, z)
-	if err != nil {
-		return randX, randY, x, y, z, errors.Wrap(err, "Failed to carry diff")
-	}
-	return randX, randY, x, y, z, nil
+	assert.True(ValueEq(x.Value(), a.Value()), "Test op %v. Values are different: x: %v, a %v", op, x.Value(), a.Value())
+	assert.True(ValueEq(y.Value(), b.Value()), "Test op %v. Values are different: y: %v, b %v", op, y.Value(), b.Value())
+	assert.True(ValueEq(z.Value(), c.Value()), "Test op %v. Values are different: z: %v, c %v", op, z.Value(), c.Value())
+
+	return nil
 }
 
-func stBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, x, yT, zT *Node, err error) {
-	var g *ExprGraph
-	g, _, yT, zT = simpleVecEqn()
-	x = NewScalar(g, Float64, WithName("x"))
-
-	randX = rand.ExpFloat64()
-	randY = rand.ExpFloat64()
-
-	binOp := newElemBinOp(op, x, yT)
-	diff := ʘBinOpDiffFns[op]
-
-	yBack := []float64{-randY, randY}
-	Let(x, randX)
-	Let(yT, tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking(yBack)))
-
-	var v Value
-	if v, err = binOp.Do(x.boundTo, yT.boundTo); err != nil {
-		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
-	}
-	zdv := variableDV(v)
-
-	if err = zT.bind(zdv); err != nil {
-		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
-	}
-
-	if err = x.bind(dvUnit(x.boundTo)); err != nil {
-		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
-	}
-
-	if err = yT.bind(dvUnit(yT.boundTo)); err != nil {
-		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
-	}
-
-	err = diff(x, yT, zT)
-	if err != nil {
-		return randX, randY, x, yT, zT, errors.Wrap(err, binOpDoFail)
-	}
-	return randX, randY, x, yT, zT, nil
-}
-
-func tsBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, xT, y, zT *Node, err error) {
-	var g *ExprGraph
-	g, xT, _, zT = simpleVecEqn()
-	y = NewScalar(g, Float64, WithName("y"))
-
-	randX = rand.ExpFloat64()
-	randY = rand.ExpFloat64()
-
-	binOp := newElemBinOp(op, xT, y)
-	diff := ʘBinOpDiffFns[op]
-
-	xBack := []float64{randX, -randX}
-	Let(xT, tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking(xBack)))
-	Let(y, randY)
-
-	var v Value
-	if v, err = binOp.Do(xT.boundTo, y.boundTo); err != nil {
-		return
-	}
-	zdv := variableDV(v)
-
-	if err = zT.bind(zdv); err != nil {
-		return
-	}
-
-	if err = xT.bind(dvUnit(xT.boundTo)); err != nil {
-		return
-	}
-
-	if err = y.bind(dvUnit(y.boundTo)); err != nil {
-		return
-	}
-
-	err = diff(xT, y, zT)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func ttBinOpDiffTest(op ʘBinaryOperatorType) (randX, randY float64, x, y, z *Node, err error) {
-	_, x, y, z = simpleVecEqn()
-
-	randX = rand.ExpFloat64()
-	randY = rand.ExpFloat64()
-
-	binOp := newElemBinOp(op, x, y)
-	diff := ʘBinOpDiffFns[op]
-
-	xBack := []float64{-randX, randX}
-	yBack := []float64{randY, -randY}
-	Let(x, tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking(xBack)))
-	Let(y, tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking(yBack)))
-
-	var v Value
-	if v, err = binOp.Do(x.boundTo, y.boundTo); err != nil {
-		return
-	}
-	zdv := variableDV(v)
-
-	if err = z.bind(zdv); err != nil {
-		return
-	}
-
-	if err = x.bind(dvUnit(x.boundTo)); err != nil {
-		return
-	}
-
-	if err = y.bind(dvUnit(y.boundTo)); err != nil {
-		return
-	}
-
-	err = diff(x, y, z)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func TestAddDiff(t *testing.T) {
+func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
 	assert := assert.New(t)
-	op := addOpType
+	var x, y, z, a, b, c, cost *Node
+	var g, g2 *ExprGraph
 
-	// s $ s version
-	_, _, x, y, z, err := ssBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
+	var randX, randY interface{}
+	switch dt {
+	case Float32:
+		randX = []float32{1, 2, 3, 4}
+		randY = []float32{2, 2, 2, 2}
+	case Float64:
+		randX = []float64{1, 2, 3, 4}
+		randY = []float64{2, 2, 2, 2}
 	}
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
 
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(zdv.d, ydv.d)
+	// randX := Gaussian(0, 1)(dt, 2, 2)
+	// randY := Gaussian(0, 1)(dt, 2, 2)
 
-	// s $ T ver
-	_, _, x, y, z, err = stBinOpDiffTest(op)
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-	zdv = z.boundTo.(*dualValue)
+	xV := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(2, 2), tensor.WithBacking(randX))
+	yV := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(2, 2), tensor.WithBacking(randY))
 
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(zdv.d, ydv.d)
+	g = NewGraph()
+	g2 = NewGraph()
+	x = NewMatrix(g, dt, WithName("x"), WithShape(2, 2))
+	y = NewMatrix(g, dt, WithName("y"), WithShape(2, 2))
+	a = NewMatrix(g2, dt, WithName("a"), WithShape(2, 2))
+	b = NewMatrix(g2, dt, WithName("b"), WithShape(2, 2))
 
-	// T $ s ver
-	_, _, x, y, z, err = tsBinOpDiffTest(op)
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-	zdv = z.boundTo.(*dualValue)
+	binOp := newEBOByType(op, x.t, y.t)
+	if z, err = applyOp(binOp, x, y); err != nil {
+		return err
+	}
+	if c, err = applyOp(binOp, a, b); err != nil {
+		return err
+	}
 
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(zdv.d, ydv.d)
+	var m1 VM
+	if op.isArith() {
+		if _, err = Sum(z); err != nil {
+			return err
+		}
+		if cost, err = Sum(c); err != nil {
+			return err
+		}
 
-	// T $ T ver
-	_, _, x, y, z, err = ttBinOpDiffTest(op)
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-	zdv = z.boundTo.(*dualValue)
+		if _, err = Grad(cost, a, b); err != nil {
+			return err
+		}
+		m1 = NewLispMachine(g)
+	} else {
+		m1 = NewLispMachine(g, ExecuteFwdOnly())
+	}
 
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(zdv.d, ydv.d)
+	prog, locMap, err := Compile(g2)
+	if err != nil {
+		return err
+	}
 
+	m2 := NewTapeMachine(prog, locMap, TraceExec())
+	// m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
+
+	Let(x, xV)
+	Let(y, yV)
+	if err = m1.RunAll(); err != nil {
+		return
+	}
+
+	Let(a, xV)
+	Let(b, yV)
+	if err = m2.RunAll(); err != nil {
+		return
+	}
+
+	var xG, aG, yG, bG, zG, cG Value
+	if op.isArith() {
+		if xG, err = x.Grad(); err != nil {
+			return
+		}
+		if yG, err = y.Grad(); err != nil {
+			return
+		}
+		if aG, err = a.Grad(); err != nil {
+			return
+		}
+		if bG, err = b.Grad(); err != nil {
+			return
+		}
+
+		if zG, err = z.Grad(); err != nil {
+			return
+		}
+		if cG, err = c.Grad(); err != nil {
+			return
+		}
+		assert.True(ValueEq(xG, aG), "Test Diff of %v. xG != aG. Got %+v \nand %+v", op, xG, aG)
+		assert.True(ValueEq(yG, bG), "Test Diff of %v. yG != bG. Got %+v \nand %+v", op, yG, bG)
+		assert.True(ValueEq(zG, cG), "Test Diff of %v. zG != cG. Got %+v \nand %+v", op, zG, cG)
+	}
+
+	assert.True(ValueEq(x.Value(), a.Value()), "Test op %v. Values are different: x: %+v\n a %+v", op, x.Value(), a.Value())
+	assert.True(ValueEq(y.Value(), b.Value()), "Test op %v. Values are different: y: %+v\n b %+v", op, y.Value(), b.Value())
+	assert.True(ValueEq(z.Value(), c.Value()), "Test op %v. Values are different: z: %+v\n c %+v", op, z.Value(), c.Value())
+
+	if t.Failed() {
+		ioutil.WriteFile(fmt.Sprintf("Test_%v_tt.dot", op), []byte(g2.ToDot()), 0644)
+	}
+
+	return nil
 }
 
-func TestSubDiff(t *testing.T) {
-	assert := assert.New(t)
-	op := subOpType
+func TestBinOps(t *testing.T) {
+	for op := addOpType; op < maxʘBinaryOpType; op++ {
+		err := ssBinOpTest(t, op, Float64)
+		if err != nil {
+			t.Errorf("Float64 version err: %v", err)
+		}
 
-	// s $ s version
-	_, _, x, y, z, err := ssBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
+		err = ssBinOpTest(t, op, Float32)
+		if err != nil {
+			t.Errorf("Float32 version err: %v", err)
+		}
+
+		err = ttBinOpTest(t, op, Float64)
+		if err != nil {
+			t.Errorf("ttBinOp Float64 version err %v", err)
+		}
+
+		err = ttBinOpTest(t, op, Float32)
+		if err != nil {
+			t.Errorf("ttBinOp Float64 version err %v", err)
+		}
 	}
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
-
-	neg := newElemUnaryOp(negOpType, z)
-	dzdy, _ := neg.Do(zdv.d)
-
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(dzdy, ydv.d)
-
-	// s $ T version
-	_, _, x, y, z, err = stBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-	zdv = z.boundTo.(*dualValue)
-
-	neg = newElemUnaryOp(negOpType, z)
-	dzdy, _ = neg.Do(zdv.d)
-
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(dzdy, ydv.d)
-
-	// T $ s version
-	_, _, x, y, z, err = tsBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-	zdv = z.boundTo.(*dualValue)
-
-	neg = newElemUnaryOp(negOpType, z)
-	dzdy, _ = neg.Do(zdv.d)
-
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(dzdy, ydv.d)
-
-	// T $ T version
-	_, _, x, y, z, err = ttBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-	zdv = z.boundTo.(*dualValue)
-
-	neg = newElemUnaryOp(negOpType, z)
-	dzdy, _ = neg.Do(zdv.d)
-
-	assert.Equal(zdv.d, xdv.d)
-	assert.Equal(dzdy, ydv.d)
-
-}
-
-func TestHadamardProdDiff(t *testing.T) {
-	assert := assert.New(t)
-	op := mulOpType
-
-	// s $ s version
-	_, _, x, y, _, err := ssBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-
-	assert.Equal(ydv.Value, xdv.d)
-	assert.Equal(xdv.Value, ydv.d)
-
-	// s $ T version
-	var randX float64
-	randX, _, x, y, _, err = stBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-
-	dzdy, err := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{randX, randX})))
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(ydv.Value, xdv.d)
-	assert.Equal(dzdy, ydv.d)
-
-	// T $ s version
-	var randY float64
-	_, randY, x, y, _, err = tsBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-
-	dzdx, err := anyToValue(tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{randY, randY})))
-	if err != nil {
-		t.Error(err)
-	}
-
-	assert.Equal(dzdx, xdv.d)
-	assert.Equal(xdv.Value, ydv.d)
-
-	// T $ T version
-	_, _, x, y, _, err = ttBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-
-	assert.Equal(ydv.Value, xdv.d)
-	assert.Equal(xdv.Value, ydv.d)
-}
-
-func TestHadamardDivDiff(t *testing.T) {
-	assert := assert.New(t)
-	op := divOpType
-
-	// s $ s version
-	randX, randY, x, y, _, err := ssBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-
-	randZ := randX / randY
-
-	assert.True(floatEquals(1.0/randY, extractF64(xdv.d)))
-	assert.True(floatEquals(-randZ/randY, extractF64(ydv.d)))
-
-	// s $ T version
-	randX, randY, x, y, _, err = stBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-
-	randZs := []float64{randX / -randY, randX / randY}
-	dzdx := []float64{1 / -randY, 1 / randY}
-	dzdy := []float64{-randZs[0] / -randY, -randZs[1] / randY}
-
-	assert.True(floatsEqual(dzdx, extractF64s(xdv.d)))
-	assert.True(floatsEqual(dzdy, extractF64s(ydv.d)))
-
-	// T $ s version
-	randX, randY, x, y, _, err = tsBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-
-	randZs = []float64{randX / randY, -randX / randY}
-	dzdx = []float64{1 / randY, 1 / randY}
-	dzdy = []float64{-randZs[0] / randY, -randZs[1] / randY}
-
-	assert.True(floatsEqual(dzdx, extractF64s(xdv.d)))
-	assert.True(floatsEqual(dzdy, extractF64s(ydv.d)))
-
-	// T $ T version
-	randX, randY, x, y, _, err = ttBinOpDiffTest(op)
-	if err != nil {
-		t.Error(err)
-	}
-	xdv = x.boundTo.(*dualValue)
-	ydv = y.boundTo.(*dualValue)
-
-	randZs = []float64{-randX / randY, randX / -randY}
-	dzdx = []float64{1 / randY, 1 / -randY}
-	dzdy = []float64{-randZs[0] / randY, -randZs[1] / -randY}
-
-	assert.True(floatsEqual(dzdx, extractF64s(xdv.d)))
-	assert.True(floatsEqual(dzdy, extractF64s(ydv.d)))
-
 }

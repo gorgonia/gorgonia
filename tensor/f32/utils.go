@@ -131,7 +131,7 @@ func argmin(a []float32) int {
 // reuseCheck checks a reuse tensor, and reshapes it to be the correct one
 func reuseCheck(reuse *Tensor, as *Tensor) (err error) {
 	if len(reuse.data) != as.Size() {
-		err = types.NewError(types.ShapeMismatch, "Reused Tensor does not have expected shape %v. Got %v instead", as.Shape(), reuse.Shape())
+		err = types.NewError(types.ShapeMismatch, "Reused Tensor %p does not have expected shape %v. Got %v instead. Reuse Size: %v, as Size %v (real: %d)", reuse, as.Shape(), reuse.Shape(), len(reuse.data), as.Size(), len(as.data))
 		return
 	}
 	return reuseCheckShape(reuse, as.Shape())

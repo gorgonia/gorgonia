@@ -10,6 +10,70 @@ import (
 	"github.com/chewxy/gorgonia/tensor/types"
 )
 
+type tensorConsOpt func(types.Dtype) types.ConsOpt
+
+func New(dt types.Dtype, opts ...tensorConsOpt) types.Tensor {
+	consOpts := make([]types.ConsOpt, len(opts))
+	for i, opt := range opts {
+		consOpts[i] = opt(dt)
+	}
+
+	switch dt {
+	case types.Float64:
+		return tf64.NewTensor(consOpts...)
+	case types.Float32:
+		return tf32.NewTensor(consOpts...)
+	case types.Int:
+		return ti.NewTensor(consOpts...)
+	case types.Int64:
+	case types.Int32:
+	case types.Byte:
+	case types.Bool:
+		return tb.NewTensor(consOpts...)
+	}
+	panic("Unreachable")
+}
+
+func WithShape(s ...int) tensorConsOpt {
+	f := func(dt types.Dtype) types.ConsOpt {
+		switch dt {
+		case types.Float64:
+			return tf64.WithShape(s...)
+		case types.Float32:
+			return tf32.WithShape(s...)
+		case types.Int:
+			return ti.WithShape(s...)
+		case types.Bool:
+			return tb.WithShape(s...)
+		default:
+			panic("Not Yet Implemented")
+		}
+	}
+	return f
+}
+
+func WithBacking(any interface{}) tensorConsOpt {
+	f := func(dt types.Dtype) types.ConsOpt {
+		switch dt {
+		case types.Float64:
+			backing := any.([]float64)
+			return tf64.WithBacking(backing)
+		case types.Float32:
+			backing := any.([]float32)
+			return tf32.WithBacking(backing)
+		case types.Int:
+			backing := any.([]int)
+			return ti.WithBacking(backing)
+		case types.Bool:
+			backing := any.([]bool)
+			return tb.WithBacking(backing)
+		default:
+			panic("Not Yet Implemented")
+		}
+	}
+	return f
+}
+
 type Argmaxer interface {
 	Argmax(int) (*ti.Tensor, error)
 }

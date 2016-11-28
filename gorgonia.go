@@ -6,6 +6,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -22,42 +23,26 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 	return n
 }
 
-// NewNodeFromAny creates a Node from a types.Tensor, automatically filling in shape and type info
-func NewNodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
-	v, err := anyToValue(any)
+// NodeFromAny creates a Node from a types.Tensor, automatically filling in shape and type info
+func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
+	v, t, dt, err := anyToValue(any)
 	if err != nil {
 		panic(err)
 	}
+
 	opts = append(opts, WithValue(v))
-	switch a := any.(type) {
-	case float32:
-		return NewScalar(g, Float32, opts...)
-	case float64:
-		return NewScalar(g, Float64, opts...)
-	case int:
-		return NewScalar(g, Int, opts...)
-	case bool:
-		return NewScalar(g, Bool, opts...)
-	case types.Tensor:
-		dt := dtypeToDtype(a.Dtype())
-		opts = append(opts, nil)
-		copy(opts[1:], opts[0:len(opts)-1])
-		opts[0] = WithShape(a.Shape()...)
-		return NewTensor(g, dt, a.Dims(), opts...)
-	case Scalar:
-		dt := a.Dtype()
+
+	switch t.(type) {
+	case Dtype:
 		return NewScalar(g, dt, opts...)
-	case Tensor:
-		dt := a.Dtype()
-		dims := a.Dims()
+	case TensorType:
 		opts = append(opts, nil)
 		copy(opts[1:], opts[0:len(opts)-1])
-		opts[0] = WithShape(a.Shape()...)
-		return NewTensor(g, dt, dims, opts...)
+		opts[0] = WithShape(v.Shape()...)
+		return NewTensor(g, dt, v.Shape().Dims(), opts...)
 	default:
 		panic(nyi("NewNodeFromAny", any))
 	}
-	panic("Unreachable")
 }
 
 // NewScalar creates a Node representing a variable that holds a scalar value
@@ -98,7 +83,7 @@ func NewTensor(g *ExprGraph, t Dtype, dims int, opts ...NodeConsOpt) *Node {
 // NewConstant takes in any reasonable value and makes it a constant node.
 func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var op Op
-	var t Type
+	var t hm.Type
 	var name string
 	var s types.Shape
 	var val Value
@@ -108,29 +93,21 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	case Scalar:
 		op = constantScalar{a}
 		val = a
-		t = a.Type()
+		t = TypeOf(a)
 		s = scalarShape
-	case Tensor:
+	case int, int64, float64, float32, byte, bool:
+		val, t = anyToScalar(v)
+		s = scalarShape
+		op = constantScalar{val.(Scalar)}
+	case types.Tensor:
 		op = constantTensor{a}
 		val = a
-		t = a.Type()
 		s = a.Shape()
-	case int, int64, float64, float32, byte, bool:
-		sv := NewScalarValue(v)
-		op = constantScalar{sv}
-		val = sv
-		t = sv.Type()
-		s = scalarShape
-	case types.Tensor:
-		T := FromTensor(a)
-		op = constantTensor{T}
-		val = T
-		s = a.Shape()
-		t = T.Type()
+		t = TypeOf(a)
 	}
 
 	if op == nil || t == nil {
-		panic("HELP")
+		panic(fmt.Sprintf("HELP. Op: %v, t: %v", op, t))
 	}
 
 	consOpts := []NodeConsOpt{withOp(op), withType(t), WithName(name), WithShape(s...), WithValue(val)}
@@ -145,7 +122,7 @@ func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) 
 	op := makeRandomOp(uniform, dt, low, high, shape...)
 	s := types.Shape(shape)
 
-	var t Type
+	var t hm.Type
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
@@ -163,7 +140,7 @@ func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...in
 	op := makeRandomOp(gaussian, dt, mean, stdev, shape...)
 	s := types.Shape(shape)
 
-	var t Type
+	var t hm.Type
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
@@ -184,7 +161,7 @@ func BinomialRandomNode(g *ExprGraph, dt Dtype, trials, prob float64, shape ...i
 	op := makeRandomOp(binomial, dt, trials, prob, shape...)
 	s := types.Shape(shape)
 
-	var t Type
+	var t hm.Type
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
@@ -225,6 +202,7 @@ func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 	for i, n := range WRTs {
 		if !n.isInput() {
 			errors.Wrapf(err, "Can only differentiate with regards to input nodes. Node %d isn't an input", i)
+			// return
 		}
 	}
 
@@ -232,6 +210,7 @@ func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 	var ok bool
 	if dt, ok = cost.t.(Dtype); !ok {
 		errors.Wrap(err, "Expected a scalar dtype for cost")
+		// return
 	}
 
 	var gradOut *Node
@@ -257,10 +236,13 @@ func Let(n *Node, be interface{}) (err error) {
 	}
 
 	var val Value
-	if val, err = anyToValue(be); err != nil {
+	// var t hm.Type
+	// var dt Dtype
+	if val, _, _, err = anyToValue(be); err != nil {
 		return errors.Wrapf(err, anyToValueFail, be, be)
 	}
 
+	// TODO: runtime type checking
 	n.bind(val)
 	return
 }

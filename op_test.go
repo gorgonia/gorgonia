@@ -4,12 +4,12 @@ import "testing"
 
 func TestStupid(t *testing.T) {
 	g := NewGraph()
-	n := newNodeFromPool(withType(Float64), withGraph(g))
+	n := newNode(withType(Float64), withGraph(g))
 	op := newElemUnaryOp(negOpType, n)
 
 	t.Logf("%p %d %s", op, op.unaryOpType(), op.ʘUnaryOperator)
 
-	v := NewScalarValue(3.1415)
+	v := F64(3.1415)
 	rv, err := op.Do(v)
 	t.Logf("%v, %v", rv, err)
 }

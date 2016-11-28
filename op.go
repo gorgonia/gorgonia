@@ -7,7 +7,20 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 )
+
+type DimSizer interface {
+	DimSize(int) (int, error)
+}
+
+func ShapesToDimSizers(shapes []types.Shape) []DimSizer {
+	retVal := make([]DimSizer, len(shapes))
+	for i, s := range shapes {
+		retVal[i] = s
+	}
+	return retVal
+}
 
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
@@ -17,20 +30,14 @@ import (
 type Op interface {
 	/* Graph Building Related Methods */
 
+	// Arity returns the number of inputs the Op expects. -1 indicates that it's n-ary and will be determined at runtime
+	Arity() int
+
 	// Informs the type of the Op (not the node). This will be used by the type system to infer the final type of the node
-	Type() Type
+	Type() hm.Type
 
 	// returns the output shape as a function of the inputs
-	inferShape(Type, ...*Node) (types.Shape, error)
-
-	/* Differentiation related fields */
-
-	// diffWRT indicates if the op is differentiable with regards to the number of inputs
-	// returns []bool to indicate which input it is differentiable to
-	DiffWRT(int) []bool
-
-	// symbolically differentiates the op
-	SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error)
+	InferShape(...DimSizer) (types.Shape, error)
 
 	/* Machine related */
 
@@ -41,10 +48,10 @@ type Op interface {
 
 	// indicates if the Op will return a pointer (allowing possible inplace edits) or by value
 	// if it's false, the return value of the Op will be a copy of its input
-	returnsPtr() bool
+	ReturnsPtr() bool
 
 	// Does this op potentially call external (cgo or cuda) functions (thereby requiring extra overhead for Go's trampolining thing)
-	callsExtern() bool
+	CallsExtern() bool
 
 	// overwriteInput() is a method which states which input the output will be overwriting.
 	// This allows for some efficiency gains as the underlying arrays wouldn't have to be re-allocated.
@@ -53,7 +60,7 @@ type Op interface {
 	// the IncrementOp would be a unary operator, and assuming we would like to overwrite the input,
 	// the retVal of overwriteInput() will be 0 (inputs[0]).
 	// -1 is returned if overwriting of input is disallowed
-	overwriteInput() int
+	OverwritesInput() int
 
 	/* Other methods */
 	WriteHash(h hash.Hash)
@@ -65,28 +72,39 @@ type Op interface {
 type UnaryOp interface {
 	Op
 
-	isUnary() bool
+	IsUnary() bool
 }
 
 // A BinaryOp is an Op that takes only two inputs
 type BinaryOp interface {
 	Op
 
-	isBinary() bool
+	IsBinary() bool
 }
 
 // A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
 type NoRetOp interface {
 	Op
 
-	returnsNothing() bool
+	ReturnsNothing() bool
 }
 
-// An AdOp is an Op that supports automatic differentiation.
-type AdOp interface {
+// An ADOp is an Op that supports automatic differentiation.
+type ADOp interface {
 	Op
 
 	DoDiff(inputs Nodes, output *Node) error
+}
+
+type SDOp interface {
+	Op
+
+	// DiffWRT indicates if the op is differentiable with regards to the given number of inputs
+	// returns []bool to indicate which input it is differentiable to
+	DiffWRT(inputs int) []bool
+
+	// SymDiff symbolically differentiates the op
+	SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error)
 }
 
 // a ReductionOp changes the shape of the node
@@ -124,23 +142,21 @@ type constantScalar struct {
 	v Scalar
 }
 
-func (c constantScalar) Type() Type                                 { return c.v.Type() }
-func (c constantScalar) returnsPtr() bool                           { return false }
-func (c constantScalar) callsExtern() bool                          { return false }
-func (c constantScalar) overwriteInput() int                        { return -1 }
-func (c constantScalar) DiffWRT(i int) []bool                       { return nil }
-func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
-
-func (c constantScalar) inferShape(Type, ...*Node) (types.Shape, error) {
-	return types.ScalarShape(), nil
-}
+func (c constantScalar) Arity() int                                  { return 0 }
+func (c constantScalar) Type() hm.Type                               { return TypeOf(c.v) }
+func (c constantScalar) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil }
+func (c constantScalar) ReturnsPtr() bool                            { return false }
+func (c constantScalar) CallsExtern() bool                           { return false }
+func (c constantScalar) OverwritesInput() int                        { return -1 }
+func (c constantScalar) DiffWRT(i int) []bool                        { return nil }
+func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error)  { return nil, nil }
 
 func (c constantScalar) Do(...Value) (Value, error) { return c.v, nil }
 func (c constantScalar) String() string             { return fmt.Sprintf("const %s", c.v) }
 
 func (c constantScalar) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "const ")
-	if err := binary.Write(h, binary.LittleEndian, c.v.t); err != nil {
+	if err := binary.Write(h, binary.LittleEndian, TypeOf(c.v)); err != nil {
 		panic(err)
 	}
 	fmt.Fprintf(h, "of %v", c.v)
@@ -156,21 +172,22 @@ func (c constantScalar) isconstant() bool { return true }
 func (c constantScalar) Value() Value     { return c.v }
 
 type constantTensor struct {
-	v Tensor
+	v types.Tensor
 }
 
-func (c constantTensor) Type() Type { return c.v.Type() }
+func (c constantTensor) Arity() int                                  { return 1 }
+func (c constantTensor) Type() hm.Type                               { return TypeOf(c.v) }
+func (c constantTensor) InferShape(...DimSizer) (types.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
 // constants should return value but for the sake of memory, we're going to return pointers
-func (c constantTensor) returnsPtr() bool                               { return true }
-func (c constantTensor) overwriteInput() int                            { return -1 }
-func (c constantTensor) callsExtern() bool                              { return false }
-func (c constantTensor) DiffWRT(i int) []bool                           { return nil }
-func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nil }
-func (c constantTensor) inferShape(Type, ...*Node) (types.Shape, error) { return c.v.Shape(), nil }
-func (c constantTensor) Do(...Value) (Value, error)                     { return c.v, nil }
-func (c constantTensor) String() string                                 { return fmt.Sprintf("const %s", c.v.Type()) }
+func (c constantTensor) ReturnsPtr() bool                           { return true }
+func (c constantTensor) OverwritesInput() int                       { return -1 }
+func (c constantTensor) CallsExtern() bool                          { return false }
+func (c constantTensor) DiffWRT(i int) []bool                       { return nil }
+func (c constantTensor) SymDiff(Nodes, *Node, *Node) (Nodes, error) { return nil, nil }
+func (c constantTensor) Do(...Value) (Value, error)                 { return c.v, nil }
+func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", TypeOf(c.v)) }
 
 func (c constantTensor) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "const %v", c.Type())

@@ -96,15 +96,21 @@ func (s Shape) IsRowVec() bool {
 }
 
 func (s Shape) Dims() int {
+	return len(s)
+}
+
+func (s Shape) DimSize(d int) (size int, err error) {
+	if (s.IsScalar() && d != 0) || (!s.IsScalar() && d >= len(s)) {
+		err = DimMismatchErr(len(s), d)
+		return
+	}
+
 	switch {
 	case s.IsScalar():
-		return 0
-	case s.IsVector():
-		return 1
+		return 0, nil
 	default:
-		return len(s)
+		return s[d], nil
 	}
-	panic("Unreachable")
 }
 
 // S gives the new shape after a shape has been sliced. It's repeated from the AP S() method mainly because there are other functions in Gorgonia that uses only shape
@@ -156,6 +162,56 @@ func (s Shape) S(slices ...Slice) (retVal Shape, err error) {
 		return ScalarShape(), nil
 	}
 
+	return
+}
+
+// Repeat returns the expected new shape given the repetition parameters.
+func (s Shape) Repeat(axis int, repeats ...int) (newShape Shape, finalRepeats []int, size int, err error) {
+	switch {
+	case axis == AllAxes:
+		size = s.TotalSize()
+		newShape = Shape{size}
+		axis = 0
+	case s.IsScalar():
+		size = 1
+		// special case for row vecs
+		if axis == 1 {
+			newShape = Shape{1, 0}
+		} else {
+			// otherwise it will be repeated into a vanilla vector
+			newShape = Shape{0}
+		}
+	case s.IsVector() && !s.IsRowVec() && !s.IsColVec() && axis == 1:
+		size = 1
+		newShape = s.Clone()
+		newShape = append(newShape, 1)
+	default:
+		if axis >= len(s) {
+			// error
+			err = NewError(AxisError, "Shape %v has %d dimensions. Axis is %d", s, s.Dims(), axis)
+			return
+		}
+		size = s[axis]
+		newShape = s.Clone()
+	}
+
+	// special case to allow generic repeats
+	if len(repeats) == 1 {
+		rep := repeats[0]
+		repeats = make([]int, size)
+		for i := range repeats {
+			repeats[i] = rep
+		}
+	}
+	reps := len(repeats)
+	if reps != size {
+		err = NewError(ShapeMismatch, "Cannot broadcast together. Resulting shape will be at least (%d, 1). Repeats is (%d, 1)", size, reps)
+		return
+	}
+
+	newSize := SumInts(repeats)
+	newShape[axis] = newSize
+	finalRepeats = repeats
 	return
 }
 

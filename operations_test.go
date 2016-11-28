@@ -28,7 +28,7 @@ func TestApplyOp(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(g, added.g)
-	assert.Equal(Float64, prune(added.t))
+	assert.Equal(Float64, added.t)
 
 	ct = NewConstant(tf64.Ones(3, 3)) // no graph set for ct
 	op = newElemBinOp(addOpType, cpi, ct)
@@ -162,7 +162,7 @@ func TestSoftMax(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
 	xT := tf64.NewTensor(tf64.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x := NewVector(g, Float64, WithShape(5, 1), WithValue(xT))
+	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
 	sm := Must(SoftMax(x))
 	logsm := Must(Neg(Must(Log(sm))))
 	cost := Must(Slice(logsm, S(2)))
@@ -188,7 +188,7 @@ func TestSoftMax(t *testing.T) {
 
 	g2 := NewGraph()
 	xT2 := tf64.NewTensor(tf64.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
-	x2 := NewVector(g, Float64, WithShape(5, 1), WithValue(xT2))
+	x2 := NewVector(g, Float64, WithShape(5), WithValue(xT2))
 	sm2 := Must(SoftMax(x2))
 	logsm2 := Must(Neg(Must(Log(sm2))))
 	Must(Slice(logsm2, S(2)))
@@ -235,8 +235,8 @@ func TestSlice(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal([]float64{0, 1, 2, 3}, x0.Value().(Tensor).Data())
-	assert.Equal(tf64.RangeFloat64(0, 9), x_0.Value().(Tensor).Data()) // but it is [0,4,8]
+	assert.Equal([]float64{0, 1, 2, 3}, x0.Value().(types.Tensor).Data())
+	assert.Equal(tf64.RangeFloat64(0, 9), x_0.Value().(types.Tensor).Data()) // but it is [0,4,8]
 	assert.Equal(0.0, x00.Value().(Scalar).Data())
 
 	t.Logf("x: %+v", xV)
@@ -420,4 +420,17 @@ func TestNorm(t *testing.T) {
 	correct := []float64{6.708203932499369, 8.12403840463596, 9.643650760992955}
 	assert.Equal(correct, extractF64s(norm.Value()))
 
+}
+
+func TestMean(t *testing.T) {
+	g := NewGraph()
+	x := NewMatrix(g, Float64, WithShape(3, 3))
+	m, err := Mean(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !m.IsScalar() {
+		t.Error("Expected result to be scalar")
+	}
 }

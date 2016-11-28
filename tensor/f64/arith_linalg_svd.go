@@ -13,7 +13,7 @@ import (
 func (t *Tensor) SVD(uv, full bool) (s, u, v *Tensor, err error) {
 	if !t.IsMatrix() {
 		// error
-		err = dimMismatchError(2, t.Opdims())
+		err = dimMismatchError(2, t.Dims())
 		return
 	}
 

@@ -6,7 +6,9 @@ import (
 	"log"
 	"strings"
 
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -232,11 +234,11 @@ func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
 func (m *tapeMachine) logf(format string, attrs ...interface{}) {
 	switch {
 	case machineDev:
-		machineLogf(format, attrs...)
-
 		if m.logger != nil {
 			goto loggercase
 		}
+
+		machineLogf(format, attrs...)
 		break
 
 	loggercase:
@@ -339,7 +341,7 @@ func (f fragment) String() string {
 
 type alloc struct {
 	id int // node ID
-	t  Type
+	t  hm.Type
 	s  types.Shape
 
 	readFrom []register
@@ -349,7 +351,7 @@ type alloc struct {
 func newAlloc(n *Node, writeTo register) alloc {
 	return alloc{
 		id:      n.ID(),
-		t:       prune(n.t),
+		t:       n.t,
 		s:       n.shape,
 		writeTo: writeTo,
 	}
@@ -365,15 +367,14 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	dest := instr.writeTo.id
 
 	// check
-	var have, want Type
+	var have, want hm.Type
 	if m.storage[dest] == nil {
 		goto mustalloc
 	}
-	have = m.storage[dest].Type()
+	have = TypeOf(m.storage[dest])
 	want = instr.t
 
-	if !m.alloc() && typeEq(have, want) {
-		machineLogf("Already preallocated!")
+	if !m.alloc() && have == want {
 		m.logf("Already prealloc")
 
 		return
@@ -384,37 +385,36 @@ mustalloc:
 	node := m.p.g.Node(instr.id).(*Node)
 	if node.boundTo != nil {
 		switch v := node.boundTo.(type) {
-		case Tensor:
+		case types.Tensor:
 			m.storage[dest] = v
 			return nil
 		case *dualValue:
-			if tv, ok := v.Value.(Tensor); ok {
+			if tv, ok := v.Value.(types.Tensor); ok {
 				m.storage[dest] = tv
 				return nil
 			}
+		case Scalar:
+			// do nothing
 		}
 	}
 
 	machineLogf("Have to allocate %v in register %v", instr.t, instr.writeTo)
-	var tt *TensorType
+	var tt TensorType
 	var ok bool
-	if tt, ok = instr.t.(*TensorType); !ok {
+	if tt, ok = instr.t.(TensorType); !ok {
 		return errors.New("Alloc only allocates tensor types")
 
 		// allocate a "scalar" vector
 	}
 
 	var dt Dtype
-	if dt, ok = prune(tt.of).(Dtype); !ok {
+	if dt, ok = tt.of.(Dtype); !ok {
 		return errors.Errorf("No dtype to allocate. Type: %T", tt.of)
 	}
 
 	//TODO: runtime shape check
-
-	t := NewTensorValue(dt, instr.s...)
-
+	t := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(instr.s...))
 	m.storage[dest] = t
-
 	return
 }
 
@@ -461,8 +461,8 @@ func (instr loadArg) String() string {
 
 type execOp struct {
 	op          Op
-	inputTypes  Types
-	outputType  Type
+	inputTypes  hm.Types
+	outputType  hm.Type
 	outputShape types.Shape
 
 	id int
@@ -479,7 +479,7 @@ func (instr execOp) reads() []register { return instr.readFrom }
 func (instr execOp) writes() register  { return instr.writeTo }
 
 func newExecOp(n *Node) execOp {
-	var inputTypes Types
+	var inputTypes hm.Types
 	for _, child := range n.children {
 		inputTypes = append(inputTypes, child.t)
 	}
@@ -553,24 +553,31 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 
 	if m.trace() {
 		var cloned Value
-		if cloned, err = v.clone(); err != nil {
+		if cloned, err = CloneValue(v); err != nil {
 			return errors.Wrap(err, cloneFail)
 		}
+		logf("Bound Cloned %v", cloned)
 		node.bind(cloned)
 	} else {
+		logf("Bound %v", v)
 		node.bind(v)
 	}
 
 	// this is a gradient node then, we should also bind the value to the node's dualValue
-	if node.derivOf != nil {
-		for _, src := range node.derivOf {
-			if src.boundTo != nil {
-				dv := dvUnit0(src.boundTo)
-				dv.SetDeriv(v) // important!! do NOT use node.boundTo
-				src.bind(dv)
-			}
-		}
-	}
+	// if node.derivOf != nil {
+	// 	for _, src := range node.derivOf {
+	// 		if src.boundTo != nil {
+	// 			dv := dvUnit0(src.boundTo)
+
+	// 			var cloned Value
+	// 			if cloned, err = CloneValue(v); err != nil {
+	// 				return errors.Wrap(err, cloneFail)
+	// 			}
+	// 			dv.SetDeriv(cloned) // important!! do NOT use node.boundTo
+	// 			src.bind(dv)
+	// 		}
+	// 	}
+	// }
 	m.watchedLogf("Written To: %v", instr.writeTo)
 	m.enterLoggingContext()
 	m.watchedLogf(m.valueFmt, v)
@@ -578,7 +585,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	return nil
 }
 func (instr execOp) String() string {
-	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.inputTypes, instr.op.callsExtern(), instr.useUnsafe, instr.preAllocated)
+	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.inputTypes, instr.op.CallsExtern(), instr.useUnsafe, instr.preAllocated)
 }
 
 // flushInstr is for blastoise and cubone
@@ -621,7 +628,7 @@ func (instr readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr readInstr) writes() register  { return register{-1, CPU} }
 func (instr readInstr) exec(m *tapeMachine) error {
 	v := m.storage[instr.readFrom.id]
-	v2, err := v.clone()
+	v2, err := CloneValue(v)
 	if err != nil {
 		return errors.Wrap(err, cloneFail)
 	}

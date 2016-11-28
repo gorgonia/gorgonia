@@ -10,7 +10,7 @@ func (t *Tensor) multiSVDNorm(rowAxis, colAxis int) (retVal *Tensor, err error) 
 	if rowAxis > colAxis {
 		rowAxis--
 	}
-	dims := t.Opdims()
+	dims := t.Dims()
 
 	if retVal, err = t.RollAxis(colAxis, dims, true); err != nil {
 		return
@@ -53,7 +53,7 @@ func (t *Tensor) multiSVDNorm(rowAxis, colAxis int) (retVal *Tensor, err error) 
 //
 // This implementation is directly adapted from Numpy, which is licenced under a BSD-like licence, and can be found here: https://docs.scipy.org/doc/numpy-1.9.1/license.html
 func (t *Tensor) Norm(ord types.NormOrder, axes ...int) (retVal *Tensor, err error) {
-	dims := t.Opdims()
+	dims := t.Dims()
 
 	// simple case
 	if len(axes) == 0 {
@@ -160,14 +160,14 @@ func (t *Tensor) Norm(ord types.NormOrder, axes ...int) (retVal *Tensor, err err
 			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
 				return
 			}
-			dims := retVal.Opdims()
+			dims := retVal.Dims()
 			return retVal.Max(dims - 1)
 		case ord == types.Norm(-2):
 			// svd norm
 			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
 				return
 			}
-			dims := retVal.Opdims()
+			dims := retVal.Dims()
 			return retVal.Min(dims - 1)
 		case ord == types.Norm(1):
 			if colAxis > rowAxis {

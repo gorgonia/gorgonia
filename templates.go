@@ -50,7 +50,7 @@ func overwritesInput(n *Node) int {
 	if n.op == nil {
 		return -1
 	}
-	return n.op.overwriteInput()
+	return n.op.OverwritesInput()
 }
 
 func getShape(n *Node) string {
@@ -63,7 +63,7 @@ func getShape(n *Node) string {
 func getGrad(n *Node) string {
 	grad, err := n.Grad()
 	if err == nil {
-		return fmt.Sprintf("%+3.3s", grad)
+		return fmt.Sprintf("%+3.3s (%p)", grad, grad)
 	}
 	return ""
 }

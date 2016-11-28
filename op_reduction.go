@@ -17,6 +17,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
@@ -32,29 +33,31 @@ func newMaxOp(along axes, dim int) *maxOp {
 	}
 }
 
-func (op maxOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(summable))
+func (op maxOp) Arity() int { return 1 }
+
+func (op maxOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
 	t := newTensorType(op.d, a)
 
-	var retType Type
+	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
 		// then it redueces down
 		retType = a
-		return newFunctionType(t, a)
+		return hm.NewFnType(t, a)
 	} else {
 		retType = newTensorType(op.d-1, a)
 	}
-	return newFunctionType(t, retType)
+	return hm.NewFnType(t, retType)
 }
 
-func (op maxOp) inferShape(Type, ...*Node) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
-func (op maxOp) DiffWRT(i int) []bool                           { return []bool{true} }
+func (op maxOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
+func (op maxOp) DiffWRT(i int) []bool                        { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Expect at least 1 input. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+
 	t := inputs[0]
 	opDim := len(t.Shape())
 
@@ -82,16 +85,16 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Expected only one input for maxop. Got %d instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+
 	return nil, NewError(NotYetImplemented, "maxOp")
 }
 
-func (op maxOp) returnsPtr() bool    { return true }
-func (op maxOp) overwriteInput() int { return 0 }
-func (op maxOp) callsExtern() bool   { return false }
+func (op maxOp) ReturnsPtr() bool     { return true }
+func (op maxOp) OverwritesInput() int { return 0 }
+func (op maxOp) CallsExtern() bool    { return false }
 
 func (op maxOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("max"))
@@ -115,8 +118,8 @@ func (op maxOp) isUnary() bool  { return true }
 // 	along int // axis
 // }
 
-// func (op argmaxOp) Type() Type {
-// 	a := newTypeVariable("a")
+// func (op argmaxOp) Type() hm.Type {
+// 	a := hm.TypeVariable('a')
 
 // }
 
@@ -136,41 +139,49 @@ func newSumOp(along axes, s types.Shape, d int) sumOp {
 	}
 }
 
+func (op sumOp) Arity() int { return 1 }
+
 // sumOp is a function with this type:
 //		sumOp :: (Summable a) ⇒ Tensor d a → Tensor d-1 a
-func (op sumOp) Type() Type {
-	a := newTypeVariable("a", withTVConstraints(summable))
+func (op sumOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
 	t := newTensorType(op.d, a)
-	var retType Type
-	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
-		// then it redueces down
-		retType = a
-		return newFunctionType(t, a)
-	} else {
-		retType = newTensorType(op.d-1, a)
+
+	if op.inputShape.IsVector() {
+		return hm.NewFnType(t, a)
 	}
-	return newFunctionType(t, retType)
+
+	// if it's a monotonic axes, it's basically summing everything.
+	if monotonic, incr1 := types.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(op.inputShape) {
+		return hm.NewFnType(t, a)
+	}
+
+	return hm.NewFnType(t, newTensorType(op.d-1, a))
+
+	// var retType hm.Type
+	// if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
+	// 	// then it redueces down
+	// 	retType = a
+	// 	return hm.NewFnType(t, a)
+	// } else {
+	// 	retType = newTensorType(op.d-1, a)
+	// }
+	// return hm.NewFnType(t, retType)
 }
 
-func (op sumOp) inferShape(t Type, inputs ...*Node) (shape types.Shape, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "sumOp requires only one input")
-		return
-	}
-
-	in := inputs[0]
-	shapeLogf("Infering... Type: %v", t)
-	shapeLogf("input shape: %v", in.shape)
+func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
+	in := inputs[0].(types.Shape)
+	shapeLogf("input shape: %v", in)
 	switch {
 	case in.IsScalar():
 		shape = scalarShape
 	case in.IsVector() && !in.IsRowVec() && !in.IsColVec():
 		if len(op.along) > 1 || (len(op.along) == 1 && op.along[0] != 0) {
-			return nil, errors.Errorf("Shape mismatch: along is %v. Shape is %v", op.along, in.shape)
+			return nil, errors.Errorf("Shape mismatch: along is %v. Shape is %v", op.along, in)
 		}
 		shape = scalarShape
 	default:
-		shape = in.Shape().Clone()
+		shape = in.Clone()
 		if len(op.along) > len(shape) {
 			return nil, errors.Errorf("Shape mismatch: %v and %v", shape, op.along)
 		}
@@ -187,8 +198,13 @@ func (op sumOp) inferShape(t Type, inputs ...*Node) (shape types.Shape, err erro
 			shape[a] = 1
 		}
 
-		if oneone.Eq(shape) {
+		switch {
+		case oneone.Eq(shape):
 			shape = scalarShape
+		case shape.IsColVec():
+			shape = shape[:1]
+		case shape.IsRowVec():
+			shape = shape[1:]
 		}
 
 	}
@@ -198,10 +214,10 @@ func (op sumOp) inferShape(t Type, inputs ...*Node) (shape types.Shape, err erro
 func (op sumOp) DiffWRT(i int) []bool { return []bool{true} }
 
 func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Requires only one input to differentiate sumop")
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+
 	children := make(Nodes, len(op.along)+1)
 	children[0] = gradNode
 	for i, a := range op.along {
@@ -228,8 +244,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 }
 
 func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Requires only one input to differentiate sumop")
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -239,19 +254,14 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	var T types.Tensor
 	switch ydvd := ydv.d.(type) {
-	case Scalar:
-		switch ydvd.t {
-		case Float64:
-			f := ydvd.v.(float64)
-			T = tf64.NewTensor(tf64.AsScalar(f))
-		case Float32:
-			f := ydvd.v.(float32)
-			T = tf32.NewTensor(tf32.AsScalar(f))
-		default:
-			return errors.Errorf(nyiFail, "sumOp.DoDiff", ydvd.t)
-		}
-	case Tensor:
-		T = ydvd.Tensor
+	case F64:
+		T = tf64.NewTensor(tf64.AsScalar(ydvd.Any().(float64)))
+	case F32:
+		T = tf32.NewTensor(tf32.AsScalar(ydvd.Any().(float32)))
+	case types.Tensor:
+		T = ydvd
+	default:
+		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.d)
 	}
 
 	var val Value
@@ -265,22 +275,20 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 				return errors.Wrapf(err, repFail, a, xShape[a])
 			}
 		}
-
-		val = FromTensor(T)
+		val = T
 	} else {
 		val = ydv.d
 	}
 
 	// then just add the two
-	add := newEBOByType(addOpType, xdv.d.Type(), val.Type())
-
+	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(val))
 	var d Value
 	if d, err = add.UnsafeDo(xdv.d, val); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
 	// check if xdv.d is scalar
-	if xdv.d.Type().isScalar() {
+	if isScalarType(TypeOf(xdv.d)) {
 		return xdv.SetDeriv(d)
 	}
 	return
@@ -288,21 +296,20 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
-	if len(inputs) != 1 {
-		err = NewError(GraphError, "Expect only one input for sumOp. GOt %v instead", len(inputs))
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
 	a := inputs[0]
-	at := a.(Tensor)
-	switch t := at.Tensor.(type) {
+	at := a.(types.Tensor)
+	switch t := at.(type) {
 	case *tf64.Tensor:
 		var ret *tf64.Tensor
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
-				retVal = NewScalarValue(ret.ScalarValue())
+				retVal, _ = anyToScalar(ret.ScalarValue())
 			} else {
-				retVal = FromTensor(ret)
+				retVal = ret
 			}
 		} else {
 			return nil, errors.Wrap(err, "failed to apply *tf64.Tensor.Sum()")
@@ -311,22 +318,22 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 		var ret *tf32.Tensor
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
-				retVal = NewScalarValue(ret.ScalarValue())
+				retVal, _ = anyToScalar(ret.ScalarValue())
 			} else {
-				retVal = FromTensor(ret)
+				retVal = ret
 			}
 		} else {
 			return nil, errors.Wrap(err, "failed to apply *tf32.Tensor.Sum()")
 		}
 	default:
-		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at.Tensor)
+		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at)
 	}
 	return
 }
 
-func (op sumOp) returnsPtr() bool    { return true }
-func (op sumOp) overwriteInput() int { return 0 }
-func (op sumOp) callsExtern() bool   { return false }
+func (op sumOp) ReturnsPtr() bool     { return true }
+func (op sumOp) OverwritesInput() int { return 0 }
+func (op sumOp) CallsExtern() bool    { return false }
 
 func (op sumOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("sum"))

@@ -18,16 +18,19 @@ type Tensor struct {
 	viewOf *Tensor
 }
 
-// a consOpt is a tensor construction option
+// a ConsOpt is a tensor construction option
 type consOpt func(*Tensor)
 
+func (c consOpt) Opt() {}
+
 // NewTensor creates a new Bool *Tensor
-func NewTensor(opts ...consOpt) *Tensor {
+func NewTensor(opts ...types.ConsOpt) *Tensor {
 	t := new(Tensor)
 	t.AP = new(types.AP)
 
 	for _, opt := range opts {
-		opt(t)
+		o := opt.(consOpt)
+		o(t)
 	}
 	t.fix()
 	// TODO: sanity check
@@ -268,6 +271,13 @@ func (t *Tensor) Zero() {
 }
 
 func (t *Tensor) SetAll(val interface{}) error {
+	if val == 1 {
+		for i := range t.data {
+			t.data[i] = true //@DEFAULTONE
+		}
+		return nil
+	}
+
 	v, ok := val.(bool)
 	if !ok {
 		return types.NewError(types.DtypeMismatch, "Cannot set val of %T. Expected Bool", val)
@@ -334,10 +344,22 @@ func (t *Tensor) Clone() *Tensor {
 		}
 	}
 
-	newdata := make([]bool, len(t.data))
-	copy(newdata, t.data)
-	retVal.data = newdata
-	retVal.viewOf = t
+	var newData []bool
+	if t.viewOf != nil {
+		iter := types.NewFlatIterator(t.AP)
+		newData = make([]bool, t.Shape().TotalSize())
+		newData = newData[:0]
+		for i, err := iter.Next(); err == nil; i, err = iter.Next() {
+			newData = append(newData, t.data[i])
+		}
+
+	} else {
+		newData = make([]bool, len(t.data))
+		copy(newData, t.data)
+	}
+
+	retVal.data = newData
+	// retVal.viewOf = t
 	// retVal.Lock()
 	return retVal
 }
@@ -378,8 +400,8 @@ func assignArray(dest, src *Tensor) (err error) {
 		panic("HELP")
 	}
 
-	dd := dest.Opdims()
-	sd := src.Opdims()
+	dd := dest.Dims()
+	sd := src.Dims()
 
 	ds := dest.Strides()
 	ss := src.Strides()

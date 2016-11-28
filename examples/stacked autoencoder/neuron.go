@@ -50,12 +50,12 @@ func (n *Neuron) GobEncode() (p []byte, err error) {
 
 	var wge, bge gob.GobEncoder
 	var ok bool
-	if wge, ok = n.w.Value().(Tensor).Tensor.(gob.GobEncoder); !ok {
+	if wge, ok = n.w.Value().(gob.GobEncoder); !ok {
 		err = errors.New("Cannot encode non-GobEncoder `w`") // well you technically can but we're adding an extra restriction here
 		return
 	}
 
-	if bge, ok = n.b.Value().(Tensor).Tensor.(gob.GobEncoder); !ok {
+	if bge, ok = n.b.Value().(gob.GobEncoder); !ok {
 		err = errors.New("Cannot encode non-GobEncoder `b`")
 		return
 	}

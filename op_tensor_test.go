@@ -1,103 +1,148 @@
 package gorgonia
 
 import (
-	"fmt"
 	"testing"
 
+	"github.com/chewxy/gorgonia/tensor"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
+var repeatOpTests = []struct {
+	name string
+	rep  int
+	axes []int
+	val  Value
+
+	correct       Value
+	expectedShape types.Shape
+	err           bool
+}{
+	{
+		"repeat matrix on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tensor.WithShape(4, 2)),
+		types.Shape{4, 2}, false,
+	},
+
+	{
+		"repeat matrix on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tensor.WithShape(2, 4)),
+		types.Shape{2, 4}, false,
+	},
+
+	{
+		"repeat col vec on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4, 1)),
+		types.Shape{4, 1}, false,
+	},
+
+	{
+		"repeat col vec on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
+		types.Shape{2, 2}, false,
+	},
+
+	{
+		"repeat row vec on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 1, 2}), tensor.WithShape(2, 2)),
+		types.Shape{2, 2}, false,
+	},
+
+	{
+		"repeat row vec on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(1, 4)),
+		types.Shape{1, 4}, false,
+	},
+
+	{
+		"repeat vector on axis 0", 2, []int{0},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4)),
+		types.Shape{4}, false,
+	},
+
+	{
+		"repeat vector on axis 1", 2, []int{1},
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
+		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
+		types.Shape{2, 2}, false,
+	},
+
+	{
+		"repeat scalar", 2, []int{0},
+		F64(3.14), tensor.New(types.Float64, tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
+		types.Shape{2}, false,
+	},
+}
+
 func TestRepeatOp(t *testing.T) {
-	assert := assert.New(t)
-	g := NewGraph()
+	// assert := assert.New(t)
 
-	rep := NewScalarValue(2) // the number of times an axis will be repeated
-	repN := NewScalar(g, Int, WithValue(rep))
+	for _, rots := range repeatOpTests {
+		g := NewGraph()
+		var res Value
+		var err error
+		var repeat *repeatOp
 
-	// test repeat tensor:
+		rep := I(rots.rep)
+		repN := NodeFromAny(g, rep)
+		n := NodeFromAny(g, rots.val)
 
-	// repeat on axis 1
-	T := tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}), tf64.WithShape(2, 2))
-	TT := FromTensor(T)
-	TN := NewMatrix(g, Float64, WithValue(TT))
+		repeat = newRepeatOp(rots.axes, Nodes{n, repN})
 
-	repeat := newRepeatOp([]int{1}, Nodes{TN, repN})
-	correct := tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tf64.WithShape(2, 4))
+		res, err = repeat.Do(rots.val, rep)
+		switch {
+		case rots.err:
+			if err == nil {
+				t.Errorf("Test %q: Expected an error", rots.name)
+			}
+			goto infershape
+		case !rots.err && err != nil:
+			t.Errorf("%+v", err)
+			goto infershape
+		}
 
-	res, err := repeat.Do(TT, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(Tensor).Tensor) {
-		t.Error("Something wrong has happend. Failed to repeat correctly")
-	}
+		if !ValueEq(res, rots.correct) {
+			t.Errorf("Test %q: Expected %v. Got %v", rots.name, rots.correct, res)
+		}
 
-	// repeat on axis 0
-	repeat = newRepeatOp([]int{0}, Nodes{TN, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tf64.WithShape(4, 2))
+	infershape:
+		var s types.Shape
+		size := sizeOp{val: rots.rep}
+		s, err = repeat.InferShape(rots.val.Shape(), size)
+		switch {
+		case rots.err:
+			if err == nil {
+				t.Error("Expected an error")
+			}
+			continue
+		case !rots.err && err != nil:
+			t.Errorf("%+v", err)
+			continue
+		}
 
-	res, err = repeat.Do(TT, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(Tensor).Tensor) {
-		t.Error("Failed to repeat correctly")
-	}
+		if !rots.expectedShape.Eq(s) {
+			t.Errorf("Test %q InferShape: Expected %v. Got %v instead", rots.name, rots.expectedShape, s)
+		}
 
-	// test repeat vector
-	T = tf64.NewTensor(tf64.WithBacking([]float64{1, 2}), tf64.WithShape(2, 1))
-	TT = FromTensor(T)
-	TN = NewVector(g, Float64, WithValue(TT))
-
-	// repeat on the 0th axis
-	repeat = newRepeatOp([]int{0}, Nodes{TN, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2}), tf64.WithShape(4, 1))
-	res, err = repeat.Do(TT, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(Tensor).Tensor) {
-		t.Error("Failed to repeat a vector correctly")
-		t.Errorf("%v", res)
-	}
-
-	// repeat on the 1st axis
-	repeat = newRepeatOp([]int{1}, Nodes{TN, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{1, 1, 2, 2}), tf64.WithShape(2, 2))
-	res, err = repeat.Do(TT, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(Tensor).Tensor) {
-		t.Error("Failed to repeat a vector correctly")
-		t.Errorf("%v", res)
-	}
-
-	// test repeat scalar
-	s := NewScalarValue(3.1415)
-	sn := NewScalar(g, Float64, WithValue(s))
-	repeat = newRepeatOp([]int{0}, Nodes{sn, repN})
-	correct = tf64.NewTensor(tf64.WithBacking([]float64{3.1415, 3.1415}))
-	res, err = repeat.Do(s, rep)
-	if err != nil {
-		t.Error(err)
-	}
-	if !correct.Eq(res.(Tensor).Tensor) {
-		t.Error("Failed to repeat a scalar correctly")
-		t.Errorf("%v", res)
 	}
 
 	/* IDIOTS CHOICE AWARD */
 
 	// impossible axes
-	T = tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}), tf64.WithShape(2, 2))
-	TT = FromTensor(T)
-	repeat = newRepeatOp([]int{3}, Nodes{TN, repN})
-	fails := func() { repeat.Do(TT, rep) }
-	assert.Panics(fails)
+	// g := NewGraph()
+	// v := tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2))
+	// n := NodeFromAny(g, v)
+	// repeat := newRepeatOp([]int{3}, Nodes{n, NodeFromAny(g, I(2))})
+	// f := func() { repeat.Do(v, I(2)) }
+	// assert.Panics(t, f)
 }
 
 func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprGraph, x, y *Node, err error) {
@@ -120,8 +165,8 @@ func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprG
 	if y, err = applyOp(repeat, x, repN); err != nil {
 		return
 	}
-	xVal, _ := anyToValue(xV)
-	yVal, _ := anyToValue(yV)
+	xVal, _, _, _ := anyToValue(xV)
+	yVal, _, _, _ := anyToValue(yV)
 	x.bind(dvUnit(xVal))
 	y.bind(dvUnitVar(yVal))
 	if err = repeat.DoDiff(Nodes{x, repN}, y); err != nil {
@@ -130,6 +175,7 @@ func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprG
 	return
 }
 
+/*
 func TestRepeatOpDoDiff(t *testing.T) {
 	assert := assert.New(t)
 	// var g *ExprGraph
@@ -203,11 +249,10 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal([]float64{2, 2, 2, 2}, extractF64s(xG))
 
 }
-
+*/
 func TestSliceOp(t *testing.T) {
 	assert := assert.New(t)
 	var T *tf64.Tensor
-	var TT Tensor
 	var v Value
 	var slice sliceOp
 	var shape types.Shape
@@ -220,17 +265,16 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] -> Scalar
 	T = tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 0, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.inferShape(TT.Type(), n); err != nil {
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(scalarShape, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
@@ -249,17 +293,16 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] -> Scalar (again, but this time, with a colvec)
 	T = tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 0, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.inferShape(TT.Type(), n); err != nil {
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(scalarShape, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
@@ -267,17 +310,16 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] again, but this time, with a rowvec, and on axis 0
 	T = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 0, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.inferShape(TT.Type(), n); err != nil {
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(types.Shape{2}, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
@@ -285,84 +327,34 @@ func TestSliceOp(t *testing.T) {
 
 	// T[0] again, but this time, with a rowvec, this time along axis 1. this should yield a scalar
 	T = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{1, 2}))
-	TT = FromTensor(T)
 	slice = newSliceOp(S(0), 1, T.Dims())
 
-	n = newNode(withGraph(g), withType(TT.Type()), WithShape(TT.Shape()...))
-	if shape, err = slice.inferShape(TT.Type(), n); err != nil {
+	n = newNode(withGraph(g), withType(TypeOf(T)), WithShape(T.Shape()...))
+	if shape, err = slice.InferShape(n.shape); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(types.Shape{2}, shape)
 
-	if v, err = slice.Do(TT); err != nil {
+	if v, err = slice.Do(T); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(1.0, extractF64(v))
 
-	/*
-		// T[:, 1:2, :]
-		T = tf64.NewTensor(tf64.WithBacking(tf64.RangeFloat64(0, 24)), tf64.WithShape(2, 3, 4))
-		TT = FromTensor(T)
-		slice = newSliceOp(1, 2, 1, T.Dims())
-
-		v, err = slice.Do(TT)
-		if err != nil {
-			t.Error(err)
-		}
-
-		vt, ok := v.(Tensor)
-		if !ok {
-			t.Error("Expected result to be a TensorType")
-		}
-
-		correctShape := types.Shape{2, 4}
-		correctStride := []int{12, 1}
-		correctData := tf64.RangeFloat64(4, 20)
-		assert.Equal(correctShape, vt.Tensor.Shape())
-		assert.Equal(correctStride, vt.Tensor.Strides())
-		assert.Equal(correctData, vt.Data())
-
-		backing := tf64.RandomFloat64(3 * 4)
-		backingLW := make([]float64, len(backing))
-		backingLD := make([]float64, len(backing))
-		for i, v := range backing {
-			backingLW[i] = v
-			backingLD[i] = 0.0
-		}
-		G := lstm.NewGraph()
-		L := new(lstm.Layer)
-		L.W = mat64.NewDense(3, 4, backingLW)
-		L.D = mat64.NewDense(3, 4, backingLD)
-		pr := G.PluckRow(L, 1)
-
-		T = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(3, 4))
-		g := NewGraph()
-		x := NewMatrix(g, Float64, WithValue(T), WithShape(3, 4))
-		sl := Must(Slice(x, S(1)))
-
-		machine := NewLispMachine(g)
-		machine.dontExecBwd()
-		err = machine.RunAll()
-		if err != nil {
-			t.Fatal(err)
-		}
-		vvv := sl.boundTo.(*dualValue).Value
-		log.Printf("%#v \n%v", vvv.(Tensor), pr.W.RawMatrix().Data)
-	*/
 }
 
 func TestSliceOpDiff(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
-	A := NewMatrix(g, Float64, WithShape(2, 2), WithInit(RangedFrom(0)))
+	A := NewMatrix(g, Float64, WithShape(2, 2), WithInit(RangedFrom(0)), WithName("A"))
 	sli := Must(Slice(A, nil, S(1))) // A[:, 1]
 	x := Must(Sum(Must(Mul(sli, twof64))))
 
 	_, err := Grad(x, A)
 	if err != nil {
 		t.Error(err)
+
 	}
 
 	prog, locMap, err := Compile(g)
@@ -376,10 +368,10 @@ func TestSliceOpDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	T := A.Value().(Tensor).Tensor
+	T := A.Value().(types.Tensor)
 	aG, _ := A.Grad()
 
-	G := aG.(Tensor).Tensor.(*tf64.Tensor)
+	G := aG.(types.Tensor)
 	assert.NotEqual(T, G)
 
 	correct := []float64{0, 2, 0, 2}
@@ -391,16 +383,14 @@ func TestSliceOpDiff(t *testing.T) {
 
 	/* Lisp machine version */
 	g2 := NewGraph()
-	A = NewMatrix(g2, Float64, WithShape(2, 2), WithInit(RangedFrom(0)))
+	A = NewMatrix(g2, Float64, WithShape(2, 2), WithInit(RangedFrom(0)), WithName("A"))
 	sli = Must(Slice(A, nil, S(1))) // A[:, 1]
 	x = Must(Sum(Must(Mul(sli, twof64))))
 
 	m2 := NewLispMachine(g2)
 	err = m2.RunAll()
 	if err != nil {
-		fmt.Printf("Errors found. here it is:\n%s", err)
-		fmt.Printf("Error was caused by %s", errors.Cause(err))
-		t.Error(err)
+		t.Errorf("%+v", err)
 	}
 
 	// t.Logf("Visual confirmation")

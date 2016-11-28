@@ -279,7 +279,7 @@ func (ra *regalloc) alloc(sorted Nodes, df *dataflow) {
 			}
 
 			var writeTo register
-			if node.op.returnsPtr() {
+			if node.op.ReturnsPtr() {
 				// create new write to if overwriteInput and the used register is stil live
 				compileLogf("NodeID: %x returns pointer", node.ID())
 				compileLogf("Op: %v", node.op)
@@ -297,7 +297,7 @@ func (ra *regalloc) alloc(sorted Nodes, df *dataflow) {
 					}
 				}
 
-				overwrites := node.op.overwriteInput()
+				overwrites := node.op.OverwritesInput()
 				if overwrites >= 0 {
 					overwrittenIsLive := reads[overwrites].liveAt(instructionID)
 					compileLogf("Overwrites : %v ", overwrites)

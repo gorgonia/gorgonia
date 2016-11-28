@@ -204,7 +204,7 @@ func codegen(inputs, sorted Nodes, df *dataflow) (prog *program, locationMap map
 			// if it's not mutable, there is no chance it will be overwritten
 			if node.isMutable() {
 				// if the instruction calls an extern (cBLAS or cuBlas), then we should preallocate the vector
-				if node.op.callsExtern() {
+				if node.op.CallsExtern() {
 					compileLogf("calls extern")
 					instr := newAlloc(node, nInterv.result)
 					instructions = append(instructions, instr)
@@ -223,7 +223,7 @@ func codegen(inputs, sorted Nodes, df *dataflow) (prog *program, locationMap map
 					if instrID, ok := lastWrites[read.id]; ok {
 						viaticum := instructions[instrID] // ;) - it IS on the way
 						if instr, ok := viaticum.(execOp); ok {
-							if instr.op.callsExtern() && !node.op.callsExtern() {
+							if instr.op.CallsExtern() && !node.op.CallsExtern() {
 								// the && bit is to make sure that if we have sequential cBLAS/cuBLAS calls,
 								// we just add it to the batch.
 								// sequential in this can mean several instructions apart. For example:
@@ -249,7 +249,7 @@ func codegen(inputs, sorted Nodes, df *dataflow) (prog *program, locationMap map
 
 				// check the overwrites - if the overwrite and the resulting register is the same,
 				// then use unsafe options when available
-				overwrites := node.op.overwriteInput()
+				overwrites := node.op.OverwritesInput()
 				if overwrites >= 0 {
 					compileLogf("Overwrites %d", overwrites)
 					overwritten := reads[overwrites]
@@ -306,12 +306,12 @@ func compileState(w io.Writer, g *ExprGraph, df *dataflow) {
 
 		if n.op != nil {
 			row[1] = fmt.Sprintf("%s", n.op)
-			overwrites := n.op.overwriteInput()
+			overwrites := n.op.OverwritesInput()
 			if overwrites >= 0 {
 				row[7] = fmt.Sprintf("%d", n.children[overwrites].ID())
 			}
 
-			if n.op.callsExtern() {
+			if n.op.CallsExtern() {
 				row[8] = "yes"
 			}
 		}

@@ -39,7 +39,8 @@ const (
 	sortFail            = "Failed to sort"
 	cloneFail           = "Failed to carry clone()"
 	clone0Fail          = "Failed to carry clone0()"
-	nyiFail             = "%s not yet implemented for %T"
+	nyiTypeFail         = "%s not yet implemented for %T"
+	nyiFail             = "%s not yet implemented for %v"
 	dtypeOfFail         = "Failed to carry dtypeOf()"
 	mulFail             = "Failed to carry Mul()"
 	applyOpFail         = "Failed to carry applyOp()"
@@ -71,7 +72,8 @@ const (
 	reshapeFail         = "Failed to reshape Tensor into %v. DataSize was: %d"
 	sliceFail           = "Failed to slice Tensor with %v"
 	execFail            = "Failed to execute %v"
-	autodiffFail        = "Failed to differentiate %T"
+	autodiffFail        = "Failed to differentiate %v"
+	undefinedOnShape    = "%v undefined on shape %v"
 )
 
 var empty struct{}

@@ -18,17 +18,23 @@ import (
 )
 
 const (
-	N     = 400
-	feats = 784
+	// N     = 400
+	// feats = 784
 
-	trainIter = 1000
+	N     = 26733
+	feats = 10
+
+	trainIter = 5000
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write mem profile to file")
+var static = flag.Bool("static", false, "Use static test file")
 var wT *tf64.Tensor
 var yT *tf64.Tensor
 var xT *tf64.Tensor
+
+const Float = T.Float64
 
 func handleError(err error) {
 	if err != nil {
@@ -45,8 +51,8 @@ func init() {
 	}
 
 	xT = tf64.NewTensor(tf64.WithBacking(xBacking), tf64.WithShape(N, feats))
-	yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N, 1))
-	wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats, 1))
+	yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N))
+	wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats))
 }
 
 func main() {
@@ -54,15 +60,22 @@ func main() {
 	rand.Seed(1337)
 	log.SetFlags(0)
 
+	if *static {
+		wBacking, xBacking, yBacking := loadStatic()
+		xT = tf64.NewTensor(tf64.WithBacking(xBacking), tf64.WithShape(N, feats))
+		yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N))
+		wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats))
+	}
+
 	// T.Use(cblas.Implementation{})
 	// T.UseNonStable()
 
 	g := T.NewGraph()
-	x := T.NewMatrix(g, T.Float64, T.WithName("x"), T.WithShape(N, feats))
-	y := T.NewVector(g, T.Float64, T.WithName("y"), T.WithShape(N, 1))
+	x := T.NewMatrix(g, Float, T.WithName("x"), T.WithShape(N, feats))
+	y := T.NewVector(g, Float, T.WithName("y"), T.WithShape(N))
 
-	w := T.NewVector(g, T.Float64, T.WithName("w"), T.WithShape(feats, 1))
-	b := T.NewScalar(g, T.Float64, T.WithName("bias"), T.WithShape(1))
+	w := T.NewVector(g, Float, T.WithName("w"), T.WithShape(feats))
+	b := T.NewScalar(g, Float, T.WithName("bias"))
 
 	one := T.NewConstant(1.0)
 

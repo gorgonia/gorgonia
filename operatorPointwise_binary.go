@@ -3,7 +3,10 @@ package gorgonia
 import (
 	"math"
 
+	tf32 "github.com/chewxy/gorgonia/tensor/f32"
+	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 )
 
@@ -31,105 +34,254 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 		return
 	}
 
-	a, aok := vals[0].(Scalar)
-	b, bok := vals[1].(Scalar)
-
-	if !aok || !bok {
-		return nil, errors.Errorf("Expected both inputs to binOp %v to be Scalar. Got %v (%T) and %#v(%T) instead", o, vals[0], vals[0], vals[1], vals[1])
-	}
-
-	if a.t != o.t {
-		return nil, errors.Errorf("Type mismatch for a. Expected %v. Got %v instead", o.t, a.t)
-	}
-
-	if b.t != o.t {
-		return nil, errors.Errorf("Type mismatch for b. Expected %v. Got %v instead | %v(%T) |%v(%T)", o.t, b.t, a, a, b, b)
+	at := TypeOf(vals[0])
+	bt := TypeOf(vals[1])
+	if !at.Eq(bt) {
+		err = errors.Errorf("Type Mismatch: %v != %v", at, bt)
+		return
 	}
 
 	var r interface{} // float or bool only plz
-	switch o.t {
-	case Float64:
-		af := a.v.(float64)
-		bf := b.v.(float64)
+	switch a := vals[0].(type) {
+	case F64:
+		b := vals[1].(F64)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = af + bf
+			r = a + b
 		case subOpType:
-			r = af - bf
+			r = a - b
 		case mulOpType:
-			r = af * bf
+			r = a * b
 		case divOpType:
-			r = af / bf
+			r = a / b
 		case powOpType:
-			r = math.Pow(af, bf)
+			r = F64(math.Pow(float64(a), float64(b)))
 		case ltOpType:
-			r = af < bf
+			r = a < b
 		case gtOpType:
-			r = af > bf
+			r = a > b
 		case lteOpType:
-			r = af <= bf
+			r = a <= b
 		case gteOpType:
-			r = af >= bf
+			r = a >= b
 		case eqOpType:
-			r = af == bf
+			r = a == b
 		case neOpType:
-			r = af != bf
+			r = a != b
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
 			if r.(bool) {
-				r = float64(1)
+				r = F64(1)
 			} else {
-				r = float64(0)
+				r = F64(0)
 			}
 		}
-	case Float32:
-		af := a.v.(float32)
-		bf := b.v.(float32)
+
+	case F32:
+		b := vals[1].(F32)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = af + bf
+			r = a + b
 		case subOpType:
-			r = af - bf
+			r = a - b
 		case mulOpType:
-			r = af * bf
+			r = a * b
 		case divOpType:
-			r = af / bf
+			r = a / b
 		case powOpType:
-			r = float32(math.Pow(float64(af), float64(bf)))
+			r = F32(math32.Pow(float32(a), float32(b)))
 		case ltOpType:
-			r = af < bf
+			r = a < b
 		case gtOpType:
-			r = af > bf
+			r = a > b
 		case lteOpType:
-			r = af <= bf
+			r = a <= b
 		case gteOpType:
-			r = af >= bf
+			r = a >= b
 		case eqOpType:
-			r = af == bf
+			r = a == b
 		case neOpType:
-			r = af != bf
+			r = a != b
 		default:
-			err = errors.Errorf("scalarBinOp.Do() - Float32", o.ʘBinaryOperatorType)
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
 			if r.(bool) {
-				r = float32(1)
+				r = F32(1)
 			} else {
-				r = float32(0)
+				r = F32(0)
 			}
 		}
+
+	case I:
+		b := vals[1].(I)
+		switch o.ʘBinaryOperatorType {
+		case addOpType:
+			r = a + b
+		case subOpType:
+			r = a - b
+		case mulOpType:
+			r = a * b
+		case divOpType:
+			r = a / b
+		// case powOpType:
+		// 	r = math.Pow(a, b)
+		case ltOpType:
+			r = a < b
+		case gtOpType:
+			r = a > b
+		case lteOpType:
+			r = a <= b
+		case gteOpType:
+			r = a >= b
+		case eqOpType:
+			r = a == b
+		case neOpType:
+			r = a != b
+		default:
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+		}
+
+		if same && !o.isArith() {
+			if r.(bool) {
+				r = I(1)
+			} else {
+				r = I(0)
+			}
+		}
+	case I32:
+		b := vals[1].(I32)
+		switch o.ʘBinaryOperatorType {
+		case addOpType:
+			r = a + b
+		case subOpType:
+			r = a - b
+		case mulOpType:
+			r = a * b
+		case divOpType:
+			r = a / b
+		// case powOpType:
+		// 	r = math.Pow(a, b)
+		case ltOpType:
+			r = a < b
+		case gtOpType:
+			r = a > b
+		case lteOpType:
+			r = a <= b
+		case gteOpType:
+			r = a >= b
+		case eqOpType:
+			r = a == b
+		case neOpType:
+			r = a != b
+		default:
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+		}
+
+		if same && !o.isArith() {
+			if r.(bool) {
+				r = I32(1)
+			} else {
+				r = I32(0)
+			}
+		}
+	case I64:
+		b := vals[1].(I64)
+		switch o.ʘBinaryOperatorType {
+		case addOpType:
+			r = a + b
+		case subOpType:
+			r = a - b
+		case mulOpType:
+			r = a * b
+		case divOpType:
+			r = a / b
+		// case powOpType:
+		// 	r = math.Pow(a, b)
+		case ltOpType:
+			r = a < b
+		case gtOpType:
+			r = a > b
+		case lteOpType:
+			r = a <= b
+		case gteOpType:
+			r = a >= b
+		case eqOpType:
+			r = a == b
+		case neOpType:
+			r = a != b
+		default:
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+		}
+
+		if same && !o.isArith() {
+			if r.(bool) {
+				r = I64(1)
+			} else {
+				r = I64(0)
+			}
+		}
+	case U8:
+		b := vals[1].(U8)
+		switch o.ʘBinaryOperatorType {
+		case addOpType:
+			r = a + b
+		case subOpType:
+			r = a - b
+		case mulOpType:
+			r = a * b
+		case divOpType:
+			r = a / b
+		// case powOpType:
+		// 	r = math.Pow(a, b)
+		case ltOpType:
+			r = a < b
+		case gtOpType:
+			r = a > b
+		case lteOpType:
+			r = a <= b
+		case gteOpType:
+			r = a >= b
+		case eqOpType:
+			r = a == b
+		case neOpType:
+			r = a != b
+		default:
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+		}
+
+		if same && !o.isArith() {
+			if r.(bool) {
+				r = U8(1)
+			} else {
+				r = U8(0)
+			}
+		}
+	case B:
+		b := vals[1].(B)
+		switch o.ʘBinaryOperatorType {
+		case eqOpType:
+			r = a == b
+		case neOpType:
+			r = a != b
+		default:
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+		}
+
 	default:
 		err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Unhandled Scalar Type", o.t)
 	}
+
 	if err != nil {
 		return
 	}
 
-	return anyToValue(r)
+	retVal, _ = anyToScalar(r)
+	return
 }
 
 type tBinOp struct {
@@ -137,6 +289,7 @@ type tBinOp struct {
 	tensorLeft bool
 }
 
+func (o tBinOp) Arity() int                     { return 2 }
 func (o tBinOp) binOpType() ʘBinaryOperatorType { return o.ʘBinaryOperatorType }
 func (o tBinOp) String() string                 { return o.ʘBinaryOperatorType.String() }
 func (o tBinOp) isArith() bool                  { return o.ʘBinaryOperatorType.isArith() }
@@ -148,23 +301,22 @@ func (o tBinOp) Do(same bool, inputs ...Value) (Value, error) {
 	return o.do(inputs)
 }
 
-func (o tBinOp) UnsafeDo(inputs ...Value) (Value, error) { return o.do(inputs, types.UseUnsafe()) }
+func (o tBinOp) UnsafeDo(inputs ...Value) (Value, error) {
+	return o.do(inputs, types.UseUnsafe())
+}
 func (o tBinOp) UsePreallocDo(v Value, inputs ...Value) (retVal Value, err error) {
-	t, ok := v.(Tensor)
+	t, ok := v.(types.Tensor)
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", v, v)
 	}
 
-	reuse := t.Tensor
+	reuse := t
 	return o.do(inputs, types.WithReuse(reuse))
 }
 
 func (o tBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
-	var reuse types.Tensor
-
-	t, ok := incr.(Tensor)
+	reuse, ok := incr.(types.Tensor)
 	if ok {
-		reuse = t.Tensor
 		_, err = o.do(inputs, types.WithIncr(reuse))
 		return
 	}
@@ -174,7 +326,7 @@ func (o tBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 		return errors.Wrapf(err, doFail, o)
 	}
 
-	add := newEBOByType(addOpType, incr.Type(), retVal.Type())
+	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
 	if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
@@ -184,13 +336,13 @@ func (o tBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 }
 
 func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error) {
-	if len(vals) != 2 {
-		err = NewError(GraphError, "Executing a binary operation expects 2 inputs. Got %d instead", len(vals))
+	if err = checkArity(o, len(vals)); err != nil {
 		return
 	}
+
 	// typecheck the operands
-	d0 := vals[0].Dtype()
-	d1 := vals[1].Dtype()
+	d0 := DtypeOf(vals[0])
+	d1 := DtypeOf(vals[1])
 
 	if d0 != d1 {
 		return nil, errors.Errorf("Dtype mismatch for bin op: %v and %v", d0, d1)
@@ -199,38 +351,41 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 	// extract the goddamn values
 	var a, b interface{}
 	if o.tensorLeft {
-		t, ok := vals[0].(Tensor)
+		t, ok := vals[0].(types.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected left value to be Tensor. Got %v of %T instead", vals[0], vals[0])
 		}
-		a = t.Tensor.Materialize()
+		a = t.Materialize()
 
 		switch other := vals[1].(type) {
-		case Scalar:
-			b = other.v
-		case Tensor:
-			b = other.Tensor.Materialize()
+		case F64:
+			b = float64(other)
+		case F32:
+			b = float32(other)
+		case types.Tensor:
+			b = other.Materialize()
 		default:
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])
 		}
 	} else {
-		t, ok := vals[1].(Tensor)
+		t, ok := vals[1].(types.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected right value to be Tensor. Got %v of %T instead", vals[1], vals[1])
 		}
-		b = t.Tensor.Materialize()
+		b = t.Materialize()
 
 		switch other := vals[0].(type) {
-		case Scalar:
-			a = other.v
-		case Tensor:
-			a = other.Tensor.Materialize()
+		case F64:
+			a = float64(other)
+		case F32:
+			a = float32(other)
+		case types.Tensor:
+			a = other.Materialize()
 		default:
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])
 		}
 	}
 
-	var r interface{}
 	switch d0 {
 	case Float64:
 		// get function, call function
@@ -239,17 +394,14 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 			if fn == nil {
 				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
 			}
-			if r, err = (*fn)(a, b, opts...); err != nil {
-				return nil, errors.Wrap(err, "Calling the function failed")
-			}
+			retVal, err = (*fn)(a, b, opts...)
 		} else {
 			fn := tf64CmpOps[o.ʘBinaryOperatorType]
 			if fn == nil {
 				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
 			}
-			if r, err = (*fn)(a, b, opts...); err != nil {
-				return nil, errors.Wrap(err, "Calling the function failed")
-			}
+
+			retVal, err = (*fn)(a, b, opts...)
 		}
 	case Float32:
 		// get function, call function
@@ -258,23 +410,19 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 			if fn == nil {
 				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
 			}
-			if r, err = (*fn)(a, b, opts...); err != nil {
-				return nil, errors.Wrap(err, "Calling the function failed")
-			}
+			retVal, err = (*fn)(a, b, opts...)
 		} else {
 			fn := tf32CmpOps[o.ʘBinaryOperatorType]
 			if fn == nil {
 				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
 			}
-			if r, err = (*fn)(a, b, opts...); err != nil {
-				return nil, errors.Wrap(err, "Calling the function failed")
-			}
+			retVal, err = (*fn)(a, b, opts...)
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "tBinOp.do()", d0)
 	}
 
-	return anyToValue(r)
+	return
 }
 
 // type binDiffFn func(x, y, z, gradZ *Node) (Nodes, err error)
@@ -300,13 +448,9 @@ func addDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, add)
 		}
 	}
-
-	if !add.returnsPtr() || x.IsScalar() {
-		xdv.SetDeriv(d) // ignore sanity check error on purpose
-	}
+	xdv.SetDeriv(d)
 
 	add = newElemBinOp(addOpType, y, z)
-
 	if y.IsScalar() {
 		if d, err = add.Do(ydv.d, zdv.d); err != nil {
 			return errors.Wrapf(err, doFail, add)
@@ -316,9 +460,7 @@ func addDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, add)
 		}
 	}
-	if !add.returnsPtr() || y.IsScalar() {
-		ydv.SetDeriv(d) // ignore errors on purpose
-	}
+	ydv.SetDeriv(d) // ignore errors on purpose
 
 	return nil
 }
@@ -327,6 +469,7 @@ func subDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdy *Node
 	if dzdy, err = Neg(gradZ); err == nil {
 		WithGroupName(gradClust)(dzdy)
+		WithGroupName(gradClust)(gradZ)
 		retVal = Nodes{gradZ, dzdy}
 	} else {
 		return nil, errors.Wrap(err, "Failed to carry Neg()")
@@ -339,12 +482,12 @@ func subDiff(x, y, z *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
 
-	sub := newElemBinOp(subOpType, y, z)
-	add := newElemBinOp(addOpType, x, z)
+	sub := newEBOByType(subOpType, y.t, z.t)
+	add := newEBOByType(addOpType, x.t, z.t)
 
 	var d Value
-	// dz/dy
 
+	// dz/dy
 	if y.IsScalar() {
 		if d, err = sub.Do(ydv.d, zdv.d); err != nil {
 			return errors.Wrapf(err, doFail, sub)
@@ -354,10 +497,7 @@ func subDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, sub)
 		}
 	}
-
-	if !sub.returnsPtr() || y.IsScalar() {
-		ydv.SetDeriv(d) // ignore errors on purpose
-	}
+	ydv.SetDeriv(d) // ignore errors on purpose
 
 	// dz/dx
 	if x.IsScalar() {
@@ -369,10 +509,7 @@ func subDiff(x, y, z *Node) (err error) {
 			return errors.Wrapf(err, unsafeDoFail, add)
 		}
 	}
-
-	if !add.returnsPtr() || x.IsScalar() {
-		xdv.SetDeriv(d) // ignore errors on purpose
-	}
+	xdv.SetDeriv(d) // ignore errors on purpose
 
 	return nil
 }
@@ -399,35 +536,44 @@ func hadamardProdDiff(x, y, z *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
 
-	// mul := newElemBinOp(mulOpType, x, z)
-	zdvdType := zdv.d.Type()
+	var mul elemBinOp
+	zdvdType := TypeOf(zdv.d)
+
+	if x.isConstant() {
+		goto dzdy
+	}
 
 	//dzdx
-	mul := newEBOByType(mulOpType, ydv.Value.Type(), zdvdType)
+	mul = newEBOByType(mulOpType, TypeOf(ydv.Value), zdvdType)
 	err = mul.IncrDo(xdv.d, ydv.Value, zdv.d)
 	if err != nil {
 		var ver Valuer
 		var ok bool
 		if ver, ok = err.(Valuer); !ok {
-			return
+			return errors.Wrap(err, "IncrDo xdv.d failed")
 		}
 
 		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
 	}
 
-	//dzdy
-	mul = newEBOByType(mulOpType, xdv.Value.Type(), zdvdType)
+dzdy:
+	if y.isConstant() {
+		goto end
+	}
+
+	mul = newEBOByType(mulOpType, TypeOf(xdv.Value), zdvdType)
 	err = mul.IncrDo(ydv.d, xdv.Value, zdv.d)
 	if err != nil {
 		var ver Valuer
 		var ok bool
 		if ver, ok = err.(Valuer); !ok {
-			return
+			return errors.Wrap(err, "IncrDo ydv.d failed")
 		}
 
 		ydv.SetDeriv(ver.Value()) // ignore errors on purpose
 	}
 
+end:
 	return nil
 }
 
@@ -463,7 +609,7 @@ func hadamardDivDiff(x, y, z *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
 
-	div := newEBOByType(divOpType, zdv.d.Type(), ydv.Value.Type())
+	div := newEBOByType(divOpType, TypeOf(zdv.d), TypeOf(ydv.Value))
 
 	// dzdx = 1/y * dz
 	err = div.IncrDo(xdv.d, zdv.d, ydv.Value)
@@ -509,11 +655,122 @@ func hadamardDivDiff(x, y, z *Node) (err error) {
 
 // TODO: go back in time, pay more attention to calculus class in high school and learn how to differentiate x^y
 func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
-	return nil, errors.New("hadamardPowDiffExpr not yet implemented")
+	var one *Node
+	var dt Dtype
+
+	if dt, err = dtypeOf(y.t); err != nil {
+		return nil, errors.Wrapf(err, dtypeExtractionFail, y.t)
+	}
+
+	switch dt {
+	case Float32:
+		one = onef32
+	case Float64:
+		one = onef64
+	default:
+		err = errors.Errorf(nyiTypeFail, "Hadamard Power Diff", y.t)
+	}
+
+	var ym1, pow *Node
+	if ym1, err = Sub(y, one); err != nil {
+		return
+	}
+
+	if pow, err = Pow(x, ym1); err != nil {
+		return
+	}
+
+	var dzdx *Node
+	if dzdx, err = HadamardProd(grad, y); err != nil {
+		return
+	}
+	if dzdx, err = HadamardProd(dzdx, pow); err != nil {
+		return
+	}
+
+	var logx *Node
+	if logx, err = Log(x); err != nil {
+		return
+	}
+
+	var dzdy *Node
+	if dzdy, err = HadamardProd(grad, z); err != nil {
+		return
+	}
+	if dzdy, err = HadamardProd(dzdy, logx); err != nil {
+		return
+	}
+
+	retVal = Nodes{dzdx, dzdy}
+	return
+	// return nil, errors.New("hadamardPowDiffExpr not yet implemented")
 }
 
 func hadamardPowDiff(x, y, z *Node) (err error) {
-	return errors.New("hadamardPowDiff not yet implemented")
+	xdv := x.boundTo.(*dualValue)
+	ydv := y.boundTo.(*dualValue)
+	zdv := z.boundTo.(*dualValue)
+
+	var ym1 Value
+	switch ydvt := ydv.Value.(type) {
+	case F64:
+		ym1 = ydvt - F64(1)
+	case F32:
+		ym1 = ydvt - F32(1)
+	case *tf64.Tensor:
+		if ym1, err = tf64.Sub(ydvt, float64(1)); err != nil {
+			return
+		}
+	case *tf32.Tensor:
+		if ym1, err = tf32.Sub(ydvt, float32(1)); err != nil {
+			return
+		}
+	default:
+		err = errors.Errorf(nyiTypeFail, "hadamardPowDiff", ydv.Value)
+		return
+	}
+
+	// dzdx
+	var pow Value
+	powOp := newEBOByType(powOpType, TypeOf(xdv.Value), TypeOf(ym1))
+	if pow, err = powOp.Do(xdv.Value, ym1); err != nil {
+		return
+	}
+
+	mul := newEBOByType(mulOpType, TypeOf(ydv.Value), TypeOf(xdv.Value))
+	if pow, err = mul.UnsafeDo(pow, ydv.Value); err != nil {
+		return
+	}
+
+	if err = mul.IncrDo(xdv.d, pow, zdv.d); err != nil {
+		var ver Valuer
+		var ok bool
+		if ver, ok = err.(Valuer); !ok {
+			return
+		}
+
+		xdv.SetDeriv(ver.Value())
+	}
+
+	// dzdy
+	var logx Value
+	logOp := newElemUnaryOp(lnOpType, x)
+	if logx, err = logOp.Do(xdv.Value); err != nil {
+		return
+	}
+	if logx, err = mul.Do(zdv.Value, logx); err != nil {
+		return
+	}
+	if err = mul.IncrDo(ydv.d, logx, zdv.d); err != nil {
+		var ver Valuer
+		var ok bool
+		if ver, ok = err.(Valuer); !ok {
+			return
+		}
+
+		ydv.SetDeriv(ver.Value())
+	}
+	return nil
 }
 
 func nondiffBinOpExpr(x, y, z, grad *Node) (retVal Nodes, err error) {

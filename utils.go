@@ -54,42 +54,30 @@ func cloneNodes(node Nodes, replacements map[*Node]*Node) Nodes {
 	return nil
 }
 
-func anyToValue(any interface{}) (val Value, err error) {
-	switch a := any.(type) {
-	case float64, float32, int, int64, int32, byte, bool:
-		return NewScalarValue(any), nil
-	case types.Tensor:
-		return Tensor{Tensor: a}, nil
-	case Value:
-		return a, nil
-	default:
-		return nil, errors.Errorf("value %v of %T not yet handled", any, any)
-	}
-	panic("Unreachable")
-}
-
 // valuesToInts will FORCIBLY cast floats to ints.
 func valuesToInts(values []Value) (retVal []int, err error) {
 	retVal = make([]int, len(values))
 	for i, v := range values {
-		sv, ok := v.(Scalar)
-		if !ok {
-			return nil, errors.Errorf("Expected values to be all Scalar Value. Got %v of %T instead", v, v)
-		}
-
 		var intV int
-		switch vt := sv.v.(type) {
-		case float64:
-			intV = int(vt)
-		case float32:
-			intV = int(vt)
-		case int:
-			intV = vt
+		switch sv := v.(type) {
+		case F64:
+			intV = int(float64(sv))
+		case F32:
+			intV = int(float32(sv))
+		case I:
+			intV = int(sv)
+		case I32:
+			intV = int(int32(sv))
+		case I64:
+			intV = int(int64(sv))
+		case U8:
+			intV = int(byte(sv))
+		case Scalar:
+			return nil, errors.Errorf(nyiTypeFail, "valueToInts", v)
 		default:
-			return nil, errors.Errorf("Expected ScalarValue to have Int type. Got %v of %v(%T) instead", sv.v, sv.t, sv.v)
+			return nil, errors.Errorf("Expected values to be all Scalar Value. Got %v of %T instead", v, v)
 
 		}
-
 		retVal[i] = intV
 	}
 	return
@@ -121,29 +109,17 @@ func intRange(start, end int) []int {
 }
 
 func ones(dt Dtype, sizes ...int) (retVal Value) {
+	if len(sizes) == 0 {
+		return one(dt)
+	}
+
 	switch dt {
 	case Float64:
-		if len(sizes) == 0 {
-			retVal = NewScalarValue(float64(1.0))
-		} else {
-			t := tf64.Ones(sizes...)
-			retVal = FromTensor(t)
-		}
+		return tf64.Ones(sizes...)
 	case Float32:
-		if len(sizes) == 0 {
-			retVal = NewScalarValue(float64(1.0))
-		} else {
-			t := tf32.Ones(sizes...)
-			retVal = FromTensor(t)
-		}
+		return tf32.Ones(sizes...)
 	case Int:
-		if len(sizes) == 0 {
-			retVal = NewScalarValue(float64(1.0))
-		} else {
-			t := ti.Ones(sizes...)
-			retVal = FromTensor(t)
-		}
-
+		return ti.Ones(sizes...)
 	default:
 		panic(fmt.Sprintf("Dtype of %v not yet implemented for ones()"))
 	}
@@ -152,84 +128,56 @@ func ones(dt Dtype, sizes ...int) (retVal Value) {
 
 func hasInf(v Value) bool {
 	switch vt := v.(type) {
-	case Tensor:
-		switch vt.Dtype() {
-		case Float64:
-			T := vt.Tensor.(*tf64.Tensor)
-			data := T.Data().([]float64)
-			for _, datum := range data {
-				if math.IsInf(datum, 0) {
-					return true
-				}
+	case F64:
+		return math.IsInf(float64(vt), 0)
+	case F32:
+		return math32.IsInf(float32(vt), 0)
+	case *tf64.Tensor:
+		data := vt.Data().([]float64)
+		for _, datum := range data {
+			if math.IsInf(datum, 0) {
+				return true
 			}
-			return false
-		case Float32:
-			T := vt.Tensor.(*tf32.Tensor)
-			data := T.Data().([]float32)
-			for _, datum := range data {
-				if math32.IsInf(datum, 0) {
-					return true
-				}
+		}
+		return false
+	case *tf32.Tensor:
+		data := vt.Data().([]float32)
+		for _, datum := range data {
+			if math32.IsInf(datum, 0) {
+				return true
 			}
-			return false
-		default:
-			err := nyi("hasInf", vt.Dtype())
-			panic(err)
 		}
-	case Scalar:
-		switch f := vt.v.(type) {
-		case float32:
-			return math32.IsInf(f, 0)
-		case float64:
-			return math.IsInf(f, 0)
-		default:
-			return false
-		}
+		return false
 	case *dualValue:
 		return hasInf(vt.Value) || hasInf(vt.d)
 	default:
-		err := nyi("hasInf", vt)
+		err := nyi("hasInf", v)
 		panic(err)
 	}
-
-	panic("Unreachable")
 }
 
 func hasNaN(v Value) bool {
 	switch vt := v.(type) {
-	case Tensor:
-		switch vt.Dtype() {
-		case Float64:
-			T := vt.Tensor.(*tf64.Tensor)
-			data := T.Data().([]float64)
-			for _, datum := range data {
-				if math.IsNaN(datum) {
-					return true
-				}
+	case F64:
+		return math.IsNaN(float64(vt))
+	case F32:
+		return math32.IsNaN(float32(vt))
+	case *tf64.Tensor:
+		data := vt.Data().([]float64)
+		for _, datum := range data {
+			if math.IsNaN(datum) {
+				return true
 			}
-			return false
-		case Float32:
-			T := vt.Tensor.(*tf64.Tensor)
-			data := T.Data().([]float32)
-			for _, datum := range data {
-				if math32.IsNaN(datum) {
-					return true
-				}
+		}
+		return false
+	case *tf32.Tensor:
+		data := vt.Data().([]float32)
+		for _, datum := range data {
+			if math32.IsNaN(datum) {
+				return true
 			}
-			return false
-		default:
-			err := nyi("hasNaN", vt.Dtype())
-			panic(err)
 		}
-	case Scalar:
-		switch f := vt.v.(type) {
-		case float32:
-			return math32.IsNaN(f)
-		case float64:
-			return math.IsNaN(f)
-		default:
-			return false
-		}
+		return false
 	case *dualValue:
 		return hasNaN(vt.Value) || hasNaN(vt.d)
 	default:
@@ -245,32 +193,20 @@ func setZero(val Value) (retVal Value) {
 		v.Zero()
 		return v
 	case Scalar:
-		cloned, err := v.clone()
-		if err != nil {
-			panic(err)
-		}
-
-		s2 := cloned.(Scalar)
-
-		switch v.t {
-		case Float64:
-			s2.v = 0.0
-		case Float32:
-			s2.v = float32(0.0)
-		case Int:
-			s2.v = 0
-		case Int64:
-			s2.v = int64(0)
-		case Int32:
-			s2.v = int32(0)
-		case Byte:
-			s2.v = byte(0)
-		case Bool:
-			s2.v = false
-		}
-		return s2
+		return zero(DtypeOf(v))
 	default:
 		panic(fmt.Sprintf("setZero not implemented yet for %T", v))
 	}
 	panic("unreachable")
+}
+
+type arityer interface {
+	Arity() int
+}
+
+func checkArity(op arityer, inputs int) error {
+	if inputs != op.Arity() && op.Arity() >= 0 {
+		return NewError(GraphError, "%v has an arity of %d. Got %d instead", op, op.Arity(), inputs)
+	}
+	return nil
 }

@@ -16,7 +16,6 @@ import "fmt"
 type AP struct {
 	shape   Shape // len(shape) is the operational definition of the dimensions
 	strides []int // strides is usually calculated from shape
-	dims    int   // this is what we tell the world the number of dimensions is
 	fin     bool  // is this struct change-proof?
 
 	// future stuff
@@ -28,7 +27,6 @@ func NewAP(shape Shape, strides []int) *AP {
 	return &AP{
 		shape:   shape,
 		strides: strides,
-		dims:    shape.Dims(),
 		fin:     true,
 	}
 }
@@ -46,7 +44,6 @@ func (ap *AP) SetShape(s ...int) {
 		if len(s) == 0 {
 			ap.shape = ap.shape[:0]
 			ap.strides = ap.strides[:0]
-			ap.dims = 0
 			return
 		}
 
@@ -60,7 +57,6 @@ func (ap *AP) SetShape(s ...int) {
 		}
 		ap.shape = Shape(s).Clone()
 		ap.strides = ap.shape.CalcStrides()
-		ap.dims = ap.shape.Dims()
 	}
 }
 
@@ -69,44 +65,31 @@ func (ap *AP) Unlock() { ap.fin = false }
 
 func (ap *AP) Shape() Shape   { return ap.shape }
 func (ap *AP) Strides() []int { return ap.strides }
-func (ap *AP) Dims() int      { return ap.dims }
-func (ap *AP) Opdims() int    { return len(ap.shape) }
+func (ap *AP) Dims() int      { return ap.shape.Dims() }
 func (ap *AP) Size() int      { return ap.shape.TotalSize() }
 
-func (ap *AP) String() string {
-	return fmt.Sprintf("Shape: %v, Stride: %v, Dims: %v, Lock: %t", ap.shape, ap.strides, ap.dims, ap.fin)
-}
+func (ap *AP) String() string { return fmt.Sprintf("%v", ap) }
 func (ap *AP) Format(state fmt.State, c rune) {
-	fmt.Fprintf(state, "Shape: %v, Stride: %v, Dims: %v, Lock: %t", ap.shape, ap.strides, ap.dims, ap.fin)
+	fmt.Fprintf(state, "Shape: %v, Stride: %v, Lock: %t", ap.shape, ap.strides, ap.fin)
 }
 
 // IsVector returns whether the access pattern falls into one of three possible definitions of vectors:
 //		vanilla vector (not a row or a col)
 //		column vector
 //		row vector
-func (ap *AP) IsVector() bool {
-	return (len(ap.shape) == 1 && ap.shape[0] > 1) || ap.IsColVec() || ap.IsRowVec()
-}
+func (ap *AP) IsVector() bool { return ap.shape.IsVector() }
 
 // IsColVec returns true when the access pattern has the shape (x, 1)
-func (ap *AP) IsColVec() bool {
-	return len(ap.shape) == 2 && ap.shape[0] > 1 && ap.shape[1] == 1
-}
+func (ap *AP) IsColVec() bool { return ap.shape.IsColVec() }
 
 // IsRowVec returns true when the access pattern has the shape (1, x)
-func (ap *AP) IsRowVec() bool {
-	return len(ap.shape) == 2 && ap.shape[0] == 1 && ap.shape[1] > 1
-}
+func (ap *AP) IsRowVec() bool { return ap.shape.IsRowVec() }
 
 // IsScalar returns true if the access pattern indicates it's a scalar value
-func (ap *AP) IsScalar() bool {
-	return ap.dims == 0 || (len(ap.shape) == 1 && ap.shape[0] == 1)
-}
+func (ap *AP) IsScalar() bool { return ap.shape.IsScalar() }
 
 // IsMatrix returns true if it's a matrix. This is mostly a convenience method. RowVec and ColVecs are also considered matrices
-func (ap *AP) IsMatrix() bool {
-	return len(ap.shape) == 2
-}
+func (ap *AP) IsMatrix() bool { return len(ap.shape) == 2 }
 
 // Clone clones the *AP. Clearly.
 func (ap *AP) Clone() (retVal *AP) {
@@ -141,12 +124,11 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 
 	ndEnd = size
 
-	newShape := ap.shape.Clone()      // the new shape
-	opDims := len(ap.shape)           // operational dimensions
-	dims := ap.dims                   // reported dimensions
-	newStrides := make([]int, opDims) // the new strides
+	newShape := ap.shape.Clone()    // the new shape
+	dims := ap.Dims()               // reported dimensions
+	newStrides := make([]int, dims) // the new strides
 
-	for i := 0; i < opDims; i++ {
+	for i := 0; i < dims; i++ {
 		var sl Slice
 		if i <= len(slices)-1 {
 			sl = slices[i]
@@ -155,7 +137,7 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		size := ap.shape[i]
 
 		var stride int
-		if dims < opDims && ap.IsVector() {
+		if ap.IsVector() {
 			// handles non-vanilla vectors
 			stride = ap.strides[0]
 		} else {
@@ -214,8 +196,8 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 // T returns the transposed metadata based on the given input
 func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 	// prep axes
-	if len(axes) > 0 && len(axes) != ap.dims {
-		err = DimMismatchErr(ap.dims, len(axes))
+	if len(axes) > 0 && len(axes) != ap.Dims() {
+		err = DimMismatchErr(ap.Dims(), len(axes))
 		return
 	}
 
@@ -271,52 +253,6 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 		retVal.strides = retVal.strides[:1]
 	}
 
-	return
-}
-
-// SortedMultiStridePerm takes multiple input strides, and creates a sorted stride permutation.
-// It's based very closely on Numpy's PyArray_CreateMultiSortedStridePerm, where a stable insertion sort is used
-// to create the permutations.
-func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
-	retVal = BorrowInts(dims)
-	for i := 0; i < dims; i++ {
-		retVal[i] = i
-	}
-
-	for i := 1; i < dims; i++ {
-		ipos := i
-		axisi := retVal[i]
-
-		for j := i - 1; j >= 0; j-- {
-			var ambig, swap bool
-			ambig = true
-			axisj := retVal[j]
-
-			for _, ap := range aps {
-				if ap.shape[axisi] != 1 && ap.shape[axisj] != 1 {
-					if ap.strides[axisi] <= ap.strides[axisj] {
-						swap = true
-					} else if ambig {
-						swap = true
-					}
-					ambig = false
-				}
-			}
-
-			if !ambig && swap {
-				ipos = j
-			} else {
-				break
-			}
-
-		}
-		if ipos != i {
-			for j := i; j > ipos; j-- {
-				retVal[j] = retVal[j-1]
-			}
-			retVal[ipos] = axisi
-		}
-	}
 	return
 }
 
@@ -539,3 +475,51 @@ func (it *FlatIterator) Chan() (retVal chan int) {
 
 	return
 }
+
+/* TEMPORARILY REMOVED
+// SortedMultiStridePerm takes multiple input strides, and creates a sorted stride permutation.
+// It's based very closely on Numpy's PyArray_CreateMultiSortedStridePerm, where a stable insertion sort is used
+// to create the permutations.
+func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
+	retVal = BorrowInts(dims)
+	for i := 0; i < dims; i++ {
+		retVal[i] = i
+	}
+
+	for i := 1; i < dims; i++ {
+		ipos := i
+		axisi := retVal[i]
+
+		for j := i - 1; j >= 0; j-- {
+			var ambig, swap bool
+			ambig = true
+			axisj := retVal[j]
+
+			for _, ap := range aps {
+				if ap.shape[axisi] != 1 && ap.shape[axisj] != 1 {
+					if ap.strides[axisi] <= ap.strides[axisj] {
+						swap = true
+					} else if ambig {
+						swap = true
+					}
+					ambig = false
+				}
+			}
+
+			if !ambig && swap {
+				ipos = j
+			} else {
+				break
+			}
+
+		}
+		if ipos != i {
+			for j := i; j > ipos; j-- {
+				retVal[j] = retVal[j-1]
+			}
+			retVal[ipos] = axisi
+		}
+	}
+	return
+}
+*/

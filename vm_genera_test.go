@@ -89,12 +89,12 @@ func TestLispMachineMechanics(t *testing.T) {
 	}
 
 	gBack := []float64{1, 1}
-	grad := FromTensor(tf64.NewTensor(tf64.WithShape(x.shape...), tf64.WithBacking(gBack)))
+	grad := tf64.NewTensor(tf64.WithShape(x.shape...), tf64.WithBacking(gBack))
 	xG, _ := x.Grad()
 	yG, _ := y.Grad()
 
-	assert.Equal(grad, xG)
-	assert.Equal(grad, yG)
+	assert.True(ValueEq(grad, xG))
+	assert.True(ValueEq(grad, yG))
 
 	// tack more shit onto the graph, and execute it again
 	szp2 := Must(Add(sz, twof64))
@@ -201,7 +201,7 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 		model := Nodes{x, y, z, cost}
 		for _, n := range model {
 			dv := n.boundTo.(*dualValue)
-			if err = dv.SetDeriv(dv.d.zero()); err != nil {
+			if err = dv.SetDeriv(ZeroValue(dv.d)); err != nil {
 				t.Errorf("Unable to set the gradient to 0 for %v. Error : %v", n, err)
 				continue
 			}

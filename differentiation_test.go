@@ -69,8 +69,8 @@ func TestBackprop(t *testing.T) {
 
 	t.Log("Simple backprop")
 	g := NewGraph()
-	x := NewVector(g, Float64, WithName("x"), WithShape(1, 10)) // horizontal vector
-	y := NewVector(g, Float64, WithName("y"), WithShape(1, 10)) // horizontal vector
+	x := NewVector(g, Float64, WithName("x"), WithShape(10)) // horizontal vector
+	y := NewVector(g, Float64, WithName("y"), WithShape(10)) // horizontal vector
 
 	res := Must(Mul(x, y))
 
@@ -89,8 +89,8 @@ func TestBackprop(t *testing.T) {
 	// reset
 	t.Log("Progressively more complex")
 	g = NewGraph()
-	x = NewVector(g, Float64, WithName("x"), WithShape(1, 10))  // row vector
-	w := NewVector(g, Float64, WithName("w"), WithShape(10, 1)) // col vector
+	x = NewMatrix(g, Float64, WithName("x"), WithShape(1, 10))  // row vector
+	w := NewMatrix(g, Float64, WithName("w"), WithShape(10, 1)) // col vector
 
 	mul := Must(Mul(x, w))
 	res = Must(Exp(mul))
@@ -105,12 +105,14 @@ func TestBackprop(t *testing.T) {
 	// Notes:
 	//
 	// extra was created in the Backprop process
+
 	extra := Must(Mul(res, onef64))
 	dzdx_expectedPath := Nodes{ret[0], w, extra, res, mul, x, w, grad}
 	dzdw_expectedPath := Nodes{ret[1], x, extra, res, mul, x, w, grad}
 
-	assert.Equal(dzdx_expectedPath, ret[0].seqWalk())
-	assert.Equal(dzdw_expectedPath, ret[1].seqWalk())
+	assert.True(dzdx_expectedPath.Equals(ret[0].seqWalk()))
+	assert.True(dzdw_expectedPath.Equals(ret[1].seqWalk()))
+
 	/*
 		ioutil.WriteFile("Test_Res.dot", []byte(res.ToDot()), 0644)
 		for i, n := range ret {
@@ -132,10 +134,11 @@ func TestCompoundOpDiff(t *testing.T) {
 	}()
 
 	// log1p
-	x := NewVector(g, Float64, WithName("x"), WithShape(2, 1))
+	x := NewVector(g, Float64, WithName("x"), WithShape(2))
 	p := Must(Add(x, onef64))
 	lp := Must(Log(p))
-	diffs, err := lp.op.SymDiff(Nodes{x}, lp, onef64)
+	op := lp.op.(elemUnaryOp)
+	diffs, err := op.SymDiff(Nodes{x}, lp, onef64)
 	if err != nil {
 		t.Error(err)
 	}

@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 )
 
 /*
@@ -23,11 +24,12 @@ type stmtOp interface {
 // However, it's implemented as a Op so that it can be counted for register allocation and liveness
 type letOp struct{}
 
-func (op letOp) Type() Type                                                      { return nil }
-func (op letOp) returnsPtr() bool                                                { return true }
-func (op letOp) overwriteInput() int                                             { return 0 }
-func (op letOp) callsExtern() bool                                               { return false }
-func (op letOp) inferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
+func (op letOp) Arity() int                                                      { return 0 }
+func (op letOp) Type() hm.Type                                                   { return nil }
+func (op letOp) ReturnsPtr() bool                                                { return true }
+func (op letOp) OverwritesInput() int                                            { return 0 }
+func (op letOp) CallsExtern() bool                                               { return false }
+func (op letOp) InferShape(...DimSizer) (types.Shape, error)                     { return nil, nil }
 func (op letOp) DiffWRT(int) []bool                                              { return nil }
 func (op letOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
 func (op letOp) Do(vals ...Value) (Value, error)                                 { return nil, nil }
@@ -46,11 +48,12 @@ type readOp struct {
 	into *Value // no, it's not a mistake. It's a pointer to a Value (which is an interface{} type)
 }
 
-func (op readOp) Type() Type                                                      { return nil }
-func (op readOp) returnsPtr() bool                                                { return true }
-func (op readOp) overwriteInput() int                                             { return 0 }
-func (op readOp) callsExtern() bool                                               { return false }
-func (op readOp) inferShape(Type, ...*Node) (types.Shape, error)                  { return nil, nil }
+func (op readOp) Arity() int                                                      { return 0 }
+func (op readOp) Type() hm.Type                                                   { return nil }
+func (op readOp) ReturnsPtr() bool                                                { return true }
+func (op readOp) OverwritesInput() int                                            { return 0 }
+func (op readOp) CallsExtern() bool                                               { return false }
+func (op readOp) InferShape(...DimSizer) (types.Shape, error)                     { return nil, nil }
 func (op readOp) DiffWRT(int) []bool                                              { return nil }
 func (op readOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error) { return nil, nil }
 func (op readOp) Do(vals ...Value) (Value, error)                                 { return nil, nil }

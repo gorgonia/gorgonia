@@ -89,9 +89,9 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	var v Value
 	switch dt {
 	case Float64:
-		v, _ = anyToValue(1.0 / prob)
+		v, _ = anyToScalar(1.0 / prob)
 	case Float32:
-		v, _ = anyToValue(float32(1.0 / prob))
+		v, _ = anyToScalar(float32(1.0 / prob))
 	default:
 		// TODO: use errors package for this panic?
 		panic(fmt.Sprintf("Dtype %v not yet implemented for dropout", dt))

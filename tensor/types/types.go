@@ -13,6 +13,7 @@ const (
 	Int
 	Int64
 	Int32
+	Byte
 	Bool
 
 	MAXDTYPE
@@ -32,6 +33,7 @@ type Tensor interface {
 	Reshape(...int) error
 	T(axes ...int) error
 	UT()
+	Transpose() // Transpose actually moves the data
 
 	// data related interface
 	Zero()
@@ -125,6 +127,10 @@ func (n NormOrder) String() string {
 		return fmt.Sprintf("Norm %v", float64(n))
 	}
 	panic("unreachable")
+}
+
+type ConsOpt interface {
+	Opt()
 }
 
 // FunctionFlag are flags for calling Tensor functions. Use only with FuncOpt

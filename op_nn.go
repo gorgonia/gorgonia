@@ -9,6 +9,7 @@ import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/hm"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 )
@@ -48,9 +49,11 @@ func makeRandomOp(which randomness, dt Dtype, a, b float64, shape ...int) random
 	}
 }
 
+func (op randomOp) Arity() int { return 0 }
+
 // randomOp :: a
 // randomOp :: Tensor a
-func (op randomOp) Type() Type {
+func (op randomOp) Type() hm.Type {
 	if op.shape.IsScalar() {
 		return op.dt
 	}
@@ -58,46 +61,44 @@ func (op randomOp) Type() Type {
 	return tt
 }
 
-func (op randomOp) inferShape(Type, ...*Node) (types.Shape, error) { return op.shape, nil }
-func (op randomOp) DiffWRT(i int) []bool                           { r := make([]bool, i); return r }
-func (op randomOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)     { return nil, nondiffErr(op) }
+func (op randomOp) InferShape(...DimSizer) (types.Shape, error) { return op.shape, nil }
+func (op randomOp) DiffWRT(i int) []bool                        { r := make([]bool, i); return r }
+func (op randomOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)  { return nil, nondiffErr(op) }
 
 func (op randomOp) Do(...Value) (retVal Value, err error) {
 	if op.shape.IsScalar() {
+		var v interface{}
 		switch op.dt {
 		case Float64:
 			switch op.which {
 			case uniform:
 				rand := rng.NewUniformGenerator(time.Now().UnixNano())
-				v := rand.Float64Range(op.a, op.b)
-				return anyToValue(v)
+				v = rand.Float64Range(op.a, op.b)
 			case gaussian:
 				rand := rng.NewGaussianGenerator(time.Now().UnixNano())
-				v := rand.Gaussian(op.a, op.b)
-				return anyToValue(v)
+				v = rand.Gaussian(op.a, op.b)
 			case binomial:
 				rand := rng.NewBinomialGenerator(time.Now().UnixNano())
-				v := float64(rand.Binomial(int64(op.a), op.b))
-				return anyToValue(v)
+				v = float64(rand.Binomial(int64(op.a), op.b))
 			}
 		case Float32:
 			switch op.which {
 			case uniform:
 				rand := rng.NewUniformGenerator(time.Now().UnixNano())
-				v := rand.Float32Range(float32(op.a), float32(op.b))
-				return anyToValue(v)
+				v = rand.Float32Range(float32(op.a), float32(op.b))
 			case gaussian:
 				rand := rng.NewGaussianGenerator(time.Now().UnixNano())
-				v := float32(rand.Gaussian(op.a, op.b))
-				return anyToValue(v)
+				v = float32(rand.Gaussian(op.a, op.b))
 			case binomial:
 				rand := rng.NewBinomialGenerator(time.Now().UnixNano())
-				v := float32(rand.Binomial(int64(op.a), op.b))
-				return anyToValue(v)
+				v = float32(rand.Binomial(int64(op.a), op.b))
 			}
 		default:
 			return nil, errors.Errorf(nyiFail, "randomOp.do()", op.dt)
 		}
+
+		retVal, _ = anyToScalar(v)
+		return
 	}
 
 	switch op.dt {
@@ -105,39 +106,35 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 		switch op.which {
 		case uniform:
 			backing := Uniform64(op.a, op.b, op.shape...)
-			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian64(op.a, op.b, op.shape...)
-			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial64(op.a, op.b, op.shape...)
-			v := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 		}
 	case Float32:
 		switch op.which {
 		case uniform:
 			backing := Uniform32(op.a, op.b, op.shape...)
-			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian32(op.a, op.b, op.shape...)
-			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial32(op.a, op.b, op.shape...)
-			v := tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
-			return anyToValue(v)
+			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 		}
+	default:
+		return nil, errors.Errorf(nyiFail, "randomOp.do() for non-scalar", op.dt)
 	}
 	panic("Unreachable")
 }
 
-func (op randomOp) returnsPtr() bool    { return false }
-func (op randomOp) callsExtern() bool   { return false }
-func (op randomOp) overwriteInput() int { return -1 }
+func (op randomOp) ReturnsPtr() bool     { return false }
+func (op randomOp) CallsExtern() bool    { return false }
+func (op randomOp) OverwritesInput() int { return -1 }
 func (op randomOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "%d%v%f%f", op.which, op.shape, op.a, op.b)
 }

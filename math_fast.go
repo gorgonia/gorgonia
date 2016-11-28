@@ -145,3 +145,11 @@ func _tanhf64(x float64) float64 {
 	}
 	panic("unreachable")
 }
+
+func _sigmoidf64(x float64) float64 {
+	return 0
+}
+
+func _sigmoidf32(x float32) float32 {
+	return 0
+}

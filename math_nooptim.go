@@ -17,3 +17,24 @@ func _inversef64(x float64) float64 { return float64(1) / x }
 
 func _tanhf32(x float32) float32 { return float32(math.Tanh(float64(x))) }
 func _tanhf64(x float64) float64 { return math.Tanh(x) }
+
+func _sigmoidf64(x float64) float64 {
+	if x < -709 {
+		return 0
+	}
+	if x > 19 {
+		return 1
+	}
+
+	return 1.0 / (1.0 + math.Exp(-x))
+}
+
+func _sigmoidf32(x float32) float32 {
+	if x < -88 {
+		return 0
+	}
+	if x > 15 {
+		return 1
+	}
+	return float32(1.0 / (1.0 + math.Exp(float64(-x))))
+}

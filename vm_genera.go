@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/pkg/errors"
 )
 
@@ -142,6 +143,7 @@ func (m *lispMachine) forward() (err error) {
 	case (m.g.roots.Contains(n) || n.isRoot()) && !n.isStmt:
 		machineLogf("Applying op %v to root", op)
 		if n.boundTo == nil {
+			machineLogf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op)
 			}
@@ -149,6 +151,7 @@ func (m *lispMachine) forward() (err error) {
 				return errors.Wrap(err, bindFail)
 			}
 		} else {
+			machineLogf("dvBindVar0")
 			dv := n.boundTo.(*dualValue)
 			if err = dvBindVar0(op, dv, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op)
@@ -172,8 +175,8 @@ func (m *lispMachine) forward() (err error) {
 		machineLogf("Inputs")
 		enterLoggingContext()
 		for i, in := range inputs {
-			if inT, ok := in.Value.(Tensor); ok {
-				machineLogf("%d; %v", i, inT.Tensor.Info())
+			if inT, ok := in.Value.(types.Tensor); ok {
+				machineLogf("%d; %v", i, inT.Info())
 			}
 		}
 		leaveLoggingContext()
@@ -206,9 +209,9 @@ func (m *lispMachine) forward() (err error) {
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
 
-	if aop, ok := op.(AdOp); ok && m.runBwd() {
+	if aop, ok := op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
-			AdOp: aop,
+			ADOp: aop,
 
 			inputs: n.children,
 			output: n,
@@ -244,7 +247,7 @@ func (m *lispMachine) backward() (err error) {
 
 	// actual differentiation
 	if err = instr.do(); err != nil {
-		return errors.Wrapf(err, autodiffFail, instr.AdOp)
+		return errors.Wrapf(err, autodiffFail, instr.ADOp)
 	}
 
 	m.watchedLogf("After:")
@@ -344,7 +347,7 @@ backward:
 }
 
 func (m *lispMachine) watchedLogf(format string, attrs ...interface{}) {
-	if !m.logFwd() {
+	if !m.logFwd() && !DEBUG {
 		goto backwards
 	}
 
@@ -357,7 +360,7 @@ func (m *lispMachine) watchedLogf(format string, attrs ...interface{}) {
 	}
 
 backwards:
-	if !m.logBwd() {
+	if !m.logBwd() && !DEBUG {
 		return
 	}
 
@@ -383,6 +386,7 @@ func (m *lispMachine) logf(format string, attrs ...interface{}) {
 	switch {
 	case machineDev, autodiffDev:
 		if machineDev {
+
 			machineLogf(format, attrs...)
 		} else {
 			autodiffLogf(format, attrs...)
@@ -436,12 +440,12 @@ func (m *lispMachine) leaveLoggingContext() {
 
 // adInstr is an autodifferentiation instruction
 type adInstr struct {
-	AdOp
+	ADOp
 
 	inputs Nodes
 	output *Node
 }
 
 func (instr adInstr) do() error {
-	return instr.AdOp.DoDiff(instr.inputs, instr.output)
+	return instr.ADOp.DoDiff(instr.inputs, instr.output)
 }

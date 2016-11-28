@@ -174,7 +174,6 @@ var repeatTestSlice = []struct {
 	dataExpected               []float32
 	shapeExpected              types.Shape
 	isErrExpected              bool
-	isPanicExpected            bool
 }{
 	{
 		"Scalar repeats on axis 0",
@@ -184,7 +183,6 @@ var repeatTestSlice = []struct {
 		[]int{3},
 		[]float32{3, 3, 3},
 		types.Shape{3},
-		false,
 		false,
 	},
 	{
@@ -196,7 +194,6 @@ var repeatTestSlice = []struct {
 		[]float32{3, 3, 3},
 		types.Shape{1, 3},
 		false,
-		false,
 	},
 	{
 		"Vector repeats on axis 1: colvec",
@@ -206,7 +203,6 @@ var repeatTestSlice = []struct {
 		[]int{3},
 		[]float32{1, 1, 1, 2, 2, 2},
 		types.Shape{2, 3},
-		false,
 		false,
 	},
 	{
@@ -218,7 +214,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 1, 1, 2, 2, 2},
 		types.Shape{1, 6},
 		false,
-		false,
 	},
 	{
 		"Vector repeats on axis 0: vanilla vectors",
@@ -228,7 +223,6 @@ var repeatTestSlice = []struct {
 		[]int{3},
 		[]float32{1, 1, 1, 2, 2, 2},
 		types.Shape{6},
-		false,
 		false,
 	},
 	{
@@ -240,7 +234,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 1, 1, 2, 2, 2},
 		types.Shape{6, 1},
 		false,
-		false,
 	},
 	{
 		"Vector repeats on axis 0: rowvec",
@@ -250,7 +243,6 @@ var repeatTestSlice = []struct {
 		[]int{3},
 		[]float32{1, 2, 1, 2, 1, 2},
 		types.Shape{3, 2},
-		false,
 		false,
 	},
 	{
@@ -262,7 +254,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 1, 1, 2, 2, 2},
 		types.Shape{6},
 		false,
-		false,
 	},
 	{
 		"Vector repeats on axis -1: Shape(6) #2",
@@ -273,7 +264,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 1, 1, 2, 2, 2},
 		types.Shape{6},
 		false,
-		false,
 	},
 	{
 		"Vector repeats on axis -1: Shape(6) #3",
@@ -283,7 +273,6 @@ var repeatTestSlice = []struct {
 		[]int{3},
 		[]float32{1, 1, 1, 2, 2, 2},
 		types.Shape{6},
-		false,
 		false,
 	},
 	{
@@ -297,7 +286,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 2, 2, 3, 4},
 		types.Shape{5},
 		false,
-		false,
 	},
 	{
 		`Matrix:
@@ -310,7 +298,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 1, 2, 3, 3, 4},
 		types.Shape{2, 3},
 		false,
-		false,
 	},
 	{
 		`Matrix:
@@ -322,7 +309,6 @@ var repeatTestSlice = []struct {
 		[]int{1, 2},
 		[]float32{1, 2, 2, 3, 4, 4},
 		types.Shape{2, 3},
-		false,
 		false,
 	},
 	{
@@ -337,7 +323,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 2, 3, 4, 3, 4},
 		types.Shape{3, 2},
 		false,
-		false,
 	},
 	{
 		`Matrix:
@@ -350,7 +335,6 @@ var repeatTestSlice = []struct {
 		[]int{2, 1},
 		[]float32{1, 2, 1, 2, 3, 4},
 		types.Shape{3, 2},
-		false,
 		false,
 	},
 	{
@@ -380,7 +364,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 2, 3, 4, 3, 4, 5, 6, 7, 8, 9, 10, 9, 10, 11, 12},
 		types.Shape{2, 4, 2},
 		false,
-		false,
 	},
 	{
 		"> 2D Matrix broadcast errors",
@@ -391,7 +374,6 @@ var repeatTestSlice = []struct {
 		nil,
 		nil,
 		true,
-		false,
 	},
 	{
 		"> 2D Matrix generic repeat - repeat EVERYTHING by 2",
@@ -401,7 +383,6 @@ var repeatTestSlice = []struct {
 		[]int{2},
 		[]float32{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12},
 		types.Shape{24},
-		false,
 		false,
 	},
 	{
@@ -413,7 +394,6 @@ var repeatTestSlice = []struct {
 		[]float32{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12},
 		types.Shape{2, 3, 4},
 		false,
-		false,
 	},
 	{
 		"Repeat Scalars",
@@ -424,7 +404,6 @@ var repeatTestSlice = []struct {
 		[]float32{3, 3, 3, 3, 3},
 		types.Shape{5},
 		false,
-		false,
 	},
 	{
 		"IDIOTS SECTION - Trying to repeat on a nonexistent axis - Vector #1",
@@ -434,7 +413,6 @@ var repeatTestSlice = []struct {
 		[]int{3},
 		nil,
 		nil,
-		false,
 		true,
 	},
 	{
@@ -445,7 +423,6 @@ var repeatTestSlice = []struct {
 		[]int{3},
 		nil,
 		nil,
-		false,
 		true,
 	},
 }
@@ -454,14 +431,6 @@ func TestTRepeat(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, test := range repeatTestSlice {
-		if test.isPanicExpected {
-			fail := func() {
-				test.tensor.Repeat(test.axis, test.repeats...)
-			}
-			assert.Panics(fail, test.name)
-			continue
-		}
-
 		checkTensor, err := test.tensor.Repeat(test.axis, test.repeats...)
 		if test.isErrExpected {
 			assert.NotNil(err, test.name)

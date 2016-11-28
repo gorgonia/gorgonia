@@ -3,219 +3,184 @@ package gorgonia
 import (
 	"testing"
 
+	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPrune(t *testing.T) {
+// TODO: gather edge cases
+func TestInferNodeType(t *testing.T) {
 	assert := assert.New(t)
+	g := NewGraph()
+	var inferNodeTests = []struct {
+		name     string
+		op       Op
+		children Nodes
 
-	t.Log("Empty type variable")
-	tv1 := new(typeVariable)
-	pruned := prune(tv1)
+		correct hm.Type
+		err     bool
+	}{
+		// simple case Float+Float
+		{"+(1, 2)",
+			newEBOByType(addOpType, Float64, Float64),
+			Nodes{
+				newNode(withGraph(g), withType(Float64), WithName("a")),
+				newNode(withGraph(g), withType(Float64), WithName("b"))},
+			Float64,
+			false},
 
-	assert.Equal(tv1, pruned)
-
-	t.Log("Concrete instance")
-	t1 := Float64
-	tv1.instance = t1
-	pruned = prune(tv1)
-
-	assert.Equal(t1, pruned)
-
-	t.Log("I N C E P T I O N - many leveles of typeVariables")
-	tv2 := new(typeVariable)
-	tv2.instance = t1
-	tv1.instance = tv2
-	pruned = prune(tv1)
-
-	assert.Equal(t1, pruned)
-}
-
-func TestTypeEq(t *testing.T) {
-	t.Log("Simple type variable equality")
-
-	tv1 := newTypeVariable("a")
-	tv2 := newTypeVariable("b")
-	tv3 := newTypeVariable("a")
-
-	if eq := typeEq(tv1, tv2); eq {
-		t.Errorf("Expected tv1 and tv2 to be not equal")
+		// complicated case: will error out due to mis match
+		{"+(1, 2)",
+			newEBOByType(addOpType, Float64, Float32),
+			Nodes{
+				newNode(withGraph(g), withType(Float64), WithName("a")),
+				newNode(withGraph(g), withType(Float32), WithName("b"))},
+			Float64,
+			true},
 	}
 
-	if eq := typeEq(tv1, tv3); !eq {
-		t.Errorf("Expected tv1 and tv3 to be equal")
-	}
+	for _, ints := range inferNodeTests {
+		t0, err := inferNodeType(ints.op, ints.children...)
+		switch {
+		case ints.err && err == nil:
+			t.Errorf("Expected an error in test %q", ints.name)
+		case !ints.err && err != nil:
+			t.Errorf("Error in test %q: %v", ints.name, err)
+		}
 
-	t.Log("Simple Dtype equality")
-	t1 := Float32
-	t2 := Float32
-	t3 := Float64
+		if ints.err {
+			continue
+		}
 
-	if eq := typeEq(t1, t2); !eq {
-		t.Errorf("Expected t1 and t2 to be equal")
-	}
-
-	if eq := typeEq(t1, t3); eq {
-		t.Errorf("Expected t1 and t3 to be not equal (Float32 != Float64)")
-	}
-
-	t.Log("Testing tensor type constructors - simple tests: different dims, different concrete dtypes")
-	tt1 := newTensorType(1, Float64)
-	tt2 := newTensorType(2, Float64)
-	tt3 := newTensorType(1, Float32)
-	tt4 := newTensorType(1, Float64)
-
-	if eq := typeEq(tt1, tt2); eq {
-		t.Errorf("Expected tt1 and tt2 to not be equal (different dims)")
-	}
-
-	if eq := typeEq(tt1, tt3); eq {
-		t.Errorf("Expected tt1 and tt2 to not be equal (different concrete dtypes)")
-	}
-
-	if eq := typeEq(tt1, tt4); !eq {
-		t.Errorf("Expected tt1 and tt4 to be equal")
-	}
-
-	t.Log("Testing more complex examples: with typeVariables instead of concrete dtypes")
-	tv2.instance = Float64
-	tv3.instance = Float64
-	tt5 := newTensorType(1, tv1) // no instance - Tensor a
-	tt6 := newTensorType(1, tv2) // has instance - Tensor b; b = Float64
-	tt7 := newTensorType(1, tv3) // has instance - Tensor a; a = Float64
-
-	if eq := typeEq(tt1, tt5); eq {
-		t.Errorf("Expected tt1 and tt5 to be not equal")
-	}
-
-	if eq := typeEq(tt1, tt6); !eq {
-		t.Errorf("Expected tt1 and tt6 to be equal")
-	}
-
-	if eq := typeEq(tt5, tt7); eq {
-		t.Errorf("Expected tt5 and tt7 to be NOT be equal (one is a concrete `Tensor Float64` and the other is `Tensor a`")
-	}
-
-	if eq := typeEq(tt1, tt7); !eq {
-		t.Errorf("Expected tt1 and tt7 to be equal (they resolve ultimately to the same type)")
-		t.Errorf("tt1: %v", tt1)
-		t.Errorf("tt7: %v", tt7)
+		assert.True(ints.correct.Eq(t0))
 	}
 }
 
-func TestUnify(t *testing.T) {
-	// the tests only ever really tests things that have been seen while running the type system
-	assert := assert.New(t)
-	var t1, t2 Type
+var inferTypeTests = []struct {
+	expr interface{}
 
-	t.Log("t1: typeVariable; t2: Float64")
-	tv1 := newTypeVariable("a")
-	t1 = tv1
-	t2 = Float64
-	if err := unify(t1, t2); err != nil {
-		t.Errorf("Error occured: %v", err)
-	}
-	assert.Equal(t2, tv1.instance)
+	correct hm.Type
+	err     bool
+}{
+	{newEBOByType(addOpType, Float64, Float64), hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a')), false},
+	{float32(0), Float32, false},
+	{float64(0), Float64, false},
+	{0, Int, false},
+	{int64(0), Int64, false},
+	{int32(0), Int32, false},
+	{true, Bool, false},
+	{newNode(withGraph(NewGraph()), withType(Float64), withOp(newEBOByType(addOpType, Float64, Float64))), Float64, false},
 
-	//******************************
+	{[]int{0}, nil, true},
+}
 
-	t.Log("t1: typeVariable; t2: typeVariable. Both have the same name, no instance")
-	tv1 = newTypeVariable("a")
-	tv2 := newTypeVariable("a")
+func TestInferType(t *testing.T) {
+	for i, itts := range inferTypeTests {
+		t0, err := inferType(itts.expr)
+		switch {
+		case itts.err && err == nil:
+			t.Errorf("Expected an error in infering type of %T", itts.expr)
+		case !itts.err && err != nil:
+			t.Errorf("Error while inferring type of %T: %v", itts.expr, err)
+		}
 
-	t1 = tv1
-	t2 = tv2
-
-	if err := unify(t1, t2); err == nil {
-		t.Errorf("There should have been a error")
-	}
-	assert.Equal(tv2.instance, tv1.instance)
-	assert.Equal(tv2.constraints, tv1.constraints)
-
-	//******************************
-
-	t.Log("t1: typeVariable; t2: typeVariable. Different names")
-	tv1 = newTypeVariable("a")
-	tv2 = newTypeVariable("b")
-
-	t1 = tv1
-	t2 = tv2
-
-	if err := unify(t1, t2); err != nil {
-		t.Errorf("Error: %v", err)
-	}
-	assert.Equal(tv2, tv1.instance)
-	assert.Equal(tv2.constraints, tv1.constraints)
-
-	//******************************
-
-	t.Log("t1: Dtype, t2: Dtype")
-	t1 = Float64
-	t2 = Float64
-
-	if err := unify(t1, t2); err != nil {
-		t.Errorf("Error: %v", err)
+		if itts.err {
+			continue
+		}
+		assert.True(t, itts.correct.Eq(t0), "Test %d: %v != %v", i, t0, itts.correct)
 	}
 
-	t2 = Float32
-	if err := unify(t1, t2); err == nil {
-		t.Errorf("differing Dtypes should yield error")
+	// way out there stuff
+	g := NewGraph()
+	n := newNode(withGraph(g), withOp(newEBOByType(addOpType, Float64, Float64)), withChildren(Nodes{newNode(withGraph(g), WithName("a"), withType(Float64)), newNode(withGraph(g), WithName("b"), withType(Float64))}))
+	t0, err := inferType(n)
+	if err != nil {
+		t.Errorf("Special Case #1: %v", err)
+	}
+	t.Logf("t0: %v", t0)
+}
+
+var scalarTypeTests []struct {
+	name string
+	a    hm.Type
+
+	isScalar bool
+	panics   bool
+}
+
+func TestIsScalarType(t *testing.T) {
+	for _, stts := range scalarTypeTests {
+		if stts.panics {
+			f := func() {
+				isScalarType(stts.a)
+			}
+			assert.Panics(t, f)
+			continue
+		}
+
+		if isScalarType(stts.a) != stts.isScalar {
+			t.Errorf("Expected isScalarType(%v) to be scalar: %v", stts.a, stts.isScalar)
+		}
+	}
+}
+
+var dtypeOfTests []struct {
+	a hm.Type
+
+	correct Dtype
+	err     bool
+}
+
+func TestDtypeOf(t *testing.T) {
+	for _, dots := range dtypeOfTests {
+		dt, err := dtypeOf(dots.a)
+
+		switch {
+		case err != nil && !dots.err:
+			t.Errorf("Error when performing dtypeOf(%v): %v", dots.a, err)
+		case err == nil && dots.err:
+			t.Errorf("Expected an error when performing dtypeOf(%v)", dots.a)
+		}
+
+		if dots.err {
+			continue
+		}
+
+		if !dots.correct.Eq(dt) {
+			t.Errorf("Incorrect dtypeOf when performing dtypeOf(%v). Expected %v. Got %v", dots.a, dots.correct, dt)
+		}
+	}
+}
+
+func init() {
+	scalarTypeTests = []struct {
+		name string
+		a    hm.Type
+
+		isScalar bool
+		panics   bool
+	}{
+		{"Float64", Float64, true, false},
+		{"Tensor Float64", newTensorType(1, Float64), false, false},
+		{"Tensor Float64 (special)", newTensorType(0, Float64), true, false},
+
+		// bad shit
+		{"a", hm.TypeVariable('a'), false, true},
+		{"malformed", malformed{}, false, true},
 	}
 
-	//******************************
+	dtypeOfTests = []struct {
+		a hm.Type
 
-	t.Log("t1: Dtype, t2: typeVar")
-	tv2.instance = nil
-	t2 = tv2
+		correct Dtype
+		err     bool
+	}{
+		{Float64, Float64, false},
+		{newTensorType(1, Float64), Float64, false},
 
-	if err := unify(t1, t2); err != nil {
-		t.Errorf("Error: %v", err)
+		// bad shit
+		{hm.TypeVariable('a'), MAXDTYPE, true},
+		{hm.TypeVariable('a'), MAXDTYPE, true},
+		{newTensorType(1, hm.TypeVariable('a')), MAXDTYPE, true},
+		{malformed{}, MAXDTYPE, true},
 	}
-	assert.Equal(t1, tv2.instance)
-
-	tv1.instance = Float64
-	t2 = t1
-	if err := unify(t1, t2); err != nil {
-		t.Errorf("Error: %v", err)
-	}
-	assert.Equal(t1, tv1.instance)
-
-	//******************************
-
-	t.Log("t1: Tensor a; t2: a")
-	a := newTypeVariable("a")
-	t1 = &TensorType{of: a}
-	tv1.instance = nil
-	t2 = tv1
-
-	if err := unify(t1, t2); err == nil {
-		t.Errorf("Expected a recursive unification error (because both have the same typeVariable)")
-	}
-
-	//******************************
-
-	t.Log("t1: Tensor a; t2: b")
-	t1 = &TensorType{of: a}
-	tv2.instance = nil
-	t2 = tv2
-
-	if err := unify(t1, t2); err != nil {
-		t.Errorf("Error: %v", err)
-	}
-	assert.Equal(t1, tv2.instance)
-
-	//******************************
-
-	// other common cases
-	t.Log("t1: Tensor a; t2: Tensor Float64")
-	t1 = &TensorType{of: a}
-	t2 = &TensorType{of: Float64}
-
-	if err := unify(t1, t2); err != nil {
-		t.Errorf("Error: %v", err)
-	}
-	if eq := typeEq(t1, t2); !eq {
-		t.Errorf("The results should be equal")
-	}
-
 }
