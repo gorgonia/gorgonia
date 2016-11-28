@@ -2,7 +2,7 @@ package gorgonia
 
 // global options
 
-var debugDerives = false
+var debugDerives = true
 var stabilization = true
 var optimizationLevel = 0
 

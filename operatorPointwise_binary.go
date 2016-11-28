@@ -3,6 +3,8 @@ package gorgonia
 import (
 	"math"
 
+	tf32 "github.com/chewxy/gorgonia/tensor/f32"
+	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
@@ -114,6 +116,7 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 				r = F32(0)
 			}
 		}
+
 	case I:
 		b := vals[1].(I)
 		switch o.ʘBinaryOperatorType {
@@ -268,6 +271,7 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
 		}
+
 	default:
 		err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Unhandled Scalar Type", o.t)
 	}
@@ -465,6 +469,7 @@ func subDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdy *Node
 	if dzdy, err = Neg(gradZ); err == nil {
 		WithGroupName(gradClust)(dzdy)
+		WithGroupName(gradClust)(gradZ)
 		retVal = Nodes{gradZ, dzdy}
 	} else {
 		return nil, errors.Wrap(err, "Failed to carry Neg()")
@@ -477,12 +482,12 @@ func subDiff(x, y, z *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
 
-	sub := newElemBinOp(subOpType, y, z)
-	add := newElemBinOp(addOpType, x, z)
+	sub := newEBOByType(subOpType, y.t, z.t)
+	add := newEBOByType(addOpType, x.t, z.t)
 
 	var d Value
-	// dz/dy
 
+	// dz/dy
 	if y.IsScalar() {
 		if d, err = sub.Do(ydv.d, zdv.d); err != nil {
 			return errors.Wrapf(err, doFail, sub)
@@ -650,11 +655,122 @@ func hadamardDivDiff(x, y, z *Node) (err error) {
 
 // TODO: go back in time, pay more attention to calculus class in high school and learn how to differentiate x^y
 func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
-	return nil, errors.New("hadamardPowDiffExpr not yet implemented")
+	var one *Node
+	var dt Dtype
+
+	if dt, err = dtypeOf(y.t); err != nil {
+		return nil, errors.Wrapf(err, dtypeExtractionFail, y.t)
+	}
+
+	switch dt {
+	case Float32:
+		one = onef32
+	case Float64:
+		one = onef64
+	default:
+		err = errors.Errorf(nyiTypeFail, "Hadamard Power Diff", y.t)
+	}
+
+	var ym1, pow *Node
+	if ym1, err = Sub(y, one); err != nil {
+		return
+	}
+
+	if pow, err = Pow(x, ym1); err != nil {
+		return
+	}
+
+	var dzdx *Node
+	if dzdx, err = HadamardProd(grad, y); err != nil {
+		return
+	}
+	if dzdx, err = HadamardProd(dzdx, pow); err != nil {
+		return
+	}
+
+	var logx *Node
+	if logx, err = Log(x); err != nil {
+		return
+	}
+
+	var dzdy *Node
+	if dzdy, err = HadamardProd(grad, z); err != nil {
+		return
+	}
+	if dzdy, err = HadamardProd(dzdy, logx); err != nil {
+		return
+	}
+
+	retVal = Nodes{dzdx, dzdy}
+	return
+	// return nil, errors.New("hadamardPowDiffExpr not yet implemented")
 }
 
 func hadamardPowDiff(x, y, z *Node) (err error) {
-	return errors.New("hadamardPowDiff not yet implemented")
+	xdv := x.boundTo.(*dualValue)
+	ydv := y.boundTo.(*dualValue)
+	zdv := z.boundTo.(*dualValue)
+
+	var ym1 Value
+	switch ydvt := ydv.Value.(type) {
+	case F64:
+		ym1 = ydvt - F64(1)
+	case F32:
+		ym1 = ydvt - F32(1)
+	case *tf64.Tensor:
+		if ym1, err = tf64.Sub(ydvt, float64(1)); err != nil {
+			return
+		}
+	case *tf32.Tensor:
+		if ym1, err = tf32.Sub(ydvt, float32(1)); err != nil {
+			return
+		}
+	default:
+		err = errors.Errorf(nyiTypeFail, "hadamardPowDiff", ydv.Value)
+		return
+	}
+
+	// dzdx
+	var pow Value
+	powOp := newEBOByType(powOpType, TypeOf(xdv.Value), TypeOf(ym1))
+	if pow, err = powOp.Do(xdv.Value, ym1); err != nil {
+		return
+	}
+
+	mul := newEBOByType(mulOpType, TypeOf(ydv.Value), TypeOf(xdv.Value))
+	if pow, err = mul.UnsafeDo(pow, ydv.Value); err != nil {
+		return
+	}
+
+	if err = mul.IncrDo(xdv.d, pow, zdv.d); err != nil {
+		var ver Valuer
+		var ok bool
+		if ver, ok = err.(Valuer); !ok {
+			return
+		}
+
+		xdv.SetDeriv(ver.Value())
+	}
+
+	// dzdy
+	var logx Value
+	logOp := newElemUnaryOp(lnOpType, x)
+	if logx, err = logOp.Do(xdv.Value); err != nil {
+		return
+	}
+	if logx, err = mul.Do(zdv.Value, logx); err != nil {
+		return
+	}
+	if err = mul.IncrDo(ydv.d, logx, zdv.d); err != nil {
+		var ver Valuer
+		var ok bool
+		if ver, ok = err.(Valuer); !ok {
+			return
+		}
+
+		ydv.SetDeriv(ver.Value())
+	}
+	return nil
 }
 
 func nondiffBinOpExpr(x, y, z, grad *Node) (retVal Nodes, err error) {

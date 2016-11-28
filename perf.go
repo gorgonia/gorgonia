@@ -8,7 +8,6 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
-	"github.com/chewxy/hm"
 )
 
 var nodePool = &sync.Pool{
@@ -42,20 +41,6 @@ func returnNode(n *Node) {
 	n.ofInterest = false
 
 	nodePool.Put(n)
-}
-
-// pool for Types with size of 1
-var types1Pool = &sync.Pool{
-	New: func() interface{} { return make(hm.Types, 1, 1) },
-}
-
-func borrowTypes1() hm.Types {
-	return types1Pool.Get().(hm.Types)
-}
-
-func returnTypes1(ts hm.Types) {
-	ts[0] = nil
-	types1Pool.Put(ts)
 }
 
 // handles Returning of Values

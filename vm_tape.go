@@ -234,11 +234,11 @@ func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
 func (m *tapeMachine) logf(format string, attrs ...interface{}) {
 	switch {
 	case machineDev:
-		machineLogf(format, attrs...)
-
 		if m.logger != nil {
 			goto loggercase
 		}
+
+		machineLogf(format, attrs...)
 		break
 
 	loggercase:
@@ -375,7 +375,6 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	want = instr.t
 
 	if !m.alloc() && have == want {
-		machineLogf("Already preallocated!")
 		m.logf("Already prealloc")
 
 		return
@@ -557,21 +556,28 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		if cloned, err = CloneValue(v); err != nil {
 			return errors.Wrap(err, cloneFail)
 		}
+		logf("Bound Cloned %v", cloned)
 		node.bind(cloned)
 	} else {
+		logf("Bound %v", v)
 		node.bind(v)
 	}
 
 	// this is a gradient node then, we should also bind the value to the node's dualValue
-	if node.derivOf != nil {
-		for _, src := range node.derivOf {
-			if src.boundTo != nil {
-				dv := dvUnit0(src.boundTo)
-				dv.SetDeriv(v) // important!! do NOT use node.boundTo
-				src.bind(dv)
-			}
-		}
-	}
+	// if node.derivOf != nil {
+	// 	for _, src := range node.derivOf {
+	// 		if src.boundTo != nil {
+	// 			dv := dvUnit0(src.boundTo)
+
+	// 			var cloned Value
+	// 			if cloned, err = CloneValue(v); err != nil {
+	// 				return errors.Wrap(err, cloneFail)
+	// 			}
+	// 			dv.SetDeriv(cloned) // important!! do NOT use node.boundTo
+	// 			src.bind(dv)
+	// 		}
+	// 	}
+	// }
 	m.watchedLogf("Written To: %v", instr.writeTo)
 	m.enterLoggingContext()
 	m.watchedLogf(m.valueFmt, v)

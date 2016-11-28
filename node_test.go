@@ -141,5 +141,14 @@ func TestNewUniqueNodes(t *testing.T) {
 	}
 
 	returnNode(n)
+}
 
+func TestCloneTo(t *testing.T) {
+	g := NewGraph()
+	g2 := NewGraph()
+
+	n := newUniqueNode(WithName("n"), withType(Float64), withGraph(g))
+	n.CloneTo(g2)
+
+	assert.True(t, nodeEq(g2.AllNodes()[0], n))
 }
