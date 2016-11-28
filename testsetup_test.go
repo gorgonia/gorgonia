@@ -5,7 +5,7 @@ import (
 	"log"
 	"runtime"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -14,22 +14,43 @@ type errorStacker interface {
 	ErrorStack() string
 }
 
-const EPSILON float64 = 1e-10
+const EPSILON64 float64 = 1e-10
+const EPSILON32 float32 = 1e-5
 
-func floatEquals(a, b float64) bool {
-	if (a-b) < EPSILON && (b-a) < EPSILON {
+func floatEquals64(a, b float64) bool {
+	if (a-b) < EPSILON64 && (b-a) < EPSILON64 {
 		return true
 	}
 	return false
 }
 
-func floatsEqual(a, b []float64) bool {
+func floatsEqual64(a, b []float64) bool {
 	if len(a) != len(b) {
 		return false
 	}
 
 	for i, v := range a {
-		if !floatEquals(v, b[i]) {
+		if !floatEquals64(v, b[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func floatEquals32(a, b float32) bool {
+	if (a-b) < EPSILON32 && (b-a) < EPSILON32 {
+		return true
+	}
+	return false
+}
+
+func floatsEqual32(a, b []float32) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, v := range a {
+		if !floatEquals32(v, b[i]) {
 			return false
 		}
 	}
@@ -37,20 +58,14 @@ func floatsEqual(a, b []float64) bool {
 }
 
 func extractF64s(v Value) []float64 {
-	var t *tf64.Tensor
-	var ok bool
-	if t, ok = v.(*tf64.Tensor); !ok {
-		panic("Only works for tf64.Tensor")
-	}
-
-	return t.Data().([]float64)
+	return v.Data().([]float64)
 }
 
 func extractF64(v Value) float64 {
 	switch vt := v.(type) {
 	case F64:
 		return float64(vt)
-	case *tf64.Tensor:
+	case types.Tensor:
 		if !vt.IsScalar() {
 			panic("Got a non scalar result!")
 		}
@@ -59,6 +74,33 @@ func extractF64(v Value) float64 {
 		return vt.ScalarValue().(float64)
 	}
 	panic(fmt.Sprintf("Unhandled types! Got %v of %T instead", v, v))
+}
+
+func extractF32s(v Value) []float32 {
+	return v.Data().([]float32)
+}
+
+func extractF32(v Value) float32 {
+	switch vt := v.(type) {
+	case F32:
+		return float32(vt)
+	case types.Tensor:
+		if !vt.IsScalar() {
+			panic("Got a non scalar result!")
+		}
+		pc, _, _, _ := runtime.Caller(1)
+		log.Printf("Better watch it: %v called with a Scalar tensor", runtime.FuncForPC(pc).Name())
+		return vt.ScalarValue().(float32)
+	}
+	panic(fmt.Sprintf("Unhandled types! Got %v of %T instead", v, v))
+}
+
+func f64sTof32s(f []float64) []float32 {
+	retVal := make([]float32, len(f))
+	for i, v := range f {
+		retVal[i] = float32(v)
+	}
+	return retVal
 }
 
 func simpleMatEqn() (g *ExprGraph, x, y, z *Node) {

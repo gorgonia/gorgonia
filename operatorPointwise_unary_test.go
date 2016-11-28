@@ -214,12 +214,12 @@ func TestCubeDiff(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.True(floatEquals(correct, extractF64(xG)), "%v != %v", xG, correct)
+	assert.True(floatEquals64(correct, extractF64(xG)), "%v != %v", xG, correct)
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d
 	correctT := []float64{correct, correct}
-	assert.True(floatsEqual(correctT, extractF64s(xdvd)))
+	assert.True(floatsEqual64(correctT, extractF64s(xdvd)))
 }
 
 func TestTanhDiff(t *testing.T) {
@@ -246,13 +246,13 @@ func TestSigmoidDiff(t *testing.T) {
 
 	correct := math.Exp(-v) / ((1 + math.Exp(-v)) * (1 + math.Exp(-v)))
 	xG := x.boundTo.(*dualValue).d
-	assert.True(floatEquals(correct, extractF64(xG)))
+	assert.True(floatEquals64(correct, extractF64(xG)))
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d
 	negCorrect := math.Exp(v) / ((1 + math.Exp(v)) * (1 + math.Exp(v)))
 	corrects := []float64{negCorrect, correct}
-	assert.True(floatsEqual(corrects, extractF64s(xdvd)))
+	assert.True(floatsEqual64(corrects, extractF64s(xdvd)))
 }
 
 func TestLog1pDiff(t *testing.T) {

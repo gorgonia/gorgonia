@@ -3,9 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
-	"os"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -168,9 +166,8 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
 		return err
 	}
 
-	// m2 := NewTapeMachine(prog, locMap, TraceExec())
-	logger := log.New(os.Stderr, "", 0)
-	m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
+	m2 := NewTapeMachine(prog, locMap, TraceExec())
+	// m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
 
 	Let(x, xV)
 	Let(y, yV)
