@@ -3,11 +3,9 @@ package gorgonia
 import (
 	"fmt"
 	"runtime"
-)
 
-type errorTyper interface {
-	ErrorType() errorType
-}
+	"github.com/pkg/errors"
+)
 
 type errNoStabilization interface {
 	error
@@ -58,81 +56,15 @@ func (err valueErr) Error() string {
 
 func (err valueErr) Offender() interface{} { return err.Valuer }
 
-//go:generate stringer -type=errorType
-type errorType byte
+// AutoDiffError is an error which should be passed if the function is not differentiable. This is useful for Op implementations
+type AutoDiffError struct{}
 
-const (
-	typeError         errorType = iota // implementation does not handle this type
-	NotYetImplemented                  // not yet implemented
-
-	// PEBKAC errors. User who uses this lib made some boo-boos
-	TypeError
-	ShapeError
-	CompileError
-	GraphError
-	SymbDiffError
-	AutoDiffError
-	RuntimeError
-)
-
-type Error struct {
-	errorType
-	msg string
-
-	fnName string
-	file   string
-	line   int
-}
-
-func (e Error) Error() string {
-	return fmt.Sprintf("%s : %s | %s:%s:%d", e.errorType, e.msg, e.file, e.fnName, e.line)
-}
-
-func (e Error) ErrorType() errorType {
-	return e.errorType
-}
-
-func NewError(t errorType, format string, attrs ...interface{}) error {
-	pc, _, _, _ := runtime.Caller(1)
-	fn := runtime.FuncForPC(pc)
-	file, line := fn.FileLine(pc)
-	e := Error{
-		errorType: t,
-		msg:       fmt.Sprintf(format, attrs...),
-
-		fnName: fn.Name(),
-		file:   file,
-		line:   line,
-	}
-	return e
-	// return errors.Wrap(e, wrap)
-}
+func (err AutoDiffError) Error() string { return "AutoDiffError" }
 
 func nyi(what string, implFor interface{}) error {
-	pc, _, _, _ := runtime.Caller(1)
-	fn := runtime.FuncForPC(pc)
-	file, line := fn.FileLine(pc)
-	e := Error{
-		errorType: NotYetImplemented,
-		msg:       fmt.Sprintf("%s not yet implemented for %v of %T", what, implFor, implFor),
-		fnName:    fn.Name(),
-		file:      file,
-		line:      line,
-	}
-	return e
+	return errors.Errorf(nyiFail, what, implFor)
 }
 
 func nondiffErr(op Op) error {
-	pc, _, _, _ := runtime.Caller(1)
-	fn := runtime.FuncForPC(pc)
-	file, line := fn.FileLine(pc)
-	e := Error{
-		errorType: SymbDiffError,
-		msg:       fmt.Sprintf("%s not differentiable", op),
-
-		fnName: fn.Name(),
-		file:   file,
-		line:   line,
-	}
-	return e
+	return errors.Errorf("%s is a non-differentiable function", op)
 }

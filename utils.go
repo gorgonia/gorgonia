@@ -206,7 +206,7 @@ type arityer interface {
 
 func checkArity(op arityer, inputs int) error {
 	if inputs != op.Arity() && op.Arity() >= 0 {
-		return NewError(GraphError, "%v has an arity of %d. Got %d instead", op, op.Arity(), inputs)
+		return errors.Errorf("%v has an arity of %d. Got %d instead", op, op.Arity(), inputs)
 	}
 	return nil
 }

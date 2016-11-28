@@ -24,13 +24,13 @@ type scalarBinOp struct {
 	t Dtype
 }
 
+func (o scalarBinOp) Arity() int                     { return 2 }
 func (o scalarBinOp) binOpType() ʘBinaryOperatorType { return o.ʘBinaryOperatorType }
 func (o scalarBinOp) isArith() bool                  { return o.ʘBinaryOperatorType.isArith() }
 func (o scalarBinOp) String() string                 { return o.ʘBinaryOperatorType.String() }
 
 func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
-	if len(vals) != 2 {
-		err = NewError(GraphError, "Executing a binary operation expects 2 inputs. Got %d instead", len(vals))
+	if err = checkArity(o, len(vals)); err != nil {
 		return
 	}
 

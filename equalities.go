@@ -43,6 +43,7 @@ func scalarEq(a, b Scalar) bool {
 	return false
 }
 
+/*
 func axesEq(a, b axes) bool {
 	if len(a) != len(b) {
 		return false
@@ -69,6 +70,7 @@ func coordEq(a, b coordinates) bool {
 	}
 	return true
 }
+*/
 
 func constEq(a, b constant) (ok bool) {
 	switch at := a.(type) {

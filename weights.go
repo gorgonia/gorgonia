@@ -8,6 +8,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/leesper/go_rng"
+	"github.com/pkg/errors"
 )
 
 // This file provides several weight initialization utility functions.
@@ -30,7 +31,7 @@ func Zeroes() InitWFn {
 		case Int:
 			return make([]int, size)
 		default:
-			err := NewError(NotYetImplemented, "dt of %v not yet implemented for Zeroes Weight Init", dt)
+			err := errors.Errorf(nyiTypeFail, "Zeroes", dt)
 			panic(err)
 		}
 		panic("unreachable")
@@ -47,7 +48,7 @@ func RangedFrom(start int) InitWFn {
 		case Float32:
 			return tf32.RangeFloat32(start, size)
 		default:
-			err := NewError(NotYetImplemented, "dt of %v not yet implemented for Ranged init", dt)
+			err := errors.Errorf(nyiTypeFail, "Ranged init", dt)
 			panic(err)
 		}
 		panic("unreachable")
@@ -67,7 +68,7 @@ func Gaussian(mean, stdev float64) InitWFn {
 		case Float32:
 			return Gaussian32(mean, stdev, s...)
 		default:
-			err := NewError(NotYetImplemented, "dt of %v not yet implemented for Gaussian Weight Init", dt)
+			err := errors.Errorf(nyiTypeFail, "Gaussian init", dt)
 			panic(err)
 		}
 		panic("unreachable")
@@ -87,7 +88,7 @@ func Uniform(low, high float64) InitWFn {
 		case Float32:
 			return Uniform32(low, high, s...)
 		default:
-			err := NewError(NotYetImplemented, "dt of %v not yet implemented for Gaussian Weight Init", dt)
+			err := errors.Errorf(nyiTypeFail, "Uniform init", dt)
 			panic(err)
 		}
 		panic("unreachable")
@@ -103,7 +104,8 @@ func GlorotN(gain float64) InitWFn {
 		case Float32:
 			return GlorotEtAlN32(gain, s...)
 		default:
-			panic(nyi("GlorotN", dt))
+			err := errors.Errorf(nyiTypeFail, "GlorotN", dt)
+			panic(err)
 		}
 		panic("unreachable")
 	}
@@ -118,7 +120,8 @@ func GlorotU(gain float64) InitWFn {
 		case Float32:
 			return GlorotEtAlU32(gain, s...)
 		default:
-			panic(nyi("GlorotU", dt))
+			err := errors.Errorf(nyiTypeFail, "GlorotU", dt)
+			panic(err)
 		}
 		panic("unreachable")
 	}

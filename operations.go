@@ -391,7 +391,6 @@ func At(a *Node, coords ...int) (retVal *Node, err error) {
 func Max(a *Node, along ...int) (retVal *Node, err error) {
 	if a.IsScalar() {
 		// can't max a scalar. Should return error
-		// err = NewError(TypeError, "Cannot Max a Scalar")
 		return a, nil
 	}
 
@@ -408,8 +407,6 @@ func Max(a *Node, along ...int) (retVal *Node, err error) {
 func Mean(a *Node, along ...int) (retVal *Node, err error) {
 	if a.IsScalar() {
 		// can't mean a scalar... return error
-		// err = NewError(TypeError, "Cannot mean a scalar value")
-		// return
 		return a, nil
 	}
 

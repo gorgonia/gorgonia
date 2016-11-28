@@ -128,10 +128,10 @@ All the functions here are expressed in terms of *Node and/or Nodes
 */
 
 func nondiffUnaryOpExpr(x, y, gradY *Node) (*Node, error) {
-	return nil, NewError(SymbDiffError, "Non differentiable function")
+	return nil, errors.Errorf("Nondifferentiable Function")
 }
 func nondiffUnaryOp(x, y *Node) error {
-	return NewError(AutoDiffError, "Non differentiable function")
+	return AutoDiffError{}
 }
 
 // apparently abs is differentiable

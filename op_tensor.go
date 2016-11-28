@@ -171,7 +171,7 @@ func (op sizeOp) Hashcode() uint32 {
 
 func (op sizeOp) DimSize(d int) (int, error) {
 	if d != op.axis {
-		return -1, NewError(ShapeError, "Dimension mismatch. Size Op is for axis %d. Want Dim Size of %d", op.axis, d)
+		return -1, errors.Errorf("Dimension mismatch. Size Op is for axis %d. Want Dim Size of %d", op.axis, d)
 	}
 	return op.val, nil
 }
@@ -377,11 +377,12 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	var reps []int
 	repeats := inputs[1:]
 	if len(repeats) != len(op.along) {
-		err = NewError(GraphError, "repeat mismatch. Expected %d. Got %d inputs instead", len(op.along), len(repeats))
+		err = errors.Errorf("Repeat Mismatch. Expected %d inputs. Got %d inputs instead", len(op.along), len(repeats))
 		return
 	}
 
 	if reps, err = valuesToInts(repeats); err != nil {
+		err = errors.Wrap(err, "Values To Ints failed in repeatOp.Do")
 		return
 	}
 
@@ -696,9 +697,7 @@ func (op sliceIncrOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err er
 }
 
 func (op sliceIncrOp) DiffWRT(i int) []bool {
-	if i > 2 {
-		// error
-		err := NewError(GraphError, "sliceOp should only have 2 inputs. Got %v instead", i)
+	if err := checkArity(op, i); err != nil {
 		panic(err)
 	}
 
@@ -915,9 +914,7 @@ func (op transposeOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err er
 }
 
 func (op transposeOp) DiffWRT(i int) []bool {
-	if i > 1 {
-		// error
-		err := NewError(GraphError, "transposeOp should only have 1 inputs. Got %v instead", i)
+	if err := checkArity(op, i); err != nil {
 		panic(err)
 	}
 

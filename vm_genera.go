@@ -197,10 +197,7 @@ func (m *lispMachine) forward() (err error) {
 		}
 
 		err = dvBind0(op, output, inputs)
-		if et, ok := errors.Cause(err).(errorTyper); ok {
-			if et.ErrorType() != AutoDiffError {
-				return errors.Wrapf(err, execFail, op)
-			}
+		if _, ok := errors.Cause(err).(AutoDiffError); ok {
 			err = nil
 		} else if err != nil {
 			return errors.Wrapf(err, execFail, op)
