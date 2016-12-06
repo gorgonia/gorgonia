@@ -1,4 +1,4 @@
-package tensorf32
+package tensori
 
 import (
 	"bytes"
@@ -13,18 +13,10 @@ import (
 	"github.com/chewxy/gorgonia/tensor/types"
 )
 
-// WriteNpy writes the *Tensor as a numpy compatible serialized file.
-//
-// The format is very well documented here:
-// http://docs.scipy.org/doc/numpy/neps/npy-format.html
-//
-// Gorgonia specifically uses Version 2.0. The floats are written in little endian order,
-// because let's face it - 90% of the world's computers are running on x86+ processors
-// This method does not close the writer. Closing (optional) is deferred to the caller
 func (t *Tensor) WriteNpy(w io.Writer) {
 	// prep header
-	// <f8 indicates that this is a little endian float32.
-	header := "{'descr': '<f4', 'fortran_order': False, 'shape': %v}"
+	// The default int size in Go is int32. But for convenience sake, we'll just serialize everything larger
+	header := "{'descr': 'i8', 'fortran_order': False, 'shape': %v}"
 	header = fmt.Sprintf(header, t.Shape())
 	padding := 16 - ((10 + len(header)) % 16)
 	if padding > 0 {
@@ -38,7 +30,7 @@ func (t *Tensor) WriteNpy(w io.Writer) {
 	w.Write([]byte(header))
 
 	for _, v := range t.data {
-		binary.Write(w, binary.LittleEndian, v)
+		binary.Write(w, binary.LittleEndian, int64(v))
 	}
 }
 
@@ -61,29 +53,6 @@ func (t *Tensor) GobEncode() (p []byte, err error) {
 	p = buf.Bytes()
 	return
 }
-
-// MarshalJSON implements the JSONMarshaller interface
-func (t *Tensor) MarshalJSON() (p []byte, err error) {
-	var buf bytes.Buffer
-	buf.WriteString("{\"Shape\": [")
-	for i, s := range t.Shape() {
-		fmt.Fprintf(&buf, "%d", s)
-		if i < len(t.Shape())-1 {
-			buf.WriteString(",")
-		}
-	}
-	buf.WriteString("], \"data\": [")
-	for i, v := range t.data {
-		fmt.Fprintf(&buf, "%g", v)
-		if i < len(t.data)-1 {
-			buf.WriteString(", ")
-		}
-	}
-	buf.WriteString("]}")
-	return buf.Bytes(), nil
-}
-
-/* READ SHIT */
 
 func (t *Tensor) ReadNpy(r io.Reader) (err error) {
 	var magic [6]byte
@@ -130,7 +99,7 @@ func (t *Tensor) ReadNpy(r io.Reader) (err error) {
 		return
 	}
 
-	if string(match[1]) != "<f4" {
+	if string(match[1]) != "i8" {
 		err = types.NewError(types.DtypeMismatch, string(match[1])) // the reason is because the error message itself will actually be used to handle errors
 		return
 	}
@@ -168,12 +137,14 @@ func (t *Tensor) ReadNpy(r io.Reader) (err error) {
 	}
 
 	size := shape.TotalSize()
-	data := make([]float32, size)
+	data := make([]int, size)
 
+	var i64 int64
 	for i := 0; i < size; i++ {
-		if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
+		if err = binary.Read(r, binary.LittleEndian, &i64); err != nil {
 			return
 		}
+		data[i] = int(i64)
 	}
 
 	if t.AP == nil {
@@ -200,7 +171,7 @@ func (t *Tensor) GobDecode(p []byte) (err error) {
 		return
 	}
 
-	var data []float32
+	var data []int
 	if err = decoder.Decode(&data); err != nil {
 		return
 	}

@@ -50,6 +50,10 @@ func (t *Tensor) GobEncode() (p []byte, err error) {
 		return
 	}
 
+	if err = encoder.Encode(t.Strides()); err != nil {
+		return
+	}
+
 	if err = encoder.Encode(t.data); err != nil {
 		return
 	}
@@ -191,17 +195,18 @@ func (t *Tensor) GobDecode(p []byte) (err error) {
 		return
 	}
 
+	var strides []int
+	if err = decoder.Decode(&strides); err != nil {
+		return
+	}
+
 	var data []float64
 	if err = decoder.Decode(&data); err != nil {
 		return
 	}
 
-	if t.AP == nil {
-		t.AP = new(types.AP)
-	}
-
+	t.AP = types.NewAP(shape, strides)
 	t.data = data
-	t.setShape(shape...)
 	t.fix()
 	return t.sanity()
 }

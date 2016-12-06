@@ -1,7 +1,9 @@
 package types
 
 import (
+	"encoding/gob"
 	"fmt"
+	"io"
 	"math"
 )
 
@@ -53,6 +55,12 @@ type Tensor interface {
 
 	fmt.Formatter
 	fmt.Stringer
+
+	// all Tensors are serializable to these formats
+	WriteNpy(io.Writer)
+	ReadNpy(io.Reader) error
+	gob.GobEncoder
+	gob.GobDecoder
 }
 
 type Slice interface {
