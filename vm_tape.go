@@ -21,14 +21,15 @@ type tapeMachine struct {
 	// state stuff, to allow continuation
 	pc int
 
-	// logging stuff
-	watchNodes Nodes
-	watchRegs  []register
-	logger     *log.Logger
-	buf        *bytes.Buffer
-	valueFmt   string
-	tabcount   int
-	logFlags   byte
+	// operational stuff
+	bindNodesDV Nodes // nodes that require binding of DV
+	watchNodes  Nodes
+	watchRegs   []register
+	logger      *log.Logger
+	buf         *bytes.Buffer
+	valueFmt    string
+	tabcount    int
+	logFlags    byte
 
 	runFlags byte //  spare2: trace(copy values and put into nodes)
 }
@@ -82,9 +83,9 @@ func (m *tapeMachine) trace() bool { return (m.runFlags>>spare2)&byte(1) == 1 }
 func (m *tapeMachine) doTrace()    { m.runFlags |= byte(1) << spare2 }
 func (m *tapeMachine) dontTrace()  { m.runFlags &= (^(byte(1) << spare2)) }
 
-func (m *tapeMachine) saveDV() bool { return m.runFlags>>spare3&byte(1) == 1 }
-func (m *tapeMachine) doSaveDV()    { m.runFlags |= byte(1) << spare3 }
-func (m *tapeMachine) dontSaveDV()  { m.runFlags &= (^(byte(1) << spare3)) }
+func (m *tapeMachine) bindDV() bool { return m.runFlags>>spare3&byte(1) == 1 }
+func (m *tapeMachine) doBindDV()    { m.runFlags |= byte(1) << spare3 }
+func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
 func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
@@ -171,7 +172,6 @@ func (m *tapeMachine) RunAll() (err error) {
 				v := m.storage[writeTo]
 				n := m.p.g.Node(id).(*Node)
 				if hasInf(v) {
-					log.Printf("Reads: %v", instr.reads())
 					return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
 				}
 			}
@@ -568,17 +568,30 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	}
 
 	// this is a gradient node then, we should also bind the value to the node's dualValue
-	if m.saveDV() && node.derivOf != nil {
+	if m.bindDV() && node.derivOf != nil {
 		for _, src := range node.derivOf {
-			if src.boundTo != nil {
-				dv := dvUnit0(src.boundTo)
+			if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {
+				continue
+			}
 
-				var cloned Value
-				if cloned, err = CloneValue(v); err != nil {
-					return errors.Wrap(err, cloneFail)
+			if src.boundTo != nil {
+				dv := dvUnit(src.boundTo)
+
+				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
+
+				if d, err := add.UnsafeDo(dv.d, v); err == nil {
+					dv.SetDeriv(d)
+					src.bind(dv)
+				} else {
+					return err
 				}
-				dv.SetDeriv(cloned) // important!! do NOT use node.boundTo
-				src.bind(dv)
+				// dv := dvUnit0(src.boundTo)
+				// var cloned Value
+				// if cloned, err = CloneValue(v); err != nil {
+				// 	return errors.Wrap(err, cloneFail)
+				// }
+				// dv.SetDeriv(cloned) // important!! do NOT use node.boundTo
+				// src.bind(dv)
 			}
 		}
 

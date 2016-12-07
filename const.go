@@ -71,7 +71,7 @@ const (
 	repFail             = "Failed to repeat Tensor along %d %d times"
 	reshapeFail         = "Failed to reshape Tensor into %v. DataSize was: %d"
 	sliceFail           = "Failed to slice Tensor with %v"
-	execFail            = "Failed to execute %v"
+	execFail            = "Failed to execute %v in node %v"
 	autodiffFail        = "Failed to differentiate %v"
 	undefinedOnShape    = "%v undefined on shape %v"
 )

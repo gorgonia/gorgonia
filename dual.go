@@ -194,6 +194,8 @@ func dvBindVar(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	}
 }
 
+//TODO test vecvecdot divBind0
+
 // doesn't alloc a dualValue, and reuses whatever that is there, and zeroes out the deriv
 func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	prealloc := retVal.Value
@@ -203,11 +205,15 @@ func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	var ret Value
 	if pd, ok := op.(UsePreallocDoer); ok {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
-	} else {
-		if ret, err = op.Do(vals...); err != nil {
-			return errors.Wrap(err, opDoFail)
+		if err == nil {
+			goto next
 		}
 	}
+	if ret, err = op.Do(vals...); err != nil {
+		return errors.Wrap(err, opDoFail)
+	}
+
+next:
 	if err != nil {
 		return
 	}

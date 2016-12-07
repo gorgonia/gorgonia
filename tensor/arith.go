@@ -3,6 +3,7 @@ package tensor
 import (
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
 )
 
@@ -97,6 +98,20 @@ func Outer(a, b types.Tensor, opts ...types.FuncOpt) (retVal types.Tensor, err e
 		return at.Outer(bt, opts...)
 	default:
 		err = types.NewError(types.NotYetImplemented, "Outer() does not handle Tensor of %T yet", a)
+	}
+	return
+}
+
+func Sub(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error) {
+	switch a.(type) {
+	case *tf64.Tensor:
+		return tf64.Sub(a, b, opts...)
+	case *tf32.Tensor:
+		return tf32.Sub(a, b, opts...)
+	case *ti.Tensor:
+		return ti.Sub(a, b, opts...)
+	default:
+		err = types.NewError(types.NotYetImplemented, "Sub not yet implemented for %T", a)
 	}
 	return
 }

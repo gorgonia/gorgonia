@@ -145,7 +145,7 @@ func (m *lispMachine) forward() (err error) {
 		if n.boundTo == nil {
 			machineLogf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
-				return errors.Wrapf(err, execFail, op)
+				return errors.Wrapf(err, execFail, op, n)
 			}
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
@@ -154,7 +154,7 @@ func (m *lispMachine) forward() (err error) {
 			machineLogf("dvBindVar0")
 			dv := n.boundTo.(*dualValue)
 			if err = dvBindVar0(op, dv, inputs); err != nil {
-				return errors.Wrapf(err, execFail, op)
+				return errors.Wrapf(err, execFail, op, n)
 			}
 		}
 
@@ -181,7 +181,7 @@ func (m *lispMachine) forward() (err error) {
 		}
 		leaveLoggingContext()
 		if output, err = dvBind(op, inputs); err != nil {
-			return errors.Wrapf(err, execFail, op)
+			return errors.Wrapf(err, execFail, op, n)
 		}
 
 		if err = n.bind(output); err != nil {
@@ -200,7 +200,7 @@ func (m *lispMachine) forward() (err error) {
 		if _, ok := errors.Cause(err).(AutoDiffError); ok {
 			err = nil
 		} else if err != nil {
-			return errors.Wrapf(err, execFail, op)
+			return errors.Wrapf(err, execFail, op, n)
 		}
 	}
 	m.watchedLogf("After:")

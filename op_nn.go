@@ -62,8 +62,6 @@ func (op randomOp) Type() hm.Type {
 }
 
 func (op randomOp) InferShape(...DimSizer) (types.Shape, error) { return op.shape, nil }
-func (op randomOp) DiffWRT(i int) []bool                        { r := make([]bool, i); return r }
-func (op randomOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)  { return nil, nondiffErr(op) }
 
 func (op randomOp) Do(...Value) (retVal Value, err error) {
 	if op.shape.IsScalar() {
@@ -114,6 +112,7 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 			backing := Binomial64(op.a, op.b, op.shape...)
 			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
 		}
+		return
 	case Float32:
 		switch op.which {
 		case uniform:
@@ -126,6 +125,7 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 			backing := Binomial32(op.a, op.b, op.shape...)
 			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
 		}
+		return
 	default:
 		return nil, errors.Errorf(nyiFail, "randomOp.do() for non-scalar", op.dt)
 	}
