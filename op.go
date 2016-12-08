@@ -8,18 +8,32 @@ import (
 
 	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 )
 
 type DimSizer interface {
 	DimSize(int) (int, error)
 }
 
+// ShapesToDimSizers is a convenience function to convert a slice of types.Shape to a slice of DimSizer
 func ShapesToDimSizers(shapes []types.Shape) []DimSizer {
 	retVal := make([]DimSizer, len(shapes))
 	for i, s := range shapes {
 		retVal[i] = s
 	}
 	return retVal
+}
+
+// DimSizersToShapes is a convenience function to convert a slice of DimSizer to a slice of types.Shape. It will return an error if any of them isn't a types.Shape
+func DimSizersToShapes(ds []DimSizer) ([]types.Shape, error) {
+	retVal := make([]types.Shape, len(ds))
+	var ok bool
+	for i, d := range ds {
+		if retVal[i], ok = d.(types.Shape); !ok {
+			return nil, errors.Errorf("Dimsizer %d is not a Shape.", i)
+		}
+	}
+	return retVal, nil
 }
 
 // An Op is a symbolic representation of an operation

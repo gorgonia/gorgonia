@@ -654,3 +654,32 @@ func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 
 	return applyOp(op, n)
 }
+
+func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
+	// check that all the nodes have the same number of dimensions
+	var d int
+	for i, n := range ns {
+		if i == 0 {
+			d = n.shape.Dims()
+			continue
+		}
+
+		if n.shape.Dims() != d {
+			err = errors.Errorf("Dimension mismatch. Expected all the nodes to be concatenated to have %d dimensions. Got %d instead", d, n.shape.Dims())
+			return
+		}
+	}
+
+	if d == 0 {
+		err = errors.Errorf("Concat only works on Tensor nodes")
+		return
+	}
+
+	if axis >= d {
+		err = errors.Errorf("Invalid axis. Nodes have %d dimensions. Axis is %d", d, axis)
+		return
+	}
+
+	op := concatOp{axis: axis, d: d}
+	return applyOp(op, ns...)
+}

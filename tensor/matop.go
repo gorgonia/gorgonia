@@ -6,6 +6,7 @@ import (
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 )
 
 func Repeat(t types.Tensor, axis int, repeats ...int) (retVal types.Tensor, err error) {
@@ -54,6 +55,58 @@ func Slice(t types.Tensor, slices ...types.Slice) (retVal types.Tensor, err erro
 		panic("Not yet implemented")
 	}
 	panic("unreachable")
+}
+
+func Concat(axis int, t types.Tensor, others ...types.Tensor) (retVal types.Tensor, err error) {
+	switch tt := t.(type) {
+	case *tf64.Tensor:
+		ts := make([]*tf64.Tensor, len(others))
+		for i, o := range others {
+			if ot, ok := o.(*tf64.Tensor); !ok {
+				return nil, errors.Errorf("Expected all tensors to be *tf64.Tensor. Got %T in %dth index of slice", o, i)
+			} else {
+				ts[i] = ot
+			}
+		}
+
+		return tt.Concat(axis, ts...)
+	case *tf32.Tensor:
+		ts := make([]*tf32.Tensor, len(others))
+		for i, o := range others {
+			if ot, ok := o.(*tf32.Tensor); !ok {
+				return nil, errors.Errorf("Expected all tensors to be *tf32.Tensor. Got %T in %dth index of slice", o, i)
+			} else {
+				ts[i] = ot
+			}
+		}
+
+		return tt.Concat(axis, ts...)
+	case *ti.Tensor:
+		ts := make([]*ti.Tensor, len(others))
+		for i, o := range others {
+			if ot, ok := o.(*ti.Tensor); !ok {
+				return nil, errors.Errorf("Expected all tensors to be *ti.Tensor. Got %T in %dth index of slice", o, i)
+			} else {
+				ts[i] = ot
+			}
+		}
+
+		return tt.Concat(axis, ts...)
+	case *tb.Tensor:
+		ts := make([]*tb.Tensor, len(others))
+		for i, o := range others {
+			if ot, ok := o.(*tb.Tensor); !ok {
+				return nil, errors.Errorf("Expected all tensors to be *tb.Tensor. Got %T in %dth index of slice", o, i)
+			} else {
+				ts[i] = ot
+			}
+		}
+
+		return tt.Concat(axis, ts...)
+	default:
+		panic("Not yet implemented")
+	}
+	panic("Unreachable")
 }
 
 func Argmax(t types.Tensor, axis int) (*ti.Tensor, error) {

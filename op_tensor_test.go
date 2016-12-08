@@ -133,16 +133,6 @@ func TestRepeatOp(t *testing.T) {
 		}
 
 	}
-
-	/* IDIOTS CHOICE AWARD */
-
-	// impossible axes
-	// g := NewGraph()
-	// v := tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2))
-	// n := NodeFromAny(g, v)
-	// repeat := newRepeatOp([]int{3}, Nodes{n, NodeFromAny(g, I(2))})
-	// f := func() { repeat.Do(v, I(2)) }
-	// assert.Panics(t, f)
 }
 
 func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprGraph, x, y *Node, err error) {
@@ -175,7 +165,6 @@ func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprG
 	return
 }
 
-/*
 func TestRepeatOpDoDiff(t *testing.T) {
 	assert := assert.New(t)
 	// var g *ExprGraph
@@ -215,7 +204,7 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	// colvec repeated unto itself
 	xT = tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{3.14, 3.14}))
 	yT = tf64.NewTensor(tf64.WithShape(4, 1), tf64.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
-	if _, x, _, err = repeatOpDiff(0, types.Shape{2, 1}, xT, yT); err != nil {
+	if _, x, _, err = repeatOpDiff(0, types.Shape{2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
 	xG, _ = x.Grad()
@@ -249,7 +238,7 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal([]float64{2, 2, 2, 2}, extractF64s(xG))
 
 }
-*/
+
 func TestSliceOp(t *testing.T) {
 	assert := assert.New(t)
 	var T *tf64.Tensor
@@ -411,4 +400,55 @@ func TestTransposeOp(t *testing.T) {
 	}
 
 	assert.Equal(types.Shape{3, 2}, AT.shape)
+}
+
+func TestConcatOp(t *testing.T) {
+	assert := assert.New(t)
+	g := NewGraph()
+	x := NewVector(g, Float64, WithShape(2))
+	xx, err := Concat(0, x, x)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	cost := Must(Sum(xx))
+	Grad(cost, x)
+
+	g2 := NewGraph()
+	a := NewVector(g2, Float64, WithShape(2))
+	aa, err := Concat(0, a, a)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	Must(Sum(aa)) // cost
+
+	aBack := []float64{1, 2}
+	aT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking(aBack))
+
+	xBack := []float64{1, 2}
+	xT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking(xBack))
+
+	prog, locMap, err := Compile(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Let(a, aT)
+	Let(x, xT)
+	m1 := NewTapeMachine(prog, locMap)
+	m2 := NewLispMachine(g2)
+
+	if err = m1.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = m2.RunAll(); err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	xG, _ := x.Grad()
+	aG, _ := a.Grad()
+	assert.Equal(xG, aG)
+	assert.Equal(xx.Value(), aa.Value())
+
 }

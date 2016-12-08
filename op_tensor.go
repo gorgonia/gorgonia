@@ -1020,3 +1020,128 @@ func (op transposeOp) String() string {
 	buf.WriteString("}")
 	return buf.String()
 }
+
+type concatOp struct {
+	axis int
+	d    int
+}
+
+func (op concatOp) Arity() int { return -1 }
+
+// concat only works for Tensor types
+//		concat :: Tensor a → Tensor a → ... → Tensor a
+func (op concatOp) Type() hm.Type {
+	tt := newTensorType(op.d, hm.TypeVariable('a'))
+
+	return hm.NewFnType(tt, tt, tt)
+}
+
+func (op concatOp) InferShape(ds ...DimSizer) (types.Shape, error) {
+	if len(ds) == 0 {
+		return nil, errors.Errorf("No shapes passed in!")
+	}
+	shapes, err := DimSizersToShapes(ds)
+	if err != nil {
+		return nil, err
+	}
+
+	return shapes[0].Concat(op.axis, shapes[1:]...)
+}
+
+func (op concatOp) Do(vals ...Value) (Value, error) {
+	if len(vals) == 1 {
+		return vals[0], nil
+	}
+
+	ts, err := valuesToTensors(vals)
+	if err != nil {
+		return nil, err
+	}
+
+	return tensor.Concat(op.axis, ts[0], ts[1:]...)
+}
+
+func (op concatOp) ReturnsPtr() bool     { return true }
+func (op concatOp) CallsExtern() bool    { return false }
+func (op concatOp) OverwritesInput() int { return -1 }
+
+func (op concatOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("concatOp"))
+	fmt.Fprintf(h, "axis: %d, dims: %d", op.axis, op.d)
+}
+
+func (op concatOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op concatOp) String() string {
+	return fmt.Sprintf("Concat(axis=%d)", op.axis)
+}
+func (op concatOp) DiffWRT(inputs int) []bool {
+	retVal := make([]bool, inputs)
+	for i := range retVal {
+		retVal[i] = true
+	}
+	return retVal
+}
+
+func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	var start int
+
+	retVal = make(Nodes, len(inputs))
+	for i, in := range inputs {
+		if op.axis >= len(in.shape) {
+			return nil, errors.Errorf("Wanted dimension %d is larger than the shape %v", op.axis, in.shape)
+		}
+		end := in.shape[op.axis] + start
+
+		s := newSliceOp(S(start, end), op.axis, op.d)
+		if retVal[i], err = applyOp(s, grad); err != nil {
+			return
+		}
+		start = end
+	}
+	return
+}
+
+func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
+	odv := output.boundTo.(*dualValue)
+	odvd := odv.d.(types.Tensor)
+
+	var start int
+	for _, in := range inputs {
+		if op.axis >= len(in.shape) {
+			return errors.Errorf("Wanted dimension %d is larger than the shape %v", op.axis, in.shape)
+		}
+		end := in.shape[op.axis] + start
+
+		idv := in.boundTo.(*dualValue)
+		idvd := idv.d.(types.Tensor)
+
+		sliced, err := tensor.Slice(odvd, S(start, end))
+		if err != nil {
+			return err
+		}
+
+		// TODO: fix VAdd hack
+		// add to odvd
+		switch st := sliced.(type) {
+		case *tf64.Tensor:
+			d := idvd.(*tf64.Tensor)
+			d.VAdd(st)
+		case *tf32.Tensor:
+			d := idvd.(*tf32.Tensor)
+			d.VAdd(st)
+		case *ti.Tensor:
+			d := idvd.(*ti.Tensor)
+			d.VAdd(st)
+		default:
+			return errors.Errorf(nyiTypeFail, "DoDiff (hack) ", st)
+		}
+
+		start = end
+	}
+	return nil
+}

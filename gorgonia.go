@@ -235,13 +235,27 @@ func Let(n *Node, be interface{}) (err error) {
 		return errors.New("Cannot bind a value to a non input node")
 	}
 
-	var val Value
-	if val, _, _, err = anyToValue(be); err != nil {
-		return errors.Wrapf(err, anyToValueFail, be, be)
+	switch v := be.(type) {
+	case types.Slice:
+		var so sliceOp
+		var ok bool
+		if so, ok = n.op.(sliceOp); !ok {
+			return errors.Errorf("Trying to Let() a node with a slice. Node's op is %v, not sliceOp", n.op)
+		}
+		so.Slice = v
+		n.op = so
+
+	case Value:
+		n.bind(v)
+	default:
+		var val Value
+		if val, _, _, err = anyToValue(be); err != nil {
+			return errors.Wrapf(err, anyToValueFail, be, be)
+		}
+
+		n.bind(val)
 	}
 
-	// TODO: runtime type checking
-	n.bind(val)
 	return
 }
 

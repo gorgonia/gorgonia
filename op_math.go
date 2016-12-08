@@ -567,16 +567,16 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err er
 	switch op.āBinaryOperator {
 	case matMulOperator:
 		if op.transA {
-			x = transpose(x)
+			x = transpose2D(x)
 		}
 		if op.transB {
-			y = transpose(y)
+			y = transpose2D(y)
 		}
 
 		retVal = types.Shape{x[0], y[1]}
 	case matVecMulOperator:
 		if op.transA {
-			x = transpose(x)
+			x = transpose2D(x)
 		}
 
 		if x[0] != y[0] && x[1] != y[0] {
