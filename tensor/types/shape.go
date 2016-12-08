@@ -215,6 +215,53 @@ func (s Shape) Repeat(axis int, repeats ...int) (newShape Shape, finalRepeats []
 	return
 }
 
+// Concat returns the expected new shape given the concatenation parameters
+func (s Shape) Concat(axis int, ss ...Shape) (newShape Shape, err error) {
+	dims := s.Dims()
+
+	// check that all the concatenates have the same dimensions
+	for _, shp := range ss {
+		if shp.Dims() != dims {
+			err = DimMismatchErr(dims, shp.Dims())
+			return
+		}
+	}
+
+	// special case
+	if axis == AllAxes {
+		axis = 0
+	}
+
+	// nope... no negative indexing here.
+	if axis < 0 {
+		err = AxisErr("Axis %d is less than 0", axis)
+		return
+	}
+
+	if axis >= dims {
+		err = AxisErr("Axis  %d is equal to the number of dimension %d", axis, dims)
+		return
+	}
+
+	newShape = Shape(BorrowInts(dims))
+	copy(newShape, s)
+
+	for _, shp := range ss {
+		for d := 0; d < dims; d++ {
+			if d == axis {
+				newShape[d] += shp[d]
+			} else {
+				// validate that the rest of the dimensions match up
+				if newShape[d] != shp[d] {
+					err = DimMismatchErr(newShape[d], shp[d])
+					return
+				}
+			}
+		}
+	}
+	return
+}
+
 func (s Shape) Format(st fmt.State, r rune) {
 	switch r {
 	case 'v', 's':
