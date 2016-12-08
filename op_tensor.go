@@ -504,7 +504,9 @@ func (op sliceOp) Type() hm.Type {
 
 func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
 	input := inputs[0].(types.Shape)
-	return input.S(op.Slice)
+	slices := make([]types.Slice, op.along+1)
+	slices[op.along] = op.Slice
+	return input.S(slices...)
 }
 
 func (op sliceOp) DiffWRT(i int) []bool {
