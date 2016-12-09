@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"log"
 
 	"github.com/chewxy/gorgonia/tensor"
 	tb "github.com/chewxy/gorgonia/tensor/b"
@@ -258,7 +259,17 @@ func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error
 			knownRepeats[i] = r.val
 		}
 	}
-	retVal = input
+
+	if monotonic, incr := types.IsMonotonicInts(op.along); monotonic && incr && input.IsScalar() {
+		if input.IsScalar() {
+			retVal = types.Shape(types.BorrowInts(len(knownRepeats)))
+			copy(retVal, knownRepeats)
+			return
+		}
+	} else {
+		retVal = input
+	}
+
 	for i, axis := range op.along {
 		rep := knownRepeats[i]
 		if rep == 1 || rep == 0 { // 0 means unknown
@@ -268,7 +279,6 @@ func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error
 			return
 		}
 	}
-
 	return
 }
 
@@ -356,8 +366,11 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		}
 	}
 
-	add := newElemBinOp(addOpType, inputs[0], output)
-	d, err = add.UnsafeDo(xdv.d, d)
+	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
+	if d, err = add.UnsafeDo(xdv.d, d); err != nil {
+		log.Printf("%+v", err)
+		return
+	}
 
 	if !add.ReturnsPtr() || inputs[0].IsScalar() {
 		err = xdv.SetDeriv(d)
@@ -386,28 +399,58 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		return
 	}
 
+	monotonic, incr := types.IsMonotonicInts(op.along)
+
 	// process inputs[0]
 	var t types.Tensor
 	switch iv := inputs[0].(type) {
 	case F64:
 		s := float64(iv)
+		if monotonic && incr {
+			ret := tf64.NewTensor(tf64.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
 		t = tf64.NewTensor(tf64.AsScalar(s))
 	case F32:
 		s := float32(iv)
+		if monotonic && incr {
+			ret := tf32.NewTensor(tf32.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
 		t = tf32.NewTensor(tf32.AsScalar(s))
 	case I:
 		s := int(iv)
+		if monotonic && incr {
+			ret := ti.NewTensor(ti.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
 		t = ti.NewTensor(ti.AsScalar(s))
+	case B:
+		s := bool(iv)
+		if monotonic && incr {
+			ret := tb.NewTensor(tb.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
+		t = tb.NewTensor(tb.AsScalar(s))
+
 	// case I32:
 	// 	s := int32(iv)
 	// case I64:
 	// 	s := int64(iv)
 	// case U8:
 	// 	s := byte(iv)
-	case B:
-		s := bool(iv)
-		t = tb.NewTensor(tb.AsScalar(s))
-
 	case types.Tensor:
 		t = iv
 	default:
@@ -416,6 +459,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	// actually do repeat
+
 	for i, axis := range op.along {
 		rep := reps[i]
 		if rep == 1 {
@@ -460,7 +504,9 @@ type sliceOp struct {
 	types.Slice
 
 	along int // along which axis to slice?
-	d     int // how many dimensions were the original tensor
+
+	a int // along which axis of the original tensor
+	d int // how many dimensions were the original tensor
 }
 
 func newSliceOp(s types.Slice, along, d int) sliceOp {
@@ -506,7 +552,10 @@ func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
 	input := inputs[0].(types.Shape)
 	slices := make([]types.Slice, op.along+1)
 	slices[op.along] = op.Slice
+
 	return input.S(slices...)
+
+	// return input.S(op.Slice)
 }
 
 func (op sliceOp) DiffWRT(i int) []bool {

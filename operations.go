@@ -62,7 +62,8 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 		shapeLogf("inferred shape %v", s)
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g), WithShape(s...))
 	} else {
-		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
+		err = errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
+		// retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
 	}
 	return
 }
@@ -607,23 +608,26 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 		return nil, errors.Errorf("Cannot slice on non Tensor types. Got %T", n.t)
 	}
 
+	if len(slices) > n.shape.Dims() {
+		return nil, errors.Errorf("Cannot slice %v. Shape: %v. Slices: %d", n, n.shape, len(slices))
+	}
+
 	retVal = n
-	for i, slice := range slices {
-		if retVal.IsScalar() {
-			return nil, errors.Errorf("cannot slice a scalar value (%v). Slice %d (%v)", retVal, i, slice)
+	var dimsChanged int
+	for i, s := range slices {
+		var along int
+		if i > 0 {
+			if prev := slices[i-1]; prev != nil {
+				if prev.End()-prev.Start() == 1 {
+					dimsChanged++
+				}
+			}
 		}
+		along = i - dimsChanged
 
-		var op sliceOp
-		switch {
-		case retVal.shape.IsVector():
-			op = newSliceOp(slice, 0, retVal.Dims())
-		default:
-			op = newSliceOp(slice, i, retVal.Dims())
-
-		}
-
+		op := newSliceOp(s, along, retVal.Dims())
 		if retVal, err = applyOp(op, retVal); err != nil {
-			return nil, errors.Wrap(err, operationError)
+			return
 		}
 	}
 	return
