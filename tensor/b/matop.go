@@ -431,7 +431,9 @@ func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 	all[0] = t
 	copy(all[1:], Ts)
 
+	// special case
 	var start, end int
+
 	for _, T := range all {
 		end += T.Shape()[axis]
 		slices := make([]types.Slice, axis+1)
