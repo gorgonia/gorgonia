@@ -1073,8 +1073,9 @@ func (op transposeOp) String() string {
 }
 
 type concatOp struct {
-	axis int
-	d    int
+	axis     int
+	d        int
+	children int
 }
 
 func (op concatOp) Arity() int { return -1 }
@@ -1083,8 +1084,12 @@ func (op concatOp) Arity() int { return -1 }
 //		concat :: Tensor a → Tensor a → ... → Tensor a
 func (op concatOp) Type() hm.Type {
 	tt := newTensorType(op.d, hm.TypeVariable('a'))
+	fnt := make([]hm.Type, op.children+1)
+	for i := range fnt {
+		fnt[i] = tt
+	}
 
-	return hm.NewFnType(tt, tt, tt)
+	return hm.NewFnType(fnt...)
 }
 
 func (op concatOp) InferShape(ds ...DimSizer) (types.Shape, error) {

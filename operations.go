@@ -684,6 +684,6 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 		return
 	}
 
-	op := concatOp{axis: axis, d: d}
+	op := concatOp{axis: axis, d: d, children: len(ns)}
 	return applyOp(op, ns...)
 }
