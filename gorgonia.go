@@ -245,7 +245,7 @@ func UnsafeLet(n *Node, be interface{}) error {
 	switch v := be.(type) {
 	case types.Slice:
 		switch so := n.op.(type) {
-		case sliceOp:
+		case *sliceOp:
 			so.Slice = v
 			n.op = so
 		case sliceIncrOp:

@@ -298,7 +298,6 @@ func (n *Node) Grad() (Value, error) {
 		return dv.d, nil
 	}
 	if n.deriv != nil {
-		logf("Getting from n.deriv")
 		return n.deriv.Value(), nil
 	}
 

@@ -560,10 +560,8 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		if cloned, err = CloneValue(v); err != nil {
 			return errors.Wrap(err, cloneFail)
 		}
-		logf("Bound Cloned %v", cloned)
 		node.bind(cloned)
 	} else {
-		logf("Bound %v", v)
 		node.bind(v)
 	}
 

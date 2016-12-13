@@ -509,22 +509,22 @@ type sliceOp struct {
 	d int // how many dimensions were the original tensor
 }
 
-func newSliceOp(s types.Slice, along, d int) sliceOp {
-	return sliceOp{
+func newSliceOp(s types.Slice, along, d int) *sliceOp {
+	return &sliceOp{
 		Slice: s,
 		along: along,
 		d:     d,
 	}
 }
 
-func (op sliceOp) Arity() int { return 1 }
+func (op *sliceOp) Arity() int { return 1 }
 
 // slicing a tensor value T[:] has type
 // 		slice :: Tensor a → Tensor a
 // 		slice :: Tensor a → a
 //
 // The latter is in the case where the resulting dimensions is 0, returning a scalar
-func (op sliceOp) Type() hm.Type {
+func (op *sliceOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	tt := newTensorType(op.d, a)
 
@@ -548,7 +548,7 @@ func (op sliceOp) Type() hm.Type {
 	return hm.NewFnType(tt, tt)
 }
 
-func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
+func (op *sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
 	input := inputs[0].(types.Shape)
 	slices := make([]types.Slice, op.along+1)
 	slices[op.along] = op.Slice
@@ -558,7 +558,7 @@ func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
 	// return input.S(op.Slice)
 }
 
-func (op sliceOp) DiffWRT(i int) []bool {
+func (op *sliceOp) DiffWRT(i int) []bool {
 	if i > 1 {
 		// error
 		err := errors.Errorf("sliceOp should only have one or more inputs. Got %v instead", i)
@@ -568,7 +568,7 @@ func (op sliceOp) DiffWRT(i int) []bool {
 	return []bool{true}
 }
 
-func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
+func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -581,7 +581,7 @@ func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Node
 	return
 }
 
-func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op *sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -604,7 +604,7 @@ func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	return
 }
 
-func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -671,10 +671,10 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sliceOp) ReturnsPtr() bool     { return true }
-func (op sliceOp) CallsExtern() bool    { return false }
-func (op sliceOp) OverwritesInput() int { return -1 }
-func (op sliceOp) WriteHash(h hash.Hash) {
+func (op *sliceOp) ReturnsPtr() bool     { return true }
+func (op *sliceOp) CallsExtern() bool    { return false }
+func (op *sliceOp) OverwritesInput() int { return -1 }
+func (op *sliceOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("slice"))
 	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
 		panic(err)
@@ -724,7 +724,7 @@ func (op sliceOp) all() bool { return op.Slice == nil || op.End() <= op.Start() 
 // T[:] +=incr
 // THIS IS AN UNSAFE OPERATION
 type sliceIncrOp struct {
-	sliceOp
+	*sliceOp
 }
 
 // slicing a tensor value T[:] has type
@@ -929,12 +929,16 @@ func (op sliceIncrOp) String() string {
 	if op.all() {
 		buf.WriteString(":")
 	} else {
-		fmt.Fprintf(&buf, "%d:%d:%d", op.Start(), op.End())
+		fmt.Fprintf(&buf, "%d:%d:%d", op.Start(), op.End(), op.Step())
 	}
 
 	buf.WriteString("...]+=...")
 	return buf.String()
 }
+
+// func (op sliceIncrOp) UsePreallocDo(val Value, inputs ...Value) (Value, error) {
+
+// }
 
 type transposeOp struct {
 	pattern []int
