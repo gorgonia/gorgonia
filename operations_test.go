@@ -321,7 +321,36 @@ func TestSlice(t *testing.T) {
 		if !ValueEq(sG, s2G) {
 			t.Errorf("Test %q - Expected sG and s2G to have the same value", sts.name)
 		}
+
+		// For visual checks
+		// xG, err := x.Grad()
+		// t.Logf("Test  %q x: \n%+v,\n%+v", sts.name, x.Value(), xG)
 	}
+
+	// special cases with UnsafeLet
+	g := NewGraph()
+	x := NewTensor(g, Float64, 2, WithShape(2, 3), WithInit(RangedFrom(0)))
+	sliced, _ := Slice(x, S(0))
+	cost := Must(Slice(sliced, S(0)))
+	Grad(cost, x)
+	prog, locMap, err := Compile(g)
+	m := NewTapeMachine(prog, locMap)
+
+	// mutate the graph before running
+	UnsafeLet(sliced, S(1))
+	UnsafeLet(cost, S(2))
+	if err = m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	xG, err := x.Grad()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, []float64{0, 0, 0, 0, 0, 1}, xG.Data())
+	// visual inspection
+	// t.Logf("x: \n%+v,\n%+v", x.Value(), xG)
 
 }
 
