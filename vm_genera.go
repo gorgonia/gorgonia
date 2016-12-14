@@ -116,13 +116,31 @@ func (m *lispMachine) forward() (err error) {
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
 
-	if n.isInput() {
-		machineLogf("Unit() on input node")
-		if err = n.bind(dvUnit(n.boundTo)); err != nil {
-			return errors.Wrap(err, bindFail)
+	if !n.isStmt {
+		switch {
+		case n.isArg():
+			machineLogf("Unit() on input node")
+			if err = n.bind(dvUnit(n.boundTo)); err != nil {
+				return errors.Wrap(err, bindFail)
+			}
+			return
+		case n.isRandom():
+			machineLogf("binding value of random node")
+
+			var v Value
+			if v, err = n.op.Do(); err != nil {
+				return errors.Wrapf(err, execFail, n.op, n)
+			}
+
+			// we wrap it in a dualValue, but don't allocate anything for the d
+			if err = n.bind(dvUnit0(v)); err != nil {
+				return errors.Wrap(err, bindFail)
+			}
+			return
+		default:
+			// do nothihng
 		}
 		m.watchedLogf(m.valueFmt, n.boundTo)
-		return
 	}
 
 	// other wise it's time to execute the op

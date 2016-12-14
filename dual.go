@@ -55,8 +55,10 @@ func (dv *dualValue) String() string {
 func (dv *dualValue) sanity() error {
 	// check that d and v are the same type
 
-	if !TypeOf(dv.Value).Eq(TypeOf(dv.d)) {
-		return errors.New("DualValues do not have the same types")
+	dvv := TypeOf(dv.Value)
+	dvd := TypeOf(dv.d)
+	if !dvv.Eq(dvd) {
+		return errors.Errorf("DualValues do not have the same types: %v and %v", dvv, dvd)
 	}
 
 	// TODO: check that the shapes are the same

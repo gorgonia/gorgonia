@@ -778,5 +778,5 @@ func nondiffBinOpExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 }
 
 func nondiffBinOp(x, y, z *Node) (err error) {
-	return errors.New("Non differentiable")
+	return AutoDiffError{}
 }

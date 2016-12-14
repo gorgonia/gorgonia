@@ -243,7 +243,10 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	b := op.ʘBinaryOperator.binOpType()
 	if err = ʘBinOpDiffFns[b](inputs[0], inputs[1], output); err != nil {
-		return errors.Wrapf(err, autodiffFail, b)
+		if _, ok := err.(AutoDiffError); !ok {
+			return errors.Wrapf(err, autodiffFail, b)
+		}
+		err = nil
 	}
 
 	//handle scalar gradients

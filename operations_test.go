@@ -1,7 +1,7 @@
 package gorgonia
 
 import (
-	"io/ioutil"
+	"log"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -256,7 +256,11 @@ func TestGt(t *testing.T) {
 		case !gtts.err && err != nil:
 			t.Errorf("Test %d: %+v", i, err)
 			continue
+		}
 
+		if gtts.retSame {
+			cost := Must(Sum(ret))
+			Grad(cost, a, b)
 		}
 
 		prog, locMap, err := Compile(g)
@@ -270,10 +274,29 @@ func TestGt(t *testing.T) {
 			t.Errorf("Test %d Expected %v. Got %v", i, gtts.expected, ret.Value())
 		}
 
-		if i == 6 {
-			ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
+		// Test LispMachine implementation
+		h := NewGraph()
+		x := NodeFromAny(h, gtts.a, WithName("x"))
+		y := NodeFromAny(h, gtts.b, WithName("y"))
+		ret2, _ := Gt(x, y, gtts.retSame)
+
+		var m2 VM
+		if gtts.retSame {
+			Must(Sum(ret2))
+			m2 = NewLispMachine(h)
+		} else {
+			m2 = NewLispMachine(h, ExecuteFwdOnly())
+		}
+		if err = m2.RunAll(); err != nil {
+			t.Errorf("Test %d LispMachine: %+v", i, err)
+			continue
+		}
+
+		if !ValueEq(ret.Value(), ret2.Value()) {
+			t.Errorf("Test %d. Expected %v. Got  %v", i, ret.Value(), ret2.Value())
 		}
 	}
+	log.Printf("DOING THIS NOW")
 
 	// other special cases
 	g := NewGraph()
@@ -286,6 +309,8 @@ func TestGt(t *testing.T) {
 	if gt, err = Gt(c, T, true); err != nil {
 		t.Error(err)
 	}
+	cost := Must(Sum(gt))
+	Grad(cost, T)
 
 	prog, locMap, err := Compile(g)
 	m1 := NewTapeMachine(prog, locMap)
@@ -294,6 +319,24 @@ func TestGt(t *testing.T) {
 	}
 
 	if (TensorType{d: 1, of: Float64}) != TypeOf(gt.Value()) {
+		t.Error("Expected a tensor type of float64")
+	}
+
+	h := NewGraph()
+	d := NewConstant(F64(1))
+	U := UniformRandomNode(h, Float64, 0, 1, 2)
+	var gt2 *Node
+	if gt2, err = Gt(d, U, true); err != nil {
+		t.Error(err)
+	}
+	Must(Sum(gt2))
+
+	m2 := NewLispMachine(h)
+	if err = m2.RunAll(); err != nil {
+		t.Error(err)
+	}
+
+	if (TensorType{d: 1, of: Float64}) != TypeOf(gt2.Value()) {
 		t.Error("Expected a tensor type of float64")
 	}
 
