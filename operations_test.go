@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -157,6 +158,145 @@ func TestMul(t *testing.T) {
 		assert.True(mts.xshape.Eq(gradX.Shape()))
 		assert.True(mts.wshape.Eq(gradW.Shape()))
 	}
+}
+
+var gtTests = []struct {
+	a, b    Value
+	retSame bool
+
+	expected Value
+	err      bool
+}{
+	// s-s
+	{F64(1), F64(0), true, F64(1), false},
+	{F64(0), F64(1), true, F64(0), false},
+	{F64(1), F64(0), false, B(true), false},
+	{F32(0), F32(1), false, B(false), false},
+
+	// s-t
+	{
+		F64(1), tensor.New(types.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
+		true,
+		tensor.New(types.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{1, 0})),
+		false,
+	},
+
+	{
+		F32(1), tensor.New(types.Float32, tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
+		false,
+		tensor.New(types.Bool, tensor.WithShape(2), tensor.WithBacking([]bool{true, false})),
+		false,
+	},
+
+	// t-s
+	{
+		tensor.New(types.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), F64(1),
+		true,
+		tensor.New(types.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{0, 1})),
+		false,
+	},
+
+	{
+		tensor.New(types.Float32, tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), F32(1),
+		false,
+		tensor.New(types.Bool, tensor.WithShape(2), tensor.WithBacking([]bool{false, true})),
+		false,
+	},
+
+	// t-t
+	{
+		tensor.New(types.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 1, 2, 3, 4, 5})),
+		tensor.New(types.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{5, 4, 3, 2, 1, 0})),
+		true,
+
+		tensor.New(types.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 1, 1, 1})),
+		false,
+	},
+
+	{
+		tensor.New(types.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 1, 2, 3, 4, 5})),
+		tensor.New(types.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{5, 4, 3, 2, 1, 0})),
+		false,
+
+		tensor.New(types.Bool, tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, true, true, true})),
+		false,
+	},
+
+	// stupids
+
+	// different shapes
+	{
+		tensor.New(types.Float32, tensor.WithShape(2)), tensor.New(types.Float32, tensor.WithShape(4)),
+		true, nil, true,
+	},
+
+	// different dtypes
+	{
+		tensor.New(types.Float64, tensor.WithShape(2)), tensor.New(types.Float32, tensor.WithShape(2)),
+		true, nil, true,
+	},
+}
+
+func TestGt(t *testing.T) {
+	for i, gtts := range gtTests {
+		g := NewGraph()
+		a := NodeFromAny(g, gtts.a, WithName("a"))
+		b := NodeFromAny(g, gtts.b, WithName("b"))
+
+		var ret *Node
+		var err error
+		ret, err = Gt(a, b, gtts.retSame)
+
+		switch {
+		case gtts.err:
+			if err == nil {
+				t.Error("Expected an error")
+			}
+			continue
+		case !gtts.err && err != nil:
+			t.Errorf("Test %d: %+v", i, err)
+			continue
+
+		}
+
+		prog, locMap, err := Compile(g)
+		m1 := NewTapeMachine(prog, locMap)
+		if err = m1.RunAll(); err != nil {
+			t.Errorf("Test %d: %+v", i, err)
+			continue
+		}
+
+		if !ValueEq(gtts.expected, ret.Value()) {
+			t.Errorf("Test %d Expected %v. Got %v", i, gtts.expected, ret.Value())
+		}
+
+		if i == 6 {
+			ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
+		}
+	}
+
+	// other special cases
+	g := NewGraph()
+	c := NewConstant(F64(1))
+	// T := NewTensor(g, Float64, 1, WithShape(2), WithInit(RangedFrom(0)))
+	T := UniformRandomNode(g, Float64, 0, 1, 2)
+
+	var gt *Node
+	var err error
+	if gt, err = Gt(c, T, true); err != nil {
+		t.Error(err)
+	}
+
+	prog, locMap, err := Compile(g)
+	m1 := NewTapeMachine(prog, locMap)
+	if err = m1.RunAll(); err != nil {
+		t.Error(err)
+	}
+
+	if (TensorType{d: 1, of: Float64}) != TypeOf(gt.Value()) {
+		t.Error("Expected a tensor type of float64")
+	}
+
 }
 
 func TestSoftMax(t *testing.T) {

@@ -67,22 +67,18 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return x, nil
 	}
 
-	var low, high float64
-	if prob < 0 {
-		low = prob
-		high = -prob
-	} else {
-		low = -prob
-		high = prob
-	}
-
 	var dt Dtype
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
-	m := UniformRandomNode(x.g, dt, low, high, x.shape...)
-	if retVal, err = HadamardProd(x, m); err != nil {
+	p := NewConstant(prob)
+	m := UniformRandomNode(x.g, dt, 0, 1, x.shape...)
+	if retVal, err = Gt(m, p, true); err != nil {
+		return nil, errors.Wrap(err, "Greater Than failed")
+	}
+
+	if retVal, err = HadamardProd(x, retVal); err != nil {
 		return nil, errors.Wrap(err, mulFail)
 	}
 

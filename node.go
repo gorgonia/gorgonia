@@ -201,9 +201,10 @@ func (n *Node) ID() int { return int(uintptr(unsafe.Pointer(n))) }
 
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }
-func (n *Node) isInput() bool    { return n.isArg() && !n.isStmt }
+func (n *Node) isInput() bool    { return (n.isArg() || n.isRandom()) && !n.isStmt }
 func (n *Node) isMutable() bool  { return !n.isInput() && n.op.ReturnsPtr() }
 func (n *Node) isConstant() bool { _, ok := n.op.(constant); return ok }
+func (n *Node) isRandom() bool   { _, ok := n.op.(randomOp); return ok }
 
 func (n *Node) isRoot() bool {
 	if n.g == nil {
