@@ -207,7 +207,7 @@ func (m *lispMachine) forward() (err error) {
 		}
 
 	default:
-		machineLogf("bind(%v) with as much reuse as possible", op)
+		m.logf("bind(%v) with as much reuse as possible", op)
 		// reuse as much as possible
 		output := dvUnit(n.boundTo)
 		if err = n.bind(output); err != nil {
@@ -218,6 +218,7 @@ func (m *lispMachine) forward() (err error) {
 		if _, ok := errors.Cause(err).(AutoDiffError); ok {
 			err = nil
 		} else if err != nil {
+			log.Printf("WTF? op %v || %v | %v", op, n, output)
 			return errors.Wrapf(err, execFail, op, n)
 		}
 	}

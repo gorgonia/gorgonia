@@ -1,10 +1,6 @@
 package gorgonia
 
-import (
-	"fmt"
-
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // BinaryXent is a convenience function for doing binary crossentropy stuff.
 // The formula is as below:
@@ -72,7 +68,21 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, dtypeOfFail)
 	}
 
-	p := NewConstant(prob)
+	var opp, pr Value // opp = 1 per p
+	switch dt {
+	case Float64:
+		opp, _ = anyToScalar(1.0 / prob)
+		pr, _ = anyToScalar(prob)
+	case Float32:
+		opp, _ = anyToScalar(float32(1.0 / prob))
+		pr, _ = anyToScalar(float32(prob))
+	default:
+		return nil, errors.Errorf(nyiTypeFail, "Dropout()", dt)
+	}
+
+	p := NewConstant(pr)
+	c := NewConstant(opp)
+
 	m := UniformRandomNode(x.g, dt, 0, 1, x.shape...)
 	if retVal, err = Gt(m, p, true); err != nil {
 		return nil, errors.Wrap(err, "Greater Than failed")
@@ -81,19 +91,6 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	if retVal, err = HadamardProd(x, retVal); err != nil {
 		return nil, errors.Wrap(err, mulFail)
 	}
-
-	var v Value
-	switch dt {
-	case Float64:
-		v, _ = anyToScalar(1.0 / prob)
-	case Float32:
-		v, _ = anyToScalar(float32(1.0 / prob))
-	default:
-		// TODO: use errors package for this panic?
-		panic(fmt.Sprintf("Dtype %v not yet implemented for dropout", dt))
-	}
-
-	c := NewConstant(v)
 
 	return HadamardDiv(retVal, c)
 }

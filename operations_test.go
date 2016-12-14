@@ -340,6 +340,8 @@ func TestGt(t *testing.T) {
 		t.Error("Expected a tensor type of float64")
 	}
 
+	t.Logf("%v", gt2.Value())
+
 }
 
 func TestSoftMax(t *testing.T) {

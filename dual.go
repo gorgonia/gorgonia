@@ -201,7 +201,6 @@ func dvBindVar(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 // doesn't alloc a dualValue, and reuses whatever that is there, and zeroes out the deriv
 func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	prealloc := retVal.Value
-
 	vals := idValue(inputs)
 
 	var ret Value

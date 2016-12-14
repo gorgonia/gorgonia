@@ -475,6 +475,12 @@ func (n *Node) bind(v Value) error {
 			if vdv == dv {
 				return nil
 			}
+			if n.isRandom() {
+				// then simply replace the value in it
+				dv.Value = vdv.Value
+				return nil
+			}
+
 			panic("Undefined behaviour") // no seriously there literally is no defined behaviour of what should the right thing be. I'll come back to this TODO.
 		}
 		dv.Value = v

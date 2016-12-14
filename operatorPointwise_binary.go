@@ -10,6 +10,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+type incrDoerBinOp interface {
+	IncrDo(v Value, retSame bool, inputs ...Value) error
+}
+type usePreallocDoerBinOp interface {
+	UsePreallocDo(v Value, retSame bool, inputs ...Value) (retVal Value, err error)
+}
+type unsafeDoerBinOp interface {
+	UnsafeDo(retSame bool, inputs ...Value) (Value, error)
+}
+
 /* BINARY OPERATOR */
 
 type ʘBinaryOperator interface {
@@ -301,20 +311,26 @@ func (o tBinOp) Do(same bool, inputs ...Value) (Value, error) {
 	return o.do(inputs)
 }
 
-func (o tBinOp) UnsafeDo(inputs ...Value) (Value, error) {
+func (o tBinOp) UnsafeDo(retSame bool, inputs ...Value) (Value, error) {
+	if retSame {
+		return o.do(inputs, types.AsSameType(), types.UseUnsafe())
+	}
 	return o.do(inputs, types.UseUnsafe())
 }
-func (o tBinOp) UsePreallocDo(v Value, inputs ...Value) (retVal Value, err error) {
+func (o tBinOp) UsePreallocDo(v Value, retSame bool, inputs ...Value) (retVal Value, err error) {
 	t, ok := v.(types.Tensor)
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", v, v)
 	}
 
 	reuse := t
+	if retSame {
+		return o.do(inputs, types.WithReuse(reuse), types.AsSameType())
+	}
 	return o.do(inputs, types.WithReuse(reuse))
 }
 
-func (o tBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
+func (o tBinOp) IncrDo(incr Value, retSame bool, inputs ...Value) (err error) {
 	reuse, ok := incr.(types.Tensor)
 	if ok {
 		_, err = o.do(inputs, types.WithIncr(reuse))
@@ -322,8 +338,15 @@ func (o tBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 	}
 
 	var retVal Value
-	if retVal, err = o.do(inputs); err != nil {
-		return errors.Wrapf(err, doFail, o)
+	if retSame {
+		if retVal, err = o.do(inputs, types.AsSameType()); err != nil {
+			return errors.Wrapf(err, doFail, o)
+		}
+	} else {
+		if retVal, err = o.do(inputs); err != nil {
+			return errors.Wrapf(err, doFail, o)
+		}
+
 	}
 
 	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))

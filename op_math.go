@@ -312,8 +312,8 @@ func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value
 		return op.Do(inputs...)
 	}
 
-	if pd, ok := op.ʘBinaryOperator.(UsePreallocDoer); ok {
-		return pd.UsePreallocDo(prealloc, inputs...)
+	if pd, ok := op.ʘBinaryOperator.(usePreallocDoerBinOp); ok {
+		return pd.UsePreallocDo(prealloc, op.retSame, inputs...)
 	}
 
 	return op.Do(inputs...)
@@ -325,8 +325,8 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 		return op.Do(inputs...)
 	}
 
-	if ud, ok := op.ʘBinaryOperator.(UnsafeDoer); ok {
-		return ud.UnsafeDo(inputs...)
+	if ud, ok := op.ʘBinaryOperator.(unsafeDoerBinOp); ok {
+		return ud.UnsafeDo(op.retSame, inputs...)
 	}
 	return op.Do(inputs...)
 }
@@ -347,11 +347,14 @@ func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 		return
 	}
 
-	if id, ok := op.ʘBinaryOperator.(IncrDoer); ok {
-		return id.IncrDo(incr, inputs...)
+	if id, ok := op.ʘBinaryOperator.(incrDoerBinOp); ok {
+		return id.IncrDo(incr, op.retSame, inputs...)
 	}
+
 	panic("unreachable")
 }
+
+func (op elemBinOp) String() string { return fmt.Sprintf("%v %t", op.ʘBinaryOperator, op.retSame) }
 
 // Fulfils the BinaryOp interface
 func (op elemBinOp) IsBinary() bool { return true }
