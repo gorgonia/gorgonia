@@ -19,7 +19,7 @@ func Lt(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 	op := lt
 
 	switch {
-	case boolT && atok && btok:
+	case atok && btok:
 		return at.tensorCmp(op, bt, boolT)
 	case boolT && atok && bfok:
 		return at.scalarCmp(op, true, bf)
@@ -36,9 +36,9 @@ func Lt(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 		return
 	case !boolT && afok && btok:
 		var b []bool
-		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
+		if b, err = scalarCmpBacking(op, false, af, bt.data); err == nil {
 			backing := boolsToInts(b)
-			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
+			retVal = NewTensor(WithShape(bt.Shape()...), WithBacking(backing))
 		}
 		return
 	default:
@@ -63,7 +63,7 @@ func Gt(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 	op := gt
 
 	switch {
-	case boolT && atok && btok:
+	case atok && btok:
 		return at.tensorCmp(op, bt, boolT)
 	case boolT && atok && bfok:
 		return at.scalarCmp(op, true, bf)
@@ -78,13 +78,13 @@ func Gt(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 		return
 	case !boolT && afok && btok:
 		var b []bool
-		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
+		if b, err = scalarCmpBacking(op, false, af, bt.data); err == nil {
 			backing := boolsToInts(b)
-			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
+			retVal = NewTensor(WithShape(bt.Shape()...), WithBacking(backing))
 		}
 		return
 	default:
-		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T", a, b)
+		err = types.NewError(types.DtypeMismatch, "Comparison cannot be done on %T and %T. %v, atok  %vbtok %v", a, b, boolT, atok, btok)
 		return
 	}
 	panic("unreachable")
@@ -105,7 +105,7 @@ func Lte(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err erro
 	op := lte
 
 	switch {
-	case boolT && atok && btok:
+	case atok && btok:
 		return at.tensorCmp(op, bt, boolT)
 	case boolT && atok && bfok:
 		return at.scalarCmp(op, true, bf)
@@ -122,9 +122,9 @@ func Lte(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err erro
 		return
 	case !boolT && afok && btok:
 		var b []bool
-		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
+		if b, err = scalarCmpBacking(op, false, af, bt.data); err == nil {
 			backing := boolsToInts(b)
-			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
+			retVal = NewTensor(WithShape(bt.Shape()...), WithBacking(backing))
 		}
 		return
 	default:
@@ -149,7 +149,7 @@ func Gte(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err erro
 	op := gte
 
 	switch {
-	case boolT && atok && btok:
+	case atok && btok:
 		return at.tensorCmp(op, bt, boolT)
 	case boolT && atok && bfok:
 		return at.scalarCmp(op, true, bf)
@@ -166,9 +166,9 @@ func Gte(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err erro
 		return
 	case !boolT && afok && btok:
 		var b []bool
-		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
+		if b, err = scalarCmpBacking(op, false, af, bt.data); err == nil {
 			backing := boolsToInts(b)
-			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
+			retVal = NewTensor(WithShape(bt.Shape()...), WithBacking(backing))
 		}
 		return
 	default:
@@ -193,7 +193,7 @@ func Eq(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 	op := eq
 
 	switch {
-	case boolT && atok && btok:
+	case atok && btok:
 		return at.tensorCmp(op, bt, boolT)
 	case boolT && atok && bfok:
 		return at.scalarCmp(op, true, bf)
@@ -210,9 +210,9 @@ func Eq(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 		return
 	case !boolT && afok && btok:
 		var b []bool
-		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
+		if b, err = scalarCmpBacking(op, false, af, bt.data); err == nil {
 			backing := boolsToInts(b)
-			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
+			retVal = NewTensor(WithShape(bt.Shape()...), WithBacking(backing))
 		}
 		return
 	default:
@@ -237,7 +237,7 @@ func Ne(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 	op := ne
 
 	switch {
-	case boolT && atok && btok:
+	case atok && btok:
 		return at.tensorCmp(op, bt, boolT)
 	case boolT && atok && bfok:
 		return at.scalarCmp(op, true, bf)
@@ -254,9 +254,9 @@ func Ne(a, b interface{}, opts ...types.FuncOpt) (retVal types.Tensor, err error
 		return
 	case !boolT && afok && btok:
 		var b []bool
-		if b, err = scalarCmpBacking(op, true, af, bt.data); err == nil {
+		if b, err = scalarCmpBacking(op, false, af, bt.data); err == nil {
 			backing := boolsToInts(b)
-			retVal = NewTensor(WithShape(at.Shape()...), WithBacking(backing))
+			retVal = NewTensor(WithShape(bt.Shape()...), WithBacking(backing))
 		}
 		return
 	default:
