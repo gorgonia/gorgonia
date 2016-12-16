@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -296,7 +295,6 @@ func TestGt(t *testing.T) {
 			t.Errorf("Test %d. Expected %v. Got  %v", i, ret.Value(), ret2.Value())
 		}
 	}
-	log.Printf("DOING THIS NOW")
 
 	// other special cases
 	g := NewGraph()

@@ -555,12 +555,11 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	m.storage[dest] = v
 	node := m.p.g.Node(instr.id).(*Node)
 
-	if m.trace() {
-		var cloned Value
-		if cloned, err = CloneValue(v); err != nil {
-			return errors.Wrap(err, cloneFail)
+	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
+		if err = node.bindCopy(v); err != nil {
+			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}
-		node.bind(cloned)
+
 	} else {
 		node.bind(v)
 	}

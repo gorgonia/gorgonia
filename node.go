@@ -492,6 +492,46 @@ func (n *Node) bind(v Value) error {
 	return nil
 }
 
+// bindCopy copies the value if to the bound value.
+func (n *Node) bindCopy(v Value) (err error) {
+	if n.boundTo == nil {
+		var cloned Value
+		if cloned, err = CloneValue(v); err != nil {
+			return
+		}
+		n.boundTo = cloned
+		return nil
+	}
+
+	var copied Value
+	if dv, ok := n.boundTo.(*dualValue); ok {
+
+		if vdv, ok := v.(*dualValue); ok {
+			if vdv == dv {
+				return nil // no need to copy!
+			}
+
+			if n.isRandom() {
+				// returnValue(dv.Value)
+				dv.Value = vdv.Value
+				return nil
+			}
+
+			return errors.Errorf("Cannot yet handle bindCopy() of *dualValue into *dualValue") // TODO FIX
+		}
+		if copied, err = Copy(dv.Value, v); err != nil {
+			return errors.Wrapf(err, "Failed to copy while binding to node with *dualValue")
+		}
+		dv.Value = copied // in case they're scalars
+		return nil
+	}
+	if copied, err = Copy(n.boundTo, v); err != nil {
+		return errors.Wrapf(err, "Failed to copy while binding to node")
+	}
+	n.boundTo = v // in case it's a scalar
+	return nil
+}
+
 // unbind releases the values back to the pool
 func (n *Node) unbind() {
 	if n.boundTo == nil {
