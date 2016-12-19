@@ -425,44 +425,16 @@ func (t *Tensor) RollAxis(axis, start int, safe bool) (retVal *Tensor, err error
 
 // Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
 func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
-	// check that all tensors to be concatenated have the same number of dimensions
-	dims := t.Dims()
-	for _, T := range Ts {
-		if T.Dims() != dims {
-			err = dimMismatchError(dims, T.Dims())
-			return
-		}
+	ss := make([]types.Shape, len(Ts))
+	for i, T := range Ts {
+		ss[i] = T.Shape()
 	}
-
-	if axis < 0 {
-		err = types.AxisErr("Axis %d is less than 0", axis)
+	var newShape types.Shape
+	if newShape, err = t.Shape().Concat(axis, ss...); err != nil {
 		return
 	}
 
-	var newStrides []int
-	newShape := types.Shape(types.BorrowInts(dims))
-	copy(newShape, t.Shape())
-	for _, T := range Ts {
-		for d := 0; d < dims; d++ {
-			if d == axis {
-				newShape[d] += T.Shape()[d]
-			} else {
-				// validate that the rest of the dimensions match up
-				if newShape[d] != T.Shape()[d] {
-					err = dimMismatchError(newShape[d], T.Shape()[d])
-					return
-				}
-			}
-		}
-	}
-
-	aps := make([]*types.AP, len(Ts)+1)
-	aps[0] = t.AP
-	for i, T := range Ts {
-		aps[i+1] = T.AP
-	}
-
-	newStrides = newShape.CalcStrides()
+	newStrides := newShape.CalcStrides()
 	data := make([]float64, newShape.TotalSize())
 
 	retVal = new(Tensor)
@@ -473,7 +445,9 @@ func (t *Tensor) Concat(axis int, Ts ...*Tensor) (retVal *Tensor, err error) {
 	all[0] = t
 	copy(all[1:], Ts)
 
+	// special case
 	var start, end int
+
 	for _, T := range all {
 		end += T.Shape()[axis]
 		slices := make([]types.Slice, axis+1)

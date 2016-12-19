@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"log"
 
 	"github.com/chewxy/gorgonia/tensor"
 	tb "github.com/chewxy/gorgonia/tensor/b"
@@ -258,7 +259,17 @@ func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error
 			knownRepeats[i] = r.val
 		}
 	}
-	retVal = input
+
+	if monotonic, incr := types.IsMonotonicInts(op.along); monotonic && incr && input.IsScalar() {
+		if input.IsScalar() {
+			retVal = types.Shape(types.BorrowInts(len(knownRepeats)))
+			copy(retVal, knownRepeats)
+			return
+		}
+	} else {
+		retVal = input
+	}
+
 	for i, axis := range op.along {
 		rep := knownRepeats[i]
 		if rep == 1 || rep == 0 { // 0 means unknown
@@ -268,7 +279,6 @@ func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error
 			return
 		}
 	}
-
 	return
 }
 
@@ -356,8 +366,11 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		}
 	}
 
-	add := newElemBinOp(addOpType, inputs[0], output)
-	d, err = add.UnsafeDo(xdv.d, d)
+	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
+	if d, err = add.UnsafeDo(xdv.d, d); err != nil {
+		log.Printf("%+v", err)
+		return
+	}
 
 	if !add.ReturnsPtr() || inputs[0].IsScalar() {
 		err = xdv.SetDeriv(d)
@@ -386,28 +399,58 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		return
 	}
 
+	monotonic, incr := types.IsMonotonicInts(op.along)
+
 	// process inputs[0]
 	var t types.Tensor
 	switch iv := inputs[0].(type) {
 	case F64:
 		s := float64(iv)
+		if monotonic && incr {
+			ret := tf64.NewTensor(tf64.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
 		t = tf64.NewTensor(tf64.AsScalar(s))
 	case F32:
 		s := float32(iv)
+		if monotonic && incr {
+			ret := tf32.NewTensor(tf32.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
 		t = tf32.NewTensor(tf32.AsScalar(s))
 	case I:
 		s := int(iv)
+		if monotonic && incr {
+			ret := ti.NewTensor(ti.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
 		t = ti.NewTensor(ti.AsScalar(s))
+	case B:
+		s := bool(iv)
+		if monotonic && incr {
+			ret := tb.NewTensor(tb.WithShape(reps...))
+			err = ret.SetAll(s)
+			retVal = ret
+
+			return
+		}
+		t = tb.NewTensor(tb.AsScalar(s))
+
 	// case I32:
 	// 	s := int32(iv)
 	// case I64:
 	// 	s := int64(iv)
 	// case U8:
 	// 	s := byte(iv)
-	case B:
-		s := bool(iv)
-		t = tb.NewTensor(tb.AsScalar(s))
-
 	case types.Tensor:
 		t = iv
 	default:
@@ -416,6 +459,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	// actually do repeat
+
 	for i, axis := range op.along {
 		rep := reps[i]
 		if rep == 1 {
@@ -460,25 +504,27 @@ type sliceOp struct {
 	types.Slice
 
 	along int // along which axis to slice?
-	d     int // how many dimensions were the original tensor
+
+	a int // along which axis of the original tensor
+	d int // how many dimensions were the original tensor
 }
 
-func newSliceOp(s types.Slice, along, d int) sliceOp {
-	return sliceOp{
+func newSliceOp(s types.Slice, along, d int) *sliceOp {
+	return &sliceOp{
 		Slice: s,
 		along: along,
 		d:     d,
 	}
 }
 
-func (op sliceOp) Arity() int { return 1 }
+func (op *sliceOp) Arity() int { return 1 }
 
 // slicing a tensor value T[:] has type
 // 		slice :: Tensor a → Tensor a
 // 		slice :: Tensor a → a
 //
 // The latter is in the case where the resulting dimensions is 0, returning a scalar
-func (op sliceOp) Type() hm.Type {
+func (op *sliceOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	tt := newTensorType(op.d, a)
 
@@ -502,12 +548,17 @@ func (op sliceOp) Type() hm.Type {
 	return hm.NewFnType(tt, tt)
 }
 
-func (op sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
+func (op *sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
 	input := inputs[0].(types.Shape)
-	return input.S(op.Slice)
+	slices := make([]types.Slice, op.along+1)
+	slices[op.along] = op.Slice
+
+	return input.S(slices...)
+
+	// return input.S(op.Slice)
 }
 
-func (op sliceOp) DiffWRT(i int) []bool {
+func (op *sliceOp) DiffWRT(i int) []bool {
 	if i > 1 {
 		// error
 		err := errors.Errorf("sliceOp should only have one or more inputs. Got %v instead", i)
@@ -517,7 +568,7 @@ func (op sliceOp) DiffWRT(i int) []bool {
 	return []bool{true}
 }
 
-func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
+func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -530,7 +581,7 @@ func (op sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Node
 	return
 }
 
-func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op *sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -553,7 +604,7 @@ func (op sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	return
 }
 
-func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -620,10 +671,10 @@ func (op sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sliceOp) ReturnsPtr() bool     { return true }
-func (op sliceOp) CallsExtern() bool    { return false }
-func (op sliceOp) OverwritesInput() int { return -1 }
-func (op sliceOp) WriteHash(h hash.Hash) {
+func (op *sliceOp) ReturnsPtr() bool     { return true }
+func (op *sliceOp) CallsExtern() bool    { return false }
+func (op *sliceOp) OverwritesInput() int { return -1 }
+func (op *sliceOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("slice"))
 	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
 		panic(err)
@@ -673,7 +724,7 @@ func (op sliceOp) all() bool { return op.Slice == nil || op.End() <= op.Start() 
 // T[:] +=incr
 // THIS IS AN UNSAFE OPERATION
 type sliceIncrOp struct {
-	sliceOp
+	*sliceOp
 }
 
 // slicing a tensor value T[:] has type
@@ -878,12 +929,16 @@ func (op sliceIncrOp) String() string {
 	if op.all() {
 		buf.WriteString(":")
 	} else {
-		fmt.Fprintf(&buf, "%d:%d:%d", op.Start(), op.End())
+		fmt.Fprintf(&buf, "%d:%d:%d", op.Start(), op.End(), op.Step())
 	}
 
 	buf.WriteString("...]+=...")
 	return buf.String()
 }
+
+// func (op sliceIncrOp) UsePreallocDo(val Value, inputs ...Value) (Value, error) {
+
+// }
 
 type transposeOp struct {
 	pattern []int
@@ -1019,4 +1074,134 @@ func (op transposeOp) String() string {
 
 	buf.WriteString("}")
 	return buf.String()
+}
+
+type concatOp struct {
+	axis     int
+	d        int
+	children int
+}
+
+func (op concatOp) Arity() int { return -1 }
+
+// concat only works for Tensor types
+//		concat :: Tensor a → Tensor a → ... → Tensor a
+func (op concatOp) Type() hm.Type {
+	tt := newTensorType(op.d, hm.TypeVariable('a'))
+	fnt := make([]hm.Type, op.children+1)
+	for i := range fnt {
+		fnt[i] = tt
+	}
+
+	return hm.NewFnType(fnt...)
+}
+
+func (op concatOp) InferShape(ds ...DimSizer) (types.Shape, error) {
+	if len(ds) == 0 {
+		return nil, errors.Errorf("No shapes passed in!")
+	}
+	shapes, err := DimSizersToShapes(ds)
+	if err != nil {
+		return nil, err
+	}
+
+	return shapes[0].Concat(op.axis, shapes[1:]...)
+}
+
+func (op concatOp) Do(vals ...Value) (Value, error) {
+	if len(vals) == 1 {
+		return vals[0], nil
+	}
+
+	ts, err := valuesToTensors(vals)
+	if err != nil {
+		return nil, err
+	}
+
+	return tensor.Concat(op.axis, ts[0], ts[1:]...)
+}
+
+func (op concatOp) ReturnsPtr() bool     { return true }
+func (op concatOp) CallsExtern() bool    { return false }
+func (op concatOp) OverwritesInput() int { return -1 }
+
+func (op concatOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("concatOp"))
+	fmt.Fprintf(h, "axis: %d, dims: %d", op.axis, op.d)
+}
+
+func (op concatOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op concatOp) String() string {
+	return fmt.Sprintf("Concat(axis=%d)", op.axis)
+}
+func (op concatOp) DiffWRT(inputs int) []bool {
+	retVal := make([]bool, inputs)
+	for i := range retVal {
+		retVal[i] = true
+	}
+	return retVal
+}
+
+func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	var start int
+
+	retVal = make(Nodes, len(inputs))
+	for i, in := range inputs {
+		if op.axis >= len(in.shape) {
+			return nil, errors.Errorf("Wanted dimension %d is larger than the shape %v", op.axis, in.shape)
+		}
+		end := in.shape[op.axis] + start
+
+		s := newSliceOp(S(start, end), op.axis, op.d)
+		if retVal[i], err = applyOp(s, grad); err != nil {
+			return
+		}
+		start = end
+	}
+	return
+}
+
+func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
+	odv := output.boundTo.(*dualValue)
+	odvd := odv.d.(types.Tensor)
+
+	var start int
+	for _, in := range inputs {
+		if op.axis >= len(in.shape) {
+			return errors.Errorf("Wanted dimension %d is larger than the shape %v", op.axis, in.shape)
+		}
+		end := in.shape[op.axis] + start
+
+		idv := in.boundTo.(*dualValue)
+		idvd := idv.d.(types.Tensor)
+
+		sliced, err := tensor.Slice(odvd, S(start, end))
+		if err != nil {
+			return err
+		}
+
+		// TODO: fix VAdd hack
+		// add to odvd
+		switch st := sliced.(type) {
+		case *tf64.Tensor:
+			d := idvd.(*tf64.Tensor)
+			d.VAdd(st)
+		case *tf32.Tensor:
+			d := idvd.(*tf32.Tensor)
+			d.VAdd(st)
+		case *ti.Tensor:
+			d := idvd.(*ti.Tensor)
+			d.VAdd(st)
+		default:
+			return errors.Errorf(nyiTypeFail, "DoDiff (hack) ", st)
+		}
+
+		start = end
+	}
+	return nil
 }

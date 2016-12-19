@@ -74,6 +74,28 @@ func WithBacking(any interface{}) tensorConsOpt {
 	return f
 }
 
+func AsScalar(any interface{}) tensorConsOpt {
+	f := func(dt types.Dtype) types.ConsOpt {
+		switch dt {
+		case types.Float64:
+			s := any.(float64)
+			return tf64.AsScalar(s)
+		case types.Float32:
+			s := any.(float32)
+			return tf32.AsScalar(s)
+		case types.Int:
+			s := any.(int)
+			return ti.AsScalar(s)
+		case types.Bool:
+			s := any.(bool)
+			return tb.AsScalar(s)
+		default:
+			panic("Not yet implemented")
+		}
+	}
+	return f
+}
+
 type Argmaxer interface {
 	Argmax(int) (*ti.Tensor, error)
 }

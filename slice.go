@@ -1,5 +1,10 @@
 package gorgonia
 
+// type SliceValue interface {
+// 	types.Slice
+// 	Value
+// }
+
 // sli is slice. It's named sli to prevent confusion over naming
 type sli struct {
 	start, end, step int
@@ -35,3 +40,9 @@ func S(start int, opt ...int) sli {
 func (s sli) Start() int { return s.start }
 func (s sli) End() int   { return s.end }
 func (s sli) Step() int  { return s.step }
+
+// sli implements SliceValue such that a slice can be passed into Let
+// func (s sli) Shape() types.Shape             { return nil }
+// func (s sli) Size() int                      { return -1 }
+// func (s sli) Data() interface{}              { return s }
+// func (s sli) Format(state fmt.State, c rune) { fmt.Fprintf(state, "%d:%d:%d", s.start, s.end, s.step) }

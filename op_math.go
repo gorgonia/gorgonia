@@ -243,7 +243,10 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	b := op.ʘBinaryOperator.binOpType()
 	if err = ʘBinOpDiffFns[b](inputs[0], inputs[1], output); err != nil {
-		return errors.Wrapf(err, autodiffFail, b)
+		if _, ok := err.(AutoDiffError); !ok {
+			return errors.Wrapf(err, autodiffFail, b)
+		}
+		err = nil
 	}
 
 	//handle scalar gradients
@@ -309,8 +312,8 @@ func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value
 		return op.Do(inputs...)
 	}
 
-	if pd, ok := op.ʘBinaryOperator.(UsePreallocDoer); ok {
-		return pd.UsePreallocDo(prealloc, inputs...)
+	if pd, ok := op.ʘBinaryOperator.(usePreallocDoerBinOp); ok {
+		return pd.UsePreallocDo(prealloc, op.retSame, inputs...)
 	}
 
 	return op.Do(inputs...)
@@ -322,8 +325,8 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 		return op.Do(inputs...)
 	}
 
-	if ud, ok := op.ʘBinaryOperator.(UnsafeDoer); ok {
-		return ud.UnsafeDo(inputs...)
+	if ud, ok := op.ʘBinaryOperator.(unsafeDoerBinOp); ok {
+		return ud.UnsafeDo(op.retSame, inputs...)
 	}
 	return op.Do(inputs...)
 }
@@ -344,11 +347,14 @@ func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 		return
 	}
 
-	if id, ok := op.ʘBinaryOperator.(IncrDoer); ok {
-		return id.IncrDo(incr, inputs...)
+	if id, ok := op.ʘBinaryOperator.(incrDoerBinOp); ok {
+		return id.IncrDo(incr, op.retSame, inputs...)
 	}
+
 	panic("unreachable")
 }
+
+func (op elemBinOp) String() string { return fmt.Sprintf("%v %t", op.ʘBinaryOperator, op.retSame) }
 
 // Fulfils the BinaryOp interface
 func (op elemBinOp) IsBinary() bool { return true }
@@ -567,16 +573,16 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err er
 	switch op.āBinaryOperator {
 	case matMulOperator:
 		if op.transA {
-			x = transpose(x)
+			x = transpose2D(x)
 		}
 		if op.transB {
-			y = transpose(y)
+			y = transpose2D(y)
 		}
 
 		retVal = types.Shape{x[0], y[1]}
 	case matVecMulOperator:
 		if op.transA {
-			x = transpose(x)
+			x = transpose2D(x)
 		}
 
 		if x[0] != y[0] && x[1] != y[0] {

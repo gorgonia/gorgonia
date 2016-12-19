@@ -8,7 +8,7 @@ type axes []int
 type coordinates []int
 
 // only works for 2D
-func transpose(shape types.Shape) types.Shape {
+func transpose2D(shape types.Shape) types.Shape {
 	if len(shape) != 2 {
 		return shape
 	}

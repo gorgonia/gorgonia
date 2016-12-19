@@ -201,9 +201,10 @@ func (n *Node) ID() int { return int(uintptr(unsafe.Pointer(n))) }
 
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }
-func (n *Node) isInput() bool    { return n.isArg() && !n.isStmt }
+func (n *Node) isInput() bool    { return (n.isArg() || n.isRandom()) && !n.isStmt }
 func (n *Node) isMutable() bool  { return !n.isInput() && n.op.ReturnsPtr() }
 func (n *Node) isConstant() bool { _, ok := n.op.(constant); return ok }
+func (n *Node) isRandom() bool   { _, ok := n.op.(randomOp); return ok }
 
 func (n *Node) isRoot() bool {
 	if n.g == nil {
@@ -298,7 +299,6 @@ func (n *Node) Grad() (Value, error) {
 		return dv.d, nil
 	}
 	if n.deriv != nil {
-		logf("Getting from n.deriv")
 		return n.deriv.Value(), nil
 	}
 
@@ -475,6 +475,12 @@ func (n *Node) bind(v Value) error {
 			if vdv == dv {
 				return nil
 			}
+			if n.isRandom() {
+				// then simply replace the value in it
+				dv.Value = vdv.Value
+				return nil
+			}
+
 			panic("Undefined behaviour") // no seriously there literally is no defined behaviour of what should the right thing be. I'll come back to this TODO.
 		}
 		dv.Value = v

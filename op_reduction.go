@@ -157,16 +157,6 @@ func (op sumOp) Type() hm.Type {
 	}
 
 	return hm.NewFnType(t, newTensorType(op.d-1, a))
-
-	// var retType hm.Type
-	// if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
-	// 	// then it redueces down
-	// 	retType = a
-	// 	return hm.NewFnType(t, a)
-	// } else {
-	// 	retType = newTensorType(op.d-1, a)
-	// }
-	// return hm.NewFnType(t, retType)
 }
 
 func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
@@ -186,7 +176,8 @@ func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
 			return nil, errors.Errorf("Shape mismatch: %v and %v", shape, op.along)
 		}
 
-		if monotonic, incr1 := types.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(shape) {
+		// special case (sum all)
+		if monotonic, incr1 := types.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(shape) && op.along[0] == 0 {
 			shape = scalarShape
 			return
 		}
@@ -199,8 +190,7 @@ func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
 		}
 
 		switch {
-		case oneone.Eq(shape):
-			shape = scalarShape
+
 		case shape.IsColVec():
 			shape = shape[:1]
 		case shape.IsRowVec():
@@ -254,11 +244,20 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	var T types.Tensor
 	switch ydvd := ydv.d.(type) {
-	case F64:
-		T = tf64.NewTensor(tf64.AsScalar(ydvd.Any().(float64)))
-	case F32:
-		T = tf32.NewTensor(tf32.AsScalar(ydvd.Any().(float32)))
+	case Scalar:
+		dt := DtypeOf(ydvd)
+		T = tensor.New(dt.TensorDtype(), tensor.WithShape(xdv.d.Shape().Clone()...))
+		T.SetAll(ydvd.Any())
 	case types.Tensor:
+		// handle broadcasting
+		if ydvd.Shape().Dims() == xdv.d.Shape().Dims()-len(op.along) {
+			newShape := xdv.d.Shape().Clone()
+			for _, a := range op.along {
+				newShape[a] = 1
+			}
+			ydvd.Reshape(newShape...)
+		}
+
 		T = ydvd
 	default:
 		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.d)
@@ -271,6 +270,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 			if xShape[a] == 1 {
 				continue // don't need to repeat
 			}
+
 			if T, err = tensor.Repeat(T, a, xShape[a]); err != nil {
 				return errors.Wrapf(err, repFail, a, xShape[a])
 			}

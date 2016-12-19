@@ -443,16 +443,31 @@ func assignArray(dest, src *Tensor) (err error) {
 
 	diter := types.NewFlatIterator(dap)
 	siter := types.NewFlatIterator(sap)
-	dch := diter.Chan()
-	sch := siter.Chan()
+	// dch := diter.Chan()
+	// sch := siter.Chan()
 
 	var i, j int
-	var ok bool
+	// var ok bool
 	for {
-		if i, ok = <-dch; !ok {
+		// if i, ok = <-dch; !ok {
+		// 	break
+		// }
+		// if j, ok = <-sch; !ok {
+		// 	break
+		// }
+
+		if i, err = diter.Next(); err != nil {
+			if _, ok := err.(NoOpError); !ok {
+				return err
+			}
+			err = nil
 			break
 		}
-		if j, ok = <-sch; !ok {
+		if j, err = siter.Next(); err != nil {
+			if _, ok := err.(NoOpError); !ok {
+				return err
+			}
+			err = nil
 			break
 		}
 

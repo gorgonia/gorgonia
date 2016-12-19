@@ -16,11 +16,11 @@ const DEBUG = true
 // I use these instead of say, Delve because most of the time, the larger picture has to be known. Delve tends to give small picture views
 var (
 	compileDev        = false
-	shapeInferenceDev = true
-	typeSystemDev     = true
-	symdiffDev        = true
-	autodiffDev       = true
-	machineDev        = true
+	shapeInferenceDev = false
+	typeSystemDev     = false
+	symdiffDev        = false
+	autodiffDev       = false
+	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
 )

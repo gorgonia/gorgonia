@@ -262,3 +262,41 @@ func TestShape_Repeat(t *testing.T) {
 		assert.Equal(srts.expectedSize, size, "Test %q: ", srts.name)
 	}
 }
+
+var shapeConcatTests = []struct {
+	name string
+	s    Shape
+	axis int
+	ss   []Shape
+
+	expected Shape
+	err      bool
+}{
+	{"standard, axis 0 ", Shape{2, 2}, 0, []Shape{{2, 2}, {2, 2}}, Shape{6, 2}, false},
+	{"standard, axis 1 ", Shape{2, 2}, 1, []Shape{{2, 2}, {2, 2}}, Shape{2, 6}, false},
+	{"standard, axis AllAxes ", Shape{2, 2}, -1, []Shape{{2, 2}, {2, 2}}, Shape{6, 2}, false},
+	{"concat to empty", Shape{2}, 0, nil, Shape{2}, false},
+
+	{"stupids: different dims", Shape{2, 2}, 0, []Shape{{2, 3, 2}}, nil, true},
+	{"stupids: negative axes", Shape{2, 2}, -5, []Shape{{2, 2}}, nil, true},
+	{"stupids: toobig axis", Shape{2, 2}, 5, []Shape{{2, 2}}, nil, true},
+	{"subtle stupids: dim mismatch", Shape{2, 2}, 0, []Shape{{2, 2}, {2, 3}}, nil, true},
+}
+
+func TestShape_Concat(t *testing.T) {
+	assert := assert.New(t)
+	for _, scts := range shapeConcatTests {
+		newShape, err := scts.s.Concat(scts.axis, scts.ss...)
+		switch {
+		case scts.err:
+			if err == nil {
+				t.Error("Expected an error")
+			}
+			continue
+		case !scts.err && err != nil:
+			t.Error(err)
+			continue
+		}
+		assert.Equal(scts.expected, newShape)
+	}
+}

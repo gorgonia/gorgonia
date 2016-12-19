@@ -323,15 +323,24 @@ type FlatIterator struct {
 
 	//state
 	lastIndex int
+	strides0  int
+	size      int
 	track     []int
 	done      bool
 }
 
 // NewFlatIterator creates a new FlatIterator
 func NewFlatIterator(ap *AP) *FlatIterator {
+	var strides0 int
+	if ap.IsVector() {
+		strides0 = ap.strides[0]
+	}
+
 	return &FlatIterator{
-		AP:    ap,
-		track: make([]int, len(ap.shape)),
+		AP:       ap,
+		track:    make([]int, len(ap.shape)),
+		size:     ap.shape.TotalSize(),
+		strides0: strides0,
 	}
 }
 
@@ -354,7 +363,8 @@ func (it *FlatIterator) Next() (int, error) {
 
 func (it *FlatIterator) singleNext() (int, error) {
 	retVal := it.lastIndex
-	it.lastIndex += it.strides[0]
+	// it.lastIndex += it.strides[0]
+	it.lastIndex += it.strides0
 
 	var tracked int
 	switch {
@@ -368,7 +378,7 @@ func (it *FlatIterator) singleNext() (int, error) {
 		panic("This ain't supposed to happen")
 	}
 
-	if tracked >= it.shape.TotalSize() {
+	if tracked >= it.size {
 		it.done = true
 	}
 

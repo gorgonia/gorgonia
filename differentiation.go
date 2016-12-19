@@ -205,6 +205,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	// when iterating through the nondes in reverse topological order
 	nodeGradMap := make(map[*Node]Nodes)
 	for i, n := range outputs {
+		symdiffLogf("Adding outputs for %x", n.ID())
 		nodeGradMap[n] = Nodes{gradOutputs[i]}
 	}
 
@@ -218,13 +219,8 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	symdiffLogf("Sorted: %d", sortedNodes)
 	symdiffLogf("nodeGradMap: %+#d", FmtNodeMap(nodeGradMap))
 	enterLoggingContext()
-	// for i := len(sortedNodes) - 1; i >= 0; i-- {
-	// 	node := sortedNodes[i]
+
 	for _, node := range sortedNodes {
-		// if !activeNodes.Contains(node) {
-		// 	autodiffLogf("skipping %d", node.ID())
-		// 	continue
-		// }
 		if _, ok := activeNodes[node]; !ok {
 			symdiffLogf("skipping %x", node.ID())
 			continue
@@ -282,9 +278,9 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 			symdiffLogf("op: %v || optype: %v ||  node: %v || Children: %#Y || Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
 			if childrenGrads, err = op.SymDiff(node.children, node, gradNode); err != nil {
 				return nil, errors.Wrapf(err, "SymDiff for %v. OpType: %v. Node Type: %v. Children: %#v. Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
-
 			}
-			symdiffLogf("Derived(%d): %d", len(childrenGrads), childrenGrads)
+
+			symdiffLogf("Derived(%d): %P", len(childrenGrads), childrenGrads)
 			leaveLoggingContext()
 
 			diffs := node.diffWRT()
@@ -294,7 +290,6 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 				childGrad := childrenGrads[i]
 
 				if differentiable {
-					// node.derives = append(node.derives, childGrad)
 					childGrad.setGroup(gradClust)
 					if grads, ok := nodeGradMap[child]; ok {
 						grads = append(grads, childGrad)

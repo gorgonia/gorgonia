@@ -230,19 +230,43 @@ func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 // Let binds a Value to a node that is a variable. A variable is represented as a *Node with no Op.
 // It is equivalent to :
 //		x = 2
-func Let(n *Node, be interface{}) (err error) {
+func Let(n *Node, be interface{}) error {
 	if !n.isInput() {
 		return errors.New("Cannot bind a value to a non input node")
 	}
 
-	var val Value
-	if val, _, _, err = anyToValue(be); err != nil {
-		return errors.Wrapf(err, anyToValueFail, be, be)
-	}
+	return UnsafeLet(n, be)
+}
 
-	// TODO: runtime type checking
-	n.bind(val)
-	return
+// UnsafeLet binds a Value to any node, not just a variable node. This means that you can use it to change any node's value at the runtime of the graph. UNSAFE!
+//
+// Additional notes: if `be` is a types.Slice, and the node's op is a sliceOp or sliceIncrOp, the op's slice will be replaced with the new slice.
+func UnsafeLet(n *Node, be interface{}) error {
+	switch v := be.(type) {
+	case types.Slice:
+		switch so := n.op.(type) {
+		case *sliceOp:
+			so.Slice = v
+			n.op = so
+		case sliceIncrOp:
+			so.Slice = v
+			n.op = so
+		default:
+			return errors.Errorf("Trying to Let() a node with a slice. Node's op is %v, not sliceOp", n.op)
+		}
+
+	case Value:
+		n.bind(v)
+	default:
+		var val Value
+		var err error
+		if val, _, _, err = anyToValue(be); err != nil {
+			return errors.Wrapf(err, anyToValueFail, be, be)
+		}
+
+		n.bind(val)
+	}
+	return nil
 }
 
 // Set is the equivalent of doing this:

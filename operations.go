@@ -62,7 +62,8 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 		shapeLogf("inferred shape %v", s)
 		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g), WithShape(s...))
 	} else {
-		retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
+		err = errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
+		// retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
 	}
 	return
 }
@@ -607,23 +608,26 @@ func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
 		return nil, errors.Errorf("Cannot slice on non Tensor types. Got %T", n.t)
 	}
 
+	if len(slices) > n.shape.Dims() {
+		return nil, errors.Errorf("Cannot slice %v. Shape: %v. Slices: %d", n, n.shape, len(slices))
+	}
+
 	retVal = n
-	for i, slice := range slices {
-		if retVal.IsScalar() {
-			return nil, errors.Errorf("cannot slice a scalar value (%v). Slice %d (%v)", retVal, i, slice)
+	var dimsChanged int
+	for i, s := range slices {
+		var along int
+		if i > 0 {
+			if prev := slices[i-1]; prev != nil {
+				if prev.End()-prev.Start() == 1 {
+					dimsChanged++
+				}
+			}
 		}
+		along = i - dimsChanged
 
-		var op sliceOp
-		switch {
-		case retVal.shape.IsVector():
-			op = newSliceOp(slice, 0, retVal.Dims())
-		default:
-			op = newSliceOp(slice, i, retVal.Dims())
-
-		}
-
+		op := newSliceOp(s, along, retVal.Dims())
 		if retVal, err = applyOp(op, retVal); err != nil {
-			return nil, errors.Wrap(err, operationError)
+			return
 		}
 	}
 	return
@@ -653,4 +657,33 @@ func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 	}
 
 	return applyOp(op, n)
+}
+
+func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
+	// check that all the nodes have the same number of dimensions
+	var d int
+	for i, n := range ns {
+		if i == 0 {
+			d = n.shape.Dims()
+			continue
+		}
+
+		if n.shape.Dims() != d {
+			err = errors.Errorf("Dimension mismatch. Expected all the nodes to be concatenated to have %d dimensions. Got %d instead", d, n.shape.Dims())
+			return
+		}
+	}
+
+	if d == 0 {
+		err = errors.Errorf("Concat only works on Tensor nodes")
+		return
+	}
+
+	if axis >= d {
+		err = errors.Errorf("Invalid axis. Nodes have %d dimensions. Axis is %d", d, axis)
+		return
+	}
+
+	op := concatOp{axis: axis, d: d, children: len(ns)}
+	return applyOp(op, ns...)
 }

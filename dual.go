@@ -55,8 +55,10 @@ func (dv *dualValue) String() string {
 func (dv *dualValue) sanity() error {
 	// check that d and v are the same type
 
-	if !TypeOf(dv.Value).Eq(TypeOf(dv.d)) {
-		return errors.New("DualValues do not have the same types")
+	dvv := TypeOf(dv.Value)
+	dvd := TypeOf(dv.d)
+	if !dvv.Eq(dvd) {
+		return errors.Errorf("DualValues do not have the same types: %v and %v", dvv, dvd)
 	}
 
 	// TODO: check that the shapes are the same
@@ -194,20 +196,25 @@ func dvBindVar(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	}
 }
 
+//TODO test vecvecdot divBind0
+
 // doesn't alloc a dualValue, and reuses whatever that is there, and zeroes out the deriv
 func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	prealloc := retVal.Value
-
 	vals := idValue(inputs)
 
 	var ret Value
 	if pd, ok := op.(UsePreallocDoer); ok {
 		ret, err = pd.UsePreallocDo(prealloc, vals...)
-	} else {
-		if ret, err = op.Do(vals...); err != nil {
-			return errors.Wrap(err, opDoFail)
+		if err == nil {
+			goto next
 		}
 	}
+	if ret, err = op.Do(vals...); err != nil {
+		return errors.Wrap(err, opDoFail)
+	}
+
+next:
 	if err != nil {
 		return
 	}

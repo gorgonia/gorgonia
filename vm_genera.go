@@ -116,13 +116,31 @@ func (m *lispMachine) forward() (err error) {
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
 
-	if n.isInput() {
-		machineLogf("Unit() on input node")
-		if err = n.bind(dvUnit(n.boundTo)); err != nil {
-			return errors.Wrap(err, bindFail)
+	if !n.isStmt {
+		switch {
+		case n.isArg():
+			machineLogf("Unit() on input node")
+			if err = n.bind(dvUnit(n.boundTo)); err != nil {
+				return errors.Wrap(err, bindFail)
+			}
+			return
+		case n.isRandom():
+			machineLogf("binding value of random node")
+
+			var v Value
+			if v, err = n.op.Do(); err != nil {
+				return errors.Wrapf(err, execFail, n.op, n)
+			}
+
+			// we wrap it in a dualValue, but don't allocate anything for the d
+			if err = n.bind(dvUnit0(v)); err != nil {
+				return errors.Wrap(err, bindFail)
+			}
+			return
+		default:
+			// do nothihng
 		}
 		m.watchedLogf(m.valueFmt, n.boundTo)
-		return
 	}
 
 	// other wise it's time to execute the op
@@ -145,7 +163,7 @@ func (m *lispMachine) forward() (err error) {
 		if n.boundTo == nil {
 			machineLogf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
-				return errors.Wrapf(err, execFail, op)
+				return errors.Wrapf(err, execFail, op, n)
 			}
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
@@ -154,7 +172,7 @@ func (m *lispMachine) forward() (err error) {
 			machineLogf("dvBindVar0")
 			dv := n.boundTo.(*dualValue)
 			if err = dvBindVar0(op, dv, inputs); err != nil {
-				return errors.Wrapf(err, execFail, op)
+				return errors.Wrapf(err, execFail, op, n)
 			}
 		}
 
@@ -181,7 +199,7 @@ func (m *lispMachine) forward() (err error) {
 		}
 		leaveLoggingContext()
 		if output, err = dvBind(op, inputs); err != nil {
-			return errors.Wrapf(err, execFail, op)
+			return errors.Wrapf(err, execFail, op, n)
 		}
 
 		if err = n.bind(output); err != nil {
@@ -189,7 +207,7 @@ func (m *lispMachine) forward() (err error) {
 		}
 
 	default:
-		machineLogf("bind(%v) with as much reuse as possible", op)
+		m.logf("bind(%v) with as much reuse as possible", op)
 		// reuse as much as possible
 		output := dvUnit(n.boundTo)
 		if err = n.bind(output); err != nil {
@@ -200,7 +218,8 @@ func (m *lispMachine) forward() (err error) {
 		if _, ok := errors.Cause(err).(AutoDiffError); ok {
 			err = nil
 		} else if err != nil {
-			return errors.Wrapf(err, execFail, op)
+			log.Printf("WTF? op %v || %v | %v", op, n, output)
+			return errors.Wrapf(err, execFail, op, n)
 		}
 	}
 	m.watchedLogf("After:")

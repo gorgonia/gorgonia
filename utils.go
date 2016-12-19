@@ -83,6 +83,18 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 	return
 }
 
+func valuesToTensors(values []Value) (retVal []types.Tensor, err error) {
+	retVal = make([]types.Tensor, len(values))
+	for i, v := range values {
+		if vt, ok := v.(types.Tensor); !ok {
+			return nil, errors.Errorf("Expected values to all be types.Tensor. Got %v of %T in %dth index of the slice", v, v, i)
+		} else {
+			retVal[i] = vt
+		}
+	}
+	return
+}
+
 func intRange(start, end int) []int {
 	size := end - start
 	incr := true
