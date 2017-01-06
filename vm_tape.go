@@ -559,7 +559,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		if err = node.bindCopy(v); err != nil {
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}
-
+		node.bind(cloned)
 	} else {
 		node.bind(v)
 	}
