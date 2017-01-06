@@ -30,6 +30,15 @@ type Cloner interface {
 	Clone() (Value, error)
 }
 
+type CopierTo interface {
+	CopyTo(dest interface{}) error
+}
+
+type CopierFrom interface {
+	CopyFrom(src interface{}) error
+}
+
+// TypeOf returns the Type of the value
 func TypeOf(v Value) hm.Type {
 	switch t := v.(type) {
 	case types.Tensor:
@@ -45,6 +54,7 @@ func TypeOf(v Value) hm.Type {
 	}
 }
 
+// DtypeOf returns the Dtype of a Value
 func DtypeOf(v Value) Dtype {
 	switch vt := v.(type) {
 	case F64:
@@ -77,6 +87,7 @@ func DtypeOf(v Value) Dtype {
 	}
 }
 
+// ValueEq is the equality function for values
 func ValueEq(a, b Value) bool {
 	switch at := a.(type) {
 	case Scalar:
@@ -96,6 +107,7 @@ func ValueEq(a, b Value) bool {
 	}
 }
 
+// CloneValue clones a value. For scalars, since Go copies scalars, it returns itself
 func CloneValue(v Value) (Value, error) {
 	switch vt := v.(type) {
 	case F64:
@@ -122,6 +134,7 @@ func CloneValue(v Value) (Value, error) {
 
 }
 
+// ZeroValue returns the zero value of a type
 func ZeroValue(v Value) Value {
 	switch vt := v.(type) {
 	case F64:
@@ -145,5 +158,31 @@ func ZeroValue(v Value) Value {
 		return vt.ZeroValue()
 	default:
 		panic(fmt.Sprintf("Cannot return zero value of %T", v))
+	}
+}
+
+// Copy copies the src values into dest values. For scalars, it just returns itself
+func Copy(dest, src Value) (Value, error) {
+	var ok bool
+	switch srcT := src.(type) {
+	case Scalar:
+		return src, nil
+	case types.Tensor:
+		var destT types.Tensor
+		if destT, ok = dest.(types.Tensor); !ok {
+			return nil, errors.Errorf("Expected dest to be a types.Tensor. Got %T instead", dest)
+		}
+		err := tensor.Copy(destT, srcT)
+		return dest, err
+	case CopierTo:
+		err := srcT.CopyTo(dest)
+		return dest, err
+	default:
+		var copyFrom CopierFrom
+		if copyFrom, ok = dest.(CopierFrom); ok {
+			err := copyFrom.CopyFrom(src)
+			return dest, err
+		}
+		return nil, errors.Errorf("Unable to copy value of type %T into value of type %T", src, dest)
 	}
 }

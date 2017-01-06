@@ -170,7 +170,10 @@ func (m *lispMachine) forward() (err error) {
 			}
 		} else {
 			machineLogf("dvBindVar0")
-			dv := n.boundTo.(*dualValue)
+			dv, ok := n.boundTo.(*dualValue)
+			if !ok {
+				panic(fmt.Sprintf("n not dual value %v", n))
+			}
 			if err = dvBindVar0(op, dv, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op, n)
 			}
@@ -218,7 +221,6 @@ func (m *lispMachine) forward() (err error) {
 		if _, ok := errors.Cause(err).(AutoDiffError); ok {
 			err = nil
 		} else if err != nil {
-			log.Printf("WTF? op %v || %v | %v", op, n, output)
 			return errors.Wrapf(err, execFail, op, n)
 		}
 	}

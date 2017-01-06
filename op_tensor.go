@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"log"
 
 	"github.com/chewxy/gorgonia/tensor"
 	tb "github.com/chewxy/gorgonia/tensor/b"
@@ -368,7 +367,6 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(d))
 	if d, err = add.UnsafeDo(xdv.d, d); err != nil {
-		log.Printf("%+v", err)
 		return
 	}
 

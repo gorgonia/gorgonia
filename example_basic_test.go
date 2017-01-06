@@ -7,7 +7,11 @@ import (
 	. "github.com/chewxy/gorgonia"
 )
 
-func Example() {
+// Basic example of representing mathematical equations as graphs.
+//
+// In this example, we want to represent the following equation
+//		z = x + y
+func Example_basic() {
 	g := NewGraph()
 
 	var x, y, z *Node

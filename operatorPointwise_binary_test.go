@@ -61,7 +61,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
 		return err
 	}
 
-	m2 := NewTapeMachine(prog, locMap)
+	m2 := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
 
 	Let(x, randX)
 	Let(y, randY)
@@ -96,14 +96,14 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
 		if cG, err = c.Grad(); err != nil {
 			return
 		}
-		assert.True(ValueEq(xG, aG), "Test Diff of %v. xG != aG. Got %v and %v", op, xG, aG)
-		assert.True(ValueEq(yG, bG), "Test Diff of %v. yG != bG. Got %v and %v", op, yG, bG)
-		assert.True(ValueEq(zG, cG), "Test Diff of %v. zG != cG. Got %v and %v", op, zG, cG)
+		assert.True(ValueEq(xG, aG), "Test ssDiff of %v. xG != aG. Got %v and %v", op, xG, aG)
+		assert.True(ValueEq(yG, bG), "Test ssDiff of %v. yG != bG. Got %v and %v", op, yG, bG)
+		assert.True(ValueEq(zG, cG), "Test ssDiff of %v. zG != cG. Got %v and %v", op, zG, cG)
 	}
 
-	assert.True(ValueEq(x.Value(), a.Value()), "Test op %v. Values are different: x: %v, a %v", op, x.Value(), a.Value())
-	assert.True(ValueEq(y.Value(), b.Value()), "Test op %v. Values are different: y: %v, b %v", op, y.Value(), b.Value())
-	assert.True(ValueEq(z.Value(), c.Value()), "Test op %v. Values are different: z: %v, c %v", op, z.Value(), c.Value())
+	assert.True(ValueEq(x.Value(), a.Value()), "Test ss op %v. Values are different: x: %v, a %v", op, x.Value(), a.Value())
+	assert.True(ValueEq(y.Value(), b.Value()), "Test ss op %v. Values are different: y: %v, b %v", op, y.Value(), b.Value())
+	assert.True(ValueEq(z.Value(), c.Value()), "Test ss op %v. Values are different: z: %v, c %v", op, z.Value(), c.Value())
 
 	return nil
 }
@@ -202,14 +202,14 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
 		if cG, err = c.Grad(); err != nil {
 			return
 		}
-		assert.True(ValueEq(xG, aG), "Test Diff of %v. xG != aG. Got %+v \nand %+v", op, xG, aG)
-		assert.True(ValueEq(yG, bG), "Test Diff of %v. yG != bG. Got %+v \nand %+v", op, yG, bG)
-		assert.True(ValueEq(zG, cG), "Test Diff of %v. zG != cG. Got %+v \nand %+v", op, zG, cG)
+		assert.True(ValueEq(xG, aG), "Test ttDiff of %v. xG != aG. Got %+v \nand %+v", op, xG, aG)
+		assert.True(ValueEq(yG, bG), "Test ttDiff of %v. yG != bG. Got %+v \nand %+v", op, yG, bG)
+		assert.True(ValueEq(zG, cG), "Test ttDiff of %v. zG != cG. Got %+v \nand %+v", op, zG, cG)
 	}
 
-	assert.True(ValueEq(x.Value(), a.Value()), "Test op %v. Values are different: x: %+v\n a %+v", op, x.Value(), a.Value())
-	assert.True(ValueEq(y.Value(), b.Value()), "Test op %v. Values are different: y: %+v\n b %+v", op, y.Value(), b.Value())
-	assert.True(ValueEq(z.Value(), c.Value()), "Test op %v. Values are different: z: %+v\n c %+v", op, z.Value(), c.Value())
+	assert.True(ValueEq(x.Value(), a.Value()), "Test tt op %v. Values are different: x: %+v\n a %+v", op, x.Value(), a.Value())
+	assert.True(ValueEq(y.Value(), b.Value()), "Test tt op %v. Values are different: y: %+v\n b %+v", op, y.Value(), b.Value())
+	assert.True(ValueEq(z.Value(), c.Value()), "Test tt op %v. Values are different: z: %+v\n c %+v", op, z.Value(), c.Value())
 
 	if t.Failed() {
 		ioutil.WriteFile(fmt.Sprintf("Test_%v_tt.dot", op), []byte(g2.ToDot()), 0644)
@@ -240,4 +240,8 @@ func TestBinOps(t *testing.T) {
 			t.Errorf("ttBinOp Float64 version err %v", err)
 		}
 	}
+
+	// single tests
+
+	// ttBinOpTest(t, subOpType, Float64)
 }

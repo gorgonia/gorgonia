@@ -52,12 +52,14 @@ var dvpool = &sync.Pool{
 func borrowDV() *dualValue { return dvpool.Get().(*dualValue) }
 
 func returnDV(dv *dualValue) {
-	if dvdT, ok := dv.d.(types.Tensor); ok {
-		returnTensor(dvdT)
-	}
-	if dvvT, ok := dv.Value.(types.Tensor); ok {
-		returnTensor(dvvT)
-	}
+	returnValue(dv.d)
+	returnValue(dv.Value)
+	// if dvdT, ok := dv.d.(types.Tensor); ok {
+	// 	returnTensor(dvdT)
+	// }
+	// if dvvT, ok := dv.Value.(types.Tensor); ok {
+	// 	returnTensor(dvvT)
+	// }
 
 	dv.d = nil
 	dv.Value = nil
@@ -76,5 +78,11 @@ func returnTensor(t types.Tensor) {
 		tb.ReturnTensor(tt)
 	default:
 		return
+	}
+}
+
+func returnValue(v Value) {
+	if t, ok := v.(types.Tensor); ok {
+		returnTensor(t)
 	}
 }
