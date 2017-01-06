@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"

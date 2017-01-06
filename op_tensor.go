@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"log"
 
 	"github.com/chewxy/gorgonia/tensor"
 	tb "github.com/chewxy/gorgonia/tensor/b"
