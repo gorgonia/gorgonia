@@ -110,6 +110,7 @@ type ADOp interface {
 	DoDiff(inputs Nodes, output *Node) error
 }
 
+// A SDOp is an Op that supports symbolic differentiation
 type SDOp interface {
 	Op
 
@@ -141,6 +142,16 @@ type UsePreallocDoer interface {
 // UnsafeDoer is an op that will overwrite the underlying value.
 type UnsafeDoer interface {
 	UnsafeDo(inputs ...Value) (Value, error)
+}
+
+// CUDADoer uses CUDA to perform the Op.
+type CUDADoer interface {
+	CUDADo(inputs ...Value) (Value, error)
+}
+
+// CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
+type CLDoer interface {
+	CLDo(inputs ...Value) (Value, error)
 }
 
 // a constant is an unchanging value. I think everyone would know what a constant is
