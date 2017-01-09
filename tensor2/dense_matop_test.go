@@ -3,7 +3,7 @@ package tensor
 import (
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/vecf64"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -148,49 +148,50 @@ func TestDense_Transpose(t *testing.T) {
 	}
 
 	// test stacked .T() calls
+	var T *Dense
 
-	// 	// column vector
-	// 	T = NewTensor(WithShape(4, 1), WithBacking(RangeFloat64(0, 4)))
-	// 	if err = T.T(); err != nil {
-	// 		t.Errorf("Stacked .T() #1 for vector. Error: %v", err)
-	// 		goto matrev
-	// 	}
-	// 	if err = T.T(); err != nil {
-	// 		t.Errorf("Stacked .T() #1 for vector. Error: %v", err)
-	// 		goto matrev
-	// 	}
-	// 	assert.Nil(T.old)
-	// 	assert.Nil(T.transposeWith)
-	// 	assert.True(T.IsColVec())
+	// column vector
+	T = New(WithShape(4, 1), WithBacking(Range(Int, 0, 4)))
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #1 for vector. Error: %v", err)
+		goto matrev
+	}
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #1 for vector. Error: %v", err)
+		goto matrev
+	}
+	assert.Nil(T.old)
+	assert.Nil(T.transposeWith)
+	assert.True(T.IsColVec())
 
-	// matrev:
-	// 	// matrix, reversed
-	// 	T = NewTensor(WithShape(2, 3), WithBacking(RangeFloat64(0, 6)))
-	// 	if err = T.T(); err != nil {
-	// 		t.Errorf("Stacked .T() #1 for matrix reverse. Error: %v", err)
-	// 		goto matnorev
-	// 	}
-	// 	if err = T.T(); err != nil {
-	// 		t.Errorf("Stacked .T() #2 for matrix reverse. Error: %v", err)
-	// 		goto matnorev
-	// 	}
-	// 	assert.Nil(T.old)
-	// 	assert.Nil(T.transposeWith)
-	// 	assert.True(Shape{2, 3}.Eq(T.Shape()))
+matrev:
+	// matrix, reversed
+	T = New(WithShape(2, 3), WithBacking(Range(Byte, 0, 6)))
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #1 for matrix reverse. Error: %v", err)
+		goto matnorev
+	}
+	if err = T.T(); err != nil {
+		t.Errorf("Stacked .T() #2 for matrix reverse. Error: %v", err)
+		goto matnorev
+	}
+	assert.Nil(T.old)
+	assert.Nil(T.transposeWith)
+	assert.True(Shape{2, 3}.Eq(T.Shape()))
 
-	// matnorev:
-	// 	// 3-tensor, non reversed
-	// 	T = NewTensor(WithShape(2, 3, 4), WithBacking(RangeFloat64(0, 24)))
-	// 	if err = T.T(); err != nil {
-	// 		t.Fatalf("Stacked .T() #1 for tensor with no reverse. Error: %v", err)
-	// 	}
-	// 	if err = T.T(2, 0, 1); err != nil {
-	// 		t.Fatalf("Stacked .T() #2 for tensor with no reverse. Error: %v", err)
-	// 	}
-	// 	correctData := []float64{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}
-	// 	assert.Equal(correctData, T.data)
-	// 	assert.Equal([]int{2, 0, 1}, T.transposeWith)
-	// 	assert.NotNil(T.old)
+matnorev:
+	// 3-tensor, non reversed
+	T = New(WithShape(2, 3, 4), WithBacking(Range(Int64, 0, 24)))
+	if err = T.T(); err != nil {
+		t.Fatalf("Stacked .T() #1 for tensor with no reverse. Error: %v", err)
+	}
+	if err = T.T(2, 0, 1); err != nil {
+		t.Fatalf("Stacked .T() #2 for tensor with no reverse. Error: %v", err)
+	}
+	correctData := i64s{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}
+	assert.Equal(correctData, T.data)
+	assert.Equal([]int{2, 0, 1}, T.transposeWith)
+	assert.NotNil(T.old)
 
 }
 
@@ -198,7 +199,7 @@ func TestTUT(t *testing.T) {
 	assert := assert.New(t)
 	var T *Dense
 
-	T = NewDense(Float64, Shape{2, 3, 4})
+	T = newTypedShapedDense(Float64, Shape{2, 3, 4})
 	T.T()
 	T.UT()
 	assert.Nil(T.old)
@@ -211,12 +212,460 @@ func TestTUT(t *testing.T) {
 }
 
 var repeatTests = []struct {
-	name                       string
-	tensor                     *Tensor
-	shouldAssertTensorNotEqual bool
-	axis                       int
-	repeats                    []int
-	dataExpected               []float64
-	shapeExpected              types.Shape
-	isErrExpected              bool
-}{}
+	name    string
+	tensor  *Dense
+	ne      bool // should assert tensor not equal
+	axis    int
+	repeats []int
+
+	correct Array
+	shape   Shape
+	err     bool
+}{
+	{"Scalar Repeat on axis 0", New(FromScalar(true)),
+		true, 0, []int{3},
+		bs{true, true, true},
+		Shape{3}, false,
+	},
+
+	{"Scalar Repeat on axis 1", New(FromScalar(byte(255))),
+		false, 1, []int{3},
+		u8s{255, 255, 255},
+		Shape{1, 3}, false,
+	},
+
+	{"Vector Repeat on axis 0", New(WithShape(2), WithBacking([]int32{1, 2})),
+		false, 0, []int{3},
+		i32s{1, 1, 1, 2, 2, 2},
+		Shape{6}, false,
+	},
+
+	{"ColVec Repeat on axis 0", New(WithShape(2, 1), WithBacking([]int64{1, 2})),
+		false, 0, []int{3},
+		i64s{1, 1, 1, 2, 2, 2},
+		Shape{6, 1}, false,
+	},
+
+	{"RowVec Repeat on axis 0", New(WithShape(1, 2), WithBacking([]int{1, 2})),
+		false, 0, []int{3},
+		ints{1, 2, 1, 2, 1, 2},
+		Shape{3, 2}, false,
+	},
+
+	{"ColVec Repeat on axis 1", New(WithShape(2, 1), WithBacking([]float32{1, 2})),
+		false, 1, []int{3},
+		f32s{1, 1, 1, 2, 2, 2},
+		Shape{2, 3}, false,
+	},
+
+	{"RowVec Repeat on axis 1", New(WithShape(1, 2), WithBacking([]float64{1, 2})),
+		false, 1, []int{3},
+		f64s{1, 1, 1, 2, 2, 2},
+		Shape{1, 6}, false,
+	},
+
+	{"Vector Repeat on all axes", New(WithShape(2), WithBacking([]byte{1, 2})),
+		false, AllAxes, []int{3},
+		u8s{1, 1, 1, 2, 2, 2},
+		Shape{6}, false,
+	},
+
+	{"ColVec Repeat on all axes", New(WithShape(2, 1), WithBacking([]int32{1, 2})),
+		false, AllAxes, []int{3},
+		i32s{1, 1, 1, 2, 2, 2},
+		Shape{6}, false,
+	},
+
+	{"RowVec Repeat on all axes", New(WithShape(1, 2), WithBacking([]int64{1, 2})),
+		false, AllAxes, []int{3},
+		i64s{1, 1, 1, 2, 2, 2},
+		Shape{6}, false,
+	},
+
+	{"M[2,2] Repeat on all axes with repeats = (1,2,1,1)", New(WithShape(2, 2), WithBacking([]int{1, 2, 3, 4})),
+		false, AllAxes, []int{1, 2, 1, 1},
+		ints{1, 2, 2, 3, 4},
+		Shape{5}, false,
+	},
+
+	{"M[2,2] Repeat on axis 1 with repeats = (2, 1)", New(WithShape(2, 2), WithBacking([]float32{1, 2, 3, 4})),
+		false, 1, []int{2, 1},
+		f32s{1, 1, 2, 3, 3, 4},
+		Shape{2, 3}, false,
+	},
+
+	{"M[2,2] Repeat on axis 1 with repeats = (1, 2)", New(WithShape(2, 2), WithBacking([]float64{1, 2, 3, 4})),
+		false, 1, []int{1, 2},
+		f64s{1, 2, 2, 3, 4, 4},
+		Shape{2, 3}, false,
+	},
+
+	{"M[2,2] Repeat on axis 0 with repeats = (1, 2)", New(WithShape(2, 2), WithBacking(f64s{1, 2, 3, 4})),
+		false, 0, []int{1, 2},
+		f64s{1, 2, 3, 4, 3, 4},
+		Shape{3, 2}, false,
+	},
+
+	{"M[2,2] Repeat on axis 0 with repeats = (2, 1)", New(WithShape(2, 2), WithBacking(f64s{1, 2, 3, 4})),
+		false, 0, []int{2, 1},
+		f64s{1, 2, 1, 2, 3, 4},
+		Shape{3, 2}, false,
+	},
+
+	{"3T[2,3,2] Repeat on axis 1 with repeats = (1,2,1)", New(WithShape(2, 3, 2), WithBacking(vecf64.Range(1, 2*3*2+1))),
+		false, 1, []int{1, 2, 1},
+		f64s{1, 2, 3, 4, 3, 4, 5, 6, 7, 8, 9, 10, 9, 10, 11, 12},
+		Shape{2, 4, 2}, false,
+	},
+
+	{"3T[2,3,2] Generic Repeat by 2", New(WithShape(2, 3, 2), WithBacking(vecf64.Range(1, 2*3*2+1))),
+		false, AllAxes, []int{2},
+		f64s{1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12},
+		Shape{24}, false,
+	},
+
+	{"3T[2,3,2] repeat with broadcast errors", New(WithShape(2, 3, 2), WithBacking(vecf64.Range(1, 2*3*2+1))),
+		false, 0, []int{1, 2, 1},
+		nil, nil, true,
+	},
+
+	// idiots
+	{"Nonexistent axis", New(WithShape(2, 1), WithBacking([]bool{true, false})),
+		false, 2, []int{3}, nil, nil, true,
+	},
+}
+
+func TestDense_Repeat(t *testing.T) {
+	assert := assert.New(t)
+	var ok bool
+
+	for _, test := range repeatTests {
+		T, err := test.tensor.Repeat(test.axis, test.repeats...)
+
+		switch {
+		case test.err:
+			if err == nil {
+				t.Errorf("Expected error when testing %q", test.name)
+			}
+			continue
+		case !test.err && err != nil:
+			t.Errorf("Test %q failed: %v", test.name, err)
+			continue
+		}
+
+		var D *Dense
+		if D, ok = T.(*Dense); !ok {
+			t.Error("Expected Repeat to return a *Dense. T: %v", T)
+			continue
+		}
+
+		if test.ne {
+			assert.NotEqual(test.tensor, D, test.name)
+		}
+
+		assert.Equal(test.correct, D.data, test.name)
+		assert.Equal(test.shape, D.Shape(), test.name)
+	}
+}
+
+func TestDense_CopyTo(t *testing.T) {
+	assert := assert.New(t)
+	var T, T2, T3 *Dense
+	var err error
+
+	T = New(WithShape(2), WithBacking([]float64{1, 2}))
+	T2 = New(Of(Float64), WithShape(1, 2))
+
+	err = T.CopyTo(T2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(T2.data, T.data)
+
+	// now, modify T1's data
+	T.data.Set(0, float64(5000))
+	assert.NotEqual(T2.data, T.data)
+
+	// test views
+	T = New(Of(Byte), WithShape(3, 3))
+	T2 = New(Of(Byte), WithShape(2, 2))
+	T3, _ = T.Slice(makeRS(0, 2), makeRS(0, 2)) // T[0:2, 0:2], shape == (2,2)
+	if err = T2.CopyTo(T3); err != nil {
+		t.Log(err) // for now it's a not yet implemented error. TODO: FIX THIS
+	}
+
+	// dumbass time
+
+	T = New(Of(Float32), WithShape(3, 3))
+	T2 = New(Of(Float32), WithShape(2, 2))
+	if err = T.CopyTo(T2); err == nil {
+		t.Error("Expected an error")
+	}
+
+	if err = T.CopyTo(T); err != nil {
+		t.Error("Copying a *Tensor to itself should yield no error. ")
+	}
+
+}
+
+var denseSliceTests = []struct {
+	name   string
+	data   Array
+	shape  Shape
+	slices []Slice
+
+	correctShape  Shape
+	correctStride []int
+	correctData   Array
+}{
+	{"a[0]", bs{true, true, false, false, false},
+		Shape{5}, []Slice{ss(0)}, ScalarShape(), nil, bs{true}},
+	{"a[0:2]", Range(Byte, 0, 5), Shape{5}, []Slice{makeRS(0, 2)}, Shape{2}, []int{1}, u8s{0, 1}},
+	{"a[1:5:2]", Range(Int32, 0, 5), Shape{5}, []Slice{makeRS(1, 5, 2)}, Shape{2}, []int{2}, i32s{1, 2, 3, 4}},
+
+	// colvec
+	{"c[0]", Range(Int64, 0, 5), Shape{5, 1}, []Slice{ss(0)}, ScalarShape(), nil, i64s{0}},
+	{"c[0:2]", Range(Float32, 0, 5), Shape{5, 1}, []Slice{makeRS(0, 2)}, Shape{2, 1}, []int{1}, f32s{0, 1}},
+	{"c[1:5:2]", Range(Float64, 0, 5), Shape{5, 1}, []Slice{makeRS(0, 5, 2)}, Shape{2, 1}, []int{2}, f64s{0, 1, 2, 3, 4}},
+
+	// rowvec
+	{"r[0]", Range(Float64, 0, 5), Shape{1, 5}, []Slice{ss(0)}, Shape{1, 5}, []int{1}, f64s{0, 1, 2, 3, 4}},
+	{"r[0:2]", Range(Float64, 0, 5), Shape{1, 5}, []Slice{makeRS(0, 2)}, Shape{1, 5}, []int{1}, f64s{0, 1, 2, 3, 4}},
+	{"r[0:5:2]", Range(Float64, 0, 5), Shape{1, 5}, []Slice{makeRS(0, 5, 2)}, Shape{1, 5}, []int{1}, f64s{0, 1, 2, 3, 4}},
+	{"r[:, 0]", Range(Float64, 0, 5), Shape{1, 5}, []Slice{nil, ss(0)}, ScalarShape(), nil, f64s{0}},
+	{"r[:, 0:2]", Range(Float64, 0, 5), Shape{1, 5}, []Slice{nil, makeRS(0, 2)}, Shape{1, 2}, []int{1}, f64s{0, 1}},
+	{"r[:, 1:5:2]", Range(Float64, 0, 5), Shape{1, 5}, []Slice{nil, makeRS(1, 5, 2)}, Shape{1, 2}, []int{2}, f64s{1, 2, 3, 4}},
+
+	// matrix
+	{"A[0]", Range(Float64, 0, 6), Shape{2, 3}, []Slice{ss(0)}, Shape{1, 3}, []int{1}, Range(Float64, 0, 3)},
+	{"A[0:2]", Range(Float64, 0, 20), Shape{4, 5}, []Slice{makeRS(0, 2)}, Shape{2, 5}, []int{5, 1}, Range(Float64, 0, 10)},
+	{"A[0, 0]", Range(Float64, 0, 20), Shape{4, 5}, []Slice{ss(0), ss(0)}, ScalarShape(), nil, f64s{0}},
+	{"A[0, 1:5]", Range(Float64, 0, 20), Shape{4, 5}, []Slice{ss(0), makeRS(1, 5)}, Shape{4}, []int{1}, Range(Float64, 1, 5)},
+	{"A[0, 1:5:2]", Range(Float64, 0, 20), Shape{4, 5}, []Slice{ss(0), makeRS(1, 5, 2)}, Shape{1, 2}, []int{2}, Range(Float64, 1, 5)},
+	{"A[:, 0]", Range(Float64, 0, 20), Shape{4, 5}, []Slice{nil, ss(0)}, Shape{4, 1}, []int{5}, Range(Float64, 0, 16)},
+	{"A[:, 1:5]", Range(Float64, 0, 20), Shape{4, 5}, []Slice{nil, makeRS(1, 5)}, Shape{4, 4}, []int{5, 1}, Range(Float64, 1, 20)},
+	{"A[:, 1:5:2]", Range(Float64, 0, 20), Shape{4, 5}, []Slice{nil, makeRS(1, 5, 2)}, Shape{4, 2}, []int{5, 2}, Range(Float64, 1, 20)},
+}
+
+func TestDense_Slice(t *testing.T) {
+	assert := assert.New(t)
+	var T, V *Dense
+	var err error
+
+	for _, sts := range denseSliceTests {
+		T = New(WithShape(sts.shape...), WithBacking(sts.data))
+		t.Log(sts.name)
+		if V, err = T.Slice(sts.slices...); err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(V.Shape()), "Test: %v - Incorrect Shape. Correct: %v. Got %v", sts.name, sts.correctShape, V.Shape())
+		assert.Equal(sts.correctStride, V.Strides(), "Test: %v - Incorrect Stride", sts.name)
+		assert.Equal(sts.correctData, V.data, "Test: %v - Incorrect Data", sts.name)
+	}
+
+	// Transposed slice
+	T = New(WithShape(2, 3), WithBacking(Range(Float32, 0, 6)))
+	T.T()
+	V, err = T.Slice(ss(0))
+	assert.True(Shape{2}.Eq(V.Shape()))
+	assert.Equal([]int{3}, V.Strides())
+	assert.Equal(f32s{0, 1, 2, 3}, V.data)
+	assert.Nil(V.old)
+
+	// slice a sliced
+	V, err = V.Slice(makeRS(1, 2))
+	assert.True(ScalarShape().Eq(V.Shape()))
+	assert.Equal(f32s{3}, V.data)
+
+	// And now, ladies and gentlemen, the idiots!
+
+	// too many slices
+	_, err = T.Slice(ss(1), ss(2), ss(3), ss(4))
+	if err == nil {
+		t.Error("Expected a DimMismatchError error")
+	}
+
+	// out of range sliced
+	_, err = T.Slice(makeRS(20, 5))
+	if err == nil {
+		t.Error("Expected a IndexError")
+	}
+
+	// surely nobody can be this dumb? Having a start of negatives
+	_, err = T.Slice(makeRS(-1, 1))
+	if err == nil {
+		t.Error("Expected a IndexError")
+	}
+
+}
+
+var rollaxisTests = []struct {
+	axis, start int
+
+	correctShape Shape
+}{
+	{0, 0, Shape{1, 2, 3, 4}},
+	{0, 1, Shape{1, 2, 3, 4}},
+	{0, 2, Shape{2, 1, 3, 4}},
+	{0, 3, Shape{2, 3, 1, 4}},
+	{0, 4, Shape{2, 3, 4, 1}},
+
+	{1, 0, Shape{2, 1, 3, 4}},
+	{1, 1, Shape{1, 2, 3, 4}},
+	{1, 2, Shape{1, 2, 3, 4}},
+	{1, 3, Shape{1, 3, 2, 4}},
+	{1, 4, Shape{1, 3, 4, 2}},
+
+	{2, 0, Shape{3, 1, 2, 4}},
+	{2, 1, Shape{1, 3, 2, 4}},
+	{2, 2, Shape{1, 2, 3, 4}},
+	{2, 3, Shape{1, 2, 3, 4}},
+	{2, 4, Shape{1, 2, 4, 3}},
+
+	{3, 0, Shape{4, 1, 2, 3}},
+	{3, 1, Shape{1, 4, 2, 3}},
+	{3, 2, Shape{1, 2, 4, 3}},
+	{3, 3, Shape{1, 2, 3, 4}},
+	{3, 4, Shape{1, 2, 3, 4}},
+}
+
+// The RollAxis tests are directly adapted from Numpy's test cases.
+func TestDense_RollAxis(t *testing.T) {
+	assert := assert.New(t)
+	var T *Dense
+	var err error
+
+	for _, rats := range rollaxisTests {
+		T = New(Of(Byte), WithShape(1, 2, 3, 4))
+		if _, err = T.RollAxis(rats.axis, rats.start, false); assert.NoError(err) {
+			assert.True(rats.correctShape.Eq(T.Shape()), "%d %d Expected %v, got %v", rats.axis, rats.start, rats.correctShape, T.Shape())
+		}
+	}
+}
+
+var concatTests = []struct {
+	name  string
+	shape Shape
+	axis  int
+
+	correctShape Shape
+	correctData  f64s
+}{
+	{"vector", Shape{2}, 0, Shape{4}, f64s{0, 1, 0, 1}},
+	{"matrix; axis 0 ", Shape{2, 2}, 0, Shape{4, 2}, f64s{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", Shape{2, 2}, 1, Shape{2, 4}, f64s{0, 1, 0, 1, 2, 3, 2, 3}},
+}
+
+func TestTensor_Concat(t *testing.T) {
+	assert := assert.New(t)
+
+	for _, cts := range concatTests {
+		T0 := New(WithShape(cts.shape...), WithBacking(Range(Float64, 0, cts.shape.TotalSize())))
+		T1 := New(WithShape(cts.shape...), WithBacking(Range(Float64, 0, cts.shape.TotalSize())))
+		T2, err := T0.Concat(cts.axis, T1)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(cts.correctShape.Eq(T2.Shape()))
+		assert.Equal(cts.correctData, T2.data)
+	}
+}
+
+var simpleStackTests = []struct {
+	name       string
+	shape      Shape
+	axis       int
+	stackCount int
+
+	correctShape Shape
+	correctData  f64s
+}{
+	{"vector, axis 0, stack 2", Shape{2}, 0, 2, Shape{2, 2}, f64s{0, 1, 100, 101}},
+	{"vector, axis 1, stack 2", Shape{2}, 1, 2, Shape{2, 2}, f64s{0, 100, 1, 101}},
+
+	{"matrix, axis 0, stack 2", Shape{2, 3}, 0, 2, Shape{2, 2, 3}, f64s{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
+	{"matrix, axis 1, stack 2", Shape{2, 3}, 1, 2, Shape{2, 2, 3}, f64s{0, 1, 2, 100, 101, 102, 3, 4, 5, 103, 104, 105}},
+	{"matrix, axis 2, stack 2", Shape{2, 3}, 2, 2, Shape{2, 3, 2}, f64s{0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105}},
+	{"matrix, axis 0, stack 3", Shape{2, 3}, 0, 3, Shape{3, 2, 3}, f64s{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205}},
+	{"matrix, axis 1, stack 3", Shape{2, 3}, 1, 3, Shape{2, 3, 3}, f64s{0, 1, 2, 100, 101, 102, 200, 201, 202, 3, 4, 5, 103, 104, 105, 203, 204, 205}},
+	{"matrix, axis 2, stack 3", Shape{2, 3}, 2, 3, Shape{2, 3, 3}, f64s{0, 100, 200, 1, 101, 201, 2, 102, 202, 3, 103, 203, 4, 104, 204, 5, 105, 205}},
+}
+
+var viewStackTests = []struct {
+	name       string
+	shape      Shape
+	transform  []int
+	slices     []Slice
+	axis       int
+	stackCount int
+
+	correctShape Shape
+	correctData  f64s
+}{
+	{"matrix(4x4)[1:3, 1:3] axis 0", Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 0, 2, Shape{2, 2, 2}, f64s{5, 6, 9, 10, 105, 106, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 1", Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 1, 2, Shape{2, 2, 2}, f64s{5, 6, 105, 106, 9, 10, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 2", Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, Shape{2, 2, 2}, f64s{5, 105, 6, 106, 9, 109, 10, 110}},
+}
+
+func TestDense_Stack(t *testing.T) {
+	assert := assert.New(t)
+	var err error
+	for _, sts := range simpleStackTests {
+		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+
+		var stacked []*Dense
+		for i := 0; i < sts.stackCount-1; i++ {
+			offset := (i + 1) * 100
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
+			stacked = append(stacked, T1)
+		}
+
+		T2, err := T.Stack(sts.axis, stacked...)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(T2.Shape()))
+		assert.Equal(sts.correctData, T2.data)
+	}
+
+	for _, sts := range viewStackTests {
+		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+		switch {
+		case sts.slices != nil && sts.transform == nil:
+			if T, err = T.Slice(sts.slices...); err != nil {
+				t.Error(err)
+				continue
+			}
+		case sts.transform != nil && sts.slices == nil:
+			T.T(sts.transform...)
+		}
+
+		var stacked []*Dense
+		for i := 0; i < sts.stackCount-1; i++ {
+			offset := (i + 1) * 100
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
+			switch {
+			case sts.slices != nil && sts.transform == nil:
+				if T1, err = T1.Slice(sts.slices...); err != nil {
+					t.Error(err)
+					continue
+				}
+			case sts.transform != nil && sts.slices == nil:
+				T1.T(sts.transform...)
+			}
+
+			stacked = append(stacked, T1)
+		}
+
+		T2, err := T.Stack(sts.axis, stacked...)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		assert.True(sts.correctShape.Eq(T2.Shape()))
+		assert.Equal(sts.correctData, T2.data)
+	}
+}

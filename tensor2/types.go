@@ -7,6 +7,7 @@ import (
 	"github.com/chewxy/hm"
 )
 
+// Dtype represents a data type of a Tensor.
 type Dtype interface {
 	hm.Type
 	ZeroValue() interface{}

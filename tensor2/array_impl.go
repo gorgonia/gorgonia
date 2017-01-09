@@ -100,64 +100,6 @@ func (a bs) Set(i int, v interface{}) error {
 	return errors.Errorf("Cannot set %v of %T to []bool", v, v)
 }
 
-/* Slice */
-
-func (a f64s) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a f32s) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a ints) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a i64s) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a i32s) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a u8s) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a bs) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
 /* Eq */
 
 func (a f64s) Eq(other interface{}) bool {

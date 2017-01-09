@@ -113,5 +113,5 @@ func init() {
 
 	compatibleTmpl = template.Must(template.New("Compat").Parse(compatibleRaw))
 
-	basics = []*template.Template{lenTmpl, capTmpl, dataTmpl, getTmpl, setTmpl, sliceTmpl, eqTmpl, zeroTmpl, oneTmpl, copyFromTmpl}
+	basics = []*template.Template{lenTmpl, capTmpl, dataTmpl, getTmpl, setTmpl, eqTmpl, zeroTmpl, oneTmpl, copyFromTmpl}
 }

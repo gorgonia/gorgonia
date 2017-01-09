@@ -21,7 +21,7 @@ type Dense struct {
 	viewOf *Dense
 }
 
-func NewDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
+func newTypedShapedDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
 	var d *Dense
 	if t, ok := dt.(dtype); ok {
 		d = borrowDense(t, shape.TotalSize())
@@ -36,11 +36,17 @@ func NewDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
 	d.setShape(shape...)
 	d.Zero()
 	return d
+}
 
+func newTypedDense(dt Dtype, opts ...ConsOpt) *Dense {
+	d := new(Dense)
+	d.t = dt
+	return d
 }
 
 func newDense(dt Dtype, size int) *Dense {
 	d := new(Dense)
+	d.t = dt
 	d.data = makeArray(dt, size)
 	d.AP = new(AP)
 	d.setShape(size)

@@ -22,6 +22,7 @@ const (
 	lenMismatch       = "Cannot compare with differing lengths: %d and %d"
 	typeMismatch      = "TypeMismatch: Op %q cannot be performed. a %T and b %T"
 	shapeMismatch     = "Shape Mismatch. Coordinates has %d dimensions, ndarry has %d dimensions"
+	sizeMismatch      = "Size Mismatch. %d and %d"
 
 	methodNYI = "%q not yet implemented for %v"
 )

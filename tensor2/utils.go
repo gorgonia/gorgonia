@@ -20,7 +20,7 @@ func MaxInt(a, b int) int {
 	return b
 }
 
-// MaxInts returns the of a slice of ints.
+// MaxInts returns the max of a slice of ints.
 func MaxInts(is ...int) (retVal int) {
 	for _, i := range is {
 		if i > retVal {
@@ -30,6 +30,7 @@ func MaxInts(is ...int) (retVal int) {
 	return
 }
 
+// SumInts sums a slice of ints
 func SumInts(a []int) (retVal int) {
 	for _, v := range a {
 		retVal += v
@@ -37,6 +38,7 @@ func SumInts(a []int) (retVal int) {
 	return
 }
 
+// ProdInts returns the internal product of an int slice
 func ProdInts(a []int) (retVal int) {
 	if len(a) == 0 {
 		return
@@ -48,6 +50,7 @@ func ProdInts(a []int) (retVal int) {
 	return
 }
 
+// IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1
 func IsMonotonicInts(a []int) (monotonic bool, incr1 bool) {
 	var prev int
 	incr1 = true
@@ -107,6 +110,7 @@ func Ltoi(shape Shape, strides []int, coords ...int) (at int, err error) {
 	return at, nil
 }
 
+// Itol is Index to Location.
 func Itol(i int, shape Shape, strides []int) (coords []int, err error) {
 	dims := len(strides)
 

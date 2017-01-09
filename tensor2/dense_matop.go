@@ -161,7 +161,7 @@ func (t *Dense) SafeT(axes ...int) (retVal *Dense, err error) {
 		return
 	}
 
-	retVal = NewDense(t.t, Shape{t.data.Len()})
+	retVal = newTypedShapedDense(t.t, Shape{t.data.Len()})
 	if _, err = copyArray(retVal.data, t.data); err != nil {
 		return
 	}
@@ -273,14 +273,14 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 	var newShape Shape
 	var size int
 	if newShape, repeats, size, err = t.Shape().Repeat(axis, repeats...); err != nil {
-		return
+		return nil, errors.Wrap(err, "Unable to get repeated shape")
 	}
 
 	if axis == AllAxes {
 		axis = 0
 	}
 
-	d := New(WithShape(newShape...))
+	d := newTypedShapedDense(t.t, newShape)
 
 	var outers int
 	if t.IsScalar() {
@@ -318,17 +318,9 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 					break
 				}
 
-				var destData, srcData Array
-
-				if destData, err = d.data.Slice(rs{destStart, d.data.Len(), 1}); err != nil {
-					return nil, err
+				if _, err = copySlicedArray(d.data, destStart, d.data.Len(), t.data, srcStart, t.data.Len()); err != nil {
+					return nil, errors.Wrap(err, "Failed to Repeat()")
 				}
-
-				if srcData, err = t.data.Slice(rs{srcStart, t.data.Len(), 1}); err != nil {
-					return nil, err
-				}
-
-				copyArray(destData, srcData) // TODO: maybe don't just copy wholesale?
 
 				destStart += newStride
 			}
@@ -336,6 +328,56 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 		}
 	}
 
+	return d, nil
+}
+
+// CopyTo copies the underlying data to the destination *Dense. The original data is untouched.
+// Note: CopyTo doesn't care about the metadata of the destination *Dense. Take for example:
+//		T = NewTensor(WithShape(6))
+//		T2 = NewTensor(WithShape(2,3))
+//		err = T.CopyTo(T2) // err == nil
+//
+// The only time that this will fail is if the underlying sizes are different
+func (t *Dense) CopyTo(other *Dense) error {
+	if other == t {
+		return nil // nothing to copy to. Maybe return NoOpErr?
+	}
+
+	if other.Size() != t.Size() {
+		return errors.Errorf(sizeMismatch, t.Size(), other.Size())
+	}
+
+	// easy peasy lemon squeezy
+	if t.viewOf == nil && other.viewOf == nil {
+		_, err := copyArray(other.data, t.data)
+		return err
+	}
+
+	return errors.Errorf(methodNYI, "CopyTo", "views")
+}
+
+// Slice performs slicing on the ndarrays. It returns a view which shares the same underlying memory as the original ndarray.
+// In the original design, views are read-only. However, as things have changed, views are now mutable.
+//
+// Example. Given:
+//		T = NewTensor(WithShape(2,2), WithBacking(RangeFloat64(0,4)))
+//		V, _ := T.Slice(nil, singleSlice(1)) // T[:, 1]
+//
+// Any modification to the values in V, will be reflected in T as well.
+//
+// The method treats <nil> as equivalent to a colon slice. T.Slice(nil) is equivalent to T[:] in Numpy syntax
+func (t *Dense) Slice(slices ...Slice) (view *Dense, err error) {
+	var newAP *AP
+	var ndStart, ndEnd int
+	if newAP, ndStart, ndEnd, err = t.AP.S(t.data.Len(), slices...); err != nil {
+		return
+	}
+
+	view = new(Dense)
+	view.t = t.t
+	view.viewOf = t
+	view.AP = newAP
+	view.data, err = sliceArray(t.data, ndStart, ndEnd)
 	return
 }
 
@@ -401,74 +443,212 @@ func (t *Dense) itol(i int) (coords []int, err error) {
 	return
 }
 
-// // simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
-// func (t *Dense) simpleStack(axis int, ap *AP, others ...*Dense) (data []float64) {
-// 	data = make([]float64, ap.Size())
-// 	switch axis {
-// 	case 0:
-// 		copy(data, t.data)
-// 		next := len(t.data)
-// 		for _, ot := range others {
-// 			copy(data[next:], ot.data)
-// 			next += len(ot.data)
-// 		}
-// 	default:
-// 		axisStride := ap.Strides()[axis]
-// 		batches := len(data) / axisStride
+// RollAxis rolls the axis backwards until it lies in the given position.
+//
+// This method was adapted from Numpy's Rollaxis. The licence for Numpy is a BSD-like licence and can be found here: https://github.com/numpy/numpy/blob/master/LICENSE.txt
+//
+// As a result of being adapted from Numpy, the quirks are also adapted. A good guide reducing the confusion around rollaxis can be found here: http://stackoverflow.com/questions/29891583/reason-why-numpy-rollaxis-is-so-confusing (see answer by hpaulj)
+func (t *Dense) RollAxis(axis, start int, safe bool) (retVal *Dense, err error) {
+	dims := t.Dims()
 
-// 		destStart := 0
-// 		start := 0
-// 		end := start + axisStride
+	if !(axis >= 0 && axis < dims) {
+		err = errors.Errorf(invalidAxis, axis, dims)
+		return
+	}
 
-// 		for i := 0; i < batches; i++ {
-// 			copy(data[destStart:], t.data[start:end])
-// 			for _, ot := range others {
-// 				destStart += axisStride
-// 				copy(data[destStart:], ot.data[start:end])
-// 				i++
-// 			}
-// 			destStart += axisStride
-// 			start += axisStride
-// 			end += axisStride
-// 		}
-// 	}
-// 	return
-// }
+	if !(start >= 0 && start <= dims) {
+		err = errors.Wrap(errors.Errorf(invalidAxis, axis, dims), "Start axis is wrong")
+		return
+	}
 
-// // viewStack is the data movement function for Stack(), applied on views
-// func (t *Dense) viewStack(axis int, ap *AP, others ...*Dense) (data []float64) {
-// 	data = make([]float64, ap.Size())
+	if axis < start {
+		start--
+	}
 
-// 	axisStride := ap.Strides()[axis]
-// 	batches := len(data) / axisStride
+	if axis == start {
+		retVal = t
+		return
+	}
 
-// 	it := NewFlatIterator(t.AP)
-// 	ch := it.Chan()
-// 	chs := make([]chan int, len(others))
-// 	chs = chs[:0]
-// 	for _, ot := range others {
-// 		oter := NewFlatIterator(ot.AP)
-// 		chs = append(chs, oter.Chan())
-// 	}
+	axes := BorrowInts(dims)
+	defer ReturnInts(axes)
 
-// 	data = data[:0]
-// 	for i := 0; i < batches; i++ {
-// 		for j := 0; j < axisStride; j++ {
-// 			id, ok := <-ch
-// 			if !ok {
-// 				break
-// 			}
-// 			data = append(data, t.data[id])
-// 		}
-// 		for j, ot := range others {
-// 			for k := 0; k < axisStride; k++ {
-// 				id, ok := <-chs[j]
-// 				if !ok {
-// 					break
-// 				}
-// 				data = append(data, ot.data[id])
-// 			}
-// 		}
-// 	}
-// 	return
-// }
+	for i := 0; i < dims; i++ {
+		axes[i] = i
+	}
+	copy(axes[axis:], axes[axis+1:])
+	copy(axes[start+1:], axes[start:])
+	axes[start] = axis
+
+	if safe {
+		return t.SafeT(axes...)
+	}
+	err = t.T(axes...)
+	retVal = t
+	return
+}
+
+// Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
+func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
+	ss := make([]Shape, len(Ts))
+	for i, T := range Ts {
+		ss[i] = T.Shape()
+	}
+	var newShape Shape
+	if newShape, err = t.Shape().Concat(axis, ss...); err != nil {
+		return
+	}
+
+	newStrides := newShape.CalcStrides()
+	data := makeArray(t.t, newShape.TotalSize())
+
+	retVal = new(Dense)
+	retVal.t = t.t
+	retVal.AP = NewAP(newShape, newStrides)
+	retVal.data = data
+
+	all := make([]*Dense, len(Ts)+1)
+	all[0] = t
+	copy(all[1:], Ts)
+
+	// special case
+	var start, end int
+
+	for _, T := range all {
+		end += T.Shape()[axis]
+		slices := make([]Slice, axis+1)
+		slices[axis] = makeRS(start, end)
+
+		var v *Dense
+		if v, err = retVal.Slice(slices...); err != nil {
+			return
+		}
+		if err = assignArray(v, T); err != nil {
+			return
+		}
+		start = end
+	}
+
+	return
+}
+
+// Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
+func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
+	opdims := t.Dims()
+	if axis >= opdims+1 {
+		err = errors.Errorf(dimMismatch, opdims+1, axis)
+		return
+	}
+
+	newShape := Shape(BorrowInts(opdims + 1))
+	newShape[axis] = len(others) + 1
+	shape := t.Shape()
+	var cur int
+	for i, s := range shape {
+		if i == axis {
+			cur++
+		}
+		newShape[cur] = s
+		cur++
+	}
+
+	newStrides := newShape.CalcStrides()
+	ap := NewAP(newShape, newStrides)
+
+	allNoMat := !t.IsMaterializable()
+	for _, ot := range others {
+		if allNoMat && ot.IsMaterializable() {
+			allNoMat = false
+		}
+	}
+
+	var data Array
+
+	// the "viewStack" method is the more generalized method
+	// and will work for all Tensors, regardless of whether it's a view
+	// But the simpleStack is faster, and is an optimization
+	if allNoMat {
+		data = t.simpleStack(axis, ap, others...)
+	} else {
+		data = t.viewStack(axis, ap, others...)
+	}
+
+	retVal = new(Dense)
+	retVal.t = t.t
+	retVal.AP = ap
+	retVal.data = data
+	return
+}
+
+// simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
+func (t *Dense) simpleStack(axis int, ap *AP, others ...*Dense) (data Array) {
+	data = makeArray(t.t, ap.Size())
+
+	switch axis {
+	case 0:
+		copyArray(data, t.data)
+		next := t.data.Len()
+		for _, ot := range others {
+			copySlicedArray(data, next, data.Len(), ot.data, 0, ot.data.Len())
+			next += ot.data.Len()
+		}
+	default:
+		axisStride := ap.Strides()[axis]
+		batches := data.Len() / axisStride
+
+		destStart := 0
+		start := 0
+		end := start + axisStride
+
+		for i := 0; i < batches; i++ {
+			copySlicedArray(data, destStart, data.Len(), t.data, start, end)
+			for _, ot := range others {
+				destStart += axisStride
+				copySlicedArray(data, destStart, data.Len(), ot.data, start, end)
+				i++
+			}
+			destStart += axisStride
+			start += axisStride
+			end += axisStride
+		}
+	}
+	return
+}
+
+// viewStack is the data movement function for Stack(), applied on views
+func (t *Dense) viewStack(axis int, ap *AP, others ...*Dense) Array {
+	// data = makeArray(t.t, ap.Size())
+	data := make([]interface{}, ap.Size())
+	axisStride := ap.Strides()[axis]
+	batches := len(data) / axisStride
+
+	it := NewFlatIterator(t.AP)
+	ch := it.Chan()
+	chs := make([]chan int, len(others))
+	chs = chs[:0]
+	for _, ot := range others {
+		oter := NewFlatIterator(ot.AP)
+		chs = append(chs, oter.Chan())
+	}
+
+	data = data[:0]
+	for i := 0; i < batches; i++ {
+		for j := 0; j < axisStride; j++ {
+			id, ok := <-ch
+			if !ok {
+				break
+			}
+			data = append(data, t.data.Get(id))
+		}
+		for j, ot := range others {
+			for k := 0; k < axisStride; k++ {
+				id, ok := <-chs[j]
+				if !ok {
+					break
+				}
+				data = append(data, ot.data.Get(id))
+			}
+		}
+	}
+	return fromInterfaceSlice(t.t, data)
+}

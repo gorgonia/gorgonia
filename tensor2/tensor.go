@@ -56,7 +56,7 @@ func New(opts ...ConsOpt) *Dense {
 		opt(d)
 	}
 
-	if d.data == nil {
+	if d.data == nil && d.t != nil {
 		d.data = makeArray(d.t, d.Shape().TotalSize())
 	}
 

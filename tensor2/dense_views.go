@@ -18,6 +18,6 @@ func (t *Dense) Materialize() Tensor {
 	}
 
 	shape := t.Shape().Clone()
-	retVal := NewDense(t.t, shape, WithBacking(newBack))
+	retVal := newTypedShapedDense(t.t, shape, WithBacking(newBack))
 	return retVal
 }

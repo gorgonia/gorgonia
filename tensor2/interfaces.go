@@ -31,6 +31,11 @@ type ArrayMaker interface {
 	MakeArray(size int) Array
 }
 
+// FromInterfaceSlicer is for custom Dtypes
+type FromInterfaceSlicer interface {
+	FromInterfaceSlice(s []interface{}) Array
+}
+
 // CopierFrom copies from source to the receiver. It returns an int indicating how many bytes have been copied
 type CopierFrom interface {
 	CopyFrom(src interface{}) (int, error)

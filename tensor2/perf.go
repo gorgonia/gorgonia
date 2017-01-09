@@ -132,21 +132,28 @@ func init() {
 
 func BorrowInts(size int) []int {
 	if size >= 8 {
-		return make([]int, 8)
+		return make([]int, size)
 	}
 
-	return intsPool[size].Get().([]int)
+	retVal := intsPool[size].Get()
+	if retVal == nil {
+		return make([]int, size)
+	}
+	return retVal.([]int)
 }
 
-func ReturnInts(ints []int) {
-	size := cap(ints)
+func ReturnInts(is []int) {
+	if is == nil {
+		return
+	}
+	size := cap(is)
 	if size >= 8 {
 		return
 	}
-	ints = ints[:cap(ints)]
-	for i := range ints {
-		ints[i] = 0
+	is = is[:cap(is)]
+	for i := range is {
+		is[i] = 0
 	}
 
-	intsPool[size].Put(ints)
+	intsPool[size].Put(is)
 }
