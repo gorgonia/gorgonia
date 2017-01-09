@@ -15,14 +15,6 @@ const setRaw = `func (a {{.Name}}) Set(i int, v interface{}) error {
 	return errors.Errorf("Cannot set %v of %T to []{{.Of}}", v, v)
 }
 `
-const sliceRaw = `func (a {{.Name}}) Slice(s Slice) (Array, error){
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-`
 
 const eqRaw = `func (a {{.Name}}) Eq(other interface{}) bool {
 	if b, ok := other.({{.Name}}); ok {
@@ -68,12 +60,13 @@ const oneRaw = `func (a {{.Name}}) One() {
 `
 
 const copyFromRaw = `func (a {{.Name}}) CopyFrom(other interface{}) (int, error){
-	if b,  ok := other.({{.Name}}); ok {
+	switch b := other.(type) {
+	case {{.Name}}:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]{{.Of}}); ok {
+	case []{{.Of}}:
 		return copy(a, b), nil
+	case {{.Compatible}}er:
+		return copy(a, b.{{.Compatible}}()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
@@ -88,7 +81,6 @@ var (
 	dataTmpl     *template.Template
 	getTmpl      *template.Template
 	setTmpl      *template.Template
-	sliceTmpl    *template.Template
 	eqTmpl       *template.Template
 	zeroTmpl     *template.Template
 	oneTmpl      *template.Template
@@ -105,7 +97,6 @@ func init() {
 	dataTmpl = template.Must(template.New("Data").Parse(dataRaw))
 	getTmpl = template.Must(template.New("Get").Parse(getRaw))
 	setTmpl = template.Must(template.New("Set").Parse(setRaw))
-	sliceTmpl = template.Must(template.New("Slice").Parse(sliceRaw))
 	eqTmpl = template.Must(template.New("Eq").Parse(eqRaw))
 	zeroTmpl = template.Must(template.New("Zeror").Parse(zeroRaw))
 	oneTmpl = template.Must(template.New("Oner").Parse(oneRaw))

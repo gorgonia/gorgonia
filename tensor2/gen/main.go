@@ -2,11 +2,17 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 )
+
+var funcMap = template.FuncMap{
+	"title": strings.Title,
+}
 
 type ArrayType struct {
 	Of          string
@@ -173,7 +179,7 @@ func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {
 	// gofmt and goimports this shit
 	cmd := exec.Command("goimports", "-w", fileName)
 	if err = cmd.Run(); err != nil {
-		log.Fatalf("Go imports failed with %v", err)
+		log.Fatalf("Go imports failed with %v for %q", err, fileName)
 	}
 
 }
@@ -187,6 +193,12 @@ func basicsFn(f io.Writer, m []ArrayType) {
 			fmt.Fprintf(f, "\n")
 		}
 		fmt.Fprint(f, "\n")
+	}
+
+	fmt.Fprintln(f, "/* Transpose Specialization */\n")
+	for _, v := range m {
+		transposeTmpl.Execute(f, v)
+		fmt.Fprintf(f, "\n")
 	}
 }
 
@@ -240,6 +252,14 @@ func testtestFn(f io.Writer, m []ArrayType) {
 			}
 		}
 		fmt.Fprintf(f, "\n")
+	}
+
+	// generate misc
+	for _, v := range m {
+		v.Name += "Dummy"
+		sliceTmpl.Execute(f, v)
+		fmt.Fprint(f, "\n")
+		dtypeTmpl.Execute(f, v)
 	}
 }
 

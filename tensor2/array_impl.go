@@ -389,85 +389,339 @@ func (a bs) One() {
 /* CopierFrom */
 
 func (a f64s) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(f64s); ok {
+	switch b := other.(type) {
+	case f64s:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]float64); ok {
+	case []float64:
 		return copy(a, b), nil
+	case Float64ser:
+		return copy(a, b.Float64s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a f32s) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(f32s); ok {
+	switch b := other.(type) {
+	case f32s:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]float32); ok {
+	case []float32:
 		return copy(a, b), nil
+	case Float32ser:
+		return copy(a, b.Float32s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a ints) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(ints); ok {
+	switch b := other.(type) {
+	case ints:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]int); ok {
+	case []int:
 		return copy(a, b), nil
+	case Intser:
+		return copy(a, b.Ints()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a i64s) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(i64s); ok {
+	switch b := other.(type) {
+	case i64s:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]int64); ok {
+	case []int64:
 		return copy(a, b), nil
+	case Int64ser:
+		return copy(a, b.Int64s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a i32s) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(i32s); ok {
+	switch b := other.(type) {
+	case i32s:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]int32); ok {
+	case []int32:
 		return copy(a, b), nil
+	case Int32ser:
+		return copy(a, b.Int32s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a u8s) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(u8s); ok {
+	switch b := other.(type) {
+	case u8s:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]byte); ok {
+	case []byte:
 		return copy(a, b), nil
+	case Byteser:
+		return copy(a, b.Bytes()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a bs) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(bs); ok {
+	switch b := other.(type) {
+	case bs:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]bool); ok {
+	case []bool:
 		return copy(a, b), nil
+	case Boolser:
+		return copy(a, b.Bools()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
+}
+
+/* Transpose Specialization */
+
+func (a f64s) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp float64
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = float64(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a f32s) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp float32
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = float32(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a ints) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp int
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = int(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a i64s) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp int64
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = int64(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a i32s) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp int32
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = int32(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a u8s) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp byte
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = byte(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a bs) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp bool
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = false
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
 }

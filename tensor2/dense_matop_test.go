@@ -125,6 +125,18 @@ var transposeTests = []struct {
 		bs{true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false},
 		Shape{2, 3, 4}, []int{12, 4, 1}, []int{12, 4, 1},
 		bs{true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false}},
+
+	{"M[2,2].T for bools, just for completeness sake", Shape{2, 2}, nil,
+		bs{true, true, false, false},
+		Shape{2, 2}, []int{1, 2}, []int{2, 1},
+		bs{true, false, true, false},
+	},
+
+	{"Non-Transposer", Shape{2, 2}, nil,
+		f64sDummy{0, 1, 2, 3},
+		Shape{2, 2}, []int{1, 2}, []int{2, 1},
+		f64sDummy{0, 2, 1, 3},
+	},
 }
 
 func TestDense_Transpose(t *testing.T) {

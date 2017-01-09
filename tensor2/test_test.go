@@ -112,64 +112,6 @@ func (a bsDummy) Set(i int, v interface{}) error {
 	return errors.Errorf("Cannot set %v of %T to []bool", v, v)
 }
 
-/* Slice */
-
-func (a f64sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a f32sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a intsDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a i64sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a i32sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a u8sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
-func (a bsDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
-	}
-	return a[start:end], nil
-}
-
 /* Eq */
 
 func (a f64sDummy) Eq(other interface{}) bool {
@@ -2143,3 +2085,67 @@ func (a u8sDummy) Lte(other ElOrd, same bool) (Array, error) {
 	}
 	return retVal, nil
 }
+
+func (a f64sDummy) Slice(s Slice) (Array, error) {
+	start, end, _, err := SliceDetails(s, len(a))
+	if err != nil {
+		return nil, err
+	}
+	return a[start:end], nil
+}
+
+func (a f64sDummy) Dtype() Dtype { return Float64 }
+func (a f32sDummy) Slice(s Slice) (Array, error) {
+	start, end, _, err := SliceDetails(s, len(a))
+	if err != nil {
+		return nil, err
+	}
+	return a[start:end], nil
+}
+
+func (a f32sDummy) Dtype() Dtype { return Float32 }
+func (a intsDummy) Slice(s Slice) (Array, error) {
+	start, end, _, err := SliceDetails(s, len(a))
+	if err != nil {
+		return nil, err
+	}
+	return a[start:end], nil
+}
+
+func (a intsDummy) Dtype() Dtype { return Int }
+func (a i64sDummy) Slice(s Slice) (Array, error) {
+	start, end, _, err := SliceDetails(s, len(a))
+	if err != nil {
+		return nil, err
+	}
+	return a[start:end], nil
+}
+
+func (a i64sDummy) Dtype() Dtype { return Int64 }
+func (a i32sDummy) Slice(s Slice) (Array, error) {
+	start, end, _, err := SliceDetails(s, len(a))
+	if err != nil {
+		return nil, err
+	}
+	return a[start:end], nil
+}
+
+func (a i32sDummy) Dtype() Dtype { return Int32 }
+func (a u8sDummy) Slice(s Slice) (Array, error) {
+	start, end, _, err := SliceDetails(s, len(a))
+	if err != nil {
+		return nil, err
+	}
+	return a[start:end], nil
+}
+
+func (a u8sDummy) Dtype() Dtype { return Byte }
+func (a bsDummy) Slice(s Slice) (Array, error) {
+	start, end, _, err := SliceDetails(s, len(a))
+	if err != nil {
+		return nil, err
+	}
+	return a[start:end], nil
+}
+
+func (a bsDummy) Dtype() Dtype { return Bool }

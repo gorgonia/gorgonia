@@ -45,3 +45,8 @@ type CopierFrom interface {
 type CopierTo interface {
 	CopyTo(dest interface{}) (int, error)
 }
+
+// Transposer is any array that provides a specialization for transposing.
+type Transposer interface {
+	Transpose(oldShape, oldStrides, axes, newStrides []int)
+}

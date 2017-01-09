@@ -199,25 +199,28 @@ func (t *Dense) Transpose() {
 	size := t.data.Len()
 	axes := t.transposeWith
 
-	if t.IsVector() {
+	defer func() {
 		t.setShape(expShape...)
+		t.sanity()
+	}()
+
+	if t.IsVector() {
 		// no change of strides.
 		return
 	}
 
-	// here we'll create a bit-map -- 64 bits should be more than enough
-	// (I don't expect to be dealing with matrices that are larger than 64 elements that requires transposes to be done)
-	//
-	// The purpose of the bit-map is to track which elements have been moved to their correct places
-	//
-	// To set ith bit: track |= (1 << i)
-	// To check if ith bit is set: track & (1 << i)
-	// To check every bit up to size is unset: (1 << size)
-	//
+	// check if there is a specialization
+	if arr, ok := t.data.(Transposer); ok {
+		arr.Transpose(t.oshape(), t.ostrides(), axes, expStrides)
+		return
+	}
 
+	// Otherwise we'll use the slightly slower methods (using Get() and Set())
+
+	// first we'll create a bit-map to track which elements have been moved to their correct places
 	track := NewBitMap(size)
 	track.Set(0)
-	track.Set(size - 1) // first and last don't change
+	track.Set(size - 1) // first and last element of a transposedon't change
 
 	// // we start our iteration at 1, because transposing 0 does noting.
 	var saved, tmp interface{}
@@ -247,9 +250,6 @@ func (t *Dense) Transpose() {
 
 		i = dest
 	}
-
-	t.setShape(expShape...)
-	t.sanity()
 }
 
 // At returns the value at the given coordinate
@@ -413,34 +413,6 @@ func (t *Dense) transposeIndex(i int, transposePat, strides []int) int {
 // This is of course, extensible to any number of dimensions.
 func (t *Dense) at(coords ...int) (at int, err error) {
 	return Ltoi(t.Shape(), t.Strides(), coords...)
-}
-
-// iToCoord is the inverse function of at().
-func (t *Dense) itol(i int) (coords []int, err error) {
-	var oShape Shape
-	var oStrides []int
-
-	if t.old != nil {
-		oShape = t.old.Shape()
-		oStrides = t.old.Strides()
-	} else {
-		oShape = t.Shape()
-		oStrides = t.Strides()
-	}
-
-	// use the original shape, permute the coordinates later
-	if coords, err = Itol(i, oShape, oStrides); err != nil {
-		err = errors.Wrapf(err, "Failed to do Itol with i: %d, oShape: %v; oStrides: %v", i, oShape, oStrides)
-		return
-	}
-
-	if t.transposeWith != nil {
-		var res [][]int
-		if res, err = Permute(t.transposeWith, coords); err == nil {
-			coords = res[0]
-		}
-	}
-	return
 }
 
 // RollAxis rolls the axis backwards until it lies in the given position.
