@@ -506,15 +506,9 @@ func (a bsDummy) Bools() []bool         { return []bool(a) }
 /* Add */
 
 func (a f64sDummy) Add(other Number) error {
-	var b []float64
-
-	switch ot := other.(type) {
-	case f64sDummy:
-		b = []float64(ot)
-	case Float64ser:
-		b = ot.Float64s()
-	default:
-		return errors.Errorf(typeMismatch, "Add", a, other)
+	b, err := getFloat64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Add")
 	}
 
 	if len(a) != len(b) {
@@ -523,19 +517,12 @@ func (a f64sDummy) Add(other Number) error {
 
 	vecf64.Add([]float64(a), b)
 	return nil
-
 }
 
 func (a f32sDummy) Add(other Number) error {
-	var b []float32
-
-	switch ot := other.(type) {
-	case f32sDummy:
-		b = []float32(ot)
-	case Float32ser:
-		b = ot.Float32s()
-	default:
-		return errors.Errorf(typeMismatch, "Add", a, other)
+	b, err := getFloat32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Add")
 	}
 
 	if len(a) != len(b) {
@@ -544,19 +531,12 @@ func (a f32sDummy) Add(other Number) error {
 
 	vecf32.Add([]float32(a), b)
 	return nil
-
 }
 
 func (a intsDummy) Add(other Number) error {
-	var b []int
-
-	switch ot := other.(type) {
-	case intsDummy:
-		b = []int(ot)
-	case Intser:
-		b = ot.Ints()
-	default:
-		return errors.Errorf(typeMismatch, "Add", a, other)
+	b, err := getInts(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Add")
 	}
 
 	if len(a) != len(b) {
@@ -565,21 +545,15 @@ func (a intsDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
-
 	}
+
 	return nil
 }
 
 func (a i64sDummy) Add(other Number) error {
-	var b []int64
-
-	switch ot := other.(type) {
-	case i64sDummy:
-		b = []int64(ot)
-	case Int64ser:
-		b = ot.Int64s()
-	default:
-		return errors.Errorf(typeMismatch, "Add", a, other)
+	b, err := getInt64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Add")
 	}
 
 	if len(a) != len(b) {
@@ -588,21 +562,15 @@ func (a i64sDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
-
 	}
+
 	return nil
 }
 
 func (a i32sDummy) Add(other Number) error {
-	var b []int32
-
-	switch ot := other.(type) {
-	case i32sDummy:
-		b = []int32(ot)
-	case Int32ser:
-		b = ot.Int32s()
-	default:
-		return errors.Errorf(typeMismatch, "Add", a, other)
+	b, err := getInt32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Add")
 	}
 
 	if len(a) != len(b) {
@@ -611,21 +579,15 @@ func (a i32sDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
-
 	}
+
 	return nil
 }
 
 func (a u8sDummy) Add(other Number) error {
-	var b []byte
-
-	switch ot := other.(type) {
-	case u8sDummy:
-		b = []byte(ot)
-	case Byteser:
-		b = ot.Bytes()
-	default:
-		return errors.Errorf(typeMismatch, "Add", a, other)
+	b, err := getBytes(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Add")
 	}
 
 	if len(a) != len(b) {
@@ -634,23 +596,17 @@ func (a u8sDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
-
 	}
+
 	return nil
 }
 
 /* Sub */
 
 func (a f64sDummy) Sub(other Number) error {
-	var b []float64
-
-	switch ot := other.(type) {
-	case f64sDummy:
-		b = []float64(ot)
-	case Float64ser:
-		b = ot.Float64s()
-	default:
-		return errors.Errorf(typeMismatch, "Sub", a, other)
+	b, err := getFloat64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Sub")
 	}
 
 	if len(a) != len(b) {
@@ -659,19 +615,12 @@ func (a f64sDummy) Sub(other Number) error {
 
 	vecf64.Sub([]float64(a), b)
 	return nil
-
 }
 
 func (a f32sDummy) Sub(other Number) error {
-	var b []float32
-
-	switch ot := other.(type) {
-	case f32sDummy:
-		b = []float32(ot)
-	case Float32ser:
-		b = ot.Float32s()
-	default:
-		return errors.Errorf(typeMismatch, "Sub", a, other)
+	b, err := getFloat32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Sub")
 	}
 
 	if len(a) != len(b) {
@@ -680,19 +629,12 @@ func (a f32sDummy) Sub(other Number) error {
 
 	vecf32.Sub([]float32(a), b)
 	return nil
-
 }
 
 func (a intsDummy) Sub(other Number) error {
-	var b []int
-
-	switch ot := other.(type) {
-	case intsDummy:
-		b = []int(ot)
-	case Intser:
-		b = ot.Ints()
-	default:
-		return errors.Errorf(typeMismatch, "Sub", a, other)
+	b, err := getInts(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Sub")
 	}
 
 	if len(a) != len(b) {
@@ -701,21 +643,15 @@ func (a intsDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
-
 	}
+
 	return nil
 }
 
 func (a i64sDummy) Sub(other Number) error {
-	var b []int64
-
-	switch ot := other.(type) {
-	case i64sDummy:
-		b = []int64(ot)
-	case Int64ser:
-		b = ot.Int64s()
-	default:
-		return errors.Errorf(typeMismatch, "Sub", a, other)
+	b, err := getInt64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Sub")
 	}
 
 	if len(a) != len(b) {
@@ -724,21 +660,15 @@ func (a i64sDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
-
 	}
+
 	return nil
 }
 
 func (a i32sDummy) Sub(other Number) error {
-	var b []int32
-
-	switch ot := other.(type) {
-	case i32sDummy:
-		b = []int32(ot)
-	case Int32ser:
-		b = ot.Int32s()
-	default:
-		return errors.Errorf(typeMismatch, "Sub", a, other)
+	b, err := getInt32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Sub")
 	}
 
 	if len(a) != len(b) {
@@ -747,21 +677,15 @@ func (a i32sDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
-
 	}
+
 	return nil
 }
 
 func (a u8sDummy) Sub(other Number) error {
-	var b []byte
-
-	switch ot := other.(type) {
-	case u8sDummy:
-		b = []byte(ot)
-	case Byteser:
-		b = ot.Bytes()
-	default:
-		return errors.Errorf(typeMismatch, "Sub", a, other)
+	b, err := getBytes(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Sub")
 	}
 
 	if len(a) != len(b) {
@@ -770,23 +694,17 @@ func (a u8sDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
-
 	}
+
 	return nil
 }
 
 /* Mul */
 
 func (a f64sDummy) Mul(other Number) error {
-	var b []float64
-
-	switch ot := other.(type) {
-	case f64sDummy:
-		b = []float64(ot)
-	case Float64ser:
-		b = ot.Float64s()
-	default:
-		return errors.Errorf(typeMismatch, "Mul", a, other)
+	b, err := getFloat64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Mul")
 	}
 
 	if len(a) != len(b) {
@@ -795,19 +713,12 @@ func (a f64sDummy) Mul(other Number) error {
 
 	vecf64.Mul([]float64(a), b)
 	return nil
-
 }
 
 func (a f32sDummy) Mul(other Number) error {
-	var b []float32
-
-	switch ot := other.(type) {
-	case f32sDummy:
-		b = []float32(ot)
-	case Float32ser:
-		b = ot.Float32s()
-	default:
-		return errors.Errorf(typeMismatch, "Mul", a, other)
+	b, err := getFloat32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Mul")
 	}
 
 	if len(a) != len(b) {
@@ -816,19 +727,12 @@ func (a f32sDummy) Mul(other Number) error {
 
 	vecf32.Mul([]float32(a), b)
 	return nil
-
 }
 
 func (a intsDummy) Mul(other Number) error {
-	var b []int
-
-	switch ot := other.(type) {
-	case intsDummy:
-		b = []int(ot)
-	case Intser:
-		b = ot.Ints()
-	default:
-		return errors.Errorf(typeMismatch, "Mul", a, other)
+	b, err := getInts(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Mul")
 	}
 
 	if len(a) != len(b) {
@@ -837,21 +741,15 @@ func (a intsDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
-
 	}
+
 	return nil
 }
 
 func (a i64sDummy) Mul(other Number) error {
-	var b []int64
-
-	switch ot := other.(type) {
-	case i64sDummy:
-		b = []int64(ot)
-	case Int64ser:
-		b = ot.Int64s()
-	default:
-		return errors.Errorf(typeMismatch, "Mul", a, other)
+	b, err := getInt64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Mul")
 	}
 
 	if len(a) != len(b) {
@@ -860,21 +758,15 @@ func (a i64sDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
-
 	}
+
 	return nil
 }
 
 func (a i32sDummy) Mul(other Number) error {
-	var b []int32
-
-	switch ot := other.(type) {
-	case i32sDummy:
-		b = []int32(ot)
-	case Int32ser:
-		b = ot.Int32s()
-	default:
-		return errors.Errorf(typeMismatch, "Mul", a, other)
+	b, err := getInt32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Mul")
 	}
 
 	if len(a) != len(b) {
@@ -883,21 +775,15 @@ func (a i32sDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
-
 	}
+
 	return nil
 }
 
 func (a u8sDummy) Mul(other Number) error {
-	var b []byte
-
-	switch ot := other.(type) {
-	case u8sDummy:
-		b = []byte(ot)
-	case Byteser:
-		b = ot.Bytes()
-	default:
-		return errors.Errorf(typeMismatch, "Mul", a, other)
+	b, err := getBytes(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Mul")
 	}
 
 	if len(a) != len(b) {
@@ -906,23 +792,17 @@ func (a u8sDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
-
 	}
+
 	return nil
 }
 
 /* Div */
 
 func (a f64sDummy) Div(other Number) error {
-	var b []float64
-
-	switch ot := other.(type) {
-	case f64sDummy:
-		b = []float64(ot)
-	case Float64ser:
-		b = ot.Float64s()
-	default:
-		return errors.Errorf(typeMismatch, "Div", a, other)
+	b, err := getFloat64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Div")
 	}
 
 	if len(a) != len(b) {
@@ -931,19 +811,12 @@ func (a f64sDummy) Div(other Number) error {
 
 	vecf64.Div([]float64(a), b)
 	return nil
-
 }
 
 func (a f32sDummy) Div(other Number) error {
-	var b []float32
-
-	switch ot := other.(type) {
-	case f32sDummy:
-		b = []float32(ot)
-	case Float32ser:
-		b = ot.Float32s()
-	default:
-		return errors.Errorf(typeMismatch, "Div", a, other)
+	b, err := getFloat32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Div")
 	}
 
 	if len(a) != len(b) {
@@ -952,97 +825,112 @@ func (a f32sDummy) Div(other Number) error {
 
 	vecf32.Div([]float32(a), b)
 	return nil
-
 }
 
 func (a intsDummy) Div(other Number) error {
-	var b []int
-
-	switch ot := other.(type) {
-	case intsDummy:
-		b = []int(ot)
-	case Intser:
-		b = ot.Ints()
-	default:
-		return errors.Errorf(typeMismatch, "Div", a, other)
+	b, err := getInts(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Div")
 	}
 
 	if len(a) != len(b) {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
-		a[i] /= v
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 
+		a[i] /= v
+	}
+
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
 
 func (a i64sDummy) Div(other Number) error {
-	var b []int64
-
-	switch ot := other.(type) {
-	case i64sDummy:
-		b = []int64(ot)
-	case Int64ser:
-		b = ot.Int64s()
-	default:
-		return errors.Errorf(typeMismatch, "Div", a, other)
+	b, err := getInt64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Div")
 	}
 
 	if len(a) != len(b) {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
-		a[i] /= v
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 
+		a[i] /= v
+	}
+
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
 
 func (a i32sDummy) Div(other Number) error {
-	var b []int32
-
-	switch ot := other.(type) {
-	case i32sDummy:
-		b = []int32(ot)
-	case Int32ser:
-		b = ot.Int32s()
-	default:
-		return errors.Errorf(typeMismatch, "Div", a, other)
+	b, err := getInt32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Div")
 	}
 
 	if len(a) != len(b) {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
-		a[i] /= v
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 
+		a[i] /= v
+	}
+
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
 
 func (a u8sDummy) Div(other Number) error {
-	var b []byte
-
-	switch ot := other.(type) {
-	case u8sDummy:
-		b = []byte(ot)
-	case Byteser:
-		b = ot.Bytes()
-	default:
-		return errors.Errorf(typeMismatch, "Div", a, other)
+	b, err := getBytes(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Div")
 	}
 
 	if len(a) != len(b) {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
-		a[i] /= v
+		if v == byte(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 
+		a[i] /= v
+	}
+
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
@@ -1050,15 +938,9 @@ func (a u8sDummy) Div(other Number) error {
 /* Pow */
 
 func (a f64sDummy) Pow(other Number) error {
-	var b []float64
-
-	switch ot := other.(type) {
-	case f64sDummy:
-		b = []float64(ot)
-	case Float64ser:
-		b = ot.Float64s()
-	default:
-		return errors.Errorf(typeMismatch, "Pow", a, other)
+	b, err := getFloat64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Pow")
 	}
 
 	if len(a) != len(b) {
@@ -1067,19 +949,12 @@ func (a f64sDummy) Pow(other Number) error {
 
 	vecf64.Pow([]float64(a), b)
 	return nil
-
 }
 
 func (a f32sDummy) Pow(other Number) error {
-	var b []float32
-
-	switch ot := other.(type) {
-	case f32sDummy:
-		b = []float32(ot)
-	case Float32ser:
-		b = ot.Float32s()
-	default:
-		return errors.Errorf(typeMismatch, "Pow", a, other)
+	b, err := getFloat32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Pow")
 	}
 
 	if len(a) != len(b) {
@@ -1088,19 +963,12 @@ func (a f32sDummy) Pow(other Number) error {
 
 	vecf32.Pow([]float32(a), b)
 	return nil
-
 }
 
 func (a intsDummy) Pow(other Number) error {
-	var b []int
-
-	switch ot := other.(type) {
-	case intsDummy:
-		b = []int(ot)
-	case Intser:
-		b = ot.Ints()
-	default:
-		return errors.Errorf(typeMismatch, "Pow", a, other)
+	b, err := getInts(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Pow")
 	}
 
 	if len(a) != len(b) {
@@ -1109,21 +977,15 @@ func (a intsDummy) Pow(other Number) error {
 
 	for i, v := range b {
 		a[i] = int(math.Pow(float64(a[i]), float64(v)))
-
 	}
+
 	return nil
 }
 
 func (a i64sDummy) Pow(other Number) error {
-	var b []int64
-
-	switch ot := other.(type) {
-	case i64sDummy:
-		b = []int64(ot)
-	case Int64ser:
-		b = ot.Int64s()
-	default:
-		return errors.Errorf(typeMismatch, "Pow", a, other)
+	b, err := getInt64s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Pow")
 	}
 
 	if len(a) != len(b) {
@@ -1132,21 +994,15 @@ func (a i64sDummy) Pow(other Number) error {
 
 	for i, v := range b {
 		a[i] = int64(math.Pow(float64(a[i]), float64(v)))
-
 	}
+
 	return nil
 }
 
 func (a i32sDummy) Pow(other Number) error {
-	var b []int32
-
-	switch ot := other.(type) {
-	case i32sDummy:
-		b = []int32(ot)
-	case Int32ser:
-		b = ot.Int32s()
-	default:
-		return errors.Errorf(typeMismatch, "Pow", a, other)
+	b, err := getInt32s(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Pow")
 	}
 
 	if len(a) != len(b) {
@@ -1155,21 +1011,15 @@ func (a i32sDummy) Pow(other Number) error {
 
 	for i, v := range b {
 		a[i] = int32(math.Pow(float64(a[i]), float64(v)))
-
 	}
+
 	return nil
 }
 
 func (a u8sDummy) Pow(other Number) error {
-	var b []byte
-
-	switch ot := other.(type) {
-	case u8sDummy:
-		b = []byte(ot)
-	case Byteser:
-		b = ot.Bytes()
-	default:
-		return errors.Errorf(typeMismatch, "Pow", a, other)
+	b, err := getBytes(other)
+	if err != nil {
+		return errors.Wrapf(err, opFail, "Pow")
 	}
 
 	if len(a) != len(b) {
@@ -1178,535 +1028,463 @@ func (a u8sDummy) Pow(other Number) error {
 
 	for i, v := range b {
 		a[i] = byte(math.Pow(float64(a[i]), float64(v)))
-
 	}
+
 	return nil
 }
 
 /* Trans */
 
-func (a f64sDummy) Trans(other interface{}) error {
+func (a f64sDummy) Trans(other interface{}) (err error) {
 	var b float64
-	var ok bool
-
-	if b, ok = other.(float64); !ok {
-		return errors.Errorf("Expected float64. Got %T instead", other)
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "Trans")
 	}
 
 	vecf64.Trans(b, []float64(a))
 	return nil
-
 }
 
-func (a f32sDummy) Trans(other interface{}) error {
+func (a f32sDummy) Trans(other interface{}) (err error) {
 	var b float32
-	var ok bool
-
-	if b, ok = other.(float32); !ok {
-		return errors.Errorf("Expected float32. Got %T instead", other)
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "Trans")
 	}
 
 	vecf32.Trans(b, []float32(a))
 	return nil
-
 }
 
-func (a intsDummy) Trans(other interface{}) error {
+func (a intsDummy) Trans(other interface{}) (err error) {
 	var b int
-	var ok bool
-
-	if b, ok = other.(int); !ok {
-		return errors.Errorf("Expected int. Got %T instead", other)
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "Trans")
 	}
 
 	for i, v := range a {
-		a[i] = b + v
-
+		a[i] = v + b
 	}
 	return nil
 }
 
-func (a i64sDummy) Trans(other interface{}) error {
+func (a i64sDummy) Trans(other interface{}) (err error) {
 	var b int64
-	var ok bool
-
-	if b, ok = other.(int64); !ok {
-		return errors.Errorf("Expected int64. Got %T instead", other)
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "Trans")
 	}
 
 	for i, v := range a {
-		a[i] = b + v
-
+		a[i] = v + b
 	}
 	return nil
 }
 
-func (a i32sDummy) Trans(other interface{}) error {
+func (a i32sDummy) Trans(other interface{}) (err error) {
 	var b int32
-	var ok bool
-
-	if b, ok = other.(int32); !ok {
-		return errors.Errorf("Expected int32. Got %T instead", other)
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "Trans")
 	}
 
 	for i, v := range a {
-		a[i] = b + v
-
+		a[i] = v + b
 	}
 	return nil
 }
 
-func (a u8sDummy) Trans(other interface{}) error {
+func (a u8sDummy) Trans(other interface{}) (err error) {
 	var b byte
-	var ok bool
-
-	if b, ok = other.(byte); !ok {
-		return errors.Errorf("Expected byte. Got %T instead", other)
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "Trans")
 	}
 
 	for i, v := range a {
-		a[i] = b + v
-
+		a[i] = v + b
 	}
 	return nil
 }
 
 /* TransR */
 
-func (a f64sDummy) TransR(other interface{}) error {
+func (a f64sDummy) TransR(other interface{}) (err error) {
 	var b float64
-	var ok bool
-
-	if b, ok = other.(float64); !ok {
-		return errors.Errorf("Expected float64. Got %T instead", other)
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransR")
 	}
 
 	vecf64.TransR(b, []float64(a))
 	return nil
-
 }
 
-func (a f32sDummy) TransR(other interface{}) error {
+func (a f32sDummy) TransR(other interface{}) (err error) {
 	var b float32
-	var ok bool
-
-	if b, ok = other.(float32); !ok {
-		return errors.Errorf("Expected float32. Got %T instead", other)
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransR")
 	}
 
 	vecf32.TransR(b, []float32(a))
 	return nil
-
 }
 
-func (a intsDummy) TransR(other interface{}) error {
+func (a intsDummy) TransR(other interface{}) (err error) {
 	var b int
-	var ok bool
-
-	if b, ok = other.(int); !ok {
-		return errors.Errorf("Expected int. Got %T instead", other)
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransR")
 	}
 
 	for i, v := range a {
 		a[i] = b - v
-
 	}
 	return nil
 }
 
-func (a i64sDummy) TransR(other interface{}) error {
+func (a i64sDummy) TransR(other interface{}) (err error) {
 	var b int64
-	var ok bool
-
-	if b, ok = other.(int64); !ok {
-		return errors.Errorf("Expected int64. Got %T instead", other)
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransR")
 	}
 
 	for i, v := range a {
 		a[i] = b - v
-
 	}
 	return nil
 }
 
-func (a i32sDummy) TransR(other interface{}) error {
+func (a i32sDummy) TransR(other interface{}) (err error) {
 	var b int32
-	var ok bool
-
-	if b, ok = other.(int32); !ok {
-		return errors.Errorf("Expected int32. Got %T instead", other)
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransR")
 	}
 
 	for i, v := range a {
 		a[i] = b - v
-
 	}
 	return nil
 }
 
-func (a u8sDummy) TransR(other interface{}) error {
+func (a u8sDummy) TransR(other interface{}) (err error) {
 	var b byte
-	var ok bool
-
-	if b, ok = other.(byte); !ok {
-		return errors.Errorf("Expected byte. Got %T instead", other)
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransR")
 	}
 
 	for i, v := range a {
 		a[i] = b - v
-
 	}
 	return nil
 }
 
 /* Scale */
 
-func (a f64sDummy) Scale(other interface{}) error {
+func (a f64sDummy) Scale(other interface{}) (err error) {
 	var b float64
-	var ok bool
-
-	if b, ok = other.(float64); !ok {
-		return errors.Errorf("Expected float64. Got %T instead", other)
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "Scale")
 	}
 
 	vecf64.Scale(b, []float64(a))
 	return nil
-
 }
 
-func (a f32sDummy) Scale(other interface{}) error {
+func (a f32sDummy) Scale(other interface{}) (err error) {
 	var b float32
-	var ok bool
-
-	if b, ok = other.(float32); !ok {
-		return errors.Errorf("Expected float32. Got %T instead", other)
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "Scale")
 	}
 
 	vecf32.Scale(b, []float32(a))
 	return nil
-
 }
 
-func (a intsDummy) Scale(other interface{}) error {
+func (a intsDummy) Scale(other interface{}) (err error) {
 	var b int
-	var ok bool
-
-	if b, ok = other.(int); !ok {
-		return errors.Errorf("Expected int. Got %T instead", other)
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "Scale")
 	}
 
 	for i, v := range a {
-		a[i] = b * v
-
+		a[i] = v * b
 	}
 	return nil
 }
 
-func (a i64sDummy) Scale(other interface{}) error {
+func (a i64sDummy) Scale(other interface{}) (err error) {
 	var b int64
-	var ok bool
-
-	if b, ok = other.(int64); !ok {
-		return errors.Errorf("Expected int64. Got %T instead", other)
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "Scale")
 	}
 
 	for i, v := range a {
-		a[i] = b * v
-
+		a[i] = v * b
 	}
 	return nil
 }
 
-func (a i32sDummy) Scale(other interface{}) error {
+func (a i32sDummy) Scale(other interface{}) (err error) {
 	var b int32
-	var ok bool
-
-	if b, ok = other.(int32); !ok {
-		return errors.Errorf("Expected int32. Got %T instead", other)
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "Scale")
 	}
 
 	for i, v := range a {
-		a[i] = b * v
-
+		a[i] = v * b
 	}
 	return nil
 }
 
-func (a u8sDummy) Scale(other interface{}) error {
+func (a u8sDummy) Scale(other interface{}) (err error) {
 	var b byte
-	var ok bool
-
-	if b, ok = other.(byte); !ok {
-		return errors.Errorf("Expected byte. Got %T instead", other)
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "Scale")
 	}
 
 	for i, v := range a {
-		a[i] = b * v
-
+		a[i] = v * b
 	}
 	return nil
 }
 
 /* DivR */
 
-func (a f64sDummy) DivR(other interface{}) error {
+func (a f64sDummy) DivR(other interface{}) (err error) {
 	var b float64
-	var ok bool
-
-	if b, ok = other.(float64); !ok {
-		return errors.Errorf("Expected float64. Got %T instead", other)
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "DivR")
 	}
 
 	vecf64.DivR(b, []float64(a))
 	return nil
-
 }
 
-func (a f32sDummy) DivR(other interface{}) error {
+func (a f32sDummy) DivR(other interface{}) (err error) {
 	var b float32
-	var ok bool
-
-	if b, ok = other.(float32); !ok {
-		return errors.Errorf("Expected float32. Got %T instead", other)
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "DivR")
 	}
 
 	vecf32.DivR(b, []float32(a))
 	return nil
-
 }
 
-func (a intsDummy) DivR(other interface{}) error {
+func (a intsDummy) DivR(other interface{}) (err error) {
 	var b int
-	var ok bool
-
-	if b, ok = other.(int); !ok {
-		return errors.Errorf("Expected int. Got %T instead", other)
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "DivR")
 	}
 
+	var errs errorIndices
 	for i, v := range a {
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 		a[i] = b / v
-
+	}
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
 
-func (a i64sDummy) DivR(other interface{}) error {
+func (a i64sDummy) DivR(other interface{}) (err error) {
 	var b int64
-	var ok bool
-
-	if b, ok = other.(int64); !ok {
-		return errors.Errorf("Expected int64. Got %T instead", other)
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "DivR")
 	}
 
+	var errs errorIndices
 	for i, v := range a {
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 		a[i] = b / v
-
+	}
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
 
-func (a i32sDummy) DivR(other interface{}) error {
+func (a i32sDummy) DivR(other interface{}) (err error) {
 	var b int32
-	var ok bool
-
-	if b, ok = other.(int32); !ok {
-		return errors.Errorf("Expected int32. Got %T instead", other)
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "DivR")
 	}
 
+	var errs errorIndices
 	for i, v := range a {
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 		a[i] = b / v
-
+	}
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
 
-func (a u8sDummy) DivR(other interface{}) error {
+func (a u8sDummy) DivR(other interface{}) (err error) {
 	var b byte
-	var ok bool
-
-	if b, ok = other.(byte); !ok {
-		return errors.Errorf("Expected byte. Got %T instead", other)
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "DivR")
 	}
 
+	var errs errorIndices
 	for i, v := range a {
+		if v == byte(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
 		a[i] = b / v
-
+	}
+	if errs != nil {
+		return errs
 	}
 	return nil
 }
 
 /* PowOf */
 
-func (a f64sDummy) PowOf(other interface{}) error {
+func (a f64sDummy) PowOf(other interface{}) (err error) {
 	var b float64
-	var ok bool
-
-	if b, ok = other.(float64); !ok {
-		return errors.Errorf("Expected float64. Got %T instead", other)
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
 	vecf64.PowOf(b, []float64(a))
 	return nil
-
 }
 
-func (a f32sDummy) PowOf(other interface{}) error {
+func (a f32sDummy) PowOf(other interface{}) (err error) {
 	var b float32
-	var ok bool
-
-	if b, ok = other.(float32); !ok {
-		return errors.Errorf("Expected float32. Got %T instead", other)
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
 	vecf32.PowOf(b, []float32(a))
 	return nil
-
 }
 
-func (a intsDummy) PowOf(other interface{}) error {
+func (a intsDummy) PowOf(other interface{}) (err error) {
 	var b int
-	var ok bool
-
-	if b, ok = other.(int); !ok {
-		return errors.Errorf("Expected int. Got %T instead", other)
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
 	for i, v := range a {
 		a[i] = int(math.Pow(float64(v), float64(b)))
-
 	}
 	return nil
 }
 
-func (a i64sDummy) PowOf(other interface{}) error {
+func (a i64sDummy) PowOf(other interface{}) (err error) {
 	var b int64
-	var ok bool
-
-	if b, ok = other.(int64); !ok {
-		return errors.Errorf("Expected int64. Got %T instead", other)
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
 	for i, v := range a {
 		a[i] = int64(math.Pow(float64(v), float64(b)))
-
 	}
 	return nil
 }
 
-func (a i32sDummy) PowOf(other interface{}) error {
+func (a i32sDummy) PowOf(other interface{}) (err error) {
 	var b int32
-	var ok bool
-
-	if b, ok = other.(int32); !ok {
-		return errors.Errorf("Expected int32. Got %T instead", other)
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
 	for i, v := range a {
 		a[i] = int32(math.Pow(float64(v), float64(b)))
-
 	}
 	return nil
 }
 
-func (a u8sDummy) PowOf(other interface{}) error {
+func (a u8sDummy) PowOf(other interface{}) (err error) {
 	var b byte
-	var ok bool
-
-	if b, ok = other.(byte); !ok {
-		return errors.Errorf("Expected byte. Got %T instead", other)
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
 	for i, v := range a {
 		a[i] = byte(math.Pow(float64(v), float64(b)))
-
 	}
 	return nil
 }
 
 /* PowOfR */
 
-func (a f64sDummy) PowOfR(other interface{}) error {
+func (a f64sDummy) PowOfR(other interface{}) (err error) {
 	var b float64
-	var ok bool
-
-	if b, ok = other.(float64); !ok {
-		return errors.Errorf("Expected float64. Got %T instead", other)
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
 	vecf64.PowOfR(b, []float64(a))
 	return nil
-
 }
 
-func (a f32sDummy) PowOfR(other interface{}) error {
+func (a f32sDummy) PowOfR(other interface{}) (err error) {
 	var b float32
-	var ok bool
-
-	if b, ok = other.(float32); !ok {
-		return errors.Errorf("Expected float32. Got %T instead", other)
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
 	vecf32.PowOfR(b, []float32(a))
 	return nil
-
 }
 
-func (a intsDummy) PowOfR(other interface{}) error {
+func (a intsDummy) PowOfR(other interface{}) (err error) {
 	var b int
-	var ok bool
-
-	if b, ok = other.(int); !ok {
-		return errors.Errorf("Expected int. Got %T instead", other)
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
 	for i, v := range a {
-		a[i] = int(math.Pow(float64(v), float64(b)))
-
+		a[i] = int(math.Pow(float64(b), float64(v)))
 	}
 	return nil
 }
 
-func (a i64sDummy) PowOfR(other interface{}) error {
+func (a i64sDummy) PowOfR(other interface{}) (err error) {
 	var b int64
-	var ok bool
-
-	if b, ok = other.(int64); !ok {
-		return errors.Errorf("Expected int64. Got %T instead", other)
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
 	for i, v := range a {
-		a[i] = int64(math.Pow(float64(v), float64(b)))
-
+		a[i] = int64(math.Pow(float64(b), float64(v)))
 	}
 	return nil
 }
 
-func (a i32sDummy) PowOfR(other interface{}) error {
+func (a i32sDummy) PowOfR(other interface{}) (err error) {
 	var b int32
-	var ok bool
-
-	if b, ok = other.(int32); !ok {
-		return errors.Errorf("Expected int32. Got %T instead", other)
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
 	for i, v := range a {
-		a[i] = int32(math.Pow(float64(v), float64(b)))
-
+		a[i] = int32(math.Pow(float64(b), float64(v)))
 	}
 	return nil
 }
 
-func (a u8sDummy) PowOfR(other interface{}) error {
+func (a u8sDummy) PowOfR(other interface{}) (err error) {
 	var b byte
-	var ok bool
-
-	if b, ok = other.(byte); !ok {
-		return errors.Errorf("Expected byte. Got %T instead", other)
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
 	for i, v := range a {
-		a[i] = byte(math.Pow(float64(v), float64(b)))
-
+		a[i] = byte(math.Pow(float64(b), float64(v)))
 	}
 	return nil
 }

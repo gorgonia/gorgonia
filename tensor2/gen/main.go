@@ -12,6 +12,7 @@ import (
 
 var funcMap = template.FuncMap{
 	"title":     strings.Title,
+	"hasSuffix": strings.HasSuffix,
 	"hasPrefix": strings.HasPrefix,
 }
 
@@ -138,13 +139,12 @@ func main() {
 	}
 
 	const (
-		testtestName = "output/test_test.go"
-
-		basicsName      = "output/array_impl.go"
-		numbersName     = "output/array_number.go"
-		numbersTestName = "output/array_number_test.go"
-		eleqordName     = "output/array_eleqord.go"
-		eleqordTestName = "output/array_eleqord_test.go"
+		testtestName    = "../test_test.go"
+		basicsName      = "../array_impl.go"
+		numbersName     = "../array_number.go"
+		numbersTestName = "../array_number_test.go"
+		eleqordName     = "../array_eleqord.go"
+		eleqordTestName = "../array_eleqord_test.go"
 	)
 
 	if err := os.Remove(basicsName); err != nil {
@@ -280,6 +280,15 @@ func testtestFn(f io.Writer, m []ArrayType) {
 func numbersFn(f io.Writer, m []ArrayType) {
 	fmt.Fprintf(f, "package tensor\n")
 
+	// helpers
+	fmt.Fprintf(f, "/* extraction functions */\n")
+	for _, v := range m {
+		if v.isNumber {
+			numberHelpersTmpl.Execute(f, v)
+			fmt.Fprintf(f, "\n")
+		}
+	}
+
 	for _, bo := range binOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		for _, v := range m {
@@ -309,12 +318,32 @@ func numbersFn(f io.Writer, m []ArrayType) {
 func numbersTestFn(f io.Writer, m []ArrayType) {
 	fmt.Fprintf(f, "package tensor\n")
 
+	// write headers/prep functions
+	for _, v := range m {
+		if v.isNumber {
+			vvBinOpTestHeaderTmpl.Execute(f, v)
+			fmt.Fprintf(f, "\n")
+		}
+	}
+
 	for _, bo := range binOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		for _, v := range m {
 			if v.isNumber {
 				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
 				binOpTestTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
+
+	for _, bo := range vecscalarOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if v.isNumber {
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
+				vecScalarTestTmpl.Execute(f, op)
 				fmt.Fprintf(f, "\n")
 			}
 		}
