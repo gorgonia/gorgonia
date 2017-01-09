@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+	"text/template"
 )
 
 var funcMap = template.FuncMap{
-	"title": strings.Title,
+	"title":     strings.Title,
+	"hasPrefix": strings.HasPrefix,
 }
 
 type ArrayType struct {
@@ -231,9 +232,22 @@ func testtestFn(f io.Writer, m []ArrayType) {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		for _, v := range m {
 			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb}
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
 				op.Name += "Dummy"
 				binOpTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
+
+	for _, bo := range vecscalarOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if v.isNumber {
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
+				op.Name += "Dummy"
+				vecScalarOpTmpl.Execute(f, op)
 				fmt.Fprintf(f, "\n")
 			}
 		}
@@ -270,8 +284,19 @@ func numbersFn(f io.Writer, m []ArrayType) {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		for _, v := range m {
 			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb}
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
 				binOpTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
+	for _, bo := range vecscalarOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if v.isNumber {
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
+				vecScalarOpTmpl.Execute(f, op)
 				fmt.Fprintf(f, "\n")
 			}
 		}
@@ -288,13 +313,14 @@ func numbersTestFn(f io.Writer, m []ArrayType) {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		for _, v := range m {
 			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb}
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
 				binOpTestTmpl.Execute(f, op)
 				fmt.Fprintf(f, "\n")
 			}
 		}
 		fmt.Fprintf(f, "\n")
 	}
+
 }
 
 func eleqordsFn(f io.Writer, m []ArrayType) {

@@ -183,6 +183,14 @@ type Number interface {
 	Sub(Number) error
 	Mul(Number) error
 	Div(Number) error
+	Pow(Number) error
+
+	Trans(interface{}) error
+	TransR(interface{}) error
+	Scale(interface{}) error
+	DivR(interface{}) error
+	PowOf(interface{}) error
+	PowOfR(interface{}) error
 }
 
 // SafeNumber is any array that you can perform basic arithmetic on and return an array

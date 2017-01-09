@@ -1,6 +1,6 @@
 package main
 
-import "html/template"
+import "text/template"
 
 const sliceRaw = `func (a {{.Name}}) Slice(s Slice) (Array, error){
 	start, end, _, err := SliceDetails(s, len(a))

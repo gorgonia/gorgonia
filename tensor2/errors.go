@@ -23,6 +23,9 @@ const (
 	typeMismatch      = "TypeMismatch: Op %q cannot be performed. a %T and b %T"
 	shapeMismatch     = "Shape Mismatch. Coordinates has %d dimensions, ndarry has %d dimensions"
 	sizeMismatch      = "Size Mismatch. %d and %d"
+	reuseReshapeErr   = "Failed to reshape the reuse *Dense from into %v. Size was: %d"
+	incrReshapeErr    = "Failed to reshape the incr *Dense into %v. Size was: %d"
+	retValReshapeErr  = "Failed to reshape the retVal *Dense into %v. Size was: %d"
 
 	methodNYI = "%q not yet implemented for %v"
 )

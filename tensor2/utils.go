@@ -310,3 +310,38 @@ func SliceDetails(s Slice, size int) (start, end, step int, err error) {
 	}
 	return
 }
+
+// reuseDenseCheck checks a reuse tensor, and reshapes it to be the correct one
+func reuseDenseCheck(reuse *Dense, as *Dense) (err error) {
+	if reuse.data.Len() != as.Size() {
+		err = errors.Errorf("Reused Tensor %p does not have expected shape %v. Got %v instead. Reuse Size: %v, as Size %v (real: %d)", reuse, as.Shape(), reuse.Shape(), reuse.data.Len(), as.Size(), as.data.Len())
+		return
+	}
+	return reuseCheckShape(reuse, as.Shape())
+
+}
+
+func reuseCheckShape(reuse *Dense, s Shape) (err error) {
+	throw := BorrowInts(len(s))
+	copy(throw, s)
+
+	if err = reuse.reshape(throw...); err != nil {
+		err = errors.Wrapf(err, reuseReshapeErr, s, reuse.DataSize())
+		return
+	}
+
+	// clean up any funny things that may be in the reuse
+	if reuse.old != nil {
+		ReturnAP(reuse.old)
+		reuse.old = nil
+	}
+
+	if reuse.transposeWith != nil {
+		ReturnInts(reuse.transposeWith)
+	}
+
+	if reuse.viewOf != nil {
+		reuse.viewOf = nil
+	}
+	return nil
+}

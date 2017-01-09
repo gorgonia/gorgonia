@@ -1,6 +1,8 @@
 package tensor
 
 import (
+	"math"
+
 	"github.com/chewxy/vecf32"
 	"github.com/chewxy/vecf64"
 	"github.com/pkg/errors"
@@ -401,84 +403,91 @@ func (a bsDummy) One() {
 /* CopierFrom */
 
 func (a f64sDummy) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(f64sDummy); ok {
+	switch b := other.(type) {
+	case f64sDummy:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]float64); ok {
+	case []float64:
 		return copy(a, b), nil
+	case Float64ser:
+		return copy(a, b.Float64s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a f32sDummy) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(f32sDummy); ok {
+	switch b := other.(type) {
+	case f32sDummy:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]float32); ok {
+	case []float32:
 		return copy(a, b), nil
+	case Float32ser:
+		return copy(a, b.Float32s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a intsDummy) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(intsDummy); ok {
+	switch b := other.(type) {
+	case intsDummy:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]int); ok {
+	case []int:
 		return copy(a, b), nil
+	case Intser:
+		return copy(a, b.Ints()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a i64sDummy) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(i64sDummy); ok {
+	switch b := other.(type) {
+	case i64sDummy:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]int64); ok {
+	case []int64:
 		return copy(a, b), nil
+	case Int64ser:
+		return copy(a, b.Int64s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a i32sDummy) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(i32sDummy); ok {
+	switch b := other.(type) {
+	case i32sDummy:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]int32); ok {
+	case []int32:
 		return copy(a, b), nil
+	case Int32ser:
+		return copy(a, b.Int32s()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a u8sDummy) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(u8sDummy); ok {
+	switch b := other.(type) {
+	case u8sDummy:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]byte); ok {
+	case []byte:
 		return copy(a, b), nil
+	case Byteser:
+		return copy(a, b.Bytes()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
 func (a bsDummy) CopyFrom(other interface{}) (int, error) {
-	if b, ok := other.(bsDummy); ok {
+	switch b := other.(type) {
+	case bsDummy:
 		return copy(a, b), nil
-	}
-
-	if b, ok := other.([]bool); ok {
+	case []bool:
 		return copy(a, b), nil
+	case Boolser:
+		return copy(a, b.Bools()), nil
 	}
 
 	return 0, errors.Errorf("Cannot copy from %T", other)
@@ -556,6 +565,7 @@ func (a intsDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
+
 	}
 	return nil
 }
@@ -578,6 +588,7 @@ func (a i64sDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
+
 	}
 	return nil
 }
@@ -600,6 +611,7 @@ func (a i32sDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
+
 	}
 	return nil
 }
@@ -622,6 +634,7 @@ func (a u8sDummy) Add(other Number) error {
 
 	for i, v := range b {
 		a[i] += v
+
 	}
 	return nil
 }
@@ -688,6 +701,7 @@ func (a intsDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
+
 	}
 	return nil
 }
@@ -710,6 +724,7 @@ func (a i64sDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
+
 	}
 	return nil
 }
@@ -732,6 +747,7 @@ func (a i32sDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
+
 	}
 	return nil
 }
@@ -754,6 +770,7 @@ func (a u8sDummy) Sub(other Number) error {
 
 	for i, v := range b {
 		a[i] -= v
+
 	}
 	return nil
 }
@@ -820,6 +837,7 @@ func (a intsDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
+
 	}
 	return nil
 }
@@ -842,6 +860,7 @@ func (a i64sDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
+
 	}
 	return nil
 }
@@ -864,6 +883,7 @@ func (a i32sDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
+
 	}
 	return nil
 }
@@ -886,6 +906,7 @@ func (a u8sDummy) Mul(other Number) error {
 
 	for i, v := range b {
 		a[i] *= v
+
 	}
 	return nil
 }
@@ -952,6 +973,7 @@ func (a intsDummy) Div(other Number) error {
 
 	for i, v := range b {
 		a[i] /= v
+
 	}
 	return nil
 }
@@ -974,6 +996,7 @@ func (a i64sDummy) Div(other Number) error {
 
 	for i, v := range b {
 		a[i] /= v
+
 	}
 	return nil
 }
@@ -996,6 +1019,7 @@ func (a i32sDummy) Div(other Number) error {
 
 	for i, v := range b {
 		a[i] /= v
+
 	}
 	return nil
 }
@@ -1018,6 +1042,671 @@ func (a u8sDummy) Div(other Number) error {
 
 	for i, v := range b {
 		a[i] /= v
+
+	}
+	return nil
+}
+
+/* Pow */
+
+func (a f64sDummy) Pow(other Number) error {
+	var b []float64
+
+	switch ot := other.(type) {
+	case f64sDummy:
+		b = []float64(ot)
+	case Float64ser:
+		b = ot.Float64s()
+	default:
+		return errors.Errorf(typeMismatch, "Pow", a, other)
+	}
+
+	if len(a) != len(b) {
+		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+	}
+
+	vecf64.Pow([]float64(a), b)
+	return nil
+
+}
+
+func (a f32sDummy) Pow(other Number) error {
+	var b []float32
+
+	switch ot := other.(type) {
+	case f32sDummy:
+		b = []float32(ot)
+	case Float32ser:
+		b = ot.Float32s()
+	default:
+		return errors.Errorf(typeMismatch, "Pow", a, other)
+	}
+
+	if len(a) != len(b) {
+		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+	}
+
+	vecf32.Pow([]float32(a), b)
+	return nil
+
+}
+
+func (a intsDummy) Pow(other Number) error {
+	var b []int
+
+	switch ot := other.(type) {
+	case intsDummy:
+		b = []int(ot)
+	case Intser:
+		b = ot.Ints()
+	default:
+		return errors.Errorf(typeMismatch, "Pow", a, other)
+	}
+
+	if len(a) != len(b) {
+		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+	}
+
+	for i, v := range b {
+		a[i] = int(math.Pow(float64(a[i]), float64(v)))
+
+	}
+	return nil
+}
+
+func (a i64sDummy) Pow(other Number) error {
+	var b []int64
+
+	switch ot := other.(type) {
+	case i64sDummy:
+		b = []int64(ot)
+	case Int64ser:
+		b = ot.Int64s()
+	default:
+		return errors.Errorf(typeMismatch, "Pow", a, other)
+	}
+
+	if len(a) != len(b) {
+		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+	}
+
+	for i, v := range b {
+		a[i] = int64(math.Pow(float64(a[i]), float64(v)))
+
+	}
+	return nil
+}
+
+func (a i32sDummy) Pow(other Number) error {
+	var b []int32
+
+	switch ot := other.(type) {
+	case i32sDummy:
+		b = []int32(ot)
+	case Int32ser:
+		b = ot.Int32s()
+	default:
+		return errors.Errorf(typeMismatch, "Pow", a, other)
+	}
+
+	if len(a) != len(b) {
+		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+	}
+
+	for i, v := range b {
+		a[i] = int32(math.Pow(float64(a[i]), float64(v)))
+
+	}
+	return nil
+}
+
+func (a u8sDummy) Pow(other Number) error {
+	var b []byte
+
+	switch ot := other.(type) {
+	case u8sDummy:
+		b = []byte(ot)
+	case Byteser:
+		b = ot.Bytes()
+	default:
+		return errors.Errorf(typeMismatch, "Pow", a, other)
+	}
+
+	if len(a) != len(b) {
+		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+	}
+
+	for i, v := range b {
+		a[i] = byte(math.Pow(float64(a[i]), float64(v)))
+
+	}
+	return nil
+}
+
+/* Trans */
+
+func (a f64sDummy) Trans(other interface{}) error {
+	var b float64
+	var ok bool
+
+	if b, ok = other.(float64); !ok {
+		return errors.Errorf("Expected float64. Got %T instead", other)
+	}
+
+	vecf64.Trans(b, []float64(a))
+	return nil
+
+}
+
+func (a f32sDummy) Trans(other interface{}) error {
+	var b float32
+	var ok bool
+
+	if b, ok = other.(float32); !ok {
+		return errors.Errorf("Expected float32. Got %T instead", other)
+	}
+
+	vecf32.Trans(b, []float32(a))
+	return nil
+
+}
+
+func (a intsDummy) Trans(other interface{}) error {
+	var b int
+	var ok bool
+
+	if b, ok = other.(int); !ok {
+		return errors.Errorf("Expected int. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b + v
+
+	}
+	return nil
+}
+
+func (a i64sDummy) Trans(other interface{}) error {
+	var b int64
+	var ok bool
+
+	if b, ok = other.(int64); !ok {
+		return errors.Errorf("Expected int64. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b + v
+
+	}
+	return nil
+}
+
+func (a i32sDummy) Trans(other interface{}) error {
+	var b int32
+	var ok bool
+
+	if b, ok = other.(int32); !ok {
+		return errors.Errorf("Expected int32. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b + v
+
+	}
+	return nil
+}
+
+func (a u8sDummy) Trans(other interface{}) error {
+	var b byte
+	var ok bool
+
+	if b, ok = other.(byte); !ok {
+		return errors.Errorf("Expected byte. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b + v
+
+	}
+	return nil
+}
+
+/* TransR */
+
+func (a f64sDummy) TransR(other interface{}) error {
+	var b float64
+	var ok bool
+
+	if b, ok = other.(float64); !ok {
+		return errors.Errorf("Expected float64. Got %T instead", other)
+	}
+
+	vecf64.TransR(b, []float64(a))
+	return nil
+
+}
+
+func (a f32sDummy) TransR(other interface{}) error {
+	var b float32
+	var ok bool
+
+	if b, ok = other.(float32); !ok {
+		return errors.Errorf("Expected float32. Got %T instead", other)
+	}
+
+	vecf32.TransR(b, []float32(a))
+	return nil
+
+}
+
+func (a intsDummy) TransR(other interface{}) error {
+	var b int
+	var ok bool
+
+	if b, ok = other.(int); !ok {
+		return errors.Errorf("Expected int. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b - v
+
+	}
+	return nil
+}
+
+func (a i64sDummy) TransR(other interface{}) error {
+	var b int64
+	var ok bool
+
+	if b, ok = other.(int64); !ok {
+		return errors.Errorf("Expected int64. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b - v
+
+	}
+	return nil
+}
+
+func (a i32sDummy) TransR(other interface{}) error {
+	var b int32
+	var ok bool
+
+	if b, ok = other.(int32); !ok {
+		return errors.Errorf("Expected int32. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b - v
+
+	}
+	return nil
+}
+
+func (a u8sDummy) TransR(other interface{}) error {
+	var b byte
+	var ok bool
+
+	if b, ok = other.(byte); !ok {
+		return errors.Errorf("Expected byte. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b - v
+
+	}
+	return nil
+}
+
+/* Scale */
+
+func (a f64sDummy) Scale(other interface{}) error {
+	var b float64
+	var ok bool
+
+	if b, ok = other.(float64); !ok {
+		return errors.Errorf("Expected float64. Got %T instead", other)
+	}
+
+	vecf64.Scale(b, []float64(a))
+	return nil
+
+}
+
+func (a f32sDummy) Scale(other interface{}) error {
+	var b float32
+	var ok bool
+
+	if b, ok = other.(float32); !ok {
+		return errors.Errorf("Expected float32. Got %T instead", other)
+	}
+
+	vecf32.Scale(b, []float32(a))
+	return nil
+
+}
+
+func (a intsDummy) Scale(other interface{}) error {
+	var b int
+	var ok bool
+
+	if b, ok = other.(int); !ok {
+		return errors.Errorf("Expected int. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b * v
+
+	}
+	return nil
+}
+
+func (a i64sDummy) Scale(other interface{}) error {
+	var b int64
+	var ok bool
+
+	if b, ok = other.(int64); !ok {
+		return errors.Errorf("Expected int64. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b * v
+
+	}
+	return nil
+}
+
+func (a i32sDummy) Scale(other interface{}) error {
+	var b int32
+	var ok bool
+
+	if b, ok = other.(int32); !ok {
+		return errors.Errorf("Expected int32. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b * v
+
+	}
+	return nil
+}
+
+func (a u8sDummy) Scale(other interface{}) error {
+	var b byte
+	var ok bool
+
+	if b, ok = other.(byte); !ok {
+		return errors.Errorf("Expected byte. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b * v
+
+	}
+	return nil
+}
+
+/* DivR */
+
+func (a f64sDummy) DivR(other interface{}) error {
+	var b float64
+	var ok bool
+
+	if b, ok = other.(float64); !ok {
+		return errors.Errorf("Expected float64. Got %T instead", other)
+	}
+
+	vecf64.DivR(b, []float64(a))
+	return nil
+
+}
+
+func (a f32sDummy) DivR(other interface{}) error {
+	var b float32
+	var ok bool
+
+	if b, ok = other.(float32); !ok {
+		return errors.Errorf("Expected float32. Got %T instead", other)
+	}
+
+	vecf32.DivR(b, []float32(a))
+	return nil
+
+}
+
+func (a intsDummy) DivR(other interface{}) error {
+	var b int
+	var ok bool
+
+	if b, ok = other.(int); !ok {
+		return errors.Errorf("Expected int. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b / v
+
+	}
+	return nil
+}
+
+func (a i64sDummy) DivR(other interface{}) error {
+	var b int64
+	var ok bool
+
+	if b, ok = other.(int64); !ok {
+		return errors.Errorf("Expected int64. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b / v
+
+	}
+	return nil
+}
+
+func (a i32sDummy) DivR(other interface{}) error {
+	var b int32
+	var ok bool
+
+	if b, ok = other.(int32); !ok {
+		return errors.Errorf("Expected int32. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b / v
+
+	}
+	return nil
+}
+
+func (a u8sDummy) DivR(other interface{}) error {
+	var b byte
+	var ok bool
+
+	if b, ok = other.(byte); !ok {
+		return errors.Errorf("Expected byte. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = b / v
+
+	}
+	return nil
+}
+
+/* PowOf */
+
+func (a f64sDummy) PowOf(other interface{}) error {
+	var b float64
+	var ok bool
+
+	if b, ok = other.(float64); !ok {
+		return errors.Errorf("Expected float64. Got %T instead", other)
+	}
+
+	vecf64.PowOf(b, []float64(a))
+	return nil
+
+}
+
+func (a f32sDummy) PowOf(other interface{}) error {
+	var b float32
+	var ok bool
+
+	if b, ok = other.(float32); !ok {
+		return errors.Errorf("Expected float32. Got %T instead", other)
+	}
+
+	vecf32.PowOf(b, []float32(a))
+	return nil
+
+}
+
+func (a intsDummy) PowOf(other interface{}) error {
+	var b int
+	var ok bool
+
+	if b, ok = other.(int); !ok {
+		return errors.Errorf("Expected int. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = int(math.Pow(float64(v), float64(b)))
+
+	}
+	return nil
+}
+
+func (a i64sDummy) PowOf(other interface{}) error {
+	var b int64
+	var ok bool
+
+	if b, ok = other.(int64); !ok {
+		return errors.Errorf("Expected int64. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = int64(math.Pow(float64(v), float64(b)))
+
+	}
+	return nil
+}
+
+func (a i32sDummy) PowOf(other interface{}) error {
+	var b int32
+	var ok bool
+
+	if b, ok = other.(int32); !ok {
+		return errors.Errorf("Expected int32. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = int32(math.Pow(float64(v), float64(b)))
+
+	}
+	return nil
+}
+
+func (a u8sDummy) PowOf(other interface{}) error {
+	var b byte
+	var ok bool
+
+	if b, ok = other.(byte); !ok {
+		return errors.Errorf("Expected byte. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = byte(math.Pow(float64(v), float64(b)))
+
+	}
+	return nil
+}
+
+/* PowOfR */
+
+func (a f64sDummy) PowOfR(other interface{}) error {
+	var b float64
+	var ok bool
+
+	if b, ok = other.(float64); !ok {
+		return errors.Errorf("Expected float64. Got %T instead", other)
+	}
+
+	vecf64.PowOfR(b, []float64(a))
+	return nil
+
+}
+
+func (a f32sDummy) PowOfR(other interface{}) error {
+	var b float32
+	var ok bool
+
+	if b, ok = other.(float32); !ok {
+		return errors.Errorf("Expected float32. Got %T instead", other)
+	}
+
+	vecf32.PowOfR(b, []float32(a))
+	return nil
+
+}
+
+func (a intsDummy) PowOfR(other interface{}) error {
+	var b int
+	var ok bool
+
+	if b, ok = other.(int); !ok {
+		return errors.Errorf("Expected int. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = int(math.Pow(float64(v), float64(b)))
+
+	}
+	return nil
+}
+
+func (a i64sDummy) PowOfR(other interface{}) error {
+	var b int64
+	var ok bool
+
+	if b, ok = other.(int64); !ok {
+		return errors.Errorf("Expected int64. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = int64(math.Pow(float64(v), float64(b)))
+
+	}
+	return nil
+}
+
+func (a i32sDummy) PowOfR(other interface{}) error {
+	var b int32
+	var ok bool
+
+	if b, ok = other.(int32); !ok {
+		return errors.Errorf("Expected int32. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = int32(math.Pow(float64(v), float64(b)))
+
+	}
+	return nil
+}
+
+func (a u8sDummy) PowOfR(other interface{}) error {
+	var b byte
+	var ok bool
+
+	if b, ok = other.(byte); !ok {
+		return errors.Errorf("Expected byte. Got %T instead", other)
+	}
+
+	for i, v := range a {
+		a[i] = byte(math.Pow(float64(v), float64(b)))
+
 	}
 	return nil
 }
