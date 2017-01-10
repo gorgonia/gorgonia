@@ -139,14 +139,17 @@ func main() {
 	}
 
 	const (
-		testtestName    = "../test_test.go"
-		basicsName      = "../array_impl.go"
-		numbersName     = "../array_number.go"
-		numbersTestName = "../array_number_test.go"
-		eleqordName     = "../array_eleqord.go"
-		eleqordTestName = "../array_eleqord_test.go"
+		testtestName        = "../test_test.go"
+		basicsName          = "../array_impl.go"
+		numbersName         = "../array_number.go"
+		numbersTestName     = "../array_number_test.go"
+		incrNumbersName     = "../array_incr.go"
+		incrNumbersTestName = "../array_incr_test.go"
+		eleqordName         = "../array_eleqord.go"
+		eleqordTestName     = "../array_eleqord_test.go"
 
-		denseBinOp = "../dense_arith.go"
+		denseBinOpName     = "../dense_arith.go"
+		denseBinOpTestName = "../api_arith_test.go"
 	)
 
 	if err := os.Remove(basicsName); err != nil {
@@ -157,22 +160,16 @@ func main() {
 
 	pipeline(testtestName, m, testtestFn)
 
-	pipeline(basicsName, m, basicsFn)
-	pipeline(numbersName, m, numbersFn)
-	pipeline(numbersTestName, m, numbersTestFn)
-	pipeline(eleqordName, m, eleqordsFn)
-	pipeline(eleqordTestName, m, eleqordsTestFn)
+	pipeline(basicsName, m, generateBasics)
+	pipeline(numbersName, m, generateNumbers)
+	pipeline(numbersTestName, m, generateNumbersTests)
+	pipeline(incrNumbersName, m, generateNumbersIncr)
+	pipeline(incrNumbersName, m, generateNumbersIncrTests)
+	pipeline(eleqordName, m, generateElEqOrds)
+	pipeline(eleqordTestName, m, generateElEqOrdsTests)
 
-	if err := os.Remove(denseBinOp); err != nil {
-		if !os.IsNotExist(err) {
-			panic(err)
-		}
-	}
-	f, err := os.Create(denseBinOp)
-	if err != nil {
-		log.Fatal(err)
-	}
-	generateDenseArith(f)
+	generateDenseArith(denseBinOpName)
+	generateDenseArithTests(denseBinOpTestName, m)
 }
 
 func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {
@@ -188,6 +185,7 @@ func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {
 	}
 	defer f.Close()
 
+	fmt.Fprintf(f, "package tensor\n")
 	fn(f, l)
 
 	// gofmt and goimports this shit
@@ -195,204 +193,37 @@ func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {
 	if err = cmd.Run(); err != nil {
 		log.Fatalf("Go imports failed with %v for %q", err, fileName)
 	}
-
-}
-
-func basicsFn(f io.Writer, m []ArrayType) {
-	fmt.Fprintf(f, "package tensor\n")
-	for _, tmpl := range basics {
-		fmt.Fprintf(f, "/* %s */\n\n", tmpl.Name())
-		for _, v := range m {
-			tmpl.Execute(f, v)
-			fmt.Fprintf(f, "\n")
-		}
-		fmt.Fprint(f, "\n")
-	}
-
-	fmt.Fprintln(f, "/* Transpose Specialization */\n")
-	for _, v := range m {
-		transposeTmpl.Execute(f, v)
-		fmt.Fprintf(f, "\n")
-	}
 }
 
 func testtestFn(f io.Writer, m []ArrayType) {
-	fmt.Fprintf(f, "package tensor\n")
-
-	for _, v := range m {
-		fmt.Fprintf(f, "type %vDummy []%v\n", v.Name, v.Of)
+	m2 := make([]ArrayType, len(m))
+	for i, t := range m {
+		m2[i] = t
+		m2[i].Name += "Dummy"
 	}
 
-	for _, tmpl := range basics {
-		fmt.Fprintf(f, "/* %s */\n\n", tmpl.Name())
-		for _, v := range m {
-			v.Name += "Dummy"
-			tmpl.Execute(f, v)
-			fmt.Fprintf(f, "\n")
-		}
-		fmt.Fprint(f, "\n")
+	// declare types
+	for _, v := range m2 {
+		fmt.Fprintf(f, "type %v []%v\n", v.Name, v.Of)
 	}
 
+	// generate basics
+	generateBasics(f, m2)
+
+	// generate compat
 	fmt.Fprintf(f, "/* COMPAT */ \n\n")
-	for _, v := range m {
-		v.Name += "Dummy"
+	for _, v := range m2 {
 		compatibleTmpl.Execute(f, v)
 		fmt.Fprintf(f, "\n")
 	}
 
-	// generate numbers
-	for _, bo := range binOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
-				op.Name += "Dummy"
-				binOpTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
-
-	for _, bo := range vecscalarOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
-				op.Name += "Dummy"
-				vecScalarOpTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
-
-	// generate eleqords
-	for _, bo := range eleqordBinOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if bo.OpName == "ElEq" || (bo.OpName != "ElEq" && v.elOrd) {
-				op := ElOrdBinOp{v, bo.OpName, bo.OpSymb, bo.TypeClass}
-				op.Name += "Dummy"
-				eleqordTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
+	generateNumbersOpsOnly(f, m2)
+	generateElEqOrds(f, m2)
 
 	// generate misc
-	for _, v := range m {
-		v.Name += "Dummy"
+	for _, v := range m2 {
 		sliceTmpl.Execute(f, v)
 		fmt.Fprint(f, "\n")
 		dtypeTmpl.Execute(f, v)
-	}
-}
-
-func numbersFn(f io.Writer, m []ArrayType) {
-	fmt.Fprintf(f, "package tensor\n")
-
-	// helpers
-	fmt.Fprintf(f, "/* extraction functions */\n")
-	for _, v := range m {
-		if v.isNumber {
-			numberHelpersTmpl.Execute(f, v)
-			fmt.Fprintf(f, "\n")
-		}
-	}
-
-	for _, bo := range binOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
-				binOpTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
-	for _, bo := range vecscalarOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
-				vecScalarOpTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
-
-	log.Println("NOTE: Manually fix Div for non-float types")
-}
-
-func numbersTestFn(f io.Writer, m []ArrayType) {
-	fmt.Fprintf(f, "package tensor\n")
-
-	// write headers/prep functions
-	for _, v := range m {
-		if v.isNumber {
-			vvBinOpTestHeaderTmpl.Execute(f, v)
-			fmt.Fprintf(f, "\n")
-		}
-	}
-
-	for _, bo := range binOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
-				binOpTestTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
-
-	for _, bo := range vecscalarOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if v.isNumber {
-				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
-				vecScalarTestTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
-
-}
-
-func eleqordsFn(f io.Writer, m []ArrayType) {
-	fmt.Fprintf(f, "package tensor\n")
-
-	for _, bo := range eleqordBinOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if bo.OpName == "ElEq" || (bo.OpName != "ElEq" && v.elOrd) {
-				op := ElOrdBinOp{v, bo.OpName, bo.OpSymb, bo.TypeClass}
-				eleqordTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
-	}
-}
-
-func eleqordsTestFn(f io.Writer, m []ArrayType) {
-	fmt.Fprintf(f, "package tensor\n")
-
-	for _, bo := range eleqordBinOps {
-		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		for _, v := range m {
-			if bo.OpName == "ElEq" || (bo.OpName != "ElEq" && v.elOrd) {
-				op := ElOrdBinOp{v, bo.OpName, bo.OpSymb, bo.TypeClass}
-				eleqordTestTmpl.Execute(f, op)
-				fmt.Fprintf(f, "\n")
-			}
-		}
-		fmt.Fprintf(f, "\n")
 	}
 }

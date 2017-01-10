@@ -2,16 +2,17 @@ package main
 
 import "text/template"
 
-const sliceRaw = `func (a {{.Name}}) Slice(s Slice) (Array, error){
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+// sliceRaw is to generate arrays that implement Slicer
+const sliceRaw = `func (a {{.Name}}) Slice(start, end int) (Array, error){
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 `
 
-const dtyperRaw = `func (a {{.Name}}) Dtype() Dtype {	return {{title .Of}}}
+const dtyperRaw = `func (a {{.Name}}) Dtype() Dtype { return {{title .Of}} }
 `
 
 var (

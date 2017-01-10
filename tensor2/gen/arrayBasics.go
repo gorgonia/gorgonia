@@ -1,6 +1,10 @@
 package main
 
-import "text/template"
+import (
+	"fmt"
+	"io"
+	"text/template"
+)
 
 const lenRaw = `func (a {{.Name}}) Len() int {return len(a)}`
 const capRaw = `func (a {{.Name}}) Cap() int {return cap(a)}`
@@ -105,4 +109,21 @@ func init() {
 	compatibleTmpl = template.Must(template.New("Compat").Parse(compatibleRaw))
 
 	basics = []*template.Template{lenTmpl, capTmpl, dataTmpl, getTmpl, setTmpl, eqTmpl, zeroTmpl, oneTmpl, copyFromTmpl}
+}
+
+func generateBasics(f io.Writer, m []ArrayType) {
+	for _, tmpl := range basics {
+		fmt.Fprintf(f, "/* %s */\n\n", tmpl.Name())
+		for _, v := range m {
+			tmpl.Execute(f, v)
+			fmt.Fprintf(f, "\n")
+		}
+		fmt.Fprint(f, "\n")
+	}
+
+	fmt.Fprintln(f, "/* Transpose Specialization */\n")
+	for _, v := range m {
+		transposeTmpl.Execute(f, v)
+		fmt.Fprintf(f, "\n")
+	}
 }

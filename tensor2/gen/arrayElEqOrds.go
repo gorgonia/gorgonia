@@ -1,6 +1,10 @@
 package main
 
-import "text/template"
+import (
+	"fmt"
+	"io"
+	"text/template"
+)
 
 type ElOrdBinOp struct {
 	ArrayType
@@ -153,4 +157,32 @@ var (
 func init() {
 	eleqordTmpl = template.Must(template.New("ElEqOrd").Parse(eleqordRaw))
 	eleqordTestTmpl = template.Must(template.New("ElEqOrdTest").Parse(eleqordTestRaw))
+}
+
+func generateElEqOrds(f io.Writer, m []ArrayType) {
+	for _, bo := range eleqordBinOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if bo.OpName == "ElEq" || (bo.OpName != "ElEq" && v.elOrd) {
+				op := ElOrdBinOp{v, bo.OpName, bo.OpSymb, bo.TypeClass}
+				eleqordTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
+}
+
+func generateElEqOrdsTests(f io.Writer, m []ArrayType) {
+	for _, bo := range eleqordBinOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if bo.OpName == "ElEq" || (bo.OpName != "ElEq" && v.elOrd) {
+				op := ElOrdBinOp{v, bo.OpName, bo.OpSymb, bo.TypeClass}
+				eleqordTestTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
 }

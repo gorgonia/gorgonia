@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
-	"io"
+	"log"
+	"os"
+	"os/exec"
 	"text/template"
 )
 
@@ -18,6 +20,7 @@ var denseBinOps = []DenseBinOp{
 	{"sub", "Sub", "TransInv", "TransInvR"},
 	{"mul", "Mul", "Scale", "Scale"},
 	{"div", "Div", "ScaleInv", "ScaleInvR"},
+	{"pow", "Pow", "PowOf", "PowOfR"},
 }
 
 const densBinOpPrep = `package tensor
@@ -142,6 +145,7 @@ const denseBinOpRaw = `func {{.OpName}}DD(a, b *Dense, opts ...FuncOpt) (retVal 
 			err = errors.Wrapf(err, opFail, "{{.OpName}}DD. Unable to safely {{.OpName}} Array a to Array reused")
 			return
 		}
+		retVal = a
 	default:
 		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
@@ -178,13 +182,13 @@ func {{.OpName}}DS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err
 			err = errors.Wrapf(err, "{{.OpName}}DS. Unable to safely {{.OpName}} ")
 			return
 		}
-		return
 	case !safe:
 		err = an.{{.VecScalar}}(b)
 		retVal = a
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
 
 func {{.OpName}}SD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -216,18 +220,29 @@ func {{.OpName}}SD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err
 			err = errors.Wrapf(err, "{{.OpName}}SD. Unable to safely {{.OpName}} ")
 			return
 		}
-		return
 	case !safe:
 		err = bn.{{.ScalarVec}}(a)
 		retVal = b
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
 
 `
 
-func generateDenseArith(f io.WriteCloser) {
+func generateDenseArith(fileName string) {
+	if err := os.Remove(fileName); err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
+	}
+
+	f, err := os.Create(fileName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Fprintln(f, densBinOpPrep)
 	fmt.Fprintln(f, "\n")
 	for _, bo := range denseBinOps {
@@ -236,6 +251,12 @@ func generateDenseArith(f io.WriteCloser) {
 		fmt.Fprintln(f, "\n")
 	}
 	f.Close()
+
+	// gofmt and goimports this shit
+	cmd := exec.Command("goimports", "-w", fileName)
+	if err = cmd.Run(); err != nil {
+		log.Fatalf("Go imports failed with %v for %q", err, fileName)
+	}
 }
 
 var (

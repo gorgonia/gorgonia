@@ -1,6 +1,11 @@
 package main
 
-import "text/template"
+import (
+	"fmt"
+	"io"
+	"log"
+	"text/template"
+)
 
 type BinOp struct {
 	ArrayType
@@ -49,26 +54,32 @@ const binOpRaw = `func (a {{.Name}}) {{.OpName}}(other Number) error {
 	}
 
 	{{if ne .VecPkg "" -}}
-	{{.VecPkg}}.{{.OpName}}([]{{.Of}}(a), b)
+		{{.VecPkg}}.{{.OpName}}([]{{.Of}}(a), b)
 	{{else -}}
-	{{if hasPrefix .OpName "ScaleInv" -}}var errs errorIndices{{end}}
-	for i, v := range b {
-		{{if hasPrefix .OpName "ScaleInv" -}}if v == {{.Of}}(0) {
-			errs = append(errs, i)
-			a[i] = 0
-			continue
+		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+		{{$div := hasPrefix .OpName "Div" -}}
+		{{if or $scaleInv $div -}}var errs errorIndices{{end}}
+		for i, v := range b {
+			{{if or $scaleInv $div -}}
+			if v == {{.Of}}(0) {
+				errs = append(errs, i)
+				a[i] = 0
+				continue
+			}
+
+			{{end -}}
+			{{if .IsFunc -}}
+				a[i] = {{.Of}}({{.OpSymb}} (float64(a[i]), float64(v)))
+			{{else -}}
+				a[i] {{.OpSymb}}= v 
+			{{end -}}
 		}
 
-		{{end -}}{{if .IsFunc -}}a[i] = {{.Of}}({{.OpSymb}} (float64(a[i]), float64(v)))
-		{{else -}}a[i] {{.OpSymb}}= v 
+		{{if or $scaleInv $div -}}
+			if errs != nil {
+				return errs
+			}
 		{{end -}}
-	}
-
-	{{if hasPrefix .OpName "ScaleInv" -}}
-	if errs != nil {
-		return errs
-	}
-	{{end -}}
 	{{end -}}
 	return nil
 }
@@ -83,31 +94,37 @@ const vecScalarOpRaw = `func (a {{.Name}}) {{.OpName}}(other interface{}) (err e
 	{{if ne .VecPkg "" -}}
 	{{.VecPkg}}.{{.OpName}}([]{{.Of}}(a), b)
 	{{else -}}
-	{{if hasPrefix .OpName "ScaleInv" -}}var errs errorIndices{{end}}
-	for i, v := range a {
-		{{if hasPrefix .OpName "ScaleInv" -}}
-		if v == {{.Of}}(0) {
-			errs = append(errs, i)
-			a[i] = 0 
-			continue
-		}
-		{{end -}}
+	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+	{{$div := hasPrefix .OpName "Div" -}}
+	{{if or $scaleInv $div -}}var errs errorIndices{{end}}
+		for i, v := range a {
+			{{if or $scaleInv $div -}}
+			if v == {{.Of}}(0) {
+				errs = append(errs, i)
+				a[i] = 0 
+				continue
+			}
+			{{end -}}
 
-		a[i] = {{if hasSuffix .OpName "R" -}}
-			{{if .IsFunc -}} {{.Of}}({{.OpSymb}}(float64(b), float64(v)))
-			{{else -}} b {{.OpSymb}} v 
+			a[i] = {{if hasSuffix .OpName "R" -}}
+				{{if .IsFunc -}} 
+					{{.Of}}({{.OpSymb}}(float64(b), float64(v)))
+				{{else -}} 
+					b {{.OpSymb}} v 
+				{{end -}}
+			{{else -}} 
+				{{if .IsFunc -}} 
+					{{.Of}}({{.OpSymb}}(float64(v), float64(b)))
+				{{else -}} 
+					v {{.OpSymb}} b
+				{{end -}}
 			{{end -}}
-		{{else -}} 
-			{{if .IsFunc -}} {{.Of}}({{.OpSymb}}(float64(v), float64(b)))
-			{{else -}} v {{.OpSymb}} b
-			{{end -}}
+		}
+		{{if or $scaleInv $div -}}
+			if errs != nil {
+				return errs
+			}
 		{{end -}}
-	}
-	{{if hasPrefix .OpName "ScaleInv" -}}
-	if errs != nil {
-		return errs
-	}
-	{{end -}}
 	{{end -}}
 	return nil
 }
@@ -117,8 +134,10 @@ const binOpTestRaw = `func Test_{{.Name}}_{{.OpName}}(t *testing.T){
 
 	correct := make({{.Name}}, len(a))
 	for i, v := range a {
-		correct[i] = {{if .IsFunc}} {{.Of}}({{.OpSymb}}(float64(v), float64(b[i]))) 
-		{{else}} v {{.OpSymb}} b[i] 
+		correct[i] = {{if .IsFunc -}}
+			{{.Of}}({{.OpSymb}}(float64(v), float64(b[i]))) 
+		{{else -}} 
+			v {{.OpSymb}} b[i] 
 		{{end -}}
 	}
 
@@ -146,8 +165,9 @@ const binOpTestRaw = `func Test_{{.Name}}_{{.OpName}}(t *testing.T){
 			break
 		}
 	}
-
-	{{if hasPrefix .OpName "ScaleInv" -}}
+	{{$div := hasPrefix .OpName "Div"}}
+	{{$scaleInv := hasPrefix .OpName "ScaleInv"}}
+	{{if or $div $scaleInv -}}
 		{{if hasPrefix .Of "float" -}}
 		{{else -}}
 			// additional tests for ScaleInv just for completeness sake
@@ -279,4 +299,82 @@ func init() {
 
 	vvBinOpTestHeaderTmpl = template.Must(template.New("vvBinOpTestHeader").Parse(numberVVTestHeaderRaw))
 	numberHelpersTmpl = template.Must(template.New("numberHelper").Funcs(funcMap).Parse(numberHelpersRaw))
+}
+
+func generateNumbers(f io.Writer, m []ArrayType) {
+	// helpers
+	fmt.Fprintf(f, "/* extraction functions */\n")
+	for _, v := range m {
+		if v.isNumber {
+			numberHelpersTmpl.Execute(f, v)
+			fmt.Fprintf(f, "\n")
+		}
+	}
+	generateNumbersOpsOnly(f, m)
+}
+
+func generateNumbersOpsOnly(f io.Writer, m []ArrayType) {
+	// generate V-V bin ops
+	for _, bo := range binOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if v.isNumber {
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
+				binOpTmpl.Execute(f, op)
+				fmt.Fprintln(f, "\n")
+			}
+		}
+		fmt.Fprintln(f, "\n")
+	}
+
+	// generate V-S and S-V bin ops
+	for _, bo := range vecscalarOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if v.isNumber {
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
+				vecScalarOpTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
+
+	log.Println("NOTE: Manually fix Div for non-float types")
+
+}
+
+func generateNumbersTests(f io.Writer, m []ArrayType) {
+	// write headers/prep functions
+	for _, v := range m {
+		if v.isNumber {
+			vvBinOpTestHeaderTmpl.Execute(f, v)
+			fmt.Fprintf(f, "\n")
+		}
+	}
+
+	for _, bo := range binOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if v.isNumber {
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
+				binOpTestTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
+
+	for _, bo := range vecscalarOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		for _, v := range m {
+			if v.isNumber {
+				op := BinOp{v, bo.OpName, bo.OpSymb, bo.IsFunc}
+				vecScalarTestTmpl.Execute(f, op)
+				fmt.Fprintf(f, "\n")
+			}
+		}
+		fmt.Fprintf(f, "\n")
+	}
+
 }
