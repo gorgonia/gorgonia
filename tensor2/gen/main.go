@@ -145,6 +145,8 @@ func main() {
 		numbersTestName = "../array_number_test.go"
 		eleqordName     = "../array_eleqord.go"
 		eleqordTestName = "../array_eleqord_test.go"
+
+		denseBinOp = "../dense_arith.go"
 	)
 
 	if err := os.Remove(basicsName); err != nil {
@@ -160,6 +162,17 @@ func main() {
 	pipeline(numbersTestName, m, numbersTestFn)
 	pipeline(eleqordName, m, eleqordsFn)
 	pipeline(eleqordTestName, m, eleqordsTestFn)
+
+	if err := os.Remove(denseBinOp); err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
+	}
+	f, err := os.Create(denseBinOp)
+	if err != nil {
+		log.Fatal(err)
+	}
+	generateDenseArith(f)
 }
 
 func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {

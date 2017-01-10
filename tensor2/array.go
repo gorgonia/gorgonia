@@ -186,9 +186,11 @@ type Number interface {
 	Pow(Number) error
 
 	Trans(interface{}) error
-	TransR(interface{}) error
+	TransInv(interface{}) error
+	TransInvR(interface{}) error
 	Scale(interface{}) error
-	DivR(interface{}) error
+	ScaleInv(interface{}) error
+	ScaleInvR(interface{}) error
 	PowOf(interface{}) error
 	PowOfR(interface{}) error
 }

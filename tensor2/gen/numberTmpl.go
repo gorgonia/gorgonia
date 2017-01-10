@@ -29,9 +29,11 @@ var vecscalarOps = []struct {
 	IsFunc bool
 }{
 	{"Trans", "+", false},
-	{"TransR", "-", false},
+	{"TransInv", "-", false},
+	{"TransInvR", "-", false},
 	{"Scale", "*", false},
-	{"DivR", "/", false},
+	{"ScaleInv", "/", false},
+	{"ScaleInvR", "/", false},
 	{"PowOf", "math.Pow", true},
 	{"PowOfR", "math.Pow", true},
 }
@@ -49,9 +51,9 @@ const binOpRaw = `func (a {{.Name}}) {{.OpName}}(other Number) error {
 	{{if ne .VecPkg "" -}}
 	{{.VecPkg}}.{{.OpName}}([]{{.Of}}(a), b)
 	{{else -}}
-	{{if hasPrefix .OpName "Div" -}}var errs errorIndices{{end}}
+	{{if hasPrefix .OpName "ScaleInv" -}}var errs errorIndices{{end}}
 	for i, v := range b {
-		{{if hasPrefix .OpName "Div" -}}if v == {{.Of}}(0) {
+		{{if hasPrefix .OpName "ScaleInv" -}}if v == {{.Of}}(0) {
 			errs = append(errs, i)
 			a[i] = 0
 			continue
@@ -62,7 +64,7 @@ const binOpRaw = `func (a {{.Name}}) {{.OpName}}(other Number) error {
 		{{end -}}
 	}
 
-	{{if hasPrefix .OpName "Div" -}}
+	{{if hasPrefix .OpName "ScaleInv" -}}
 	if errs != nil {
 		return errs
 	}
@@ -79,11 +81,11 @@ const vecScalarOpRaw = `func (a {{.Name}}) {{.OpName}}(other interface{}) (err e
 	}
 
 	{{if ne .VecPkg "" -}}
-	{{.VecPkg}}.{{.OpName}}(b, []{{.Of}}(a))
+	{{.VecPkg}}.{{.OpName}}([]{{.Of}}(a), b)
 	{{else -}}
-	{{if hasPrefix .OpName "Div" -}}var errs errorIndices{{end}}
+	{{if hasPrefix .OpName "ScaleInv" -}}var errs errorIndices{{end}}
 	for i, v := range a {
-		{{if hasPrefix .OpName "Div" -}}
+		{{if hasPrefix .OpName "ScaleInv" -}}
 		if v == {{.Of}}(0) {
 			errs = append(errs, i)
 			a[i] = 0 
@@ -101,7 +103,7 @@ const vecScalarOpRaw = `func (a {{.Name}}) {{.OpName}}(other interface{}) (err e
 			{{end -}}
 		{{end -}}
 	}
-	{{if hasPrefix .OpName "Div" -}}
+	{{if hasPrefix .OpName "ScaleInv" -}}
 	if errs != nil {
 		return errs
 	}
@@ -145,10 +147,10 @@ const binOpTestRaw = `func Test_{{.Name}}_{{.OpName}}(t *testing.T){
 		}
 	}
 
-	{{if hasPrefix .OpName "Div" -}}
+	{{if hasPrefix .OpName "ScaleInv" -}}
 		{{if hasPrefix .Of "float" -}}
 		{{else -}}
-			// additional tests for Div just for completeness sake
+			// additional tests for ScaleInv just for completeness sake
 			b = {{.Name}}{ {{.TestData0}} }
 			if err := a.{{.OpName}}(b); err == nil {
 				t.Error("Expected an errrorIndices")
@@ -174,7 +176,7 @@ const vecScalarTestRaw = `func Test_{{.Name}}_{{.OpName}}(t *testing.T){
 
 	correct := make({{.Name}}, len(a))
 	for i, v := range a {
-		{{if hasPrefix .OpName "Div"}}if v == {{.Of}}(0) {
+		{{if hasPrefix .OpName "ScaleInv"}}if v == {{.Of}}(0) {
 			correct[i] = 0
 			continue
 		}
@@ -191,7 +193,7 @@ const vecScalarTestRaw = `func Test_{{.Name}}_{{.OpName}}(t *testing.T){
 		{{end -}}
 	}
 
-	{{if hasPrefix .OpName "Div" -}}
+	{{if hasPrefix .OpName "ScaleInv" -}}
 		{{if hasPrefix .Of "float" -}}
 			if err := a.{{.OpName}}(b); err != nil{
 				t.Fatal(err)

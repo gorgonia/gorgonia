@@ -968,12 +968,6 @@ func Test_ints_Div(t *testing.T) {
 		}
 	}
 
-	// additional tests for Div just for completeness sake
-	b = ints{0, 1, 2, 3, 4}
-	if err := a.Div(b); err == nil {
-		t.Error("Expected an errrorIndices")
-	}
-
 	// idiotsville 1
 	if err := a.Div(b[:3]); err == nil {
 		t.Error("Expected an error when performing Div on differing lengths")
@@ -1016,12 +1010,6 @@ func Test_i64s_Div(t *testing.T) {
 			t.Errorf("Div is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
-	}
-
-	// additional tests for Div just for completeness sake
-	b = i64s{0, 1, 2, 3, 4}
-	if err := a.Div(b); err == nil {
-		t.Error("Expected an errrorIndices")
 	}
 
 	// idiotsville 1
@@ -1068,12 +1056,6 @@ func Test_i32s_Div(t *testing.T) {
 		}
 	}
 
-	// additional tests for Div just for completeness sake
-	b = i32s{0, 1, 2, 3, 4}
-	if err := a.Div(b); err == nil {
-		t.Error("Expected an errrorIndices")
-	}
-
 	// idiotsville 1
 	if err := a.Div(b[:3]); err == nil {
 		t.Error("Expected an error when performing Div on differing lengths")
@@ -1116,12 +1098,6 @@ func Test_u8s_Div(t *testing.T) {
 			t.Errorf("Div is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
-	}
-
-	// additional tests for Div just for completeness sake
-	b = u8s{0, 1, 2, 3, 4}
-	if err := a.Div(b); err == nil {
-		t.Error("Expected an errrorIndices")
 	}
 
 	// idiotsville 1
@@ -1549,9 +1525,157 @@ func Test_u8s_Trans(t *testing.T) {
 	}
 }
 
-/* TransR */
+/* TransInv */
 
-func Test_f64s_TransR(t *testing.T) {
+func Test_f64s_TransInv(t *testing.T) {
+	a, _, _, b := prepf64sTest()
+
+	correct := make(f64s, len(a))
+	for i, v := range a {
+		correct[i] = v - b
+	}
+
+	if err := a.TransInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		// for floats we don't bother checking the incorrect stuff
+		if v != correct[i] && i != 0 {
+			t.Errorf("TransInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.TransInv(float32(2)); err == nil {
+		t.Error("Expected an error when performing TransInv on a differing type")
+	}
+}
+
+func Test_f32s_TransInv(t *testing.T) {
+	a, _, _, b := prepf32sTest()
+
+	correct := make(f32s, len(a))
+	for i, v := range a {
+		correct[i] = v - b
+	}
+
+	if err := a.TransInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		// for floats we don't bother checking the incorrect stuff
+		if v != correct[i] && i != 0 {
+			t.Errorf("TransInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.TransInv(2.0); err == nil {
+		t.Error("Expected an error when performing TransInv on a differing type")
+	}
+}
+
+func Test_ints_TransInv(t *testing.T) {
+	a, _, _, b := prepintsTest()
+
+	correct := make(ints, len(a))
+	for i, v := range a {
+		correct[i] = v - b
+	}
+
+	if err := a.TransInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("TransInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.TransInv(2.0); err == nil {
+		t.Error("Expected an error when performing TransInv on a differing type")
+	}
+}
+
+func Test_i64s_TransInv(t *testing.T) {
+	a, _, _, b := prepi64sTest()
+
+	correct := make(i64s, len(a))
+	for i, v := range a {
+		correct[i] = v - b
+	}
+
+	if err := a.TransInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("TransInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.TransInv(2.0); err == nil {
+		t.Error("Expected an error when performing TransInv on a differing type")
+	}
+}
+
+func Test_i32s_TransInv(t *testing.T) {
+	a, _, _, b := prepi32sTest()
+
+	correct := make(i32s, len(a))
+	for i, v := range a {
+		correct[i] = v - b
+	}
+
+	if err := a.TransInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("TransInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.TransInv(2.0); err == nil {
+		t.Error("Expected an error when performing TransInv on a differing type")
+	}
+}
+
+func Test_u8s_TransInv(t *testing.T) {
+	a, _, _, b := prepu8sTest()
+
+	correct := make(u8s, len(a))
+	for i, v := range a {
+		correct[i] = v - b
+	}
+
+	if err := a.TransInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("TransInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.TransInv(2.0); err == nil {
+		t.Error("Expected an error when performing TransInv on a differing type")
+	}
+}
+
+/* TransInvR */
+
+func Test_f64s_TransInvR(t *testing.T) {
 	a, _, _, b := prepf64sTest()
 
 	correct := make(f64s, len(a))
@@ -1559,24 +1683,24 @@ func Test_f64s_TransR(t *testing.T) {
 		correct[i] = b - v
 	}
 
-	if err := a.TransR(b); err != nil {
+	if err := a.TransInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		// for floats we don't bother checking the incorrect stuff
 		if v != correct[i] && i != 0 {
-			t.Errorf("TransR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("TransInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.TransR(float32(2)); err == nil {
-		t.Error("Expected an error when performing TransR on a differing type")
+	if err := a.TransInvR(float32(2)); err == nil {
+		t.Error("Expected an error when performing TransInvR on a differing type")
 	}
 }
 
-func Test_f32s_TransR(t *testing.T) {
+func Test_f32s_TransInvR(t *testing.T) {
 	a, _, _, b := prepf32sTest()
 
 	correct := make(f32s, len(a))
@@ -1584,24 +1708,24 @@ func Test_f32s_TransR(t *testing.T) {
 		correct[i] = b - v
 	}
 
-	if err := a.TransR(b); err != nil {
+	if err := a.TransInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		// for floats we don't bother checking the incorrect stuff
 		if v != correct[i] && i != 0 {
-			t.Errorf("TransR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("TransInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.TransR(2.0); err == nil {
-		t.Error("Expected an error when performing TransR on a differing type")
+	if err := a.TransInvR(2.0); err == nil {
+		t.Error("Expected an error when performing TransInvR on a differing type")
 	}
 }
 
-func Test_ints_TransR(t *testing.T) {
+func Test_ints_TransInvR(t *testing.T) {
 	a, _, _, b := prepintsTest()
 
 	correct := make(ints, len(a))
@@ -1609,23 +1733,23 @@ func Test_ints_TransR(t *testing.T) {
 		correct[i] = b - v
 	}
 
-	if err := a.TransR(b); err != nil {
+	if err := a.TransInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("TransR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("TransInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.TransR(2.0); err == nil {
-		t.Error("Expected an error when performing TransR on a differing type")
+	if err := a.TransInvR(2.0); err == nil {
+		t.Error("Expected an error when performing TransInvR on a differing type")
 	}
 }
 
-func Test_i64s_TransR(t *testing.T) {
+func Test_i64s_TransInvR(t *testing.T) {
 	a, _, _, b := prepi64sTest()
 
 	correct := make(i64s, len(a))
@@ -1633,23 +1757,23 @@ func Test_i64s_TransR(t *testing.T) {
 		correct[i] = b - v
 	}
 
-	if err := a.TransR(b); err != nil {
+	if err := a.TransInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("TransR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("TransInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.TransR(2.0); err == nil {
-		t.Error("Expected an error when performing TransR on a differing type")
+	if err := a.TransInvR(2.0); err == nil {
+		t.Error("Expected an error when performing TransInvR on a differing type")
 	}
 }
 
-func Test_i32s_TransR(t *testing.T) {
+func Test_i32s_TransInvR(t *testing.T) {
 	a, _, _, b := prepi32sTest()
 
 	correct := make(i32s, len(a))
@@ -1657,23 +1781,23 @@ func Test_i32s_TransR(t *testing.T) {
 		correct[i] = b - v
 	}
 
-	if err := a.TransR(b); err != nil {
+	if err := a.TransInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("TransR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("TransInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.TransR(2.0); err == nil {
-		t.Error("Expected an error when performing TransR on a differing type")
+	if err := a.TransInvR(2.0); err == nil {
+		t.Error("Expected an error when performing TransInvR on a differing type")
 	}
 }
 
-func Test_u8s_TransR(t *testing.T) {
+func Test_u8s_TransInvR(t *testing.T) {
 	a, _, _, b := prepu8sTest()
 
 	correct := make(u8s, len(a))
@@ -1681,19 +1805,19 @@ func Test_u8s_TransR(t *testing.T) {
 		correct[i] = b - v
 	}
 
-	if err := a.TransR(b); err != nil {
+	if err := a.TransInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("TransR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("TransInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.TransR(2.0); err == nil {
-		t.Error("Expected an error when performing TransR on a differing type")
+	if err := a.TransInvR(2.0); err == nil {
+		t.Error("Expected an error when performing TransInvR on a differing type")
 	}
 }
 
@@ -1845,9 +1969,197 @@ func Test_u8s_Scale(t *testing.T) {
 	}
 }
 
-/* DivR */
+/* ScaleInv */
 
-func Test_f64s_DivR(t *testing.T) {
+func Test_f64s_ScaleInv(t *testing.T) {
+	a, _, _, b := prepf64sTest()
+
+	correct := make(f64s, len(a))
+	for i, v := range a {
+		if v == float64(0) {
+			correct[i] = 0
+			continue
+		}
+		correct[i] = v / b
+	}
+
+	if err := a.ScaleInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		// for floats we don't bother checking the incorrect stuff
+		if v != correct[i] && i != 0 {
+			t.Errorf("ScaleInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.ScaleInv(float32(2)); err == nil {
+		t.Error("Expected an error when performing ScaleInv on a differing type")
+	}
+}
+
+func Test_f32s_ScaleInv(t *testing.T) {
+	a, _, _, b := prepf32sTest()
+
+	correct := make(f32s, len(a))
+	for i, v := range a {
+		if v == float32(0) {
+			correct[i] = 0
+			continue
+		}
+		correct[i] = v / b
+	}
+
+	if err := a.ScaleInv(b); err != nil {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		// for floats we don't bother checking the incorrect stuff
+		if v != correct[i] && i != 0 {
+			t.Errorf("ScaleInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.ScaleInv(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInv on a differing type")
+	}
+}
+
+func Test_ints_ScaleInv(t *testing.T) {
+	a, _, _, b := prepintsTest()
+
+	correct := make(ints, len(a))
+	for i, v := range a {
+		if v == int(0) {
+			correct[i] = 0
+			continue
+		}
+		correct[i] = v / b
+	}
+
+	err := a.ScaleInv(b)
+	if err == nil {
+		t.Error("Expected error (division by zero)")
+	}
+	if _, ok := err.(errorIndices); !ok {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("ScaleInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.ScaleInv(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInv on a differing type")
+	}
+}
+
+func Test_i64s_ScaleInv(t *testing.T) {
+	a, _, _, b := prepi64sTest()
+
+	correct := make(i64s, len(a))
+	for i, v := range a {
+		if v == int64(0) {
+			correct[i] = 0
+			continue
+		}
+		correct[i] = v / b
+	}
+
+	err := a.ScaleInv(b)
+	if err == nil {
+		t.Error("Expected error (division by zero)")
+	}
+	if _, ok := err.(errorIndices); !ok {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("ScaleInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.ScaleInv(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInv on a differing type")
+	}
+}
+
+func Test_i32s_ScaleInv(t *testing.T) {
+	a, _, _, b := prepi32sTest()
+
+	correct := make(i32s, len(a))
+	for i, v := range a {
+		if v == int32(0) {
+			correct[i] = 0
+			continue
+		}
+		correct[i] = v / b
+	}
+
+	err := a.ScaleInv(b)
+	if err == nil {
+		t.Error("Expected error (division by zero)")
+	}
+	if _, ok := err.(errorIndices); !ok {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("ScaleInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.ScaleInv(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInv on a differing type")
+	}
+}
+
+func Test_u8s_ScaleInv(t *testing.T) {
+	a, _, _, b := prepu8sTest()
+
+	correct := make(u8s, len(a))
+	for i, v := range a {
+		if v == byte(0) {
+			correct[i] = 0
+			continue
+		}
+		correct[i] = v / b
+	}
+
+	err := a.ScaleInv(b)
+	if err == nil {
+		t.Error("Expected error (division by zero)")
+	}
+	if _, ok := err.(errorIndices); !ok {
+		t.Fatal(err)
+	}
+	for i, v := range a {
+		if v != correct[i] {
+			t.Errorf("ScaleInv is incorrect. Expected %v. Got %v", correct[i], v)
+			break
+		}
+	}
+
+	// idiotsville 1
+	if err := a.ScaleInv(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInv on a differing type")
+	}
+}
+
+/* ScaleInvR */
+
+func Test_f64s_ScaleInvR(t *testing.T) {
 	a, _, _, b := prepf64sTest()
 
 	correct := make(f64s, len(a))
@@ -1859,24 +2171,24 @@ func Test_f64s_DivR(t *testing.T) {
 		correct[i] = b / v
 	}
 
-	if err := a.DivR(b); err != nil {
+	if err := a.ScaleInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		// for floats we don't bother checking the incorrect stuff
 		if v != correct[i] && i != 0 {
-			t.Errorf("DivR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("ScaleInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.DivR(float32(2)); err == nil {
-		t.Error("Expected an error when performing DivR on a differing type")
+	if err := a.ScaleInvR(float32(2)); err == nil {
+		t.Error("Expected an error when performing ScaleInvR on a differing type")
 	}
 }
 
-func Test_f32s_DivR(t *testing.T) {
+func Test_f32s_ScaleInvR(t *testing.T) {
 	a, _, _, b := prepf32sTest()
 
 	correct := make(f32s, len(a))
@@ -1888,24 +2200,24 @@ func Test_f32s_DivR(t *testing.T) {
 		correct[i] = b / v
 	}
 
-	if err := a.DivR(b); err != nil {
+	if err := a.ScaleInvR(b); err != nil {
 		t.Fatal(err)
 	}
 	for i, v := range a {
 		// for floats we don't bother checking the incorrect stuff
 		if v != correct[i] && i != 0 {
-			t.Errorf("DivR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("ScaleInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.DivR(2.0); err == nil {
-		t.Error("Expected an error when performing DivR on a differing type")
+	if err := a.ScaleInvR(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInvR on a differing type")
 	}
 }
 
-func Test_ints_DivR(t *testing.T) {
+func Test_ints_ScaleInvR(t *testing.T) {
 	a, _, _, b := prepintsTest()
 
 	correct := make(ints, len(a))
@@ -1917,7 +2229,7 @@ func Test_ints_DivR(t *testing.T) {
 		correct[i] = b / v
 	}
 
-	err := a.DivR(b)
+	err := a.ScaleInvR(b)
 	if err == nil {
 		t.Error("Expected error (division by zero)")
 	}
@@ -1926,18 +2238,18 @@ func Test_ints_DivR(t *testing.T) {
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("DivR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("ScaleInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.DivR(2.0); err == nil {
-		t.Error("Expected an error when performing DivR on a differing type")
+	if err := a.ScaleInvR(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInvR on a differing type")
 	}
 }
 
-func Test_i64s_DivR(t *testing.T) {
+func Test_i64s_ScaleInvR(t *testing.T) {
 	a, _, _, b := prepi64sTest()
 
 	correct := make(i64s, len(a))
@@ -1949,7 +2261,7 @@ func Test_i64s_DivR(t *testing.T) {
 		correct[i] = b / v
 	}
 
-	err := a.DivR(b)
+	err := a.ScaleInvR(b)
 	if err == nil {
 		t.Error("Expected error (division by zero)")
 	}
@@ -1958,18 +2270,18 @@ func Test_i64s_DivR(t *testing.T) {
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("DivR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("ScaleInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.DivR(2.0); err == nil {
-		t.Error("Expected an error when performing DivR on a differing type")
+	if err := a.ScaleInvR(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInvR on a differing type")
 	}
 }
 
-func Test_i32s_DivR(t *testing.T) {
+func Test_i32s_ScaleInvR(t *testing.T) {
 	a, _, _, b := prepi32sTest()
 
 	correct := make(i32s, len(a))
@@ -1981,7 +2293,7 @@ func Test_i32s_DivR(t *testing.T) {
 		correct[i] = b / v
 	}
 
-	err := a.DivR(b)
+	err := a.ScaleInvR(b)
 	if err == nil {
 		t.Error("Expected error (division by zero)")
 	}
@@ -1990,18 +2302,18 @@ func Test_i32s_DivR(t *testing.T) {
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("DivR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("ScaleInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.DivR(2.0); err == nil {
-		t.Error("Expected an error when performing DivR on a differing type")
+	if err := a.ScaleInvR(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInvR on a differing type")
 	}
 }
 
-func Test_u8s_DivR(t *testing.T) {
+func Test_u8s_ScaleInvR(t *testing.T) {
 	a, _, _, b := prepu8sTest()
 
 	correct := make(u8s, len(a))
@@ -2013,7 +2325,7 @@ func Test_u8s_DivR(t *testing.T) {
 		correct[i] = b / v
 	}
 
-	err := a.DivR(b)
+	err := a.ScaleInvR(b)
 	if err == nil {
 		t.Error("Expected error (division by zero)")
 	}
@@ -2022,14 +2334,14 @@ func Test_u8s_DivR(t *testing.T) {
 	}
 	for i, v := range a {
 		if v != correct[i] {
-			t.Errorf("DivR is incorrect. Expected %v. Got %v", correct[i], v)
+			t.Errorf("ScaleInvR is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
 	}
 
 	// idiotsville 1
-	if err := a.DivR(2.0); err == nil {
-		t.Error("Expected an error when performing DivR on a differing type")
+	if err := a.ScaleInvR(2.0); err == nil {
+		t.Error("Expected an error when performing ScaleInvR on a differing type")
 	}
 }
 

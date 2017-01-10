@@ -51,7 +51,7 @@ func prepSafeVVOp(a, b Number, optional ...Number) (retVal Number, err error) {
 
 	if reuse != nil {
 		retVal = reuse
-		_, err = copyArray(retVal, a)
+		_, err = copyArray(reuse, a)
 	} else {
 		retVal = cloneArray(a).(Number)
 	}
@@ -112,6 +112,112 @@ func safePow(a, b Number, optional ...Number) (retVal Number, err error) {
 	}
 	if err = retVal.Pow(b); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safePow")
+	}
+	return
+}
+
+func prepSafeSDOp(a Number, optional ...Number) (retVal Number, err error) {
+	var reuse Number
+	if len(optional) >= 1 {
+		reuse = optional[0]
+		if reuse.Len() != a.Len() {
+			return nil, errors.Errorf(lenMismatch, a.Len(), reuse.Len())
+		}
+	}
+
+	if reuse != nil {
+		_, err = copyArray(reuse, a)
+		retVal = reuse
+	} else {
+		retVal = cloneArray(a).(Number)
+	}
+	return
+}
+
+func safeTrans(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeTrans")
+	}
+
+	if err = retVal.Trans(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeTrans")
+	}
+	return
+}
+
+func safeTransInv(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeTransInv")
+	}
+
+	if err = retVal.TransInv(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeTransInv")
+	}
+	return
+}
+
+func safeTransInvR(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeTransInvR")
+	}
+
+	if err = retVal.TransInvR(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeTransInvR")
+	}
+	return
+}
+
+func safeScale(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeScale")
+	}
+
+	if err = retVal.Scale(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeScale")
+	}
+	return
+}
+
+func safeScaleInv(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeScaleInv")
+	}
+
+	if err = retVal.ScaleInv(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeScaleInv")
+	}
+	return
+}
+
+func safeScaleInvR(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeScaleInvR")
+	}
+
+	if err = retVal.ScaleInvR(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeScaleInvR")
+	}
+	return
+}
+
+func safePowOf(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safePowOf")
+	}
+
+	if err = retVal.PowOf(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safePowOf")
+	}
+	return
+}
+
+func safePowOfR(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
+	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safePowOfR")
+	}
+
+	if err = retVal.PowOfR(b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safePowOfR")
 	}
 	return
 }

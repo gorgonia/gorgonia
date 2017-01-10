@@ -837,20 +837,10 @@ func (a intsDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
-	var errs errorIndices
 	for i, v := range b {
-		if v == int(0) {
-			errs = append(errs, i)
-			a[i] = 0
-			continue
-		}
-
 		a[i] /= v
 	}
 
-	if errs != nil {
-		return errs
-	}
 	return nil
 }
 
@@ -864,20 +854,10 @@ func (a i64sDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
-	var errs errorIndices
 	for i, v := range b {
-		if v == int64(0) {
-			errs = append(errs, i)
-			a[i] = 0
-			continue
-		}
-
 		a[i] /= v
 	}
 
-	if errs != nil {
-		return errs
-	}
 	return nil
 }
 
@@ -891,20 +871,10 @@ func (a i32sDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
-	var errs errorIndices
 	for i, v := range b {
-		if v == int32(0) {
-			errs = append(errs, i)
-			a[i] = 0
-			continue
-		}
-
 		a[i] /= v
 	}
 
-	if errs != nil {
-		return errs
-	}
 	return nil
 }
 
@@ -918,20 +888,10 @@ func (a u8sDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
-	var errs errorIndices
 	for i, v := range b {
-		if v == byte(0) {
-			errs = append(errs, i)
-			a[i] = 0
-			continue
-		}
-
 		a[i] /= v
 	}
 
-	if errs != nil {
-		return errs
-	}
 	return nil
 }
 
@@ -1041,7 +1001,7 @@ func (a f64sDummy) Trans(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "Trans")
 	}
 
-	vecf64.Trans(b, []float64(a))
+	vecf64.Trans([]float64(a), b)
 	return nil
 }
 
@@ -1051,7 +1011,7 @@ func (a f32sDummy) Trans(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "Trans")
 	}
 
-	vecf32.Trans(b, []float32(a))
+	vecf32.Trans([]float32(a), b)
 	return nil
 }
 
@@ -1103,56 +1063,102 @@ func (a u8sDummy) Trans(other interface{}) (err error) {
 	return nil
 }
 
-/* TransR */
+/* TransInv */
 
-func (a f64sDummy) TransR(other interface{}) (err error) {
+func (a f64sDummy) TransInv(other interface{}) (err error) {
 	var b float64
 	if b, err = getFloat64(other); err != nil {
-		return errors.Wrapf(err, opFail, "TransR")
+		return errors.Wrapf(err, opFail, "TransInv")
 	}
 
-	vecf64.TransR(b, []float64(a))
+	vecf64.TransInv([]float64(a), b)
 	return nil
 }
 
-func (a f32sDummy) TransR(other interface{}) (err error) {
+func (a f32sDummy) TransInv(other interface{}) (err error) {
 	var b float32
 	if b, err = getFloat32(other); err != nil {
-		return errors.Wrapf(err, opFail, "TransR")
+		return errors.Wrapf(err, opFail, "TransInv")
 	}
 
-	vecf32.TransR(b, []float32(a))
+	vecf32.TransInv([]float32(a), b)
 	return nil
 }
 
-func (a intsDummy) TransR(other interface{}) (err error) {
+func (a intsDummy) TransInv(other interface{}) (err error) {
 	var b int
 	if b, err = getInt(other); err != nil {
-		return errors.Wrapf(err, opFail, "TransR")
+		return errors.Wrapf(err, opFail, "TransInv")
 	}
 
 	for i, v := range a {
-		a[i] = b - v
+		a[i] = v - b
 	}
 	return nil
 }
 
-func (a i64sDummy) TransR(other interface{}) (err error) {
+func (a i64sDummy) TransInv(other interface{}) (err error) {
 	var b int64
 	if b, err = getInt64(other); err != nil {
-		return errors.Wrapf(err, opFail, "TransR")
+		return errors.Wrapf(err, opFail, "TransInv")
 	}
 
 	for i, v := range a {
-		a[i] = b - v
+		a[i] = v - b
 	}
 	return nil
 }
 
-func (a i32sDummy) TransR(other interface{}) (err error) {
+func (a i32sDummy) TransInv(other interface{}) (err error) {
 	var b int32
 	if b, err = getInt32(other); err != nil {
-		return errors.Wrapf(err, opFail, "TransR")
+		return errors.Wrapf(err, opFail, "TransInv")
+	}
+
+	for i, v := range a {
+		a[i] = v - b
+	}
+	return nil
+}
+
+func (a u8sDummy) TransInv(other interface{}) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransInv")
+	}
+
+	for i, v := range a {
+		a[i] = v - b
+	}
+	return nil
+}
+
+/* TransInvR */
+
+func (a f64sDummy) TransInvR(other interface{}) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransInvR")
+	}
+
+	vecf64.TransInvR([]float64(a), b)
+	return nil
+}
+
+func (a f32sDummy) TransInvR(other interface{}) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransInvR")
+	}
+
+	vecf32.TransInvR([]float32(a), b)
+	return nil
+}
+
+func (a intsDummy) TransInvR(other interface{}) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransInvR")
 	}
 
 	for i, v := range a {
@@ -1161,10 +1167,34 @@ func (a i32sDummy) TransR(other interface{}) (err error) {
 	return nil
 }
 
-func (a u8sDummy) TransR(other interface{}) (err error) {
+func (a i64sDummy) TransInvR(other interface{}) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransInvR")
+	}
+
+	for i, v := range a {
+		a[i] = b - v
+	}
+	return nil
+}
+
+func (a i32sDummy) TransInvR(other interface{}) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "TransInvR")
+	}
+
+	for i, v := range a {
+		a[i] = b - v
+	}
+	return nil
+}
+
+func (a u8sDummy) TransInvR(other interface{}) (err error) {
 	var b byte
 	if b, err = getByte(other); err != nil {
-		return errors.Wrapf(err, opFail, "TransR")
+		return errors.Wrapf(err, opFail, "TransInvR")
 	}
 
 	for i, v := range a {
@@ -1181,7 +1211,7 @@ func (a f64sDummy) Scale(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "Scale")
 	}
 
-	vecf64.Scale(b, []float64(a))
+	vecf64.Scale([]float64(a), b)
 	return nil
 }
 
@@ -1191,7 +1221,7 @@ func (a f32sDummy) Scale(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "Scale")
 	}
 
-	vecf32.Scale(b, []float32(a))
+	vecf32.Scale([]float32(a), b)
 	return nil
 }
 
@@ -1243,32 +1273,138 @@ func (a u8sDummy) Scale(other interface{}) (err error) {
 	return nil
 }
 
-/* DivR */
+/* ScaleInv */
 
-func (a f64sDummy) DivR(other interface{}) (err error) {
+func (a f64sDummy) ScaleInv(other interface{}) (err error) {
 	var b float64
 	if b, err = getFloat64(other); err != nil {
-		return errors.Wrapf(err, opFail, "DivR")
+		return errors.Wrapf(err, opFail, "ScaleInv")
 	}
 
-	vecf64.DivR(b, []float64(a))
+	vecf64.ScaleInv([]float64(a), b)
 	return nil
 }
 
-func (a f32sDummy) DivR(other interface{}) (err error) {
+func (a f32sDummy) ScaleInv(other interface{}) (err error) {
 	var b float32
 	if b, err = getFloat32(other); err != nil {
-		return errors.Wrapf(err, opFail, "DivR")
+		return errors.Wrapf(err, opFail, "ScaleInv")
 	}
 
-	vecf32.DivR(b, []float32(a))
+	vecf32.ScaleInv([]float32(a), b)
 	return nil
 }
 
-func (a intsDummy) DivR(other interface{}) (err error) {
+func (a intsDummy) ScaleInv(other interface{}) (err error) {
 	var b int
 	if b, err = getInt(other); err != nil {
-		return errors.Wrapf(err, opFail, "DivR")
+		return errors.Wrapf(err, opFail, "ScaleInv")
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+		a[i] = v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i64sDummy) ScaleInv(other interface{}) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "ScaleInv")
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+		a[i] = v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i32sDummy) ScaleInv(other interface{}) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "ScaleInv")
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+		a[i] = v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a u8sDummy) ScaleInv(other interface{}) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "ScaleInv")
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == byte(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+		a[i] = v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+/* ScaleInvR */
+
+func (a f64sDummy) ScaleInvR(other interface{}) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "ScaleInvR")
+	}
+
+	vecf64.ScaleInvR([]float64(a), b)
+	return nil
+}
+
+func (a f32sDummy) ScaleInvR(other interface{}) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "ScaleInvR")
+	}
+
+	vecf32.ScaleInvR([]float32(a), b)
+	return nil
+}
+
+func (a intsDummy) ScaleInvR(other interface{}) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "ScaleInvR")
 	}
 
 	var errs errorIndices
@@ -1286,10 +1422,10 @@ func (a intsDummy) DivR(other interface{}) (err error) {
 	return nil
 }
 
-func (a i64sDummy) DivR(other interface{}) (err error) {
+func (a i64sDummy) ScaleInvR(other interface{}) (err error) {
 	var b int64
 	if b, err = getInt64(other); err != nil {
-		return errors.Wrapf(err, opFail, "DivR")
+		return errors.Wrapf(err, opFail, "ScaleInvR")
 	}
 
 	var errs errorIndices
@@ -1307,10 +1443,10 @@ func (a i64sDummy) DivR(other interface{}) (err error) {
 	return nil
 }
 
-func (a i32sDummy) DivR(other interface{}) (err error) {
+func (a i32sDummy) ScaleInvR(other interface{}) (err error) {
 	var b int32
 	if b, err = getInt32(other); err != nil {
-		return errors.Wrapf(err, opFail, "DivR")
+		return errors.Wrapf(err, opFail, "ScaleInvR")
 	}
 
 	var errs errorIndices
@@ -1328,10 +1464,10 @@ func (a i32sDummy) DivR(other interface{}) (err error) {
 	return nil
 }
 
-func (a u8sDummy) DivR(other interface{}) (err error) {
+func (a u8sDummy) ScaleInvR(other interface{}) (err error) {
 	var b byte
 	if b, err = getByte(other); err != nil {
-		return errors.Wrapf(err, opFail, "DivR")
+		return errors.Wrapf(err, opFail, "ScaleInvR")
 	}
 
 	var errs errorIndices
@@ -1357,7 +1493,7 @@ func (a f64sDummy) PowOf(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
-	vecf64.PowOf(b, []float64(a))
+	vecf64.PowOf([]float64(a), b)
 	return nil
 }
 
@@ -1367,7 +1503,7 @@ func (a f32sDummy) PowOf(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "PowOf")
 	}
 
-	vecf32.PowOf(b, []float32(a))
+	vecf32.PowOf([]float32(a), b)
 	return nil
 }
 
@@ -1427,7 +1563,7 @@ func (a f64sDummy) PowOfR(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
-	vecf64.PowOfR(b, []float64(a))
+	vecf64.PowOfR([]float64(a), b)
 	return nil
 }
 
@@ -1437,7 +1573,7 @@ func (a f32sDummy) PowOfR(other interface{}) (err error) {
 		return errors.Wrapf(err, opFail, "PowOfR")
 	}
 
-	vecf32.PowOfR(b, []float32(a))
+	vecf32.PowOfR([]float32(a), b)
 	return nil
 }
 
