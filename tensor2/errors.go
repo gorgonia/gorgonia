@@ -7,6 +7,11 @@ type NoOpError interface {
 	NoOp() bool
 }
 
+// MathError is an error that occurs in an Array. It lists the indices for which an error has happened
+type MathError interface {
+	Indices() []int
+}
+
 type noopError struct{}
 
 func (e noopError) NoOp() bool    { return true }

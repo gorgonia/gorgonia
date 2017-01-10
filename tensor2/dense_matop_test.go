@@ -87,7 +87,7 @@ var transposeTests = []struct {
 	{"M.T()", Shape{2, 3}, nil, i64s{0, 1, 2, 3, 4, 5},
 		Shape{3, 2}, []int{1, 3}, []int{2, 1}, i64s{0, 3, 1, 4, 2, 5}},
 
-	{"M.T(0,1) (NOOP)", Shape{2, 3}, []int{0, 1}, i32s{0, 1, 2, 3, 4, 5, 6},
+	{"M.T(0,1) (NOOP)", Shape{2, 3}, []int{0, 1}, i32s{0, 1, 2, 3, 4, 5},
 		Shape{2, 3}, []int{3, 1}, []int{3, 1}, i32s{0, 1, 2, 3, 4, 5, 6}},
 
 	{"3T.T()", Shape{2, 3, 4}, nil,
@@ -211,7 +211,7 @@ func TestTUT(t *testing.T) {
 	assert := assert.New(t)
 	var T *Dense
 
-	T = newTypedShapedDense(Float64, Shape{2, 3, 4})
+	T = New(Of(Float64), WithShape(2, 3, 4))
 	T.T()
 	T.UT()
 	assert.Nil(T.old)

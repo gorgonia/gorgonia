@@ -21,7 +21,8 @@ type Dense struct {
 	viewOf *Dense
 }
 
-func newTypedShapedDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
+// recycledDense gets from the pool
+func recycledDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
 	var d *Dense
 	if t, ok := dt.(dtype); ok {
 		d = borrowDense(t, shape.TotalSize())
@@ -32,15 +33,13 @@ func newTypedShapedDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
 	for _, opt := range opts {
 		opt(d)
 	}
-
 	d.setShape(shape...)
-	d.Zero()
-	return d
-}
 
-func newTypedDense(dt Dtype, opts ...ConsOpt) *Dense {
-	d := new(Dense)
-	d.t = dt
+	d.fix()
+	if err := d.sanity(); err != nil {
+		panic(err)
+	}
+
 	return d
 }
 
@@ -179,23 +178,27 @@ func (t *Dense) setShape(s ...int) {
 }
 
 func (t *Dense) fix() {
-	if t.Shape() == nil {
-		if t.data == nil {
-			return
-		}
-		// otherwise, the shape is automatically a [n,1]
-		rows := t.data.Len()
-
-		if rows == 1 {
-			t.SetShape() // it's a scalar!
-		} else {
-			t.SetShape(rows) // it's a vector (unknown whether column or row)
-		}
+	if t.AP == nil {
+		return
 	}
 
-	if t.data == nil {
+	switch {
+	case t.Shape() == nil && t.data != nil:
+		size := t.data.Len()
+		if size == 1 {
+			t.SetShape() // scalar
+		} else {
+			t.SetShape(size) // vector
+		}
+	case t.data == nil && t.t != nil:
 		size := t.Shape().TotalSize()
 		t.data = makeArray(t.t, size)
+	case t.t == nil && t.data != nil:
+		var err error
+		t.t, err = typeOf(t.data)
+		if err != nil {
+			panic(err)
+		}
 	}
 	t.Lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
 }

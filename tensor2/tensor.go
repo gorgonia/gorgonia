@@ -55,9 +55,10 @@ func New(opts ...ConsOpt) *Dense {
 	for _, opt := range opts {
 		opt(d)
 	}
+	d.fix()
 
-	if d.data == nil && d.t != nil {
-		d.data = makeArray(d.t, d.Shape().TotalSize())
+	if err := d.sanity(); err != nil {
+		panic(err)
 	}
 
 	return d

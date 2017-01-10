@@ -82,6 +82,59 @@ end:
 	return pool.Get().(*Dense)
 }
 
+// ReturnTensor returns a Tensor to their respective pools. Use with caution
+func ReturnTensor(t Tensor) {
+	if !usePool {
+		return
+	}
+	switch tt := t.(type) {
+	case *Dense:
+		dt, ok := tt.t.(dtype)
+		if !ok {
+			return
+		}
+		if _, ok := densePool[dt]; !ok {
+			return
+		}
+
+		if tt.viewOf != nil {
+			ReturnAP(tt.AP)
+			tt.AP = nil
+			if tt.old != nil {
+				ReturnAP(tt.old)
+				tt.old = nil
+			}
+			if tt.transposeWith != nil {
+				ReturnInts(tt.transposeWith)
+				tt.transposeWith = nil
+			}
+			tt.data = nil
+			return // yes, we're not putting it back into the pool
+		}
+
+		size := tt.data.Cap()
+		poolsClosed.RLock()
+		pool, ok := densePool[dt][size]
+		poolsClosed.RUnlock()
+		if !ok {
+			pool = newDensePool(dt, size)
+		}
+
+		if tt.old != nil {
+			ReturnAP(tt.old)
+			tt.old = nil
+		}
+
+		if tt.transposeWith != nil {
+			ReturnInts(tt.transposeWith)
+			tt.transposeWith = nil
+		}
+
+		tt.Unlock()
+		pool.Put(tt)
+	}
+}
+
 /* AP POOL */
 
 // apPool supports tensors up to 4-dimensions. Because, c'mon, you're not likely to use anything more than 5

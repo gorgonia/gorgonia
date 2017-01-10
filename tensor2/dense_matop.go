@@ -161,7 +161,7 @@ func (t *Dense) SafeT(axes ...int) (retVal *Dense, err error) {
 		return
 	}
 
-	retVal = newTypedShapedDense(t.t, Shape{t.data.Len()})
+	retVal = recycledDense(t.t, Shape{t.data.Len()})
 	if _, err = copyArray(retVal.data, t.data); err != nil {
 		return
 	}
@@ -280,7 +280,8 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 		axis = 0
 	}
 
-	d := newTypedShapedDense(t.t, newShape)
+	d := recycledDense(t.t, newShape)
+	// d := New(Of(t.t), WithShape(newShape...))
 
 	var outers int
 	if t.IsScalar() {
@@ -293,9 +294,7 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 	}
 
 	var stride, newStride int
-	if newShape.IsVector() {
-		stride = 1 // special case
-	} else if t.IsVector() {
+	if newShape.IsVector() || t.IsVector() {
 		stride = 1 // special case because CalcStrides() will return []int{1} as the strides for a vector
 	} else {
 		stride = t.ostrides()[axis]
