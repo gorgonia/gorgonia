@@ -26,46 +26,50 @@ func (t *Dense) Trace() (retVal interface{}, err error) {
 	c := t.Shape()[1]
 
 	m := MinInt(r, c)
+	stride := rstride + cstride
 
-	switch data := t.data.(type) {
-	case f64s:
+	switch data := t.Data().(type) {
+	case []float64:
 		var trace float64
 		for i := 0; i < m; i++ {
-			trace += data[i*(rstride+cstride)]
+			trace += data[i*stride]
 		}
 		retVal = trace
 
-	case f32s:
+	case []float32:
 		var trace float32
 		for i := 0; i < m; i++ {
-			trace += data[i*(rstride+cstride)]
+			trace += data[i*stride]
 		}
 		retVal = trace
-	case ints:
+	case []int:
 		var trace int
 		for i := 0; i < m; i++ {
-			trace += data[i*(rstride+cstride)]
+			trace += data[i*stride]
 		}
 		retVal = trace
-	case i64s:
+	case []int64:
 		var trace int64
 		for i := 0; i < m; i++ {
-			trace += data[i*(rstride+cstride)]
+			trace += data[i*stride]
 		}
 		retVal = trace
-	case i32s:
+	case []int32:
 		var trace int32
 		for i := 0; i < m; i++ {
-			trace += data[i*(rstride+cstride)]
+			trace += data[i*stride]
 		}
 		retVal = trace
-	case u8s:
+	case []byte:
 		var trace byte
 		for i := 0; i < m; i++ {
-			trace += data[i*(rstride+cstride)]
+			trace += data[i*stride]
 		}
 		retVal = trace
 	default:
+		if tracer, ok := t.data.(Tracer); ok {
+			return tracer.Trace(rstride, cstride, m)
+		}
 		err = errors.Errorf(unsupportedDtype, t.data, "Trace")
 	}
 	return
@@ -94,7 +98,6 @@ func (t *Dense) Inner(other Tensor) (retVal *Dense, err error) {
 	}
 
 	return t.inner(other)
-
 }
 
 // inner is a thin layer over BLAS's Ddot.
@@ -108,9 +111,8 @@ func (t *Dense) inner(other Tensor) (retVal *Dense, err error) {
 	}
 
 	on := ot.data.(Float)
-	switch data := t.data.(type) {
-	case f64s:
-		a := []float64(data)
+	switch a := t.Data().(type) {
+	case []float64:
 		var b []float64
 		if b, err = getFloat64s(on); err != nil {
 			return
@@ -118,35 +120,16 @@ func (t *Dense) inner(other Tensor) (retVal *Dense, err error) {
 
 		ret := whichblas.Ddot(t.Size(), a, 1, b, 1)
 		retVal = New(FromScalar(ret))
-	case f32s:
-		a := []float32(data)
+	case []float32:
 		var b []float32
 		if b, err = getFloat32s(on); err != nil {
 			return
 		}
 
 		ret := whichblas.Sdot(t.Size(), a, 1, b, 1)
-		retVal = New(FromScalar(ret))
-	case Float32ser:
-		a := data.Float32s()
-		var b []float32
-		if b, err = getFloat32s(on); err != nil {
-			return
-		}
-
-		ret := whichblas.Sdot(t.Size(), a, 1, b, 1)
-		retVal = New(FromScalar(ret))
-	case Float64ser:
-		a := data.Float64s()
-		var b []float64
-		if b, err = getFloat64s(on); err != nil {
-			return
-		}
-
-		ret := whichblas.Ddot(t.Size(), a, 1, b, 1)
 		retVal = New(FromScalar(ret))
 	default:
-		panic("Unreachable")
+		err = errors.Errorf(typeNYI, "Inner", other.Data())
 	}
 	return
 }
@@ -225,73 +208,39 @@ func (t *Dense) matVecMul(other *Dense, retVal *Dense) (err error) {
 	lda := t.ostrides()[0]
 	incX, incY := 1, 1 // step size
 
-	switch data := t.data.(type) {
-	case f64s:
-		A := []float64(data)
+	switch A := t.Data().(type) {
+	case []float64:
 		var x, y []float64
 		var ok bool
 		if x, ok = other.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, x)
+			err = errors.Errorf(dtypeMismatch, A, x)
 			return
 		}
 
 		if y, ok = retVal.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, y)
+			err = errors.Errorf(dtypeMismatch, A, y)
 			return
 		}
 
 		alpha, beta := float64(1), float64(0)
 		whichblas.Dgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
-	case f32s:
-		A := []float32(data)
+	case []float32:
 		var x, y []float32
 		var ok bool
 		if x, ok = other.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, data, x)
+			err = errors.Errorf(dtypeMismatch, A, x)
 			return
 		}
 
 		if y, ok = retVal.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, data, y)
-			return
-		}
-
-		alpha, beta := float32(1), float32(0)
-		whichblas.Sgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
-	case Float64ser:
-		A := data.Float64s()
-		var x, y []float64
-		var ok bool
-		if x, ok = other.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, x)
-			return
-		}
-
-		if y, ok = retVal.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, y)
-			return
-		}
-
-		alpha, beta := float64(1), float64(0)
-		whichblas.Dgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
-	case Float32ser:
-		A := data.Float32s()
-		var x, y []float32
-		var ok bool
-		if x, ok = other.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, data, x)
-			return
-		}
-
-		if y, ok = retVal.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, t, y)
+			err = errors.Errorf(dtypeMismatch, A, y)
 			return
 		}
 
 		alpha, beta := float32(1), float32(0)
 		whichblas.Sgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
 	default:
-		panic("Unreachable")
+		return errors.Errorf(typeNYI, "matVecMul", other.Data())
 	}
 
 	return nil
@@ -368,75 +317,39 @@ func (t *Dense) matMul(other, retVal *Dense) (err error) {
 	ldb := other.ostrides()[0]
 	ldc := retVal.ostrides()[0]
 
-	switch data := t.data.(type) {
-	case f64s:
-		a := []float64(data)
+	var ok bool
+	switch a := t.Data().(type) {
+	case []float64:
 		var b, c []float64
-		var ok bool
 		if b, ok = other.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, b)
+			err = errors.Errorf(dtypeMismatch, a, b)
 			return
 		}
 
 		if c, ok = retVal.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, c)
+			err = errors.Errorf(dtypeMismatch, a, c)
 			return
 		}
 
 		alpha, beta := float64(1), float64(0)
 		whichblas.Dgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-	case f32s:
-		a := []float32(data)
+	case []float32:
 		var b, c []float32
-		var ok bool
 		if b, ok = other.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, data, b)
+			err = errors.Errorf(dtypeMismatch, a, b)
 			return
 		}
 
 		if c, ok = retVal.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, data, c)
-			return
-		}
-
-		alpha, beta := float32(1), float32(0)
-		whichblas.Sgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-	case Float64ser:
-		a := data.Float64s()
-		var b, c []float64
-		var ok bool
-		if b, ok = other.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, b)
-			return
-		}
-
-		if c, ok = retVal.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, data, c)
-			return
-		}
-
-		alpha, beta := float64(1), float64(0)
-		whichblas.Dgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-	case Float32ser:
-		a := data.Float32s()
-		var b, c []float32
-		var ok bool
-		if b, ok = other.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, data, b)
-			return
-		}
-
-		if c, ok = retVal.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, t, c)
+			err = errors.Errorf(dtypeMismatch, a, c)
 			return
 		}
 
 		alpha, beta := float32(1), float32(0)
 		whichblas.Sgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
 	default:
-		panic("Unreachable")
+		return errors.Errorf(typeNYI, "matVecMul", other.Data())
 	}
-
 	return
 }
 

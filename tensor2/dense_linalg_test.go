@@ -19,10 +19,10 @@ var traceTests = []struct {
 	{i32s{0, 1, 2, 3, 4, 5}, int32(4), false},
 	{u8s{0, 1, 2, 3, 4, 5}, byte(4), false},
 
-	{bs{true, false, true, false, true, false}, nil, true},
+	// compatible types
+	{f64sDummy{0, 1, 2, 3, 4, 5}, float64(4), false},
 
-	// compatible types. fails for now
-	{f64sDummy{0, 1, 2, 3, 4, 5}, nil, true},
+	{bs{true, false, true, false, true, false}, nil, true},
 }
 
 func TestDense_Trace(t *testing.T) {
@@ -34,7 +34,7 @@ func TestDense_Trace(t *testing.T) {
 		switch {
 		case tts.err:
 			if err == nil {
-				t.Error("Expected an error")
+				t.Errorf("Expected an error: %v", T.Data())
 			}
 			continue
 		case !tts.err && err != nil:

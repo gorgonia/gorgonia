@@ -153,6 +153,21 @@ type Transposer interface {
 	Transpose(oldShape, oldStrides, axes, newStrides []int)
 }
 
+// Tracer is any array that provides a specialization for a linear algebra trace. Do note that while the mathematical definition
+// of a trace is only defined on a square matrix, package Tensor actually supports non-square matrices. This is provided by the min
+// argument. Here is a sample implementation of Trace():
+// 		type foos []foo
+//		func (fs foos) Trace(rowStride, colStride, min int) (interface{}, error){
+//			var trace foo
+//			for i := 0; i < m; i++ {
+//				trace += fs[i * (rowStride+colStride)]
+//			}
+//			return trace, nil
+//		}
+type Tracer interface {
+	Trace(rowStride, colStride, min int) (interface{}, error)
+}
+
 /* BASIC ARRAY TYPE HANDLING */
 
 // Float64ser is any array that can turn into a []float64
@@ -257,6 +272,8 @@ type ElOrd interface {
 	Gt(other ElOrd, same bool) (Array, error)
 	Gte(other ElOrd, same bool) (Array, error)
 }
+
+/* FUNCTIONS */
 
 // Range creates a ranged array with a given type. It panics if the dt is not the provided ones
 func Range(dt Dtype, start, end int) Array {
