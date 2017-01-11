@@ -451,10 +451,20 @@ func (a ints) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 
@@ -468,10 +478,20 @@ func (a i64s) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 
@@ -485,10 +505,20 @@ func (a i32s) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 
@@ -502,10 +532,20 @@ func (a u8s) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == byte(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 

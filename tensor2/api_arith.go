@@ -67,3 +67,18 @@ func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	}
 	panic("Unreachable")
 }
+
+func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	ad, adok := a.(*Dense)
+	bd, bdok := b.(*Dense)
+
+	switch {
+	case adok && bdok:
+		return powDD(ad, bd, opts...)
+	case adok && !bdok:
+		return powDS(ad, b, opts...)
+	case !adok && bdok:
+		return powSD(a, bd, opts...)
+	}
+	panic("Unreachable")
+}

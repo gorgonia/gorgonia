@@ -30,6 +30,7 @@ const (
 	invalidAxis       = "Invalid axis %d for ndarray with %d dimensions"
 	repeatedAxis      = "repeated axis %d in permutation pattern"
 	invalidSliceIndex = "Invalid slice index. Start: %d, End: %d"
+	sliceIndexOOB     = "Slice index out of bounds: Start: %d, End: %d. Length: %d"
 	broadcastError    = "Cannot broadcast together. Resulting shape will be at least (%d, 1). Repeats is (%d, 1)"
 	lenMismatch       = "Cannot compare with differing lengths: %d and %d"
 	typeMismatch      = "TypeMismatch: a %T and b %T"
@@ -41,6 +42,7 @@ const (
 	div0              = "Division by 0. Index was %v"
 	opFail            = "Failed to perform %v"
 	extractionFail    = "Failed to extract %v from %T"
+	unknownState      = "Unknown state reached: Safe %t, Incr %t, Reuse %t"
 
 	methodNYI = "%q not yet implemented for %v"
 )

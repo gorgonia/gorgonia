@@ -13,6 +13,7 @@ type DenseBinOpTest struct {
 	ArrayType
 
 	ScalarValue            int
+	ScalarValue2           int
 	TestSlice0, TestSlice1 []int
 
 	CorrectSV0, CorrectSV1, CorrectSV2 []int
@@ -44,7 +45,7 @@ const denseBinOpTestRaw = `var {{.OpName}}Tests = []struct{
 	 correct1: []{{.Of}}{ {{range .CorrectSV1 -}} {{printf "%d" .}}, {{end -}} },
 	},
 	{a: New(Of({{title .Of}}), WithBacking([]{{.Of}}{ {{range .TestSlice0 -}}{{printf "%d" .}},{{end -}} })),
-	 b: {{.Of}}({{.ScalarValue}}), 
+	 b: {{.Of}}({{.ScalarValue2}}), 
 	 incr: New(Of({{title .Of}}), WithBacking([]{{.Of}}{ 100, 100, 100, 100 })), 
 	 reuse: New(Of({{title .Of}}), WithBacking([]{{.Of}}{200, 200, 200, 200})), 
 	 correct0: []{{.Of}}{ {{range .CorrectVS0 -}} {{printf "%d" .}}, {{end -}} },
@@ -121,9 +122,16 @@ func generateDenseArithTests(fileName string, ts []ArrayType) {
 			testSlice0 := []int{1, 2, 3, 4}
 			testSlice1 := []int{1, 2, 3, 4}
 			s := 1
+			s2 := 1
 
 			if bo.OpName == "div" {
 				s = 24
+
+				for i := range testSlice0 {
+					testSlice0[i] *= 2
+					testSlice1[i] *= 2
+				}
+				s2 = 2
 			}
 
 			correctSV0 := make([]int, len(testSlice0))
@@ -166,14 +174,14 @@ func generateDenseArithTests(fileName string, ts []ArrayType) {
 					correctVV0[i] = v * testSlice1[i]
 					correctVV1[i] = v*testSlice1[i] + 100
 				case "div":
-					correctSV0[i] = s / v     // safe, unsafe and reuse
-					correctSV1[i] = s/v + 100 // incr
+					correctSV0[i] = int(float64(s) / float64(v))     // safe, unsafe and reuse
+					correctSV1[i] = int(float64(s)/float64(v)) + 100 // incr
 
-					correctVS0[i] = v / s
-					correctVS1[i] = v/s + 100
+					correctVS0[i] = int(float64(v) / float64(s2))
+					correctVS1[i] = int(float64(v)/float64(s2)) + 100
 
-					correctVV0[i] = v / testSlice1[i]
-					correctVV1[i] = v/testSlice1[i] + 100
+					correctVV0[i] = int(float64(v) / float64(testSlice1[i]))
+					correctVV1[i] = int(float64(v)/float64(testSlice1[i])) + 100
 				case "pow":
 					correctSV0[i] = int(math.Pow(float64(s), float64(v)))       // safe, unsafe and reuse
 					correctSV1[i] = int(math.Pow(float64(s), float64(v))) + 100 // incr
@@ -201,10 +209,11 @@ func generateDenseArithTests(fileName string, ts []ArrayType) {
 			}
 
 			dbot := DenseBinOpTest{
-				ArrayType:   t,
-				ScalarValue: s,
-				TestSlice0:  testSlice0,
-				TestSlice1:  testSlice1,
+				ArrayType:    t,
+				ScalarValue:  s,
+				ScalarValue2: s2,
+				TestSlice0:   testSlice0,
+				TestSlice1:   testSlice1,
 
 				CorrectSV0: correctSV0,
 				CorrectSV1: correctSV1,

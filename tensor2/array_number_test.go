@@ -968,6 +968,12 @@ func Test_ints_Div(t *testing.T) {
 		}
 	}
 
+	// additional tests for ScaleInv just for completeness sake
+	b = ints{0, 1, 2, 3, 4}
+	if err := a.Div(b); err == nil {
+		t.Error("Expected an errrorIndices")
+	}
+
 	// idiotsville 1
 	if err := a.Div(b[:3]); err == nil {
 		t.Error("Expected an error when performing Div on differing lengths")
@@ -1010,6 +1016,12 @@ func Test_i64s_Div(t *testing.T) {
 			t.Errorf("Div is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
+	}
+
+	// additional tests for ScaleInv just for completeness sake
+	b = i64s{0, 1, 2, 3, 4}
+	if err := a.Div(b); err == nil {
+		t.Error("Expected an errrorIndices")
 	}
 
 	// idiotsville 1
@@ -1056,6 +1068,12 @@ func Test_i32s_Div(t *testing.T) {
 		}
 	}
 
+	// additional tests for ScaleInv just for completeness sake
+	b = i32s{0, 1, 2, 3, 4}
+	if err := a.Div(b); err == nil {
+		t.Error("Expected an errrorIndices")
+	}
+
 	// idiotsville 1
 	if err := a.Div(b[:3]); err == nil {
 		t.Error("Expected an error when performing Div on differing lengths")
@@ -1098,6 +1116,12 @@ func Test_u8s_Div(t *testing.T) {
 			t.Errorf("Div is incorrect. Expected %v. Got %v", correct[i], v)
 			break
 		}
+	}
+
+	// additional tests for ScaleInv just for completeness sake
+	b = u8s{0, 1, 2, 3, 4}
+	if err := a.Div(b); err == nil {
+		t.Error("Expected an errrorIndices")
 	}
 
 	// idiotsville 1

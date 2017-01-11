@@ -196,10 +196,11 @@ const vecScalarTestRaw = `func Test_{{.Name}}_{{.OpName}}(t *testing.T){
 
 	correct := make({{.Name}}, len(a))
 	for i, v := range a {
-		{{if hasPrefix .OpName "ScaleInv"}}if v == {{.Of}}(0) {
-			correct[i] = 0
-			continue
-		}
+		{{if hasPrefix .OpName "ScaleInv" -}}
+			if v == {{.Of}}(0) {
+				correct[i] = 0
+				continue
+			}
 		{{end -}}
 
 		correct[i] = {{if hasSuffix .OpName "R" -}}

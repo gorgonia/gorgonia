@@ -30,8 +30,9 @@ type ArrayType struct {
 	elOrd    bool
 
 	// test
-	TestData0 string
-	TestData1 string
+	TestData0    string
+	TestData1    string
+	IncrTestData string
 }
 
 func main() {
@@ -164,7 +165,7 @@ func main() {
 	pipeline(numbersName, m, generateNumbers)
 	pipeline(numbersTestName, m, generateNumbersTests)
 	pipeline(incrNumbersName, m, generateNumbersIncr)
-	pipeline(incrNumbersName, m, generateNumbersIncrTests)
+	pipeline(incrNumbersTestName, m, generateNumbersIncrTests)
 	pipeline(eleqordName, m, generateElEqOrds)
 	pipeline(eleqordTestName, m, generateElEqOrdsTests)
 
@@ -218,6 +219,7 @@ func testtestFn(f io.Writer, m []ArrayType) {
 	}
 
 	generateNumbersOpsOnly(f, m2)
+	generateNumbersIncr(f, m2)
 	generateElEqOrds(f, m2)
 
 	// generate misc

@@ -493,6 +493,253 @@ func (a bsDummy) CopyFrom(other interface{}) (int, error) {
 	return 0, errors.Errorf("Cannot copy from %T", other)
 }
 
+/* Transpose Specialization */
+
+func (a f64sDummy) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp float64
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = float64(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a f32sDummy) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp float32
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = float32(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a intsDummy) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp int
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = int(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a i64sDummy) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp int64
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = int64(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a i32sDummy) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp int32
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = int32(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a u8sDummy) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp byte
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = byte(0)
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
+func (a bsDummy) Transpose(oldShape, oldStrides, axes, newStrides []int) {
+	size := len(a)
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last don't change
+
+	var saved, tmp bool
+	var i int
+
+	for i = 1; ; {
+		dest := TransposeIndex(i, oldShape, axes, oldStrides, newStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			a[i] = saved
+			saved = false
+
+			for i < size && track.IsSet(i) {
+				i++
+			}
+
+			if i >= size {
+				break
+			}
+			continue
+		}
+
+		track.Set(i)
+		tmp = a[i]
+		a[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
 /* COMPAT */
 
 func (a f64sDummy) Float64s() []float64 { return []float64(a) }
@@ -837,10 +1084,20 @@ func (a intsDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 
@@ -854,10 +1111,20 @@ func (a i64sDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 
@@ -871,10 +1138,20 @@ func (a i32sDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 
@@ -888,10 +1165,20 @@ func (a u8sDummy) Div(other Number) error {
 		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
 	}
 
+	var errs errorIndices
 	for i, v := range b {
+		if v == byte(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
 		a[i] /= v
 	}
 
+	if errs != nil {
+		return errs
+	}
 	return nil
 }
 
@@ -1621,6 +1908,1840 @@ func (a u8sDummy) PowOfR(other interface{}) (err error) {
 
 	for i, v := range a {
 		a[i] = byte(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+/* Add */
+
+func (a f64sDummy) IncrAdd(other, incrArr Number) (err error) {
+	var b, incr []float64
+	if b, err = getFloat64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+	}
+
+	vecf64.IncrAdd([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrAdd(other, incrArr Number) (err error) {
+	var b, incr []float32
+	if b, err = getFloat32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+	}
+
+	vecf32.IncrAdd([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrAdd(other, incrArr Number) (err error) {
+	var b, incr []int
+	if b, err = getInts(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] + v
+	}
+
+	return nil
+}
+
+func (a i64sDummy) IncrAdd(other, incrArr Number) (err error) {
+	var b, incr []int64
+	if b, err = getInt64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] + v
+	}
+
+	return nil
+}
+
+func (a i32sDummy) IncrAdd(other, incrArr Number) (err error) {
+	var b, incr []int32
+	if b, err = getInt32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] + v
+	}
+
+	return nil
+}
+
+func (a u8sDummy) IncrAdd(other, incrArr Number) (err error) {
+	var b, incr []byte
+	if b, err = getBytes(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrAdd")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] + v
+	}
+
+	return nil
+}
+
+/* Sub */
+
+func (a f64sDummy) IncrSub(other, incrArr Number) (err error) {
+	var b, incr []float64
+	if b, err = getFloat64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+	}
+
+	vecf64.IncrSub([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrSub(other, incrArr Number) (err error) {
+	var b, incr []float32
+	if b, err = getFloat32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+	}
+
+	vecf32.IncrSub([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrSub(other, incrArr Number) (err error) {
+	var b, incr []int
+	if b, err = getInts(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] - v
+	}
+
+	return nil
+}
+
+func (a i64sDummy) IncrSub(other, incrArr Number) (err error) {
+	var b, incr []int64
+	if b, err = getInt64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] - v
+	}
+
+	return nil
+}
+
+func (a i32sDummy) IncrSub(other, incrArr Number) (err error) {
+	var b, incr []int32
+	if b, err = getInt32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] - v
+	}
+
+	return nil
+}
+
+func (a u8sDummy) IncrSub(other, incrArr Number) (err error) {
+	var b, incr []byte
+	if b, err = getBytes(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrSub")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] - v
+	}
+
+	return nil
+}
+
+/* Mul */
+
+func (a f64sDummy) IncrMul(other, incrArr Number) (err error) {
+	var b, incr []float64
+	if b, err = getFloat64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+	}
+
+	vecf64.IncrMul([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrMul(other, incrArr Number) (err error) {
+	var b, incr []float32
+	if b, err = getFloat32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+	}
+
+	vecf32.IncrMul([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrMul(other, incrArr Number) (err error) {
+	var b, incr []int
+	if b, err = getInts(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] * v
+	}
+
+	return nil
+}
+
+func (a i64sDummy) IncrMul(other, incrArr Number) (err error) {
+	var b, incr []int64
+	if b, err = getInt64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] * v
+	}
+
+	return nil
+}
+
+func (a i32sDummy) IncrMul(other, incrArr Number) (err error) {
+	var b, incr []int32
+	if b, err = getInt32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] * v
+	}
+
+	return nil
+}
+
+func (a u8sDummy) IncrMul(other, incrArr Number) (err error) {
+	var b, incr []byte
+	if b, err = getBytes(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrMul")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += a[i] * v
+	}
+
+	return nil
+}
+
+/* Div */
+
+func (a f64sDummy) IncrDiv(other, incrArr Number) (err error) {
+	var b, incr []float64
+	if b, err = getFloat64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+	}
+
+	vecf64.IncrDiv([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrDiv(other, incrArr Number) (err error) {
+	var b, incr []float32
+	if b, err = getFloat32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+	}
+
+	vecf32.IncrDiv([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrDiv(other, incrArr Number) (err error) {
+	var b, incr []int
+	if b, err = getInts(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range b {
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += a[i] / v
+	}
+
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrDiv(other, incrArr Number) (err error) {
+	var b, incr []int64
+	if b, err = getInt64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range b {
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += a[i] / v
+	}
+
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrDiv(other, incrArr Number) (err error) {
+	var b, incr []int32
+	if b, err = getInt32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range b {
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += a[i] / v
+	}
+
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrDiv(other, incrArr Number) (err error) {
+	var b, incr []byte
+	if b, err = getBytes(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrDiv")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range b {
+		if v == byte(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += a[i] / v
+	}
+
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+/* Pow */
+
+func (a f64sDummy) IncrPow(other, incrArr Number) (err error) {
+	var b, incr []float64
+	if b, err = getFloat64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+	}
+
+	vecf64.IncrPow([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrPow(other, incrArr Number) (err error) {
+	var b, incr []float32
+	if b, err = getFloat32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+	}
+
+	vecf32.IncrPow([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrPow(other, incrArr Number) (err error) {
+	var b, incr []int
+	if b, err = getInts(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += int(math.Pow(float64(a[i]), float64(v)))
+	}
+
+	return nil
+}
+
+func (a i64sDummy) IncrPow(other, incrArr Number) (err error) {
+	var b, incr []int64
+	if b, err = getInt64s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += int64(math.Pow(float64(a[i]), float64(v)))
+	}
+
+	return nil
+}
+
+func (a i32sDummy) IncrPow(other, incrArr Number) (err error) {
+	var b, incr []int32
+	if b, err = getInt32s(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += int32(math.Pow(float64(a[i]), float64(v)))
+	}
+
+	return nil
+}
+
+func (a u8sDummy) IncrPow(other, incrArr Number) (err error) {
+	var b, incr []byte
+	if b, err = getBytes(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPow")
+	}
+
+	if len(b) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+	}
+
+	for i, v := range b {
+		incr[i] += byte(math.Pow(float64(a[i]), float64(v)))
+	}
+
+	return nil
+}
+
+/* Trans */
+
+func (a f64sDummy) IncrTrans(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+	}
+
+	vecf64.IncrTrans([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrTrans(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+	}
+
+	vecf32.IncrTrans([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrTrans(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrTrans(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrTrans(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrTrans(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTrans")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+/* TransInv */
+
+func (a f64sDummy) IncrTransInv(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+	}
+
+	vecf64.IncrTransInv([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrTransInv(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+	}
+
+	vecf32.IncrTransInv([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrTransInv(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrTransInv(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrTransInv(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrTransInv(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+/* TransInvR */
+
+func (a f64sDummy) IncrTransInvR(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+	}
+
+	vecf64.IncrTransInvR([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrTransInvR(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+	}
+
+	vecf32.IncrTransInvR([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrTransInvR(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrTransInvR(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrTransInvR(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrTransInvR(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrTransInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+/* Scale */
+
+func (a f64sDummy) IncrScale(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+	}
+
+	vecf64.IncrScale([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrScale(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+	}
+
+	vecf32.IncrScale([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrScale(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrScale(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrScale(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrScale(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScale")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+/* ScaleInv */
+
+func (a f64sDummy) IncrScaleInv(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+	}
+
+	vecf64.IncrScaleInv([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrScaleInv(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+	}
+
+	vecf32.IncrScaleInv([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrScaleInv(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrScaleInv(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int64(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrScaleInv(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int32(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrScaleInv(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInv")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == byte(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+/* ScaleInvR */
+
+func (a f64sDummy) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+	}
+
+	vecf64.IncrScaleInvR([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+	}
+
+	vecf32.IncrScaleInvR([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int64(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == int32(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrScaleInvR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+	}
+
+	var errs errorIndices
+	for i, v := range a {
+		if v == byte(0) {
+			errs = append(errs, i)
+			incr[i] = 0
+			continue
+		}
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+/* PowOf */
+
+func (a f64sDummy) IncrPowOf(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+	}
+
+	vecf64.IncrPowOf([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrPowOf(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+	}
+
+	vecf32.IncrPowOf([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrPowOf(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += int(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrPowOf(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += int64(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrPowOf(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += int32(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrPowOf(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOf")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += byte(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+/* PowOfR */
+
+func (a f64sDummy) IncrPowOfR(other interface{}, incrArr Number) (err error) {
+	var b float64
+	if b, err = getFloat64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	var incr []float64
+	if incr, err = getFloat64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+	}
+
+	vecf64.IncrPowOfR([]float64(a), b, incr)
+	return nil
+}
+
+func (a f32sDummy) IncrPowOfR(other interface{}, incrArr Number) (err error) {
+	var b float32
+	if b, err = getFloat32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	var incr []float32
+	if incr, err = getFloat32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+	}
+
+	vecf32.IncrPowOfR([]float32(a), b, incr)
+	return nil
+}
+
+func (a intsDummy) IncrPowOfR(other interface{}, incrArr Number) (err error) {
+	var b int
+	if b, err = getInt(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	var incr []int
+	if incr, err = getInts(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += int(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func (a i64sDummy) IncrPowOfR(other interface{}, incrArr Number) (err error) {
+	var b int64
+	if b, err = getInt64(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	var incr []int64
+	if incr, err = getInt64s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += int64(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func (a i32sDummy) IncrPowOfR(other interface{}, incrArr Number) (err error) {
+	var b int32
+	if b, err = getInt32(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	var incr []int32
+	if incr, err = getInt32s(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += int32(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func (a u8sDummy) IncrPowOfR(other interface{}, incrArr Number) (err error) {
+	var b byte
+	if b, err = getByte(other); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	var incr []byte
+	if incr, err = getBytes(incrArr); err != nil {
+		return errors.Wrapf(err, opFail, "IncrPowOfR")
+	}
+
+	if len(incr) != len(a) {
+		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+	}
+
+	for i, v := range a {
+		incr[i] += byte(math.Pow(float64(b), float64(v)))
 	}
 	return nil
 }
@@ -2689,65 +4810,65 @@ func (a u8sDummy) Lte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a f64sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+func (a f64sDummy) Slice(start, end int) (Array, error) {
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 
 func (a f64sDummy) Dtype() Dtype { return Float64 }
-func (a f32sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+func (a f32sDummy) Slice(start, end int) (Array, error) {
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 
 func (a f32sDummy) Dtype() Dtype { return Float32 }
-func (a intsDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+func (a intsDummy) Slice(start, end int) (Array, error) {
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 
 func (a intsDummy) Dtype() Dtype { return Int }
-func (a i64sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+func (a i64sDummy) Slice(start, end int) (Array, error) {
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 
 func (a i64sDummy) Dtype() Dtype { return Int64 }
-func (a i32sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+func (a i32sDummy) Slice(start, end int) (Array, error) {
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 
 func (a i32sDummy) Dtype() Dtype { return Int32 }
-func (a u8sDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+func (a u8sDummy) Slice(start, end int) (Array, error) {
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 
 func (a u8sDummy) Dtype() Dtype { return Byte }
-func (a bsDummy) Slice(s Slice) (Array, error) {
-	start, end, _, err := SliceDetails(s, len(a))
-	if err != nil {
-		return nil, err
+func (a bsDummy) Slice(start, end int) (Array, error) {
+	if end >= len(a) || start < 0 {
+		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
 	}
+
 	return a[start:end], nil
 }
 

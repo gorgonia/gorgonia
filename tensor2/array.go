@@ -20,6 +20,18 @@ type Array interface {
 	MemSetter
 }
 
+// provided Arrays
+
+type f64s []float64
+type f32s []float32
+type ints []int
+type i64s []int64
+type i32s []int32
+type u8s []byte
+type bs []bool
+
+// Array creation functions
+
 func makeArray(dt Dtype, size int) Array {
 	switch dt {
 	case Float64:
@@ -119,17 +131,26 @@ func fromInterfaceSlice(dt Dtype, s []interface{}) Array {
 	panic("Unsupported Dtype")
 }
 
-type f64s []float64
-type f32s []float32
-type ints []int
-type i64s []int64
-type i32s []int32
-type u8s []byte
-type bs []bool
-
 /* ARRAY OP STUFF */
+
+// Slicer slices the array. It's a standin for doing a[start:end]
 type Slicer interface {
 	Slice(start, end int) (Array, error)
+}
+
+// CopierFrom copies from source to the receiver. It returns an int indicating how many bytes or elements have been copied
+type CopierFrom interface {
+	CopyFrom(src interface{}) (int, error)
+}
+
+// CopierTo copies from the receiver to the dest. It returns an int indicating how many bytes or elements have been copied
+type CopierTo interface {
+	CopyTo(dest interface{}) (int, error)
+}
+
+// Transposer is any array that provides a specialization for transposing.
+type Transposer interface {
+	Transpose(oldShape, oldStrides, axes, newStrides []int)
 }
 
 /* BASIC ARRAY TYPE HANDLING */
@@ -179,12 +200,15 @@ type Dtyper interface {
 // Number is any array where you can perform basic arithmetic on. The arithmethic methods are expected to clober the value of the receiver
 type Number interface {
 	Array
+
+	// Array-Array interactions
 	Add(Number) error
 	Sub(Number) error
 	Mul(Number) error
 	Div(Number) error
 	Pow(Number) error
 
+	// Array-Scalar interactions
 	Trans(interface{}) error
 	TransInv(interface{}) error
 	TransInvR(interface{}) error
@@ -193,15 +217,21 @@ type Number interface {
 	ScaleInvR(interface{}) error
 	PowOf(interface{}) error
 	PowOfR(interface{}) error
-}
 
-// SafeNumber is any array that you can perform basic arithmetic on and return an array
-type SafeNumber interface {
-	Number
-	SafeAdd(Number) (Array, error)
-	SafeSub(Number) (Array, error)
-	SafeMul(Number) (Array, error)
-	SafeDiv(Number) (Array, error)
+	// Incremental interactions
+	IncrAdd(other, incr Number) error
+	IncrSub(other, incr Number) error
+	IncrMul(other, incr Number) error
+	IncrDiv(other, incr Number) error
+	IncrPow(other, incr Number) error
+	IncrTrans(x interface{}, incr Number) error
+	IncrTransInv(x interface{}, incr Number) error
+	IncrTransInvR(x interface{}, incr Number) error
+	IncrScale(x interface{}, incr Number) error
+	IncrScaleInv(x interface{}, incr Number) error
+	IncrScaleInvR(x interface{}, incr Number) error
+	IncrPowOf(x interface{}, incr Number) error
+	IncrPowOfR(x interface{}, incr Number) error
 }
 
 // Float is any array where you can perform floating point operations. Arrays that also implement Float will have linalg performed

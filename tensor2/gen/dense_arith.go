@@ -101,31 +101,11 @@ const denseBinOpRaw = `func {{.OpName}}DD(a, b *Dense, opts ...FuncOpt) (retVal 
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
-		if reuse == b {
-			// b + b first, because b will get clobbered
-			if err = rn.{{title .OpName}}(bn); err != nil {
-				err = errors.Wrapf(err, opFail, "{{.OpName}}DD. Unable to {{.OpName}} Array b to Array reused")
-				return
+			if err = an.Incr{{title .OpName}}(bn, rn);err!=nil{
+				err = errors.Wrapf(err, opFail, "{{.OpName}}DD. Unable to increment reuse Array")
+				return	
 			}
-
-			if err = rn.{{title .OpName}}(an); err != nil {
-				err = errors.Wrapf(err, opFail, "{{.OpName}}DD. Unable to {{.OpName}} Array a to Array reused")
-				return
-			}
-
-			return reuse, nil
-		}
-
-		if err = rn.{{title .OpName}}(an); err != nil {
-			err = errors.Wrapf(err, opFail, "{{.OpName}}DD. Unable to {{.OpName}} Array a to Array reused")
-			return
-		}
-		if err = rn.{{title .OpName}}(bn); err != nil {
-			err = errors.Wrapf(err, opFail, "{{.OpName}}DD. Unable to {{.OpName}} Array b to Array reused")
-			return
-		}
-
-		return reuse, nil
+		retVal = reuse
 	case toReuse:
 		if _, err = safe{{title .OpName}}(an, bn, rn); err != nil {
 			err = errors.Wrapf(err, opFail, "{{.OpName}}DD. Unable to {{.OpName}} Array a and Array b to Array reused")
@@ -160,13 +140,9 @@ func {{.OpName}}DS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err
 
 	switch {
 	case incr:
-		if err = rn.{{title .OpName}}(an); err != nil {
-			err = errors.Wrapf(err, "{{.OpName}}DS. Unable to {{.OpName}} Array a to the reuse")
-			return
-		}
-		if err = rn.{{.VecScalar}}(b); err != nil {
-			err = errors.Wrapf(err, "{{.OpName}}DS. Unable to {{.VecScalar}} the Array reuse by b of %T", b)
-			return
+		if err = an.Incr{{title .VecScalar}}(b, rn); err != nil {
+			err = errors.Wrapf(err, "{{.OpName}}DS. Unable to Incr{{.VecScalar}} the Array reuse by b of %T", b)
+			return	
 		}
 		retVal = reuse
 	case toReuse:
@@ -199,13 +175,9 @@ func {{.OpName}}SD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err
 
 	switch {
 	case incr:
-		if err = rn.{{title .OpName}}(bn); err != nil {
-			err = errors.Wrapf(err, "{{.OpName}}SD. Unable to {{.OpName}} Array b to the reuse")
-			return
-		}
-		if err = rn.{{.ScalarVec}}(a); err != nil {
+		if err = bn.Incr{{title .ScalarVec}}(a, rn); err != nil{
 			err = errors.Wrapf(err, "{{.OpName}}SD. Unable to {{.VecScalar}} the Array reuse by a of %T", a)
-			return
+			return	
 		}
 		retVal = reuse
 	case toReuse:

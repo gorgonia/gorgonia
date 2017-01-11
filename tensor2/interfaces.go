@@ -35,18 +35,3 @@ type ArrayMaker interface {
 type FromInterfaceSlicer interface {
 	FromInterfaceSlice(s []interface{}) Array
 }
-
-// CopierFrom copies from source to the receiver. It returns an int indicating how many bytes have been copied
-type CopierFrom interface {
-	CopyFrom(src interface{}) (int, error)
-}
-
-// CopierTo copies from the receiver to the dest. It returns an int indicating how many bytes have been copied
-type CopierTo interface {
-	CopyTo(dest interface{}) (int, error)
-}
-
-// Transposer is any array that provides a specialization for transposing.
-type Transposer interface {
-	Transpose(oldShape, oldStrides, axes, newStrides []int)
-}

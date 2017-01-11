@@ -2,7 +2,6 @@ package tensor
 
 import "github.com/pkg/errors"
 
-
 func prepDDOp(a, b *Dense, opts ...FuncOpt) (an, bn, rn Number, reuse *Dense, safe, toReuse, incr bool, err error) {
 	var ok bool
 	if an, ok = a.data.(Number); !ok {
@@ -66,8 +65,6 @@ func prepSD(a *Dense, opts ...FuncOpt) (an, rn Number, reuse *Dense, safe, toReu
 
 }
 
-
-
 /* add */
 
 func addDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -79,31 +76,11 @@ func addDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
-		if reuse == b {
-			// b + b first, because b will get clobbered
-			if err = rn.Add(bn); err != nil {
-				err = errors.Wrapf(err, opFail, "addDD. Unable to add Array b to Array reused")
-				return
-			}
-
-			if err = rn.Add(an); err != nil {
-				err = errors.Wrapf(err, opFail, "addDD. Unable to add Array a to Array reused")
-				return
-			}
-
-			return reuse, nil
-		}
-
-		if err = rn.Add(an); err != nil {
-			err = errors.Wrapf(err, opFail, "addDD. Unable to add Array a to Array reused")
+		if err = an.IncrAdd(bn, rn); err != nil {
+			err = errors.Wrapf(err, opFail, "addDD. Unable to increment reuse Array")
 			return
 		}
-		if err = rn.Add(bn); err != nil {
-			err = errors.Wrapf(err, opFail, "addDD. Unable to add Array b to Array reused")
-			return
-		}
-
-		return reuse, nil
+		retVal = reuse
 	case toReuse:
 		if _, err = safeAdd(an, bn, rn); err != nil {
 			err = errors.Wrapf(err, opFail, "addDD. Unable to add Array a and Array b to Array reused")
@@ -123,6 +100,7 @@ func addDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, opFail, "addDD. Unable to safely add Array a to Array reused")
 			return
 		}
+		retVal = a
 	default:
 		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
@@ -137,12 +115,8 @@ func addDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Add(an); err != nil {
-			err = errors.Wrapf(err, "addDS. Unable to add Array a to the reuse")
-			return
-		}
-		if err = rn.Trans(b); err != nil {
-			err = errors.Wrapf(err, "addDS. Unable to Trans the Array reuse by b of %T", b)
+		if err = an.IncrTrans(b, rn); err != nil {
+			err = errors.Wrapf(err, "addDS. Unable to IncrTrans the Array reuse by b of %T", b)
 			return
 		}
 		retVal = reuse
@@ -159,13 +133,13 @@ func addDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "addDS. Unable to safely add ")
 			return
 		}
-		return
 	case !safe:
 		err = an.Trans(b)
 		retVal = a
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
 
 func addSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -176,11 +150,7 @@ func addSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Add(bn); err != nil {
-			err = errors.Wrapf(err, "addSD. Unable to add Array b to the reuse")
-			return
-		}
-		if err = rn.Trans(a); err != nil {
+		if err = bn.IncrTrans(a, rn); err != nil {
 			err = errors.Wrapf(err, "addSD. Unable to Trans the Array reuse by a of %T", a)
 			return
 		}
@@ -197,16 +167,14 @@ func addSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "addSD. Unable to safely add ")
 			return
 		}
-		return
 	case !safe:
 		err = bn.Trans(a)
 		retVal = b
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
-
-
 
 /* sub */
 
@@ -219,31 +187,11 @@ func subDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
-		if reuse == b {
-			// b + b first, because b will get clobbered
-			if err = rn.Sub(bn); err != nil {
-				err = errors.Wrapf(err, opFail, "subDD. Unable to sub Array b to Array reused")
-				return
-			}
-
-			if err = rn.Sub(an); err != nil {
-				err = errors.Wrapf(err, opFail, "subDD. Unable to sub Array a to Array reused")
-				return
-			}
-
-			return reuse, nil
-		}
-
-		if err = rn.Sub(an); err != nil {
-			err = errors.Wrapf(err, opFail, "subDD. Unable to sub Array a to Array reused")
+		if err = an.IncrSub(bn, rn); err != nil {
+			err = errors.Wrapf(err, opFail, "subDD. Unable to increment reuse Array")
 			return
 		}
-		if err = rn.Sub(bn); err != nil {
-			err = errors.Wrapf(err, opFail, "subDD. Unable to sub Array b to Array reused")
-			return
-		}
-
-		return reuse, nil
+		retVal = reuse
 	case toReuse:
 		if _, err = safeSub(an, bn, rn); err != nil {
 			err = errors.Wrapf(err, opFail, "subDD. Unable to sub Array a and Array b to Array reused")
@@ -263,6 +211,7 @@ func subDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, opFail, "subDD. Unable to safely sub Array a to Array reused")
 			return
 		}
+		retVal = a
 	default:
 		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
@@ -277,12 +226,8 @@ func subDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Sub(an); err != nil {
-			err = errors.Wrapf(err, "subDS. Unable to sub Array a to the reuse")
-			return
-		}
-		if err = rn.TransInv(b); err != nil {
-			err = errors.Wrapf(err, "subDS. Unable to TransInv the Array reuse by b of %T", b)
+		if err = an.IncrTransInv(b, rn); err != nil {
+			err = errors.Wrapf(err, "subDS. Unable to IncrTransInv the Array reuse by b of %T", b)
 			return
 		}
 		retVal = reuse
@@ -299,13 +244,13 @@ func subDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "subDS. Unable to safely sub ")
 			return
 		}
-		return
 	case !safe:
 		err = an.TransInv(b)
 		retVal = a
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
 
 func subSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -316,11 +261,7 @@ func subSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Sub(bn); err != nil {
-			err = errors.Wrapf(err, "subSD. Unable to sub Array b to the reuse")
-			return
-		}
-		if err = rn.TransInvR(a); err != nil {
+		if err = bn.IncrTransInvR(a, rn); err != nil {
 			err = errors.Wrapf(err, "subSD. Unable to TransInv the Array reuse by a of %T", a)
 			return
 		}
@@ -337,16 +278,14 @@ func subSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "subSD. Unable to safely sub ")
 			return
 		}
-		return
 	case !safe:
 		err = bn.TransInvR(a)
 		retVal = b
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
-
-
 
 /* mul */
 
@@ -359,31 +298,11 @@ func mulDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
-		if reuse == b {
-			// b + b first, because b will get clobbered
-			if err = rn.Mul(bn); err != nil {
-				err = errors.Wrapf(err, opFail, "mulDD. Unable to mul Array b to Array reused")
-				return
-			}
-
-			if err = rn.Mul(an); err != nil {
-				err = errors.Wrapf(err, opFail, "mulDD. Unable to mul Array a to Array reused")
-				return
-			}
-
-			return reuse, nil
-		}
-
-		if err = rn.Mul(an); err != nil {
-			err = errors.Wrapf(err, opFail, "mulDD. Unable to mul Array a to Array reused")
+		if err = an.IncrMul(bn, rn); err != nil {
+			err = errors.Wrapf(err, opFail, "mulDD. Unable to increment reuse Array")
 			return
 		}
-		if err = rn.Mul(bn); err != nil {
-			err = errors.Wrapf(err, opFail, "mulDD. Unable to mul Array b to Array reused")
-			return
-		}
-
-		return reuse, nil
+		retVal = reuse
 	case toReuse:
 		if _, err = safeMul(an, bn, rn); err != nil {
 			err = errors.Wrapf(err, opFail, "mulDD. Unable to mul Array a and Array b to Array reused")
@@ -403,6 +322,7 @@ func mulDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, opFail, "mulDD. Unable to safely mul Array a to Array reused")
 			return
 		}
+		retVal = a
 	default:
 		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
@@ -417,12 +337,8 @@ func mulDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Mul(an); err != nil {
-			err = errors.Wrapf(err, "mulDS. Unable to mul Array a to the reuse")
-			return
-		}
-		if err = rn.Scale(b); err != nil {
-			err = errors.Wrapf(err, "mulDS. Unable to Scale the Array reuse by b of %T", b)
+		if err = an.IncrScale(b, rn); err != nil {
+			err = errors.Wrapf(err, "mulDS. Unable to IncrScale the Array reuse by b of %T", b)
 			return
 		}
 		retVal = reuse
@@ -439,13 +355,13 @@ func mulDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "mulDS. Unable to safely mul ")
 			return
 		}
-		return
 	case !safe:
 		err = an.Scale(b)
 		retVal = a
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
 
 func mulSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -456,11 +372,7 @@ func mulSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Mul(bn); err != nil {
-			err = errors.Wrapf(err, "mulSD. Unable to mul Array b to the reuse")
-			return
-		}
-		if err = rn.Scale(a); err != nil {
+		if err = bn.IncrScale(a, rn); err != nil {
 			err = errors.Wrapf(err, "mulSD. Unable to Scale the Array reuse by a of %T", a)
 			return
 		}
@@ -477,16 +389,14 @@ func mulSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "mulSD. Unable to safely mul ")
 			return
 		}
-		return
 	case !safe:
 		err = bn.Scale(a)
 		retVal = b
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
-
-
 
 /* div */
 
@@ -499,31 +409,11 @@ func divDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
-		if reuse == b {
-			// b + b first, because b will get clobbered
-			if err = rn.Div(bn); err != nil {
-				err = errors.Wrapf(err, opFail, "divDD. Unable to div Array b to Array reused")
-				return
-			}
-
-			if err = rn.Div(an); err != nil {
-				err = errors.Wrapf(err, opFail, "divDD. Unable to div Array a to Array reused")
-				return
-			}
-
-			return reuse, nil
-		}
-
-		if err = rn.Div(an); err != nil {
-			err = errors.Wrapf(err, opFail, "divDD. Unable to div Array a to Array reused")
+		if err = an.IncrDiv(bn, rn); err != nil {
+			err = errors.Wrapf(err, opFail, "divDD. Unable to increment reuse Array")
 			return
 		}
-		if err = rn.Div(bn); err != nil {
-			err = errors.Wrapf(err, opFail, "divDD. Unable to div Array b to Array reused")
-			return
-		}
-
-		return reuse, nil
+		retVal = reuse
 	case toReuse:
 		if _, err = safeDiv(an, bn, rn); err != nil {
 			err = errors.Wrapf(err, opFail, "divDD. Unable to div Array a and Array b to Array reused")
@@ -543,6 +433,7 @@ func divDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, opFail, "divDD. Unable to safely div Array a to Array reused")
 			return
 		}
+		retVal = a
 	default:
 		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
@@ -557,12 +448,8 @@ func divDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Div(an); err != nil {
-			err = errors.Wrapf(err, "divDS. Unable to div Array a to the reuse")
-			return
-		}
-		if err = rn.ScaleInv(b); err != nil {
-			err = errors.Wrapf(err, "divDS. Unable to ScaleInv the Array reuse by b of %T", b)
+		if err = an.IncrScaleInv(b, rn); err != nil {
+			err = errors.Wrapf(err, "divDS. Unable to IncrScaleInv the Array reuse by b of %T", b)
 			return
 		}
 		retVal = reuse
@@ -579,13 +466,13 @@ func divDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "divDS. Unable to safely div ")
 			return
 		}
-		return
 	case !safe:
 		err = an.ScaleInv(b)
 		retVal = a
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
 
 func divSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -596,11 +483,7 @@ func divSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	switch {
 	case incr:
-		if err = rn.Div(bn); err != nil {
-			err = errors.Wrapf(err, "divSD. Unable to div Array b to the reuse")
-			return
-		}
-		if err = rn.ScaleInvR(a); err != nil {
+		if err = bn.IncrScaleInvR(a, rn); err != nil {
 			err = errors.Wrapf(err, "divSD. Unable to ScaleInv the Array reuse by a of %T", a)
 			return
 		}
@@ -617,14 +500,122 @@ func divSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 			err = errors.Wrapf(err, "divSD. Unable to safely div ")
 			return
 		}
-		return
 	case !safe:
 		err = bn.ScaleInvR(a)
 		retVal = b
-		return
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
 	}
-	panic("Unreachable")
+	return
 }
 
+/* pow */
 
+func powDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
+	an, bn, rn, reuse, safe, toReuse, incr, err := prepDDOp(a, b, opts...)
+	if err != nil {
+		return nil, err
+	}
 
+	switch {
+	case incr:
+		// when incr returned, the reuse is the *Dense to be incremented
+		if err = an.IncrPow(bn, rn); err != nil {
+			err = errors.Wrapf(err, opFail, "powDD. Unable to increment reuse Array")
+			return
+		}
+		retVal = reuse
+	case toReuse:
+		if _, err = safePow(an, bn, rn); err != nil {
+			err = errors.Wrapf(err, opFail, "powDD. Unable to pow Array a and Array b to Array reused")
+			return
+		}
+		retVal = reuse
+	case safe:
+		retVal = recycledDense(a.t, a.Shape().Clone())
+		rn = retVal.data.(Number)
+		if _, err = safePow(an, bn, rn); err != nil {
+			err = errors.Wrapf(err, opFail, "powDD. Unable to safely pow Array a and b to rn")
+			return
+		}
+		return
+	case !safe:
+		if err = an.Pow(bn); err != nil {
+			err = errors.Wrapf(err, opFail, "powDD. Unable to safely pow Array a to Array reused")
+			return
+		}
+		retVal = a
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
+	}
+	return
+}
+
+func powDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
+	an, rn, reuse, safe, toReuse, incr, err := prepSD(a, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case incr:
+		if err = an.IncrPowOf(b, rn); err != nil {
+			err = errors.Wrapf(err, "powDS. Unable to IncrPowOf the Array reuse by b of %T", b)
+			return
+		}
+		retVal = reuse
+	case toReuse:
+		if _, err = safePowOf(an, b, rn); err != nil {
+			err = errors.Wrapf(err, "powDS")
+			return
+		}
+		retVal = reuse
+	case safe:
+		retVal = recycledDense(a.t, a.Shape().Clone())
+		rn = retVal.data.(Number)
+		if _, err = safePowOf(an, b, rn); err != nil {
+			err = errors.Wrapf(err, "powDS. Unable to safely pow ")
+			return
+		}
+	case !safe:
+		err = an.PowOf(b)
+		retVal = a
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
+	}
+	return
+}
+
+func powSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
+	bn, rn, reuse, safe, toReuse, incr, err := prepSD(b, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case incr:
+		if err = bn.IncrPowOfR(a, rn); err != nil {
+			err = errors.Wrapf(err, "powSD. Unable to PowOf the Array reuse by a of %T", a)
+			return
+		}
+		retVal = reuse
+	case toReuse:
+		if _, err = safePowOfR(bn, a, rn); err != nil {
+			err = errors.Wrapf(err, "powSD")
+		}
+		retVal = reuse
+	case safe:
+		retVal = recycledDense(b.t, b.Shape().Clone())
+		rn = retVal.data.(Number)
+		if _, err = safePowOfR(bn, a, rn); err != nil {
+			err = errors.Wrapf(err, "powSD. Unable to safely pow ")
+			return
+		}
+	case !safe:
+		err = bn.PowOfR(a)
+		retVal = b
+	default:
+		err = errors.Errorf("Unknown state reached: Safe %t, Incr %t, Reuse %t", safe, incr, reuse)
+	}
+	return
+}
