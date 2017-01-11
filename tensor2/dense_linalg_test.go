@@ -222,6 +222,11 @@ var matVecMulTests = []struct {
 	{Range(Float64, 0, 6), Range(Float64, 0, 3), Shape{2, 3}, Shape{3},
 		Range(Float64, 52, 54), Range(Float32, 100, 103), Shape{2}, Shape{3},
 		[]float64{5, 14}, []float64{105, 115}, []float64{110, 129}, Shape{2}, false, true, false},
+
+	// stupids: type mismatch, incr not a Number
+	{Range(Float64, 0, 6), Range(Float64, 0, 3), Shape{2, 3}, Shape{3},
+		Range(Float64, 52, 54), bs{true, true, true}, Shape{2}, Shape{3},
+		[]float64{5, 14}, []float64{105, 115}, []float64{110, 129}, Shape{2}, false, true, false},
 }
 
 func TestDense_MatVecMul(t *testing.T) {
@@ -289,5 +294,48 @@ func TestDense_MatVecMul(t *testing.T) {
 		assert.True(mvmt.correctShape.Eq(T.Shape()))
 		assert.Equal(mvmt.correctIncrReuse, T.Data())
 	}
+}
 
+var matMulTests = []struct {
+	a, b           Array
+	shapeA, shapeB Shape
+
+	reuse, incr    Array
+	shapeR, shapeI Shape
+
+	correct          interface{}
+	correctIncr      interface{}
+	correctIncrReuse interface{}
+	correctShape     Shape
+	err              bool
+	errIncr          bool
+	errReuse         bool
+}{
+	{Range(Float64, 0, 6), Range(Float64, 0, 6), Shape{2, 3}, Shape{3, 2},
+		Range(Float64, 52, 54), Range(Float64, 100, 102), Shape{2}, Shape{2},
+		[]float64{10, 13, 28, 40}, []float64{0, 0, 0, 0}, []float64{0, 0, 0, 0}, Shape{2, 2}, false, false, false},
+}
+
+func TestDense_MatMul(t *testing.T) {
+	assert := assert.New(t)
+	for i, mmt := range matMulTests {
+		a := New(WithBacking(mmt.a), WithShape(mmt.shapeA...))
+		b := New(WithBacking(mmt.b), WithShape(mmt.shapeB...))
+
+		T, err := a.MatMul(b)
+
+		switch {
+		case mmt.err:
+			if err == nil {
+				t.Errorf("Safe Test (%d) : Expected an error | a: %v(%T) | b %v(%T)", i, mmt.a, mmt.a, mmt.b, mmt.b)
+			}
+			continue
+		case !mmt.err && err != nil:
+			t.Errorf("Safe Test(%d) error'd: %+v", i, err)
+			continue
+		}
+
+		assert.True(mmt.correctShape.Eq(T.Shape()))
+		assert.Equal(mmt.correct, T.Data())
+	}
 }

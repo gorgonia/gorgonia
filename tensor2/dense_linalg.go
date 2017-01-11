@@ -101,18 +101,13 @@ func (t *Dense) Inner(other Tensor) (retVal *Dense, err error) {
 // There is a slight difference in terms of API (you'll note that inner() returns a tensor and error)
 // This is because the actual result of a  dot product is a scalar.
 func (t *Dense) inner(other Tensor) (retVal *Dense, err error) {
-	ot, ok := other.(*Dense)
-	if !ok {
-		err = errors.Errorf(typeNYI, "inner", other)
+	var ot *Dense
+	if ot, err = getFloatDense(other); err != nil {
+		err = errors.Wrapf(err, opFail, "inner")
 		return
 	}
 
-	on, ok := ot.data.(Float)
-	if !ok {
-		err = errors.Errorf(unsupportedDtype, ot.data, "Inner")
-		return
-	}
-
+	on := ot.data.(Float)
 	switch data := t.data.(type) {
 	case f64s:
 		a := []float64(data)
@@ -185,76 +180,33 @@ func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err err
 	if odim != n {
 		err = errors.Errorf(shapeMismatch, n, other.Shape())
 		return
-
 	}
 
 	expectedShape := Shape{m}
 
 	// check whether retVal has the same size as the resulting matrix would be: mx1
 	reuse, incr := parseReuseIncr(opts...)
-	if reuse != nil {
-		var rd *Dense
-		var ok bool
-		if rd, ok = reuse.(*Dense); !ok {
-			err = errors.Errorf(typeNYI, "MatVecMul", reuse)
-		}
-		if err = reuseCheckShape(rd, expectedShape); err != nil {
-			return
-		}
-		retVal = rd
+
+	if retVal, err = handleReuse(reuse, expectedShape); err != nil {
+		err = errors.Wrapf(err, opFail, "MatVecMul")
+		return
 	}
 
 	if retVal == nil {
 		retVal = recycledDense(t.t, expectedShape)
 	}
 
-	switch ot := other.(type) {
-	case *Dense:
-		if _, ok := ot.data.(Float); !ok {
-			err = errors.Errorf(unsupportedDtype, ot.data, "MatVecMul")
-			return
-		}
-
-		if err = t.matVecMul(ot, retVal); err != nil {
-			return
-		}
-	default:
-		err = errors.Errorf(typeNYI, "MatVecMul", other)
+	var od *Dense
+	if od, err = getFloatDense(other); err != nil {
+		err = errors.Wrapf(err, typeNYI, "MatVecMul", other)
 		return
 	}
 
-	// handle increments
-	if incr != nil {
-		if !expectedShape.Eq(incr.Shape()) {
-			err = errors.Errorf(shapeMismatch, expectedShape, incr.Shape())
-			return
-		}
-		var incrD *Dense
-		var ok bool
-		if incrD, ok = incr.(*Dense); !ok {
-			err = errors.Errorf(typeNYI, "MatVecMul", reuse)
-			return
-		}
-
-		var incrN Number
-		if incrN, ok = incrD.data.(Number); !ok {
-			err = errors.Errorf(unsupportedDtype, incrD.data, "MatVecMul as incr")
-			return
-		}
-
-		incrN.Add(retVal.data.(Number))
-		// vecAdd(incr.data, retVal.data)
-
-		// return retVal to pool - if and only if retVal is not reuse
-		// reuse indicates that someone else also has the reference to the *Tensor
-		if retVal != reuse {
-			ReturnTensor(retVal)
-		}
-
-		// then
-		retVal = incrD
+	if err = t.matVecMul(od, retVal); err != nil {
+		return
 	}
-	return
+
+	return handleIncr(retVal, reuse, incr, expectedShape)
 }
 
 // matVecMul is a thin layer over BLAS' DGEMV
@@ -343,4 +295,224 @@ func (t *Dense) matVecMul(other *Dense, retVal *Dense) (err error) {
 	}
 
 	return nil
+}
+
+// MatMul is the basic matrix multiplication that you learned in high school. It takes an optional reuse ndarray, where the ndarray is reused as the result.
+// If that isn't passed in,  a new ndarray will be created instead.
+func (t *Dense) MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) {
+	// check that both are matrices
+	if !t.Shape().IsMatrix() || !other.Shape().IsMatrix() {
+		err = errors.Errorf("MatMul requires both operands to be matrices. Got t's shape: %v, other's shape: %v", t.Shape(), other.Shape())
+		return
+	}
+
+	// checks that t is mxk matrix
+	var m, n, k int
+	m = t.Shape()[0]
+	k = t.Shape()[1]
+	n = other.Shape()[1]
+
+	// check shape
+	if k != other.Shape()[0] {
+		err = errors.Errorf(shapeMismatch, t.Shape(), other.Shape())
+		return
+	}
+
+	// check whether retVal has the same size as the resulting matrix would be: mxn
+	expectedShape := Shape{m, n}
+
+	reuse, incr := parseReuseIncr(opts...)
+	if retVal, err = handleReuse(reuse, expectedShape); err != nil {
+		err = errors.Wrapf(err, opFail, "MatMul")
+		return
+	}
+
+	if retVal == nil {
+		retVal = recycledDense(t.t, expectedShape)
+	}
+
+	var od *Dense
+	if od, err = getFloatDense(other); err != nil {
+		err = errors.Wrapf(err, typeNYI, "MatMul", other)
+		return
+	}
+
+	if err = t.matMul(od, retVal); err != nil {
+		return
+	}
+
+	return handleIncr(retVal, reuse, incr, expectedShape)
+}
+
+// matMul is a thin layer over DGEMM.
+// DGEMM computes:
+//		C = αA * B +  βC
+// To prevent needless zeroing out of the slice, we just set β to 0
+func (t *Dense) matMul(other, retVal *Dense) (err error) {
+	tA, tB := blas.NoTrans, blas.NoTrans
+	if t.old != nil {
+		tA = blas.Trans
+	}
+
+	if other.old != nil {
+		tB = blas.Trans
+	}
+
+	var m, n, k int
+	m = t.Shape()[0]
+	k = t.Shape()[1]
+	n = other.Shape()[1]
+
+	// wrt the strides, we use the original strides, because that's what BLAS needs, instead of calling .Strides()
+	lda := t.ostrides()[0]
+	ldb := other.ostrides()[0]
+	ldc := retVal.ostrides()[0]
+
+	switch data := t.data.(type) {
+	case f64s:
+		a := []float64(data)
+		var b, c []float64
+		var ok bool
+		if b, ok = other.Data().([]float64); !ok {
+			err = errors.Errorf(dtypeMismatch, data, b)
+			return
+		}
+
+		if c, ok = retVal.Data().([]float64); !ok {
+			err = errors.Errorf(dtypeMismatch, data, c)
+			return
+		}
+
+		alpha, beta := float64(1), float64(0)
+		whichblas.Dgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+	case f32s:
+		a := []float32(data)
+		var b, c []float32
+		var ok bool
+		if b, ok = other.Data().([]float32); !ok {
+			err = errors.Errorf(dtypeMismatch, data, b)
+			return
+		}
+
+		if c, ok = retVal.Data().([]float32); !ok {
+			err = errors.Errorf(dtypeMismatch, data, c)
+			return
+		}
+
+		alpha, beta := float32(1), float32(0)
+		whichblas.Sgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+	case Float64ser:
+		a := data.Float64s()
+		var b, c []float64
+		var ok bool
+		if b, ok = other.Data().([]float64); !ok {
+			err = errors.Errorf(dtypeMismatch, data, b)
+			return
+		}
+
+		if c, ok = retVal.Data().([]float64); !ok {
+			err = errors.Errorf(dtypeMismatch, data, c)
+			return
+		}
+
+		alpha, beta := float64(1), float64(0)
+		whichblas.Dgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+	case Float32ser:
+		a := data.Float32s()
+		var b, c []float32
+		var ok bool
+		if b, ok = other.Data().([]float32); !ok {
+			err = errors.Errorf(dtypeMismatch, data, b)
+			return
+		}
+
+		if c, ok = retVal.Data().([]float32); !ok {
+			err = errors.Errorf(dtypeMismatch, t, c)
+			return
+		}
+
+		alpha, beta := float32(1), float32(0)
+		whichblas.Sgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+	default:
+		panic("Unreachable")
+	}
+
+	return
+}
+
+/* UTILITY FUNCTIONS */
+
+// getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
+func getFloatDense(a Tensor) (retVal *Dense, err error) {
+	switch at := a.(type) {
+	case *Dense:
+		if f, ok := at.data.(Float); !ok {
+			err = errors.Errorf(dtypeMismatch, f, at.data)
+			return
+		}
+		return at, nil
+	default:
+		err = errors.Errorf(extractionFail, "*Dense", a)
+		return
+	}
+	panic("unreachable")
+}
+
+// handleReuse extracts a *Dense from Tensor, and checks the shape of the reuse Tensor
+func handleReuse(reuse Tensor, expectedShape Shape) (retVal *Dense, err error) {
+	if reuse != nil {
+		var rd *Dense
+		var ok bool
+		if rd, ok = reuse.(*Dense); !ok {
+			err = errors.Errorf(extractionFail, "*Dense", reuse)
+			return
+		}
+		if err = reuseCheckShape(rd, expectedShape); err != nil {
+			err = errors.Wrapf(err, "Unable to process reuse *Dense Tensor. Shape error.")
+			return
+		}
+		retVal = rd
+		return
+	}
+	return
+}
+
+// handleIncr is the cleanup step for when there is an Tensor to increment. If the result tensor is the same as the reuse Tensor, the result tensor gets returned to the pool
+func handleIncr(res *Dense, reuse, incr Tensor, expectedShape Shape) (retVal *Dense, err error) {
+	// handle increments
+	if incr != nil {
+		if !expectedShape.Eq(incr.Shape()) {
+			err = errors.Errorf(shapeMismatch, expectedShape, incr.Shape())
+			return
+		}
+		var incrD *Dense
+		var ok bool
+		if incrD, ok = incr.(*Dense); !ok {
+			err = errors.Errorf(extractionFail, "*Dense", incr)
+			return
+		}
+
+		var incrN Number
+		if incrN, ok = incrD.data.(Number); !ok {
+			err = errors.Errorf(unsupportedDtype, incrD.data, "MatVecMul as incr")
+			return
+		}
+
+		if err = incrN.Add(res.data.(Number)); err != nil {
+			return
+		}
+		// vecAdd(incr.data, retVal.data)
+
+		// return retVal to pool - if and only if retVal is not reuse
+		// reuse indicates that someone else also has the reference to the *Dense
+		if res != reuse {
+			ReturnTensor(res)
+		}
+
+		// then
+		retVal = incrD
+		return
+	}
+
+	return res, nil
 }

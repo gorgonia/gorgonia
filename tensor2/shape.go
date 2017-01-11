@@ -83,25 +83,26 @@ func (s Shape) Clone() Shape {
 	return retVal
 }
 
-func (s Shape) IsScalar() bool {
-	return len(s) == 0 || (len(s) == 1 && s[0] == 1)
-}
+// IsScalar returns true if the access pattern indicates it's a scalar value
+func (s Shape) IsScalar() bool { return len(s) == 0 || (len(s) == 1 && s[0] == 1) }
 
-func (s Shape) IsVector() bool {
-	return s.IsColVec() || s.IsRowVec() || (len(s) == 1 && s[0] > 1)
-}
+// IsVector returns whether the access pattern falls into one of three possible definitions of vectors:
+//		vanilla vector (not a row or a col)
+//		column vector
+//		row vector
+func (s Shape) IsVector() bool { return s.IsColVec() || s.IsRowVec() || (len(s) == 1 && s[0] > 1) }
 
-func (s Shape) IsColVec() bool {
-	return len(s) == 2 && (s[1] == 1 && s[0] > 1)
-}
+// IsColVec returns true when the access pattern has the shape (x, 1)
+func (s Shape) IsColVec() bool { return len(s) == 2 && (s[1] == 1 && s[0] > 1) }
 
-func (s Shape) IsRowVec() bool {
-	return len(s) == 2 && (s[0] == 1 && s[1] > 1)
-}
+// IsRowVec returns true when the access pattern has the shape (1, x)
+func (s Shape) IsRowVec() bool { return len(s) == 2 && (s[0] == 1 && s[1] > 1) }
 
-func (s Shape) Dims() int {
-	return len(s)
-}
+// IsMatrix returns true if it's a matrix. This is mostly a convenience method. RowVec and ColVecs are also considered matrices
+func (s Shape) IsMatrix() bool { return len(s) == 2 }
+
+// Dims returns the number of dimensions in the shape
+func (s Shape) Dims() int { return len(s) }
 
 func (s Shape) DimSize(d int) (size int, err error) {
 	if (s.IsScalar() && d != 0) || (!s.IsScalar() && d >= len(s)) {

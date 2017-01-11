@@ -321,6 +321,7 @@ func reuseDenseCheck(reuse *Dense, as *Dense) (err error) {
 
 }
 
+// reuseCheckShape  checks the shape and reshapes it to be correct if the size fits but the shape doesn't.
 func reuseCheckShape(reuse *Dense, s Shape) (err error) {
 	throw := BorrowInts(len(s))
 	copy(throw, s)
