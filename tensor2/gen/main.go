@@ -226,6 +226,12 @@ func testtestFn(f io.Writer, m []ArrayType) {
 	for _, v := range m2 {
 		sliceTmpl.Execute(f, v)
 		fmt.Fprint(f, "\n")
+
 		dtypeTmpl.Execute(f, v)
+		fmt.Fprint(f, "\n")
+
+		if strings.HasPrefix(v.Of, "float") {
+			floatArrTmpl.Execute(f, v)
+		}
 	}
 }

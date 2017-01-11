@@ -34,7 +34,7 @@ const (
 	broadcastError    = "Cannot broadcast together. Resulting shape will be at least (%d, 1). Repeats is (%d, 1)"
 	lenMismatch       = "Cannot compare with differing lengths: %d and %d"
 	typeMismatch      = "TypeMismatch: a %T and b %T"
-	shapeMismatch     = "Shape Mismatch. Coordinates has %d dimensions, ndarry has %d dimensions"
+	shapeMismatch     = "Shape mismatch. Expected %v. Got %v"
 	sizeMismatch      = "Size Mismatch. %d and %d"
 	reuseReshapeErr   = "Failed to reshape the reuse *Dense from into %v. Size was: %d"
 	incrReshapeErr    = "Failed to reshape the incr *Dense into %v. Size was: %d"
@@ -43,6 +43,8 @@ const (
 	opFail            = "Failed to perform %v"
 	extractionFail    = "Failed to extract %v from %T"
 	unknownState      = "Unknown state reached: Safe %t, Incr %t, Reuse %t"
+	unsupportedDtype  = "Array of %T is unsupported for %v"
 
 	methodNYI = "%q not yet implemented for %v"
+	typeNYI   = "%q not yet implemented for interactions with %T"
 )

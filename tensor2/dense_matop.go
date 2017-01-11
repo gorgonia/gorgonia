@@ -255,7 +255,7 @@ func (t *Dense) Transpose() {
 // At returns the value at the given coordinate
 func (t *Dense) At(coords ...int) (interface{}, error) {
 	if len(coords) != t.Dims() {
-		return nil, errors.Errorf(shapeMismatch, len(coords), t.Dims())
+		return nil, errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
 
 	at, err := t.at(coords...)

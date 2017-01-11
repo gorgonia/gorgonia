@@ -4819,6 +4819,9 @@ func (a f64sDummy) Slice(start, end int) (Array, error) {
 }
 
 func (a f64sDummy) Dtype() Dtype { return Float64 }
+
+func (a f64sDummy) HasNaN() bool { return false }
+func (a f64sDummy) HasInf() bool { return false }
 func (a f32sDummy) Slice(start, end int) (Array, error) {
 	if end >= len(a) || start < 0 {
 		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
@@ -4828,6 +4831,9 @@ func (a f32sDummy) Slice(start, end int) (Array, error) {
 }
 
 func (a f32sDummy) Dtype() Dtype { return Float32 }
+
+func (a f32sDummy) HasNaN() bool { return false }
+func (a f32sDummy) HasInf() bool { return false }
 func (a intsDummy) Slice(start, end int) (Array, error) {
 	if end >= len(a) || start < 0 {
 		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
@@ -4837,6 +4843,7 @@ func (a intsDummy) Slice(start, end int) (Array, error) {
 }
 
 func (a intsDummy) Dtype() Dtype { return Int }
+
 func (a i64sDummy) Slice(start, end int) (Array, error) {
 	if end >= len(a) || start < 0 {
 		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
@@ -4846,6 +4853,7 @@ func (a i64sDummy) Slice(start, end int) (Array, error) {
 }
 
 func (a i64sDummy) Dtype() Dtype { return Int64 }
+
 func (a i32sDummy) Slice(start, end int) (Array, error) {
 	if end >= len(a) || start < 0 {
 		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
@@ -4855,6 +4863,7 @@ func (a i32sDummy) Slice(start, end int) (Array, error) {
 }
 
 func (a i32sDummy) Dtype() Dtype { return Int32 }
+
 func (a u8sDummy) Slice(start, end int) (Array, error) {
 	if end >= len(a) || start < 0 {
 		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
@@ -4864,6 +4873,7 @@ func (a u8sDummy) Slice(start, end int) (Array, error) {
 }
 
 func (a u8sDummy) Dtype() Dtype { return Byte }
+
 func (a bsDummy) Slice(start, end int) (Array, error) {
 	if end >= len(a) || start < 0 {
 		return nil, errors.Errorf(sliceIndexOOB, start, end, len(a))
