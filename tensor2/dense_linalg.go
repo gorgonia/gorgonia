@@ -353,6 +353,89 @@ func (t *Dense) matMul(other, retVal *Dense) (err error) {
 	return
 }
 
+func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) {
+	// check both are vectors
+	if !t.Shape().IsVector() || !other.Shape().IsVector() {
+		err = errors.Errorf("Outer only works when there are two vectors. t's shape: %v. other's shape: %v", t.Shape(), other.Shape())
+		return
+	}
+
+	m := t.Size()
+	n := other.Size()
+
+	// check whether retVal has the same size as the resulting matrix would be: mxn
+	expectedShape := Shape{m, n}
+
+	reuse, incr := parseReuseIncr(opts...)
+	if retVal, err = handleReuse(reuse, expectedShape); err != nil {
+		err = errors.Wrapf(err, opFail, "Outer")
+		return
+	}
+
+	if retVal == nil {
+		retVal = recycledDense(t.t, expectedShape)
+	}
+
+	var od *Dense
+	if od, err = getFloatDense(other); err != nil {
+		err = errors.Wrapf(err, typeNYI, "Outer", other)
+		return
+	}
+
+	// DGER does not have any beta. So the values have to be zeroed first if the tensor is to be reused
+	retVal.data.Zero()
+	if err = t.outer(od, retVal); err != nil {
+		return
+	}
+	return handleIncr(retVal, reuse, incr, expectedShape)
+}
+
+func (t *Dense) outer(other, retVal *Dense) (err error) {
+	m := t.Size()
+	n := other.Size()
+
+	// the stride of a Vector is always going to be [1],
+	// incX := t.Strides()[0]
+	// incY := other.Strides()[0]
+	incX, incY := 1, 1
+	lda := retVal.Strides()[0]
+
+	var ok bool
+	switch x := t.Data().(type) {
+	case []float64:
+		var y, A []float64
+		if y, ok = other.Data().([]float64); !ok {
+			err = errors.Errorf(dtypeMismatch, x, y)
+			return
+		}
+
+		if A, ok = retVal.Data().([]float64); !ok {
+			err = errors.Errorf(dtypeMismatch, x, A)
+			return
+		}
+
+		alpha := float64(1)
+		whichblas.Dger(m, n, alpha, x, incX, y, incY, A, lda)
+	case []float32:
+		var y, A []float32
+		if y, ok = other.Data().([]float32); !ok {
+			err = errors.Errorf(dtypeMismatch, x, y)
+			return
+		}
+
+		if A, ok = retVal.Data().([]float32); !ok {
+			err = errors.Errorf(dtypeMismatch, x, A)
+			return
+		}
+
+		alpha := float32(1)
+		whichblas.Sger(m, n, alpha, x, incX, y, incY, A, lda)
+	default:
+		return errors.Errorf(typeNYI, "outer", other.Data())
+	}
+	return
+}
+
 /* UTILITY FUNCTIONS */
 
 // getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float

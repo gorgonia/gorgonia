@@ -6,6 +6,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type linalgTest struct {
+	a, b           Array
+	shapeA, shapeB Shape
+
+	reuse, incr    Array
+	shapeR, shapeI Shape
+
+	correct          interface{}
+	correctIncr      interface{}
+	correctIncrReuse interface{}
+	correctShape     Shape
+	err              bool
+	errIncr          bool
+	errReuse         bool
+}
+
 var traceTests = []struct {
 	data Array
 
@@ -114,21 +130,7 @@ func TestDense_Inner(t *testing.T) {
 	}
 }
 
-var matVecMulTests = []struct {
-	a, b           Array
-	shapeA, shapeB Shape
-
-	reuse, incr    Array
-	shapeR, shapeI Shape
-
-	correct          interface{}
-	correctIncr      interface{}
-	correctIncrReuse interface{}
-	correctShape     Shape
-	err              bool
-	errIncr          bool
-	errReuse         bool
-}{
+var matVecMulTests = []linalgTest{
 	// Float64s
 	{Range(Float64, 0, 6), Range(Float64, 0, 3), Shape{2, 3}, Shape{3},
 		Range(Float64, 52, 54), Range(Float64, 100, 102), Shape{2}, Shape{2},
@@ -292,21 +294,7 @@ func TestDense_MatVecMul(t *testing.T) {
 	}
 }
 
-var matMulTests = []struct {
-	a, b           Array
-	shapeA, shapeB Shape
-
-	reuse, incr    Array
-	shapeR, shapeI Shape
-
-	correct          interface{}
-	correctIncr      interface{}
-	correctIncrReuse interface{}
-	correctShape     Shape
-	err              bool
-	errIncr          bool
-	errReuse         bool
-}{
+var matMulTests = []linalgTest{
 	// Float64s
 	{Range(Float64, 0, 6), Range(Float64, 0, 6), Shape{2, 3}, Shape{3, 2},
 		Range(Float64, 52, 56), Range(Float64, 100, 104), Shape{2, 2}, Shape{2, 2},
@@ -438,5 +426,127 @@ func TestDense_MatMul(t *testing.T) {
 		}
 		assert.True(mmt.correctShape.Eq(T.Shape()))
 		assert.Equal(mmt.correctIncrReuse, T.Data())
+	}
+}
+
+var outerTests = []linalgTest{
+	// Float64s
+	{Range(Float64, 0, 3), Range(Float64, 0, 3), Shape{3}, Shape{3},
+		Range(Float64, 52, 61), Range(Float64, 100, 109), Shape{3, 3}, Shape{3, 3},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		false, false, false},
+
+	// Float32s
+	{Range(Float32, 0, 3), Range(Float32, 0, 3), Shape{3}, Shape{3},
+		Range(Float32, 52, 61), Range(Float32, 100, 109), Shape{3, 3}, Shape{3, 3},
+		[]float32{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float32{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float32{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		false, false, false},
+
+	// stupids - a or b not vector
+	{Range(Float64, 0, 3), Range(Float64, 0, 6), Shape{3}, Shape{3, 2},
+		Range(Float64, 52, 61), Range(Float64, 100, 109), Shape{3, 3}, Shape{3, 3},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		true, false, false},
+
+	//	stupids - bad incr shape
+	{Range(Float64, 0, 3), Range(Float64, 0, 3), Shape{3}, Shape{3},
+		Range(Float64, 52, 61), Range(Float64, 100, 106), Shape{3, 3}, Shape{3, 2},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		false, true, false},
+
+	// stupids - bad reuse shape
+	{Range(Float64, 0, 3), Range(Float64, 0, 3), Shape{3}, Shape{3},
+		Range(Float64, 52, 58), Range(Float64, 100, 109), Shape{3, 2}, Shape{3, 3},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		false, false, true},
+
+	// stupids - b not Float
+	{Range(Float64, 0, 3), Range(Int, 0, 3), Shape{3}, Shape{3},
+		Range(Float64, 52, 61), Range(Float64, 100, 109), Shape{3, 3}, Shape{3, 3},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		true, false, false},
+
+	// stupids - a not Float
+	{Range(Int, 0, 3), Range(Float64, 0, 3), Shape{3}, Shape{3},
+		Range(Float64, 52, 61), Range(Float64, 100, 109), Shape{3, 3}, Shape{3, 3},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		true, false, false},
+
+	// stupids - a-b type mismatch
+	{Range(Float64, 0, 3), Range(Float32, 0, 3), Shape{3}, Shape{3},
+		Range(Float64, 52, 61), Range(Float64, 100, 109), Shape{3, 3}, Shape{3, 3},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		true, false, false},
+
+	// stupids a-b type mismatch
+	{Range(Float32, 0, 3), Range(Float64, 0, 3), Shape{3}, Shape{3},
+		Range(Float64, 52, 61), Range(Float64, 100, 109), Shape{3, 3}, Shape{3, 3},
+		[]float64{0, 0, 0, 0, 1, 2, 0, 2, 4}, []float64{100, 101, 102, 103, 105, 107, 106, 109, 112}, []float64{100, 101, 102, 103, 106, 109, 106, 111, 116}, Shape{3, 3},
+		true, false, false},
+}
+
+func TestDense_Outer(t *testing.T) {
+	assert := assert.New(t)
+	for i, ot := range outerTests {
+		a := New(WithBacking(ot.a), WithShape(ot.shapeA...))
+		b := New(WithBacking(ot.b), WithShape(ot.shapeB...))
+
+		T, err := a.Outer(b)
+		switch {
+		case ot.err:
+			if err == nil {
+				t.Errorf("Safe Test(%d): Expected an error", i)
+			}
+			continue
+		case !ot.err && err != nil:
+			t.Errorf("Safe Test(%d) errored: %+v", i, err)
+			continue
+		}
+		assert.True(ot.correctShape.Eq(T.Shape()))
+		assert.Equal(ot.correct, T.Data())
+
+		// incr
+		incr := New(WithBacking(ot.incr), WithShape(ot.shapeI...))
+		T, err = a.Outer(b, WithIncr(incr))
+		switch {
+		case ot.errIncr:
+			if err == nil {
+				t.Errorf("WithIncr Test (%d): Expected an error", i)
+			}
+			continue
+		case !ot.errIncr && err != nil:
+			t.Errorf("WithIncr Test (%d) err: %+v", i, err)
+			continue
+		}
+
+		assert.True(ot.correctShape.Eq(T.Shape()))
+		assert.Equal(ot.correctIncr, T.Data())
+
+		// reuse
+		reuse := New(WithBacking(ot.reuse), WithShape(ot.shapeR...))
+		T, err = a.Outer(b, WithReuse(reuse))
+
+		switch {
+		case ot.errReuse:
+			if err == nil {
+				t.Error("Expected an error withReuse")
+			}
+			continue
+		case !ot.errReuse && err != nil:
+			t.Error("WithReuse (%d) err: %+v", i, err)
+			continue
+		}
+
+		assert.True(ot.correctShape.Eq(T.Shape()))
+		assert.Equal(ot.correct, T.Data())
+
+		// reuse AND incr
+		T, err = a.Outer(b, WithIncr(incr), WithReuse(reuse))
+		if err != nil {
+			t.Errorf("Reuse and Incr error'd %+v", err)
+			continue
+		}
+		assert.True(ot.correctShape.Eq(T.Shape()))
+		assert.Equal(ot.correctIncrReuse, T.Data())
 	}
 }
