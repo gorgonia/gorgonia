@@ -436,6 +436,157 @@ func (t *Dense) outer(other, retVal *Dense) (err error) {
 	return
 }
 
+// TensorMul is for multiplying Tensors with more than 2 dimensions.
+//
+// The algorithm is conceptually simple (but tricky to get right):
+// 		1. Transpose and reshape the Tensors in such a way that both t and other are 2D matrices
+//		2. Use DGEMM to multiply them
+//		3. Reshape the results to be the new expected result
+//
+// This function is a Go implementation of Numpy's tensordot method. It simplifies a lot of what Numpy does.
+func (t *Dense) TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err error) {
+	ts := t.Shape()
+	td := len(ts)
+
+	os := other.Shape()
+	od := len(os)
+
+	na := len(axesA)
+	nb := len(axesB)
+	sameLength := na == nb
+	if sameLength {
+		for i := 0; i < na; i++ {
+			if ts[axesA[i]] != os[axesB[i]] {
+				sameLength = false
+				break
+			}
+			if axesA[i] < 0 {
+				axesA[i] += td
+			}
+
+			if axesB[i] < 0 {
+				axesB[i] += od
+			}
+		}
+	}
+
+	if !sameLength {
+		err = errors.Errorf(shapeMismatch, ts, os)
+		return
+	}
+
+	// handle shapes
+	var notins []int
+	for i := 0; i < td; i++ {
+		notin := true
+		for _, a := range axesA {
+			if i == a {
+				notin = false
+				break
+			}
+		}
+		if notin {
+			notins = append(notins, i)
+		}
+	}
+
+	newAxesA := BorrowInts(len(notins) + len(axesA))
+	defer ReturnInts(newAxesA)
+	newAxesA = newAxesA[:0]
+	newAxesA = append(notins, axesA...)
+	n2 := 1
+	for _, a := range axesA {
+		n2 *= ts[a]
+	}
+
+	newShapeT := Shape(BorrowInts(2))
+	defer ReturnInts(newShapeT)
+	newShapeT[0] = ts.TotalSize() / n2
+	newShapeT[1] = n2
+
+	retShape1 := BorrowInts(len(ts))
+	defer ReturnInts(retShape1)
+	retShape1 = retShape1[:0]
+	for _, ni := range notins {
+		retShape1 = append(retShape1, ts[ni])
+	}
+
+	// work on other now
+	notins = notins[:0]
+	for i := 0; i < od; i++ {
+		notin := true
+		for _, a := range axesB {
+			if i == a {
+				notin = false
+				break
+			}
+		}
+		if notin {
+			notins = append(notins, i)
+		}
+	}
+
+	newAxesB := BorrowInts(len(notins) + len(axesB))
+	defer ReturnInts(newAxesB)
+	newAxesB = newAxesB[:0]
+	newAxesB = append(axesB, notins...)
+
+	newShapeO := Shape(BorrowInts(2))
+	defer ReturnInts(newShapeO)
+	newShapeO[0] = n2
+	newShapeO[1] = os.TotalSize() / n2
+
+	retShape2 := BorrowInts(len(ts))
+	retShape2 = retShape2[:0]
+	for _, ni := range notins {
+		retShape2 = append(retShape2, os[ni])
+	}
+
+	// we borrowClone because we don't want to touch the original Tensors
+	doT := t.Clone().(*Dense)
+	doOther := other.Clone().(*Dense)
+	defer ReturnTensor(doT)
+	defer ReturnTensor(doOther)
+
+	if err = doT.T(newAxesA...); err != nil {
+		return
+	}
+	doT.Transpose() // we have to materialize the transpose first or the underlying data won't be changed and the reshape that follows would be meaningless
+
+	if err = doT.Reshape(newShapeT...); err != nil {
+		return
+	}
+
+	if err = doOther.T(newAxesB...); err != nil {
+		return
+	}
+	doOther.Transpose()
+
+	if err = doOther.Reshape(newShapeO...); err != nil {
+		return
+	}
+
+	// the magic happens here
+	var rt Tensor
+	if rt, err = Dot(doT, doOther); err != nil {
+		return
+	}
+	retVal = rt.(*Dense)
+
+	retShape := BorrowInts(len(retShape1) + len(retShape2))
+	defer ReturnInts(retShape)
+
+	retShape = retShape[:0]
+	retShape = append(retShape, retShape1...)
+	retShape = append(retShape, retShape2...)
+
+	if err = retVal.Reshape(retShape...); err != nil {
+		return
+	}
+
+	return
+}
+
 /* UTILITY FUNCTIONS */
 
 // getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float

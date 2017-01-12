@@ -24,9 +24,11 @@ type Tensor interface {
 	Transpose() // Transpose actually moves the data
 
 	// data related interface
-	Zero()
-	SetAll(interface{}) error
-	Data() interface{}
+	Zeroer
+	MemSetter
+	Dataer
+	Eq
+	Cloner
 
 	// type overloading shit
 	IsScalar() bool
@@ -36,8 +38,7 @@ type Tensor interface {
 	IsView() bool
 	Materialize() Tensor
 
-	// Equality
-	Eq
+	// formatters
 	fmt.Formatter
 	fmt.Stringer
 
@@ -48,6 +49,12 @@ type Tensor interface {
 	gob.GobDecoder
 }
 
+// Dotter is used to implement sparse matrices
+type Dotter interface {
+	Tensor
+	Dot(Tensor, ...FuncOpt) (Tensor, error)
+}
+
 // New creates a new Dense Tensor. For sparse arrays use their relevant construction function
 func New(opts ...ConsOpt) *Dense {
 	d := new(Dense)
@@ -56,7 +63,6 @@ func New(opts ...ConsOpt) *Dense {
 		opt(d)
 	}
 	d.fix()
-
 	if err := d.sanity(); err != nil {
 		panic(err)
 	}

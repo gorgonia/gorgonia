@@ -36,6 +36,7 @@ func recycledDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
 	d.setShape(shape...)
 
 	d.fix()
+
 	if err := d.sanity(); err != nil {
 		panic(err)
 	}
@@ -100,7 +101,7 @@ func (t *Dense) Zero() {
 	t.data.Zero()
 }
 
-func (t *Dense) SetAll(val interface{}) error {
+func (t *Dense) Memset(val interface{}) error {
 	if val == 1 {
 		if o, ok := t.data.(Oner); ok {
 			o.One()
@@ -156,6 +157,23 @@ func (t *Dense) Eq(other interface{}) bool {
 		return true
 	}
 	return false
+}
+
+// Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
+func (t *Dense) Clone() interface{} {
+	retVal := recycledDense(t.t, t.Shape().Clone())
+	ReturnAP(retVal.AP)
+	retVal.AP = t.AP.Clone()
+
+	if t.old != nil {
+		retVal.old = t.old.Clone()
+	}
+
+	newData := makeArray(t.t, t.data.Len())
+	copyArray(newData, t.data)
+	retVal.data = newData
+	retVal.Lock()
+	return retVal
 }
 
 /* utility functions to get stuff */

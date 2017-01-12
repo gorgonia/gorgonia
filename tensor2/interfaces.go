@@ -5,6 +5,16 @@ type Eq interface {
 	Eq(interface{}) bool
 }
 
+// Cloner is any type that can clone itself
+type Cloner interface {
+	Clone() interface{}
+}
+
+// Dataer is any type that returns the data in its original form (typically a Go slice of something)
+type Dataer interface {
+	Data() interface{}
+}
+
 // Boolable is any type has a zero and one value, and is able to set itself to either
 type Boolable interface {
 	Zeroer

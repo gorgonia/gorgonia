@@ -8,14 +8,14 @@ import (
 
 // An Array is a representation of a backing for a Dense Tensor
 type Array interface {
-	Len() int          // returns the length of the array
-	Cap() int          // returns the cap of the array
-	Data() interface{} // returns as its original self
+	Len() int // returns the length of the array
+	Cap() int // returns the cap of the array
 
 	Get(i int) interface{}          // Gets the value at index i
 	Set(i int, v interface{}) error // Sets the value at index i to the value
 
 	Eq
+	Dataer
 	Zeroer
 	MemSetter
 }

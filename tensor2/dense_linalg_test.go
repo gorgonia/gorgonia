@@ -550,3 +550,48 @@ func TestDense_Outer(t *testing.T) {
 		assert.Equal(ot.correctIncrReuse, T.Data())
 	}
 }
+
+var tensorMulTests = []struct {
+	a, b           Array
+	shapeA, shapeB Shape
+
+	reuse, incr    Array
+	shapeR, shapeI Shape
+
+	correct          interface{}
+	correctIncr      interface{}
+	correctIncrReuse interface{}
+	correctShape     Shape
+	err              bool
+	errIncr          bool
+	errReuse         bool
+
+	axesA, axesB []int
+}{
+	{a: Range(Float64, 0, 60), b: Range(Float64, 0, 24), shapeA: Shape{3, 4, 5}, shapeB: Shape{4, 3, 2},
+		axesA: []int{1, 0}, axesB: []int{0, 1},
+		correct: []float64{4400, 4730, 4532, 4874, 4664, 5018, 4796, 5162, 4928, 5306}, correctShape: Shape{5, 2}},
+}
+
+func TestDense_TensorMul(t *testing.T) {
+	assert := assert.New(t)
+	for i, tmt := range tensorMulTests {
+		a := New(WithShape(tmt.shapeA...), WithBacking(tmt.a))
+		b := New(WithShape(tmt.shapeB...), WithBacking(tmt.b))
+
+		T, err := a.TensorMul(b, tmt.axesA, tmt.axesB)
+		switch {
+		case tmt.err:
+			if err == nil {
+				t.Errorf("Safe Test (%d) : Expected an error ", i)
+			}
+			continue
+		case !tmt.err && err != nil:
+			t.Errorf("Safe Test(%d) error'd: %+v", i, err)
+			continue
+		}
+
+		assert.True(tmt.correctShape.Eq(T.Shape()))
+		assert.Equal(tmt.correct, T.Data())
+	}
+}
