@@ -35,110 +35,110 @@ type ArrayType struct {
 	IncrTestData string
 }
 
+var arrayTypes = [...]ArrayType{
+	ArrayType{
+		Of:          "float64",
+		Name:        "f64s",
+		DefaultZero: "float64(0)",
+		DefaultOne:  "float64(1)",
+		Compatible:  "Float64s",
+
+		VecPkg:  "vecf64",
+		MathPkg: "math",
+
+		isNumber: true,
+		elOrd:    true,
+
+		TestData0: "0, 1, 2, 3, 4",
+		TestData1: "1, 2, 2, 1, 100",
+	},
+
+	ArrayType{
+		Of:          "float32",
+		Name:        "f32s",
+		DefaultZero: "float32(0)",
+		DefaultOne:  "float32(1)",
+		Compatible:  "Float32s",
+
+		VecPkg:  "vecf32",
+		MathPkg: "math32",
+
+		isNumber: true,
+		elOrd:    true,
+
+		TestData0: "0, 1, 2, 3, 4",
+		TestData1: "1, 2, 2, 1, 100",
+	},
+
+	ArrayType{
+		Of:          "int",
+		Name:        "ints",
+		DefaultZero: "int(0)",
+		DefaultOne:  "int(1)",
+		Compatible:  "Ints",
+
+		isNumber: true,
+		elOrd:    true,
+
+		TestData0: "0, 1, 2, 3, 4",
+		TestData1: "1, 2, 2, 1, 100",
+	},
+
+	ArrayType{
+		Of:          "int64",
+		Name:        "i64s",
+		DefaultZero: "int64(0)",
+		DefaultOne:  "int64(1)",
+		Compatible:  "Int64s",
+
+		isNumber: true,
+		elOrd:    true,
+
+		TestData0: "0, 1, 2, 3, 4",
+		TestData1: "1, 2, 2, 1, 100",
+	},
+
+	ArrayType{
+		Of:          "int32",
+		Name:        "i32s",
+		DefaultZero: "int32(0)",
+		DefaultOne:  "int32(1)",
+		Compatible:  "Int32s",
+
+		isNumber: true,
+		elOrd:    true,
+
+		TestData0: "0, 1, 2, 3, 4",
+		TestData1: "1, 2, 2, 1, 100",
+	},
+
+	ArrayType{
+		Of:          "byte",
+		Name:        "u8s",
+		DefaultZero: "byte(0)",
+		DefaultOne:  "byte(1)",
+		Compatible:  "Bytes",
+
+		isNumber: true,
+		elOrd:    true,
+
+		TestData0: "0, 1, 2, 3, 4",
+		TestData1: "1, 2, 2, 1, 100",
+	},
+
+	ArrayType{
+		Of:          "bool",
+		Name:        "bs",
+		DefaultZero: "false",
+		DefaultOne:  "true",
+		Compatible:  "Bools",
+
+		TestData0: "true, false, true, false, true",
+		TestData1: "true, true, true, false, false",
+	},
+}
+
 func main() {
-	m := []ArrayType{
-		ArrayType{
-			Of:          "float64",
-			Name:        "f64s",
-			DefaultZero: "float64(0)",
-			DefaultOne:  "float64(1)",
-			Compatible:  "Float64s",
-
-			VecPkg:  "vecf64",
-			MathPkg: "math",
-
-			isNumber: true,
-			elOrd:    true,
-
-			TestData0: "0, 1, 2, 3, 4",
-			TestData1: "1, 2, 2, 1, 100",
-		},
-
-		ArrayType{
-			Of:          "float32",
-			Name:        "f32s",
-			DefaultZero: "float32(0)",
-			DefaultOne:  "float32(1)",
-			Compatible:  "Float32s",
-
-			VecPkg:  "vecf32",
-			MathPkg: "math32",
-
-			isNumber: true,
-			elOrd:    true,
-
-			TestData0: "0, 1, 2, 3, 4",
-			TestData1: "1, 2, 2, 1, 100",
-		},
-
-		ArrayType{
-			Of:          "int",
-			Name:        "ints",
-			DefaultZero: "int(0)",
-			DefaultOne:  "int(1)",
-			Compatible:  "Ints",
-
-			isNumber: true,
-			elOrd:    true,
-
-			TestData0: "0, 1, 2, 3, 4",
-			TestData1: "1, 2, 2, 1, 100",
-		},
-
-		ArrayType{
-			Of:          "int64",
-			Name:        "i64s",
-			DefaultZero: "int64(0)",
-			DefaultOne:  "int64(1)",
-			Compatible:  "Int64s",
-
-			isNumber: true,
-			elOrd:    true,
-
-			TestData0: "0, 1, 2, 3, 4",
-			TestData1: "1, 2, 2, 1, 100",
-		},
-
-		ArrayType{
-			Of:          "int32",
-			Name:        "i32s",
-			DefaultZero: "int32(0)",
-			DefaultOne:  "int32(1)",
-			Compatible:  "Int32s",
-
-			isNumber: true,
-			elOrd:    true,
-
-			TestData0: "0, 1, 2, 3, 4",
-			TestData1: "1, 2, 2, 1, 100",
-		},
-
-		ArrayType{
-			Of:          "byte",
-			Name:        "u8s",
-			DefaultZero: "byte(0)",
-			DefaultOne:  "byte(1)",
-			Compatible:  "Bytes",
-
-			isNumber: true,
-			elOrd:    true,
-
-			TestData0: "0, 1, 2, 3, 4",
-			TestData1: "1, 2, 2, 1, 100",
-		},
-
-		ArrayType{
-			Of:          "bool",
-			Name:        "bs",
-			DefaultZero: "false",
-			DefaultOne:  "true",
-			Compatible:  "Bools",
-
-			TestData0: "true, false, true, false, true",
-			TestData1: "true, true, true, false, false",
-		},
-	}
-
 	const (
 		testtestName        = "../test_test.go"
 		basicsName          = "../array_impl.go"
@@ -153,21 +153,14 @@ func main() {
 		denseBinOpTestName = "../api_arith_test.go"
 	)
 
-	if err := os.Remove(basicsName); err != nil {
-		if !os.IsNotExist(err) {
-			panic(err)
-		}
-	}
-
-	pipeline(testtestName, m, testtestFn)
-
-	pipeline(basicsName, m, generateBasics)
-	pipeline(numbersName, m, generateNumbers)
-	pipeline(numbersTestName, m, generateNumbersTests)
-	pipeline(incrNumbersName, m, generateNumbersIncr)
-	pipeline(incrNumbersTestName, m, generateNumbersIncrTests)
-	pipeline(eleqordName, m, generateElEqOrds)
-	pipeline(eleqordTestName, m, generateElEqOrdsTests)
+	pipeline(testtestName, arrayTypes, testtestFn)
+	pipeline(basicsName, arrayTypes, generateBasics)
+	pipeline(numbersName, arrayTypes, generateNumbers)
+	pipeline(numbersTestName, arrayTypes, generateNumbersTests)
+	pipeline(incrNumbersName, arrayTypes, generateNumbersIncr)
+	pipeline(incrNumbersTestName, arrayTypes, generateNumbersIncrTests)
+	pipeline(eleqordName, arrayTypes, generateElEqOrds)
+	pipeline(eleqordTestName, arrayTypes, generateElEqOrdsTests)
 
 	generateDenseArith(denseBinOpName)
 	generateDenseArithTests(denseBinOpTestName, m)
