@@ -1138,8 +1138,8 @@ func TestDot(t *testing.T) {
 
 	// The Nearly Stupids
 
-	s = New(Of(Float64), FromScalar(5.0))
-	s2 = New(Of(Float64), FromScalar(10.0))
+	s = New(FromScalar(5.0))
+	s2 = New(FromScalar(10.0))
 	R, err = Dot(s, s2)
 	assert.Nil(err)
 	assert.True(R.IsScalar())
