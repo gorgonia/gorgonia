@@ -675,6 +675,11 @@ func assignArray(dest, src *Dense) (err error) {
 	// dch := diter.Chan()
 	// sch := siter.Chan()
 
+	if im, ok := dest.data.(IterMapper); ok {
+		return im.IterMap(src.data, diter, siter, nil, false)
+	}
+
+	// slow methods used if not IterMap
 	var i, j int
 	// var ok bool
 	for {

@@ -557,30 +557,71 @@ func TestDense_RollAxis(t *testing.T) {
 
 var concatTests = []struct {
 	name  string
+	dt    Dtype
+	a     Array
 	shape Shape
 	axis  int
 
 	correctShape Shape
-	correctData  f64s
+	correctData  interface{}
 }{
-	{"vector", Shape{2}, 0, Shape{4}, f64s{0, 1, 0, 1}},
-	{"matrix; axis 0 ", Shape{2, 2}, 0, Shape{4, 2}, f64s{0, 1, 2, 3, 0, 1, 2, 3}},
-	{"matrix; axis 1 ", Shape{2, 2}, 1, Shape{2, 4}, f64s{0, 1, 0, 1, 2, 3, 2, 3}},
+	// Float64
+	{"vector", Float64, nil, Shape{2}, 0, Shape{4}, []float64{0, 1, 0, 1}},
+	{"matrix; axis 0 ", Float64, nil, Shape{2, 2}, 0, Shape{4, 2}, []float64{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", Float64, nil, Shape{2, 2}, 1, Shape{2, 4}, []float64{0, 1, 0, 1, 2, 3, 2, 3}},
+
+	// Float32
+	{"vector", Float32, nil, Shape{2}, 0, Shape{4}, []float32{0, 1, 0, 1}},
+	{"matrix; axis 0 ", Float32, nil, Shape{2, 2}, 0, Shape{4, 2}, []float32{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", Float32, nil, Shape{2, 2}, 1, Shape{2, 4}, []float32{0, 1, 0, 1, 2, 3, 2, 3}},
+
+	// Int
+	{"vector", Int, nil, Shape{2}, 0, Shape{4}, []int{0, 1, 0, 1}},
+	{"matrix; axis 0 ", Int, nil, Shape{2, 2}, 0, Shape{4, 2}, []int{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", Int, nil, Shape{2, 2}, 1, Shape{2, 4}, []int{0, 1, 0, 1, 2, 3, 2, 3}},
+
+	// Int64
+	{"vector", Int64, nil, Shape{2}, 0, Shape{4}, []int64{0, 1, 0, 1}},
+	{"matrix; axis 0 ", Int64, nil, Shape{2, 2}, 0, Shape{4, 2}, []int64{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", Int64, nil, Shape{2, 2}, 1, Shape{2, 4}, []int64{0, 1, 0, 1, 2, 3, 2, 3}},
+
+	// Int32
+	{"vector", Int32, nil, Shape{2}, 0, Shape{4}, []int32{0, 1, 0, 1}},
+	{"matrix; axis 0 ", Int32, nil, Shape{2, 2}, 0, Shape{4, 2}, []int32{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", Int32, nil, Shape{2, 2}, 1, Shape{2, 4}, []int32{0, 1, 0, 1, 2, 3, 2, 3}},
+
+	// Byte
+	{"vector", Byte, nil, Shape{2}, 0, Shape{4}, []byte{0, 1, 0, 1}},
+	{"matrix; axis 0 ", Byte, nil, Shape{2, 2}, 0, Shape{4, 2}, []byte{0, 1, 2, 3, 0, 1, 2, 3}},
+	{"matrix; axis 1 ", Byte, nil, Shape{2, 2}, 1, Shape{2, 4}, []byte{0, 1, 0, 1, 2, 3, 2, 3}},
+
+	// Bool
+	{"vector", Bool, bs{true, false}, Shape{2}, 0, Shape{4}, []bool{true, false, true, false}},
+	{"matrix; axis 0 ", Bool, bs{true, false, true, false}, Shape{2, 2}, 0, Shape{4, 2}, []bool{true, false, true, false, true, false, true, false}},
+	{"matrix; axis 1 ", Bool, bs{true, false, true, false}, Shape{2, 2}, 1, Shape{2, 4}, []bool{true, false, true, false, true, false, true, false}},
 }
 
-func TestTensor_Concat(t *testing.T) {
+func TestDense_Concat(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, cts := range concatTests {
-		T0 := New(WithShape(cts.shape...), WithBacking(Range(Float64, 0, cts.shape.TotalSize())))
-		T1 := New(WithShape(cts.shape...), WithBacking(Range(Float64, 0, cts.shape.TotalSize())))
+		var T0, T1 *Dense
+
+		if cts.a == nil {
+			T0 = New(WithShape(cts.shape...), WithBacking(Range(cts.dt, 0, cts.shape.TotalSize())))
+			T1 = New(WithShape(cts.shape...), WithBacking(Range(cts.dt, 0, cts.shape.TotalSize())))
+		} else {
+			T0 = New(WithShape(cts.shape...), WithBacking(cts.a))
+			T1 = New(WithShape(cts.shape...), WithBacking(cloneArray(cts.a)))
+		}
+
 		T2, err := T0.Concat(cts.axis, T1)
 		if err != nil {
 			t.Error(err)
 			continue
 		}
 		assert.True(cts.correctShape.Eq(T2.Shape()))
-		assert.Equal(cts.correctData, T2.data)
+		assert.Equal(cts.correctData, T2.Data())
 	}
 }
 
@@ -800,6 +841,7 @@ func TestDense_Apply(t *testing.T) {
 		assert.NotEqual(T2, T, "Test %d", i)
 		assert.Equal(dat.correct, T2.Data(), "Test %d", i)
 
+		// incr
 		incr := New(WithBacking(dat.incr))
 		T2, err = T.Apply(fn, WithIncr(incr))
 		if err != nil {

@@ -1022,8 +1022,8 @@ func (a f64sDummy) IterMap(other Array, it, ot *FlatIterator, fn interface{}, in
 				a[i] = f(b[j])
 			}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")
@@ -1173,8 +1173,8 @@ func (a f32sDummy) IterMap(other Array, it, ot *FlatIterator, fn interface{}, in
 				a[i] = f(b[j])
 			}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")
@@ -1324,8 +1324,8 @@ func (a intsDummy) IterMap(other Array, it, ot *FlatIterator, fn interface{}, in
 				a[i] = f(b[j])
 			}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")
@@ -1475,8 +1475,8 @@ func (a i64sDummy) IterMap(other Array, it, ot *FlatIterator, fn interface{}, in
 				a[i] = f(b[j])
 			}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")
@@ -1626,8 +1626,8 @@ func (a i32sDummy) IterMap(other Array, it, ot *FlatIterator, fn interface{}, in
 				a[i] = f(b[j])
 			}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")
@@ -1777,8 +1777,8 @@ func (a u8sDummy) IterMap(other Array, it, ot *FlatIterator, fn interface{}, inc
 				a[i] = f(b[j])
 			}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")
@@ -1899,8 +1899,8 @@ func (a bsDummy) IterMap(other Array, it, ot *FlatIterator, fn interface{}, incr
 				a[i] = f(b[j])
 			}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")

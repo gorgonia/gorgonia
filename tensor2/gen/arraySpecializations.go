@@ -233,8 +233,8 @@ const iterMapperRaw = `func (a {{.Name}}) IterMap(other Array, it, ot *FlatItera
 				}
 			{{end}}
 
-			return nil
 		}
+		return nil
 	case other == nil && ot != nil:
 		// error - stupid
 		return errors.Errorf("Meaningless state - other is nil, ot is not")
