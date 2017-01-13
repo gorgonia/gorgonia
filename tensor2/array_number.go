@@ -21,7 +21,7 @@ func (a f64s) Add(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Add", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf64.Add([]float64(a), b)
@@ -35,7 +35,7 @@ func (a f32s) Add(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Add", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf32.Add([]float32(a), b)
@@ -49,7 +49,7 @@ func (a ints) Add(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Add", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -66,7 +66,7 @@ func (a i64s) Add(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Add", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -83,7 +83,7 @@ func (a i32s) Add(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Add", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -100,7 +100,7 @@ func (a u8s) Add(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Add", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -119,7 +119,7 @@ func (a f64s) Sub(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Sub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf64.Sub([]float64(a), b)
@@ -133,7 +133,7 @@ func (a f32s) Sub(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Sub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf32.Sub([]float32(a), b)
@@ -147,7 +147,7 @@ func (a ints) Sub(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Sub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -164,7 +164,7 @@ func (a i64s) Sub(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Sub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -181,7 +181,7 @@ func (a i32s) Sub(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Sub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -198,7 +198,7 @@ func (a u8s) Sub(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Sub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -217,7 +217,7 @@ func (a f64s) Mul(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Mul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf64.Mul([]float64(a), b)
@@ -231,7 +231,7 @@ func (a f32s) Mul(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Mul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf32.Mul([]float32(a), b)
@@ -245,7 +245,7 @@ func (a ints) Mul(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Mul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -262,7 +262,7 @@ func (a i64s) Mul(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Mul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -279,7 +279,7 @@ func (a i32s) Mul(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Mul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -296,7 +296,7 @@ func (a u8s) Mul(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Mul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -315,7 +315,7 @@ func (a f64s) Div(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf64.Div([]float64(a), b)
@@ -329,7 +329,7 @@ func (a f32s) Div(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf32.Div([]float32(a), b)
@@ -343,7 +343,7 @@ func (a ints) Div(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	var errs errorIndices
@@ -370,7 +370,7 @@ func (a i64s) Div(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	var errs errorIndices
@@ -397,7 +397,7 @@ func (a i32s) Div(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	var errs errorIndices
@@ -424,7 +424,7 @@ func (a u8s) Div(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Div", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	var errs errorIndices
@@ -453,7 +453,7 @@ func (a f64s) Pow(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf64.Pow([]float64(a), b)
@@ -467,7 +467,7 @@ func (a f32s) Pow(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	vecf32.Pow([]float32(a), b)
@@ -481,7 +481,7 @@ func (a ints) Pow(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -498,7 +498,7 @@ func (a i64s) Pow(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -515,7 +515,7 @@ func (a i32s) Pow(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {
@@ -532,7 +532,7 @@ func (a u8s) Pow(other Number) error {
 	}
 
 	if len(a) != len(b) {
-		return errors.Errorf("lenMismatch", "Pow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	for i, v := range b {

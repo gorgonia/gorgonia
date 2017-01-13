@@ -8,10 +8,7 @@ GENERATED FILE. DO NOT EDIT
 
 /* extraction functions */
 func getFloat64s(a Array) ([]float64, error) {
-	switch at := a.(type) {
-	case f64s:
-		return []float64(at), nil
-	case Float64ser:
+	if at, ok := a.(Float64ser); ok {
 		return at.Float64s(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]float64", a)
@@ -26,10 +23,7 @@ func getFloat64(a interface{}) (retVal float64, err error) {
 }
 
 func getFloat32s(a Array) ([]float32, error) {
-	switch at := a.(type) {
-	case f32s:
-		return []float32(at), nil
-	case Float32ser:
+	if at, ok := a.(Float32ser); ok {
 		return at.Float32s(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]float32", a)
@@ -44,10 +38,7 @@ func getFloat32(a interface{}) (retVal float32, err error) {
 }
 
 func getInts(a Array) ([]int, error) {
-	switch at := a.(type) {
-	case ints:
-		return []int(at), nil
-	case Intser:
+	if at, ok := a.(Intser); ok {
 		return at.Ints(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]int", a)
@@ -62,10 +53,7 @@ func getInt(a interface{}) (retVal int, err error) {
 }
 
 func getInt64s(a Array) ([]int64, error) {
-	switch at := a.(type) {
-	case i64s:
-		return []int64(at), nil
-	case Int64ser:
+	if at, ok := a.(Int64ser); ok {
 		return at.Int64s(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]int64", a)
@@ -80,10 +68,7 @@ func getInt64(a interface{}) (retVal int64, err error) {
 }
 
 func getInt32s(a Array) ([]int32, error) {
-	switch at := a.(type) {
-	case i32s:
-		return []int32(at), nil
-	case Int32ser:
+	if at, ok := a.(Int32ser); ok {
 		return at.Int32s(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]int32", a)
@@ -98,10 +83,7 @@ func getInt32(a interface{}) (retVal int32, err error) {
 }
 
 func getBytes(a Array) ([]byte, error) {
-	switch at := a.(type) {
-	case u8s:
-		return []byte(at), nil
-	case Byteser:
+	if at, ok := a.(Byteser); ok {
 		return at.Bytes(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]byte", a)
@@ -116,10 +98,7 @@ func getByte(a interface{}) (retVal byte, err error) {
 }
 
 func getBools(a Array) ([]bool, error) {
-	switch at := a.(type) {
-	case bs:
-		return []bool(at), nil
-	case Boolser:
+	if at, ok := a.(Boolser); ok {
 		return at.Bools(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]bool", a)
@@ -152,6 +131,16 @@ func (a i64s) Cap() int { return cap(a) }
 func (a i32s) Cap() int { return cap(a) }
 func (a u8s) Cap() int  { return cap(a) }
 func (a bs) Cap() int   { return cap(a) }
+
+/* Compat */
+
+func (a f64s) Float64s() []float64 { return []float64(a) }
+func (a f32s) Float32s() []float32 { return []float32(a) }
+func (a ints) Ints() []int         { return []int(a) }
+func (a i64s) Int64s() []int64     { return []int64(a) }
+func (a i32s) Int32s() []int32     { return []int32(a) }
+func (a u8s) Bytes() []byte        { return []byte(a) }
+func (a bs) Bools() []bool         { return []bool(a) }
 
 /* Data */
 
@@ -593,8 +582,6 @@ func (a bs) One() {
 
 func (a f64s) CopyFrom(other interface{}) (int, error) {
 	switch b := other.(type) {
-	case f64s:
-		return copy(a, b), nil
 	case []float64:
 		return copy(a, b), nil
 	case Float64ser:
@@ -606,8 +593,6 @@ func (a f64s) CopyFrom(other interface{}) (int, error) {
 
 func (a f32s) CopyFrom(other interface{}) (int, error) {
 	switch b := other.(type) {
-	case f32s:
-		return copy(a, b), nil
 	case []float32:
 		return copy(a, b), nil
 	case Float32ser:
@@ -619,8 +604,6 @@ func (a f32s) CopyFrom(other interface{}) (int, error) {
 
 func (a ints) CopyFrom(other interface{}) (int, error) {
 	switch b := other.(type) {
-	case ints:
-		return copy(a, b), nil
 	case []int:
 		return copy(a, b), nil
 	case Intser:
@@ -632,8 +615,6 @@ func (a ints) CopyFrom(other interface{}) (int, error) {
 
 func (a i64s) CopyFrom(other interface{}) (int, error) {
 	switch b := other.(type) {
-	case i64s:
-		return copy(a, b), nil
 	case []int64:
 		return copy(a, b), nil
 	case Int64ser:
@@ -645,8 +626,6 @@ func (a i64s) CopyFrom(other interface{}) (int, error) {
 
 func (a i32s) CopyFrom(other interface{}) (int, error) {
 	switch b := other.(type) {
-	case i32s:
-		return copy(a, b), nil
 	case []int32:
 		return copy(a, b), nil
 	case Int32ser:
@@ -658,8 +637,6 @@ func (a i32s) CopyFrom(other interface{}) (int, error) {
 
 func (a u8s) CopyFrom(other interface{}) (int, error) {
 	switch b := other.(type) {
-	case u8s:
-		return copy(a, b), nil
 	case []byte:
 		return copy(a, b), nil
 	case Byteser:
@@ -671,8 +648,6 @@ func (a u8s) CopyFrom(other interface{}) (int, error) {
 
 func (a bs) CopyFrom(other interface{}) (int, error) {
 	switch b := other.(type) {
-	case bs:
-		return copy(a, b), nil
 	case []bool:
 		return copy(a, b), nil
 	case Boolser:

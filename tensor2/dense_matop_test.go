@@ -366,7 +366,7 @@ func TestDense_Repeat(t *testing.T) {
 
 		var D *Dense
 		if D, err = getDense(T); err != nil {
-			t.Error("Expected Repeat to return a *Dense. got %v of %T instead", T, T)
+			t.Errorf("Expected Repeat to return a *Dense. got %v of %T instead", T, T)
 			continue
 		}
 
@@ -806,7 +806,7 @@ func TestDense_Apply(t *testing.T) {
 		var err error
 		if dat.slice != nil {
 			if T, err = T.Slice(dat.slice...); err != nil {
-				t.Error("Slicing failed %+v", err)
+				t.Errorf("Slicing failed %+v", err)
 				continue
 			}
 		}

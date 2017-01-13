@@ -34,7 +34,7 @@ const eleqordRaw = `func (a {{.Name}}) {{.OpName}}(other {{.TypeClass}}, same bo
 	case {{.Compatible}}er:
 		b = {{.Name}}(ot.{{.Compatible}}())
 	default:
-		return nil, errors.Errorf(typeMismatch, "{{.OpName}}", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 	
 	if len(a) != len(b){

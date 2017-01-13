@@ -277,7 +277,7 @@ func TestDense_MatVecMul(t *testing.T) {
 			}
 			continue
 		case !mvmt.errReuse && err != nil:
-			t.Error("WithReuse (%d) err: %+v", i, err)
+			t.Errorf("WithReuse (%d) err: %+v", i, err)
 			continue
 		}
 
@@ -412,7 +412,7 @@ func TestDense_MatMul(t *testing.T) {
 			}
 			continue
 		case !mmt.errReuse && err != nil:
-			t.Error("WithReuse (%d) err: %+v", i, err)
+			t.Errorf("WithReuse (%d) err: %+v", i, err)
 			continue
 		}
 
@@ -534,7 +534,7 @@ func TestDense_Outer(t *testing.T) {
 			}
 			continue
 		case !ot.errReuse && err != nil:
-			t.Error("WithReuse (%d) err: %+v", i, err)
+			t.Errorf("WithReuse (%d) err: %+v", i, err)
 			continue
 		}
 

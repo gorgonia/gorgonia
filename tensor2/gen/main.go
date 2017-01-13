@@ -208,11 +208,11 @@ func testtestFn(f io.Writer, m []ArrayType) {
 	generateBasics(f, m2)
 
 	// generate compat
-	fmt.Fprintf(f, "/* COMPAT */ \n\n")
-	for _, v := range m2 {
-		compatibleTmpl.Execute(f, v)
-		fmt.Fprintf(f, "\n")
-	}
+	// fmt.Fprintf(f, "/* COMPAT */ \n\n")
+	// for _, v := range m2 {
+	// 	compatibleTmpl.Execute(f, v)
+	// 	fmt.Fprintf(f, "\n")
+	// }
 
 	generateNumbersOpsOnly(f, m2)
 	generateNumbersIncr(f, m2)

@@ -65,8 +65,6 @@ const oneRaw = `func (a {{.Name}}) One() {
 
 const copyFromRaw = `func (a {{.Name}}) CopyFrom(other interface{}) (int, error){
 	switch b := other.(type) {
-	case {{.Name}}:
-		return copy(a, b), nil
 	case []{{.Of}}:
 		return copy(a, b), nil
 	case {{.Compatible}}er:
@@ -124,10 +122,7 @@ func Test_{{.Name}}_Map(t *testing.T) {
 `
 
 const extractionHelpersRaw = `func get{{title .Of}}s(a Array) ([]{{.Of}}, error){
-	switch at := a.(type){
-	case {{.Name}}:
-		return []{{.Of}}(at), nil
-	case {{.Compatible}}er:
+	if at, ok := a.({{.Compatible}}er); ok {
 		return at.{{.Compatible}}(), nil
 	}
 	return nil, errors.Errorf(extractionFail, "[]{{.Of}}", a)
@@ -185,7 +180,7 @@ func init() {
 	// tests
 	arrayMapTestTmpl = template.Must(template.New("MapTest").Funcs(funcMap).Parse(arrayMapTestRaw))
 
-	basics = []*template.Template{lenTmpl, capTmpl, dataTmpl, getTmpl, setTmpl, arrayMapTmpl, eqTmpl, zeroTmpl, oneTmpl, copyFromTmpl}
+	basics = []*template.Template{lenTmpl, capTmpl, compatibleTmpl, dataTmpl, getTmpl, setTmpl, arrayMapTmpl, eqTmpl, zeroTmpl, oneTmpl, copyFromTmpl}
 	basicsTests = []*template.Template{arrayMapTestTmpl}
 }
 

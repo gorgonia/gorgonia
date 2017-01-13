@@ -25,11 +25,11 @@ func (a f64s) IncrAdd(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrAdd([]float64(a), b, incr)
@@ -47,11 +47,11 @@ func (a f32s) IncrAdd(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrAdd([]float32(a), b, incr)
@@ -69,11 +69,11 @@ func (a ints) IncrAdd(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -94,11 +94,11 @@ func (a i64s) IncrAdd(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -119,11 +119,11 @@ func (a i32s) IncrAdd(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -144,11 +144,11 @@ func (a u8s) IncrAdd(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrAdd", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -171,11 +171,11 @@ func (a f64s) IncrSub(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrSub([]float64(a), b, incr)
@@ -193,11 +193,11 @@ func (a f32s) IncrSub(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrSub([]float32(a), b, incr)
@@ -215,11 +215,11 @@ func (a ints) IncrSub(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -240,11 +240,11 @@ func (a i64s) IncrSub(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -265,11 +265,11 @@ func (a i32s) IncrSub(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -290,11 +290,11 @@ func (a u8s) IncrSub(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrSub", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -317,11 +317,11 @@ func (a f64s) IncrMul(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrMul([]float64(a), b, incr)
@@ -339,11 +339,11 @@ func (a f32s) IncrMul(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrMul([]float32(a), b, incr)
@@ -361,11 +361,11 @@ func (a ints) IncrMul(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -386,11 +386,11 @@ func (a i64s) IncrMul(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -411,11 +411,11 @@ func (a i32s) IncrMul(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -436,11 +436,11 @@ func (a u8s) IncrMul(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrMul", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -463,11 +463,11 @@ func (a f64s) IncrDiv(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrDiv([]float64(a), b, incr)
@@ -485,11 +485,11 @@ func (a f32s) IncrDiv(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrDiv([]float32(a), b, incr)
@@ -507,11 +507,11 @@ func (a ints) IncrDiv(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -542,11 +542,11 @@ func (a i64s) IncrDiv(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -577,11 +577,11 @@ func (a i32s) IncrDiv(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -612,11 +612,11 @@ func (a u8s) IncrDiv(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrDiv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -649,11 +649,11 @@ func (a f64s) IncrPow(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrPow([]float64(a), b, incr)
@@ -671,11 +671,11 @@ func (a f32s) IncrPow(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrPow([]float32(a), b, incr)
@@ -693,11 +693,11 @@ func (a ints) IncrPow(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -718,11 +718,11 @@ func (a i64s) IncrPow(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -743,11 +743,11 @@ func (a i32s) IncrPow(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -768,11 +768,11 @@ func (a u8s) IncrPow(other, incrArr Number) (err error) {
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(b))
+		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPow", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range b {
@@ -796,7 +796,7 @@ func (a f64s) IncrTrans(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrTrans([]float64(a), b, incr)
@@ -815,7 +815,7 @@ func (a f32s) IncrTrans(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrTrans([]float32(a), b, incr)
@@ -834,7 +834,7 @@ func (a ints) IncrTrans(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -855,7 +855,7 @@ func (a i64s) IncrTrans(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -876,7 +876,7 @@ func (a i32s) IncrTrans(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -897,7 +897,7 @@ func (a u8s) IncrTrans(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTrans", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -920,7 +920,7 @@ func (a f64s) IncrTransInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrTransInv([]float64(a), b, incr)
@@ -939,7 +939,7 @@ func (a f32s) IncrTransInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrTransInv([]float32(a), b, incr)
@@ -958,7 +958,7 @@ func (a ints) IncrTransInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -979,7 +979,7 @@ func (a i64s) IncrTransInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1000,7 +1000,7 @@ func (a i32s) IncrTransInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1021,7 +1021,7 @@ func (a u8s) IncrTransInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1044,7 +1044,7 @@ func (a f64s) IncrTransInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrTransInvR([]float64(a), b, incr)
@@ -1063,7 +1063,7 @@ func (a f32s) IncrTransInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrTransInvR([]float32(a), b, incr)
@@ -1082,7 +1082,7 @@ func (a ints) IncrTransInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1103,7 +1103,7 @@ func (a i64s) IncrTransInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1124,7 +1124,7 @@ func (a i32s) IncrTransInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1145,7 +1145,7 @@ func (a u8s) IncrTransInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrTransInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1168,7 +1168,7 @@ func (a f64s) IncrScale(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrScale([]float64(a), b, incr)
@@ -1187,7 +1187,7 @@ func (a f32s) IncrScale(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrScale([]float32(a), b, incr)
@@ -1206,7 +1206,7 @@ func (a ints) IncrScale(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1227,7 +1227,7 @@ func (a i64s) IncrScale(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1248,7 +1248,7 @@ func (a i32s) IncrScale(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1269,7 +1269,7 @@ func (a u8s) IncrScale(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScale", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1292,7 +1292,7 @@ func (a f64s) IncrScaleInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrScaleInv([]float64(a), b, incr)
@@ -1311,7 +1311,7 @@ func (a f32s) IncrScaleInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrScaleInv([]float32(a), b, incr)
@@ -1330,7 +1330,7 @@ func (a ints) IncrScaleInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1360,7 +1360,7 @@ func (a i64s) IncrScaleInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1390,7 +1390,7 @@ func (a i32s) IncrScaleInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1420,7 +1420,7 @@ func (a u8s) IncrScaleInv(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInv", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1452,7 +1452,7 @@ func (a f64s) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrScaleInvR([]float64(a), b, incr)
@@ -1471,7 +1471,7 @@ func (a f32s) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrScaleInvR([]float32(a), b, incr)
@@ -1490,7 +1490,7 @@ func (a ints) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1520,7 +1520,7 @@ func (a i64s) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1550,7 +1550,7 @@ func (a i32s) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1580,7 +1580,7 @@ func (a u8s) IncrScaleInvR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrScaleInvR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	var errs errorIndices
@@ -1612,7 +1612,7 @@ func (a f64s) IncrPowOf(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrPowOf([]float64(a), b, incr)
@@ -1631,7 +1631,7 @@ func (a f32s) IncrPowOf(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrPowOf([]float32(a), b, incr)
@@ -1650,7 +1650,7 @@ func (a ints) IncrPowOf(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1671,7 +1671,7 @@ func (a i64s) IncrPowOf(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1692,7 +1692,7 @@ func (a i32s) IncrPowOf(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1713,7 +1713,7 @@ func (a u8s) IncrPowOf(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOf", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1736,7 +1736,7 @@ func (a f64s) IncrPowOfR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf64.IncrPowOfR([]float64(a), b, incr)
@@ -1755,7 +1755,7 @@ func (a f32s) IncrPowOfR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	vecf32.IncrPowOfR([]float32(a), b, incr)
@@ -1774,7 +1774,7 @@ func (a ints) IncrPowOfR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1795,7 +1795,7 @@ func (a i64s) IncrPowOfR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1816,7 +1816,7 @@ func (a i32s) IncrPowOfR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {
@@ -1837,7 +1837,7 @@ func (a u8s) IncrPowOfR(other interface{}, incrArr Number) (err error) {
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "IncrPowOfR", len(a), len(incr))
+		return errors.Errorf(lenMismatch, len(a), len(incr))
 	}
 
 	for i, v := range a {

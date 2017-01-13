@@ -28,7 +28,7 @@ const densBinOpPrep = `package tensor
 import "github.com/pkg/errors"
 
 
-func prepDDOp(a, b *Dense, opts ...FuncOpt) (an, bn, rn Number, reuse *Dense, safe, toReuse, incr bool, err error) {
+func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (an, bn, rn Number, reuse *Dense, safe, toReuse, incr bool, err error) {
 	var ok bool
 	if an, ok = a.data.(Number); !ok {
 		err = noopError{}
@@ -45,7 +45,9 @@ func prepDDOp(a, b *Dense, opts ...FuncOpt) (an, bn, rn Number, reuse *Dense, sa
 		return
 	}
 
-	safe, incr, reuseT := parseSafeReuse(opts...)
+	fo := parseFuncOpts(opts...)
+	reuseT, incr := fo.incrReuse()
+	safe = fo.safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -64,14 +66,16 @@ func prepDDOp(a, b *Dense, opts ...FuncOpt) (an, bn, rn Number, reuse *Dense, sa
 	return
 }
 
-func prepSD(a *Dense, opts ...FuncOpt) (an, rn Number, reuse *Dense, safe, toReuse, incr bool, err error) {
+func prepUnaryDense(a *Dense, opts ...FuncOpt) (an, rn Number, reuse *Dense, safe, toReuse, incr bool, err error) {
 	var ok bool
 	if an, ok = a.data.(Number); !ok {
 		err = noopError{}
 		return
 	}
 
-	safe, incr, reuseT := parseSafeReuse(opts...)
+	fo := parseFuncOpts(opts...)
+	reuseT, incr := fo.incrReuse()
+	safe = fo.safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -93,7 +97,7 @@ func prepSD(a *Dense, opts ...FuncOpt) (an, rn Number, reuse *Dense, safe, toReu
 `
 
 const denseBinOpRaw = `func {{.OpName}}DD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	an, bn, rn, reuse, safe, toReuse, incr, err := prepDDOp(a, b, opts...)
+	an, bn, rn, reuse, safe, toReuse, incr, err := prepBinaryDense(a, b, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +137,7 @@ const denseBinOpRaw = `func {{.OpName}}DD(a, b *Dense, opts ...FuncOpt) (retVal 
 }
 
 func {{.OpName}}DS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
-	an, rn, reuse, safe, toReuse, incr, err := prepSD(a, opts...)
+	an, rn, reuse, safe, toReuse, incr, err := prepUnaryDense(a, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +172,7 @@ func {{.OpName}}DS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err
 }
 
 func {{.OpName}}SD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	bn, rn, reuse, safe, toReuse, incr, err := prepSD(b, opts...)
+	bn, rn, reuse, safe, toReuse, incr, err := prepUnaryDense(b, opts...)
 	if err != nil {
 		return nil, err
 	}

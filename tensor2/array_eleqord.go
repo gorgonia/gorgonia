@@ -17,7 +17,7 @@ func (a f64s) ElEq(other ElEq, same bool) (Array, error) {
 	case Float64ser:
 		b = f64s(ot.Float64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "ElEq", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -51,7 +51,7 @@ func (a f32s) ElEq(other ElEq, same bool) (Array, error) {
 	case Float32ser:
 		b = f32s(ot.Float32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "ElEq", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -85,7 +85,7 @@ func (a ints) ElEq(other ElEq, same bool) (Array, error) {
 	case Intser:
 		b = ints(ot.Ints())
 	default:
-		return nil, errors.Errorf(typeMismatch, "ElEq", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -119,7 +119,7 @@ func (a i64s) ElEq(other ElEq, same bool) (Array, error) {
 	case Int64ser:
 		b = i64s(ot.Int64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "ElEq", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -153,7 +153,7 @@ func (a i32s) ElEq(other ElEq, same bool) (Array, error) {
 	case Int32ser:
 		b = i32s(ot.Int32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "ElEq", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -187,7 +187,7 @@ func (a u8s) ElEq(other ElEq, same bool) (Array, error) {
 	case Byteser:
 		b = u8s(ot.Bytes())
 	default:
-		return nil, errors.Errorf(typeMismatch, "ElEq", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -221,7 +221,7 @@ func (a bs) ElEq(other ElEq, same bool) (Array, error) {
 	case Boolser:
 		b = bs(ot.Bools())
 	default:
-		return nil, errors.Errorf(typeMismatch, "ElEq", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -257,7 +257,7 @@ func (a f64s) Gt(other ElOrd, same bool) (Array, error) {
 	case Float64ser:
 		b = f64s(ot.Float64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -291,7 +291,7 @@ func (a f32s) Gt(other ElOrd, same bool) (Array, error) {
 	case Float32ser:
 		b = f32s(ot.Float32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -325,7 +325,7 @@ func (a ints) Gt(other ElOrd, same bool) (Array, error) {
 	case Intser:
 		b = ints(ot.Ints())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -359,7 +359,7 @@ func (a i64s) Gt(other ElOrd, same bool) (Array, error) {
 	case Int64ser:
 		b = i64s(ot.Int64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -393,7 +393,7 @@ func (a i32s) Gt(other ElOrd, same bool) (Array, error) {
 	case Int32ser:
 		b = i32s(ot.Int32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -427,7 +427,7 @@ func (a u8s) Gt(other ElOrd, same bool) (Array, error) {
 	case Byteser:
 		b = u8s(ot.Bytes())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -463,7 +463,7 @@ func (a f64s) Gte(other ElOrd, same bool) (Array, error) {
 	case Float64ser:
 		b = f64s(ot.Float64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -497,7 +497,7 @@ func (a f32s) Gte(other ElOrd, same bool) (Array, error) {
 	case Float32ser:
 		b = f32s(ot.Float32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -531,7 +531,7 @@ func (a ints) Gte(other ElOrd, same bool) (Array, error) {
 	case Intser:
 		b = ints(ot.Ints())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -565,7 +565,7 @@ func (a i64s) Gte(other ElOrd, same bool) (Array, error) {
 	case Int64ser:
 		b = i64s(ot.Int64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -599,7 +599,7 @@ func (a i32s) Gte(other ElOrd, same bool) (Array, error) {
 	case Int32ser:
 		b = i32s(ot.Int32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -633,7 +633,7 @@ func (a u8s) Gte(other ElOrd, same bool) (Array, error) {
 	case Byteser:
 		b = u8s(ot.Bytes())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Gte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -669,7 +669,7 @@ func (a f64s) Lt(other ElOrd, same bool) (Array, error) {
 	case Float64ser:
 		b = f64s(ot.Float64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -703,7 +703,7 @@ func (a f32s) Lt(other ElOrd, same bool) (Array, error) {
 	case Float32ser:
 		b = f32s(ot.Float32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -737,7 +737,7 @@ func (a ints) Lt(other ElOrd, same bool) (Array, error) {
 	case Intser:
 		b = ints(ot.Ints())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -771,7 +771,7 @@ func (a i64s) Lt(other ElOrd, same bool) (Array, error) {
 	case Int64ser:
 		b = i64s(ot.Int64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -805,7 +805,7 @@ func (a i32s) Lt(other ElOrd, same bool) (Array, error) {
 	case Int32ser:
 		b = i32s(ot.Int32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -839,7 +839,7 @@ func (a u8s) Lt(other ElOrd, same bool) (Array, error) {
 	case Byteser:
 		b = u8s(ot.Bytes())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lt", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -875,7 +875,7 @@ func (a f64s) Lte(other ElOrd, same bool) (Array, error) {
 	case Float64ser:
 		b = f64s(ot.Float64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -909,7 +909,7 @@ func (a f32s) Lte(other ElOrd, same bool) (Array, error) {
 	case Float32ser:
 		b = f32s(ot.Float32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -943,7 +943,7 @@ func (a ints) Lte(other ElOrd, same bool) (Array, error) {
 	case Intser:
 		b = ints(ot.Ints())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -977,7 +977,7 @@ func (a i64s) Lte(other ElOrd, same bool) (Array, error) {
 	case Int64ser:
 		b = i64s(ot.Int64s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -1011,7 +1011,7 @@ func (a i32s) Lte(other ElOrd, same bool) (Array, error) {
 	case Int32ser:
 		b = i32s(ot.Int32s())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {
@@ -1045,7 +1045,7 @@ func (a u8s) Lte(other ElOrd, same bool) (Array, error) {
 	case Byteser:
 		b = u8s(ot.Bytes())
 	default:
-		return nil, errors.Errorf(typeMismatch, "Lte", a, other)
+		return nil, errors.Errorf(typeMismatch, a, other)
 	}
 
 	if len(a) != len(b) {

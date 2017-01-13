@@ -50,7 +50,7 @@ const binOpRaw = `func (a {{.Name}}) {{.OpName}}(other Number) error {
 	}
 	
 	if len(a) != len(b){
-		return errors.Errorf("lenMismatch", "{{.OpName}}", len(a), len(b))
+		return errors.Errorf(lenMismatch,  len(a), len(b))
 	}
 
 	{{if ne .VecPkg "" -}}

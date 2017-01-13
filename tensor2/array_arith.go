@@ -1,6 +1,10 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"github.com/chewxy/vecf32"
+	"github.com/chewxy/vecf64"
+	"github.com/pkg/errors"
+)
 
 func cloneArray(a Array) Array {
 	switch at := a.(type) {
@@ -36,7 +40,7 @@ func cloneArray(a Array) Array {
 	panic("Unreachable")
 }
 
-func prepSafeVVOp(a, b Number, optional ...Number) (retVal Number, err error) {
+func prepBinaryArray(a, b Number, optional ...Number) (retVal Number, err error) {
 	var reuse Number
 	if a.Len() != b.Len() {
 		return nil, errors.Errorf(lenMismatch, a.Len(), b.Len())
@@ -59,7 +63,7 @@ func prepSafeVVOp(a, b Number, optional ...Number) (retVal Number, err error) {
 }
 
 func safeAdd(a, b Number, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeVVOp(a, b, optional...); err != nil {
+	if retVal, err = prepBinaryArray(a, b, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeAdd")
 	}
 
@@ -70,7 +74,7 @@ func safeAdd(a, b Number, optional ...Number) (retVal Number, err error) {
 }
 
 func safeSub(a, b Number, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeVVOp(a, b, optional...); err != nil {
+	if retVal, err = prepBinaryArray(a, b, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeSub")
 	}
 
@@ -81,7 +85,7 @@ func safeSub(a, b Number, optional ...Number) (retVal Number, err error) {
 }
 
 func safeMul(a, b Number, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeVVOp(a, b, optional...); err != nil {
+	if retVal, err = prepBinaryArray(a, b, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeDiv")
 	}
 
@@ -92,7 +96,7 @@ func safeMul(a, b Number, optional ...Number) (retVal Number, err error) {
 }
 
 func safeDiv(a, b Number, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeVVOp(a, b, optional...); err != nil {
+	if retVal, err = prepBinaryArray(a, b, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeDiv")
 	}
 
@@ -107,7 +111,7 @@ func safeDiv(a, b Number, optional ...Number) (retVal Number, err error) {
 }
 
 func safePow(a, b Number, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeVVOp(a, b, optional...); err != nil {
+	if retVal, err = prepBinaryArray(a, b, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safePow")
 	}
 	if err = retVal.Pow(b); err != nil {
@@ -116,7 +120,7 @@ func safePow(a, b Number, optional ...Number) (retVal Number, err error) {
 	return
 }
 
-func prepSafeSDOp(a Number, optional ...Number) (retVal Number, err error) {
+func prepUnaryArray(a Number, optional ...Number) (retVal Number, err error) {
 	var reuse Number
 	if len(optional) >= 1 {
 		reuse = optional[0]
@@ -135,7 +139,7 @@ func prepSafeSDOp(a Number, optional ...Number) (retVal Number, err error) {
 }
 
 func safeTrans(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeTrans")
 	}
 
@@ -146,7 +150,7 @@ func safeTrans(a Number, b interface{}, optional ...Number) (retVal Number, err 
 }
 
 func safeTransInv(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeTransInv")
 	}
 
@@ -157,7 +161,7 @@ func safeTransInv(a Number, b interface{}, optional ...Number) (retVal Number, e
 }
 
 func safeTransInvR(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeTransInvR")
 	}
 
@@ -168,7 +172,7 @@ func safeTransInvR(a Number, b interface{}, optional ...Number) (retVal Number, 
 }
 
 func safeScale(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeScale")
 	}
 
@@ -179,7 +183,7 @@ func safeScale(a Number, b interface{}, optional ...Number) (retVal Number, err 
 }
 
 func safeScaleInv(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeScaleInv")
 	}
 
@@ -190,7 +194,7 @@ func safeScaleInv(a Number, b interface{}, optional ...Number) (retVal Number, e
 }
 
 func safeScaleInvR(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safeScaleInvR")
 	}
 
@@ -201,7 +205,7 @@ func safeScaleInvR(a Number, b interface{}, optional ...Number) (retVal Number, 
 }
 
 func safePowOf(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safePowOf")
 	}
 
@@ -212,12 +216,55 @@ func safePowOf(a Number, b interface{}, optional ...Number) (retVal Number, err 
 }
 
 func safePowOfR(a Number, b interface{}, optional ...Number) (retVal Number, err error) {
-	if retVal, err = prepSafeSDOp(a, optional...); err != nil {
+	if retVal, err = prepUnaryArray(a, optional...); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safePowOfR")
 	}
 
 	if err = retVal.PowOfR(b); err != nil {
 		return nil, errors.Wrapf(err, opFail, "safePowOfR")
+	}
+	return
+}
+
+/* Unaries */
+
+// safeSqrt only works on Float s for now
+func safeSqrt(a Number, optional ...Number) (retVal Float, err error) {
+	var retN Number
+	if retN, err = prepUnaryArray(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeSqrt")
+	}
+
+	var ok bool
+	if retVal, ok = retN.(Float); !ok {
+		return nil, errors.Errorf("Sqrt only works on Floats")
+	}
+
+	switch rt := retVal.(type) {
+	case Float64ser:
+		vecf64.Sqrt(rt.Float64s())
+	case Float32ser:
+		vecf32.Sqrt(rt.Float32s())
+	}
+	return
+}
+
+func safeInvSqrt(a Number, optional ...Number) (retVal Number, err error) {
+	var retN Number
+	if retN, err = prepUnaryArray(a, optional...); err != nil {
+		return nil, errors.Wrapf(err, opFail, "safeSqrt")
+	}
+
+	var ok bool
+	if retVal, ok = retN.(Float); !ok {
+		return nil, errors.Errorf("Sqrt only works on Floats")
+	}
+
+	switch rt := retVal.(type) {
+	case Float64ser:
+		vecf64.Sqrt(rt.Float64s())
+	case Float32ser:
+		vecf32.Sqrt(rt.Float32s())
 	}
 	return
 }

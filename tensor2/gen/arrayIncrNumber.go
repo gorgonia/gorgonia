@@ -17,11 +17,11 @@ const incrBinOpRaw = `func (a {{.Name}}) Incr{{.OpName}}(other, incrArr Number) 
 	}
 
 	if len(b) != len(a) {
-		return errors.Errorf("lenMismatch", "Incr{{.OpName}}", len(a), len(b))
+		return errors.Errorf(lenMismatch,  len(a), len(b))
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "Incr{{.OpName}}", len(a), len(incr))
+		return errors.Errorf(lenMismatch,  len(a), len(incr))
 	}
 
 	{{if ne .VecPkg "" -}} 
@@ -95,7 +95,7 @@ const vsIncrBinOpRaw = `func (a {{.Name}}) Incr{{.OpName}}(other interface{}, in
 	}
 
 	if len(incr) != len(a) {
-		return errors.Errorf("lenMismatch", "Incr{{.OpName}}", len(a), len(incr))
+		return errors.Errorf(lenMismatch,  len(a), len(incr))
 	}
 
 
