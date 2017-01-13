@@ -2,84 +2,84 @@ package tensor
 
 import "github.com/pkg/errors"
 
-type Mapper interface {
-	Map(Array) error
+// Apply applies a function to all the values in the ndarray
+func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	safe, incr, reuseT := parseSafeReuse(opts...)
+	reuse, _ := getDense(reuseT)
+
+	// check reuse and stuff
+	var res Array
+	switch {
+	case reuse != nil:
+		res = reuse.data
+		if res.Len() != t.Size() {
+			err = errors.Errorf(shapeMismatch, t.Shape(), reuse.Shape())
+			return
+		}
+	case !safe:
+		res = t.data
+	default:
+		if t.IsMaterializable() {
+			res = makeArray(t.t, t.Shape().TotalSize())
+		} else {
+			res = cloneArray(t.data)
+		}
+	}
+	// do
+	switch {
+	case t.viewOf == nil && !incr:
+		res.Map(fn)
+	case t.viewOf == nil && incr:
+		rn, ok := res.(Number)
+		if !ok {
+			err = errors.Errorf("Can only incr on Number arrays")
+			return
+		}
+
+		tn, ok := t.data.(Number)
+		if !ok {
+			err = errors.Errorf("Can only incr on Number Arrays")
+			return
+		}
+
+		cloned := cloneArray(tn).(Number)
+		if err = cloned.Map(fn); err != nil {
+			return
+		}
+
+		if err = rn.Add(cloned); err != nil {
+			return
+		}
+	case t.viewOf != nil:
+		var im IterMapper
+		var ok bool
+		if im, ok = res.(IterMapper); !ok {
+			panic("Not handled yet")
+		}
+
+		it := NewFlatIterator(t.AP)
+		if err = im.IterMap(t.data, nil, it, fn, incr); err != nil {
+			return
+		}
+
+	default:
+		err = errors.Errorf("Apply not implemented for this state: isView: %t and incr: %t", t.viewOf == nil, incr)
+		return
+	}
+	// set retVal
+	switch {
+	case reuse != nil:
+		if err = reuseCheckShape(reuse, t.Shape()); err != nil {
+			return
+		}
+		retVal = reuse
+	case !safe:
+		retVal = t
+	default:
+		retVal = New(Of(t.t), WithBacking(res), WithShape(t.Shape()...))
+	}
+	return
 }
-
-// // Apply applies a function to all the values in the ndarray
-// func (t *Dense) Apply(fn func(float64) float64, opts ...FuncOpt) (retVal *Dense, err error) {
-// 	safe, incr, reuse := parseSafeReuse(opts...)
-
-// 	// check reuse and stuff
-// 	var res []float64
-// 	switch {
-// 	case reuse != nil:
-// 		res = reuse.data
-// 		if len(res) != t.Size() {
-// 			err = shapeMismatchError(t.Shape(), reuse.Shape())
-// 			return
-// 		}
-// 	case !safe:
-// 		res = t.data
-// 	default:
-// 		if t.IsMaterializable() {
-// 			res = make([]float64, t.Shape().TotalSize())
-
-// 		} else {
-// 			res = make([]float64, len(t.data))
-// 		}
-// 	}
-// 	// do
-// 	switch {
-// 	case t.viewOf == nil && !incr:
-// 		for i, v := range t.data {
-// 			res[i] = fn(v)
-// 		}
-// 	case t.viewOf == nil && incr:
-// 		for i, v := range t.data {
-// 			res[i] += fn(v)
-// 		}
-// 	case t.viewOf != nil && !incr:
-// 		it := NewFlatIterator(t.AP)
-// 		var next, i int
-// 		for next, err = it.Next(); err == nil; next, err = it.Next() {
-// 			if _, noop := err.(NoOpError); err != nil && !noop {
-// 				return
-// 			}
-// 			res[i] = fn(t.data[next])
-// 			i++
-// 		}
-// 		err = nil
-// 	case t.viewOf != nil && incr:
-// 		it := NewFlatIterator(t.AP)
-// 		var next, i int
-// 		for next, err = it.Next(); err == nil; next, err = it.Next() {
-// 			if _, noop := err.(NoOpError); err != nil && !noop {
-// 				return
-// 			}
-
-// 			res[i] += fn(t.data[next])
-// 			i++
-// 		}
-// 		err = nil
-// 	default:
-// 		err = notyetimplemented("Apply not implemented for this state: isView: %t and incr: %t", t.viewOf == nil, incr)
-// 		return
-// 	}
-// 	// set retVal
-// 	switch {
-// 	case reuse != nil:
-// 		if err = reuseCheckShape(reuse, t.Shape()); err != nil {
-// 			return
-// 		}
-// 		retVal = reuse
-// 	case !safe:
-// 		retVal = t
-// 	default:
-// 		retVal = NewTensor(WithBacking(res), WithShape(t.Shape()...))
-// 	}
-// 	return
-// }
 
 // T performs a thunked transpose. It doesn't actually do anything, except store extra information about the post-transposed shapes and strides
 // Usually this is more than enough, as BLAS will handle the rest of the transpose

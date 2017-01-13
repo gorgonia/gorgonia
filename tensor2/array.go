@@ -13,6 +13,7 @@ type Array interface {
 
 	Get(i int) interface{}          // Gets the value at index i
 	Set(i int, v interface{}) error // Sets the value at index i to the value
+	Map(fn interface{}) error       // fn should be func(x T) T, but your mileage may vary
 
 	Eq
 	Dataer
@@ -151,6 +152,16 @@ type CopierTo interface {
 // Transposer is any array that provides a specialization for transposing.
 type Transposer interface {
 	Transpose(oldShape, oldStrides, axes, newStrides []int)
+}
+
+// MapIncr is a specialization for map
+type IncrMapper interface {
+	MapIncr(fn interface{}) error
+}
+
+// IterateMapper is a specialization for map
+type IterMapper interface {
+	IterMap(other Array, it, ot *FlatIterator, fn interface{}, incr bool) error
 }
 
 // Tracer is any array that provides a specialization for a linear algebra trace. Do note that while the mathematical definition

@@ -261,26 +261,6 @@ const numberVVTestHeaderRaw = `func prep{{.Name}}Test() ({{.Name}}, {{.Name}}, {
 }
 `
 
-const numberHelpersRaw = `func get{{title .Of}}s(a Number) ([]{{.Of}}, error){
-	switch at := a.(type){
-	case {{.Name}}:
-		return []{{.Of}}(at), nil
-	case {{.Compatible}}er:
-		return at.{{.Compatible}}(), nil
-	}
-	return nil, errors.Errorf(extractionFail, "[]{{.Of}}", a)
-}
-
-func get{{title .Of}}(a interface{}) (retVal {{.Of}}, err error) {
-	if b, ok := a.({{.Of}}); ok{
-		return b, nil
-	}
-	err = errors.Errorf(extractionFail, "{{.Of}}", a)
-	return
-}
-
-`
-
 var (
 	binOpTmpl         *template.Template
 	binOpTestTmpl     *template.Template
@@ -288,7 +268,6 @@ var (
 	vecScalarTestTmpl *template.Template
 
 	vvBinOpTestHeaderTmpl *template.Template
-	numberHelpersTmpl     *template.Template
 )
 
 func init() {
@@ -299,18 +278,9 @@ func init() {
 	vecScalarTestTmpl = template.Must(template.New("vecScalarTest").Funcs(funcMap).Parse(vecScalarTestRaw))
 
 	vvBinOpTestHeaderTmpl = template.Must(template.New("vvBinOpTestHeader").Parse(numberVVTestHeaderRaw))
-	numberHelpersTmpl = template.Must(template.New("numberHelper").Funcs(funcMap).Parse(numberHelpersRaw))
 }
 
 func generateNumbers(f io.Writer, m []ArrayType) {
-	// helpers
-	fmt.Fprintf(f, "/* extraction functions */\n")
-	for _, v := range m {
-		if v.isNumber {
-			numberHelpersTmpl.Execute(f, v)
-			fmt.Fprintf(f, "\n")
-		}
-	}
 	generateNumbersOpsOnly(f, m)
 }
 

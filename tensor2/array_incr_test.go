@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+/*
+GENERATED FILE. DO NOT EDIT
+*/
+
 /* Add */
 
 func Test_f64s_IncrAdd(t *testing.T) {

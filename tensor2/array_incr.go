@@ -8,6 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+/*
+GENERATED FILE. DO NOT EDIT
+*/
+
 /* Add */
 
 func (a f64s) IncrAdd(other, incrArr Number) (err error) {

@@ -2,6 +2,10 @@ package tensor
 
 import "github.com/pkg/errors"
 
+/*
+GENERATED FILE. DO NOT EDIT
+*/
+
 /* ElEq */
 
 func (a f64s) ElEq(other ElEq, same bool) (Array, error) {

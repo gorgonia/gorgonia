@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+/*
+GENERATED FILE. DO NOT EDIT
+*/
+
 func prepf64sTest() (f64s, f64s, f64sDummy, float64) {
 	a := f64s{0, 1, 2, 3, 4}
 	b := f64s{1, 2, 2, 1, 100}

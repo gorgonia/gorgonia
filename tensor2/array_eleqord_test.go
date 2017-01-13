@@ -2,6 +2,10 @@ package tensor
 
 import "testing"
 
+/*
+GENERATED FILE. DO NOT EDIT
+*/
+
 /* ElEq */
 
 func Test_f64s_ElEq(t *testing.T) {

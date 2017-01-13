@@ -4,6 +4,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 type Tensor interface {
@@ -167,3 +169,23 @@ func Ones(dt Dtype, shape ...int) Tensor {
 // 	}
 // 	return d
 // }
+
+func getDense(t Tensor) (*Dense, error) {
+	if retVal, ok := t.(*Dense); ok {
+		return retVal, nil
+	}
+	return nil, errors.Errorf(extractionFail, "*Dense", t)
+}
+
+// getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
+func getFloatDense(t Tensor) (retVal *Dense, err error) {
+	if retVal, err = getDense(t); err != nil {
+		err = errors.Wrapf(err, opFail, "getFloatDense")
+		return
+	}
+	if f, ok := retVal.data.(Float); !ok {
+		err = errors.Errorf(dtypeMismatch, f, retVal.data)
+		return
+	}
+	return
+}

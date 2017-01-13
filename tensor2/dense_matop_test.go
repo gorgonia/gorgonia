@@ -349,7 +349,6 @@ var repeatTests = []struct {
 
 func TestDense_Repeat(t *testing.T) {
 	assert := assert.New(t)
-	var ok bool
 
 	for _, test := range repeatTests {
 		T, err := test.tensor.Repeat(test.axis, test.repeats...)
@@ -366,8 +365,8 @@ func TestDense_Repeat(t *testing.T) {
 		}
 
 		var D *Dense
-		if D, ok = T.(*Dense); !ok {
-			t.Error("Expected Repeat to return a *Dense. T: %v", T)
+		if D, err = getDense(T); err != nil {
+			t.Error("Expected Repeat to return a *Dense. got %v of %T instead", T, T)
 			continue
 		}
 
@@ -679,5 +678,136 @@ func TestDense_Stack(t *testing.T) {
 		}
 		assert.True(sts.correctShape.Eq(T2.Shape()))
 		assert.Equal(sts.correctData, T2.data)
+	}
+}
+
+var denseApplyTests = []struct {
+	a     Array
+	reuse Array
+	incr  Array
+	shape Shape
+	slice []Slice
+
+	correct     interface{}
+	correctIncr interface{}
+}{
+	// Float64
+	{Range(Float64, 0, 6), Range(Float64, 52, 58), f64s{100, 100, 100, 100, 100, 100},
+		Shape{2, 3}, nil,
+		[]float64{-0, -1, -2, -3, -4, -5}, []float64{100, 99, 98, 97, 96, 95}},
+	{Range(Float64, 0, 6), Range(Float64, 52, 55), f64s{100, 100, 100},
+		Shape{2, 3}, []Slice{ss(0)},
+		[]float64{0, -1, -2}, []float64{100, 99, 98}},
+	{Range(Float64, 0, 6), Range(Float64, 52, 54), f64s{100, 100},
+		Shape{2, 3}, []Slice{nil, ss(1)},
+		[]float64{-1, -4}, []float64{99, 96}},
+
+	// Float32
+	{Range(Float32, 0, 6), Range(Float32, 52, 58), f32s{100, 100, 100, 100, 100, 100},
+		Shape{2, 3}, nil,
+		[]float32{-0, -1, -2, -3, -4, -5}, []float32{100, 99, 98, 97, 96, 95}},
+	{Range(Float32, 0, 6), Range(Float32, 52, 55), f32s{100, 100, 100},
+		Shape{2, 3}, []Slice{ss(0)},
+		[]float32{0, -1, -2}, []float32{100, 99, 98}},
+	{Range(Float32, 0, 6), Range(Float32, 52, 54), f32s{100, 100},
+		Shape{2, 3}, []Slice{nil, ss(1)},
+		[]float32{-1, -4}, []float32{99, 96}},
+
+	// Int
+	{Range(Int, 0, 6), Range(Int, 52, 58), ints{100, 100, 100, 100, 100, 100},
+		Shape{2, 3}, nil,
+		[]int{-0, -1, -2, -3, -4, -5}, []int{100, 99, 98, 97, 96, 95}},
+	{Range(Int, 0, 6), Range(Int, 52, 55), ints{100, 100, 100},
+		Shape{2, 3}, []Slice{ss(0)},
+		[]int{0, -1, -2}, []int{100, 99, 98}},
+	{Range(Int, 0, 6), Range(Int, 52, 54), ints{100, 100},
+		Shape{2, 3}, []Slice{nil, ss(1)},
+		[]int{-1, -4}, []int{99, 96}},
+
+	// Int64
+	{Range(Int64, 0, 6), Range(Int64, 52, 58), i64s{100, 100, 100, 100, 100, 100},
+		Shape{2, 3}, nil,
+		[]int64{-0, -1, -2, -3, -4, -5}, []int64{100, 99, 98, 97, 96, 95}},
+	{Range(Int64, 0, 6), Range(Int64, 52, 55), i64s{100, 100, 100},
+		Shape{2, 3}, []Slice{ss(0)},
+		[]int64{0, -1, -2}, []int64{100, 99, 98}},
+	{Range(Int64, 0, 6), Range(Int64, 52, 54), i64s{100, 100},
+		Shape{2, 3}, []Slice{nil, ss(1)},
+		[]int64{-1, -4}, []int64{99, 96}},
+
+	// Int32
+	{Range(Int32, 0, 6), Range(Int32, 52, 58), i32s{100, 100, 100, 100, 100, 100},
+		Shape{2, 3}, nil,
+		[]int32{-0, -1, -2, -3, -4, -5}, []int32{100, 99, 98, 97, 96, 95}},
+	{Range(Int32, 0, 6), Range(Int32, 52, 55), i32s{100, 100, 100},
+		Shape{2, 3}, []Slice{ss(0)},
+		[]int32{0, -1, -2}, []int32{100, 99, 98}},
+	{Range(Int32, 0, 6), Range(Int32, 52, 54), i32s{100, 100},
+		Shape{2, 3}, []Slice{nil, ss(1)},
+		[]int32{-1, -4}, []int32{99, 96}},
+
+	// Byte
+	{Range(Byte, 0, 6), Range(Byte, 52, 58), u8s{100, 100, 100, 100, 100, 100},
+		Shape{2, 3}, nil,
+		[]byte{0, 255, 254, 253, 252, 251}, []byte{100, 99, 98, 97, 96, 95}},
+	{Range(Byte, 0, 6), Range(Byte, 52, 55), u8s{100, 100, 100},
+		Shape{2, 3}, []Slice{ss(0)},
+		[]byte{0, 255, 254}, []byte{100, 99, 98}},
+	{Range(Byte, 0, 6), Range(Byte, 52, 54), u8s{100, 100},
+		Shape{2, 3}, []Slice{nil, ss(1)},
+		[]byte{255, 252}, []byte{99, 96}},
+}
+
+func TestDense_Apply(t *testing.T) {
+	assert := assert.New(t)
+	for i, dat := range denseApplyTests {
+		T := New(WithBacking(dat.a), WithShape(dat.shape...))
+		var err error
+		if dat.slice != nil {
+			if T, err = T.Slice(dat.slice...); err != nil {
+				t.Error("Slicing failed %+v", err)
+				continue
+			}
+		}
+
+		var T2 Tensor
+		var fn interface{}
+		// safe
+		switch T.t {
+		case Float64:
+			fn = invFloat64
+		case Float32:
+			fn = invFloat32
+		case Int:
+			fn = invInt
+		case Int64:
+			fn = invInt64
+		case Int32:
+			fn = invInt32
+		case Byte:
+			fn = invByte
+		case Bool:
+			fn = invBool
+		}
+
+		T2, err = T.Apply(fn)
+
+		if err != nil {
+			t.Errorf("Test %d errored: %+v", i, err)
+			continue
+		}
+
+		assert.NotEqual(T2, T, "Test %d", i)
+		assert.Equal(dat.correct, T2.Data(), "Test %d", i)
+
+		incr := New(WithBacking(dat.incr))
+		T2, err = T.Apply(fn, WithIncr(incr))
+		if err != nil {
+			t.Errorf("Test %d errored: %+v", i, err)
+			continue
+		}
+
+		assert.NotEqual(T2, T, "Test Incr %d", i)
+		assert.Equal(dat.correctIncr, T2.Data(), "Test %d", i)
 	}
 }

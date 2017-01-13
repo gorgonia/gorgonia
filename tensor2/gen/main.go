@@ -35,7 +35,7 @@ type ArrayType struct {
 	IncrTestData string
 }
 
-var arrayTypes = [...]ArrayType{
+var arrayTypes = []ArrayType{
 	ArrayType{
 		Of:          "float64",
 		Name:        "f64s",
@@ -142,6 +142,7 @@ func main() {
 	const (
 		testtestName        = "../test_test.go"
 		basicsName          = "../array_impl.go"
+		basicsTestName      = "../array_impl_test.go"
 		numbersName         = "../array_number.go"
 		numbersTestName     = "../array_number_test.go"
 		incrNumbersName     = "../array_incr.go"
@@ -154,7 +155,9 @@ func main() {
 	)
 
 	pipeline(testtestName, arrayTypes, testtestFn)
-	pipeline(basicsName, arrayTypes, generateBasics)
+
+	pipeline(basicsName, arrayTypes, generateImpl)
+	pipeline(basicsTestName, arrayTypes, generateBasicsTest)
 	pipeline(numbersName, arrayTypes, generateNumbers)
 	pipeline(numbersTestName, arrayTypes, generateNumbersTests)
 	pipeline(incrNumbersName, arrayTypes, generateNumbersIncr)
@@ -163,7 +166,7 @@ func main() {
 	pipeline(eleqordTestName, arrayTypes, generateElEqOrdsTests)
 
 	generateDenseArith(denseBinOpName)
-	generateDenseArithTests(denseBinOpTestName, m)
+	generateDenseArithTests(denseBinOpTestName, arrayTypes)
 }
 
 func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {
@@ -179,7 +182,7 @@ func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {
 	}
 	defer f.Close()
 
-	fmt.Fprintf(f, "package tensor\n")
+	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
 	fn(f, l)
 
 	// gofmt and goimports this shit

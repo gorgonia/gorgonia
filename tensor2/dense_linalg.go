@@ -589,36 +589,18 @@ func (t *Dense) TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err 
 
 /* UTILITY FUNCTIONS */
 
-// getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
-func getFloatDense(a Tensor) (retVal *Dense, err error) {
-	switch at := a.(type) {
-	case *Dense:
-		if f, ok := at.data.(Float); !ok {
-			err = errors.Errorf(dtypeMismatch, f, at.data)
-			return
-		}
-		return at, nil
-	default:
-		err = errors.Errorf(extractionFail, "*Dense", a)
-		return
-	}
-	panic("unreachable")
-}
-
 // handleReuse extracts a *Dense from Tensor, and checks the shape of the reuse Tensor
 func handleReuse(reuse Tensor, expectedShape Shape) (retVal *Dense, err error) {
 	if reuse != nil {
-		var rd *Dense
-		var ok bool
-		if rd, ok = reuse.(*Dense); !ok {
-			err = errors.Errorf(extractionFail, "*Dense", reuse)
+		if retVal, err = getDense(reuse); err != nil {
+			err = errors.Wrapf(err, opFail, "handling reuse")
 			return
 		}
-		if err = reuseCheckShape(rd, expectedShape); err != nil {
+
+		if err = reuseCheckShape(retVal, expectedShape); err != nil {
 			err = errors.Wrapf(err, "Unable to process reuse *Dense Tensor. Shape error.")
 			return
 		}
-		retVal = rd
 		return
 	}
 	return
