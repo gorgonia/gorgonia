@@ -139,19 +139,18 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		return
 	}
 
-	reuseT, incrT := parseReuseIncr(opts...)
-	var reuse, incr *Dense
+	fo := parseFuncOpts(opts...)
 
-	if reuseT != nil {
-		if reuse, err = getFloatDense(reuseT); err != nil {
-			err = errors.Wrapf(err, opFail, "Dot - reuse")
-			return
-		}
+	var reuse, incr *Dense
+	if reuse, err = getFloatDense(fo.reuse); err != nil {
+		err = errors.Wrapf(err, opFail, "Dot - reuse")
+		return
+
 	}
-	if incrT != nil {
-		if incr, err = getFloatDense(incrT); err != nil {
-			err = errors.Wrapf(err, opFail, "Dot - incr")
-		}
+
+	if incr, err = getFloatDense(fo.incr); err != nil {
+		err = errors.Wrapf(err, opFail, "Dot - incr")
+		return
 	}
 
 	switch {

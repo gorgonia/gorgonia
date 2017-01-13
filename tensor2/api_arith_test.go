@@ -159,8 +159,10 @@ var addTests = []struct {
 func TestAdd(t *testing.T) {
 	assert := assert.New(t)
 	for i, ats := range addTests {
+		var T Tensor
+		var err error
 		// safe
-		T, err := Add(ats.a, ats.b)
+		T, err = Add(ats.a, ats.b)
 		if err != nil {
 			t.Errorf("%+v", err)
 		}
@@ -173,14 +175,14 @@ func TestAdd(t *testing.T) {
 		}
 		assert.Equal(ats.correct1, T.Data(), "Incr Test Add %d", i)
 
-		// reuse
+		// // reuse
 		T, err = Add(ats.a, ats.b, WithReuse(ats.reuse))
 		if err != nil {
 			t.Errorf("%v", err)
 		}
 		assert.Equal(ats.correct0, T.Data(), "Reuse Test Add %d", i)
 
-		// unsafe
+		// // unsafe
 		T, err = Add(ats.a, ats.b, UseUnsafe())
 		if err != nil {
 			t.Errorf("%v", err)

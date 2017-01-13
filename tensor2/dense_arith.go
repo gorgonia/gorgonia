@@ -19,12 +19,14 @@ func prepDDOp(a, b *Dense, opts ...FuncOpt) (an, bn, rn Number, reuse *Dense, sa
 		return
 	}
 
-	safe, incr, reuseT := parseSafeReuse(opts...)
+	fo := parseFuncOpts(opts...)
+	reuseT, incr := fo.incrReuse()
+
+	safe = fo.safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
-		reuse = reuseT.(*Dense)
-
+		reuse, _ = getDense(reuseT)
 		if err = reuseDenseCheck(reuse, a); err != nil {
 			err = errors.Wrap(err, "Cannot add with reuse")
 			return
@@ -45,12 +47,13 @@ func prepSD(a *Dense, opts ...FuncOpt) (an, rn Number, reuse *Dense, safe, toReu
 		return
 	}
 
-	safe, incr, reuseT := parseSafeReuse(opts...)
+	fo := parseFuncOpts(opts...)
+	reuseT, incr := fo.incrReuse()
+	safe = fo.safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
-		reuse = reuseT.(*Dense)
-
+		reuse, _ = getDense(reuseT)
 		if err = reuseDenseCheck(reuse, a); err != nil {
 			err = errors.Wrap(err, "Cannot add with reuse")
 			return

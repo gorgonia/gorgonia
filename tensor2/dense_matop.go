@@ -4,8 +4,14 @@ import "github.com/pkg/errors"
 
 // Apply applies a function to all the values in the ndarray
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	safe, incr, reuseT := parseSafeReuse(opts...)
-	reuse, _ := getDense(reuseT)
+	fo := parseFuncOpts(opts...)
+	reuseT, incr := fo.incrReuse()
+	safe := fo.safe()
+
+	var reuse *Dense
+	if reuse, err = getDense(reuseT); err != nil {
+		return
+	}
 
 	// check reuse and stuff
 	var res Array

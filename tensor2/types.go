@@ -152,44 +152,44 @@ const (
 )
 
 // FuncOpt are optionals for calling Tensor function.
-type FuncOpt func() (FunctionFlag, interface{})
+type FuncOpt func(*funcOpt)
 
 // WithIncr passes in a Tensor to be incremented.
 func WithIncr(incr Tensor) FuncOpt {
-	f := func() (FunctionFlag, interface{}) {
-		return Incr, incr
+	f := func(opt *funcOpt) {
+		opt.incr = incr
 	}
 	return f
 }
 
 // WithReuse passes in a Tensor to be reused.
 func WithReuse(reuse Tensor) FuncOpt {
-	f := func() (FunctionFlag, interface{}) {
-		return Reuse, reuse
+	f := func(opt *funcOpt) {
+		opt.reuse = reuse
 	}
 	return f
 }
 
 // UseSafe ensures that the operation is a safe operation (copies data, does not clobber). This is the default option for most methods and functions
 func UseSafe() FuncOpt {
-	f := func() (FunctionFlag, interface{}) {
-		return SafeOp, nil
+	f := func(opt *funcOpt) {
+		opt.unsafe = false
 	}
 	return f
 }
 
 // UseUnsafe ensures that the operation is an unsafe operation - data will be clobbered, and operations performed inplace
 func UseUnsafe() FuncOpt {
-	f := func() (FunctionFlag, interface{}) {
-		return UnsafeOp, nil
+	f := func(opt *funcOpt) {
+		opt.unsafe = true
 	}
 	return f
 }
 
 // AsSameType makes sure that the return Tensor is the same type as input Tensors.
 func AsSameType() FuncOpt {
-	f := func() (FunctionFlag, interface{}) {
-		return AsSame, nil
+	f := func(opt *funcOpt) {
+		opt.same = true
 	}
 	return f
 }

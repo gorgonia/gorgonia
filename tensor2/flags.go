@@ -1,66 +1,26 @@
 package tensor
 
-// SafeOp has precedence over unsafe (it's default)
-// Incr has precedence over Reuse
-func parseSafeReuse(opts ...FuncOpt) (safe, incr bool, reuse Tensor) {
-	safe = true
-	for _, opt := range opts {
-		flag, val := opt()
-		switch flag {
-		case SafeOp:
-			if !safe {
-				safe = true
-			}
-		case UnsafeOp:
-			safe = false
-		case Incr:
-			incr = true
-			reuse = val.(Tensor)
-		case Reuse:
-			if reuse == nil {
-				reuse = val.(Tensor)
-			}
-		}
-	}
-	return
+type funcOpt struct {
+	reuse  Tensor
+	incr   Tensor
+	unsafe bool
+	same   bool
 }
 
-func parseSafe(opts ...FuncOpt) bool {
+func parseFuncOpts(opts ...FuncOpt) *funcOpt {
+	retVal := new(funcOpt)
 	for _, opt := range opts {
-		if flag, _ := opt(); flag == SafeOp {
-			return true
-		}
+		opt(retVal)
 	}
-	return false
+	return retVal
 }
 
-func parseUnsafe(opts ...FuncOpt) bool {
-	for _, opt := range opts {
-		if flag, _ := opt(); flag == UnsafeOp {
-			return true
-		}
+// incReuse returns whether a reuse tensor is to be used as the incr Tensor
+func (fo *funcOpt) incrReuse() (Tensor, bool) {
+	if fo.incr != nil {
+		return fo.incr, true
 	}
-	return false
+	return fo.reuse, false
 }
 
-func parseReuseIncr(opts ...FuncOpt) (reuse, incr Tensor) {
-	for _, opt := range opts {
-		flag, iface := opt()
-		switch flag {
-		case Reuse:
-			reuse = iface.(Tensor)
-		case Incr:
-			incr = iface.(Tensor)
-		}
-	}
-	return
-}
-
-func parseAsFloat64(opts ...FuncOpt) bool {
-	for _, opt := range opts {
-		if flag, _ := opt(); flag == AsTensorF64 || flag == AsSame {
-			return true
-		}
-	}
-	return false
-}
+func (fo *funcOpt) safe() bool { return !fo.unsafe }

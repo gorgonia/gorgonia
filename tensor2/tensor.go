@@ -171,6 +171,10 @@ func Ones(dt Dtype, shape ...int) Tensor {
 // }
 
 func getDense(t Tensor) (*Dense, error) {
+	if t == nil {
+		return nil, nil
+	}
+
 	if retVal, ok := t.(*Dense); ok {
 		return retVal, nil
 	}
@@ -179,6 +183,10 @@ func getDense(t Tensor) (*Dense, error) {
 
 // getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
 func getFloatDense(t Tensor) (retVal *Dense, err error) {
+	if t == nil {
+		return
+	}
+
 	if retVal, err = getDense(t); err != nil {
 		err = errors.Wrapf(err, opFail, "getFloatDense")
 		return
