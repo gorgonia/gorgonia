@@ -194,16 +194,9 @@ var shapeSliceTests = []struct {
 }
 
 func TestShape_Slice(t *testing.T) {
-	for _, ssts := range shapeSliceTests {
+	for i, ssts := range shapeSliceTests {
 		newShape, err := ssts.s.S(ssts.sli...)
-		switch {
-		case ssts.err:
-			if err == nil {
-				t.Error("Expected an error")
-			}
-			continue
-		case !ssts.err && err != nil:
-			t.Error(err)
+		if checkErr(t, ssts.err, err, "Shape slice", i) {
 			continue
 		}
 

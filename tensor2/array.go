@@ -1,6 +1,8 @@
 package tensor
 
 import (
+	"log"
+
 	"github.com/chewxy/vecf32"
 	"github.com/chewxy/vecf64"
 	"github.com/pkg/errors"
@@ -76,6 +78,7 @@ func arrayFromInterface(a interface{}) Array {
 	case []bool:
 		return bs(at)
 	}
+	log.Printf("%v, %T", a, a)
 	panic("Unreachable")
 }
 

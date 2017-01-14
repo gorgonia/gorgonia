@@ -25,6 +25,9 @@ func Of(a Dtype) ConsOpt {
 // It can be used with other construction options like WithShape
 func WithBacking(a interface{}) ConsOpt {
 	f := func(t Tensor) {
+		if a == nil {
+			return
+		}
 		switch tt := t.(type) {
 		case *Dense:
 			tt.data = arrayFromInterface(a)

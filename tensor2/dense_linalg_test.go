@@ -44,21 +44,13 @@ var traceTests = []struct {
 
 func TestDense_Trace(t *testing.T) {
 	assert := assert.New(t)
-	for _, tts := range traceTests {
+	for i, tts := range traceTests {
 		T := New(WithBacking(tts.data), WithShape(2, 3))
 		trace, err := T.Trace()
 
-		switch {
-		case tts.err:
-			if err == nil {
-				t.Errorf("Expected an error: %v", T.Data())
-			}
-			continue
-		case !tts.err && err != nil:
-			t.Errorf("%+v", err)
+		if checkErr(t, tts.err, err, "Trace", i) {
 			continue
 		}
-
 		assert.Equal(tts.correct, trace)
 
 		//
@@ -111,19 +103,12 @@ var innerTests = []struct {
 }
 
 func TestDense_Inner(t *testing.T) {
-	for _, its := range innerTests {
+	for i, its := range innerTests {
 		a := New(WithShape(its.shapeA...), WithBacking(its.a))
 		b := New(WithShape(its.shapeB...), WithBacking(its.b))
 
 		T, err := a.Inner(b)
-		switch {
-		case its.err:
-			if err == nil {
-				t.Error("Expected an error!")
-			}
-			continue
-		case !its.err && err != nil:
-			t.Errorf("%+v", err)
+		if checkErr(t, its.err, err, "Inner", i) {
 			continue
 		}
 
@@ -235,14 +220,7 @@ func TestDense_MatVecMul(t *testing.T) {
 		b := New(WithBacking(mvmt.b), WithShape(mvmt.shapeB...))
 
 		T, err := a.MatVecMul(b)
-		switch {
-		case mvmt.err:
-			if err == nil {
-				t.Errorf("Safe Test (%d) : Expected an error | a: %v(%T) | b %v(%T)", i, mvmt.a, mvmt.a, mvmt.b, mvmt.b)
-			}
-			continue
-		case !mvmt.err && err != nil:
-			t.Errorf("Safe Test(%d) error'd: %+v", i, err)
+		if checkErr(t, mvmt.err, err, "Safe", i) {
 			continue
 		}
 
@@ -252,14 +230,7 @@ func TestDense_MatVecMul(t *testing.T) {
 		// incr
 		incr := New(WithBacking(mvmt.incr), WithShape(mvmt.shapeI...))
 		T, err = a.MatVecMul(b, WithIncr(incr))
-		switch {
-		case mvmt.errIncr:
-			if err == nil {
-				t.Errorf("WithIncr Test (%d): Expected an error", i)
-			}
-			continue
-		case !mvmt.errIncr && err != nil:
-			t.Errorf("WithIncr Test (%d) err: %+v", i, err)
+		if checkErr(t, mvmt.errIncr, err, "WithIncr", i) {
 			continue
 		}
 
@@ -270,14 +241,7 @@ func TestDense_MatVecMul(t *testing.T) {
 		reuse := New(WithBacking(mvmt.reuse), WithShape(mvmt.shapeR...))
 		T, err = a.MatVecMul(b, WithReuse(reuse))
 
-		switch {
-		case mvmt.errReuse:
-			if err == nil {
-				t.Error("Expected an error withReuse")
-			}
-			continue
-		case !mvmt.errReuse && err != nil:
-			t.Errorf("WithReuse (%d) err: %+v", i, err)
+		if checkErr(t, mvmt.errReuse, err, "WithReuse", i) {
 			continue
 		}
 
@@ -286,8 +250,7 @@ func TestDense_MatVecMul(t *testing.T) {
 
 		// reuse AND incr
 		T, err = a.MatVecMul(b, WithIncr(incr), WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Reuse and Incr error'd %+v", err)
+		if checkErr(t, mvmt.err, err, "WithReuse and WithIncr", i) {
 			continue
 		}
 		assert.True(mvmt.correctShape.Eq(T.Shape()))
@@ -369,35 +332,18 @@ func TestDense_MatMul(t *testing.T) {
 		b := New(WithBacking(mmt.b), WithShape(mmt.shapeB...))
 
 		T, err := a.MatMul(b)
-
-		switch {
-		case mmt.err:
-			if err == nil {
-				t.Errorf("Safe Test (%d) : Expected an error | a: %v(%T) | b %v(%T)", i, mmt.a, mmt.a, mmt.b, mmt.b)
-			}
-			continue
-		case !mmt.err && err != nil:
-			t.Errorf("Safe Test(%d) error'd: %+v", i, err)
+		if checkErr(t, mmt.err, err, "Safe", i) {
 			continue
 		}
-
 		assert.True(mmt.correctShape.Eq(T.Shape()))
 		assert.Equal(mmt.correct, T.Data())
 
 		// incr
 		incr := New(WithBacking(mmt.incr), WithShape(mmt.shapeI...))
 		T, err = a.MatMul(b, WithIncr(incr))
-		switch {
-		case mmt.errIncr:
-			if err == nil {
-				t.Errorf("WithIncr Test (%d): Expected an error", i)
-			}
-			continue
-		case !mmt.errIncr && err != nil:
-			t.Errorf("WithIncr Test (%d) err: %+v", i, err)
+		if checkErr(t, mmt.errIncr, err, "WithIncr", i) {
 			continue
 		}
-
 		assert.True(mmt.correctShape.Eq(T.Shape()))
 		assert.Equal(mmt.correctIncr, T.Data())
 
@@ -405,24 +351,15 @@ func TestDense_MatMul(t *testing.T) {
 		reuse := New(WithBacking(mmt.reuse), WithShape(mmt.shapeR...))
 		T, err = a.MatMul(b, WithReuse(reuse))
 
-		switch {
-		case mmt.errReuse:
-			if err == nil {
-				t.Error("Expected an error withReuse")
-			}
-			continue
-		case !mmt.errReuse && err != nil:
-			t.Errorf("WithReuse (%d) err: %+v", i, err)
+		if checkErr(t, mmt.errReuse, err, "WithReuse", i) {
 			continue
 		}
-
 		assert.True(mmt.correctShape.Eq(T.Shape()))
 		assert.Equal(mmt.correct, T.Data())
 
 		// reuse AND incr
 		T, err = a.MatMul(b, WithIncr(incr), WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Reuse and Incr error'd %+v", err)
+		if checkErr(t, mmt.err, err, "WithIncr and WithReuse", i) {
 			continue
 		}
 		assert.True(mmt.correctShape.Eq(T.Shape()))
@@ -493,14 +430,7 @@ func TestDense_Outer(t *testing.T) {
 		b := New(WithBacking(ot.b), WithShape(ot.shapeB...))
 
 		T, err := a.Outer(b)
-		switch {
-		case ot.err:
-			if err == nil {
-				t.Errorf("Safe Test(%d): Expected an error", i)
-			}
-			continue
-		case !ot.err && err != nil:
-			t.Errorf("Safe Test(%d) errored: %+v", i, err)
+		if checkErr(t, ot.err, err, "Safe", i) {
 			continue
 		}
 		assert.True(ot.correctShape.Eq(T.Shape()))
@@ -509,35 +439,18 @@ func TestDense_Outer(t *testing.T) {
 		// incr
 		incr := New(WithBacking(ot.incr), WithShape(ot.shapeI...))
 		T, err = a.Outer(b, WithIncr(incr))
-		switch {
-		case ot.errIncr:
-			if err == nil {
-				t.Errorf("WithIncr Test (%d): Expected an error", i)
-			}
-			continue
-		case !ot.errIncr && err != nil:
-			t.Errorf("WithIncr Test (%d) err: %+v", i, err)
+		if checkErr(t, ot.errIncr, err, "WithIncr", i) {
 			continue
 		}
-
 		assert.True(ot.correctShape.Eq(T.Shape()))
 		assert.Equal(ot.correctIncr, T.Data())
 
 		// reuse
 		reuse := New(WithBacking(ot.reuse), WithShape(ot.shapeR...))
 		T, err = a.Outer(b, WithReuse(reuse))
-
-		switch {
-		case ot.errReuse:
-			if err == nil {
-				t.Error("Expected an error withReuse")
-			}
-			continue
-		case !ot.errReuse && err != nil:
-			t.Errorf("WithReuse (%d) err: %+v", i, err)
+		if checkErr(t, ot.errReuse, err, "WithReuse", i) {
 			continue
 		}
-
 		assert.True(ot.correctShape.Eq(T.Shape()))
 		assert.Equal(ot.correct, T.Data())
 
@@ -581,17 +494,9 @@ func TestDense_TensorMul(t *testing.T) {
 		b := New(WithShape(tmt.shapeB...), WithBacking(tmt.b))
 
 		T, err := a.TensorMul(b, tmt.axesA, tmt.axesB)
-		switch {
-		case tmt.err:
-			if err == nil {
-				t.Errorf("Safe Test (%d) : Expected an error ", i)
-			}
-			continue
-		case !tmt.err && err != nil:
-			t.Errorf("Safe Test(%d) error'd: %+v", i, err)
+		if checkErr(t, tmt.err, err, "Safe", i) {
 			continue
 		}
-
 		assert.True(tmt.correctShape.Eq(T.Shape()))
 		assert.Equal(tmt.correct, T.Data())
 	}

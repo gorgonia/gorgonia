@@ -232,10 +232,7 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 		if axes[0] == 0 {
 			return
 		}
-
-		for i, s := range currentStride {
-			strides[i] = s
-		}
+		copy(strides, currentStride)
 		shape[0], shape[1] = currentShape[1], currentShape[0]
 	default:
 		copy(shape, currentShape)

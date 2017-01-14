@@ -50,6 +50,47 @@ func PointwiseSquare(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	return
 }
 
+// Sqrt calculates the square root of each elements of the Tensor. Does not support incr option yet
+func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	switch at := a.(type) {
+	case *Dense:
+		var an, rn Number
+		var reuse *Dense
+		var safe, toReuse, incr bool
+		if an, rn, reuse, safe, toReuse, incr, err = prepUnaryDense(at, opts...); err != nil {
+			err = errors.Wrapf(err, opFail, "Sqrt")
+			return
+		}
+
+		switch {
+		case incr:
+			fallthrough
+		case toReuse:
+			_, err = safeSqrt(an, rn)
+			retVal = reuse
+		case safe:
+			var backing Number
+			if backing, err = safeSqrt(an); err == nil {
+				retVal = New(Of(at.t), WithBacking(backing), WithShape(a.Shape().Clone()...))
+			}
+		case !safe:
+			switch arr := an.(type) {
+			case Float64ser:
+				vecf64.Sqrt(arr.Float64s())
+			case Float32ser:
+				vecf32.Sqrt(arr.Float32s())
+			default:
+				err = errors.Errorf(unsupportedDtype, an, "Sqrt")
+			}
+			retVal = a
+		}
+		return
+
+	default:
+		panic("NYI")
+	}
+}
+
 // InvSqrt calculates 1/sqrt(v) of each element in the *Tensor. Does not support incr option yet
 func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch at := a.(type) {
@@ -70,7 +111,7 @@ func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = reuse
 		case safe:
 			var backing Number
-			if backing, err = safeInvSqrt(an); err != nil {
+			if backing, err = safeInvSqrt(an); err == nil {
 				retVal = New(Of(at.t), WithBacking(backing), WithShape(a.Shape().Clone()...))
 			}
 		case !safe:
@@ -119,12 +160,20 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 		switch dt := retD.data.(type) {
 		case Float64ser:
 			var minF, maxF float64
+
 			if minF, err = getFloat64(min); err != nil {
 				err = errors.Wrapf(err, opFail, "Clamp min")
+				return
 			}
 			if maxF, err = getFloat64(max); err != nil {
 				err = errors.Wrapf(err, opFail, "Clamp min")
+				return
 			}
+
+			if minF >= maxF {
+				minF, maxF = maxF, minF
+			}
+
 			data := dt.Float64s()
 			for i, v := range data {
 				if v < minF || math.IsInf(v, -1) {
@@ -146,6 +195,11 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 				err = errors.Wrapf(err, opFail, "Clamp min")
 				return
 			}
+
+			if minF >= maxF {
+				minF, maxF = maxF, minF
+			}
+
 			data := dt.Float32s()
 			for i, v := range data {
 				if v < minF || math32.IsInf(v, -1) {
@@ -167,6 +221,11 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 				err = errors.Wrapf(err, opFail, "Clamp min")
 				return
 			}
+
+			if minF >= maxF {
+				minF, maxF = maxF, minF
+			}
+
 			data := dt.Ints()
 			for i, v := range data {
 				if v < minF {
@@ -187,6 +246,11 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 				err = errors.Wrapf(err, opFail, "Clamp min")
 				return
 			}
+
+			if minF >= maxF {
+				minF, maxF = maxF, minF
+			}
+
 			data := dt.Int64s()
 			for i, v := range data {
 				if v < minF {
@@ -207,6 +271,11 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 				err = errors.Wrapf(err, opFail, "Clamp min")
 				return
 			}
+
+			if minF >= maxF {
+				minF, maxF = maxF, minF
+			}
+
 			data := dt.Int32s()
 			for i, v := range data {
 				if v < minF {
@@ -227,6 +296,11 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 				err = errors.Wrapf(err, opFail, "Clamp min")
 				return
 			}
+
+			if minF >= maxF {
+				minF, maxF = maxF, minF
+			}
+
 			data := dt.Bytes()
 			for i, v := range data {
 				if v < minF {
@@ -240,6 +314,7 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 		case Boolser:
 			return nil, errors.Errorf(unsupportedDtype, retD.data, "Clamp")
 		}
+		retVal = retD
 	default:
 		panic("NYI")
 	}

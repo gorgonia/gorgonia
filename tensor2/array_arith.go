@@ -252,19 +252,19 @@ func safeSqrt(a Number, optional ...Number) (retVal Float, err error) {
 func safeInvSqrt(a Number, optional ...Number) (retVal Number, err error) {
 	var retN Number
 	if retN, err = prepUnaryArray(a, optional...); err != nil {
-		return nil, errors.Wrapf(err, opFail, "safeSqrt")
+		return nil, errors.Wrapf(err, opFail, "safeInvSqrt")
 	}
 
 	var ok bool
 	if retVal, ok = retN.(Float); !ok {
-		return nil, errors.Errorf("Sqrt only works on Floats")
+		return nil, errors.Errorf("InvSqrt only works on Floats")
 	}
 
 	switch rt := retVal.(type) {
 	case Float64ser:
-		vecf64.Sqrt(rt.Float64s())
+		vecf64.InvSqrt(rt.Float64s())
 	case Float32ser:
-		vecf32.Sqrt(rt.Float32s())
+		vecf32.InvSqrt(rt.Float32s())
 	}
 	return
 }

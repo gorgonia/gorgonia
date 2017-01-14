@@ -33,15 +33,7 @@ func TestDense_At(t *testing.T) {
 	for i, ats := range atTests {
 		T := New(WithShape(ats.shape...), WithBacking(ats.data))
 		got, err := T.At(ats.coord...)
-
-		switch {
-		case ats.err:
-			if err == nil {
-				t.Error("Expected an error")
-			}
-			continue
-		case !ats.err && err != nil:
-			t.Errorf("i: %d Err: %v", i, err)
+		if checkErr(t, ats.err, err, "At", i) {
 			continue
 		}
 
@@ -350,17 +342,9 @@ var repeatTests = []struct {
 func TestDense_Repeat(t *testing.T) {
 	assert := assert.New(t)
 
-	for _, test := range repeatTests {
+	for i, test := range repeatTests {
 		T, err := test.tensor.Repeat(test.axis, test.repeats...)
-
-		switch {
-		case test.err:
-			if err == nil {
-				t.Errorf("Expected error when testing %q", test.name)
-			}
-			continue
-		case !test.err && err != nil:
-			t.Errorf("Test %q failed: %v", test.name, err)
+		if checkErr(t, test.err, err, "Repeat", i) {
 			continue
 		}
 

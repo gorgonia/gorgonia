@@ -1,10 +1,6 @@
 package tensor
 
-import (
-	"log"
-
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // exported API for arithmetics and the stupidly crazy amount of overloaded semantics
 // Add performs a pointwise a+b. a and b can either be float64 or Tensor
@@ -188,7 +184,6 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			reuse.reshape()
 			retVal = reuse
 		default:
-			log.Printf("%v %v ret.Data %v", af, bf, ret.Data())
 			retVal = New(FromScalar(ret.Get(0)))
 		}
 		return
