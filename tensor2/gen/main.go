@@ -152,6 +152,8 @@ func main() {
 
 		denseBinOpName     = "../dense_arith.go"
 		denseBinOpTestName = "../api_arith_test.go"
+
+		denseCmpBinOpName = "../dense_cmp.go"
 	)
 
 	pipeline(testtestName, arrayTypes, testtestFn)
@@ -167,6 +169,7 @@ func main() {
 
 	generateDenseArith(denseBinOpName)
 	generateDenseArithTests(denseBinOpTestName, arrayTypes)
+	generateDenseCmp(denseCmpBinOpName)
 }
 
 func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {
