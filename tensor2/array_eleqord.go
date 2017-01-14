@@ -9,16 +9,12 @@ GENERATED FILE. DO NOT EDIT
 /* ElEq */
 
 func (a f64s) ElEq(other ElEq, same bool) (Array, error) {
-	var b f64s
-
-	switch ot := other.(type) {
-	case f64s:
-		b = ot
-	case Float64ser:
-		b = f64s(ot.Float64s())
-	default:
+	var compat Float64ser
+	var ok bool
+	if compat, ok = other.(Float64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -43,16 +39,12 @@ func (a f64s) ElEq(other ElEq, same bool) (Array, error) {
 }
 
 func (a f32s) ElEq(other ElEq, same bool) (Array, error) {
-	var b f32s
-
-	switch ot := other.(type) {
-	case f32s:
-		b = ot
-	case Float32ser:
-		b = f32s(ot.Float32s())
-	default:
+	var compat Float32ser
+	var ok bool
+	if compat, ok = other.(Float32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -77,16 +69,12 @@ func (a f32s) ElEq(other ElEq, same bool) (Array, error) {
 }
 
 func (a ints) ElEq(other ElEq, same bool) (Array, error) {
-	var b ints
-
-	switch ot := other.(type) {
-	case ints:
-		b = ot
-	case Intser:
-		b = ints(ot.Ints())
-	default:
+	var compat Intser
+	var ok bool
+	if compat, ok = other.(Intser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Ints()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -111,16 +99,12 @@ func (a ints) ElEq(other ElEq, same bool) (Array, error) {
 }
 
 func (a i64s) ElEq(other ElEq, same bool) (Array, error) {
-	var b i64s
-
-	switch ot := other.(type) {
-	case i64s:
-		b = ot
-	case Int64ser:
-		b = i64s(ot.Int64s())
-	default:
+	var compat Int64ser
+	var ok bool
+	if compat, ok = other.(Int64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -145,16 +129,12 @@ func (a i64s) ElEq(other ElEq, same bool) (Array, error) {
 }
 
 func (a i32s) ElEq(other ElEq, same bool) (Array, error) {
-	var b i32s
-
-	switch ot := other.(type) {
-	case i32s:
-		b = ot
-	case Int32ser:
-		b = i32s(ot.Int32s())
-	default:
+	var compat Int32ser
+	var ok bool
+	if compat, ok = other.(Int32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -179,16 +159,12 @@ func (a i32s) ElEq(other ElEq, same bool) (Array, error) {
 }
 
 func (a u8s) ElEq(other ElEq, same bool) (Array, error) {
-	var b u8s
-
-	switch ot := other.(type) {
-	case u8s:
-		b = ot
-	case Byteser:
-		b = u8s(ot.Bytes())
-	default:
+	var compat Byteser
+	var ok bool
+	if compat, ok = other.(Byteser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Bytes()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -213,16 +189,12 @@ func (a u8s) ElEq(other ElEq, same bool) (Array, error) {
 }
 
 func (a bs) ElEq(other ElEq, same bool) (Array, error) {
-	var b bs
-
-	switch ot := other.(type) {
-	case bs:
-		b = ot
-	case Boolser:
-		b = bs(ot.Bools())
-	default:
+	var compat Boolser
+	var ok bool
+	if compat, ok = other.(Boolser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Bools()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -249,16 +221,12 @@ func (a bs) ElEq(other ElEq, same bool) (Array, error) {
 /* Gt */
 
 func (a f64s) Gt(other ElOrd, same bool) (Array, error) {
-	var b f64s
-
-	switch ot := other.(type) {
-	case f64s:
-		b = ot
-	case Float64ser:
-		b = f64s(ot.Float64s())
-	default:
+	var compat Float64ser
+	var ok bool
+	if compat, ok = other.(Float64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -283,16 +251,12 @@ func (a f64s) Gt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a f32s) Gt(other ElOrd, same bool) (Array, error) {
-	var b f32s
-
-	switch ot := other.(type) {
-	case f32s:
-		b = ot
-	case Float32ser:
-		b = f32s(ot.Float32s())
-	default:
+	var compat Float32ser
+	var ok bool
+	if compat, ok = other.(Float32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -317,16 +281,12 @@ func (a f32s) Gt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a ints) Gt(other ElOrd, same bool) (Array, error) {
-	var b ints
-
-	switch ot := other.(type) {
-	case ints:
-		b = ot
-	case Intser:
-		b = ints(ot.Ints())
-	default:
+	var compat Intser
+	var ok bool
+	if compat, ok = other.(Intser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Ints()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -351,16 +311,12 @@ func (a ints) Gt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i64s) Gt(other ElOrd, same bool) (Array, error) {
-	var b i64s
-
-	switch ot := other.(type) {
-	case i64s:
-		b = ot
-	case Int64ser:
-		b = i64s(ot.Int64s())
-	default:
+	var compat Int64ser
+	var ok bool
+	if compat, ok = other.(Int64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -385,16 +341,12 @@ func (a i64s) Gt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i32s) Gt(other ElOrd, same bool) (Array, error) {
-	var b i32s
-
-	switch ot := other.(type) {
-	case i32s:
-		b = ot
-	case Int32ser:
-		b = i32s(ot.Int32s())
-	default:
+	var compat Int32ser
+	var ok bool
+	if compat, ok = other.(Int32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -419,16 +371,12 @@ func (a i32s) Gt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a u8s) Gt(other ElOrd, same bool) (Array, error) {
-	var b u8s
-
-	switch ot := other.(type) {
-	case u8s:
-		b = ot
-	case Byteser:
-		b = u8s(ot.Bytes())
-	default:
+	var compat Byteser
+	var ok bool
+	if compat, ok = other.(Byteser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Bytes()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -455,16 +403,12 @@ func (a u8s) Gt(other ElOrd, same bool) (Array, error) {
 /* Gte */
 
 func (a f64s) Gte(other ElOrd, same bool) (Array, error) {
-	var b f64s
-
-	switch ot := other.(type) {
-	case f64s:
-		b = ot
-	case Float64ser:
-		b = f64s(ot.Float64s())
-	default:
+	var compat Float64ser
+	var ok bool
+	if compat, ok = other.(Float64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -489,16 +433,12 @@ func (a f64s) Gte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a f32s) Gte(other ElOrd, same bool) (Array, error) {
-	var b f32s
-
-	switch ot := other.(type) {
-	case f32s:
-		b = ot
-	case Float32ser:
-		b = f32s(ot.Float32s())
-	default:
+	var compat Float32ser
+	var ok bool
+	if compat, ok = other.(Float32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -523,16 +463,12 @@ func (a f32s) Gte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a ints) Gte(other ElOrd, same bool) (Array, error) {
-	var b ints
-
-	switch ot := other.(type) {
-	case ints:
-		b = ot
-	case Intser:
-		b = ints(ot.Ints())
-	default:
+	var compat Intser
+	var ok bool
+	if compat, ok = other.(Intser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Ints()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -557,16 +493,12 @@ func (a ints) Gte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i64s) Gte(other ElOrd, same bool) (Array, error) {
-	var b i64s
-
-	switch ot := other.(type) {
-	case i64s:
-		b = ot
-	case Int64ser:
-		b = i64s(ot.Int64s())
-	default:
+	var compat Int64ser
+	var ok bool
+	if compat, ok = other.(Int64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -591,16 +523,12 @@ func (a i64s) Gte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i32s) Gte(other ElOrd, same bool) (Array, error) {
-	var b i32s
-
-	switch ot := other.(type) {
-	case i32s:
-		b = ot
-	case Int32ser:
-		b = i32s(ot.Int32s())
-	default:
+	var compat Int32ser
+	var ok bool
+	if compat, ok = other.(Int32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -625,16 +553,12 @@ func (a i32s) Gte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a u8s) Gte(other ElOrd, same bool) (Array, error) {
-	var b u8s
-
-	switch ot := other.(type) {
-	case u8s:
-		b = ot
-	case Byteser:
-		b = u8s(ot.Bytes())
-	default:
+	var compat Byteser
+	var ok bool
+	if compat, ok = other.(Byteser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Bytes()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -661,16 +585,12 @@ func (a u8s) Gte(other ElOrd, same bool) (Array, error) {
 /* Lt */
 
 func (a f64s) Lt(other ElOrd, same bool) (Array, error) {
-	var b f64s
-
-	switch ot := other.(type) {
-	case f64s:
-		b = ot
-	case Float64ser:
-		b = f64s(ot.Float64s())
-	default:
+	var compat Float64ser
+	var ok bool
+	if compat, ok = other.(Float64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -695,16 +615,12 @@ func (a f64s) Lt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a f32s) Lt(other ElOrd, same bool) (Array, error) {
-	var b f32s
-
-	switch ot := other.(type) {
-	case f32s:
-		b = ot
-	case Float32ser:
-		b = f32s(ot.Float32s())
-	default:
+	var compat Float32ser
+	var ok bool
+	if compat, ok = other.(Float32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -729,16 +645,12 @@ func (a f32s) Lt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a ints) Lt(other ElOrd, same bool) (Array, error) {
-	var b ints
-
-	switch ot := other.(type) {
-	case ints:
-		b = ot
-	case Intser:
-		b = ints(ot.Ints())
-	default:
+	var compat Intser
+	var ok bool
+	if compat, ok = other.(Intser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Ints()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -763,16 +675,12 @@ func (a ints) Lt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i64s) Lt(other ElOrd, same bool) (Array, error) {
-	var b i64s
-
-	switch ot := other.(type) {
-	case i64s:
-		b = ot
-	case Int64ser:
-		b = i64s(ot.Int64s())
-	default:
+	var compat Int64ser
+	var ok bool
+	if compat, ok = other.(Int64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -797,16 +705,12 @@ func (a i64s) Lt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i32s) Lt(other ElOrd, same bool) (Array, error) {
-	var b i32s
-
-	switch ot := other.(type) {
-	case i32s:
-		b = ot
-	case Int32ser:
-		b = i32s(ot.Int32s())
-	default:
+	var compat Int32ser
+	var ok bool
+	if compat, ok = other.(Int32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -831,16 +735,12 @@ func (a i32s) Lt(other ElOrd, same bool) (Array, error) {
 }
 
 func (a u8s) Lt(other ElOrd, same bool) (Array, error) {
-	var b u8s
-
-	switch ot := other.(type) {
-	case u8s:
-		b = ot
-	case Byteser:
-		b = u8s(ot.Bytes())
-	default:
+	var compat Byteser
+	var ok bool
+	if compat, ok = other.(Byteser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Bytes()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -867,16 +767,12 @@ func (a u8s) Lt(other ElOrd, same bool) (Array, error) {
 /* Lte */
 
 func (a f64s) Lte(other ElOrd, same bool) (Array, error) {
-	var b f64s
-
-	switch ot := other.(type) {
-	case f64s:
-		b = ot
-	case Float64ser:
-		b = f64s(ot.Float64s())
-	default:
+	var compat Float64ser
+	var ok bool
+	if compat, ok = other.(Float64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -901,16 +797,12 @@ func (a f64s) Lte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a f32s) Lte(other ElOrd, same bool) (Array, error) {
-	var b f32s
-
-	switch ot := other.(type) {
-	case f32s:
-		b = ot
-	case Float32ser:
-		b = f32s(ot.Float32s())
-	default:
+	var compat Float32ser
+	var ok bool
+	if compat, ok = other.(Float32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Float32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -935,16 +827,12 @@ func (a f32s) Lte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a ints) Lte(other ElOrd, same bool) (Array, error) {
-	var b ints
-
-	switch ot := other.(type) {
-	case ints:
-		b = ot
-	case Intser:
-		b = ints(ot.Ints())
-	default:
+	var compat Intser
+	var ok bool
+	if compat, ok = other.(Intser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Ints()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -969,16 +857,12 @@ func (a ints) Lte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i64s) Lte(other ElOrd, same bool) (Array, error) {
-	var b i64s
-
-	switch ot := other.(type) {
-	case i64s:
-		b = ot
-	case Int64ser:
-		b = i64s(ot.Int64s())
-	default:
+	var compat Int64ser
+	var ok bool
+	if compat, ok = other.(Int64ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int64s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -1003,16 +887,12 @@ func (a i64s) Lte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a i32s) Lte(other ElOrd, same bool) (Array, error) {
-	var b i32s
-
-	switch ot := other.(type) {
-	case i32s:
-		b = ot
-	case Int32ser:
-		b = i32s(ot.Int32s())
-	default:
+	var compat Int32ser
+	var ok bool
+	if compat, ok = other.(Int32ser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Int32s()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))
@@ -1037,16 +917,12 @@ func (a i32s) Lte(other ElOrd, same bool) (Array, error) {
 }
 
 func (a u8s) Lte(other ElOrd, same bool) (Array, error) {
-	var b u8s
-
-	switch ot := other.(type) {
-	case u8s:
-		b = ot
-	case Byteser:
-		b = u8s(ot.Bytes())
-	default:
+	var compat Byteser
+	var ok bool
+	if compat, ok = other.(Byteser); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.Bytes()
 
 	if len(a) != len(b) {
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))

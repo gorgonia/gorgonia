@@ -26,16 +26,12 @@ var eleqordBinOps = []struct {
 }
 
 const eleqordRaw = `func (a {{.Name}}) {{.OpName}}(other {{.TypeClass}}, same bool) (Array, error) {
-	var b {{.Name}}
-
-	switch ot := other.(type){
-	case {{.Name}}:
-		b = ot
-	case {{.Compatible}}er:
-		b = {{.Name}}(ot.{{.Compatible}}())
-	default:
+	var compat {{.Compatible}}er
+	var ok bool
+	if compat, ok = other.({{.Compatible}}er); !ok {
 		return nil, errors.Errorf(typeMismatch, a, other)
 	}
+	b := compat.{{.Compatible}}()
 	
 	if len(a) != len(b){
 		return nil, errors.Errorf(lenMismatch, len(a), len(b))

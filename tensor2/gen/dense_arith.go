@@ -54,7 +54,7 @@ func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (an, bn, rn Number, reuse *De
 		reuse = reuseT.(*Dense)
 
 		if err = reuseDenseCheck(reuse, a); err != nil {
-			err = errors.Wrap(err, "Cannot add with reuse")
+			err = errors.Wrap(err, "Cannot use reuse")
 			return
 		}
 
