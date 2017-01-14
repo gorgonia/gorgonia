@@ -311,8 +311,100 @@ func Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err 
 					data[i] = maxF
 				}
 			}
-		case Boolser:
+		default:
 			return nil, errors.Errorf(unsupportedDtype, retD.data, "Clamp")
+		}
+		retVal = retD
+	default:
+		panic("NYI")
+	}
+	return
+}
+
+// Sign returns the sign function as applied to each element in the ndarray. It does not yet support the incr option
+func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	switch at := a.(type) {
+	case *Dense:
+		// var an, rn Number
+		var reuse *Dense
+		var safe, toReuse, incr bool
+		if _, _, reuse, safe, toReuse, incr, err = prepUnaryDense(at, opts...); err != nil {
+			err = errors.Wrapf(err, opFail, "InvSqrt")
+			return
+		}
+
+		var retD *Dense
+		switch {
+		case incr:
+			fallthrough
+		case toReuse:
+			copyArray(reuse.data, at.data)
+			retD = reuse
+		case safe:
+			retD = at.Clone().(*Dense)
+		case !safe:
+			retD = at
+		}
+		switch dt := retD.data.(type) {
+		case Float64ser:
+			data := dt.Float64s()
+			for i, v := range data {
+				if v < 0 {
+					data[i] = -1
+					continue
+				}
+				if v > 0 {
+					data[i] = 1
+				}
+			}
+
+		case Float32ser:
+			data := dt.Float32s()
+			for i, v := range data {
+				if v < 0 {
+					data[i] = -1
+					continue
+				}
+				if v > 0 {
+					data[i] = 1
+				}
+			}
+
+		case Intser:
+			data := dt.Ints()
+			for i, v := range data {
+				if v < 0 {
+					data[i] = -1
+					continue
+				}
+				if v > 0 {
+					data[i] = 1
+				}
+			}
+		case Int64ser:
+			data := dt.Int64s()
+			for i, v := range data {
+				if v < 0 {
+					data[i] = -1
+					continue
+				}
+				if v > 0 {
+					data[i] = 1
+				}
+			}
+		case Int32ser:
+			data := dt.Int32s()
+			for i, v := range data {
+				if v < 0 {
+					data[i] = -1
+					continue
+				}
+				if v > 0 {
+					data[i] = 1
+				}
+			}
+		default:
+			return nil, errors.Errorf(unsupportedDtype, retD.data, "Sign")
 		}
 		retVal = retD
 	default:

@@ -262,3 +262,60 @@ func TestClamp(t *testing.T) {
 		assert.Equal(ct.correct, ct.a.Data()) // a is clobbered
 	}
 }
+
+var signTests = []struct {
+	a, reuse Array
+
+	correct  interface{}
+	err      bool
+	errReuse bool
+}{
+	{f64s{0, 1, 2, -1, -2}, f64s{0, 10, 20, 30, 40}, []float64{0, 1, 1, -1, -1}, false, false},
+	{f32s{0, 1, 2, -1, -2}, f32s{0, 10, 20, 30, 40}, []float32{0, 1, 1, -1, -1}, false, false},
+	{ints{0, 1, 2, -1, -2}, ints{0, 10, 20, 30, 40}, []int{0, 1, 1, -1, -1}, false, false},
+	{i64s{0, 1, 2, -1, -2}, i64s{0, 10, 20, 30, 40}, []int64{0, 1, 1, -1, -1}, false, false},
+	{i32s{0, 1, 2, -1, -2}, i32s{0, 10, 20, 30, 40}, []int32{0, 1, 1, -1, -1}, false, false},
+
+	// unsupported for now
+	{u8s{0, 1, 4, 9, 16}, u8s{0, 10, 20, 30, 40}, []byte{0, 1, 2, 3, 4}, true, true},
+
+	// stupids: wrong resize shape
+	{f32s{0, 1, 2, -1, -2}, f32s{0, 10}, []float32{0, 1, 1, -1, -1}, false, true},
+}
+
+func TestSign(t *testing.T) {
+	assert := assert.New(t)
+
+	for i, st := range signTests {
+		var a, reuse, T Tensor
+		var err error
+		a = New(WithBacking(st.a))
+		T, err = Sign(a)
+
+		if checkErr(t, st.err, err, "Safe", i) {
+			continue
+		}
+		assert.Equal(st.correct, T.Data())
+
+		// reuse
+		a = New(WithBacking(st.a))
+		reuse = New(WithBacking(st.reuse))
+		T, err = Sign(a, WithReuse(reuse))
+
+		if checkErr(t, st.errReuse, err, "Reuse", i) {
+			continue
+		}
+		assert.Equal(st.correct, T.Data())
+		assert.Equal(st.correct, st.reuse.Data()) // ensure that the reuse has been clobbered
+
+		// unsafe
+		a = New(WithBacking(st.a))
+		T, err = Sign(a, UseUnsafe())
+
+		if checkErr(t, st.err, err, "Unsafe", i) {
+			continue
+		}
+		assert.Equal(st.correct, T.Data())
+		assert.Equal(st.correct, st.a.Data()) // ensure a has been clobbered
+	}
+}
