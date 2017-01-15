@@ -18,14 +18,14 @@ var denseCmpBinOps = []DenseCmpBinOp{
 
 const prepDenseCmpBinOpRaw = `package tensor
 
-func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense, safe, same, toReuse bool, err error){
+func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElemOrd, reuse *Dense, safe, same, toReuse bool, err error){
 	var ok bool
-	if ao, ok = a.data.(ElOrd); !ok {
+	if ao, ok = a.data.(ElemOrd); !ok {
 		err = noopError{}
 		return
 	}
 
-	if bo, ok = b.data.(ElOrd); !ok {
+	if bo, ok = b.data.(ElemOrd); !ok {
 		err = noopError{}
 		return
 	}
@@ -39,6 +39,9 @@ func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense
 	reuseT, _ := fo.incrReuse()
 	safe = fo.safe()
 	same = fo.same
+	if !safe{
+		same = true
+	}
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -52,8 +55,8 @@ func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense
 				return
 			}
 		} else{
-			var kal ElOrd 
-			if kal, ok = reuse.data.(ElOrd); !ok {
+			var kal ElemOrd 
+			if kal, ok = reuse.data.(ElemOrd); !ok {
 				err = errors.Errorf(typeMismatch, kal, reuse.data)
 				return
 			}
@@ -67,9 +70,9 @@ func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense
 	return
 }
 
-func prepOneDenseCmp(a *Dense, opts ...FuncOpt)(ao ElOrd, reuse *Dense, safe, same, toReuse bool, err error){
+func prepOneDenseCmp(a *Dense, opts ...FuncOpt)(ao ElemOrd, reuse *Dense, safe, same, toReuse bool, err error){
 	var ok bool
-	if ao, ok = a.data.(ElOrd); !ok {
+	if ao, ok = a.data.(ElemOrd); !ok {
 		err = noopError{}
 		return
 	}
@@ -78,6 +81,9 @@ func prepOneDenseCmp(a *Dense, opts ...FuncOpt)(ao ElOrd, reuse *Dense, safe, sa
 	reuseT, _ := fo.incrReuse()
 	safe = fo.safe()
 	same = fo.same
+	if !safe{
+		same = true
+	}
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -91,8 +97,8 @@ func prepOneDenseCmp(a *Dense, opts ...FuncOpt)(ao ElOrd, reuse *Dense, safe, sa
 				return
 			}
 		} else{
-			var kal ElOrd 
-			if kal, ok = reuse.data.(ElOrd); !ok {
+			var kal ElemOrd 
+			if kal, ok = reuse.data.(ElemOrd); !ok {
 				err = errors.Errorf(typeMismatch, kal, reuse.data)
 				return
 			}
@@ -113,7 +119,7 @@ const denseCmpBinOpRaw = `func {{.OpName}}DD(a, b *Dense, opts ...FuncOpt)(retVa
 	}
 
 	var arr Array
-	if arr, err = ao.{{title .OpName}}(bo, safe); err != nil {
+	if arr, err = ao.{{title .OpName}}(bo, same); err != nil {
 		return
 	}
 
@@ -121,8 +127,12 @@ const denseCmpBinOpRaw = `func {{.OpName}}DD(a, b *Dense, opts ...FuncOpt)(retVa
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -140,7 +150,7 @@ func {{.OpName}}DS(a *Dense, b interface{}, opts ...FuncOpt)(retVal *Dense, err 
 		return nil, err
 	}
 	
-	tmp := cloneArray(ao).(ElOrd)
+	tmp := cloneArray(ao).(ElemOrd)
 	if err = tmp.Memset(b); err != nil {
 		return 
 	}
@@ -154,8 +164,12 @@ func {{.OpName}}DS(a *Dense, b interface{}, opts ...FuncOpt)(retVal *Dense, err 
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -173,7 +187,7 @@ func {{.OpName}}SD(a interface{}, b *Dense, opts ...FuncOpt)(retVal *Dense, err 
 		return nil, err
 	}
 
-	tmp := cloneArray(bo).(ElOrd)
+	tmp := cloneArray(bo).(ElemOrd)
 	if err = tmp.Memset(a); err != nil {
 		return 
 	}
@@ -187,8 +201,12 @@ func {{.OpName}}SD(a interface{}, b *Dense, opts ...FuncOpt)(retVal *Dense, err 
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(b.t, b.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, b.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:

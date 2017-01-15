@@ -58,8 +58,6 @@ const denseBinOpTestRaw = `var {{.OpName}}Tests = []struct{
 	 correct0: []{{.Of}}{ {{range .CorrectVV0 -}} {{printf "%d" .}}, {{end -}} },
 	 correct1: []{{.Of}}{ {{range .CorrectVV1 -}} {{printf "%d" .}}, {{end -}} },
 	},
-
-
 	{{end -}}
 }
 

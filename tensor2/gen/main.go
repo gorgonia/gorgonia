@@ -153,7 +153,8 @@ func main() {
 		denseBinOpName     = "../dense_arith.go"
 		denseBinOpTestName = "../api_arith_test.go"
 
-		denseCmpBinOpName = "../dense_cmp.go"
+		denseCmpBinOpName     = "../dense_cmp.go"
+		denseCmpBinOpTestName = "../api_cmp_test.go"
 	)
 
 	pipeline(testtestName, arrayTypes, testtestFn)
@@ -170,6 +171,7 @@ func main() {
 	generateDenseArith(denseBinOpName)
 	generateDenseArithTests(denseBinOpTestName, arrayTypes)
 	generateDenseCmp(denseCmpBinOpName)
+	pipeline(denseCmpBinOpTestName, arrayTypes, generateDenseCmpTests)
 }
 
 func pipeline(fileName string, l []ArrayType, fn func(io.Writer, []ArrayType)) {

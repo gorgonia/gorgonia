@@ -4902,7 +4902,7 @@ func (a u8sDummy) IncrPowOfR(other interface{}, incrArr Number) (err error) {
 
 /* ElEq */
 
-func (a f64sDummy) ElEq(other ElEq, same bool) (Array, error) {
+func (a f64sDummy) ElEq(other ElemEq, same bool) (Array, error) {
 	var compat Float64ser
 	var ok bool
 	if compat, ok = other.(Float64ser); !ok {
@@ -4932,7 +4932,7 @@ func (a f64sDummy) ElEq(other ElEq, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a f32sDummy) ElEq(other ElEq, same bool) (Array, error) {
+func (a f32sDummy) ElEq(other ElemEq, same bool) (Array, error) {
 	var compat Float32ser
 	var ok bool
 	if compat, ok = other.(Float32ser); !ok {
@@ -4962,7 +4962,7 @@ func (a f32sDummy) ElEq(other ElEq, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a intsDummy) ElEq(other ElEq, same bool) (Array, error) {
+func (a intsDummy) ElEq(other ElemEq, same bool) (Array, error) {
 	var compat Intser
 	var ok bool
 	if compat, ok = other.(Intser); !ok {
@@ -4992,7 +4992,7 @@ func (a intsDummy) ElEq(other ElEq, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i64sDummy) ElEq(other ElEq, same bool) (Array, error) {
+func (a i64sDummy) ElEq(other ElemEq, same bool) (Array, error) {
 	var compat Int64ser
 	var ok bool
 	if compat, ok = other.(Int64ser); !ok {
@@ -5022,7 +5022,7 @@ func (a i64sDummy) ElEq(other ElEq, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i32sDummy) ElEq(other ElEq, same bool) (Array, error) {
+func (a i32sDummy) ElEq(other ElemEq, same bool) (Array, error) {
 	var compat Int32ser
 	var ok bool
 	if compat, ok = other.(Int32ser); !ok {
@@ -5052,7 +5052,7 @@ func (a i32sDummy) ElEq(other ElEq, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a u8sDummy) ElEq(other ElEq, same bool) (Array, error) {
+func (a u8sDummy) ElEq(other ElemEq, same bool) (Array, error) {
 	var compat Byteser
 	var ok bool
 	if compat, ok = other.(Byteser); !ok {
@@ -5082,7 +5082,7 @@ func (a u8sDummy) ElEq(other ElEq, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a bsDummy) ElEq(other ElEq, same bool) (Array, error) {
+func (a bsDummy) ElEq(other ElemEq, same bool) (Array, error) {
 	var compat Boolser
 	var ok bool
 	if compat, ok = other.(Boolser); !ok {
@@ -5114,7 +5114,7 @@ func (a bsDummy) ElEq(other ElEq, same bool) (Array, error) {
 
 /* Gt */
 
-func (a f64sDummy) Gt(other ElOrd, same bool) (Array, error) {
+func (a f64sDummy) Gt(other ElemOrd, same bool) (Array, error) {
 	var compat Float64ser
 	var ok bool
 	if compat, ok = other.(Float64ser); !ok {
@@ -5144,7 +5144,7 @@ func (a f64sDummy) Gt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a f32sDummy) Gt(other ElOrd, same bool) (Array, error) {
+func (a f32sDummy) Gt(other ElemOrd, same bool) (Array, error) {
 	var compat Float32ser
 	var ok bool
 	if compat, ok = other.(Float32ser); !ok {
@@ -5174,7 +5174,7 @@ func (a f32sDummy) Gt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a intsDummy) Gt(other ElOrd, same bool) (Array, error) {
+func (a intsDummy) Gt(other ElemOrd, same bool) (Array, error) {
 	var compat Intser
 	var ok bool
 	if compat, ok = other.(Intser); !ok {
@@ -5204,7 +5204,7 @@ func (a intsDummy) Gt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i64sDummy) Gt(other ElOrd, same bool) (Array, error) {
+func (a i64sDummy) Gt(other ElemOrd, same bool) (Array, error) {
 	var compat Int64ser
 	var ok bool
 	if compat, ok = other.(Int64ser); !ok {
@@ -5234,7 +5234,7 @@ func (a i64sDummy) Gt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i32sDummy) Gt(other ElOrd, same bool) (Array, error) {
+func (a i32sDummy) Gt(other ElemOrd, same bool) (Array, error) {
 	var compat Int32ser
 	var ok bool
 	if compat, ok = other.(Int32ser); !ok {
@@ -5264,7 +5264,7 @@ func (a i32sDummy) Gt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a u8sDummy) Gt(other ElOrd, same bool) (Array, error) {
+func (a u8sDummy) Gt(other ElemOrd, same bool) (Array, error) {
 	var compat Byteser
 	var ok bool
 	if compat, ok = other.(Byteser); !ok {
@@ -5296,7 +5296,7 @@ func (a u8sDummy) Gt(other ElOrd, same bool) (Array, error) {
 
 /* Gte */
 
-func (a f64sDummy) Gte(other ElOrd, same bool) (Array, error) {
+func (a f64sDummy) Gte(other ElemOrd, same bool) (Array, error) {
 	var compat Float64ser
 	var ok bool
 	if compat, ok = other.(Float64ser); !ok {
@@ -5326,7 +5326,7 @@ func (a f64sDummy) Gte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a f32sDummy) Gte(other ElOrd, same bool) (Array, error) {
+func (a f32sDummy) Gte(other ElemOrd, same bool) (Array, error) {
 	var compat Float32ser
 	var ok bool
 	if compat, ok = other.(Float32ser); !ok {
@@ -5356,7 +5356,7 @@ func (a f32sDummy) Gte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a intsDummy) Gte(other ElOrd, same bool) (Array, error) {
+func (a intsDummy) Gte(other ElemOrd, same bool) (Array, error) {
 	var compat Intser
 	var ok bool
 	if compat, ok = other.(Intser); !ok {
@@ -5386,7 +5386,7 @@ func (a intsDummy) Gte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i64sDummy) Gte(other ElOrd, same bool) (Array, error) {
+func (a i64sDummy) Gte(other ElemOrd, same bool) (Array, error) {
 	var compat Int64ser
 	var ok bool
 	if compat, ok = other.(Int64ser); !ok {
@@ -5416,7 +5416,7 @@ func (a i64sDummy) Gte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i32sDummy) Gte(other ElOrd, same bool) (Array, error) {
+func (a i32sDummy) Gte(other ElemOrd, same bool) (Array, error) {
 	var compat Int32ser
 	var ok bool
 	if compat, ok = other.(Int32ser); !ok {
@@ -5446,7 +5446,7 @@ func (a i32sDummy) Gte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a u8sDummy) Gte(other ElOrd, same bool) (Array, error) {
+func (a u8sDummy) Gte(other ElemOrd, same bool) (Array, error) {
 	var compat Byteser
 	var ok bool
 	if compat, ok = other.(Byteser); !ok {
@@ -5478,7 +5478,7 @@ func (a u8sDummy) Gte(other ElOrd, same bool) (Array, error) {
 
 /* Lt */
 
-func (a f64sDummy) Lt(other ElOrd, same bool) (Array, error) {
+func (a f64sDummy) Lt(other ElemOrd, same bool) (Array, error) {
 	var compat Float64ser
 	var ok bool
 	if compat, ok = other.(Float64ser); !ok {
@@ -5508,7 +5508,7 @@ func (a f64sDummy) Lt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a f32sDummy) Lt(other ElOrd, same bool) (Array, error) {
+func (a f32sDummy) Lt(other ElemOrd, same bool) (Array, error) {
 	var compat Float32ser
 	var ok bool
 	if compat, ok = other.(Float32ser); !ok {
@@ -5538,7 +5538,7 @@ func (a f32sDummy) Lt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a intsDummy) Lt(other ElOrd, same bool) (Array, error) {
+func (a intsDummy) Lt(other ElemOrd, same bool) (Array, error) {
 	var compat Intser
 	var ok bool
 	if compat, ok = other.(Intser); !ok {
@@ -5568,7 +5568,7 @@ func (a intsDummy) Lt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i64sDummy) Lt(other ElOrd, same bool) (Array, error) {
+func (a i64sDummy) Lt(other ElemOrd, same bool) (Array, error) {
 	var compat Int64ser
 	var ok bool
 	if compat, ok = other.(Int64ser); !ok {
@@ -5598,7 +5598,7 @@ func (a i64sDummy) Lt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i32sDummy) Lt(other ElOrd, same bool) (Array, error) {
+func (a i32sDummy) Lt(other ElemOrd, same bool) (Array, error) {
 	var compat Int32ser
 	var ok bool
 	if compat, ok = other.(Int32ser); !ok {
@@ -5628,7 +5628,7 @@ func (a i32sDummy) Lt(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a u8sDummy) Lt(other ElOrd, same bool) (Array, error) {
+func (a u8sDummy) Lt(other ElemOrd, same bool) (Array, error) {
 	var compat Byteser
 	var ok bool
 	if compat, ok = other.(Byteser); !ok {
@@ -5660,7 +5660,7 @@ func (a u8sDummy) Lt(other ElOrd, same bool) (Array, error) {
 
 /* Lte */
 
-func (a f64sDummy) Lte(other ElOrd, same bool) (Array, error) {
+func (a f64sDummy) Lte(other ElemOrd, same bool) (Array, error) {
 	var compat Float64ser
 	var ok bool
 	if compat, ok = other.(Float64ser); !ok {
@@ -5690,7 +5690,7 @@ func (a f64sDummy) Lte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a f32sDummy) Lte(other ElOrd, same bool) (Array, error) {
+func (a f32sDummy) Lte(other ElemOrd, same bool) (Array, error) {
 	var compat Float32ser
 	var ok bool
 	if compat, ok = other.(Float32ser); !ok {
@@ -5720,7 +5720,7 @@ func (a f32sDummy) Lte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a intsDummy) Lte(other ElOrd, same bool) (Array, error) {
+func (a intsDummy) Lte(other ElemOrd, same bool) (Array, error) {
 	var compat Intser
 	var ok bool
 	if compat, ok = other.(Intser); !ok {
@@ -5750,7 +5750,7 @@ func (a intsDummy) Lte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i64sDummy) Lte(other ElOrd, same bool) (Array, error) {
+func (a i64sDummy) Lte(other ElemOrd, same bool) (Array, error) {
 	var compat Int64ser
 	var ok bool
 	if compat, ok = other.(Int64ser); !ok {
@@ -5780,7 +5780,7 @@ func (a i64sDummy) Lte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a i32sDummy) Lte(other ElOrd, same bool) (Array, error) {
+func (a i32sDummy) Lte(other ElemOrd, same bool) (Array, error) {
 	var compat Int32ser
 	var ok bool
 	if compat, ok = other.(Int32ser); !ok {
@@ -5810,7 +5810,7 @@ func (a i32sDummy) Lte(other ElOrd, same bool) (Array, error) {
 	return retVal, nil
 }
 
-func (a u8sDummy) Lte(other ElOrd, same bool) (Array, error) {
+func (a u8sDummy) Lte(other ElemOrd, same bool) (Array, error) {
 	var compat Byteser
 	var ok bool
 	if compat, ok = other.(Byteser); !ok {

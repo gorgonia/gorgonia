@@ -2,14 +2,14 @@ package tensor
 
 import "github.com/pkg/errors"
 
-func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense, safe, same, toReuse bool, err error) {
+func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElemOrd, reuse *Dense, safe, same, toReuse bool, err error) {
 	var ok bool
-	if ao, ok = a.data.(ElOrd); !ok {
+	if ao, ok = a.data.(ElemOrd); !ok {
 		err = noopError{}
 		return
 	}
 
-	if bo, ok = b.data.(ElOrd); !ok {
+	if bo, ok = b.data.(ElemOrd); !ok {
 		err = noopError{}
 		return
 	}
@@ -23,6 +23,9 @@ func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense
 	reuseT, _ := fo.incrReuse()
 	safe = fo.safe()
 	same = fo.same
+	if !safe {
+		same = true
+	}
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -36,8 +39,8 @@ func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense
 				return
 			}
 		} else {
-			var kal ElOrd
-			if kal, ok = reuse.data.(ElOrd); !ok {
+			var kal ElemOrd
+			if kal, ok = reuse.data.(ElemOrd); !ok {
 				err = errors.Errorf(typeMismatch, kal, reuse.data)
 				return
 			}
@@ -51,9 +54,9 @@ func prepDenseCmpBinOp(a, b *Dense, opts ...FuncOpt) (ao, bo ElOrd, reuse *Dense
 	return
 }
 
-func prepOneDenseCmp(a *Dense, opts ...FuncOpt) (ao ElOrd, reuse *Dense, safe, same, toReuse bool, err error) {
+func prepOneDenseCmp(a *Dense, opts ...FuncOpt) (ao ElemOrd, reuse *Dense, safe, same, toReuse bool, err error) {
 	var ok bool
-	if ao, ok = a.data.(ElOrd); !ok {
+	if ao, ok = a.data.(ElemOrd); !ok {
 		err = noopError{}
 		return
 	}
@@ -62,6 +65,9 @@ func prepOneDenseCmp(a *Dense, opts ...FuncOpt) (ao ElOrd, reuse *Dense, safe, s
 	reuseT, _ := fo.incrReuse()
 	safe = fo.safe()
 	same = fo.same
+	if !safe {
+		same = true
+	}
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -75,8 +81,8 @@ func prepOneDenseCmp(a *Dense, opts ...FuncOpt) (ao ElOrd, reuse *Dense, safe, s
 				return
 			}
 		} else {
-			var kal ElOrd
-			if kal, ok = reuse.data.(ElOrd); !ok {
+			var kal ElemOrd
+			if kal, ok = reuse.data.(ElemOrd); !ok {
 				err = errors.Errorf(typeMismatch, kal, reuse.data)
 				return
 			}
@@ -99,7 +105,7 @@ func elEqDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	var arr Array
-	if arr, err = ao.ElEq(bo, safe); err != nil {
+	if arr, err = ao.ElEq(bo, same); err != nil {
 		return
 	}
 
@@ -107,8 +113,12 @@ func elEqDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -126,7 +136,7 @@ func elEqDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error)
 		return nil, err
 	}
 
-	tmp := cloneArray(ao).(ElOrd)
+	tmp := cloneArray(ao).(ElemOrd)
 	if err = tmp.Memset(b); err != nil {
 		return
 	}
@@ -140,8 +150,12 @@ func elEqDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error)
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -159,7 +173,7 @@ func elEqSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error)
 		return nil, err
 	}
 
-	tmp := cloneArray(bo).(ElOrd)
+	tmp := cloneArray(bo).(ElemOrd)
 	if err = tmp.Memset(a); err != nil {
 		return
 	}
@@ -173,8 +187,12 @@ func elEqSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error)
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(b.t, b.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, b.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -195,7 +213,7 @@ func gtDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	var arr Array
-	if arr, err = ao.Gt(bo, safe); err != nil {
+	if arr, err = ao.Gt(bo, same); err != nil {
 		return
 	}
 
@@ -203,8 +221,12 @@ func gtDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -222,7 +244,7 @@ func gtDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
-	tmp := cloneArray(ao).(ElOrd)
+	tmp := cloneArray(ao).(ElemOrd)
 	if err = tmp.Memset(b); err != nil {
 		return
 	}
@@ -236,8 +258,12 @@ func gtDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -255,7 +281,7 @@ func gtSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
-	tmp := cloneArray(bo).(ElOrd)
+	tmp := cloneArray(bo).(ElemOrd)
 	if err = tmp.Memset(a); err != nil {
 		return
 	}
@@ -269,8 +295,12 @@ func gtSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(b.t, b.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, b.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -291,7 +321,7 @@ func gteDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	var arr Array
-	if arr, err = ao.Gte(bo, safe); err != nil {
+	if arr, err = ao.Gte(bo, same); err != nil {
 		return
 	}
 
@@ -299,8 +329,12 @@ func gteDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -318,7 +352,7 @@ func gteDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 		return nil, err
 	}
 
-	tmp := cloneArray(ao).(ElOrd)
+	tmp := cloneArray(ao).(ElemOrd)
 	if err = tmp.Memset(b); err != nil {
 		return
 	}
@@ -332,8 +366,12 @@ func gteDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -351,7 +389,7 @@ func gteSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		return nil, err
 	}
 
-	tmp := cloneArray(bo).(ElOrd)
+	tmp := cloneArray(bo).(ElemOrd)
 	if err = tmp.Memset(a); err != nil {
 		return
 	}
@@ -365,8 +403,12 @@ func gteSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(b.t, b.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, b.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -387,7 +429,7 @@ func ltDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	var arr Array
-	if arr, err = ao.Lt(bo, safe); err != nil {
+	if arr, err = ao.Lt(bo, same); err != nil {
 		return
 	}
 
@@ -395,8 +437,12 @@ func ltDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -414,7 +460,7 @@ func ltDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
-	tmp := cloneArray(ao).(ElOrd)
+	tmp := cloneArray(ao).(ElemOrd)
 	if err = tmp.Memset(b); err != nil {
 		return
 	}
@@ -428,8 +474,12 @@ func ltDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -447,7 +497,7 @@ func ltSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
-	tmp := cloneArray(bo).(ElOrd)
+	tmp := cloneArray(bo).(ElemOrd)
 	if err = tmp.Memset(a); err != nil {
 		return
 	}
@@ -461,8 +511,12 @@ func ltSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(b.t, b.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, b.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -483,7 +537,7 @@ func lteDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	var arr Array
-	if arr, err = ao.Lte(bo, safe); err != nil {
+	if arr, err = ao.Lte(bo, same); err != nil {
 		return
 	}
 
@@ -491,8 +545,12 @@ func lteDD(a, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -510,7 +568,7 @@ func lteDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 		return nil, err
 	}
 
-	tmp := cloneArray(ao).(ElOrd)
+	tmp := cloneArray(ao).(ElemOrd)
 	if err = tmp.Memset(b); err != nil {
 		return
 	}
@@ -524,8 +582,12 @@ func lteDS(a *Dense, b interface{}, opts ...FuncOpt) (retVal *Dense, err error) 
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(a.t, a.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, a.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:
@@ -543,7 +605,7 @@ func lteSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		return nil, err
 	}
 
-	tmp := cloneArray(bo).(ElOrd)
+	tmp := cloneArray(bo).(ElemOrd)
 	if err = tmp.Memset(a); err != nil {
 		return
 	}
@@ -557,8 +619,12 @@ func lteSD(a interface{}, b *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	case toReuse:
 		_, err = copyArray(reuse.data, arr)
 		retVal = reuse
-	case safe:
+	case safe && same:
 		d := recycledDense(b.t, b.Shape().Clone())
+		_, err = copyArray(d.data, arr)
+		retVal = d
+	case safe && !same:
+		d := recycledDense(Bool, b.Shape().Clone())
 		_, err = copyArray(d.data, arr)
 		retVal = d
 	case !safe:

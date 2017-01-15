@@ -271,20 +271,20 @@ type Float interface {
 }
 
 // ElemEq is any array type that you can perform elementwise equality on
-type ElEq interface {
+type ElemEq interface {
 	Array
 	Oner
 
-	ElEq(other ElEq, same bool) (Array, error)
+	ElEq(other ElemEq, same bool) (Array, error)
 }
 
 // ElOrd is any array where you can perform an ordered comparison elementwise
-type ElOrd interface {
-	ElEq
-	Lt(other ElOrd, same bool) (Array, error)
-	Lte(other ElOrd, same bool) (Array, error)
-	Gt(other ElOrd, same bool) (Array, error)
-	Gte(other ElOrd, same bool) (Array, error)
+type ElemOrd interface {
+	ElemEq
+	Lt(other ElemOrd, same bool) (Array, error)
+	Lte(other ElemOrd, same bool) (Array, error)
+	Gt(other ElemOrd, same bool) (Array, error)
+	Gte(other ElemOrd, same bool) (Array, error)
 }
 
 /* FUNCTIONS */

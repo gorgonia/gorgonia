@@ -39,7 +39,6 @@ var addTests = []struct {
 		correct0: []float64{2, 4, 6, 8},
 		correct1: []float64{102, 104, 106, 108},
 	},
-
 	// Float32
 	{a: float32(1),
 		b:        New(Of(Float32), WithBacking([]float32{1, 2, 3, 4})),
@@ -62,7 +61,6 @@ var addTests = []struct {
 		correct0: []float32{2, 4, 6, 8},
 		correct1: []float32{102, 104, 106, 108},
 	},
-
 	// Int
 	{a: int(1),
 		b:        New(Of(Int), WithBacking([]int{1, 2, 3, 4})),
@@ -85,7 +83,6 @@ var addTests = []struct {
 		correct0: []int{2, 4, 6, 8},
 		correct1: []int{102, 104, 106, 108},
 	},
-
 	// Int64
 	{a: int64(1),
 		b:        New(Of(Int64), WithBacking([]int64{1, 2, 3, 4})),
@@ -108,7 +105,6 @@ var addTests = []struct {
 		correct0: []int64{2, 4, 6, 8},
 		correct1: []int64{102, 104, 106, 108},
 	},
-
 	// Int32
 	{a: int32(1),
 		b:        New(Of(Int32), WithBacking([]int32{1, 2, 3, 4})),
@@ -131,7 +127,6 @@ var addTests = []struct {
 		correct0: []int32{2, 4, 6, 8},
 		correct1: []int32{102, 104, 106, 108},
 	},
-
 	// Byte
 	{a: byte(1),
 		b:        New(Of(Byte), WithBacking([]byte{1, 2, 3, 4})),
@@ -222,7 +217,6 @@ var subTests = []struct {
 		correct0: []float64{0, 0, 0, 0},
 		correct1: []float64{100, 100, 100, 100},
 	},
-
 	// Float32
 	{a: float32(1),
 		b:        New(Of(Float32), WithBacking([]float32{1, 2, 3, 4})),
@@ -245,7 +239,6 @@ var subTests = []struct {
 		correct0: []float32{0, 0, 0, 0},
 		correct1: []float32{100, 100, 100, 100},
 	},
-
 	// Int
 	{a: int(1),
 		b:        New(Of(Int), WithBacking([]int{1, 2, 3, 4})),
@@ -268,7 +261,6 @@ var subTests = []struct {
 		correct0: []int{0, 0, 0, 0},
 		correct1: []int{100, 100, 100, 100},
 	},
-
 	// Int64
 	{a: int64(1),
 		b:        New(Of(Int64), WithBacking([]int64{1, 2, 3, 4})),
@@ -291,7 +283,6 @@ var subTests = []struct {
 		correct0: []int64{0, 0, 0, 0},
 		correct1: []int64{100, 100, 100, 100},
 	},
-
 	// Int32
 	{a: int32(1),
 		b:        New(Of(Int32), WithBacking([]int32{1, 2, 3, 4})),
@@ -314,7 +305,6 @@ var subTests = []struct {
 		correct0: []int32{0, 0, 0, 0},
 		correct1: []int32{100, 100, 100, 100},
 	},
-
 	// Byte
 	{a: byte(1),
 		b:        New(Of(Byte), WithBacking([]byte{1, 2, 3, 4})),
@@ -405,7 +395,6 @@ var mulTests = []struct {
 		correct0: []float64{1, 4, 9, 16},
 		correct1: []float64{101, 104, 109, 116},
 	},
-
 	// Float32
 	{a: float32(1),
 		b:        New(Of(Float32), WithBacking([]float32{1, 2, 3, 4})),
@@ -428,7 +417,6 @@ var mulTests = []struct {
 		correct0: []float32{1, 4, 9, 16},
 		correct1: []float32{101, 104, 109, 116},
 	},
-
 	// Int
 	{a: int(1),
 		b:        New(Of(Int), WithBacking([]int{1, 2, 3, 4})),
@@ -451,7 +439,6 @@ var mulTests = []struct {
 		correct0: []int{1, 4, 9, 16},
 		correct1: []int{101, 104, 109, 116},
 	},
-
 	// Int64
 	{a: int64(1),
 		b:        New(Of(Int64), WithBacking([]int64{1, 2, 3, 4})),
@@ -474,7 +461,6 @@ var mulTests = []struct {
 		correct0: []int64{1, 4, 9, 16},
 		correct1: []int64{101, 104, 109, 116},
 	},
-
 	// Int32
 	{a: int32(1),
 		b:        New(Of(Int32), WithBacking([]int32{1, 2, 3, 4})),
@@ -497,7 +483,6 @@ var mulTests = []struct {
 		correct0: []int32{1, 4, 9, 16},
 		correct1: []int32{101, 104, 109, 116},
 	},
-
 	// Byte
 	{a: byte(1),
 		b:        New(Of(Byte), WithBacking([]byte{1, 2, 3, 4})),
@@ -588,7 +573,6 @@ var divTests = []struct {
 		correct0: []float64{1, 1, 1, 1},
 		correct1: []float64{101, 101, 101, 101},
 	},
-
 	// Float32
 	{a: float32(24),
 		b:        New(Of(Float32), WithBacking([]float32{2, 4, 6, 8})),
@@ -611,7 +595,6 @@ var divTests = []struct {
 		correct0: []float32{1, 1, 1, 1},
 		correct1: []float32{101, 101, 101, 101},
 	},
-
 	// Int
 	{a: int(24),
 		b:        New(Of(Int), WithBacking([]int{2, 4, 6, 8})),
@@ -634,7 +617,6 @@ var divTests = []struct {
 		correct0: []int{1, 1, 1, 1},
 		correct1: []int{101, 101, 101, 101},
 	},
-
 	// Int64
 	{a: int64(24),
 		b:        New(Of(Int64), WithBacking([]int64{2, 4, 6, 8})),
@@ -657,7 +639,6 @@ var divTests = []struct {
 		correct0: []int64{1, 1, 1, 1},
 		correct1: []int64{101, 101, 101, 101},
 	},
-
 	// Int32
 	{a: int32(24),
 		b:        New(Of(Int32), WithBacking([]int32{2, 4, 6, 8})),
@@ -680,7 +661,6 @@ var divTests = []struct {
 		correct0: []int32{1, 1, 1, 1},
 		correct1: []int32{101, 101, 101, 101},
 	},
-
 	// Byte
 	{a: byte(24),
 		b:        New(Of(Byte), WithBacking([]byte{2, 4, 6, 8})),
@@ -771,7 +751,6 @@ var powTests = []struct {
 		correct0: []float64{1, 4, 27, 256},
 		correct1: []float64{101, 104, 127, 356},
 	},
-
 	// Float32
 	{a: float32(1),
 		b:        New(Of(Float32), WithBacking([]float32{1, 2, 3, 4})),
@@ -794,7 +773,6 @@ var powTests = []struct {
 		correct0: []float32{1, 4, 27, 256},
 		correct1: []float32{101, 104, 127, 356},
 	},
-
 	// Int
 	{a: int(1),
 		b:        New(Of(Int), WithBacking([]int{1, 2, 3, 4})),
@@ -817,7 +795,6 @@ var powTests = []struct {
 		correct0: []int{1, 4, 27, 256},
 		correct1: []int{101, 104, 127, 356},
 	},
-
 	// Int64
 	{a: int64(1),
 		b:        New(Of(Int64), WithBacking([]int64{1, 2, 3, 4})),
@@ -840,7 +817,6 @@ var powTests = []struct {
 		correct0: []int64{1, 4, 27, 256},
 		correct1: []int64{101, 104, 127, 356},
 	},
-
 	// Int32
 	{a: int32(1),
 		b:        New(Of(Int32), WithBacking([]int32{1, 2, 3, 4})),
@@ -863,7 +839,6 @@ var powTests = []struct {
 		correct0: []int32{1, 4, 27, 256},
 		correct1: []int32{101, 104, 127, 356},
 	},
-
 	// Byte
 	{a: byte(1),
 		b:        New(Of(Byte), WithBacking([]byte{1, 2, 3, 4})),

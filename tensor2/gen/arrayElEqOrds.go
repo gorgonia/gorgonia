@@ -18,11 +18,11 @@ var eleqordBinOps = []struct {
 	OpSymb    string
 	TypeClass string
 }{
-	{"ElEq", "==", "ElEq"},
-	{"Gt", ">", "ElOrd"},
-	{"Gte", ">=", "ElOrd"},
-	{"Lt", "<", "ElOrd"},
-	{"Lte", "<=", "ElOrd"},
+	{"ElEq", "==", "ElemEq"},
+	{"Gt", ">", "ElemOrd"},
+	{"Gte", ">=", "ElemOrd"},
+	{"Lt", "<", "ElemOrd"},
+	{"Lte", "<=", "ElemOrd"},
 }
 
 const eleqordRaw = `func (a {{.Name}}) {{.OpName}}(other {{.TypeClass}}, same bool) (Array, error) {
