@@ -1,14 +1,11 @@
 package tensor
 
-import "log"
-
 func ElEq(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	ad, adok := a.(*Dense)
 	bd, bdok := b.(*Dense)
 
 	switch {
 	case adok && bdok:
-		log.Printf("DD")
 		return elEqDD(ad, bd, opts...)
 	case adok && !bdok:
 		return elEqDS(ad, b, opts...)
