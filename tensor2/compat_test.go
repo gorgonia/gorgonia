@@ -1,31 +1,55 @@
 package tensor
 
 import (
+	"math"
 	"testing"
 
+	"github.com/chewxy/math32"
 	"github.com/gonum/matrix/mat64"
 	"github.com/stretchr/testify/assert"
 )
 
+var denseFromMat64 = []struct {
+	of  Dtype
+	mat []float64
+
+	correct interface{}
+}{
+	{Float64, []float64{0, 1, 2, 3, 4, 5}, []float64{0, 1, 2, 3, 4, 5}},
+	{Float32, []float64{0, 1, 2, 3, 4, 5}, []float32{0, 1, 2, 3, 4, 5}},
+	{Int, []float64{0, 1, 2, math.NaN(), math.Inf(1), math.Inf(-1)}, []int{0, 1, 2, 0, 0, 0}},
+	{Int64, []float64{0, 1, 2, math.NaN(), math.Inf(1), math.Inf(-1)}, []int64{0, 1, 2, 0, 0, 0}},
+	{Int32, []float64{0, 1, 2, math.NaN(), math.Inf(1), math.Inf(-1)}, []int32{0, 1, 2, 0, 0, 0}},
+	{Byte, []float64{0, 1, 2, math.NaN(), math.Inf(1), math.Inf(-1)}, []byte{0, 1, 2, 0, 0, 0}},
+	{Bool, []float64{0, 1, 2, math.NaN(), math.Inf(1), math.Inf(-1)}, []bool{false, true, true, false, false, false}},
+}
+
 func TestFromMat64(t *testing.T) {
 	assert := assert.New(t)
-	var m *mat64.Dense
-	var T *Dense
-	var backing []float64
+	for _, m64t := range denseFromMat64 {
+		m := mat64.NewDense(2, 3, m64t.mat)
+		T := FromMat64(m, m64t.of, true)
+		assert.True(Shape{2, 3}.Eq(T.Shape()))
+		assert.Equal(m64t.correct, T.Data())
 
-	backing = Range(Float64, 0, 6).(f64s).Float64s()
-	m = mat64.NewDense(2, 3, backing)
+		T = FromMat64(m, m64t.of, false)
+		assert.True(Shape{2, 3}.Eq(T.Shape()))
+		assert.Equal(m64t.correct, T.Data())
+	}
 
-	T = FromMat64(m, true)
-	assert.Equal(Shape{2, 3}, T.Shape())
-	assert.Equal(backing, T.Data())
-	backing[0] = 1000
-	assert.NotEqual(backing, T.Data())
+	// test specials
+	backing := []float64{math.NaN(), math.Inf(1), math.Inf(-1), math.NaN()}
+	m := mat64.NewDense(2, 2, backing)
 
-	backing[0] = 0
-	T = FromMat64(m, false)
-	backing[0] = 1000
-	assert.Equal(backing, T.Data())
+	T := FromMat64(m, Float64, true)
+	assert.True(math.IsNaN(T.Data().([]float64)[0]))
+	assert.True(math.IsInf(T.Data().([]float64)[1], 1))
+	assert.True(math.IsInf(T.Data().([]float64)[2], -1))
+
+	T = FromMat64(m, Float32, true)
+	assert.True(math32.IsNaN(T.Data().([]float32)[0]))
+	assert.True(math32.IsInf(T.Data().([]float32)[1], 1))
+	assert.True(math32.IsInf(T.Data().([]float32)[2], -1))
 }
 
 var denseToMat64Tests = []struct {
@@ -91,6 +115,14 @@ func TestToMat64(t *testing.T) {
 		}
 
 		assert.Equal(m64t.slicedCorrect, m.RawMatrix().Data)
-
 	}
+
+	backing := []float32{math32.NaN(), math32.Inf(1), math32.Inf(-1), math32.NaN()}
+	T := New(WithBacking(backing), WithShape(2, 2))
+	m, _ := ToMat64(T, false)
+	data := m.RawMatrix().Data
+
+	assert.True(math.IsNaN(data[0]))
+	assert.True(math.IsInf(data[1], 1))
+	assert.True(math.IsInf(data[2], -1))
 }
