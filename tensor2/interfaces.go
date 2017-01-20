@@ -45,3 +45,9 @@ type ArrayMaker interface {
 type FromInterfaceSlicer interface {
 	FromInterfaceSlice(s []interface{}) Array
 }
+
+// privat interfaces
+
+type normer interface {
+	Norm(ord NormOrder, axes ...int) (Tensor, error)
+}
