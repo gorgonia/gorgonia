@@ -46,7 +46,15 @@ type FromInterfaceSlicer interface {
 	FromInterfaceSlice(s []interface{}) Array
 }
 
-// privat interfaces
+type Argmaxer interface {
+	Argmax() int
+}
+
+type Argminer interface {
+	Argmin() int
+}
+
+// private interfaces
 
 type normer interface {
 	Norm(ord NormOrder, axes ...int) (Tensor, error)
