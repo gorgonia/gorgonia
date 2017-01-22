@@ -21,23 +21,14 @@ func Of(a Dtype) ConsOpt {
 //		backing := []float64{1,2,3,4}
 // 		t := New(WithBacking(backing))
 // It can be used with other construction options like WithShape
-func WithBacking(a interface{}) ConsOpt {
+func WithBacking(x interface{}) ConsOpt {
 	f := func(t Tensor) {
-		if a == nil {
+		if x == nil {
 			return
 		}
 		switch tt := t.(type) {
 		case *Dense:
-			tt.data = arrayFromInterface(a)
-
-			// if the type is not known
-			if tt.t == nil {
-				var err error
-				tt.t, err = typeOf(tt.data)
-				if err != nil {
-					panic(err)
-				}
-			}
+			tt.fromSlice(x)
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -56,7 +47,7 @@ func WithShape(dims ...int) ConsOpt {
 
 			// special case for scalars
 			if len(throw) == 0 {
-				tt.data = makeArray(tt.t, 1)
+				// tt.data = makeArray(tt.t, 1)
 			}
 		default:
 			panic("Unsupported Tensor type")
@@ -69,45 +60,46 @@ func WithShape(dims ...int) ConsOpt {
 
 // FromScalar is a construction option for representing a scalar value as a Tensor
 func FromScalar(s interface{}) ConsOpt {
-	f := func(t Tensor) {
-		switch tt := t.(type) {
-		case *Dense:
-			if tt.data != nil {
-				if err := tt.data.Set(0, s); err != nil {
-					panic(err)
-				}
-				return
-			}
 
-			switch st := s.(type) {
-			case float64:
-				tt.data = f64s{st}
-				tt.t = Float64
-			case float32:
-				tt.data = f32s{st}
-				tt.t = Float32
-			case int:
-				tt.data = ints{st}
-				tt.t = Int
-			case int64:
-				tt.data = i64s{st}
-				tt.t = Int64
-			case int32:
-				tt.data = i32s{st}
-				tt.t = Int32
-			case byte:
-				tt.data = u8s{st}
-				tt.t = Byte
-			case bool:
-				tt.data = bs{st}
-				tt.t = Bool
-			case Dtyper:
-				dt := st.Dtype()
-				tt.data = makeArray(dt, 1)
-				tt.data.Set(0, dt.ZeroValue())
-			default:
-				panic("Scalar value unsupported")
-			}
+	f := func(t Tensor) {
+		switch t.(type) {
+		case *Dense:
+			// if tt.data != nil {
+			// 	if err := tt.data.Set(0, s); err != nil {
+			// 		panic(err)
+			// 	}
+			// 	return
+			// }
+
+			// switch st := s.(type) {
+			// case float64:
+			// 	tt.data = f64s{st}
+			// 	tt.t = Float64
+			// case float32:
+			// 	tt.data = f32s{st}
+			// 	tt.t = Float32
+			// case int:
+			// 	tt.data = ints{st}
+			// 	tt.t = Int
+			// case int64:
+			// 	tt.data = i64s{st}
+			// 	tt.t = Int64
+			// case int32:
+			// 	tt.data = i32s{st}
+			// 	tt.t = Int32
+			// case byte:
+			// 	tt.data = u8s{st}
+			// 	tt.t = Byte
+			// case bool:
+			// 	tt.data = bs{st}
+			// 	tt.t = Bool
+			// case Dtyper:
+			// 	dt := st.Dtype()
+			// 	tt.data = makeArray(dt, 1)
+			// 	tt.data.Set(0, dt.ZeroValue())
+			// default:
+			// 	panic("Scalar value unsupported")
+			// }
 		default:
 			panic("Unsupported Tensor Type")
 		}
