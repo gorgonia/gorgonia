@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"math"
+	"math/cmplx"
 
 	"github.com/chewxy/vecf32"
 	"github.com/chewxy/vecf64"
@@ -157,6 +158,9 @@ func addC64(a, b []complex64) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] += v
+	}
 	return nil
 }
 
@@ -165,6 +169,9 @@ func addC128(a, b []complex128) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] += v
+	}
 	return nil
 }
 
@@ -313,6 +320,9 @@ func subC64(a, b []complex64) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] -= v
+	}
 	return nil
 }
 
@@ -321,6 +331,9 @@ func subC128(a, b []complex128) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] -= v
+	}
 	return nil
 }
 
@@ -469,6 +482,9 @@ func mulC64(a, b []complex64) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] *= v
+	}
 	return nil
 }
 
@@ -477,6 +493,9 @@ func mulC128(a, b []complex128) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] *= v
+	}
 	return nil
 }
 
@@ -725,6 +744,9 @@ func divC64(a, b []complex64) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] /= v
+	}
 	return nil
 }
 
@@ -733,6 +755,9 @@ func divC128(a, b []complex128) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+		a[i] /= v
+	}
 	return nil
 }
 
@@ -881,6 +906,10 @@ func powC64(a, b []complex64) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+
+		a[i] = complex64(cmplx.Pow(complex128(a[i]), complex128(v)))
+	}
 	return nil
 }
 
@@ -889,6 +918,10 @@ func powC128(a, b []complex128) error {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
 
+	for i, v := range b {
+
+		a[i] = complex128(cmplx.Pow(complex128(a[i]), complex128(v)))
+	}
 	return nil
 }
 
@@ -985,10 +1018,16 @@ func transF64(a []float64, b float64) error {
 }
 
 func transC64(a []complex64, b complex64) error {
+	for i, v := range a {
+		a[i] = v + b
+	}
 	return nil
 }
 
 func transC128(a []complex128, b complex128) error {
+	for i, v := range a {
+		a[i] = v + b
+	}
 	return nil
 }
 
@@ -1085,10 +1124,16 @@ func transinvF64(a []float64, b float64) error {
 }
 
 func transinvC64(a []complex64, b complex64) error {
+	for i, v := range a {
+		a[i] = v - b
+	}
 	return nil
 }
 
 func transinvC128(a []complex128, b complex128) error {
+	for i, v := range a {
+		a[i] = v - b
+	}
 	return nil
 }
 
@@ -1185,10 +1230,16 @@ func transinvrF64(a []float64, b float64) error {
 }
 
 func transinvrC64(a []complex64, b complex64) error {
+	for i, v := range a {
+		a[i] = b - v
+	}
 	return nil
 }
 
 func transinvrC128(a []complex128, b complex128) error {
+	for i, v := range a {
+		a[i] = b - v
+	}
 	return nil
 }
 
@@ -1285,10 +1336,16 @@ func scaleF64(a []float64, b float64) error {
 }
 
 func scaleC64(a []complex64, b complex64) error {
+	for i, v := range a {
+		a[i] = v * b
+	}
 	return nil
 }
 
 func scaleC128(a []complex128, b complex128) error {
+	for i, v := range a {
+		a[i] = v * b
+	}
 	return nil
 }
 
@@ -1302,6 +1359,7 @@ func scaleinvI(a []int, b int) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1318,6 +1376,7 @@ func scaleinvI8(a []int8, b int8) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1334,6 +1393,7 @@ func scaleinvI16(a []int16, b int16) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1350,6 +1410,7 @@ func scaleinvI32(a []int32, b int32) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1366,6 +1427,7 @@ func scaleinvI64(a []int64, b int64) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1382,6 +1444,7 @@ func scaleinvU(a []uint, b uint) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1398,6 +1461,7 @@ func scaleinvU8(a []uint8, b uint8) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1414,6 +1478,7 @@ func scaleinvU16(a []uint16, b uint16) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1430,6 +1495,7 @@ func scaleinvU32(a []uint32, b uint32) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1446,6 +1512,7 @@ func scaleinvU64(a []uint64, b uint64) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = v / b
 	}
 	if errs != nil {
@@ -1465,10 +1532,16 @@ func scaleinvF64(a []float64, b float64) error {
 }
 
 func scaleinvC64(a []complex64, b complex64) error {
+	for i, v := range a {
+		a[i] = v / b
+	}
 	return nil
 }
 
 func scaleinvC128(a []complex128, b complex128) error {
+	for i, v := range a {
+		a[i] = v / b
+	}
 	return nil
 }
 
@@ -1482,6 +1555,7 @@ func scaleinvrI(a []int, b int) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1498,6 +1572,7 @@ func scaleinvrI8(a []int8, b int8) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1514,6 +1589,7 @@ func scaleinvrI16(a []int16, b int16) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1530,6 +1606,7 @@ func scaleinvrI32(a []int32, b int32) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1546,6 +1623,7 @@ func scaleinvrI64(a []int64, b int64) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1562,6 +1640,7 @@ func scaleinvrU(a []uint, b uint) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1578,6 +1657,7 @@ func scaleinvrU8(a []uint8, b uint8) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1594,6 +1674,7 @@ func scaleinvrU16(a []uint16, b uint16) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1610,6 +1691,7 @@ func scaleinvrU32(a []uint32, b uint32) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1626,6 +1708,7 @@ func scaleinvrU64(a []uint64, b uint64) error {
 			a[i] = 0
 			continue
 		}
+
 		a[i] = b / v
 	}
 	if errs != nil {
@@ -1645,10 +1728,16 @@ func scaleinvrF64(a []float64, b float64) error {
 }
 
 func scaleinvrC64(a []complex64, b complex64) error {
+	for i, v := range a {
+		a[i] = b / v
+	}
 	return nil
 }
 
 func scaleinvrC128(a []complex128, b complex128) error {
+	for i, v := range a {
+		a[i] = b / v
+	}
 	return nil
 }
 
@@ -1745,10 +1834,18 @@ func powofF64(a []float64, b float64) error {
 }
 
 func powofC64(a []complex64, b complex64) error {
+	for i, v := range a {
+
+		a[i] = complex64(cmplx.Pow(complex128(v), complex128(b)))
+	}
 	return nil
 }
 
 func powofC128(a []complex128, b complex128) error {
+	for i, v := range a {
+
+		a[i] = complex128(cmplx.Pow(complex128(v), complex128(b)))
+	}
 	return nil
 }
 
@@ -1845,9 +1942,17 @@ func powofrF64(a []float64, b float64) error {
 }
 
 func powofrC64(a []complex64, b complex64) error {
+	for i, v := range a {
+
+		a[i] = complex64(cmplx.Pow(complex128(b), complex128(v)))
+	}
 	return nil
 }
 
 func powofrC128(a []complex128, b complex128) error {
+	for i, v := range a {
+
+		a[i] = complex128(cmplx.Pow(complex128(b), complex128(v)))
+	}
 	return nil
 }

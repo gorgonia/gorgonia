@@ -55,12 +55,6 @@ func newDense(dt Dtype, size int) *Dense {
 	return d
 }
 
-func newFromSlice(x interface{}) *Dense {
-	t := new(Dense)
-	t.fromSlice(x)
-	return t
-}
-
 func (t *Dense) fromSlice(x interface{}) {
 	xt := reflect.TypeOf(x)
 	if xt.Kind() != reflect.Slice {

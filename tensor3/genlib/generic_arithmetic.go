@@ -13,7 +13,14 @@ const genericVecVecArithRaw = `func {{lower .OpName}}{{short .Kind}}(a, b []{{as
 
 	{{if hasPrefix .Kind.String "float" -}}
 		vec{{short .Kind | lower }}.{{.OpName}}(a, b)
-	{{else if hasPrefix .Kind.String "complex" -}} 
+	{{else if hasPrefix .Kind.String "complex" -}}
+		for i, v := range b {
+			{{if eq .OpName "Pow"}}
+				a[i] = {{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v)))
+			{{else -}}
+				a[i] {{.OpSymb}}= v 
+			{{end -}}
+			}
 	{{else -}}
 		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
 		{{$div := hasPrefix .OpName "Div" -}}
@@ -47,6 +54,13 @@ const genericVecScalarArithRaw = `func {{lower .OpName}}{{short .Kind}}(a []{{as
 	{{if hasPrefix .Kind.String "float" -}}
 		vec{{short .Kind | lower }}.{{.OpName}}([]{{asType .Kind}}(a), b)
 	{{else if hasPrefix .Kind.String "complex" -}} 
+		for i, v := range a {
+			{{if hasPrefix .OpName "Pow"}}
+				a[i] =  {{if hasSuffix .OpName "R" -}}   {{asType .Kind}}(cmplx.Pow(complex128(b), complex128(v)))  {{else -}}  {{asType .Kind}}(cmplx.Pow(complex128(v), complex128(b))) {{end -}}
+			{{else -}}
+				a[i] = {{if hasSuffix .OpName "R" -}} b {{.OpSymb}} v {{else -}} v {{.OpSymb}} b {{end -}}
+			{{end -}}
+			}
 	{{else -}}
 		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
 		{{$div := hasPrefix .OpName "Div" -}}
@@ -58,8 +72,8 @@ const genericVecScalarArithRaw = `func {{lower .OpName}}{{short .Kind}}(a []{{as
 				a[i] = 0 
 				continue
 			}
-			{{end -}}
 
+			{{end -}}
 			a[i] = {{if hasSuffix .OpName "R" -}}
 				{{if .IsFunc -}} 
 					{{asType .Kind}}({{.OpSymb}}(float64(b), float64(v)))

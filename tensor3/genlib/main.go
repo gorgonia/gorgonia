@@ -15,12 +15,15 @@ type ManyKinds struct {
 
 func main() {
 	const (
-		getSetName       = "../dense_getset.go"
-		getSetTestsName  = "../dense_getset_test.go"
-		genUtilsName     = "../genericUtils.go"
-		transposeName    = "../dense_transpose_specializations.go"
-		genericArithName = "../genericArith.go"
-		denseArithName   = "../dense_arith.go"
+		getSetName          = "../dense_getset.go"
+		getSetTestsName     = "../dense_getset_test.go"
+		genUtilsName        = "../genericUtils.go"
+		transposeName       = "../dense_transpose_specializations.go"
+		genericArithName    = "../genericArith.go"
+		denseArithName      = "../dense_arith.go"
+		denseArithTestsName = "../dense_arith_test.go"
+
+		testTestName = "../test_test.go"
 	)
 	mk := makeManyKinds()
 	pipeline(getSetName, mk, getset)
@@ -29,6 +32,8 @@ func main() {
 	pipeline(transposeName, mk, transpose)
 	pipeline(genericArithName, mk, genericArith)
 	pipeline(denseArithName, mk, arith)
+	pipeline(denseArithTestsName, mk, denseArithTests)
+	pipeline(testTestName, mk, testtest)
 }
 
 func makeManyKinds() *ManyKinds {
