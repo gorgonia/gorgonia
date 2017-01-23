@@ -53,13 +53,32 @@ var specialized = [...]reflect.Kind{
 	reflect.String,
 }
 
+var number = [...]reflect.Kind{
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Uint,
+	reflect.Uint8,
+	reflect.Uint16,
+	reflect.Uint32,
+	reflect.Uint64,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
+}
+
 var funcs = template.FuncMap{
 	"lower":           strings.ToLower,
 	"title":           strings.Title,
 	"hasPrefix":       strings.HasPrefix,
+	"hasSuffix":       strings.HasSuffix,
 	"isParameterized": isParameterized,
 	"isRangeable":     isRangeable,
 	"isSpecialized":   isSpecialized,
+	"isNumber":        isNumber,
 
 	"short": short,
 	"clean": clean,
@@ -89,6 +108,15 @@ func isRangeable(a reflect.Kind) bool {
 
 func isSpecialized(a reflect.Kind) bool {
 	for _, v := range specialized {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
+func isNumber(a reflect.Kind) bool {
+	for _, v := range number {
 		if v == a {
 			return true
 		}

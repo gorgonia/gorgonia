@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"reflect"
 	"text/template"
@@ -81,7 +80,6 @@ func init() {
 }
 
 func getsetTest(f io.Writer, generic *ManyKinds) {
-	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
 	tests := makeTests(generic)
 	GetTest.Execute(f, tests)
 }

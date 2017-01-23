@@ -64,12 +64,29 @@ var (
 )
 
 // specialized types indicate that there are specialized code generated for these types
-var specializedTypes = [...]Dtype{
+var specializedTypes = []Dtype{
 	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Complex64, Complex128, String,
+}
+
+var numberTypes = []Dtype{
+	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Complex64, Complex128,
+}
+
+var ordTypes = []Dtype{
+	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Complex64, Complex128, String,
 }
 
 func isSpecialized(dt Dtype) bool {
 	for _, s := range specializedTypes {
+		if s.Kind() == dt.Kind() {
+			return true
+		}
+	}
+	return false
+}
+
+func isNumber(dt Dtype) bool {
+	for _, s := range numberTypes {
 		if s.Kind() == dt.Kind() {
 			return true
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -14,16 +15,20 @@ type ManyKinds struct {
 
 func main() {
 	const (
-		getSetName      = "../dense_getset.go"
-		getSetTestsName = "../dense_getset_test.go"
-		genUtilsName    = "../genericUtils.go"
-		transposeName   = "../dense_transpose_specializations.go"
+		getSetName       = "../dense_getset.go"
+		getSetTestsName  = "../dense_getset_test.go"
+		genUtilsName     = "../genericUtils.go"
+		transposeName    = "../dense_transpose_specializations.go"
+		genericArithName = "../genericArith.go"
+		denseArithName   = "../dense_arith.go"
 	)
 	mk := makeManyKinds()
 	pipeline(getSetName, mk, getset)
 	pipeline(getSetTestsName, mk, getsetTest)
 	pipeline(genUtilsName, mk, utils)
 	pipeline(transposeName, mk, transpose)
+	pipeline(genericArithName, mk, genericArith)
+	pipeline(denseArithName, mk, arith)
 }
 
 func makeManyKinds() *ManyKinds {
@@ -41,6 +46,7 @@ func pipeline(filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds
 	}
 	defer f.Close()
 
+	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
 	fn(f, generic)
 
 	// gofmt and goimports this shit

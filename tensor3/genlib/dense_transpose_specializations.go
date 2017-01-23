@@ -56,10 +56,12 @@ const transposeRaw = `func (t *Dense) transpose(expStrides []int){
 	{{range .Kinds -}}
 		{{if isSpecialized . -}}
 	case reflect.{{reflectKind .}}:
-		transpose{{short .}}(expStrides)
+		t.transpose{{short .}}(expStrides)
 		{{end -}}
 	{{end -}}
 	default:
+			axes := t.transposeWith
+	size := t.len()
 		// first we'll create a bit-map to track which elements have been moved to their correct places
 	track := NewBitMap(size)
 	track.Set(0)
@@ -107,7 +109,6 @@ func init() {
 }
 
 func transpose(f io.Writer, generic *ManyKinds) {
-	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
 	for _, k := range generic.Kinds {
 		if isSpecialized(k) {
 			fmt.Fprintf(f, "/* %v */\n\n", k)

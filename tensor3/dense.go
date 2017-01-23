@@ -147,45 +147,41 @@ func (t *Dense) IsMaterializable() bool {
 
 // Eq checks that two types.Tensor are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
 func (t *Dense) Eq(other interface{}) bool {
-	// if ot, ok := other.(*Dense); ok {
-	// 	if ot == t {
-	// 		return true
-	// 	}
+	if ot, ok := other.(*Dense); ok {
+		if ot == t {
+			return true
+		}
 
-	// 	if ot.data.Len() != t.data.Len() {
-	// 		return false
-	// 	}
+		if ot.len() != t.len() {
+			return false
+		}
 
-	// 	if !t.Shape().Eq(ot.Shape()) {
-	// 		return false
-	// 	}
+		if !t.Shape().Eq(ot.Shape()) {
+			return false
+		}
 
-	// 	if !t.data.Eq(ot.data) {
-	// 		return false
-	// 	}
-	// 	//TODO: MORE METADATA CHECKS!
+		if t.data != ot.data {
+			return false
+		}
 
-	// 	return true
-	// }
+		return true
+	}
 	return false
 }
 
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {
-	// retVal := recycledDense(t.t, t.Shape().Clone())
-	// ReturnAP(retVal.AP)
-	// retVal.AP = t.AP.Clone()
+	retVal := recycledDense(t.t, t.Shape().Clone())
+	ReturnAP(retVal.AP)
+	retVal.AP = t.AP.Clone()
 
-	// if t.old != nil {
-	// 	retVal.old = t.old.Clone()
-	// }
+	if t.old != nil {
+		retVal.old = t.old.Clone()
+	}
 
-	// newData := makeArray(t.t, t.data.Len())
-	// copyArray(newData, t.data)
-	// retVal.data = newData
-	// retVal.Lock()
-	// return retVal
-	return nil
+	copyDense(retVal, t)
+	retVal.Lock()
+	return retVal
 }
 
 func (t *Dense) cap() int { return t.hdr.Cap }

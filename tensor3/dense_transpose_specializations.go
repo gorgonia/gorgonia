@@ -633,38 +633,40 @@ func (t *Dense) transposeStr(expStrides []int) {
 func (t *Dense) transpose(expStrides []int) {
 	switch t.t.Kind() {
 	case reflect.Bool:
-		transposeB(expStrides)
+		t.transposeB(expStrides)
 	case reflect.Int:
-		transposeI(expStrides)
+		t.transposeI(expStrides)
 	case reflect.Int8:
-		transposeI8(expStrides)
+		t.transposeI8(expStrides)
 	case reflect.Int16:
-		transposeI16(expStrides)
+		t.transposeI16(expStrides)
 	case reflect.Int32:
-		transposeI32(expStrides)
+		t.transposeI32(expStrides)
 	case reflect.Int64:
-		transposeI64(expStrides)
+		t.transposeI64(expStrides)
 	case reflect.Uint:
-		transposeU(expStrides)
+		t.transposeU(expStrides)
 	case reflect.Uint8:
-		transposeU8(expStrides)
+		t.transposeU8(expStrides)
 	case reflect.Uint16:
-		transposeU16(expStrides)
+		t.transposeU16(expStrides)
 	case reflect.Uint32:
-		transposeU32(expStrides)
+		t.transposeU32(expStrides)
 	case reflect.Uint64:
-		transposeU64(expStrides)
+		t.transposeU64(expStrides)
 	case reflect.Float32:
-		transposeF32(expStrides)
+		t.transposeF32(expStrides)
 	case reflect.Float64:
-		transposeF64(expStrides)
+		t.transposeF64(expStrides)
 	case reflect.Complex64:
-		transposeC64(expStrides)
+		t.transposeC64(expStrides)
 	case reflect.Complex128:
-		transposeC128(expStrides)
+		t.transposeC128(expStrides)
 	case reflect.String:
-		transposeStr(expStrides)
+		t.transposeStr(expStrides)
 	default:
+		axes := t.transposeWith
+		size := t.len()
 		// first we'll create a bit-map to track which elements have been moved to their correct places
 		track := NewBitMap(size)
 		track.Set(0)

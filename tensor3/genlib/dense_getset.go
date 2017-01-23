@@ -156,7 +156,6 @@ func init() {
 }
 
 func getset(f io.Writer, generic *ManyKinds) {
-	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
 	for _, k := range generic.Kinds {
 		if !isParameterized(k) {
 			fmt.Fprintf(f, "/* %v */\n\n", k)
