@@ -1,23 +1,24 @@
 package main
 
 import (
-	"reflect"
+	"fmt"
+	"io"
 	"text/template"
 )
 
-const asSliceRaw = `func (t *Dense) {{lower .String | clean | strip}}s() []{{lower .String | clean}} { return *(*[]{{lower .String | clean}})(unsafe.Pointer(t.hdr)) }
+const asSliceRaw = `func (t *Dense) {{asType . | strip }}s() []{{asType .}} { return *(*[]{{asType .}})(unsafe.Pointer(t.hdr)) }
 `
-const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{lower .String | clean }}) { t.{{lower .String | clean | strip}}s()[i] = x }
+const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{asType .}}) { t.{{asType . | strip}}s()[i] = x }
 `
-const getBasicRaw = `func (t *Dense) get{{short .}}(i int) {{lower .String | clean }} { return t.{{lower .String | clean | strip }}s()[i]}
+const getBasicRaw = `func (t *Dense) get{{short .}}(i int) {{asType .}} { return t.{{lower .String | clean | strip }}s()[i]}
 `
 const getRaw = `func (t *Dense) get(i int) interface{} {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
 		{{else -}}
-	case reflect.{{.String | title |  strip}}:
-		return t.{{lower .String | clean | strip }}s()[i]
+	case reflect.{{reflectKind .}}:
+		return t.get{{short .}}(i)
 		{{end -}}
 	{{end -}}
 	default:
@@ -34,9 +35,9 @@ const setRaw = `func (t *Dense) set(i int, x interface{}) {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
 		{{else -}}
-	case reflect.{{.String | title | strip}}:
-		xv := x.({{lower .String | clean}})
-		t.{{lower .String | clean|strip}}s()[i] = xv
+	case reflect.{{reflectKind .}}:
+		xv := x.({{asType .}})
+		t.set{{short .}}(i, xv)
 		{{end -}}
 	{{end -}}
 	default:
@@ -56,7 +57,7 @@ const makeDataRaw = `func (t *Dense) makeArray(size int) {
 	{{range .Kinds -}}
 		{{if isParameterized .}}
 		{{else -}}
-	case reflect.{{.String | title | strip}}:
+	case reflect.{{reflectKind .}}:
 		arr := make([]{{.String | lower | clean }}, size)
 		t.fromSlice(arr)
 		{{end -}}
@@ -76,8 +77,8 @@ const copyRaw = `func copyDense(dest, src *Dense) int {
 	{{range .Kinds -}}
 		{{if isParameterized .}}
 		{{else -}}
-	case reflect.{{.String | title | strip}}:
-		return copy(dest.{{lower .String | clean | strip}}s(), src.{{lower .String | clean | strip}}s())
+	case reflect.{{reflectKind .}}:
+		return copy(dest.{{asType . | strip}}s(), src.{{asType . | strip}}s())
 		{{end -}}
 	{{end -}}
 	default:
@@ -118,7 +119,7 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense) int {
 		{{range .Kinds -}}
 			{{if isParameterized . -}}
 			{{else -}}
-		case reflect.{{.String | title| strip}}:
+		case reflect.{{reflectKind .}}:
 			dest.set{{short .}}(i, src.get{{short .}}(j))
 			{{end -}}
 		{{end -}}
@@ -130,10 +131,6 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense) int {
 	return count
 }
 `
-
-type ManyKinds struct {
-	Kinds []reflect.Kind
-}
 
 var (
 	AsSlice   *template.Template
@@ -156,4 +153,26 @@ func init() {
 	Copy = template.Must(template.New("copy").Funcs(funcs).Parse(copyRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
 
+}
+
+func getset(f io.Writer, generic *ManyKinds) {
+	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
+	for _, k := range generic.Kinds {
+		if !isParameterized(k) {
+			fmt.Fprintf(f, "/* %v */\n\n", k)
+			AsSlice.Execute(f, k)
+			SimpleSet.Execute(f, k)
+			SimpleGet.Execute(f, k)
+			fmt.Fprint(f, "\n")
+		}
+	}
+	MakeData.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	Set.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	Get.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	Copy.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	CopyIter.Execute(f, generic)
 }

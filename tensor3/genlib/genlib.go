@@ -17,17 +17,78 @@ var parameterizedKinds = [...]reflect.Kind{
 	reflect.Struct,
 }
 
+var rangeable = [...]reflect.Kind{
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Uint,
+	reflect.Uint8,
+	reflect.Uint16,
+	reflect.Uint32,
+	reflect.Uint64,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
+}
+
+var specialized = [...]reflect.Kind{
+	reflect.Bool,
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Uint,
+	reflect.Uint8,
+	reflect.Uint16,
+	reflect.Uint32,
+	reflect.Uint64,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
+	reflect.String,
+}
+
 var funcs = template.FuncMap{
 	"lower":           strings.ToLower,
 	"title":           strings.Title,
+	"hasPrefix":       strings.HasPrefix,
 	"isParameterized": isParameterized,
-	"short":           short,
-	"clean":           clean,
-	"strip":           strip,
+	"isRangeable":     isRangeable,
+	"isSpecialized":   isSpecialized,
+
+	"short": short,
+	"clean": clean,
+	"strip": strip,
+
+	"reflectKind": reflectKind,
+	"asType":      asType,
 }
 
 func isParameterized(a reflect.Kind) bool {
 	for _, v := range parameterizedKinds {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
+func isRangeable(a reflect.Kind) bool {
+	for _, v := range rangeable {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
+func isSpecialized(a reflect.Kind) bool {
+	for _, v := range specialized {
 		if v == a {
 			return true
 		}
@@ -78,4 +139,12 @@ func clean(a string) string {
 
 func strip(a string) string {
 	return strings.Replace(a, ".", "", -1)
+}
+
+func reflectKind(a reflect.Kind) string {
+	return strip(strings.Title(a.String()))
+}
+
+func asType(a reflect.Kind) string {
+	return clean(a.String())
 }

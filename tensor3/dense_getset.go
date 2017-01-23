@@ -184,58 +184,58 @@ func (t *Dense) set(i int, x interface{}) {
 	switch t.t.Kind() {
 	case reflect.Bool:
 		xv := x.(bool)
-		t.bools()[i] = xv
+		t.setB(i, xv)
 	case reflect.Int:
 		xv := x.(int)
-		t.ints()[i] = xv
+		t.setI(i, xv)
 	case reflect.Int8:
 		xv := x.(int8)
-		t.int8s()[i] = xv
+		t.setI8(i, xv)
 	case reflect.Int16:
 		xv := x.(int16)
-		t.int16s()[i] = xv
+		t.setI16(i, xv)
 	case reflect.Int32:
 		xv := x.(int32)
-		t.int32s()[i] = xv
+		t.setI32(i, xv)
 	case reflect.Int64:
 		xv := x.(int64)
-		t.int64s()[i] = xv
+		t.setI64(i, xv)
 	case reflect.Uint:
 		xv := x.(uint)
-		t.uints()[i] = xv
+		t.setU(i, xv)
 	case reflect.Uint8:
 		xv := x.(uint8)
-		t.uint8s()[i] = xv
+		t.setU8(i, xv)
 	case reflect.Uint16:
 		xv := x.(uint16)
-		t.uint16s()[i] = xv
+		t.setU16(i, xv)
 	case reflect.Uint32:
 		xv := x.(uint32)
-		t.uint32s()[i] = xv
+		t.setU32(i, xv)
 	case reflect.Uint64:
 		xv := x.(uint64)
-		t.uint64s()[i] = xv
+		t.setU64(i, xv)
 	case reflect.Uintptr:
 		xv := x.(uintptr)
-		t.uintptrs()[i] = xv
+		t.setUintptr(i, xv)
 	case reflect.Float32:
 		xv := x.(float32)
-		t.float32s()[i] = xv
+		t.setF32(i, xv)
 	case reflect.Float64:
 		xv := x.(float64)
-		t.float64s()[i] = xv
+		t.setF64(i, xv)
 	case reflect.Complex64:
 		xv := x.(complex64)
-		t.complex64s()[i] = xv
+		t.setC64(i, xv)
 	case reflect.Complex128:
 		xv := x.(complex128)
-		t.complex128s()[i] = xv
+		t.setC128(i, xv)
 	case reflect.String:
 		xv := x.(string)
-		t.strings()[i] = xv
+		t.setStr(i, xv)
 	case reflect.UnsafePointer:
 		xv := x.(unsafe.Pointer)
-		t.unsafePointers()[i] = xv
+		t.setUnsafePointer(i, xv)
 	default:
 		xv := reflect.ValueOf(x)
 		ptr := uintptr(t.data)
@@ -249,41 +249,41 @@ func (t *Dense) set(i int, x interface{}) {
 func (t *Dense) get(i int) interface{} {
 	switch t.t.Kind() {
 	case reflect.Bool:
-		return t.bools()[i]
+		return t.getB(i)
 	case reflect.Int:
-		return t.ints()[i]
+		return t.getI(i)
 	case reflect.Int8:
-		return t.int8s()[i]
+		return t.getI8(i)
 	case reflect.Int16:
-		return t.int16s()[i]
+		return t.getI16(i)
 	case reflect.Int32:
-		return t.int32s()[i]
+		return t.getI32(i)
 	case reflect.Int64:
-		return t.int64s()[i]
+		return t.getI64(i)
 	case reflect.Uint:
-		return t.uints()[i]
+		return t.getU(i)
 	case reflect.Uint8:
-		return t.uint8s()[i]
+		return t.getU8(i)
 	case reflect.Uint16:
-		return t.uint16s()[i]
+		return t.getU16(i)
 	case reflect.Uint32:
-		return t.uint32s()[i]
+		return t.getU32(i)
 	case reflect.Uint64:
-		return t.uint64s()[i]
+		return t.getU64(i)
 	case reflect.Uintptr:
-		return t.uintptrs()[i]
+		return t.getUintptr(i)
 	case reflect.Float32:
-		return t.float32s()[i]
+		return t.getF32(i)
 	case reflect.Float64:
-		return t.float64s()[i]
+		return t.getF64(i)
 	case reflect.Complex64:
-		return t.complex64s()[i]
+		return t.getC64(i)
 	case reflect.Complex128:
-		return t.complex128s()[i]
+		return t.getC128(i)
 	case reflect.String:
-		return t.strings()[i]
+		return t.getStr(i)
 	case reflect.UnsafePointer:
-		return t.unsafePointers()[i]
+		return t.getUnsafePointer(i)
 	default:
 		at := uintptr(t.data) + uintptr(i)*t.t.Size()
 		val := reflect.NewAt(t.t, unsafe.Pointer(at))

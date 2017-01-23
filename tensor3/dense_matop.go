@@ -1,10 +1,6 @@
 package tensor
 
-import (
-	"reflect"
-
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // Apply applies a function to all the values in the ndarray
 // func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
@@ -203,10 +199,6 @@ func (t *Dense) Transpose() {
 	expShape := t.Shape()
 	expStrides := expShape.CalcStrides() // important! because the strides would have changed once the underlying data changed
 	defer ReturnInts(expStrides)
-
-	size := t.len()
-	axes := t.transposeWith
-
 	defer func() {
 		t.setShape(expShape...)
 		t.sanity()
@@ -217,40 +209,7 @@ func (t *Dense) Transpose() {
 		return
 	}
 
-	// Otherwise we'll use the slightly slower methods (using Get() and Set())
-
-	// first we'll create a bit-map to track which elements have been moved to their correct places
-	track := NewBitMap(size)
-	track.Set(0)
-	track.Set(size - 1) // first and last element of a transposedon't change
-
-	// // we start our iteration at 1, because transposing 0 does noting.
-	var saved, tmp interface{}
-	var i int
-	for i = 1; ; {
-		dest := t.transposeIndex(i, axes, expStrides)
-
-		if track.IsSet(i) && track.IsSet(dest) {
-			t.set(i, saved)
-			saved = reflect.Zero(t.t.Type).Interface()
-
-			for i < size && track.IsSet(i) {
-				i++
-			}
-
-			if i >= size {
-				break
-			}
-			continue
-		}
-
-		track.Set(i)
-		tmp = t.get(i)
-		t.set(i, saved)
-		saved = tmp
-
-		i = dest
-	}
+	t.transpose(expStrides)
 }
 
 // At returns the value at the given coordinate

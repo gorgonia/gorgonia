@@ -63,6 +63,20 @@ var (
 	String     = Dtype{reflect.TypeOf("")}
 )
 
+// specialized types indicate that there are specialized code generated for these types
+var specializedTypes = [...]Dtype{
+	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Complex64, Complex128, String,
+}
+
+func isSpecialized(dt Dtype) bool {
+	for _, s := range specializedTypes {
+		if s.Kind() == dt.Kind() {
+			return true
+		}
+	}
+	return false
+}
+
 // NormOrder represents the order of the norm. Ideally, we'd only represent norms with a uint/byte.
 // But there are norm types that are outside numerical types, such as nuclear norm and fobenius norm.
 // So it is internally represented by a float. If Go could use NaN and Inf as consts, it would have been best,

@@ -1,49 +1,51 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"reflect"
 )
 
+type ManyKinds struct {
+	Kinds []reflect.Kind
+}
+
 func main() {
 	const (
-		getSetName = "../dense_getset.go"
+		getSetName      = "../dense_getset.go"
+		getSetTestsName = "../dense_getset_test.go"
+		genUtilsName    = "../genericUtils.go"
+		transposeName   = "../dense_transpose_specializations.go"
 	)
-	f, err := os.Create(getSetName)
+	mk := makeManyKinds()
+	pipeline(getSetName, mk, getset)
+	pipeline(getSetTestsName, mk, getsetTest)
+	pipeline(genUtilsName, mk, utils)
+	pipeline(transposeName, mk, transpose)
+}
+
+func makeManyKinds() *ManyKinds {
+	mk := make([]reflect.Kind, 0)
+	for k := reflect.Invalid + 1; k < reflect.UnsafePointer+1; k++ {
+		mk = append(mk, k)
+	}
+	return &ManyKinds{mk}
+}
+
+func pipeline(filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds)) {
+	f, err := os.Create(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
-	mk := make([]reflect.Kind, 0)
-	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
-	for k := reflect.Invalid + 1; k < reflect.UnsafePointer+1; k++ {
-		if !isParameterized(k) {
-			fmt.Fprintf(f, "/* %v */\n\n", k)
-			AsSlice.Execute(f, k)
-			SimpleSet.Execute(f, k)
-			SimpleGet.Execute(f, k)
-			fmt.Fprint(f, "\n")
-		}
-		mk = append(mk, k)
-	}
-	generic := &ManyKinds{Kinds: mk}
-	MakeData.Execute(f, generic)
-	fmt.Fprintf(f, "\n\n\n")
-	Set.Execute(f, generic)
-	fmt.Fprintf(f, "\n\n\n")
-	Get.Execute(f, generic)
-	fmt.Fprintf(f, "\n\n\n")
-	Copy.Execute(f, generic)
-	fmt.Fprintf(f, "\n\n\n")
-	CopyIter.Execute(f, generic)
+	fn(f, generic)
 
 	// gofmt and goimports this shit
-	cmd := exec.Command("goimports", "-w", getSetName)
+	cmd := exec.Command("goimports", "-w", filename)
 	if err = cmd.Run(); err != nil {
-		log.Fatalf("Go imports failed with %v for %q", err, getSetName)
+		log.Fatalf("Go imports failed with %v for %q", err, filename)
 	}
 }
