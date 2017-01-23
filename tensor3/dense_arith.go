@@ -33,11 +33,18 @@ func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse,
 	if toReuse {
 		if reuse, ok = reuseT.(*Dense); !ok {
 			err = errors.Errorf("Cannot reuse a different type of Tensor in a Dense-Dense operation")
+			return
 		}
 
 		if reuse.t.Kind() != a.t.Kind() {
 			err = errors.Errorf(typeMismatch, a.t, reuse.t)
 			err = errors.Wrapf(err, "Cannot use reuse")
+			return
+		}
+
+		if reuse.DataSize() != a.Size() {
+			err = errors.Errorf(shapeMismatch, reuse.Shape(), a.Shape())
+			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
 		}
 	}
@@ -64,6 +71,12 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 		if reuse.t.Kind() != a.t.Kind() {
 			err = errors.Errorf(typeMismatch, a.t, reuse.t)
 			err = errors.Wrapf(err, "Cannot use reuse")
+			return
+		}
+
+		if reuse.DataSize() != a.Size() {
+			err = errors.Errorf(shapeMismatch, reuse.Shape(), a.Shape())
+			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
 		}
 	}

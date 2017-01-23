@@ -52,6 +52,37 @@ const setRaw = `func (t *Dense) set(i int, x interface{}) {
 
 `
 
+const memsetRaw = `func (t *Dense) Memset(x interface{}) error {
+	switch t.t.Kind() {
+	{{range .Kinds -}}
+		{{if isParameterized . -}}
+		{{else -}}
+	case reflect.{{reflectKind .}}:
+		xv, ok := x.({{asType .}})
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.{{asType . | strip}}s()
+		for i := range data{
+			data[i] = xv
+		}
+		{{end -}}
+	{{end -}}
+	default:
+		xv := reflect.ValueOf(x)
+		ptr := uintptr(t.data)
+		for i := 0; i < t.hdr.Len; i++ {
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(xv)
+		}
+	}
+	return nil
+}
+
+`
+
 const makeDataRaw = `func (t *Dense) makeArray(size int) {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
@@ -138,6 +169,7 @@ var (
 	SimpleGet *template.Template
 	Get       *template.Template
 	Set       *template.Template
+	Memset    *template.Template
 	MakeData  *template.Template
 	Copy      *template.Template
 	CopyIter  *template.Template
@@ -149,6 +181,7 @@ func init() {
 	SimpleGet = template.Must(template.New("SimpleGet").Funcs(funcs).Parse(getBasicRaw))
 	Get = template.Must(template.New("Get").Funcs(funcs).Parse(getRaw))
 	Set = template.Must(template.New("Set").Funcs(funcs).Parse(setRaw))
+	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
 	MakeData = template.Must(template.New("makedata").Funcs(funcs).Parse(makeDataRaw))
 	Copy = template.Must(template.New("copy").Funcs(funcs).Parse(copyRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
@@ -170,6 +203,8 @@ func getset(f io.Writer, generic *ManyKinds) {
 	Set.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Get.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	Memset.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Copy.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")

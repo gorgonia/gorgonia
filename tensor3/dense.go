@@ -105,17 +105,6 @@ func (t *Dense) Zero() {
 	// t.data.Zero()
 }
 
-func (t *Dense) Memset(val interface{}) error {
-	// if val == 1 {
-	// 	if o, ok := t.data.(Oner); ok {
-	// 		o.One()
-	// 		return nil
-	// 	}
-	// }
-	// return t.data.Memset(val)
-	return nil
-}
-
 // ScalarValue() returns the scalar value of a *Tensor,
 // IF and ONLY IF it's a Tensor representation of a scalar value.
 // This is required because operations like a (vec · vec) would return a scalar value.

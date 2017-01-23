@@ -3,6 +3,8 @@ package tensor
 import (
 	"reflect"
 	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 /*
@@ -290,6 +292,183 @@ func (t *Dense) get(i int) interface{} {
 		val = reflect.Indirect(val)
 		return val.Interface()
 	}
+}
+
+func (t *Dense) Memset(x interface{}) error {
+	switch t.t.Kind() {
+	case reflect.Bool:
+		xv, ok := x.(bool)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.bools()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int:
+		xv, ok := x.(int)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.ints()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int8:
+		xv, ok := x.(int8)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int8s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int16:
+		xv, ok := x.(int16)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int16s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int32:
+		xv, ok := x.(int32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int32s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int64:
+		xv, ok := x.(int64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint:
+		xv, ok := x.(uint)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uints()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint8:
+		xv, ok := x.(uint8)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint8s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint16:
+		xv, ok := x.(uint16)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint16s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint32:
+		xv, ok := x.(uint32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint32s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint64:
+		xv, ok := x.(uint64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uintptr:
+		xv, ok := x.(uintptr)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uintptrs()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Float32:
+		xv, ok := x.(float32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.float32s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Float64:
+		xv, ok := x.(float64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.float64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Complex64:
+		xv, ok := x.(complex64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.complex64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Complex128:
+		xv, ok := x.(complex128)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.complex128s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.String:
+		xv, ok := x.(string)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.strings()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.UnsafePointer:
+		xv, ok := x.(unsafe.Pointer)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.unsafePointers()
+		for i := range data {
+			data[i] = xv
+		}
+	default:
+		xv := reflect.ValueOf(x)
+		ptr := uintptr(t.data)
+		for i := 0; i < t.hdr.Len; i++ {
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(xv)
+		}
+	}
+	return nil
 }
 
 func copyDense(dest, src *Dense) int {
