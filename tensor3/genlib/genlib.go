@@ -70,6 +70,47 @@ var number = [...]reflect.Kind{
 	reflect.Complex128,
 }
 
+var elEq = [...]reflect.Kind{
+	reflect.Bool,
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Uint,
+	reflect.Uint8,
+	reflect.Uint16,
+	reflect.Uint32,
+	reflect.Uint64,
+	reflect.Uintptr,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
+	reflect.String,
+	reflect.UnsafePointer,
+}
+
+var elOrd = [...]reflect.Kind{
+	reflect.Bool,
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Uint,
+	reflect.Uint8,
+	reflect.Uint16,
+	reflect.Uint32,
+	reflect.Uint64,
+	reflect.Uintptr,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
+	reflect.String, // strings are orderable and the assumption is lexicographic sorting
+}
+
 var funcs = template.FuncMap{
 	"lower":           strings.ToLower,
 	"title":           strings.Title,
@@ -79,6 +120,8 @@ var funcs = template.FuncMap{
 	"isRangeable":     isRangeable,
 	"isSpecialized":   isSpecialized,
 	"isNumber":        isNumber,
+	"isEq":            isEq,
+	"isOrd":           isOrd,
 
 	"short": short,
 	"clean": clean,
@@ -117,6 +160,24 @@ func isSpecialized(a reflect.Kind) bool {
 
 func isNumber(a reflect.Kind) bool {
 	for _, v := range number {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
+func isEq(a reflect.Kind) bool {
+	for _, v := range elEq {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
+func isOrd(a reflect.Kind) bool {
+	for _, v := range elOrd {
 		if v == a {
 			return true
 		}

@@ -21,8 +21,10 @@ func main() {
 		transposeName       = "../dense_transpose_specializations.go"
 		viewStackName       = "../dense_viewstack_specializations.go"
 		genericArithName    = "../genericArith.go"
+		genericCmpName      = "../genericCmp.go"
 		denseArithName      = "../dense_arith.go"
 		denseArithTestsName = "../dense_arith_test.go"
+		denseCmpName        = "../dense_cmp.go"
 
 		testTestName = "../test_test.go"
 	)
@@ -33,8 +35,10 @@ func main() {
 	pipeline(transposeName, mk, transpose)
 	pipeline(viewStackName, mk, viewstack)
 	pipeline(genericArithName, mk, genericArith)
+	pipeline(genericCmpName, mk, genericCmp)
 	pipeline(denseArithName, mk, arith)
 	pipeline(denseArithTestsName, mk, denseArithTests)
+	pipeline(denseCmpName, mk, denseCmp)
 	pipeline(testTestName, mk, testtest)
 }
 
