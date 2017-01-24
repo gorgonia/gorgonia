@@ -10,6 +10,6 @@ func (t *Dense) Materialize() Tensor {
 	}
 
 	retVal := recycledDense(t.t, t.shape.Clone())
-	copyDenseIter(retVal, t)
+	copyDenseIter(retVal, t, nil, nil)
 	return retVal
 }

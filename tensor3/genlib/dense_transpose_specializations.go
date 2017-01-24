@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-// enerates the transpose specializations
+// generates the transpose specializations
 const transposeSpecializedRaw = `func (t *Dense) transpose{{short .}}(expStrides []int){
 	axes := t.transposeWith
 	size := t.len()

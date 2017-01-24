@@ -19,6 +19,7 @@ func main() {
 		getSetTestsName     = "../dense_getset_test.go"
 		genUtilsName        = "../genericUtils.go"
 		transposeName       = "../dense_transpose_specializations.go"
+		viewStackName       = "../dense_viewstack_specializations.go"
 		genericArithName    = "../genericArith.go"
 		denseArithName      = "../dense_arith.go"
 		denseArithTestsName = "../dense_arith_test.go"
@@ -30,6 +31,7 @@ func main() {
 	pipeline(getSetTestsName, mk, getsetTest)
 	pipeline(genUtilsName, mk, utils)
 	pipeline(transposeName, mk, transpose)
+	pipeline(viewStackName, mk, viewstack)
 	pipeline(genericArithName, mk, genericArith)
 	pipeline(denseArithName, mk, arith)
 	pipeline(denseArithTestsName, mk, denseArithTests)

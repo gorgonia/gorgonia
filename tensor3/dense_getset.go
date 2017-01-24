@@ -521,13 +521,69 @@ func copyDense(dest, src *Dense) int {
 	}
 }
 
-func copyDenseIter(dest, src *Dense) int {
+func copySliced(dest *Dense, dstart, dend int, src *Dense, sstart, send int) int {
+	if dest.t != src.t {
+		panic("Cannot copy arrays of different types")
+	}
+	switch dest.t.Kind() {
+	case reflect.Bool:
+		return copy(dest.bools()[dstart:dend], src.bools()[sstart:send])
+	case reflect.Int:
+		return copy(dest.ints()[dstart:dend], src.ints()[sstart:send])
+	case reflect.Int8:
+		return copy(dest.int8s()[dstart:dend], src.int8s()[sstart:send])
+	case reflect.Int16:
+		return copy(dest.int16s()[dstart:dend], src.int16s()[sstart:send])
+	case reflect.Int32:
+		return copy(dest.int32s()[dstart:dend], src.int32s()[sstart:send])
+	case reflect.Int64:
+		return copy(dest.int64s()[dstart:dend], src.int64s()[sstart:send])
+	case reflect.Uint:
+		return copy(dest.uints()[dstart:dend], src.uints()[sstart:send])
+	case reflect.Uint8:
+		return copy(dest.uint8s()[dstart:dend], src.uint8s()[sstart:send])
+	case reflect.Uint16:
+		return copy(dest.uint16s()[dstart:dend], src.uint16s()[sstart:send])
+	case reflect.Uint32:
+		return copy(dest.uint32s()[dstart:dend], src.uint32s()[sstart:send])
+	case reflect.Uint64:
+		return copy(dest.uint64s()[dstart:dend], src.uint64s()[sstart:send])
+	case reflect.Uintptr:
+		return copy(dest.uintptrs()[dstart:dend], src.uintptrs()[sstart:send])
+	case reflect.Float32:
+		return copy(dest.float32s()[dstart:dend], src.float32s()[sstart:send])
+	case reflect.Float64:
+		return copy(dest.float64s()[dstart:dend], src.float64s()[sstart:send])
+	case reflect.Complex64:
+		return copy(dest.complex64s()[dstart:dend], src.complex64s()[sstart:send])
+	case reflect.Complex128:
+		return copy(dest.complex128s()[dstart:dend], src.complex128s()[sstart:send])
+
+	case reflect.String:
+		return copy(dest.strings()[dstart:dend], src.strings()[sstart:send])
+
+	case reflect.UnsafePointer:
+		return copy(dest.unsafePointers()[dstart:dend], src.unsafePointers()[sstart:send])
+	default:
+		dv := reflect.ValueOf(dest.v)
+		dv = dv.Slice(dstart, dend)
+		sv := reflect.ValueOf(src.v)
+		sv = sv.Slice(sstart, send)
+		return reflect.Copy(dv, sv)
+	}
+}
+
+func copyDenseIter(dest, src *Dense, diter, siter *FlatIterator) (int, error) {
 	if dest.t != src.t {
 		panic("Cannot copy arrays of different types")
 	}
 
-	siter := NewFlatIterator(src.AP)
-	diter := NewFlatIterator(dest.AP)
+	if diter == nil {
+		diter = NewFlatIterator(dest.AP)
+	}
+	if siter == nil {
+		siter = NewFlatIterator(src.AP)
+	}
 
 	k := dest.t.Kind()
 	var i, j, count int
@@ -535,14 +591,14 @@ func copyDenseIter(dest, src *Dense) int {
 	for {
 		if i, err = diter.Next(); err != nil {
 			if _, ok := err.(NoOpError); !ok {
-				panic(err)
+				return count, err
 			}
 			err = nil
 			break
 		}
 		if j, err = siter.Next(); err != nil {
 			if _, ok := err.(NoOpError); !ok {
-				panic(err)
+				return count, err
 			}
 			err = nil
 			break
@@ -589,5 +645,71 @@ func copyDenseIter(dest, src *Dense) int {
 		}
 		count++
 	}
-	return count
+	return count, err
+}
+
+// the method assumes the AP and metadata has already been set and this is simply slicing the values
+func (t *Dense) slice(start, end int) {
+	switch t.t.Kind() {
+	case reflect.Bool:
+		data := t.bools()[start:end]
+		t.fromSlice(data)
+	case reflect.Int:
+		data := t.ints()[start:end]
+		t.fromSlice(data)
+	case reflect.Int8:
+		data := t.int8s()[start:end]
+		t.fromSlice(data)
+	case reflect.Int16:
+		data := t.int16s()[start:end]
+		t.fromSlice(data)
+	case reflect.Int32:
+		data := t.int32s()[start:end]
+		t.fromSlice(data)
+	case reflect.Int64:
+		data := t.int64s()[start:end]
+		t.fromSlice(data)
+	case reflect.Uint:
+		data := t.uints()[start:end]
+		t.fromSlice(data)
+	case reflect.Uint8:
+		data := t.uint8s()[start:end]
+		t.fromSlice(data)
+	case reflect.Uint16:
+		data := t.uint16s()[start:end]
+		t.fromSlice(data)
+	case reflect.Uint32:
+		data := t.uint32s()[start:end]
+		t.fromSlice(data)
+	case reflect.Uint64:
+		data := t.uint64s()[start:end]
+		t.fromSlice(data)
+	case reflect.Uintptr:
+		data := t.uintptrs()[start:end]
+		t.fromSlice(data)
+	case reflect.Float32:
+		data := t.float32s()[start:end]
+		t.fromSlice(data)
+	case reflect.Float64:
+		data := t.float64s()[start:end]
+		t.fromSlice(data)
+	case reflect.Complex64:
+		data := t.complex64s()[start:end]
+		t.fromSlice(data)
+	case reflect.Complex128:
+		data := t.complex128s()[start:end]
+		t.fromSlice(data)
+
+	case reflect.String:
+		data := t.strings()[start:end]
+		t.fromSlice(data)
+
+	case reflect.UnsafePointer:
+		data := t.unsafePointers()[start:end]
+		t.fromSlice(data)
+	default:
+		v := reflect.ValueOf(t.v)
+		v = v.Slice(start, end)
+		t.fromSlice(v.Interface())
+	}
 }

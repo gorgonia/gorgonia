@@ -120,13 +120,39 @@ const copyRaw = `func copyDense(dest, src *Dense) int {
 }
 `
 
-const copyIterRaw = `func copyDenseIter(dest, src *Dense) int {
+const copySlicedRaw = `func copySliced(dest *Dense, dstart, dend int, src *Dense, sstart, send int) int{
+	if dest.t != src.t {
+		panic("Cannot copy arrays of different types")
+	}
+	switch dest.t.Kind() {
+	{{range .Kinds -}}
+		{{if isParameterized .}}
+		{{else -}}
+	case reflect.{{reflectKind .}}:
+		return copy(dest.{{asType . | strip}}s()[dstart:dend], src.{{asType . | strip}}s()[sstart:send])
+		{{end -}}
+	{{end -}}
+	default:
+		dv := reflect.ValueOf(dest.v)
+		dv = dv.Slice(dstart, dend)
+		sv := reflect.ValueOf(src.v)
+		sv = sv.Slice(sstart, send)
+		return reflect.Copy(dv, sv)
+	}	
+}
+`
+
+const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIterator) (int, error) {
 	if dest.t != src.t {
 		panic("Cannot copy arrays of different types")
 	}
 
-	siter := NewFlatIterator(src.AP)
-	diter := NewFlatIterator(dest.AP)
+	if diter == nil {
+		diter = NewFlatIterator(dest.AP)	
+	}
+	if siter == nil {
+		siter = NewFlatIterator(src.AP)
+	}
 	
 	k := dest.t.Kind()
 	var i, j, count int
@@ -134,14 +160,14 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense) int {
 	for {
 		if i, err = diter.Next() ; err != nil {
 			if _, ok := err.(NoOpError); !ok {
-				panic(err)
+				return count, err
 			}
 			err = nil
 			break
 		}
 		if j, err = siter.Next() ; err != nil {
 			if _, ok := err.(NoOpError); !ok {
-				panic(err)
+				return count, err
 			}
 			err = nil
 			break
@@ -159,20 +185,41 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense) int {
 		}
 		count++
 	}
-	return count
+	return count, err
+}
+`
+
+const sliceRaw = `// the method assumes the AP and metadata has already been set and this is simply slicing the values
+func (t *Dense) slice(start, end int) {
+	switch t.t.Kind() {
+	{{range .Kinds -}}
+		{{if isParameterized .}}
+		{{else -}}
+	case reflect.{{reflectKind .}}:
+		data := t.{{asType . | strip}}s()[start:end]
+		t.fromSlice(data)
+		{{end -}}
+	{{end -}}
+	default:
+		v := reflect.ValueOf(t.v)
+		v = v.Slice(start, end)
+		t.fromSlice(v.Interface())
+	}	
 }
 `
 
 var (
-	AsSlice   *template.Template
-	SimpleSet *template.Template
-	SimpleGet *template.Template
-	Get       *template.Template
-	Set       *template.Template
-	Memset    *template.Template
-	MakeData  *template.Template
-	Copy      *template.Template
-	CopyIter  *template.Template
+	AsSlice    *template.Template
+	SimpleSet  *template.Template
+	SimpleGet  *template.Template
+	Get        *template.Template
+	Set        *template.Template
+	Memset     *template.Template
+	MakeData   *template.Template
+	Copy       *template.Template
+	CopySliced *template.Template
+	CopyIter   *template.Template
+	Slice      *template.Template
 )
 
 func init() {
@@ -184,7 +231,9 @@ func init() {
 	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
 	MakeData = template.Must(template.New("makedata").Funcs(funcs).Parse(makeDataRaw))
 	Copy = template.Must(template.New("copy").Funcs(funcs).Parse(copyRaw))
+	CopySliced = template.Must(template.New("copySliced").Funcs(funcs).Parse(copySlicedRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
+	Slice = template.Must(template.New("slice").Funcs(funcs).Parse(sliceRaw))
 
 }
 
@@ -208,5 +257,9 @@ func getset(f io.Writer, generic *ManyKinds) {
 	fmt.Fprintf(f, "\n\n\n")
 	Copy.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
+	CopySliced.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
 	CopyIter.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	Slice.Execute(f, generic)
 }
