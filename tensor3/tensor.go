@@ -1,6 +1,10 @@
 package tensor
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/pkg/errors"
+)
 
 type Tensor interface {
 	// info about the ndarray
@@ -163,3 +167,14 @@ func New(opts ...ConsOpt) *Dense {
 // 	}
 // 	return d
 // }
+
+func getDense(t Tensor) (*Dense, error) {
+	if t == nil {
+		return nil, nil
+	}
+
+	if retVal, ok := t.(*Dense); ok {
+		return retVal, nil
+	}
+	return nil, errors.Errorf(extractionFail, "*Dense", t)
+}

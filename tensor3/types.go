@@ -61,6 +61,9 @@ var (
 	Complex64  = Dtype{reflect.TypeOf(complex64(1))}
 	Complex128 = Dtype{reflect.TypeOf(complex128(1))}
 	String     = Dtype{reflect.TypeOf("")}
+
+	// aliases
+	Byte = Uint8
 )
 
 // specialized types indicate that there are specialized code generated for these types

@@ -1,5 +1,10 @@
 package tensor
 
+import (
+	"reflect"
+	"unsafe"
+)
+
 // a ConsOpt is a tensor construction option
 type ConsOpt func(Tensor)
 
@@ -59,11 +64,27 @@ func WithShape(dims ...int) ConsOpt {
 }
 
 // FromScalar is a construction option for representing a scalar value as a Tensor
-func FromScalar(s interface{}) ConsOpt {
+func FromScalar(x interface{}) ConsOpt {
 
 	f := func(t Tensor) {
-		switch t.(type) {
+		switch tt := t.(type) {
 		case *Dense:
+			xt := reflect.TypeOf(x)
+			xv := reflect.New(xt)
+			xvi := reflect.Indirect(xv)
+			xvi.Set(reflect.ValueOf(x))
+			ptr := xv.Pointer()
+			uptr := unsafe.Pointer(ptr)
+			hdr := &reflect.SliceHeader{
+				Data: ptr,
+				Len:  1,
+				Cap:  1,
+			}
+			tt.data = uptr
+			tt.v = x
+			tt.t = Dtype{xt}
+			tt.hdr = hdr
+
 			// if tt.data != nil {
 			// 	if err := tt.data.Set(0, s); err != nil {
 			// 		panic(err)

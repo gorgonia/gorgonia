@@ -80,7 +80,12 @@ func (t *Dense) fromSlice(x interface{}) {
 func (t *Dense) Info() *AP         { return t.AP }
 func (t *Dense) Dtype() Dtype      { return t.t }
 func (t *Dense) Data() interface{} { return t.v }
-func (t *Dense) DataSize() int     { return t.hdr.Len }
+func (t *Dense) DataSize() int {
+	if t.IsScalar() {
+		return 0
+	}
+	return t.hdr.Len
+}
 
 // Reshape reshapes a *Dense. If the tensors need to be materialized (either it's a view or transpose), it will be materialized before the reshape happens
 func (t *Dense) Reshape(dims ...int) error {
