@@ -1,6 +1,10 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"reflect"
+
+	"github.com/pkg/errors"
+)
 
 // Apply applies a function to all the values in the ndarray
 // func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
@@ -332,6 +336,11 @@ func (t *Dense) Slice(slices ...Slice) (view *Dense, err error) {
 	view.t = t.t
 	view.viewOf = t
 	view.AP = newAP
+	view.hdr = new(reflect.SliceHeader)
+	view.data = t.data
+	view.hdr.Data = t.hdr.Data
+	view.hdr.Len = t.hdr.Len
+	view.hdr.Cap = t.hdr.Cap
 	view.slice(ndStart, ndEnd)
 	return
 }

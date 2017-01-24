@@ -190,7 +190,7 @@ func TestDense_Transpose(t *testing.T) {
 		T.Transpose()
 		assert.True(tts.correctShape.Eq(T.Shape()), "Transpose %v Expected shape: %v. Got %v", tts.name, tts.correctShape, T.Shape())
 		assert.Equal(tts.correctStrides2, T.Strides())
-		assert.Equal(tts.correctData, T.data, "Transpose %v", tts.name)
+		assert.Equal(tts.correctData, T.Data(), "Transpose %v", tts.name)
 	}
 
 	// test stacked .T() calls
@@ -235,7 +235,7 @@ matnorev:
 		t.Fatalf("Stacked .T() #2 for tensor with no reverse. Error: %v", err)
 	}
 	correctData := []int64{0, 12, 4, 16, 8, 20, 1, 13, 5, 17, 9, 21, 2, 14, 6, 18, 10, 22, 3, 15, 7, 19, 11, 23}
-	assert.Equal(correctData, T.data)
+	assert.Equal(correctData, T.Data())
 	assert.Equal([]int{2, 0, 1}, T.transposeWith)
 	assert.NotNil(T.old)
 
@@ -400,7 +400,7 @@ func TestDense_Repeat(t *testing.T) {
 			assert.NotEqual(test.tensor, D, test.name)
 		}
 
-		assert.Equal(test.correct, D.data, test.name)
+		assert.Equal(test.correct, D.Data(), test.name)
 		assert.Equal(test.shape, D.Shape(), test.name)
 	}
 }
@@ -417,11 +417,11 @@ func TestDense_CopyTo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(T2.data, T.data)
+	assert.Equal(T2.Data(), T.Data())
 
 	// now, modify T1's data
 	T.set(0, float64(5000))
-	assert.NotEqual(T2.data, T.data)
+	assert.NotEqual(T2.Data(), T.Data())
 
 	// test views
 	T = New(Of(Byte), WithShape(3, 3))
@@ -498,7 +498,7 @@ func TestDense_Slice(t *testing.T) {
 		}
 		assert.True(sts.correctShape.Eq(V.Shape()), "Test: %v - Incorrect Shape. Correct: %v. Got %v", sts.name, sts.correctShape, V.Shape())
 		assert.Equal(sts.correctStride, V.Strides(), "Test: %v - Incorrect Stride", sts.name)
-		assert.Equal(sts.correctData, V.data, "Test: %v - Incorrect Data", sts.name)
+		assert.Equal(sts.correctData, V.Data(), "Test: %v - Incorrect Data", sts.name)
 	}
 
 	// Transposed slice
@@ -507,13 +507,13 @@ func TestDense_Slice(t *testing.T) {
 	V, err = T.Slice(ss(0))
 	assert.True(Shape{2}.Eq(V.Shape()))
 	assert.Equal([]int{3}, V.Strides())
-	assert.Equal([]float32{0, 1, 2, 3}, V.data)
+	assert.Equal([]float32{0, 1, 2, 3}, V.Data())
 	assert.Nil(V.old)
 
 	// slice a sliced
 	V, err = V.Slice(makeRS(1, 2))
 	assert.True(ScalarShape().Eq(V.Shape()))
-	assert.Equal([]float32{3}, V.data)
+	assert.Equal([]float32{3}, V.Data())
 
 	// And now, ladies and gentlemen, the idiots!
 
@@ -706,7 +706,7 @@ func TestDense_Stack(t *testing.T) {
 			continue
 		}
 		assert.True(sts.correctShape.Eq(T2.Shape()))
-		assert.Equal(sts.correctData, T2.data)
+		assert.Equal(sts.correctData, T2.Data())
 	}
 
 	for _, sts := range viewStackTests {
@@ -744,7 +744,7 @@ func TestDense_Stack(t *testing.T) {
 			continue
 		}
 		assert.True(sts.correctShape.Eq(T2.Shape()))
-		assert.Equal(sts.correctData, T2.data)
+		assert.Equal(sts.correctData, T2.Data())
 	}
 }
 
