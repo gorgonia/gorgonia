@@ -92,7 +92,6 @@ var elEq = [...]reflect.Kind{
 }
 
 var elOrd = [...]reflect.Kind{
-	reflect.Bool,
 	reflect.Int,
 	reflect.Int8,
 	reflect.Int16,
@@ -106,8 +105,8 @@ var elOrd = [...]reflect.Kind{
 	reflect.Uintptr,
 	reflect.Float32,
 	reflect.Float64,
-	reflect.Complex64,
-	reflect.Complex128,
+	// reflect.Complex64,
+	// reflect.Complex128,
 	reflect.String, // strings are orderable and the assumption is lexicographic sorting
 }
 

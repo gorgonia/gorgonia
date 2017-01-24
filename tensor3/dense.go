@@ -26,7 +26,7 @@ type Dense struct {
 }
 
 func recycledDense(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) {
-	retVal := recycledDenseNoFix(dt, shape, opts...)
+	retVal = recycledDenseNoFix(dt, shape, opts...)
 	retVal.fix()
 	if err := retVal.sanity(); err != nil {
 		panic(err)
@@ -45,6 +45,7 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 		opt(retVal)
 	}
 	retVal.setShape(shape...)
+	return
 }
 
 func newDense(dt Dtype, size int) *Dense {

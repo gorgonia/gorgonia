@@ -19,46 +19,94 @@ var cmpBinOps = []struct {
 	{"Lte", "<=", isOrd},
 }
 
-const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, same bool) (retVal *Dense, err error) {
-	k := t.t.Kind()
-	if k != other.t.Kind() {
-		err = errors.Errorf(typeMismatch, t.t, other.t)
+const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse *Dense, safe, same, toReuse bool, err error) {
+	if a.t.Kind() != b.t.Kind() {
+		err = errors.Errorf(typeMismatch, a.t, b.t)
 		return
 	}
-	if t.len() != other.len() {
-		err = errors.Errorf(lenMismatch, t.len(), other.len())
+
+	if !a.Shape().Eq(b.Shape()) {
+		err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
+		return 
 	}
+	fo := parseFuncOpts(opts...)
+	reuseT, _ := fo.incrReuse()
+	safe = fo.safe()
+	same = fo.same
+	if !safe{
+		same = true
+	}
+	toReuse = reuseT != nil
+
+	if toReuse {
+		reuse = reuseT.(*Dense)
+		if reuse.t.Kind() != a.t.Kind() {
+			err = errors.Errorf(typeMismatch, a.t, reuse.t)
+			return
+		}
+
+		if  err = reuseDenseCheck(reuse, a); err != nil {
+			err = errors.Wrap(err, "Cannot use reuse")
+			return
+		}
+	}
+	return
+}
+`
+
+const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
+	if err != nil {
+		return nil, err
+	}
+
 	{{$op := .OpName}}
-	retVal := recycledDenseNoFix(t.t, t.Shape().Clone())
-	switch k {
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{ $eq := isEq . -}}
 		{{ $ord := isOrd . -}}
-		{{if or $eq $ord -}} 
+		{{ $opEq := eq $op "Eq" -}}
+		{{ $eeq := and $eq $opEq}}
+
+		{{if or $eeq $ord -}}
 	case reflect.{{reflectKind .}}:
 		td := t.{{asType . | strip}}s()
 		od := other.{{asType . | strip}}s()
-		{{if isNumber . -}}
-			if same {
-				ret := {{lower $op}}DDSame{{short .}}(td, od)
-				retVal.fromSlice(ret)
-			} else {
+			{{if isNumber . -}}
+				if same {
+					ret := {{lower $op}}DDSame{{short .}}(td, od)
+					retVal.fromSlice(ret)
+				} else {
+					ret := {{lower $op}}DDBools{{short .}}(td, od)
+					retVal.fromSlice(ret)
+				}
+			{{else -}}
 				ret := {{lower $op}}DDBools{{short .}}(td, od)
 				retVal.fromSlice(ret)
-			}
-		{{else -}}
-			ret := {{lower $op}}DDBools{{short .}}(td, od)
-			retVal.fromSlice(ret)
-		{{end -}}
+			{{end -}}
 
 		{{end -}}
+
 	{{end -}}
 	default:
-		err = errors.Errorf(unsupportedDtype, d.t, "{{lower .OpName}}")
+		err = errors.Errorf(unsupportedDtype, t.t, "{{lower .OpName}}")
 		return
 	}
+
 	retVal.fix()
 	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
 	return
 }
 
@@ -73,6 +121,7 @@ func init() {
 }
 
 func denseCmp(f io.Writer, generic *ManyKinds) {
+	fmt.Fprintln(f, prepCmpRaw)
 	for _, bo := range cmpBinOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		op := ArithBinOps{generic, bo.OpName, bo.OpSymb, false}

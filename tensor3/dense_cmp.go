@@ -10,25 +10,57 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
-/* Eq */
-
-func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
-	k := t.t.Kind()
-	if k != other.t.Kind() {
-		err = errors.Errorf(typeMismatch, t.t, other.t)
+func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, same, toReuse bool, err error) {
+	if a.t.Kind() != b.t.Kind() {
+		err = errors.Errorf(typeMismatch, a.t, b.t)
 		return
 	}
-	if t.len() != other.len() {
-		err = errors.Errorf(lenMismatch, t.len(), other.len())
+
+	if !a.Shape().Eq(b.Shape()) {
+		err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
+		return
+	}
+	fo := parseFuncOpts(opts...)
+	reuseT, _ := fo.incrReuse()
+	safe = fo.safe()
+	same = fo.same
+	if !safe {
+		same = true
+	}
+	toReuse = reuseT != nil
+
+	if toReuse {
+		reuse = reuseT.(*Dense)
+		if reuse.t.Kind() != a.t.Kind() {
+			err = errors.Errorf(typeMismatch, a.t, reuse.t)
+			return
+		}
+
+		if err = reuseDenseCheck(reuse, a); err != nil {
+			err = errors.Wrap(err, "Cannot use reuse")
+			return
+		}
+	}
+	return
+}
+
+/* Eq */
+
+func (t *Dense) eqDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
+	if err != nil {
+		return nil, err
 	}
 
-	retVal := recycledDenseNoFix(t.t, t.Shape().Clone())
-	switch k {
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+
 	case reflect.Bool:
 		td := t.bools()
 		od := other.bools()
 		ret := eqDDBoolsB(td, od)
 		retVal.fromSlice(ret)
+
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
@@ -39,6 +71,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsI(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
@@ -49,6 +82,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsI8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
@@ -59,6 +93,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsI16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
@@ -69,6 +104,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsI32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
@@ -79,6 +115,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsI64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
@@ -89,6 +126,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsU(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
@@ -99,6 +137,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsU8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
@@ -109,6 +148,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsU16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
@@ -119,6 +159,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsU32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
@@ -129,11 +170,13 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsU64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uintptr:
 		td := t.uintptrs()
 		od := other.uintptrs()
 		ret := eqDDBoolsUintptr(td, od)
 		retVal.fromSlice(ret)
+
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -144,6 +187,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsF32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
@@ -154,6 +198,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsF64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Complex64:
 		td := t.complex64s()
 		od := other.complex64s()
@@ -164,6 +209,7 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsC64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Complex128:
 		td := t.complex128s()
 		od := other.complex128s()
@@ -174,44 +220,50 @@ func (t *Dense) eqDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := eqDDBoolsC128(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		ret := eqDDBoolsStr(td, od)
 		retVal.fromSlice(ret)
+
 	case reflect.UnsafePointer:
 		td := t.unsafePointers()
 		od := other.unsafePointers()
 		ret := eqDDBoolsUnsafePointer(td, od)
 		retVal.fromSlice(ret)
 	default:
-		err = errors.Errorf(unsupportedDtype, d.t, "eq")
+		err = errors.Errorf(unsupportedDtype, t.t, "eq")
 		return
 	}
+
 	retVal.fix()
 	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
 	return
 }
 
 /* Gt */
 
-func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
-	k := t.t.Kind()
-	if k != other.t.Kind() {
-		err = errors.Errorf(typeMismatch, t.t, other.t)
-		return
-	}
-	if t.len() != other.len() {
-		err = errors.Errorf(lenMismatch, t.len(), other.len())
+func (t *Dense) gtDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
+	if err != nil {
+		return nil, err
 	}
 
-	retVal := recycledDenseNoFix(t.t, t.Shape().Clone())
-	switch k {
-	case reflect.Bool:
-		td := t.bools()
-		od := other.bools()
-		ret := gtDDBoolsB(td, od)
-		retVal.fromSlice(ret)
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
@@ -222,6 +274,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsI(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
@@ -232,6 +285,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsI8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
@@ -242,6 +296,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsI16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
@@ -252,6 +307,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsI32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
@@ -262,6 +318,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsI64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
@@ -272,6 +329,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsU(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
@@ -282,6 +340,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsU8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
@@ -292,6 +351,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsU16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
@@ -302,6 +362,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsU32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
@@ -312,11 +373,13 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsU64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uintptr:
 		td := t.uintptrs()
 		od := other.uintptrs()
 		ret := gtDDBoolsUintptr(td, od)
 		retVal.fromSlice(ret)
+
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -327,6 +390,7 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsF32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
@@ -337,64 +401,45 @@ func (t *Dense) gtDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gtDDBoolsF64(td, od)
 			retVal.fromSlice(ret)
 		}
-	case reflect.Complex64:
-		td := t.complex64s()
-		od := other.complex64s()
-		if same {
-			ret := gtDDSameC64(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := gtDDBoolsC64(td, od)
-			retVal.fromSlice(ret)
-		}
-	case reflect.Complex128:
-		td := t.complex128s()
-		od := other.complex128s()
-		if same {
-			ret := gtDDSameC128(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := gtDDBoolsC128(td, od)
-			retVal.fromSlice(ret)
-		}
+
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		ret := gtDDBoolsStr(td, od)
 		retVal.fromSlice(ret)
-	case reflect.UnsafePointer:
-		td := t.unsafePointers()
-		od := other.unsafePointers()
-		ret := gtDDBoolsUnsafePointer(td, od)
-		retVal.fromSlice(ret)
+
 	default:
-		err = errors.Errorf(unsupportedDtype, d.t, "gt")
+		err = errors.Errorf(unsupportedDtype, t.t, "gt")
 		return
 	}
+
 	retVal.fix()
 	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
 	return
 }
 
 /* Gte */
 
-func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
-	k := t.t.Kind()
-	if k != other.t.Kind() {
-		err = errors.Errorf(typeMismatch, t.t, other.t)
-		return
-	}
-	if t.len() != other.len() {
-		err = errors.Errorf(lenMismatch, t.len(), other.len())
+func (t *Dense) gteDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
+	if err != nil {
+		return nil, err
 	}
 
-	retVal := recycledDenseNoFix(t.t, t.Shape().Clone())
-	switch k {
-	case reflect.Bool:
-		td := t.bools()
-		od := other.bools()
-		ret := gteDDBoolsB(td, od)
-		retVal.fromSlice(ret)
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
@@ -405,6 +450,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsI(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
@@ -415,6 +461,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsI8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
@@ -425,6 +472,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsI16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
@@ -435,6 +483,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsI32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
@@ -445,6 +494,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsI64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
@@ -455,6 +505,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsU(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
@@ -465,6 +516,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsU8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
@@ -475,6 +527,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsU16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
@@ -485,6 +538,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsU32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
@@ -495,11 +549,13 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsU64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uintptr:
 		td := t.uintptrs()
 		od := other.uintptrs()
 		ret := gteDDBoolsUintptr(td, od)
 		retVal.fromSlice(ret)
+
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -510,6 +566,7 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsF32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
@@ -520,64 +577,45 @@ func (t *Dense) gteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := gteDDBoolsF64(td, od)
 			retVal.fromSlice(ret)
 		}
-	case reflect.Complex64:
-		td := t.complex64s()
-		od := other.complex64s()
-		if same {
-			ret := gteDDSameC64(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := gteDDBoolsC64(td, od)
-			retVal.fromSlice(ret)
-		}
-	case reflect.Complex128:
-		td := t.complex128s()
-		od := other.complex128s()
-		if same {
-			ret := gteDDSameC128(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := gteDDBoolsC128(td, od)
-			retVal.fromSlice(ret)
-		}
+
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		ret := gteDDBoolsStr(td, od)
 		retVal.fromSlice(ret)
-	case reflect.UnsafePointer:
-		td := t.unsafePointers()
-		od := other.unsafePointers()
-		ret := gteDDBoolsUnsafePointer(td, od)
-		retVal.fromSlice(ret)
+
 	default:
-		err = errors.Errorf(unsupportedDtype, d.t, "gte")
+		err = errors.Errorf(unsupportedDtype, t.t, "gte")
 		return
 	}
+
 	retVal.fix()
 	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
 	return
 }
 
 /* Lt */
 
-func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
-	k := t.t.Kind()
-	if k != other.t.Kind() {
-		err = errors.Errorf(typeMismatch, t.t, other.t)
-		return
-	}
-	if t.len() != other.len() {
-		err = errors.Errorf(lenMismatch, t.len(), other.len())
+func (t *Dense) ltDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
+	if err != nil {
+		return nil, err
 	}
 
-	retVal := recycledDenseNoFix(t.t, t.Shape().Clone())
-	switch k {
-	case reflect.Bool:
-		td := t.bools()
-		od := other.bools()
-		ret := ltDDBoolsB(td, od)
-		retVal.fromSlice(ret)
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
@@ -588,6 +626,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsI(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
@@ -598,6 +637,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsI8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
@@ -608,6 +648,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsI16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
@@ -618,6 +659,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsI32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
@@ -628,6 +670,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsI64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
@@ -638,6 +681,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsU(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
@@ -648,6 +692,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsU8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
@@ -658,6 +703,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsU16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
@@ -668,6 +714,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsU32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
@@ -678,11 +725,13 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsU64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uintptr:
 		td := t.uintptrs()
 		od := other.uintptrs()
 		ret := ltDDBoolsUintptr(td, od)
 		retVal.fromSlice(ret)
+
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -693,6 +742,7 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsF32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
@@ -703,64 +753,45 @@ func (t *Dense) ltDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := ltDDBoolsF64(td, od)
 			retVal.fromSlice(ret)
 		}
-	case reflect.Complex64:
-		td := t.complex64s()
-		od := other.complex64s()
-		if same {
-			ret := ltDDSameC64(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := ltDDBoolsC64(td, od)
-			retVal.fromSlice(ret)
-		}
-	case reflect.Complex128:
-		td := t.complex128s()
-		od := other.complex128s()
-		if same {
-			ret := ltDDSameC128(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := ltDDBoolsC128(td, od)
-			retVal.fromSlice(ret)
-		}
+
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		ret := ltDDBoolsStr(td, od)
 		retVal.fromSlice(ret)
-	case reflect.UnsafePointer:
-		td := t.unsafePointers()
-		od := other.unsafePointers()
-		ret := ltDDBoolsUnsafePointer(td, od)
-		retVal.fromSlice(ret)
+
 	default:
-		err = errors.Errorf(unsupportedDtype, d.t, "lt")
+		err = errors.Errorf(unsupportedDtype, t.t, "lt")
 		return
 	}
+
 	retVal.fix()
 	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
 	return
 }
 
 /* Lte */
 
-func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
-	k := t.t.Kind()
-	if k != other.t.Kind() {
-		err = errors.Errorf(typeMismatch, t.t, other.t)
-		return
-	}
-	if t.len() != other.len() {
-		err = errors.Errorf(lenMismatch, t.len(), other.len())
+func (t *Dense) lteDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
+	if err != nil {
+		return nil, err
 	}
 
-	retVal := recycledDenseNoFix(t.t, t.Shape().Clone())
-	switch k {
-	case reflect.Bool:
-		td := t.bools()
-		od := other.bools()
-		ret := lteDDBoolsB(td, od)
-		retVal.fromSlice(ret)
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
@@ -771,6 +802,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsI(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
@@ -781,6 +813,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsI8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
@@ -791,6 +824,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsI16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
@@ -801,6 +835,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsI32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
@@ -811,6 +846,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsI64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
@@ -821,6 +857,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsU(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
@@ -831,6 +868,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsU8(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
@@ -841,6 +879,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsU16(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
@@ -851,6 +890,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsU32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
@@ -861,11 +901,13 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsU64(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Uintptr:
 		td := t.uintptrs()
 		od := other.uintptrs()
 		ret := lteDDBoolsUintptr(td, od)
 		retVal.fromSlice(ret)
+
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -876,6 +918,7 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsF32(td, od)
 			retVal.fromSlice(ret)
 		}
+
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
@@ -886,41 +929,30 @@ func (t *Dense) lteDD(other *Dense, same bool) (retVal *Dense, err error) {
 			ret := lteDDBoolsF64(td, od)
 			retVal.fromSlice(ret)
 		}
-	case reflect.Complex64:
-		td := t.complex64s()
-		od := other.complex64s()
-		if same {
-			ret := lteDDSameC64(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := lteDDBoolsC64(td, od)
-			retVal.fromSlice(ret)
-		}
-	case reflect.Complex128:
-		td := t.complex128s()
-		od := other.complex128s()
-		if same {
-			ret := lteDDSameC128(td, od)
-			retVal.fromSlice(ret)
-		} else {
-			ret := lteDDBoolsC128(td, od)
-			retVal.fromSlice(ret)
-		}
+
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		ret := lteDDBoolsStr(td, od)
 		retVal.fromSlice(ret)
-	case reflect.UnsafePointer:
-		td := t.unsafePointers()
-		od := other.unsafePointers()
-		ret := lteDDBoolsUnsafePointer(td, od)
-		retVal.fromSlice(ret)
+
 	default:
-		err = errors.Errorf(unsupportedDtype, d.t, "lte")
+		err = errors.Errorf(unsupportedDtype, t.t, "lte")
 		return
 	}
+
 	retVal.fix()
 	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
 	return
 }

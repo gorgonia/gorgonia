@@ -50,7 +50,7 @@ var vecscalarOps = []struct {
 	{"PowOfR", "math.Pow", true},
 }
 
-const prepRaw = `func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
+const prepArithRaw = `func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
 	if !isNumber(a.t) && !isNumber(b.t) {
 		err = noopError{}
 		return
@@ -215,7 +215,7 @@ func init() {
 	dsArithTable = template.Must(template.New("dense-scalar arith table").Funcs(funcs).Parse(denseScalarArithSwitchTableRaw))
 }
 func arith(f io.Writer, generic *ManyKinds) {
-	fmt.Fprint(f, prepRaw)
+	fmt.Fprint(f, prepArithRaw)
 	for _, bo := range binOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		op := ArithBinOps{generic, bo.OpName, bo.OpSymb, bo.IsFunc}

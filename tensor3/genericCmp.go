@@ -634,22 +634,6 @@ func eqDSBoolsUnsafePointer(a []unsafe.Pointer, b unsafe.Pointer) (retVal []bool
 
 /* Gt */
 
-func gtDDBoolsB(a, b []bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b[i]
-	}
-	return retVal
-}
-
-func gtDSBoolsB(a []bool, b bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b
-	}
-	return retVal
-}
-
 func gtDDBoolsI(a, b []int) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -1146,86 +1130,6 @@ func gtDSSameF64(a []float64, b float64) (retVal []float64) {
 	return retVal
 }
 
-func gtDDBoolsC64(a, b []complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b[i]
-	}
-	return retVal
-}
-
-func gtDDSameC64(a, b []complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v > b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func gtDSBoolsC64(a []complex64, b complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b
-	}
-	return retVal
-}
-
-func gtDSSameC64(a []complex64, b complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v > b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func gtDDBoolsC128(a, b []complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b[i]
-	}
-	return retVal
-}
-
-func gtDDSameC128(a, b []complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
-	for i, v := range a {
-		if v > b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func gtDSBoolsC128(a []complex128, b complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b
-	}
-	return retVal
-}
-
-func gtDSSameC128(a []complex128, b complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
-	for i, v := range a {
-		if v > b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
 func gtDDBoolsStr(a, b []string) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -1243,22 +1147,6 @@ func gtDSBoolsStr(a []string, b string) (retVal []bool) {
 }
 
 /* Gte */
-
-func gteDDBoolsB(a, b []bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b[i]
-	}
-	return retVal
-}
-
-func gteDSBoolsB(a []bool, b bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b
-	}
-	return retVal
-}
 
 func gteDDBoolsI(a, b []int) (retVal []bool) {
 	retVal = make([]bool, len(a))
@@ -1756,86 +1644,6 @@ func gteDSSameF64(a []float64, b float64) (retVal []float64) {
 	return retVal
 }
 
-func gteDDBoolsC64(a, b []complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b[i]
-	}
-	return retVal
-}
-
-func gteDDSameC64(a, b []complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v >= b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func gteDSBoolsC64(a []complex64, b complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b
-	}
-	return retVal
-}
-
-func gteDSSameC64(a []complex64, b complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v >= b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func gteDDBoolsC128(a, b []complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b[i]
-	}
-	return retVal
-}
-
-func gteDDSameC128(a, b []complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
-	for i, v := range a {
-		if v >= b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func gteDSBoolsC128(a []complex128, b complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b
-	}
-	return retVal
-}
-
-func gteDSSameC128(a []complex128, b complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
-	for i, v := range a {
-		if v >= b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
 func gteDDBoolsStr(a, b []string) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -1853,22 +1661,6 @@ func gteDSBoolsStr(a []string, b string) (retVal []bool) {
 }
 
 /* Lt */
-
-func ltDDBoolsB(a, b []bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b[i]
-	}
-	return retVal
-}
-
-func ltDSBoolsB(a []bool, b bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b
-	}
-	return retVal
-}
 
 func ltDDBoolsI(a, b []int) (retVal []bool) {
 	retVal = make([]bool, len(a))
@@ -2366,86 +2158,6 @@ func ltDSSameF64(a []float64, b float64) (retVal []float64) {
 	return retVal
 }
 
-func ltDDBoolsC64(a, b []complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b[i]
-	}
-	return retVal
-}
-
-func ltDDSameC64(a, b []complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v < b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func ltDSBoolsC64(a []complex64, b complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b
-	}
-	return retVal
-}
-
-func ltDSSameC64(a []complex64, b complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v < b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func ltDDBoolsC128(a, b []complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b[i]
-	}
-	return retVal
-}
-
-func ltDDSameC128(a, b []complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
-	for i, v := range a {
-		if v < b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func ltDSBoolsC128(a []complex128, b complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b
-	}
-	return retVal
-}
-
-func ltDSSameC128(a []complex128, b complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
-	for i, v := range a {
-		if v < b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
 func ltDDBoolsStr(a, b []string) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -2463,22 +2175,6 @@ func ltDSBoolsStr(a []string, b string) (retVal []bool) {
 }
 
 /* Lte */
-
-func lteDDBoolsB(a, b []bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b[i]
-	}
-	return retVal
-}
-
-func lteDSBoolsB(a []bool, b bool) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b
-	}
-	return retVal
-}
 
 func lteDDBoolsI(a, b []int) (retVal []bool) {
 	retVal = make([]bool, len(a))
@@ -2966,86 +2662,6 @@ func lteDSBoolsF64(a []float64, b float64) (retVal []bool) {
 
 func lteDSSameF64(a []float64, b float64) (retVal []float64) {
 	retVal = make([]float64, len(a))
-	for i, v := range a {
-		if v <= b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func lteDDBoolsC64(a, b []complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b[i]
-	}
-	return retVal
-}
-
-func lteDDSameC64(a, b []complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v <= b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func lteDSBoolsC64(a []complex64, b complex64) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b
-	}
-	return retVal
-}
-
-func lteDSSameC64(a []complex64, b complex64) (retVal []complex64) {
-	retVal = make([]complex64, len(a))
-	for i, v := range a {
-		if v <= b {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func lteDDBoolsC128(a, b []complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b[i]
-	}
-	return retVal
-}
-
-func lteDDSameC128(a, b []complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
-	for i, v := range a {
-		if v <= b[i] {
-			retVal[i] = 1
-		} else {
-			retVal[i] = 0
-		}
-	}
-	return retVal
-}
-
-func lteDSBoolsC128(a []complex128, b complex128) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b
-	}
-	return retVal
-}
-
-func lteDSSameC128(a []complex128, b complex128) (retVal []complex128) {
-	retVal = make([]complex128, len(a))
 	for i, v := range a {
 		if v <= b {
 			retVal[i] = 1
