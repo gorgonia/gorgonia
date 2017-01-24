@@ -10,151 +10,724 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
-/* int */
+func TestAdditionBasicProperties(t *testing.T) {
+	idenI := func(a *QCDenseI) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int, a.len())
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
 
-func TestAdditionI(t *testing.T) {
-	var f func(*QCDenseI) bool
-	var err error
-
-	f = func(x *QCDenseI) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Int, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Int, x.len())
-		correct = newDense(Int, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
+		ret, _ = identity.Add(a.Dense)
 		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Int, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Int, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Int, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseI) bool {
-		var ret, correct, reuse *Dense
-		var zero int
-		var err error
-		zero = 0
-		correct = newDense(Int, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Int, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
 			return false
 		}
 		return true
 	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
+	if err := quick.Check(idenI, nil); err != nil {
+		t.Error(err)
+	}
+	commI := func(a, b *QCDenseI) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commI, nil); err != nil {
+		t.Error(err)
+	}
+	assocI := func(a, b, c *QCDenseI) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocI, nil); err != nil {
+		t.Error(err)
+	}
+	idenI8 := func(a *QCDenseI8) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int8, a.len())
+		correct = newDense(Int8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI8, nil); err != nil {
+		t.Error(err)
+	}
+	commI8 := func(a, b *QCDenseI8) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commI8, nil); err != nil {
+		t.Error(err)
+	}
+	assocI8 := func(a, b, c *QCDenseI8) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocI8, nil); err != nil {
+		t.Error(err)
+	}
+	idenI16 := func(a *QCDenseI16) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int16, a.len())
+		correct = newDense(Int16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI16, nil); err != nil {
+		t.Error(err)
+	}
+	commI16 := func(a, b *QCDenseI16) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commI16, nil); err != nil {
+		t.Error(err)
+	}
+	assocI16 := func(a, b, c *QCDenseI16) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocI16, nil); err != nil {
+		t.Error(err)
+	}
+	idenI32 := func(a *QCDenseI32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int32, a.len())
+		correct = newDense(Int32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI32, nil); err != nil {
+		t.Error(err)
+	}
+	commI32 := func(a, b *QCDenseI32) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commI32, nil); err != nil {
+		t.Error(err)
+	}
+	assocI32 := func(a, b, c *QCDenseI32) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocI32, nil); err != nil {
+		t.Error(err)
+	}
+	idenI64 := func(a *QCDenseI64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int64, a.len())
+		correct = newDense(Int64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI64, nil); err != nil {
+		t.Error(err)
+	}
+	commI64 := func(a, b *QCDenseI64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commI64, nil); err != nil {
+		t.Error(err)
+	}
+	assocI64 := func(a, b, c *QCDenseI64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocI64, nil); err != nil {
+		t.Error(err)
+	}
+	idenU := func(a *QCDenseU) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint, a.len())
+		correct = newDense(Uint, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU, nil); err != nil {
+		t.Error(err)
+	}
+	commU := func(a, b *QCDenseU) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commU, nil); err != nil {
+		t.Error(err)
+	}
+	assocU := func(a, b, c *QCDenseU) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocU, nil); err != nil {
+		t.Error(err)
+	}
+	idenU8 := func(a *QCDenseU8) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint8, a.len())
+		correct = newDense(Uint8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU8, nil); err != nil {
+		t.Error(err)
+	}
+	commU8 := func(a, b *QCDenseU8) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commU8, nil); err != nil {
+		t.Error(err)
+	}
+	assocU8 := func(a, b, c *QCDenseU8) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocU8, nil); err != nil {
+		t.Error(err)
+	}
+	idenU16 := func(a *QCDenseU16) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint16, a.len())
+		correct = newDense(Uint16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU16, nil); err != nil {
+		t.Error(err)
+	}
+	commU16 := func(a, b *QCDenseU16) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commU16, nil); err != nil {
+		t.Error(err)
+	}
+	assocU16 := func(a, b, c *QCDenseU16) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocU16, nil); err != nil {
+		t.Error(err)
+	}
+	idenU32 := func(a *QCDenseU32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint32, a.len())
+		correct = newDense(Uint32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU32, nil); err != nil {
+		t.Error(err)
+	}
+	commU32 := func(a, b *QCDenseU32) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commU32, nil); err != nil {
+		t.Error(err)
+	}
+	assocU32 := func(a, b, c *QCDenseU32) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocU32, nil); err != nil {
+		t.Error(err)
+	}
+	idenU64 := func(a *QCDenseU64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint64, a.len())
+		correct = newDense(Uint64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU64, nil); err != nil {
+		t.Error(err)
+	}
+	commU64 := func(a, b *QCDenseU64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commU64, nil); err != nil {
+		t.Error(err)
+	}
+	assocU64 := func(a, b, c *QCDenseU64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocU64, nil); err != nil {
+		t.Error(err)
+	}
+	idenF32 := func(a *QCDenseF32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Float32, a.len())
+		correct = newDense(Float32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF32, nil); err != nil {
+		t.Error(err)
+	}
+	commF32 := func(a, b *QCDenseF32) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commF32, nil); err != nil {
+		t.Error(err)
+	}
+	assocF32 := func(a, b, c *QCDenseF32) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocF32, nil); err != nil {
+		t.Error(err)
+	}
+	idenF64 := func(a *QCDenseF64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Float64, a.len())
+		correct = newDense(Float64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF64, nil); err != nil {
+		t.Error(err)
+	}
+	commF64 := func(a, b *QCDenseF64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commF64, nil); err != nil {
+		t.Error(err)
+	}
+	assocF64 := func(a, b, c *QCDenseF64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocF64, nil); err != nil {
+		t.Error(err)
+	}
+	idenC64 := func(a *QCDenseC64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Complex64, a.len())
+		correct = newDense(Complex64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC64, nil); err != nil {
+		t.Error(err)
+	}
+	commC64 := func(a, b *QCDenseC64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commC64, nil); err != nil {
+		t.Error(err)
+	}
+	assocC64 := func(a, b, c *QCDenseC64) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocC64, nil); err != nil {
+		t.Error(err)
+	}
+	idenC128 := func(a *QCDenseC128) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Complex128, a.len())
+		correct = newDense(Complex128, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = identity.Add(a.Dense)
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC128, nil); err != nil {
+		t.Error(err)
+	}
+	commC128 := func(a, b *QCDenseC128) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(commC128, nil); err != nil {
+		t.Error(err)
+	}
+	assocC128 := func(a, b, c *QCDenseC128) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()) {
+			t.Errorf("%v\n%v", ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assocC128, nil); err != nil {
+		t.Error(err)
 	}
 }
+func TestAdditionFuncOpts(t *testing.T) {
+	var f func(*QCDenseI) bool
+	f = func(a *QCDenseI) bool {
+		identity := newDense(Int, a.len()+1)
+		if _, err := identity.Add(a.Dense); err == nil {
+			t.Error("Failed length mismatch test")
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+
+	// safe
+	f = func(a *QCDenseI) bool {
+		var identity, ret *Dense
+		var err error
+		identity = newDense(Int, a.len())
+		if ret, err = identity.Add(a.Dense); err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret == identity || ret == a.Dense {
+			t.Errorf("Failed safe test for Add")
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+
+	// reuse
+	f = func(a *QCDenseI) bool {
+		var identity, ret, correct, reuse *Dense
+		var err error
+		identity = newDense(Int, a.len())
+		reuse = newDense(Int, a.len())
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+		if ret, err = identity.Add(a.Dense, WithReuse(reuse)); err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret != reuse {
+			t.Error("Expected ret == reuse")
+			return false
+		}
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// wrong reuse type
+		reuse = newDense(Bool, a.len())
+		if _, err = identity.Add(a.Dense, WithReuse(reuse)); err == nil {
+			t.Error("Expected an error when using a reuse with a type mismatch")
+			return false
+		}
+
+		// wrong reuse length
+		reuse = newDense(Int, a.len()+1)
+		if _, err = identity.Add(a.Dense, WithReuse(reuse)); err == nil {
+			t.Error("Expected an error when using a reuse with a size mismatch")
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+
+	// unsafe
+	f = func(a *QCDenseI) bool {
+		var identity, ret, correct *Dense
+		var err error
+		identity = newDense(Int, a.len())
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		if ret, err = identity.Add(a.Dense, UseUnsafe()); err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret != identity {
+			t.Error("Expected ret == reuse")
+			return false
+		}
+		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+}
+
+/* int */
+
 func TestSubtractionI(t *testing.T) {
 	var f func(*QCDenseI) bool
 	var err error
@@ -466,149 +1039,6 @@ func TestMultiplicationI(t *testing.T) {
 
 /* int8 */
 
-func TestAdditionI8(t *testing.T) {
-	var f func(*QCDenseI8) bool
-	var err error
-
-	f = func(x *QCDenseI8) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Int8, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Int8, x.len())
-		correct = newDense(Int8, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Int8, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Int8, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Int8, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseI8) bool {
-		var ret, correct, reuse *Dense
-		var zero int8
-		var err error
-		zero = 0
-		correct = newDense(Int8, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Int8, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionI8(t *testing.T) {
 	var f func(*QCDenseI8) bool
 	var err error
@@ -920,149 +1350,6 @@ func TestMultiplicationI8(t *testing.T) {
 
 /* int16 */
 
-func TestAdditionI16(t *testing.T) {
-	var f func(*QCDenseI16) bool
-	var err error
-
-	f = func(x *QCDenseI16) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Int16, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Int16, x.len())
-		correct = newDense(Int16, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Int16, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Int16, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Int16, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseI16) bool {
-		var ret, correct, reuse *Dense
-		var zero int16
-		var err error
-		zero = 0
-		correct = newDense(Int16, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Int16, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionI16(t *testing.T) {
 	var f func(*QCDenseI16) bool
 	var err error
@@ -1374,149 +1661,6 @@ func TestMultiplicationI16(t *testing.T) {
 
 /* int32 */
 
-func TestAdditionI32(t *testing.T) {
-	var f func(*QCDenseI32) bool
-	var err error
-
-	f = func(x *QCDenseI32) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Int32, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Int32, x.len())
-		correct = newDense(Int32, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Int32, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Int32, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Int32, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseI32) bool {
-		var ret, correct, reuse *Dense
-		var zero int32
-		var err error
-		zero = 0
-		correct = newDense(Int32, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Int32, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionI32(t *testing.T) {
 	var f func(*QCDenseI32) bool
 	var err error
@@ -1828,149 +1972,6 @@ func TestMultiplicationI32(t *testing.T) {
 
 /* int64 */
 
-func TestAdditionI64(t *testing.T) {
-	var f func(*QCDenseI64) bool
-	var err error
-
-	f = func(x *QCDenseI64) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Int64, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Int64, x.len())
-		correct = newDense(Int64, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Int64, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Int64, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Int64, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseI64) bool {
-		var ret, correct, reuse *Dense
-		var zero int64
-		var err error
-		zero = 0
-		correct = newDense(Int64, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Int64, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionI64(t *testing.T) {
 	var f func(*QCDenseI64) bool
 	var err error
@@ -2282,149 +2283,6 @@ func TestMultiplicationI64(t *testing.T) {
 
 /* uint */
 
-func TestAdditionU(t *testing.T) {
-	var f func(*QCDenseU) bool
-	var err error
-
-	f = func(x *QCDenseU) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Uint, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Uint, x.len())
-		correct = newDense(Uint, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Uint, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Uint, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Uint, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseU) bool {
-		var ret, correct, reuse *Dense
-		var zero uint
-		var err error
-		zero = 0
-		correct = newDense(Uint, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Uint, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionU(t *testing.T) {
 	var f func(*QCDenseU) bool
 	var err error
@@ -2736,149 +2594,6 @@ func TestMultiplicationU(t *testing.T) {
 
 /* uint8 */
 
-func TestAdditionU8(t *testing.T) {
-	var f func(*QCDenseU8) bool
-	var err error
-
-	f = func(x *QCDenseU8) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Uint8, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Uint8, x.len())
-		correct = newDense(Uint8, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Uint8, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Uint8, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Uint8, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseU8) bool {
-		var ret, correct, reuse *Dense
-		var zero uint8
-		var err error
-		zero = 0
-		correct = newDense(Uint8, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Uint8, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionU8(t *testing.T) {
 	var f func(*QCDenseU8) bool
 	var err error
@@ -3190,149 +2905,6 @@ func TestMultiplicationU8(t *testing.T) {
 
 /* uint16 */
 
-func TestAdditionU16(t *testing.T) {
-	var f func(*QCDenseU16) bool
-	var err error
-
-	f = func(x *QCDenseU16) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Uint16, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Uint16, x.len())
-		correct = newDense(Uint16, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Uint16, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Uint16, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Uint16, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseU16) bool {
-		var ret, correct, reuse *Dense
-		var zero uint16
-		var err error
-		zero = 0
-		correct = newDense(Uint16, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Uint16, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionU16(t *testing.T) {
 	var f func(*QCDenseU16) bool
 	var err error
@@ -3644,149 +3216,6 @@ func TestMultiplicationU16(t *testing.T) {
 
 /* uint32 */
 
-func TestAdditionU32(t *testing.T) {
-	var f func(*QCDenseU32) bool
-	var err error
-
-	f = func(x *QCDenseU32) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Uint32, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Uint32, x.len())
-		correct = newDense(Uint32, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Uint32, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Uint32, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Uint32, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseU32) bool {
-		var ret, correct, reuse *Dense
-		var zero uint32
-		var err error
-		zero = 0
-		correct = newDense(Uint32, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Uint32, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionU32(t *testing.T) {
 	var f func(*QCDenseU32) bool
 	var err error
@@ -4098,149 +3527,6 @@ func TestMultiplicationU32(t *testing.T) {
 
 /* uint64 */
 
-func TestAdditionU64(t *testing.T) {
-	var f func(*QCDenseU64) bool
-	var err error
-
-	f = func(x *QCDenseU64) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Uint64, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Uint64, x.len())
-		correct = newDense(Uint64, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Uint64, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Uint64, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Uint64, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseU64) bool {
-		var ret, correct, reuse *Dense
-		var zero uint64
-		var err error
-		zero = 0
-		correct = newDense(Uint64, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Uint64, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionU64(t *testing.T) {
 	var f func(*QCDenseU64) bool
 	var err error
@@ -4552,149 +3838,6 @@ func TestMultiplicationU64(t *testing.T) {
 
 /* float32 */
 
-func TestAdditionF32(t *testing.T) {
-	var f func(*QCDenseF32) bool
-	var err error
-
-	f = func(x *QCDenseF32) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Float32, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Float32, x.len())
-		correct = newDense(Float32, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Float32, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Float32, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Float32, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseF32) bool {
-		var ret, correct, reuse *Dense
-		var zero float32
-		var err error
-		zero = 0
-		correct = newDense(Float32, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Float32, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionF32(t *testing.T) {
 	var f func(*QCDenseF32) bool
 	var err error
@@ -5006,149 +4149,6 @@ func TestMultiplicationF32(t *testing.T) {
 
 /* float64 */
 
-func TestAdditionF64(t *testing.T) {
-	var f func(*QCDenseF64) bool
-	var err error
-
-	f = func(x *QCDenseF64) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Float64, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Float64, x.len())
-		correct = newDense(Float64, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Float64, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Float64, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Float64, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseF64) bool {
-		var ret, correct, reuse *Dense
-		var zero float64
-		var err error
-		zero = 0
-		correct = newDense(Float64, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Float64, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionF64(t *testing.T) {
 	var f func(*QCDenseF64) bool
 	var err error
@@ -5460,149 +4460,6 @@ func TestMultiplicationF64(t *testing.T) {
 
 /* complex64 */
 
-func TestAdditionC64(t *testing.T) {
-	var f func(*QCDenseC64) bool
-	var err error
-
-	f = func(x *QCDenseC64) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Complex64, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Complex64, x.len())
-		correct = newDense(Complex64, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Complex64, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Complex64, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Complex64, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseC64) bool {
-		var ret, correct, reuse *Dense
-		var zero complex64
-		var err error
-		zero = 0
-		correct = newDense(Complex64, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Complex64, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionC64(t *testing.T) {
 	var f func(*QCDenseC64) bool
 	var err error
@@ -5914,149 +4771,6 @@ func TestMultiplicationC64(t *testing.T) {
 
 /* complex128 */
 
-func TestAdditionC128(t *testing.T) {
-	var f func(*QCDenseC128) bool
-	var err error
-
-	f = func(x *QCDenseC128) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense(Complex128, x.len()+1)
-
-		// basic length test
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense(Complex128, x.len())
-		correct = newDense(Complex128, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense(Complex128, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense(Complex128, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil {
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense(Complex128, x.len())
-		if ret, err = x.Add(zero); err != nil {
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDenseC128) bool {
-		var ret, correct, reuse *Dense
-		var zero complex128
-		var err error
-		zero = 0
-		correct = newDense(Complex128, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense(Complex128, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()) {
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
-	}
-}
 func TestSubtractionC128(t *testing.T) {
 	var f func(*QCDenseC128) bool
 	var err error

@@ -6,147 +6,151 @@ import (
 	"text/template"
 )
 
-const testAdditionRaw = `func TestAddition{{short .}}(t *testing.T){
-	var f func(*QCDense{{short .}}) bool
-	var err error
+const testAdditionBasicPropertiesRaw = `func TestAdditionBasicProperties(t *testing.T){
+	{{range .Kinds -}}
+	iden{{short .}} := func(a *QCDense{{short .}}) bool {
+		var ret, correct, identity *Dense
+		identity = newDense({{asType . | title | strip}}, a.len())
+		correct = newDense({{asType . | title | strip}}, a.len())
+		copyDense(correct, a.Dense)
 
-	f = func(x *QCDense{{short .}}) bool {
-		var ret, correct, zero, reuse *Dense
-		var err error
-		zero = newDense({{asType . | title | strip}}, x.len()+1)
-
-		// basic length test 
-		if _, err = zero.Add(x.Dense); err == nil {
-			t.Error("Failed length test")
-			return false
-		}
-
-		// safe identity
-		zero = newDense({{asType . | title | strip}}, x.len())
-		correct = newDense({{asType . | title | strip}}, x.len())
-		copyDense(correct, x.Dense)
-
-		if ret, err = zero.Add(x.Dense); err != nil {
-			t.Errorf("Failed safe identity test: %v", err)
-			return false
-		}
-
-		if ret == zero || ret == x.Dense {
-			t.Error("Failed safe identity test: safe op should not return same value")
-			return false
-		}
-
+		ret, _ = identity.Add(a.Dense)
 		if !reflect.DeepEqual(correct.Data(), ret.Data()){
-			t.Errorf("Failed safe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
 			return false
-		}
-
-		// reuse identity - wrong length
-		reuse = newDense({{asType . | title | strip}}, x.len()+1)
-		if _, err = x.Add(zero, WithReuse(reuse)); err == nil {
-			t.Error("Expected an error when reuse is of a differing size")
-			return false
-		}
-
-		// reuse identity
-		reuse = newDense({{asType . | title | strip}}, x.len())
-		if ret, err = zero.Add(x.Dense, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed reuse identity test: %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Errorf("Failed reuse identity test. Expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()){
-			t.Errorf("Failed resue identity test: Operation incorrect: \nWant: %v \nGot: %v", correct.Data(), ret.Data())
-		}
-
-		// unsafe identity
-		if ret, err = zero.Add(x.Dense, UseUnsafe()); err != nil{
-			t.Errorf("Failed unsafe identity test: %v", err)
-			return false
-		}
-		if ret != zero {
-			t.Error("Failed unsafe identity test. Expected the return *Dense to be the same as the left")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()){
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}
-
-		// test commutativity and associativity
-		zero = newDense({{asType . | title | strip}}, x.len())
-		if ret, err = x.Add(zero); err != nil{
-			t.Errorf("Failed commutativity/associativity test: %v", err)
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()){
-			t.Errorf("Failed unsafe identity test: operation incorrect: \nWant: %v \nGot: %v\n", correct.Data(), ret.Data())
-			return false
-		}		
-
-		return true
-	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Unsafe Identity test: %v", err)
-	}
-
-	f = func(x *QCDense{{short .}}) bool {
-		var ret, correct, reuse *Dense
-		var zero {{asType .}}
-		var err error
-		zero = 0
-		correct = newDense({{asType . | title | strip}}, x.len())
-		copyDense(correct, x.Dense)
-
-		// Safe Trans
-		if ret, err = x.Trans(zero); err != nil {
-			t.Errorf("Failed Safe Trans test %v", err)
-			return false
-		}
-		if ret == x.Dense {
-			t.Error("Failed Safe Trans: ret == x")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()){
-			t.Errorf("Failed Safe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Reuse Trans
-		reuse = newDense({{asType . | title | strip}}, x.len())
-		if ret, err = x.Trans(zero, WithReuse(reuse)); err != nil {
-			t.Errorf("Failed Reuse Trans test %v", err)
-			return false
-		}
-		if ret != reuse {
-			t.Error("Failed Reuse Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()){
-			t.Errorf("Failed Reuse Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false
-		}
-
-		// Unsafe Trans
-		if ret, err = x.Trans(zero, UseUnsafe()); err != nil {
-			t.Errorf("Unsafe trans test failed:  %v", err)
-			return false
-		}
-		if ret != x.Dense {
-			t.Error("Failed Unsafe Trans: expected return value to be the same as reuse")
-			return false
-		}
-		if !reflect.DeepEqual(correct.Data(), ret.Data()){
-			t.Errorf("Failed Unsafe Trans: Operation incorrect. \nWant %v\nGot%v", correct.Data(), ret.Data())
-			return false	
 		}
 		return true
 	}
-	if err = quick.Check(f, nil); err != nil {
-		t.Errorf("Failed Trans tests: %v", err)
+	if err := quick.Check(iden{{short .}}, nil); err != nil {
+		t.Error(err)
+	}
+	comm{{short .}} := func(a, b *QCDense{{short .}}) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret2, _ = b.Add(a.Dense)
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()){
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(comm{{short .}}, nil); err != nil {
+		t.Error(err)
+	}
+	assoc{{short .}} := func(a, b, c *QCDense{{short .}}) bool {
+		var ret1, ret2 *Dense
+		ret1, _ = a.Add(b.Dense)
+		ret1, _ = ret1.Add(c.Dense)
+
+		ret2, _ = b.Add(c.Dense)
+		ret2, _ = a.Add(ret2)
+
+		if !reflect.DeepEqual(ret1.Data(), ret2.Data()){
+			t.Errorf("%v\n%v",ret1.Data(), ret2.Data())
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(assoc{{short .}}, nil); err != nil {
+		t.Error(err)
+	}
+	{{end -}}
+}
+`
+
+const testAdditionFuncOptRaw = `func TestAdditionFuncOpts(t *testing.T){
+	var f func(*QCDenseI) bool
+	f = func(a *QCDenseI) bool {
+		identity := newDense(Int, a.len()+1)
+		if _, err := identity.Add(a.Dense); err == nil {
+			t.Error("Failed length mismatch test")
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+
+	// safe
+	f = func(a *QCDenseI) bool {
+		var identity, ret *Dense
+		var err error
+		identity = newDense(Int, a.len())
+		if ret, err = identity.Add(a.Dense); err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret == identity || ret == a.Dense {
+			t.Errorf("Failed safe test for Add")
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+
+	// reuse
+	f = func(a *QCDenseI) bool {
+		var identity, ret, correct, reuse *Dense
+		var err error
+		identity = newDense(Int, a.len())
+		reuse = newDense(Int, a.len())
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+		if ret, err = identity.Add(a.Dense, WithReuse(reuse)); err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret != reuse {
+			t.Error("Expected ret == reuse")
+			return false
+		}
+		if !reflect.DeepEqual(correct.Data(), ret.Data()){
+			return false
+		}
+
+		// wrong reuse type
+		reuse = newDense(Bool, a.len())
+		if _, err = identity.Add(a.Dense, WithReuse(reuse)); err == nil {
+			t.Error("Expected an error when using a reuse with a type mismatch")
+			return false
+		}
+
+		// wrong reuse length
+		reuse = newDense(Int, a.len()+1)
+		if _, err = identity.Add(a.Dense, WithReuse(reuse)); err == nil {
+			t.Error("Expected an error when using a reuse with a size mismatch")
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+
+	// unsafe 
+	f = func(a *QCDenseI) bool {
+		var identity, ret, correct *Dense
+		var err error
+		identity = newDense(Int, a.len())
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		if ret, err = identity.Add(a.Dense, UseUnsafe()) ; err != nil {
+			t.Error(err)
+			return false
+		}
+		if ret != identity {
+			t.Error("Expected ret == reuse")
+			return false
+		}
+		if !reflect.DeepEqual(correct.Data(), ret.Data()){
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
 	}
 }
 `
@@ -464,22 +468,28 @@ const testMultiplicationRaw = `func TestMultiplication{{short .}}(t *testing.T){
 `
 
 var (
-	testAddition       *template.Template
-	testSubtraction    *template.Template
-	testMultiplication *template.Template
+	testAdditionBasicProperties *template.Template
+	testAdditionFuncOpt         *template.Template
+	testSubtraction             *template.Template
+	testMultiplication          *template.Template
 )
 
 func init() {
-	testAddition = template.Must(template.New("testAddition").Funcs(funcs).Parse(testAdditionRaw))
+	testAdditionBasicProperties = template.Must(template.New("testAdditionBasicProp").Funcs(funcs).Parse(testAdditionBasicPropertiesRaw))
+	testAdditionFuncOpt = template.Must(template.New("testAdditionFuncOpt").Funcs(funcs).Parse(testAdditionFuncOptRaw))
 	testSubtraction = template.Must(template.New("testSubtraction").Funcs(funcs).Parse(testSubtractionRaw))
 	testMultiplication = template.Must(template.New("testMul").Funcs(funcs).Parse(testMultiplicationRaw))
 }
 
 func denseArithTests(f io.Writer, generic *ManyKinds) {
+	numbers := filter(generic.Kinds, isNumber)
+	mk := &ManyKinds{numbers}
+	testAdditionBasicProperties.Execute(f, mk)
+	testAdditionFuncOpt.Execute(f, mk)
 	for _, k := range generic.Kinds {
 		if isNumber(k) {
 			fmt.Fprintf(f, "/* %s */\n\n", k)
-			testAddition.Execute(f, k)
+
 			testSubtraction.Execute(f, k)
 			testMultiplication.Execute(f, k)
 		}
