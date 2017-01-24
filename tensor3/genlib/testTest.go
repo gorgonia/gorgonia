@@ -6,26 +6,37 @@ import (
 	"text/template"
 )
 
-const testHeaderRaw = `func newGenerator(of Dtype) quick.Generator {
-	switch of.Kind() {
-	{{range .Kinds -}}
-		{{if isNumber . -}}
-	case reflect.{{reflectKind .}}:
-		return QCDense{{short .}}(nil)
-		{{end -}}
-	{{end -}}
-	}
-	panic("Unreacheable")
+const testHeaderRaw = `func randomBool() bool {
+	i := rand.Intn(11)
+	return i > 5
 }
 
-type Densor interface{
-	D() *Dense
-}
+// from : https://stackoverflow.com/a/31832326/3426066
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const (
+    letterIdxBits = 6                    // 6 bits to represent a letter index
+    letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+    letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+)
+var src = rand.NewSource(time.Now().UnixNano())
 
-var numbers = []Dtype{
-	{{range .Kinds -}}
-		{{if isNumber . -}}{{asType . | title}}, {{end -}}
-	{{end -}}
+func randomString() string {
+	n := rand.Intn(10)
+    b := make([]byte, n)
+    // A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
+    for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
+        if remain == 0 {
+            cache, remain = src.Int63(), letterIdxMax
+        }
+        if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+            b[i] = letterBytes[idx]
+            i--
+        }
+        cache >>= letterIdxBits
+        remain--
+    }
+
+    return string(b)
 }
 
 `
@@ -49,6 +60,12 @@ func (*QCDense{{short .}}) Generate(r *rand.Rand, size int) reflect.Value {
 			s[i] = complex(r.Float32(), r.Float32())
 		{{else if eq .String "complex128" -}}
 			s[i] = complex(r.Float64(), r.Float64())
+		{{else if eq .String "bool" -}}
+			s[i] = randomBool()
+		{{else if eq .String "string" -}}
+			s[i] = randomString()
+		{{else if eq .String "unsafe.Pointer" -}}
+			s[i] = nil
 		{{end -}}
 	}
 	d := recycledDense({{asType . | title | strip}}, Shape{size}, WithBacking(s))
@@ -69,10 +86,10 @@ func init() {
 }
 
 func testtest(f io.Writer, generic *ManyKinds) {
-	// testHeader.Execute(f, generic)
+	testHeader.Execute(f, generic)
 	fmt.Fprint(f, "\n")
 	for _, k := range generic.Kinds {
-		if isNumber(k) {
+		if !isParameterized(k) {
 			testQC.Execute(f, k)
 			fmt.Fprint(f, "\n")
 		}

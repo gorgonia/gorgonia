@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"unsafe"
 
 	"github.com/chewxy/hm"
 )
@@ -64,6 +65,10 @@ var (
 
 	// aliases
 	Byte = Uint8
+
+	// extras
+	Uintptr       = Dtype{reflect.TypeOf(uintptr(0))}
+	UnsafePointer = Dtype{reflect.TypeOf(unsafe.Pointer(&Uintptr))}
 )
 
 // specialized types indicate that there are specialized code generated for these types

@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -12,7 +13,7 @@ GENERATED FILE. DO NOT EDIT
 
 func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, same, toReuse bool, err error) {
 	if a.t.Kind() != b.t.Kind() {
-		err = errors.Errorf(typeMismatch, a.t, b.t)
+		err = errors.Errorf(dtypeMismatch, a.t, b.t)
 		return
 	}
 
@@ -31,9 +32,17 @@ func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, same,
 
 	if toReuse {
 		reuse = reuseT.(*Dense)
-		if reuse.t.Kind() != a.t.Kind() {
-			err = errors.Errorf(typeMismatch, a.t, reuse.t)
-			return
+		if same {
+			if reuse.t.Kind() != a.t.Kind() {
+				err = errors.Errorf(dtypeMismatch, a.t, reuse.t)
+				return
+			}
+		} else {
+			if reuse.t.Kind() != reflect.Bool {
+				log.Printf("STATE: %v %v", toReuse, same)
+				err = errors.Errorf(dtypeMismatch, reflect.Bool, reuse.t)
+				return
+			}
 		}
 
 		if err = reuseDenseCheck(reuse, a); err != nil {
@@ -46,7 +55,7 @@ func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, same,
 
 /* Eq */
 
-func (t *Dense) eqDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
 	if err != nil {
 		return nil, err
@@ -255,7 +264,7 @@ func (t *Dense) eqDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, e
 
 /* Gt */
 
-func (t *Dense) gtDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
 	if err != nil {
 		return nil, err
@@ -431,7 +440,7 @@ func (t *Dense) gtDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, e
 
 /* Gte */
 
-func (t *Dense) gteDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
 	if err != nil {
 		return nil, err
@@ -607,7 +616,7 @@ func (t *Dense) gteDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, 
 
 /* Lt */
 
-func (t *Dense) ltDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
 	if err != nil {
 		return nil, err
@@ -783,7 +792,7 @@ func (t *Dense) ltDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, e
 
 /* Lte */
 
-func (t *Dense) lteDD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
 	if err != nil {
 		return nil, err

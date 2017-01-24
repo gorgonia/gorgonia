@@ -21,7 +21,7 @@ var cmpBinOps = []struct {
 
 const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse *Dense, safe, same, toReuse bool, err error) {
 	if a.t.Kind() != b.t.Kind() {
-		err = errors.Errorf(typeMismatch, a.t, b.t)
+		err = errors.Errorf(dtypeMismatch, a.t, b.t)
 		return
 	}
 
@@ -40,9 +40,17 @@ const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse 
 
 	if toReuse {
 		reuse = reuseT.(*Dense)
-		if reuse.t.Kind() != a.t.Kind() {
-			err = errors.Errorf(typeMismatch, a.t, reuse.t)
-			return
+		if same {
+			if reuse.t.Kind() != a.t.Kind() {
+				err = errors.Errorf(dtypeMismatch, a.t, reuse.t)
+				return
+			}	
+		} else {
+			if reuse.t.Kind() != reflect.Bool {
+				log.Printf("STATE: %v %v", toReuse, same)
+				err = errors.Errorf(dtypeMismatch, reflect.Bool, reuse.t)
+				return
+			}
 		}
 
 		if  err = reuseDenseCheck(reuse, a); err != nil {
@@ -54,7 +62,7 @@ const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse 
 }
 `
 
-const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, same bool, opts ...FuncOpt) (retVal *Dense, err error) {
+const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, same, toReuse, err := prepBinaryDenseCmp(t, other, opts...)
 	if err != nil {
 		return nil, err

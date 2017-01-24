@@ -3,11 +3,63 @@ package tensor
 import (
 	"math/rand"
 	"reflect"
+	"time"
+	"unsafe"
 )
 
 /*
 GENERATED FILE. DO NOT EDIT
 */
+
+func randomBool() bool {
+	i := rand.Intn(11)
+	return i > 5
+}
+
+// from : https://stackoverflow.com/a/31832326/3426066
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const (
+	letterIdxBits = 6                    // 6 bits to represent a letter index
+	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
+	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
+)
+
+var src = rand.NewSource(time.Now().UnixNano())
+
+func randomString() string {
+	n := rand.Intn(10)
+	b := make([]byte, n)
+	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
+	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = src.Int63(), letterIdxMax
+		}
+		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i--
+		}
+		cache >>= letterIdxBits
+		remain--
+	}
+
+	return string(b)
+}
+
+type QCDenseB struct {
+	*Dense
+}
+
+func (q *QCDenseB) D() *Dense { return q.Dense }
+func (*QCDenseB) Generate(r *rand.Rand, size int) reflect.Value {
+	s := make([]bool, size)
+	for i := range s {
+		s[i] = randomBool()
+	}
+	d := recycledDense(Bool, Shape{size}, WithBacking(s))
+	q := new(QCDenseB)
+	q.Dense = d
+	return reflect.ValueOf(q)
+}
 
 type QCDenseI struct {
 	*Dense
@@ -169,6 +221,22 @@ func (*QCDenseU64) Generate(r *rand.Rand, size int) reflect.Value {
 	return reflect.ValueOf(q)
 }
 
+type QCDenseUintptr struct {
+	*Dense
+}
+
+func (q *QCDenseUintptr) D() *Dense { return q.Dense }
+func (*QCDenseUintptr) Generate(r *rand.Rand, size int) reflect.Value {
+	s := make([]uintptr, size)
+	for i := range s {
+		s[i] = uintptr(r.Uint32())
+	}
+	d := recycledDense(Uintptr, Shape{size}, WithBacking(s))
+	q := new(QCDenseUintptr)
+	q.Dense = d
+	return reflect.ValueOf(q)
+}
+
 type QCDenseF32 struct {
 	*Dense
 }
@@ -229,6 +297,38 @@ func (*QCDenseC128) Generate(r *rand.Rand, size int) reflect.Value {
 	}
 	d := recycledDense(Complex128, Shape{size}, WithBacking(s))
 	q := new(QCDenseC128)
+	q.Dense = d
+	return reflect.ValueOf(q)
+}
+
+type QCDenseStr struct {
+	*Dense
+}
+
+func (q *QCDenseStr) D() *Dense { return q.Dense }
+func (*QCDenseStr) Generate(r *rand.Rand, size int) reflect.Value {
+	s := make([]string, size)
+	for i := range s {
+		s[i] = randomString()
+	}
+	d := recycledDense(String, Shape{size}, WithBacking(s))
+	q := new(QCDenseStr)
+	q.Dense = d
+	return reflect.ValueOf(q)
+}
+
+type QCDenseUnsafePointer struct {
+	*Dense
+}
+
+func (q *QCDenseUnsafePointer) D() *Dense { return q.Dense }
+func (*QCDenseUnsafePointer) Generate(r *rand.Rand, size int) reflect.Value {
+	s := make([]unsafe.Pointer, size)
+	for i := range s {
+		s[i] = nil
+	}
+	d := recycledDense(UnsafePointer, Shape{size}, WithBacking(s))
+	q := new(QCDenseUnsafePointer)
 	q.Dense = d
 	return reflect.ValueOf(q)
 }

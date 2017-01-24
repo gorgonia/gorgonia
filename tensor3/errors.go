@@ -43,7 +43,7 @@ const (
 	opFail            = "Failed to perform %v"
 	extractionFail    = "Failed to extract %v from %T"
 	unknownState      = "Unknown state reached: Safe %t, Incr %t, Reuse %t"
-	unsupportedDtype  = "Array of %T is unsupported for %v"
+	unsupportedDtype  = "Array of %v is unsupported for %v"
 
 	methodNYI = "%q not yet implemented for %v"
 	typeNYI   = "%q not yet implemented for interactions with %T"

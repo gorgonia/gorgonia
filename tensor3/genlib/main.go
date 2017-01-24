@@ -25,6 +25,7 @@ func main() {
 		denseArithName      = "../dense_arith.go"
 		denseArithTestsName = "../dense_arith_test.go"
 		denseCmpName        = "../dense_cmp.go"
+		denseCmpTestsName   = "../dense_cmp_test.go"
 
 		testTestName = "../test_test.go"
 	)
@@ -39,6 +40,7 @@ func main() {
 	pipeline(denseArithName, mk, arith)
 	pipeline(denseArithTestsName, mk, denseArithTests)
 	pipeline(denseCmpName, mk, denseCmp)
+	pipeline(denseCmpTestsName, mk, denseCmpTests)
 	pipeline(testTestName, mk, testtest)
 }
 

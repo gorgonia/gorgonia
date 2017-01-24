@@ -184,6 +184,15 @@ func isOrd(a reflect.Kind) bool {
 	return false
 }
 
+func filter(a []reflect.Kind, is func(reflect.Kind) bool) (retVal []reflect.Kind) {
+	for _, k := range a {
+		if is(k) {
+			retVal = append(retVal, k)
+		}
+	}
+	return
+}
+
 var shortNames = map[reflect.Kind]string{
 	reflect.Invalid:       "Invalid",
 	reflect.Bool:          "B",
