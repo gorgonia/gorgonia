@@ -47,7 +47,6 @@ const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse 
 			}	
 		} else {
 			if reuse.t.Kind() != reflect.Bool {
-				log.Printf("STATE: %v %v", toReuse, same)
 				err = errors.Errorf(dtypeMismatch, reflect.Bool, reuse.t)
 				return
 			}

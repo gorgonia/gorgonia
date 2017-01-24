@@ -102,7 +102,8 @@ const makeDataRaw = `func (t *Dense) makeArray(size int) {
 
 const copyRaw = `func copyDense(dest, src *Dense) int {
 	if dest.t != src.t {
-		panic("Cannot copy arrays of different types")
+		err := errors.Errorf(dtypeMismatch, src.t, dest.t)
+		panic(err.Error())
 	}
 	switch dest.t.Kind() {
 	{{range .Kinds -}}

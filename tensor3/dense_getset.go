@@ -473,7 +473,8 @@ func (t *Dense) Memset(x interface{}) error {
 
 func copyDense(dest, src *Dense) int {
 	if dest.t != src.t {
-		panic("Cannot copy arrays of different types")
+		err := errors.Errorf(dtypeMismatch, src.t, dest.t)
+		panic(err.Error())
 	}
 	switch dest.t.Kind() {
 	case reflect.Bool:

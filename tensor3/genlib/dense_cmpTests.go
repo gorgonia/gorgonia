@@ -51,11 +51,12 @@ const testDDCmpOpFuncOptsRaw = `func Test_Dense_{{lower .OpName}}DD_funcOpts(t *
 		f{{short .}} := func(a, b *QCDense{{short .}}) bool {
 			var reuse, axb, ret *Dense
 			var err error
-			reuse = recycledDense({{asType . | title | strip}}, Shape{a.len()})
-			if axb, err = a.{{lower $op}}DD(b.Dense, AsSameType()); err != nil {
+
+			reuse  = recycledDense(Bool, Shape{a.len()})
+			if axb, err = a.{{lower $op}}DD(b.Dense); err != nil {
 				t.Errorf("Test {{$op}} reuse for {{.}} failed(axb): %v",err)
 			}
-			if ret, err = a.{{lower $op}}DD(b.Dense, AsSameType(), WithReuse(reuse)); err != nil {
+			if ret, err = a.{{lower $op}}DD(b.Dense, WithReuse(reuse)); err != nil {
 				t.Errorf("Test {{$op}} reuse for {{.}} failed: %v", err)
 				return false
 			}
@@ -66,12 +67,45 @@ const testDDCmpOpFuncOptsRaw = `func Test_Dense_{{lower .OpName}}DD_funcOpts(t *
 			if !reflect.DeepEqual(axb.Data(), ret.Data()){
 				return false
 			}
-			{{if ne .String "bool" -}}
+
+
+			{{if isNumber . -}}
+			// reuse as same type
+			reuse = recycledDense({{asType . | title | strip}}, Shape{a.len()})
+			if axb, err = a.{{lower $op}}DD(b.Dense, AsSameType()); err != nil {
+				t.Errorf("Test {{$op}} as same type reuse for {{.}} failed(axb): %v",err)
+			}
+			if ret, err = a.{{lower $op}}DD(b.Dense, AsSameType(), WithReuse(reuse)); err != nil {
+				t.Errorf("Test {{$op}} as same type reuse for {{.}} failed: %v", err)
+				return false
+			}
+			if ret != reuse {
+				t.Errorf("Expected ret to be equal reuse")
+				return false
+			}
+			if !reflect.DeepEqual(axb.Data(), ret.Data()){
+				return false
+			}
 			if ret, err = a.{{lower $op}}DD(b.Dense, WithReuse(reuse)); err == nil {
 				t.Error("Expected an error")
 				return false
 			}
+
+			// unsafe
+			if ret, err = a.{{lower $op}}DD(b.Dense, UseUnsafe()); err != nil{
+				t.Errorf("Unsafe {{$op}} for {{.}} failed %v", err)
+				return false
+			}
+			if ret != a.Dense {
+				t.Error("Expected ret to be equal to a")
+			}
+			if !reflect.DeepEqual(axb.Data(), ret.Data()){
+				return false
+			}
+
 			{{end -}}
+
+
 
 			return true
 		}

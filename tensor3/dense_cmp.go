@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -39,7 +38,6 @@ func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, same,
 			}
 		} else {
 			if reuse.t.Kind() != reflect.Bool {
-				log.Printf("STATE: %v %v", toReuse, same)
 				err = errors.Errorf(dtypeMismatch, reflect.Bool, reuse.t)
 				return
 			}
