@@ -131,7 +131,7 @@ func denseCmp(f io.Writer, generic *ManyKinds) {
 	fmt.Fprintln(f, prepCmpRaw)
 	for _, bo := range cmpBinOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		op := ArithBinOps{generic, bo.OpName, bo.OpSymb, false}
+		op := BinOps{generic, bo.OpName, bo.OpSymb, false}
 		ddElEqOrd.Execute(f, op)
 		fmt.Fprintln(f, "\n")
 	}

@@ -20,37 +20,6 @@ func checkErr(t *testing.T, expected bool, err error, name string, id interface{
 	return false
 }
 
-func tolerancef64(a, b, e float64) bool {
-	d := a - b
-	if d < 0 {
-		d = -d
-	}
-
-	// note: b is correct (expected) value, a is actual value.
-	// make error tolerance a fraction of b, not a.
-	if b != 0 {
-		e = e * b
-		if e < 0 {
-			e = -e
-		}
-	}
-	return d < e
-}
-
-func closeenoughf64(a, b float64) bool { return tolerancef64(a, b, 1e-8) }
-func isclosef64(a, b float64) bool     { return tolerancef64(a, b, 1e-14) }
-func veryclosef64(a, b float64) bool   { return tolerancef64(a, b, 4e-16) }
-func soclosef64(a, b, e float64) bool  { return tolerancef64(a, b, e) }
-func alikef64(a, b float64) bool {
-	switch {
-	case math.IsNaN(a) && math.IsNaN(b):
-		return true
-	case a == b:
-		return math.Signbit(a) == math.Signbit(b)
-	}
-	return false
-}
-
 func sliceApproxf64(a, b []float64, fn func(a, b float64) bool) bool {
 	if len(a) != len(b) {
 		return false

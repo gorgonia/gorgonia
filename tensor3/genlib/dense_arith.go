@@ -14,11 +14,23 @@ type ArithBinOp struct {
 	IsFunc bool
 }
 
-type ArithBinOps struct {
+type BinOps struct {
 	*ManyKinds
 	OpName string
 	OpSymb string
 	IsFunc bool
+}
+
+type ArithBinOps struct {
+	BinOps
+
+	HasIdentity   bool
+	Identity      int
+	IsCommutative bool
+	IsAssociative bool
+	IsInv         bool
+	InvOpName     string
+	InvOpSymb     string
 }
 
 var binOps = []struct {
@@ -26,12 +38,20 @@ var binOps = []struct {
 	OpSymb string
 
 	IsFunc bool
+
+	HasIdentity   bool
+	Identity      int
+	IsCommutative bool
+	IsAssociative bool
+	IsInv         bool
+	InvOpName     string
+	InvOpSymb     string
 }{
-	{"Add", "+", false},
-	{"Sub", "-", false},
-	{"Mul", "*", false},
-	{"Div", "/", false},
-	{"Pow", "math.Pow", true},
+	{"Add", "+", false, true, 0, true, true, false, "", ""},
+	{"Sub", "-", false, false, 0, false, false, true, "Add", "+"},
+	{"Mul", "*", false, true, 1, true, true, false, "", ""},
+	{"Div", "/", false, false, 1, false, false, true, "Mul", "*"},
+	{"Pow", "math.Pow", true, true, 1, false, false, false, "", ""},
 }
 
 var vecscalarOps = []struct {
@@ -218,14 +238,19 @@ func arith(f io.Writer, generic *ManyKinds) {
 	fmt.Fprint(f, prepArithRaw)
 	for _, bo := range binOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		op := ArithBinOps{generic, bo.OpName, bo.OpSymb, bo.IsFunc}
+		op := BinOps{
+			ManyKinds: generic,
+			OpName:    bo.OpName,
+			OpSymb:    bo.OpSymb,
+			IsFunc:    bo.IsFunc,
+		}
 		ddArith.Execute(f, op)
 		ddArithTable.Execute(f, op)
 		fmt.Fprintln(f, "\n")
 	}
 	for _, bo := range vecscalarOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		op := ArithBinOps{generic, bo.OpName, bo.OpSymb, bo.IsFunc}
+		op := BinOps{generic, bo.OpName, bo.OpSymb, bo.IsFunc}
 		dsArith.Execute(f, op)
 		dsArithTable.Execute(f, op)
 		fmt.Fprintln(f, "\n")

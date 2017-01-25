@@ -131,7 +131,7 @@ func denseCmpTests(f io.Writer, generic *ManyKinds) {
 	for _, bo := range cmpBinOps {
 		fmt.Fprintf(f, "/* %s */\n\n\n", bo.OpName)
 		mk := &ManyKinds{filter(generic.Kinds, bo.is)}
-		op := ArithBinOps{mk, bo.OpName, bo.OpSymb, false}
+		op := BinOps{mk, bo.OpName, bo.OpSymb, false}
 		testDDCmpOpTransitivity.Execute(f, op)
 		fmt.Fprintln(f, "\n")
 		testDDCmpOpFuncOpts.Execute(f, op)
