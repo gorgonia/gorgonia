@@ -12,6 +12,7 @@ GENERATED FILE. DO NOT EDIT
 /* Add */
 
 func TestAddBasicProperties(t *testing.T) {
+
 	// identity
 	idenI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
@@ -19,7 +20,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -64,7 +65,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int8, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -109,7 +110,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int16, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -154,7 +155,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -199,7 +200,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -244,7 +245,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -289,7 +290,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint8, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -334,7 +335,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint16, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -379,7 +380,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -424,7 +425,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -469,7 +470,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Float32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -514,7 +515,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Float64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -559,7 +560,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Complex64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -604,7 +605,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Complex128, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Add(a.Dense)
+		ret, _ = a.Add(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -655,7 +656,7 @@ func TestAddFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("len test for Add failed : %v ", err)
 	}
 
 	// safe
@@ -674,7 +675,7 @@ func TestAddFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("safe test for Add failed : %v ", err)
 	}
 
 	// reuse
@@ -707,14 +708,14 @@ func TestAddFuncOpts(t *testing.T) {
 
 		// wrong reuse length
 		reuse = newDense(Float64, a.len()+1)
-		if _, err = identity.Add(a.Dense, WithReuse(reuse)); err == nil {
+		if _, err = a.Add(identity, WithReuse(reuse)); err == nil {
 			t.Error("Expected an error when doing Add using a reuse with a size mismatch")
 			return false
 		}
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("reuse test for Add failed : %v ", err)
 	}
 
 	// unsafe
@@ -739,194 +740,251 @@ func TestAddFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("unsafe test for Add failed : %v ", err)
 	}
 }
 
 /* Sub */
 
 func TestSubBasicProperties(t *testing.T) {
-	// invertible property - reserved to test inverse functions
-	invI := func(a, b *QCDenseI) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+
+	// identity
+	idenI := func(a *QCDenseI) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int, a.len())
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI, nil); err != nil {
-		t.Errorf("Inverse function test for int failed %v", err)
+	if err := quick.Check(idenI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI8 := func(a, b *QCDenseI8) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI8 := func(a *QCDenseI8) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int8, a.len())
+		correct = newDense(Int8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI8, nil); err != nil {
-		t.Errorf("Inverse function test for int8 failed %v", err)
+	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI16 := func(a, b *QCDenseI16) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI16 := func(a *QCDenseI16) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int16, a.len())
+		correct = newDense(Int16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI16, nil); err != nil {
-		t.Errorf("Inverse function test for int16 failed %v", err)
+	if err := quick.Check(idenI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI32 := func(a, b *QCDenseI32) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI32 := func(a *QCDenseI32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int32, a.len())
+		correct = newDense(Int32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI32, nil); err != nil {
-		t.Errorf("Inverse function test for int32 failed %v", err)
+	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI64 := func(a, b *QCDenseI64) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI64 := func(a *QCDenseI64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int64, a.len())
+		correct = newDense(Int64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI64, nil); err != nil {
-		t.Errorf("Inverse function test for int64 failed %v", err)
+	if err := quick.Check(idenI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU := func(a, b *QCDenseU) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU := func(a *QCDenseU) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint, a.len())
+		correct = newDense(Uint, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU, nil); err != nil {
-		t.Errorf("Inverse function test for uint failed %v", err)
+	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU8 := func(a, b *QCDenseU8) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU8 := func(a *QCDenseU8) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint8, a.len())
+		correct = newDense(Uint8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU8, nil); err != nil {
-		t.Errorf("Inverse function test for uint8 failed %v", err)
+	if err := quick.Check(idenU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU16 := func(a, b *QCDenseU16) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU16 := func(a *QCDenseU16) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint16, a.len())
+		correct = newDense(Uint16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU16, nil); err != nil {
-		t.Errorf("Inverse function test for uint16 failed %v", err)
+	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU32 := func(a, b *QCDenseU32) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU32 := func(a *QCDenseU32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint32, a.len())
+		correct = newDense(Uint32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU32, nil); err != nil {
-		t.Errorf("Inverse function test for uint32 failed %v", err)
+	if err := quick.Check(idenU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU64 := func(a, b *QCDenseU64) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU64 := func(a *QCDenseU64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint64, a.len())
+		correct = newDense(Uint64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU64, nil); err != nil {
-		t.Errorf("Inverse function test for uint64 failed %v", err)
+	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invF32 := func(a, b *QCDenseF32) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenF32 := func(a *QCDenseF32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Float32, a.len())
+		correct = newDense(Float32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invF32, nil); err != nil {
-		t.Errorf("Inverse function test for float32 failed %v", err)
+	if err := quick.Check(idenF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invF64 := func(a, b *QCDenseF64) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenF64 := func(a *QCDenseF64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Float64, a.len())
+		correct = newDense(Float64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invF64, nil); err != nil {
-		t.Errorf("Inverse function test for float64 failed %v", err)
+	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invC64 := func(a, b *QCDenseC64) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenC64 := func(a *QCDenseC64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Complex64, a.len())
+		correct = newDense(Complex64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invC64, nil); err != nil {
-		t.Errorf("Inverse function test for complex64 failed %v", err)
+	if err := quick.Check(idenC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invC128 := func(a, b *QCDenseC128) bool {
-		ret1, _ := a.Sub(b.Dense)
-		ret2, _ := ret1.Add(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenC128 := func(a *QCDenseC128) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Complex128, a.len())
+		correct = newDense(Complex128, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Sub(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invC128, nil); err != nil {
-		t.Errorf("Inverse function test for complex128 failed %v", err)
+	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
 	}
 }
 func TestSubFuncOpts(t *testing.T) {
@@ -941,7 +999,7 @@ func TestSubFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("len test for Sub failed : %v ", err)
 	}
 
 	// safe
@@ -960,7 +1018,7 @@ func TestSubFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("safe test for Sub failed : %v ", err)
 	}
 
 	// reuse
@@ -993,14 +1051,14 @@ func TestSubFuncOpts(t *testing.T) {
 
 		// wrong reuse length
 		reuse = newDense(Float64, a.len()+1)
-		if _, err = identity.Sub(a.Dense, WithReuse(reuse)); err == nil {
+		if _, err = a.Sub(identity, WithReuse(reuse)); err == nil {
 			t.Error("Expected an error when doing Sub using a reuse with a size mismatch")
 			return false
 		}
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("reuse test for Sub failed : %v ", err)
 	}
 
 	// unsafe
@@ -1025,13 +1083,14 @@ func TestSubFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("unsafe test for Sub failed : %v ", err)
 	}
 }
 
 /* Mul */
 
 func TestMulBasicProperties(t *testing.T) {
+
 	// identity
 	idenI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
@@ -1040,7 +1099,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1086,7 +1145,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int8, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1132,7 +1191,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int16, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1178,7 +1237,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1224,7 +1283,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1270,7 +1329,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1316,7 +1375,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint8, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1362,7 +1421,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint16, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1408,7 +1467,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1454,7 +1513,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1500,7 +1559,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Float32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1546,7 +1605,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Float64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1592,7 +1651,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Complex64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1638,7 +1697,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Complex128, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Mul(a.Dense)
+		ret, _ = a.Mul(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -1690,7 +1749,7 @@ func TestMulFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("len test for Mul failed : %v ", err)
 	}
 
 	// safe
@@ -1710,7 +1769,7 @@ func TestMulFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("safe test for Mul failed : %v ", err)
 	}
 
 	// reuse
@@ -1744,14 +1803,14 @@ func TestMulFuncOpts(t *testing.T) {
 
 		// wrong reuse length
 		reuse = newDense(Float64, a.len()+1)
-		if _, err = identity.Mul(a.Dense, WithReuse(reuse)); err == nil {
+		if _, err = a.Mul(identity, WithReuse(reuse)); err == nil {
 			t.Error("Expected an error when doing Mul using a reuse with a size mismatch")
 			return false
 		}
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("reuse test for Mul failed : %v ", err)
 	}
 
 	// unsafe
@@ -1759,7 +1818,7 @@ func TestMulFuncOpts(t *testing.T) {
 		var identity, ret, correct *Dense
 		var err error
 		identity = newDense(Float64, a.len())
-		identity.Memset(1)
+		identity.Memset(float64(1))
 		correct = newDense(Float64, a.len())
 		copyDense(correct, a.Dense)
 
@@ -1777,194 +1836,265 @@ func TestMulFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("unsafe test for Mul failed : %v ", err)
 	}
 }
 
 /* Div */
 
 func TestDivBasicProperties(t *testing.T) {
-	// invertible property - reserved to test inverse functions
-	invI := func(a, b *QCDenseI) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+
+	// identity
+	idenI := func(a *QCDenseI) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int, a.len())
+		identity.Memset(int(1))
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI, nil); err != nil {
-		t.Errorf("Inverse function test for int failed %v", err)
+	if err := quick.Check(idenI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI8 := func(a, b *QCDenseI8) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI8 := func(a *QCDenseI8) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int8, a.len())
+		identity.Memset(int8(1))
+		correct = newDense(Int8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI8, nil); err != nil {
-		t.Errorf("Inverse function test for int8 failed %v", err)
+	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI16 := func(a, b *QCDenseI16) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI16 := func(a *QCDenseI16) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int16, a.len())
+		identity.Memset(int16(1))
+		correct = newDense(Int16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI16, nil); err != nil {
-		t.Errorf("Inverse function test for int16 failed %v", err)
+	if err := quick.Check(idenI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI32 := func(a, b *QCDenseI32) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI32 := func(a *QCDenseI32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int32, a.len())
+		identity.Memset(int32(1))
+		correct = newDense(Int32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI32, nil); err != nil {
-		t.Errorf("Inverse function test for int32 failed %v", err)
+	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invI64 := func(a, b *QCDenseI64) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenI64 := func(a *QCDenseI64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Int64, a.len())
+		identity.Memset(int64(1))
+		correct = newDense(Int64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invI64, nil); err != nil {
-		t.Errorf("Inverse function test for int64 failed %v", err)
+	if err := quick.Check(idenI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU := func(a, b *QCDenseU) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU := func(a *QCDenseU) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint, a.len())
+		identity.Memset(uint(1))
+		correct = newDense(Uint, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU, nil); err != nil {
-		t.Errorf("Inverse function test for uint failed %v", err)
+	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU8 := func(a, b *QCDenseU8) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU8 := func(a *QCDenseU8) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint8, a.len())
+		identity.Memset(uint8(1))
+		correct = newDense(Uint8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU8, nil); err != nil {
-		t.Errorf("Inverse function test for uint8 failed %v", err)
+	if err := quick.Check(idenU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU16 := func(a, b *QCDenseU16) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU16 := func(a *QCDenseU16) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint16, a.len())
+		identity.Memset(uint16(1))
+		correct = newDense(Uint16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU16, nil); err != nil {
-		t.Errorf("Inverse function test for uint16 failed %v", err)
+	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU32 := func(a, b *QCDenseU32) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU32 := func(a *QCDenseU32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint32, a.len())
+		identity.Memset(uint32(1))
+		correct = newDense(Uint32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU32, nil); err != nil {
-		t.Errorf("Inverse function test for uint32 failed %v", err)
+	if err := quick.Check(idenU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invU64 := func(a, b *QCDenseU64) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenU64 := func(a *QCDenseU64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Uint64, a.len())
+		identity.Memset(uint64(1))
+		correct = newDense(Uint64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invU64, nil); err != nil {
-		t.Errorf("Inverse function test for uint64 failed %v", err)
+	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invF32 := func(a, b *QCDenseF32) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenF32 := func(a *QCDenseF32) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Float32, a.len())
+		identity.Memset(float32(1))
+		correct = newDense(Float32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invF32, nil); err != nil {
-		t.Errorf("Inverse function test for float32 failed %v", err)
+	if err := quick.Check(idenF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invF64 := func(a, b *QCDenseF64) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenF64 := func(a *QCDenseF64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Float64, a.len())
+		identity.Memset(float64(1))
+		correct = newDense(Float64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invF64, nil); err != nil {
-		t.Errorf("Inverse function test for float64 failed %v", err)
+	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invC64 := func(a, b *QCDenseC64) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenC64 := func(a *QCDenseC64) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Complex64, a.len())
+		identity.Memset(complex64(1))
+		correct = newDense(Complex64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invC64, nil); err != nil {
-		t.Errorf("Inverse function test for complex64 failed %v", err)
+	if err := quick.Check(idenC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
 	}
-	// invertible property - reserved to test inverse functions
-	invC128 := func(a, b *QCDenseC128) bool {
-		ret1, _ := a.Div(b.Dense)
-		ret2, _ := ret1.Mul(b.Dense)
-		if !allClose(ret2.Data(), a.Data()) {
-			t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+	// identity
+	idenC128 := func(a *QCDenseC128) bool {
+		var ret, correct, identity *Dense
+		identity = newDense(Complex128, a.len())
+		identity.Memset(complex128(1))
+		correct = newDense(Complex128, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Div(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 		return true
 	}
-	if err := quick.Check(invC128, nil); err != nil {
-		t.Errorf("Inverse function test for complex128 failed %v", err)
+	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
 	}
 }
 func TestDivFuncOpts(t *testing.T) {
@@ -1980,7 +2110,7 @@ func TestDivFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("len test for Div failed : %v ", err)
 	}
 
 	// safe
@@ -2000,7 +2130,7 @@ func TestDivFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("safe test for Div failed : %v ", err)
 	}
 
 	// reuse
@@ -2034,14 +2164,14 @@ func TestDivFuncOpts(t *testing.T) {
 
 		// wrong reuse length
 		reuse = newDense(Float64, a.len()+1)
-		if _, err = identity.Div(a.Dense, WithReuse(reuse)); err == nil {
+		if _, err = a.Div(identity, WithReuse(reuse)); err == nil {
 			t.Error("Expected an error when doing Div using a reuse with a size mismatch")
 			return false
 		}
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("reuse test for Div failed : %v ", err)
 	}
 
 	// unsafe
@@ -2049,7 +2179,7 @@ func TestDivFuncOpts(t *testing.T) {
 		var identity, ret, correct *Dense
 		var err error
 		identity = newDense(Float64, a.len())
-		identity.Memset(1)
+		identity.Memset(float64(1))
 		correct = newDense(Float64, a.len())
 		copyDense(correct, a.Dense)
 
@@ -2067,13 +2197,14 @@ func TestDivFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("unsafe test for Div failed : %v ", err)
 	}
 }
 
 /* Pow */
 
 func TestPowBasicProperties(t *testing.T) {
+
 	// identity
 	idenI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
@@ -2082,7 +2213,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Int, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2100,7 +2231,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Int8, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2118,7 +2249,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Int16, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2136,7 +2267,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Int32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2154,7 +2285,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Int64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2172,7 +2303,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Uint, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2190,7 +2321,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Uint8, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2208,7 +2339,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Uint16, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2226,7 +2357,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Uint32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2244,7 +2375,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Uint64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2262,7 +2393,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Float32, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2280,7 +2411,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Float64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2298,7 +2429,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Complex64, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2316,7 +2447,7 @@ func TestPowBasicProperties(t *testing.T) {
 		correct = newDense(Complex128, a.len())
 		copyDense(correct, a.Dense)
 
-		ret, _ = identity.Pow(a.Dense)
+		ret, _ = a.Pow(identity)
 
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
@@ -2340,7 +2471,7 @@ func TestPowFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("len test for Pow failed : %v ", err)
 	}
 
 	// safe
@@ -2360,7 +2491,7 @@ func TestPowFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("safe test for Pow failed : %v ", err)
 	}
 
 	// reuse
@@ -2394,14 +2525,14 @@ func TestPowFuncOpts(t *testing.T) {
 
 		// wrong reuse length
 		reuse = newDense(Float64, a.len()+1)
-		if _, err = identity.Pow(a.Dense, WithReuse(reuse)); err == nil {
+		if _, err = a.Pow(identity, WithReuse(reuse)); err == nil {
 			t.Error("Expected an error when doing Pow using a reuse with a size mismatch")
 			return false
 		}
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("reuse test for Pow failed : %v ", err)
 	}
 
 	// unsafe
@@ -2409,7 +2540,7 @@ func TestPowFuncOpts(t *testing.T) {
 		var identity, ret, correct *Dense
 		var err error
 		identity = newDense(Float64, a.len())
-		identity.Memset(1)
+		identity.Memset(float64(1))
 		correct = newDense(Float64, a.len())
 		copyDense(correct, a.Dense)
 
@@ -2427,6 +2558,6 @@ func TestPowFuncOpts(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("unsafe test for Pow failed : %v ", err)
 	}
 }

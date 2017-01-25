@@ -7,6 +7,7 @@ import (
 )
 
 const testBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing.T){
+
 	{{$op := .OpName -}}
 	{{$hasIden := .HasIdentity -}}
 	{{$iden := .Identity -}}
@@ -26,7 +27,7 @@ const testBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing.T
 				correct = newDense({{asType . | title | strip}}, a.len())
 				copyDense(correct, a.Dense)
 
-				ret, _ = identity.{{$op}}(a.Dense)
+				ret, _ = a.{{$op}}(identity)
 
 				if !allClose(correct.Data(), ret.Data()){
 					return false
@@ -103,7 +104,7 @@ const testFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("len test for {{.OpName}} failed : %v ", err)
 	}
 
 	// safe
@@ -125,7 +126,7 @@ const testFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("safe test for {{.OpName}} failed : %v ", err)
 	}
 
 	// reuse
@@ -161,14 +162,14 @@ const testFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
 
 		// wrong reuse length
 		reuse = newDense(Float64, a.len()+1)
-		if _, err = identity.{{.OpName}}(a.Dense, WithReuse(reuse)); err == nil {
+		if _, err = a.{{.OpName}}(identity, WithReuse(reuse)); err == nil {
 			t.Error("Expected an error when doing {{.OpName}} using a reuse with a size mismatch")
 			return false
 		}
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("reuse test for {{.OpName}} failed : %v ", err)
 	}
 
 	// unsafe 
@@ -177,7 +178,7 @@ const testFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
 		var err error
 		identity = newDense(Float64, a.len())
 		{{if ne .Identity 0 -}}
-			identity.Memset({{.Identity}})
+			identity.Memset(float64({{.Identity}}))
 		{{end -}}
 		correct = newDense(Float64, a.len())
 		copyDense(correct, a.Dense)
@@ -196,7 +197,7 @@ const testFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
 		return true
 	}
 	if err := quick.Check(f, nil); err != nil {
-		t.Error(err)
+		t.Errorf("unsafe test for {{.OpName}} failed : %v ", err)
 	}
 }
 `

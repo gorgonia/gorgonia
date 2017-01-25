@@ -48,9 +48,9 @@ var binOps = []struct {
 	InvOpSymb     string
 }{
 	{"Add", "+", false, true, 0, true, true, false, "", ""},
-	{"Sub", "-", false, false, 0, false, false, true, "Add", "+"},
+	{"Sub", "-", false, true, 0, false, false, false, "Add", "+"},
 	{"Mul", "*", false, true, 1, true, true, false, "", ""},
-	{"Div", "/", false, false, 1, false, false, true, "Mul", "*"},
+	{"Div", "/", false, true, 1, false, false, false, "Mul", "*"},
 	{"Pow", "math.Pow", true, true, 1, false, false, false, "", ""},
 }
 
