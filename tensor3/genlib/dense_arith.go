@@ -51,7 +51,7 @@ var binOps = []struct {
 	{"Sub", "-", false, true, 0, false, false, false, "Add", "+"},
 	{"Mul", "*", false, true, 1, true, true, false, "", ""},
 	{"Div", "/", false, true, 1, false, false, false, "Mul", "*"},
-	{"Pow", "math.Pow", true, true, 1, false, false, false, "", ""},
+	{"Pow", "math.Pow", true, false, 1, false, false, false, "", ""},
 }
 
 var vecscalarOps = []struct {

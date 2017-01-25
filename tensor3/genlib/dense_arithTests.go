@@ -38,6 +38,22 @@ const testBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing.T
 				t.Errorf("Identity test for {{.}} failed %v",err)
 			}
 		{{end -}}
+		{{if eq $op "Pow" -}}
+			pow0{{short .}} := func(a *QCDense{{short .}}) bool {
+				var ret, correct, zero *Dense 
+				zero = newDense({{asType . | title | strip}}, a.len())
+				correct = newDense({{asType . | title | strip}}, a.len())
+				correct.Memset({{asType .}}(1))
+				ret, _ = a.{{$op}}(zero)
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+				return true
+			}
+			if err := quick.Check(pow0{{short .}}, nil); err != nil {
+				t.Errorf("Pow 0 failed")
+			}
+		{{end -}}
 		{{if $isComm -}}
 			// commutativity
 			comm{{short .}} := func(a, b *QCDense{{short .}}) bool {

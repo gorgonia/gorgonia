@@ -145,7 +145,7 @@ func allClose(a, b interface{}) bool {
 	case []complex64:
 		bt := b.([]complex64)
 		for i, v := range at {
-			if !cClose(complex128(v), complex128(bt[i])){
+			if !cSoclose(complex128(v), complex128(bt[i]),1e-5){
 				return false
 			}
 		}
