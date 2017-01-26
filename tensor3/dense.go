@@ -110,10 +110,10 @@ func (t *Dense) reshape(dims ...int) error {
 	return t.sanity()
 }
 
-// Zero zeroes a *Dense.
-func (t *Dense) Zero() {
-	// t.data.Zero()
-}
+// // Zero zeroes a *Dense.
+// func (t *Dense) Zero() {
+// 	// t.data.Zero()
+// }
 
 // ScalarValue() returns the scalar value of a *Tensor,
 // IF and ONLY IF it's a Tensor representation of a scalar value.

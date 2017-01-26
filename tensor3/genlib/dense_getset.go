@@ -83,6 +83,33 @@ const memsetRaw = `func (t *Dense) Memset(x interface{}) error {
 
 `
 
+const zeroRaw = `func (t *Dense) Zero() {
+	switch t.t.Kind() {
+	{{range .Kinds -}}
+		{{if isParameterized . -}}
+		{{else -}}
+	case reflect.{{reflectKind .}}:
+		data := t.{{asType . | strip}}s()
+		for i := range data {
+			data[i] = {{if eq .String "bool" -}}
+				false
+			{{else if eq .String "string" -}}""
+			{{else if eq .String "unsafe.Pointer" -}}nil
+			{{else -}}0{{end}}
+		}
+		{{end -}}
+	{{end -}}
+	default:
+		ptr := uintptr(t.data)
+		for i := 0; i < t.hdr.Len; i++ {
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(reflect.Zero(t.t))
+		}
+	}
+}
+`
 const makeDataRaw = `func (t *Dense) makeArray(size int) {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
@@ -216,6 +243,7 @@ var (
 	Get        *template.Template
 	Set        *template.Template
 	Memset     *template.Template
+	Zero       *template.Template
 	MakeData   *template.Template
 	Copy       *template.Template
 	CopySliced *template.Template
@@ -230,6 +258,7 @@ func init() {
 	Get = template.Must(template.New("Get").Funcs(funcs).Parse(getRaw))
 	Set = template.Must(template.New("Set").Funcs(funcs).Parse(setRaw))
 	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
+	Zero = template.Must(template.New("Zero").Funcs(funcs).Parse(zeroRaw))
 	MakeData = template.Must(template.New("makedata").Funcs(funcs).Parse(makeDataRaw))
 	Copy = template.Must(template.New("copy").Funcs(funcs).Parse(copyRaw))
 	CopySliced = template.Must(template.New("copySliced").Funcs(funcs).Parse(copySlicedRaw))
@@ -255,6 +284,8 @@ func getset(f io.Writer, generic *ManyKinds) {
 	Get.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Memset.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	Zero.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Copy.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")

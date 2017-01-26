@@ -178,3 +178,22 @@ func getDense(t Tensor) (*Dense, error) {
 	}
 	return nil, errors.Errorf(extractionFail, "*Dense", t)
 }
+
+// getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
+func getFloatDense(t Tensor) (retVal *Dense, err error) {
+	if t == nil {
+		return
+	}
+	if retVal, err = getDense(t); err != nil {
+		err = errors.Wrapf(err, opFail, "getFloatDense")
+		return
+	}
+	if retVal == nil {
+		return
+	}
+	if !isFloat(retVal.t) {
+		err = errors.Errorf(dtypeMismatch, retVal.t, retVal.data)
+		return
+	}
+	return
+}

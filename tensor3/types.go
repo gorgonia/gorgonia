@@ -102,6 +102,10 @@ func isNumber(dt Dtype) bool {
 	return false
 }
 
+func isFloat(dt Dtype) bool {
+	return dt.Kind() == reflect.Float64 || dt.Kind() == reflect.Float32
+}
+
 // NormOrder represents the order of the norm. Ideally, we'd only represent norms with a uint/byte.
 // But there are norm types that are outside numerical types, such as nuclear norm and fobenius norm.
 // So it is internally represented by a float. If Go could use NaN and Inf as consts, it would have been best,

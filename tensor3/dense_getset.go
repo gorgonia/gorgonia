@@ -471,6 +471,112 @@ func (t *Dense) Memset(x interface{}) error {
 	return nil
 }
 
+func (t *Dense) Zero() {
+	switch t.t.Kind() {
+	case reflect.Bool:
+		data := t.bools()
+		for i := range data {
+			data[i] = false
+
+		}
+	case reflect.Int:
+		data := t.ints()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Int8:
+		data := t.int8s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Int16:
+		data := t.int16s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Int32:
+		data := t.int32s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Int64:
+		data := t.int64s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Uint:
+		data := t.uints()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Uint8:
+		data := t.uint8s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Uint16:
+		data := t.uint16s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Uint32:
+		data := t.uint32s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Uint64:
+		data := t.uint64s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Uintptr:
+		data := t.uintptrs()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Float32:
+		data := t.float32s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Float64:
+		data := t.float64s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Complex64:
+		data := t.complex64s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.Complex128:
+		data := t.complex128s()
+		for i := range data {
+			data[i] = 0
+		}
+	case reflect.String:
+		data := t.strings()
+		for i := range data {
+			data[i] = ""
+
+		}
+	case reflect.UnsafePointer:
+		data := t.unsafePointers()
+		for i := range data {
+			data[i] = nil
+
+		}
+	default:
+		ptr := uintptr(t.data)
+		for i := 0; i < t.hdr.Len; i++ {
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(reflect.Zero(t.t))
+		}
+	}
+}
+
 func copyDense(dest, src *Dense) int {
 	if dest.t != src.t {
 		err := errors.Errorf(dtypeMismatch, src.t, dest.t)
