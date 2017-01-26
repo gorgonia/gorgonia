@@ -15,7 +15,7 @@ const genericVecVecArithRaw = `func {{lower .OpName}}{{short .Kind}}(a, b []{{as
 		vec{{short .Kind | lower }}.{{.OpName}}(a, b)
 	{{else if hasPrefix .Kind.String "complex" -}}
 		for i, v := range b {
-			{{if eq .OpName "Pow"}}
+			{{if eq .OpName "Pow" -}}
 				a[i] = {{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v)))
 			{{else -}}
 				a[i] {{.OpSymb}}= v 
@@ -24,7 +24,8 @@ const genericVecVecArithRaw = `func {{lower .OpName}}{{short .Kind}}(a, b []{{as
 	{{else -}}
 		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
 		{{$div := hasPrefix .OpName "Div" -}}
-		{{if or $scaleInv $div -}}var errs errorIndices{{end}}
+		{{if or $scaleInv $div -}}var errs errorIndices
+		{{end -}}
 		for i, v := range b {
 			{{if or $scaleInv $div -}}
 			if v == {{asType .Kind}}(0) {
@@ -52,10 +53,10 @@ const genericVecVecArithRaw = `func {{lower .OpName}}{{short .Kind}}(a, b []{{as
 `
 const genericVecScalarArithRaw = `func {{lower .OpName}}{{short .Kind}}(a []{{asType .Kind}}, b {{asType .Kind}}) error {
 	{{if hasPrefix .Kind.String "float" -}}
-		vec{{short .Kind | lower }}.{{.OpName}}([]{{asType .Kind}}(a), b)
+		vec{{short .Kind | lower }}.{{.OpName}}(a, b)
 	{{else if hasPrefix .Kind.String "complex" -}} 
 		for i, v := range a {
-			{{if hasPrefix .OpName "Pow"}}
+			{{if hasPrefix .OpName "Pow" -}}
 				a[i] =  {{if hasSuffix .OpName "R" -}}   {{asType .Kind}}(cmplx.Pow(complex128(b), complex128(v)))  {{else -}}  {{asType .Kind}}(cmplx.Pow(complex128(v), complex128(b))) {{end -}}
 			{{else -}}
 				a[i] = {{if hasSuffix .OpName "R" -}} b {{.OpSymb}} v {{else -}} v {{.OpSymb}} b {{end -}}
@@ -64,7 +65,8 @@ const genericVecScalarArithRaw = `func {{lower .OpName}}{{short .Kind}}(a []{{as
 	{{else -}}
 		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
 		{{$div := hasPrefix .OpName "Div" -}}
-		{{if or $scaleInv $div -}}var errs errorIndices{{end}}
+		{{if or $scaleInv $div -}}var errs errorIndices
+		{{end -}}
 		for i, v := range a {
 			{{if or $scaleInv $div -}}
 			if v == {{asType .Kind}}(0) {

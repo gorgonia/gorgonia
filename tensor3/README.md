@@ -16,3 +16,8 @@ t := a.ElemEq(b) // false
 ```
 
 Large number float operations - inverse of Vector-Scalar ops have not been generated because tests to handle the correctness of weird cases haven't been written
+
+TODO: 
+
+* Identity optimizations for op
+* Zero value optimizations

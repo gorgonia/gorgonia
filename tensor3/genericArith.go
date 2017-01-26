@@ -907,7 +907,6 @@ func powC64(a, b []complex64) error {
 	}
 
 	for i, v := range b {
-
 		a[i] = complex64(cmplx.Pow(complex128(a[i]), complex128(v)))
 	}
 	return nil
@@ -919,7 +918,6 @@ func powC128(a, b []complex128) error {
 	}
 
 	for i, v := range b {
-
 		a[i] = complex128(cmplx.Pow(complex128(a[i]), complex128(v)))
 	}
 	return nil
@@ -928,7 +926,6 @@ func powC128(a, b []complex128) error {
 /* Trans */
 
 func transI(a []int, b int) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -936,7 +933,6 @@ func transI(a []int, b int) error {
 }
 
 func transI8(a []int8, b int8) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -944,7 +940,6 @@ func transI8(a []int8, b int8) error {
 }
 
 func transI16(a []int16, b int16) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -952,7 +947,6 @@ func transI16(a []int16, b int16) error {
 }
 
 func transI32(a []int32, b int32) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -960,7 +954,6 @@ func transI32(a []int32, b int32) error {
 }
 
 func transI64(a []int64, b int64) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -968,7 +961,6 @@ func transI64(a []int64, b int64) error {
 }
 
 func transU(a []uint, b uint) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -976,7 +968,6 @@ func transU(a []uint, b uint) error {
 }
 
 func transU8(a []uint8, b uint8) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -984,7 +975,6 @@ func transU8(a []uint8, b uint8) error {
 }
 
 func transU16(a []uint16, b uint16) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -992,7 +982,6 @@ func transU16(a []uint16, b uint16) error {
 }
 
 func transU32(a []uint32, b uint32) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -1000,7 +989,6 @@ func transU32(a []uint32, b uint32) error {
 }
 
 func transU64(a []uint64, b uint64) error {
-
 	for i, v := range a {
 		a[i] = v + b
 	}
@@ -1008,12 +996,12 @@ func transU64(a []uint64, b uint64) error {
 }
 
 func transF32(a []float32, b float32) error {
-	vecf32.Trans([]float32(a), b)
+	vecf32.Trans(a, b)
 	return nil
 }
 
 func transF64(a []float64, b float64) error {
-	vecf64.Trans([]float64(a), b)
+	vecf64.Trans(a, b)
 	return nil
 }
 
@@ -1034,7 +1022,6 @@ func transC128(a []complex128, b complex128) error {
 /* TransInv */
 
 func transinvI(a []int, b int) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1042,7 +1029,6 @@ func transinvI(a []int, b int) error {
 }
 
 func transinvI8(a []int8, b int8) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1050,7 +1036,6 @@ func transinvI8(a []int8, b int8) error {
 }
 
 func transinvI16(a []int16, b int16) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1058,7 +1043,6 @@ func transinvI16(a []int16, b int16) error {
 }
 
 func transinvI32(a []int32, b int32) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1066,7 +1050,6 @@ func transinvI32(a []int32, b int32) error {
 }
 
 func transinvI64(a []int64, b int64) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1074,7 +1057,6 @@ func transinvI64(a []int64, b int64) error {
 }
 
 func transinvU(a []uint, b uint) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1082,7 +1064,6 @@ func transinvU(a []uint, b uint) error {
 }
 
 func transinvU8(a []uint8, b uint8) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1090,7 +1071,6 @@ func transinvU8(a []uint8, b uint8) error {
 }
 
 func transinvU16(a []uint16, b uint16) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1098,7 +1078,6 @@ func transinvU16(a []uint16, b uint16) error {
 }
 
 func transinvU32(a []uint32, b uint32) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1106,7 +1085,6 @@ func transinvU32(a []uint32, b uint32) error {
 }
 
 func transinvU64(a []uint64, b uint64) error {
-
 	for i, v := range a {
 		a[i] = v - b
 	}
@@ -1114,12 +1092,12 @@ func transinvU64(a []uint64, b uint64) error {
 }
 
 func transinvF32(a []float32, b float32) error {
-	vecf32.TransInv([]float32(a), b)
+	vecf32.TransInv(a, b)
 	return nil
 }
 
 func transinvF64(a []float64, b float64) error {
-	vecf64.TransInv([]float64(a), b)
+	vecf64.TransInv(a, b)
 	return nil
 }
 
@@ -1140,7 +1118,6 @@ func transinvC128(a []complex128, b complex128) error {
 /* TransInvR */
 
 func transinvrI(a []int, b int) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1148,7 +1125,6 @@ func transinvrI(a []int, b int) error {
 }
 
 func transinvrI8(a []int8, b int8) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1156,7 +1132,6 @@ func transinvrI8(a []int8, b int8) error {
 }
 
 func transinvrI16(a []int16, b int16) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1164,7 +1139,6 @@ func transinvrI16(a []int16, b int16) error {
 }
 
 func transinvrI32(a []int32, b int32) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1172,7 +1146,6 @@ func transinvrI32(a []int32, b int32) error {
 }
 
 func transinvrI64(a []int64, b int64) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1180,7 +1153,6 @@ func transinvrI64(a []int64, b int64) error {
 }
 
 func transinvrU(a []uint, b uint) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1188,7 +1160,6 @@ func transinvrU(a []uint, b uint) error {
 }
 
 func transinvrU8(a []uint8, b uint8) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1196,7 +1167,6 @@ func transinvrU8(a []uint8, b uint8) error {
 }
 
 func transinvrU16(a []uint16, b uint16) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1204,7 +1174,6 @@ func transinvrU16(a []uint16, b uint16) error {
 }
 
 func transinvrU32(a []uint32, b uint32) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1212,7 +1181,6 @@ func transinvrU32(a []uint32, b uint32) error {
 }
 
 func transinvrU64(a []uint64, b uint64) error {
-
 	for i, v := range a {
 		a[i] = b - v
 	}
@@ -1220,12 +1188,12 @@ func transinvrU64(a []uint64, b uint64) error {
 }
 
 func transinvrF32(a []float32, b float32) error {
-	vecf32.TransInvR([]float32(a), b)
+	vecf32.TransInvR(a, b)
 	return nil
 }
 
 func transinvrF64(a []float64, b float64) error {
-	vecf64.TransInvR([]float64(a), b)
+	vecf64.TransInvR(a, b)
 	return nil
 }
 
@@ -1246,7 +1214,6 @@ func transinvrC128(a []complex128, b complex128) error {
 /* Scale */
 
 func scaleI(a []int, b int) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1254,7 +1221,6 @@ func scaleI(a []int, b int) error {
 }
 
 func scaleI8(a []int8, b int8) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1262,7 +1228,6 @@ func scaleI8(a []int8, b int8) error {
 }
 
 func scaleI16(a []int16, b int16) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1270,7 +1235,6 @@ func scaleI16(a []int16, b int16) error {
 }
 
 func scaleI32(a []int32, b int32) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1278,7 +1242,6 @@ func scaleI32(a []int32, b int32) error {
 }
 
 func scaleI64(a []int64, b int64) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1286,7 +1249,6 @@ func scaleI64(a []int64, b int64) error {
 }
 
 func scaleU(a []uint, b uint) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1294,7 +1256,6 @@ func scaleU(a []uint, b uint) error {
 }
 
 func scaleU8(a []uint8, b uint8) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1302,7 +1263,6 @@ func scaleU8(a []uint8, b uint8) error {
 }
 
 func scaleU16(a []uint16, b uint16) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1310,7 +1270,6 @@ func scaleU16(a []uint16, b uint16) error {
 }
 
 func scaleU32(a []uint32, b uint32) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1318,7 +1277,6 @@ func scaleU32(a []uint32, b uint32) error {
 }
 
 func scaleU64(a []uint64, b uint64) error {
-
 	for i, v := range a {
 		a[i] = v * b
 	}
@@ -1326,12 +1284,12 @@ func scaleU64(a []uint64, b uint64) error {
 }
 
 func scaleF32(a []float32, b float32) error {
-	vecf32.Scale([]float32(a), b)
+	vecf32.Scale(a, b)
 	return nil
 }
 
 func scaleF64(a []float64, b float64) error {
-	vecf64.Scale([]float64(a), b)
+	vecf64.Scale(a, b)
 	return nil
 }
 
@@ -1522,12 +1480,12 @@ func scaleinvU64(a []uint64, b uint64) error {
 }
 
 func scaleinvF32(a []float32, b float32) error {
-	vecf32.ScaleInv([]float32(a), b)
+	vecf32.ScaleInv(a, b)
 	return nil
 }
 
 func scaleinvF64(a []float64, b float64) error {
-	vecf64.ScaleInv([]float64(a), b)
+	vecf64.ScaleInv(a, b)
 	return nil
 }
 
@@ -1718,12 +1676,12 @@ func scaleinvrU64(a []uint64, b uint64) error {
 }
 
 func scaleinvrF32(a []float32, b float32) error {
-	vecf32.ScaleInvR([]float32(a), b)
+	vecf32.ScaleInvR(a, b)
 	return nil
 }
 
 func scaleinvrF64(a []float64, b float64) error {
-	vecf64.ScaleInvR([]float64(a), b)
+	vecf64.ScaleInvR(a, b)
 	return nil
 }
 
@@ -1744,7 +1702,6 @@ func scaleinvrC128(a []complex128, b complex128) error {
 /* PowOf */
 
 func powofI(a []int, b int) error {
-
 	for i, v := range a {
 		a[i] = int(math.Pow(float64(v), float64(b)))
 	}
@@ -1752,7 +1709,6 @@ func powofI(a []int, b int) error {
 }
 
 func powofI8(a []int8, b int8) error {
-
 	for i, v := range a {
 		a[i] = int8(math.Pow(float64(v), float64(b)))
 	}
@@ -1760,7 +1716,6 @@ func powofI8(a []int8, b int8) error {
 }
 
 func powofI16(a []int16, b int16) error {
-
 	for i, v := range a {
 		a[i] = int16(math.Pow(float64(v), float64(b)))
 	}
@@ -1768,7 +1723,6 @@ func powofI16(a []int16, b int16) error {
 }
 
 func powofI32(a []int32, b int32) error {
-
 	for i, v := range a {
 		a[i] = int32(math.Pow(float64(v), float64(b)))
 	}
@@ -1776,7 +1730,6 @@ func powofI32(a []int32, b int32) error {
 }
 
 func powofI64(a []int64, b int64) error {
-
 	for i, v := range a {
 		a[i] = int64(math.Pow(float64(v), float64(b)))
 	}
@@ -1784,7 +1737,6 @@ func powofI64(a []int64, b int64) error {
 }
 
 func powofU(a []uint, b uint) error {
-
 	for i, v := range a {
 		a[i] = uint(math.Pow(float64(v), float64(b)))
 	}
@@ -1792,7 +1744,6 @@ func powofU(a []uint, b uint) error {
 }
 
 func powofU8(a []uint8, b uint8) error {
-
 	for i, v := range a {
 		a[i] = uint8(math.Pow(float64(v), float64(b)))
 	}
@@ -1800,7 +1751,6 @@ func powofU8(a []uint8, b uint8) error {
 }
 
 func powofU16(a []uint16, b uint16) error {
-
 	for i, v := range a {
 		a[i] = uint16(math.Pow(float64(v), float64(b)))
 	}
@@ -1808,7 +1758,6 @@ func powofU16(a []uint16, b uint16) error {
 }
 
 func powofU32(a []uint32, b uint32) error {
-
 	for i, v := range a {
 		a[i] = uint32(math.Pow(float64(v), float64(b)))
 	}
@@ -1816,7 +1765,6 @@ func powofU32(a []uint32, b uint32) error {
 }
 
 func powofU64(a []uint64, b uint64) error {
-
 	for i, v := range a {
 		a[i] = uint64(math.Pow(float64(v), float64(b)))
 	}
@@ -1824,18 +1772,17 @@ func powofU64(a []uint64, b uint64) error {
 }
 
 func powofF32(a []float32, b float32) error {
-	vecf32.PowOf([]float32(a), b)
+	vecf32.PowOf(a, b)
 	return nil
 }
 
 func powofF64(a []float64, b float64) error {
-	vecf64.PowOf([]float64(a), b)
+	vecf64.PowOf(a, b)
 	return nil
 }
 
 func powofC64(a []complex64, b complex64) error {
 	for i, v := range a {
-
 		a[i] = complex64(cmplx.Pow(complex128(v), complex128(b)))
 	}
 	return nil
@@ -1843,7 +1790,6 @@ func powofC64(a []complex64, b complex64) error {
 
 func powofC128(a []complex128, b complex128) error {
 	for i, v := range a {
-
 		a[i] = complex128(cmplx.Pow(complex128(v), complex128(b)))
 	}
 	return nil
@@ -1852,7 +1798,6 @@ func powofC128(a []complex128, b complex128) error {
 /* PowOfR */
 
 func powofrI(a []int, b int) error {
-
 	for i, v := range a {
 		a[i] = int(math.Pow(float64(b), float64(v)))
 	}
@@ -1860,7 +1805,6 @@ func powofrI(a []int, b int) error {
 }
 
 func powofrI8(a []int8, b int8) error {
-
 	for i, v := range a {
 		a[i] = int8(math.Pow(float64(b), float64(v)))
 	}
@@ -1868,7 +1812,6 @@ func powofrI8(a []int8, b int8) error {
 }
 
 func powofrI16(a []int16, b int16) error {
-
 	for i, v := range a {
 		a[i] = int16(math.Pow(float64(b), float64(v)))
 	}
@@ -1876,7 +1819,6 @@ func powofrI16(a []int16, b int16) error {
 }
 
 func powofrI32(a []int32, b int32) error {
-
 	for i, v := range a {
 		a[i] = int32(math.Pow(float64(b), float64(v)))
 	}
@@ -1884,7 +1826,6 @@ func powofrI32(a []int32, b int32) error {
 }
 
 func powofrI64(a []int64, b int64) error {
-
 	for i, v := range a {
 		a[i] = int64(math.Pow(float64(b), float64(v)))
 	}
@@ -1892,7 +1833,6 @@ func powofrI64(a []int64, b int64) error {
 }
 
 func powofrU(a []uint, b uint) error {
-
 	for i, v := range a {
 		a[i] = uint(math.Pow(float64(b), float64(v)))
 	}
@@ -1900,7 +1840,6 @@ func powofrU(a []uint, b uint) error {
 }
 
 func powofrU8(a []uint8, b uint8) error {
-
 	for i, v := range a {
 		a[i] = uint8(math.Pow(float64(b), float64(v)))
 	}
@@ -1908,7 +1847,6 @@ func powofrU8(a []uint8, b uint8) error {
 }
 
 func powofrU16(a []uint16, b uint16) error {
-
 	for i, v := range a {
 		a[i] = uint16(math.Pow(float64(b), float64(v)))
 	}
@@ -1916,7 +1854,6 @@ func powofrU16(a []uint16, b uint16) error {
 }
 
 func powofrU32(a []uint32, b uint32) error {
-
 	for i, v := range a {
 		a[i] = uint32(math.Pow(float64(b), float64(v)))
 	}
@@ -1924,7 +1861,6 @@ func powofrU32(a []uint32, b uint32) error {
 }
 
 func powofrU64(a []uint64, b uint64) error {
-
 	for i, v := range a {
 		a[i] = uint64(math.Pow(float64(b), float64(v)))
 	}
@@ -1932,18 +1868,17 @@ func powofrU64(a []uint64, b uint64) error {
 }
 
 func powofrF32(a []float32, b float32) error {
-	vecf32.PowOfR([]float32(a), b)
+	vecf32.PowOfR(a, b)
 	return nil
 }
 
 func powofrF64(a []float64, b float64) error {
-	vecf64.PowOfR([]float64(a), b)
+	vecf64.PowOfR(a, b)
 	return nil
 }
 
 func powofrC64(a []complex64, b complex64) error {
 	for i, v := range a {
-
 		a[i] = complex64(cmplx.Pow(complex128(b), complex128(v)))
 	}
 	return nil
@@ -1951,7 +1886,6 @@ func powofrC64(a []complex64, b complex64) error {
 
 func powofrC128(a []complex128, b complex128) error {
 	for i, v := range a {
-
 		a[i] = complex128(cmplx.Pow(complex128(b), complex128(v)))
 	}
 	return nil
