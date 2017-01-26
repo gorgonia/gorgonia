@@ -59,15 +59,23 @@ var vecscalarOps = []struct {
 	OpSymb string
 
 	IsFunc bool
+
+	HasIdentity   bool
+	Identity      int
+	IsCommutative bool
+	IsAssociative bool
+	IsInv         bool
+	InvOpName     string
+	InvOpSymb     string
 }{
-	{"Trans", "+", false},
-	{"TransInv", "-", false},
-	{"TransInvR", "-", false},
-	{"Scale", "*", false},
-	{"ScaleInv", "/", false},
-	{"ScaleInvR", "/", false},
-	{"PowOf", "math.Pow", true},
-	{"PowOfR", "math.Pow", true},
+	{"Trans", "+", false, true, 0, true, true, false, "", ""},
+	{"TransInv", "-", false, true, 0, false, false, false, "Trans", "+"},
+	{"TransInvR", "-", false, false, 0, false, false, false, "", ""},
+	{"Scale", "*", false, true, 1, true, true, false, "", ""}, // no good way to test inverse w/o  implicit broadcast
+	{"ScaleInv", "/", false, true, 1, false, false, false, "Scale", "*"},
+	{"ScaleInvR", "/", false, false, 0, false, false, false, "", ""},    // identity is 0 on purpose
+	{"PowOf", "math.Pow", true, false, 0, false, false, false, "", ""},  // identity is 0 on purpose
+	{"PowOfR", "math.Pow", true, false, 0, false, false, false, "", ""}, // identity is 0 on purpose
 }
 
 const prepArithRaw = `func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {

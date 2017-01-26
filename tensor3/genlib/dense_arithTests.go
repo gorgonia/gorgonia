@@ -6,8 +6,7 @@ import (
 	"text/template"
 )
 
-const testBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing.T){
-
+const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing.T){
 	{{$op := .OpName -}}
 	{{$hasIden := .HasIdentity -}}
 	{{$iden := .Identity -}}
@@ -105,7 +104,7 @@ const testBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing.T
 }
 `
 
-const testFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
+const testDDFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
 	var f func(*QCDenseF64) bool
 
 	f = func(a *QCDenseF64) bool {
@@ -218,16 +217,89 @@ const testFuncOptRaw = `func Test{{.OpName}}FuncOpts(t *testing.T){
 }
 `
 
+const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing.T){
+	{{$op := .OpName -}}
+	{{$hasIden := .HasIdentity -}}
+	{{$iden := .Identity -}}
+	{{$isComm := .IsCommutative -}}
+	{{$isAssoc := .IsAssociative -}}
+	{{$isInv := .IsInv -}}
+	{{$invOpName := .InvOpName -}}
+	{{range .Kinds -}}
+		{{if $hasIden -}}
+			// identity
+			iden{{short .}} := func(a *QCDense{{short .}}) bool {
+				var ret, correct *Dense
+				var identity {{asType .}}
+				{{if ne $iden 0 -}}
+					identity = {{$iden}}
+				{{end -}}
+				correct = newDense({{asType . | title | strip}}, a.len())
+				copyDense(correct, a.Dense)
+
+				ret, _ = a.{{$op}}(identity)
+
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+				return true
+			}
+			if err := quick.Check(iden{{short .}}, nil); err != nil {
+				t.Errorf("Identity test for {{.}} failed %v",err)
+			}
+		{{end -}}
+		{{if hasSuffix $op "R" -}}
+
+		
+		{{end -}}
+		{{if eq $op "PowOf" -}}
+			pow0{{short .}} := func(a *QCDense{{short .}}) bool {
+				var ret, correct *Dense 
+				var zero {{asType .}}
+				correct = newDense({{asType . | title | strip}}, a.len())
+				correct.Memset({{asType .}}(1))
+				ret, _ = a.{{$op}}(zero)
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+				return true
+			}
+			if err := quick.Check(pow0{{short .}}, nil); err != nil {
+				t.Errorf("Pow 0 failed")
+			}
+		{{end -}}
+		{{if $isInv -}}
+			// invertible property - reserved to test inverse functions
+			inv{{short .}} := func(a *QCDense{{short .}}, b {{asType .}}) bool {
+				ret1, _ := a.{{$op}}(b)
+				ret2, _ := ret1.{{$invOpName}}(b)
+				if !allClose(ret2.Data(), a.Data()){
+
+					t.Errorf("E: %v\nG: %v", a.Data(), ret2.Data())
+					return false
+				}
+				return true
+			}
+			if err := quick.Check(inv{{short .}}, nil); err != nil {
+				t.Errorf("Inverse function test for {{.}} failed %v",err)
+			}
+		{{end -}}
+	{{end -}}
+}
+`
+
 var (
-	testBasicProperties *template.Template
-	testFuncOpts        *template.Template
-	testSubtraction     *template.Template
-	testMultiplication  *template.Template
+	testDDBasicProperties *template.Template
+	testDDFuncOpts        *template.Template
+
+	testDSBasicProperties *template.Template
 )
 
 func init() {
-	testBasicProperties = template.Must(template.New("testAdditionBasicProp").Funcs(funcs).Parse(testBasicPropertiesRaw))
-	testFuncOpts = template.Must(template.New("testAdditionFuncOpt").Funcs(funcs).Parse(testFuncOptRaw))
+	testDDBasicProperties = template.Must(template.New("testDDBasicProp").Funcs(funcs).Parse(testDDBasicPropertiesRaw))
+	testDDFuncOpts = template.Must(template.New("testDDFuncOpt").Funcs(funcs).Parse(testDDFuncOptRaw))
+
+	testDSBasicProperties = template.Must(template.New("testDSBasicProp").Funcs(funcs).Parse(testDSBasicPropertiesRaw))
 }
 
 func denseArithTests(f io.Writer, generic *ManyKinds) {
@@ -252,7 +324,29 @@ func denseArithTests(f io.Writer, generic *ManyKinds) {
 			InvOpName:     bo.InvOpName,
 			InvOpSymb:     bo.InvOpSymb,
 		}
-		testBasicProperties.Execute(f, op)
-		testFuncOpts.Execute(f, bo)
+		testDDBasicProperties.Execute(f, op)
+		testDDFuncOpts.Execute(f, bo)
+	}
+
+	for _, bo := range vecscalarOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		op := ArithBinOps{
+			BinOps: BinOps{
+				ManyKinds: mk,
+				OpName:    bo.OpName,
+				OpSymb:    bo.OpSymb,
+				IsFunc:    bo.IsFunc,
+			},
+
+			HasIdentity:   bo.HasIdentity,
+			Identity:      bo.Identity,
+			IsCommutative: bo.IsCommutative,
+			IsAssociative: bo.IsAssociative,
+			IsInv:         bo.IsInv,
+			InvOpName:     bo.InvOpName,
+			InvOpSymb:     bo.InvOpSymb,
+		}
+
+		testDSBasicProperties.Execute(f, op)
 	}
 }

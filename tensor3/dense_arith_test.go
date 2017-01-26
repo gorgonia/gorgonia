@@ -12,7 +12,6 @@ GENERATED FILE. DO NOT EDIT
 /* Add */
 
 func TestAddBasicProperties(t *testing.T) {
-
 	// identity
 	idenI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
@@ -747,7 +746,6 @@ func TestAddFuncOpts(t *testing.T) {
 /* Sub */
 
 func TestSubBasicProperties(t *testing.T) {
-
 	// identity
 	idenI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
@@ -1090,7 +1088,6 @@ func TestSubFuncOpts(t *testing.T) {
 /* Mul */
 
 func TestMulBasicProperties(t *testing.T) {
-
 	// identity
 	idenI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
@@ -1843,7 +1840,6 @@ func TestMulFuncOpts(t *testing.T) {
 /* Div */
 
 func TestDivBasicProperties(t *testing.T) {
-
 	// identity
 	idenI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
@@ -2204,7 +2200,6 @@ func TestDivFuncOpts(t *testing.T) {
 /* Pow */
 
 func TestPowBasicProperties(t *testing.T) {
-
 	pow0I := func(a *QCDenseI) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Int, a.len())
@@ -2504,4 +2499,1220 @@ func TestPowFuncOpts(t *testing.T) {
 	if err := quick.Check(f, nil); err != nil {
 		t.Errorf("unsafe test for Pow failed : %v ", err)
 	}
+}
+
+/* Trans */
+
+func TestTransBasicProperties(t *testing.T) {
+	// identity
+	idenI := func(a *QCDenseI) bool {
+		var ret, correct *Dense
+		var identity int
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
+	// identity
+	idenI8 := func(a *QCDenseI8) bool {
+		var ret, correct *Dense
+		var identity int8
+		correct = newDense(Int8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	// identity
+	idenI16 := func(a *QCDenseI16) bool {
+		var ret, correct *Dense
+		var identity int16
+		correct = newDense(Int16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
+	// identity
+	idenI32 := func(a *QCDenseI32) bool {
+		var ret, correct *Dense
+		var identity int32
+		correct = newDense(Int32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	// identity
+	idenI64 := func(a *QCDenseI64) bool {
+		var ret, correct *Dense
+		var identity int64
+		correct = newDense(Int64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
+	// identity
+	idenU := func(a *QCDenseU) bool {
+		var ret, correct *Dense
+		var identity uint
+		correct = newDense(Uint, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+	// identity
+	idenU8 := func(a *QCDenseU8) bool {
+		var ret, correct *Dense
+		var identity uint8
+		correct = newDense(Uint8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
+	// identity
+	idenU16 := func(a *QCDenseU16) bool {
+		var ret, correct *Dense
+		var identity uint16
+		correct = newDense(Uint16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	// identity
+	idenU32 := func(a *QCDenseU32) bool {
+		var ret, correct *Dense
+		var identity uint32
+		correct = newDense(Uint32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
+	// identity
+	idenU64 := func(a *QCDenseU64) bool {
+		var ret, correct *Dense
+		var identity uint64
+		correct = newDense(Uint64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	// identity
+	idenF32 := func(a *QCDenseF32) bool {
+		var ret, correct *Dense
+		var identity float32
+		correct = newDense(Float32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
+	// identity
+	idenF64 := func(a *QCDenseF64) bool {
+		var ret, correct *Dense
+		var identity float64
+		correct = newDense(Float64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	// identity
+	idenC64 := func(a *QCDenseC64) bool {
+		var ret, correct *Dense
+		var identity complex64
+		correct = newDense(Complex64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
+	// identity
+	idenC128 := func(a *QCDenseC128) bool {
+		var ret, correct *Dense
+		var identity complex128
+		correct = newDense(Complex128, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Trans(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+}
+
+/* TransInv */
+
+func TestTransInvBasicProperties(t *testing.T) {
+	// identity
+	idenI := func(a *QCDenseI) bool {
+		var ret, correct *Dense
+		var identity int
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
+	// identity
+	idenI8 := func(a *QCDenseI8) bool {
+		var ret, correct *Dense
+		var identity int8
+		correct = newDense(Int8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	// identity
+	idenI16 := func(a *QCDenseI16) bool {
+		var ret, correct *Dense
+		var identity int16
+		correct = newDense(Int16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
+	// identity
+	idenI32 := func(a *QCDenseI32) bool {
+		var ret, correct *Dense
+		var identity int32
+		correct = newDense(Int32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	// identity
+	idenI64 := func(a *QCDenseI64) bool {
+		var ret, correct *Dense
+		var identity int64
+		correct = newDense(Int64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
+	// identity
+	idenU := func(a *QCDenseU) bool {
+		var ret, correct *Dense
+		var identity uint
+		correct = newDense(Uint, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+	// identity
+	idenU8 := func(a *QCDenseU8) bool {
+		var ret, correct *Dense
+		var identity uint8
+		correct = newDense(Uint8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
+	// identity
+	idenU16 := func(a *QCDenseU16) bool {
+		var ret, correct *Dense
+		var identity uint16
+		correct = newDense(Uint16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	// identity
+	idenU32 := func(a *QCDenseU32) bool {
+		var ret, correct *Dense
+		var identity uint32
+		correct = newDense(Uint32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
+	// identity
+	idenU64 := func(a *QCDenseU64) bool {
+		var ret, correct *Dense
+		var identity uint64
+		correct = newDense(Uint64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	// identity
+	idenF32 := func(a *QCDenseF32) bool {
+		var ret, correct *Dense
+		var identity float32
+		correct = newDense(Float32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
+	// identity
+	idenF64 := func(a *QCDenseF64) bool {
+		var ret, correct *Dense
+		var identity float64
+		correct = newDense(Float64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	// identity
+	idenC64 := func(a *QCDenseC64) bool {
+		var ret, correct *Dense
+		var identity complex64
+		correct = newDense(Complex64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
+	// identity
+	idenC128 := func(a *QCDenseC128) bool {
+		var ret, correct *Dense
+		var identity complex128
+		correct = newDense(Complex128, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.TransInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+}
+
+/* TransInvR */
+
+func TestTransInvRBasicProperties(t *testing.T) {
+}
+
+/* Scale */
+
+func TestScaleBasicProperties(t *testing.T) {
+	// identity
+	idenI := func(a *QCDenseI) bool {
+		var ret, correct *Dense
+		var identity int
+		identity = 1
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
+	// identity
+	idenI8 := func(a *QCDenseI8) bool {
+		var ret, correct *Dense
+		var identity int8
+		identity = 1
+		correct = newDense(Int8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	// identity
+	idenI16 := func(a *QCDenseI16) bool {
+		var ret, correct *Dense
+		var identity int16
+		identity = 1
+		correct = newDense(Int16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
+	// identity
+	idenI32 := func(a *QCDenseI32) bool {
+		var ret, correct *Dense
+		var identity int32
+		identity = 1
+		correct = newDense(Int32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	// identity
+	idenI64 := func(a *QCDenseI64) bool {
+		var ret, correct *Dense
+		var identity int64
+		identity = 1
+		correct = newDense(Int64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
+	// identity
+	idenU := func(a *QCDenseU) bool {
+		var ret, correct *Dense
+		var identity uint
+		identity = 1
+		correct = newDense(Uint, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+	// identity
+	idenU8 := func(a *QCDenseU8) bool {
+		var ret, correct *Dense
+		var identity uint8
+		identity = 1
+		correct = newDense(Uint8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
+	// identity
+	idenU16 := func(a *QCDenseU16) bool {
+		var ret, correct *Dense
+		var identity uint16
+		identity = 1
+		correct = newDense(Uint16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	// identity
+	idenU32 := func(a *QCDenseU32) bool {
+		var ret, correct *Dense
+		var identity uint32
+		identity = 1
+		correct = newDense(Uint32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
+	// identity
+	idenU64 := func(a *QCDenseU64) bool {
+		var ret, correct *Dense
+		var identity uint64
+		identity = 1
+		correct = newDense(Uint64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	// identity
+	idenF32 := func(a *QCDenseF32) bool {
+		var ret, correct *Dense
+		var identity float32
+		identity = 1
+		correct = newDense(Float32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
+	// identity
+	idenF64 := func(a *QCDenseF64) bool {
+		var ret, correct *Dense
+		var identity float64
+		identity = 1
+		correct = newDense(Float64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	// identity
+	idenC64 := func(a *QCDenseC64) bool {
+		var ret, correct *Dense
+		var identity complex64
+		identity = 1
+		correct = newDense(Complex64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
+	// identity
+	idenC128 := func(a *QCDenseC128) bool {
+		var ret, correct *Dense
+		var identity complex128
+		identity = 1
+		correct = newDense(Complex128, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.Scale(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+}
+
+/* ScaleInv */
+
+func TestScaleInvBasicProperties(t *testing.T) {
+	// identity
+	idenI := func(a *QCDenseI) bool {
+		var ret, correct *Dense
+		var identity int
+		identity = 1
+		correct = newDense(Int, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
+	// identity
+	idenI8 := func(a *QCDenseI8) bool {
+		var ret, correct *Dense
+		var identity int8
+		identity = 1
+		correct = newDense(Int8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	// identity
+	idenI16 := func(a *QCDenseI16) bool {
+		var ret, correct *Dense
+		var identity int16
+		identity = 1
+		correct = newDense(Int16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
+	// identity
+	idenI32 := func(a *QCDenseI32) bool {
+		var ret, correct *Dense
+		var identity int32
+		identity = 1
+		correct = newDense(Int32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	// identity
+	idenI64 := func(a *QCDenseI64) bool {
+		var ret, correct *Dense
+		var identity int64
+		identity = 1
+		correct = newDense(Int64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
+	// identity
+	idenU := func(a *QCDenseU) bool {
+		var ret, correct *Dense
+		var identity uint
+		identity = 1
+		correct = newDense(Uint, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+	// identity
+	idenU8 := func(a *QCDenseU8) bool {
+		var ret, correct *Dense
+		var identity uint8
+		identity = 1
+		correct = newDense(Uint8, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
+	// identity
+	idenU16 := func(a *QCDenseU16) bool {
+		var ret, correct *Dense
+		var identity uint16
+		identity = 1
+		correct = newDense(Uint16, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	// identity
+	idenU32 := func(a *QCDenseU32) bool {
+		var ret, correct *Dense
+		var identity uint32
+		identity = 1
+		correct = newDense(Uint32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
+	// identity
+	idenU64 := func(a *QCDenseU64) bool {
+		var ret, correct *Dense
+		var identity uint64
+		identity = 1
+		correct = newDense(Uint64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	// identity
+	idenF32 := func(a *QCDenseF32) bool {
+		var ret, correct *Dense
+		var identity float32
+		identity = 1
+		correct = newDense(Float32, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
+	// identity
+	idenF64 := func(a *QCDenseF64) bool {
+		var ret, correct *Dense
+		var identity float64
+		identity = 1
+		correct = newDense(Float64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	// identity
+	idenC64 := func(a *QCDenseC64) bool {
+		var ret, correct *Dense
+		var identity complex64
+		identity = 1
+		correct = newDense(Complex64, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
+	// identity
+	idenC128 := func(a *QCDenseC128) bool {
+		var ret, correct *Dense
+		var identity complex128
+		identity = 1
+		correct = newDense(Complex128, a.len())
+		copyDense(correct, a.Dense)
+
+		ret, _ = a.ScaleInv(identity)
+
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+}
+
+/* ScaleInvR */
+
+func TestScaleInvRBasicProperties(t *testing.T) {
+}
+
+/* PowOf */
+
+func TestPowOfBasicProperties(t *testing.T) {
+	pow0I := func(a *QCDenseI) bool {
+		var ret, correct *Dense
+		var zero int
+		correct = newDense(Int, a.len())
+		correct.Memset(int(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0I, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0I8 := func(a *QCDenseI8) bool {
+		var ret, correct *Dense
+		var zero int8
+		correct = newDense(Int8, a.len())
+		correct.Memset(int8(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0I8, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0I16 := func(a *QCDenseI16) bool {
+		var ret, correct *Dense
+		var zero int16
+		correct = newDense(Int16, a.len())
+		correct.Memset(int16(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0I16, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0I32 := func(a *QCDenseI32) bool {
+		var ret, correct *Dense
+		var zero int32
+		correct = newDense(Int32, a.len())
+		correct.Memset(int32(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0I32, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0I64 := func(a *QCDenseI64) bool {
+		var ret, correct *Dense
+		var zero int64
+		correct = newDense(Int64, a.len())
+		correct.Memset(int64(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0I64, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0U := func(a *QCDenseU) bool {
+		var ret, correct *Dense
+		var zero uint
+		correct = newDense(Uint, a.len())
+		correct.Memset(uint(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0U, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0U8 := func(a *QCDenseU8) bool {
+		var ret, correct *Dense
+		var zero uint8
+		correct = newDense(Uint8, a.len())
+		correct.Memset(uint8(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0U8, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0U16 := func(a *QCDenseU16) bool {
+		var ret, correct *Dense
+		var zero uint16
+		correct = newDense(Uint16, a.len())
+		correct.Memset(uint16(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0U16, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0U32 := func(a *QCDenseU32) bool {
+		var ret, correct *Dense
+		var zero uint32
+		correct = newDense(Uint32, a.len())
+		correct.Memset(uint32(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0U32, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0U64 := func(a *QCDenseU64) bool {
+		var ret, correct *Dense
+		var zero uint64
+		correct = newDense(Uint64, a.len())
+		correct.Memset(uint64(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0U64, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0F32 := func(a *QCDenseF32) bool {
+		var ret, correct *Dense
+		var zero float32
+		correct = newDense(Float32, a.len())
+		correct.Memset(float32(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0F32, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0F64 := func(a *QCDenseF64) bool {
+		var ret, correct *Dense
+		var zero float64
+		correct = newDense(Float64, a.len())
+		correct.Memset(float64(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0F64, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0C64 := func(a *QCDenseC64) bool {
+		var ret, correct *Dense
+		var zero complex64
+		correct = newDense(Complex64, a.len())
+		correct.Memset(complex64(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0C64, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+	pow0C128 := func(a *QCDenseC128) bool {
+		var ret, correct *Dense
+		var zero complex128
+		correct = newDense(Complex128, a.len())
+		correct.Memset(complex128(1))
+		ret, _ = a.PowOf(zero)
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(pow0C128, nil); err != nil {
+		t.Errorf("Pow 0 failed")
+	}
+}
+
+/* PowOfR */
+
+func TestPowOfRBasicProperties(t *testing.T) {
 }
