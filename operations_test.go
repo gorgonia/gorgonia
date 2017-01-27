@@ -316,7 +316,7 @@ func TestGt(t *testing.T) {
 		t.Error(err)
 	}
 
-	if (TensorType{d: 1, of: Float64}) != TypeOf(gt.Value()) {
+	if (TensorType{Dims: 1, Of: Float64}) != TypeOf(gt.Value()) {
 		t.Error("Expected a tensor type of float64")
 	}
 
@@ -334,7 +334,7 @@ func TestGt(t *testing.T) {
 		t.Error(err)
 	}
 
-	if (TensorType{d: 1, of: Float64}) != TypeOf(gt2.Value()) {
+	if (TensorType{Dims: 1, Of: Float64}) != TypeOf(gt2.Value()) {
 		t.Error("Expected a tensor type of float64")
 	}
 

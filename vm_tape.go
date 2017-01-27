@@ -412,8 +412,8 @@ mustalloc:
 	}
 
 	var dt Dtype
-	if dt, ok = tt.of.(Dtype); !ok {
-		return errors.Errorf("No dtype to allocate. Type: %T", tt.of)
+	if dt, ok = tt.Of.(Dtype); !ok {
+		return errors.Errorf("No dtype to allocate. Type: %T", tt.Of)
 	}
 
 	//TODO: runtime shape check
