@@ -177,20 +177,6 @@ func (n NormOrder) String() string {
 	panic("unreachable")
 }
 
-// FunctionFlag are flags for calling Tensor functions. Use only with FuncOpt
-type FunctionFlag byte
-
-const (
-	SafeOp FunctionFlag = iota
-	UnsafeOp
-	Reuse
-	Incr
-	AsSame
-	AsTensorF64
-	AsTensorF32
-	AsTensorInt
-)
-
 // FuncOpt are optionals for calling Tensor function.
 type FuncOpt func(*funcOpt)
 
@@ -230,6 +216,14 @@ func UseUnsafe() FuncOpt {
 func AsSameType() FuncOpt {
 	f := func(opt *funcOpt) {
 		opt.same = true
+	}
+	return f
+}
+
+// As makes sure that the the return Tensor is of the type specified. Currently only works for FromMat64
+func As(t Dtype) FuncOpt {
+	f := func(opt *funcOpt) {
+		opt.t = t
 	}
 	return f
 }

@@ -5,6 +5,7 @@ type funcOpt struct {
 	incr   Tensor
 	unsafe bool
 	same   bool
+	t      Dtype
 }
 
 func parseFuncOpts(opts ...FuncOpt) *funcOpt {
