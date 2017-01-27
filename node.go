@@ -221,7 +221,7 @@ func (n *Node) IsScalar() bool { _, ok := n.t.(Dtype); return ok }
 // IsVector indicates if a node represents a vector value. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsVector() bool {
 	if t, ok := n.t.(TensorType); ok {
-		return t.d == 1
+		return t.Dims == 1
 	}
 
 	return false
@@ -312,7 +312,7 @@ func (n *Node) Dims() int {
 	}
 	switch nt := n.t.(type) {
 	case TensorType:
-		return nt.d
+		return nt.Dims
 	case Dtype:
 		return 0
 	default:

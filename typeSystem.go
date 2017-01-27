@@ -80,7 +80,7 @@ func isScalarType(t hm.Type) bool {
 	case Dtype:
 		return true
 	case TensorType:
-		if tt.d == 0 {
+		if tt.Dims == 0 {
 			return true
 		}
 		return false
@@ -96,7 +96,7 @@ func dtypeOf(t hm.Type) (retVal Dtype, err error) {
 	case Dtype:
 		retVal = p
 	case TensorType:
-		return dtypeOf(p.of)
+		return dtypeOf(p.Of)
 	case hm.TypeVariable:
 		err = errors.Errorf("instance %v does not have a dtype", p)
 	default:
