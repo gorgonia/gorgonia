@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"log"
 	"testing"
 
 	"github.com/chewxy/vecf64"
@@ -496,6 +497,7 @@ func TestDot(t *testing.T) {
 	var expectedShape Shape
 	var expectedData []float64
 	var expectedScalar float64
+
 	// vector-vector
 	t.Log("Vec⋅Vec")
 	a = New(Of(Float64), WithShape(3, 1), WithBacking(Range(Float64, 0, 3)))
@@ -506,6 +508,7 @@ func TestDot(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(expectedScalar, r.Data())
 	assert.True(ScalarShape().Eq(r.Shape()))
+
 	// vector-mat (which is the same as matᵀ*vec)
 	t.Log("Vec⋅Mat dot, should be equal to Aᵀb")
 	A = New(Of(Float64), WithShape(3, 2), WithBacking(Range(Float64, 0, 6)))
@@ -560,6 +563,7 @@ func TestDot(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
+
 	// T-T
 	t.Log("3T⋅4T")
 	A = New(Of(Float64), WithShape(2, 3, 4), WithBacking(Range(Float64, 0, 24)))
@@ -641,9 +645,10 @@ func TestDot(t *testing.T) {
 	assert.Equal(R, R2)
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
+
 	// 3T-vec with reuse
 	t.Logf("3T⋅vec with reuse")
-	R.Zero()
+	R = New(Of(Float64), WithShape(6))
 	A = New(Of(Float64), WithShape(2, 3, 4), WithBacking(Range(Float64, 0, 24)))
 	R2, err = Dot(A, b, WithReuse(R))
 	expectedShape = Shape{2, 3}
@@ -660,17 +665,13 @@ func TestDot(t *testing.T) {
 	R = New(Of(Float64), WithShape(2))
 	a = New(Of(Float64), WithShape(4), WithBacking(Range(Float64, 0, 4)))
 	B = New(Of(Float64), WithShape(4, 2), WithBacking(Range(Float64, 0, 8)))
-	if R2, err = Dot(a, B, WithReuse(R)); err != nil {
-		t.Error(err)
-		goto testIncr
-	}
+	R2, err = Dot(a, B, WithReuse(R))
 	expectedShape = Shape{2}
 	expectedData = []float64{28, 34}
 	assert.Nil(err)
 	assert.Equal(R, R2)
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
-testIncr:
 	// test incr
 	incrBack := make([]float64, 2)
 	copy(incrBack, expectedData)
@@ -687,12 +688,12 @@ testIncr:
 	R, err = Dot(s, s2)
 	assert.Nil(err)
 	assert.True(R.IsScalar())
-	assert.Equal([]float64{50}, R.Data())
+	assert.Equal(float64(50), R.Data())
 	R.Zero()
 	R2, err = Dot(s, s2, WithReuse(R))
 	assert.Nil(err)
 	assert.True(R2.IsScalar())
-	assert.Equal([]float64{50}, R2.Data())
+	assert.Equal(float64(50), R2.Data())
 	R, err = Dot(s, A)
 	expectedData = vecf64.Range(0, 24)
 	vecf64.Scale(expectedData, 5)
@@ -731,10 +732,16 @@ testIncr:
 	assert.Equal(A.Shape(), R.Shape())
 	assert.Equal(expectedData, R.Data())
 	incr = New(Of(Float64), FromScalar(float64(50)))
+
+	t.Logf("s %v s2 %v incr %v", s, s2, incr)
+	log.Printf("HERE")
 	R, err = Dot(s, s2, WithIncr(incr))
+	log.Printf("DONE. R%v | %v", R, R.Data())
 	assert.Nil(err)
+	assert.Equal(R, incr)
 	assert.True(R.IsScalar())
-	assert.Equal([]float64{100}, R.Data())
+	assert.Equal(float64(100), R.Data())
+
 	/* HERE BE STUPIDS */
 	// different sizes of vectors
 	c = New(Of(Float64), WithShape(1, 100))
@@ -758,4 +765,35 @@ testIncr:
 	B = New(Of(Float64), WithShape(4, 2, 3))
 	_, err = Dot(A, B)
 	assert.NotNil(err)
+}
+
+func TestOneDot(t *testing.T) {
+	assert := assert.New(t)
+	A := New(Of(Float64), WithShape(2, 3, 4), WithBacking(Range(Float64, 0, 24)))
+	b := New(Of(Float64), WithShape(4), WithBacking(Range(Float64, 0, 4)))
+
+	R, err := Dot(A, b)
+	expectedShape := Shape{2, 3}
+	expectedData := []float64{
+		14, 38, 62,
+		86, 110, 134,
+	}
+	assert.Nil(err)
+	assert.Equal(expectedData, R.Data())
+	assert.Equal(expectedShape, R.Shape())
+
+	// 3T-vec with reuse
+	t.Logf("3T⋅vec with reuse")
+	R.Zero()
+	A = New(Of(Float64), WithShape(2, 3, 4), WithBacking(Range(Float64, 0, 24)))
+	R2, err := Dot(A, b, WithReuse(R))
+	expectedShape = Shape{2, 3}
+	expectedData = []float64{
+		14, 38, 62,
+		86, 110, 134,
+	}
+	assert.Nil(err)
+	assert.Equal(R, R2)
+	assert.Equal(expectedData, R2.Data())
+	assert.Equal(expectedShape, R2.Shape())
 }

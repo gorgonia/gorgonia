@@ -100,6 +100,25 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				t.Errorf("Inverse function test for {{.}} failed %v",err)
 			}
 		{{end -}}
+		// incr
+		incr{{short .}} := func(a, b, incr *QCDense{{short .}}) bool {
+			// build correct
+			ret, _ := a.{{$op}}(b.Dense)
+			correct, _ := incr.Add(ret)
+
+			check, _ := a.{{$op}}(b.Dense, WithIncr(incr.Dense))
+			if check != incr.Dense {
+				t.Error("Expected incr.Dense == check")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}
+			return true
+		}
+		if err := quick.Check(incr{{short .}}, nil); err != nil {
+			t.Error("Incr function test for {{.}} failed %v", err)
+		}
 	{{end -}}
 }
 `
@@ -284,6 +303,25 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				t.Errorf("Inverse function test for {{.}} failed %v",err)
 			}
 		{{end -}}
+		incr{{short .}} := func(a, incr *QCDense{{short .}}, b {{asType .}}) bool {
+			// build correct
+			ret, _ := a.{{$op}}(b)
+			correct, _ := incr.Add(ret)
+
+			check, _ := a.{{$op}}(b, WithIncr(incr.Dense))
+			if check != incr.Dense {
+				t.Error("Expected incr.Dense == check")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				t.Errorf("Correct: %v, check %v", correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
+				return false
+			}
+			return true
+		}
+		if err := quick.Check(incr{{short .}}, nil); err != nil {
+			t.Error("Incr function test for {{.}} failed %v", err)
+		}
 	{{end -}}
 }
 `

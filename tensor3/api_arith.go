@@ -1,6 +1,11 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"log"
+	"reflect"
+
+	"github.com/pkg/errors"
+)
 
 // exported API for arithmetics and the stupidly crazy amount of overloaded semantics
 // Add performs a pointwise a+b. a and b can either be float64 or Tensor
@@ -60,6 +65,8 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	case adok && bdok:
 		return ad.Mul(bd, opts...)
 	case adok && !bdok:
+		log.Printf("TransInv: a: %v, b %v", a, b)
+		defer log.Printf("a %v", retVal)
 		return ad.Scale(b, opts...)
 	case !adok && bdok:
 		return bd.Scale(a, opts...)
@@ -151,16 +158,12 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 
 	switch {
 	case a.IsScalar() && b.IsScalar():
-		var incrF *Dense
-		if incrF, err = getFloatDense(incr); err != nil {
-			err = errors.Wrapf(err, opFail, "Dot - extraction of Incr")
-			return
-		}
-
-		var ret *Dense
-		if ret, err = a.Mul(b); err != nil {
-			err = errors.Wrapf(err, opFail, "Dot - is Scalar")
-			return
+		var res interface{}
+		switch a.t.Kind() {
+		case reflect.Float64:
+			res = a.getF64(0) * b.getF64(0)
+		case reflect.Float32:
+			res = a.getF32(0) * b.getF32(0)
 		}
 
 		switch {
@@ -169,19 +172,21 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				err = errors.Errorf(shapeMismatch, ScalarShape(), incr.Shape())
 				return
 			}
-			if _, err = incrF.Add(ret, UseUnsafe()); err != nil {
+			log.Printf("use Incr : %v", incr)
+			if _, err = incr.Trans(res, UseUnsafe()); err != nil {
 				err = errors.Wrapf(err, opFail, "Dot scalar incr")
 				return
 			}
-
 			retVal = incr
+			log.Printf("retVal %v", retVal)
 		case reuse != nil:
-			reuse.set(0, ret.get(0))
+			reuse.set(0, res)
 			reuse.reshape()
 			retVal = reuse
 		default:
-			retVal = ret
+			retVal = New(FromScalar(res))
 		}
+		log.Printf("Returning %v", retVal)
 		return
 	case a.IsScalar():
 		switch {
@@ -202,28 +207,15 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		return Mul(a, b.ScalarValue())
 	}
 
-	// now the stupid scaling stuff is out of the way, let's do some linear algebra
-	// var ok bool
+	// now that the stupid scalar stuff is out of the way, let's do some linear algebra
 	// if incr != nil {
 	// 	defer func() {
 	// 		if !retVal.Shape().Eq(incr.Shape()) {
 	// 			err = errors.Errorf(shapeMismatch, retVal.Shape(), incr.Shape())
 	// 			return
 	// 		}
-	// 		switch rt := retVal.(type) {
-	// 		case *Dense:
-	// 			var rn Number
-	// 			if rn, ok = rt.data.(Number); !ok {
-	// 				err = errors.Errorf(extractionFail)
-	// 				return
-	// 			}
-	// 			incrF.Add(rn)
-	// 			retVal = incr
-	// 		default:
-	// 			err = errors.Errorf(typeNYI, "Dot", retVal)
-	// 			return
-	// 		}
-
+	// 		retD := retVal.(*Dense)
+	// 		retVal, err = incr.Add(retD, UseUnsafe())
 	// 	}()
 	// }
 
@@ -250,31 +242,6 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			default:
 			}
 			return b.MatVecMul(a)
-			// if b.Shape()[0] != a.Size() {
-			// 	err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
-			// 	return
-			// }
-
-			// var rd *Dense
-			// expectedShape := Shape{b.Shape()[1]}
-			// if reuse != nil {
-			// 	if err = reuseCheckShape(reuse, expectedShape); err != nil {
-			// 		return
-			// 	}
-			// 	rd = reuse
-
-			// } else {
-			// 	rd = recycledDense(a.t, expectedShape)
-			// }
-			// b.T()
-			// if err = b.matVecMul(a, rd); err != nil {
-			// 	err = errors.Wrapf(err, opFail, "Dot - a is vector, b is matrix")
-			// 	return
-			// }
-			// b.T()
-
-			// retVal = rd
-			// return
 		default:
 
 		}
@@ -292,29 +259,6 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return a.MatVecMul(b)
 
-			// if a.Shape()[1] != b.Size() {
-			// 	err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
-			// 	return
-			// }
-
-			// var rd *Dense
-			// expectedShape := Shape{a.Shape()[0]}
-			// if reuse != nil {
-			// 	if err = reuseCheckShape(reuse, expectedShape); err != nil {
-			// 		return
-			// 	}
-			// 	rd = reuse
-			// } else {
-			// 	rd = recycledDense(a.t, expectedShape)
-			// }
-
-			// if err = a.matVecMul(b, rd); err != nil {
-			// 	err = errors.Wrapf(err, opFail, "Dot - a is matrix, b is vector")
-			// 	return
-			// }
-
-			// retVal = rd
-			// return
 		case b.IsMatrix():
 			switch {
 			case reuse != nil && incr != nil:
@@ -326,25 +270,6 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			default:
 			}
 			return a.MatMul(b)
-			// if a.Shape()[1] != b.Shape()[0] {
-			// 	err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
-			// 	return
-			// }
-			// var rd *Dense
-			// expectedShape := Shape{a.Shape()[0], b.Shape()[1]}
-			// if reuse != nil {
-			// 	rd = reuse
-			// 	// check that retVal has the correct shape
-			// 	if !retVal.Shape().Eq(expectedShape) {
-			// 		err = errors.Errorf(shapeMismatch, expectedShape, retVal.Shape())
-			// 		return
-			// 	}
-			// } else {
-			// 	rd = New(Of(a.t), WithShape(expectedShape...))
-			// }
-			// a.matMul(b, rd)
-			// retVal = rd
-			// return
 		default:
 		}
 	default:

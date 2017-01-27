@@ -57,6 +57,25 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(assocI, nil); err != nil {
 		t.Errorf("Associativity test for int failed %v", err)
 	}
+	// incr
+	incrI := func(a, b, incr *QCDenseI) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -101,6 +120,25 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocI8, nil); err != nil {
 		t.Errorf("Associativity test for int8 failed %v", err)
+	}
+	// incr
+	incrI8 := func(a, b, incr *QCDenseI8) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -147,6 +185,25 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(assocI16, nil); err != nil {
 		t.Errorf("Associativity test for int16 failed %v", err)
 	}
+	// incr
+	incrI16 := func(a, b, incr *QCDenseI16) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -191,6 +248,25 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocI32, nil); err != nil {
 		t.Errorf("Associativity test for int32 failed %v", err)
+	}
+	// incr
+	incrI32 := func(a, b, incr *QCDenseI32) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -237,6 +313,25 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(assocI64, nil); err != nil {
 		t.Errorf("Associativity test for int64 failed %v", err)
 	}
+	// incr
+	incrI64 := func(a, b, incr *QCDenseI64) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -281,6 +376,25 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocU, nil); err != nil {
 		t.Errorf("Associativity test for uint failed %v", err)
+	}
+	// incr
+	incrU := func(a, b, incr *QCDenseU) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -327,6 +441,25 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(assocU8, nil); err != nil {
 		t.Errorf("Associativity test for uint8 failed %v", err)
 	}
+	// incr
+	incrU8 := func(a, b, incr *QCDenseU8) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -371,6 +504,25 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocU16, nil); err != nil {
 		t.Errorf("Associativity test for uint16 failed %v", err)
+	}
+	// incr
+	incrU16 := func(a, b, incr *QCDenseU16) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -417,6 +569,25 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(assocU32, nil); err != nil {
 		t.Errorf("Associativity test for uint32 failed %v", err)
 	}
+	// incr
+	incrU32 := func(a, b, incr *QCDenseU32) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -461,6 +632,25 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocU64, nil); err != nil {
 		t.Errorf("Associativity test for uint64 failed %v", err)
+	}
+	// incr
+	incrU64 := func(a, b, incr *QCDenseU64) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -507,6 +697,25 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(assocF32, nil); err != nil {
 		t.Errorf("Associativity test for float32 failed %v", err)
 	}
+	// incr
+	incrF32 := func(a, b, incr *QCDenseF32) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -551,6 +760,25 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocF64, nil); err != nil {
 		t.Errorf("Associativity test for float64 failed %v", err)
+	}
+	// incr
+	incrF64 := func(a, b, incr *QCDenseF64) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -597,6 +825,25 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(assocC64, nil); err != nil {
 		t.Errorf("Associativity test for complex64 failed %v", err)
 	}
+	// incr
+	incrC64 := func(a, b, incr *QCDenseC64) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -641,6 +888,25 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocC128, nil); err != nil {
 		t.Errorf("Associativity test for complex128 failed %v", err)
+	}
+	// incr
+	incrC128 := func(a, b, incr *QCDenseC128) bool {
+		// build correct
+		ret, _ := a.Add(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
 	}
 }
 func TestAddFuncOpts(t *testing.T) {
@@ -763,6 +1029,25 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+	// incr
+	incrI := func(a, b, incr *QCDenseI) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -779,6 +1064,25 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	// incr
+	incrI8 := func(a, b, incr *QCDenseI8) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -797,6 +1101,25 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+	// incr
+	incrI16 := func(a, b, incr *QCDenseI16) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -813,6 +1136,25 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	// incr
+	incrI32 := func(a, b, incr *QCDenseI32) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -831,6 +1173,25 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+	// incr
+	incrI64 := func(a, b, incr *QCDenseI64) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -847,6 +1208,25 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
+	}
+	// incr
+	incrU := func(a, b, incr *QCDenseU) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -865,6 +1245,25 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+	// incr
+	incrU8 := func(a, b, incr *QCDenseU8) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -881,6 +1280,25 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	// incr
+	incrU16 := func(a, b, incr *QCDenseU16) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -899,6 +1317,25 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+	// incr
+	incrU32 := func(a, b, incr *QCDenseU32) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -915,6 +1352,25 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	// incr
+	incrU64 := func(a, b, incr *QCDenseU64) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -933,6 +1389,25 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+	// incr
+	incrF32 := func(a, b, incr *QCDenseF32) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -949,6 +1424,25 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	// incr
+	incrF64 := func(a, b, incr *QCDenseF64) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -967,6 +1461,25 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+	// incr
+	incrC64 := func(a, b, incr *QCDenseC64) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -983,6 +1496,25 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+	// incr
+	incrC128 := func(a, b, incr *QCDenseC128) bool {
+		// build correct
+		ret, _ := a.Sub(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
 	}
 }
 func TestSubFuncOpts(t *testing.T) {
@@ -1134,6 +1666,25 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(assocI, nil); err != nil {
 		t.Errorf("Associativity test for int failed %v", err)
 	}
+	// incr
+	incrI := func(a, b, incr *QCDenseI) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -1179,6 +1730,25 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocI8, nil); err != nil {
 		t.Errorf("Associativity test for int8 failed %v", err)
+	}
+	// incr
+	incrI8 := func(a, b, incr *QCDenseI8) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -1226,6 +1796,25 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(assocI16, nil); err != nil {
 		t.Errorf("Associativity test for int16 failed %v", err)
 	}
+	// incr
+	incrI16 := func(a, b, incr *QCDenseI16) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -1271,6 +1860,25 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocI32, nil); err != nil {
 		t.Errorf("Associativity test for int32 failed %v", err)
+	}
+	// incr
+	incrI32 := func(a, b, incr *QCDenseI32) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -1318,6 +1926,25 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(assocI64, nil); err != nil {
 		t.Errorf("Associativity test for int64 failed %v", err)
 	}
+	// incr
+	incrI64 := func(a, b, incr *QCDenseI64) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -1363,6 +1990,25 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocU, nil); err != nil {
 		t.Errorf("Associativity test for uint failed %v", err)
+	}
+	// incr
+	incrU := func(a, b, incr *QCDenseU) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -1410,6 +2056,25 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(assocU8, nil); err != nil {
 		t.Errorf("Associativity test for uint8 failed %v", err)
 	}
+	// incr
+	incrU8 := func(a, b, incr *QCDenseU8) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -1455,6 +2120,25 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocU16, nil); err != nil {
 		t.Errorf("Associativity test for uint16 failed %v", err)
+	}
+	// incr
+	incrU16 := func(a, b, incr *QCDenseU16) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -1502,6 +2186,25 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(assocU32, nil); err != nil {
 		t.Errorf("Associativity test for uint32 failed %v", err)
 	}
+	// incr
+	incrU32 := func(a, b, incr *QCDenseU32) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -1547,6 +2250,25 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocU64, nil); err != nil {
 		t.Errorf("Associativity test for uint64 failed %v", err)
+	}
+	// incr
+	incrU64 := func(a, b, incr *QCDenseU64) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -1594,6 +2316,25 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(assocF32, nil); err != nil {
 		t.Errorf("Associativity test for float32 failed %v", err)
 	}
+	// incr
+	incrF32 := func(a, b, incr *QCDenseF32) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -1639,6 +2380,25 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocF64, nil); err != nil {
 		t.Errorf("Associativity test for float64 failed %v", err)
+	}
+	// incr
+	incrF64 := func(a, b, incr *QCDenseF64) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -1686,6 +2446,25 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(assocC64, nil); err != nil {
 		t.Errorf("Associativity test for complex64 failed %v", err)
 	}
+	// incr
+	incrC64 := func(a, b, incr *QCDenseC64) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -1731,6 +2510,25 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(assocC128, nil); err != nil {
 		t.Errorf("Associativity test for complex128 failed %v", err)
+	}
+	// incr
+	incrC128 := func(a, b, incr *QCDenseC128) bool {
+		// build correct
+		ret, _ := a.Mul(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
 	}
 }
 func TestMulFuncOpts(t *testing.T) {
@@ -1858,6 +2656,25 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+	// incr
+	incrI := func(a, b, incr *QCDenseI) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -1875,6 +2692,25 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	// incr
+	incrI8 := func(a, b, incr *QCDenseI8) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -1894,6 +2730,25 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+	// incr
+	incrI16 := func(a, b, incr *QCDenseI16) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -1911,6 +2766,25 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	// incr
+	incrI32 := func(a, b, incr *QCDenseI32) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -1930,6 +2804,25 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+	// incr
+	incrI64 := func(a, b, incr *QCDenseI64) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -1947,6 +2840,25 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
+	}
+	// incr
+	incrU := func(a, b, incr *QCDenseU) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -1966,6 +2878,25 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+	// incr
+	incrU8 := func(a, b, incr *QCDenseU8) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -1983,6 +2914,25 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	// incr
+	incrU16 := func(a, b, incr *QCDenseU16) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -2002,6 +2952,25 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+	// incr
+	incrU32 := func(a, b, incr *QCDenseU32) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -2019,6 +2988,25 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	// incr
+	incrU64 := func(a, b, incr *QCDenseU64) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -2038,6 +3026,25 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+	// incr
+	incrF32 := func(a, b, incr *QCDenseF32) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -2055,6 +3062,25 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	// incr
+	incrF64 := func(a, b, incr *QCDenseF64) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -2074,6 +3100,25 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+	// incr
+	incrC64 := func(a, b, incr *QCDenseC64) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -2091,6 +3136,25 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+	// incr
+	incrC128 := func(a, b, incr *QCDenseC128) bool {
+		// build correct
+		ret, _ := a.Div(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
 	}
 }
 func TestDivFuncOpts(t *testing.T) {
@@ -2214,6 +3278,25 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	// incr
+	incrI := func(a, b, incr *QCDenseI) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	pow0I8 := func(a *QCDenseI8) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Int8, a.len())
@@ -2227,6 +3310,25 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0I8, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	// incr
+	incrI8 := func(a, b, incr *QCDenseI8) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	pow0I16 := func(a *QCDenseI16) bool {
 		var ret, correct, zero *Dense
@@ -2242,6 +3344,25 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I16, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	// incr
+	incrI16 := func(a, b, incr *QCDenseI16) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	pow0I32 := func(a *QCDenseI32) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Int32, a.len())
@@ -2255,6 +3376,25 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0I32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	// incr
+	incrI32 := func(a, b, incr *QCDenseI32) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	pow0I64 := func(a *QCDenseI64) bool {
 		var ret, correct, zero *Dense
@@ -2270,6 +3410,25 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	// incr
+	incrI64 := func(a, b, incr *QCDenseI64) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	pow0U := func(a *QCDenseU) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Uint, a.len())
@@ -2283,6 +3442,25 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0U, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	// incr
+	incrU := func(a, b, incr *QCDenseU) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	pow0U8 := func(a *QCDenseU8) bool {
 		var ret, correct, zero *Dense
@@ -2298,6 +3476,25 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U8, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	// incr
+	incrU8 := func(a, b, incr *QCDenseU8) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	pow0U16 := func(a *QCDenseU16) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Uint16, a.len())
@@ -2311,6 +3508,25 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0U16, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	// incr
+	incrU16 := func(a, b, incr *QCDenseU16) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	pow0U32 := func(a *QCDenseU32) bool {
 		var ret, correct, zero *Dense
@@ -2326,6 +3542,25 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	// incr
+	incrU32 := func(a, b, incr *QCDenseU32) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	pow0U64 := func(a *QCDenseU64) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Uint64, a.len())
@@ -2339,6 +3574,25 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0U64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	// incr
+	incrU64 := func(a, b, incr *QCDenseU64) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	pow0F32 := func(a *QCDenseF32) bool {
 		var ret, correct, zero *Dense
@@ -2354,6 +3608,25 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0F32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	// incr
+	incrF32 := func(a, b, incr *QCDenseF32) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	pow0F64 := func(a *QCDenseF64) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Float64, a.len())
@@ -2367,6 +3640,25 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0F64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	// incr
+	incrF64 := func(a, b, incr *QCDenseF64) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	pow0C64 := func(a *QCDenseC64) bool {
 		var ret, correct, zero *Dense
@@ -2382,6 +3674,25 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0C64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	// incr
+	incrC64 := func(a, b, incr *QCDenseC64) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	pow0C128 := func(a *QCDenseC128) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Complex128, a.len())
@@ -2395,6 +3706,25 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0C128, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	// incr
+	incrC128 := func(a, b, incr *QCDenseC128) bool {
+		// build correct
+		ret, _ := a.Pow(b.Dense)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
 	}
 }
 func TestPowFuncOpts(t *testing.T) {
@@ -2521,6 +3851,25 @@ func TestTransBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct *Dense
@@ -2537,6 +3886,25 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -2555,6 +3923,25 @@ func TestTransBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct *Dense
@@ -2571,6 +3958,25 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -2589,6 +3995,25 @@ func TestTransBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct *Dense
@@ -2605,6 +4030,25 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -2623,6 +4067,25 @@ func TestTransBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct *Dense
@@ -2639,6 +4102,25 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -2657,6 +4139,25 @@ func TestTransBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct *Dense
@@ -2673,6 +4174,25 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -2691,6 +4211,25 @@ func TestTransBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct *Dense
@@ -2707,6 +4246,25 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -2725,6 +4283,25 @@ func TestTransBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct *Dense
@@ -2741,6 +4318,25 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.Trans(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Trans(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
 	}
 }
 
@@ -2764,6 +4360,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct *Dense
@@ -2780,6 +4395,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -2798,6 +4432,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct *Dense
@@ -2814,6 +4467,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -2832,6 +4504,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct *Dense
@@ -2848,6 +4539,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -2866,6 +4576,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct *Dense
@@ -2882,6 +4611,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -2900,6 +4648,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct *Dense
@@ -2916,6 +4683,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -2934,6 +4720,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct *Dense
@@ -2950,6 +4755,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -2968,6 +4792,25 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct *Dense
@@ -2985,11 +4828,296 @@ func TestTransInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
 	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.TransInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
+	}
 }
 
 /* TransInvR */
 
 func TestTransInvRBasicProperties(t *testing.T) {
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
+	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
+	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
+	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
+	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
+	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
+	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.TransInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
+	}
 }
 
 /* Scale */
@@ -3013,6 +5141,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct *Dense
@@ -3030,6 +5177,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -3049,6 +5215,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct *Dense
@@ -3066,6 +5251,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -3085,6 +5289,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct *Dense
@@ -3102,6 +5325,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -3121,6 +5363,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct *Dense
@@ -3138,6 +5399,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -3157,6 +5437,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct *Dense
@@ -3174,6 +5473,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -3193,6 +5511,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct *Dense
@@ -3210,6 +5547,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -3229,6 +5585,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct *Dense
@@ -3246,6 +5621,25 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.Scale(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.Scale(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
 	}
 }
 
@@ -3270,6 +5664,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct *Dense
@@ -3287,6 +5700,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -3306,6 +5738,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct *Dense
@@ -3323,6 +5774,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -3342,6 +5812,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct *Dense
@@ -3359,6 +5848,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -3378,6 +5886,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct *Dense
@@ -3395,6 +5922,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -3414,6 +5960,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct *Dense
@@ -3431,6 +5996,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -3450,6 +6034,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct *Dense
@@ -3467,6 +6070,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -3486,6 +6108,25 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct *Dense
@@ -3504,11 +6145,296 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
 	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
+	}
 }
 
 /* ScaleInvR */
 
 func TestScaleInvRBasicProperties(t *testing.T) {
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
+	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
+	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
+	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
+	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
+	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
+	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.ScaleInvR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
+	}
 }
 
 /* PowOf */
@@ -3528,6 +6454,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
 	pow0I8 := func(a *QCDenseI8) bool {
 		var ret, correct *Dense
 		var zero int8
@@ -3541,6 +6486,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0I8, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
 	}
 	pow0I16 := func(a *QCDenseI16) bool {
 		var ret, correct *Dense
@@ -3556,6 +6520,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I16, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
 	pow0I32 := func(a *QCDenseI32) bool {
 		var ret, correct *Dense
 		var zero int32
@@ -3569,6 +6552,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0I32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
 	}
 	pow0I64 := func(a *QCDenseI64) bool {
 		var ret, correct *Dense
@@ -3584,6 +6586,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
 	pow0U := func(a *QCDenseU) bool {
 		var ret, correct *Dense
 		var zero uint
@@ -3597,6 +6618,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0U, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
 	}
 	pow0U8 := func(a *QCDenseU8) bool {
 		var ret, correct *Dense
@@ -3612,6 +6652,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U8, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
 	pow0U16 := func(a *QCDenseU16) bool {
 		var ret, correct *Dense
 		var zero uint16
@@ -3625,6 +6684,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0U16, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
 	}
 	pow0U32 := func(a *QCDenseU32) bool {
 		var ret, correct *Dense
@@ -3640,6 +6718,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
 	pow0U64 := func(a *QCDenseU64) bool {
 		var ret, correct *Dense
 		var zero uint64
@@ -3653,6 +6750,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0U64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
 	}
 	pow0F32 := func(a *QCDenseF32) bool {
 		var ret, correct *Dense
@@ -3668,6 +6784,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0F32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
 	pow0F64 := func(a *QCDenseF64) bool {
 		var ret, correct *Dense
 		var zero float64
@@ -3681,6 +6816,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(pow0F64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
 	}
 	pow0C64 := func(a *QCDenseC64) bool {
 		var ret, correct *Dense
@@ -3696,6 +6850,25 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0C64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
 	pow0C128 := func(a *QCDenseC128) bool {
 		var ret, correct *Dense
 		var zero complex128
@@ -3710,9 +6883,294 @@ func TestPowOfBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0C128, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.PowOf(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOf(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
+	}
 }
 
 /* PowOfR */
 
 func TestPowOfRBasicProperties(t *testing.T) {
+	incrI := func(a, incr *QCDenseI, b int) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI, nil); err != nil {
+		t.Error("Incr function test for int failed %v", err)
+	}
+	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI8, nil); err != nil {
+		t.Error("Incr function test for int8 failed %v", err)
+	}
+	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI16, nil); err != nil {
+		t.Error("Incr function test for int16 failed %v", err)
+	}
+	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI32, nil); err != nil {
+		t.Error("Incr function test for int32 failed %v", err)
+	}
+	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrI64, nil); err != nil {
+		t.Error("Incr function test for int64 failed %v", err)
+	}
+	incrU := func(a, incr *QCDenseU, b uint) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU, nil); err != nil {
+		t.Error("Incr function test for uint failed %v", err)
+	}
+	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU8, nil); err != nil {
+		t.Error("Incr function test for uint8 failed %v", err)
+	}
+	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU16, nil); err != nil {
+		t.Error("Incr function test for uint16 failed %v", err)
+	}
+	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU32, nil); err != nil {
+		t.Error("Incr function test for uint32 failed %v", err)
+	}
+	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrU64, nil); err != nil {
+		t.Error("Incr function test for uint64 failed %v", err)
+	}
+	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF32, nil); err != nil {
+		t.Error("Incr function test for float32 failed %v", err)
+	}
+	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrF64, nil); err != nil {
+		t.Error("Incr function test for float64 failed %v", err)
+	}
+	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC64, nil); err != nil {
+		t.Error("Incr function test for complex64 failed %v", err)
+	}
+	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
+		// build correct
+		ret, _ := a.PowOfR(b)
+		correct, _ := incr.Add(ret)
+
+		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
+		if check != incr.Dense {
+			t.Error("Expected incr.Dense == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(incrC128, nil); err != nil {
+		t.Error("Incr function test for complex128 failed %v", err)
+	}
 }

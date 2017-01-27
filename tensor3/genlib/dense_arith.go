@@ -158,9 +158,58 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 		return nil, err
 	}
 
+	{{$isFunc := .IsFunc -}}
+	{{$op := .OpSymb -}}
+	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+	{{$div := hasPrefix .OpName "Div" -}}
+	{{if or $scaleInv $div -}}var errs errorIndices
+	{{end -}}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
+		switch reuse.t.Kind() {
+		{{range .Kinds -}}
+			{{if isNumber . -}}
+		case reflect.{{reflectKind .}}:
+			data := reuse.{{asType . | strip}}s()
+			for i := range data {
+				{{if or $div $scaleInv -}}
+					{{if hasPrefix .String "float" -}}
+					{{else if hasPrefix .String "complex" -}}
+					{{else -}}
+					if other.get{{short .}}(i) == 0 {
+						errs = append(errs, i)
+						continue
+					}
+					{{end -}}
+				{{end -}}
+				data[i] += {{if $isFunc -}}
+					{{if eq $op "math.Pow" -}}
+						{{if eq .String "float32"}}
+							math32.Pow(t.get{{short .}}(i), other.get{{short .}}(i))
+						{{else if eq .String "float64" -}}
+							math.Pow(t.get{{short .}}(i), other.get{{short .}}(i))
+						{{else if eq .String "complex64" -}}
+							complex64(cmplx.Pow(complex128(t.get{{short .}}(i)), complex128(other.get{{short .}}(i))))
+						{{else if eq .String "complex128" -}}
+							cmplx.Pow(t.get{{short .}}(i), other.get{{short .}}(i))
+						{{else -}}
+							{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(i))))
+						{{end -}}
+					{{end -}}
+				{{else -}}
+					t.get{{short .}}(i) {{$op}} other.get{{short .}}(i)
+				{{end -}}
+			}
+			{{end -}}
+		{{end -}}
+		}
+		{{if or $scaleInv $div -}}
+		if errs != nil {
+			err = err
+		}
+		{{end -}}
+		retVal = reuse
 	case toReuse:
 		copyDense(reuse, t)
 		reuse.{{lower .OpName}}(other)
@@ -196,8 +245,53 @@ const denseScalarArithRaw = `func (t *Dense) {{.OpName}}(other interface{}, opts
 		return nil, err
 	}
 
+	{{$isFunc := .IsFunc -}}
+	{{$op := .OpSymb -}}
+	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+	{{$div := hasPrefix .OpName "Div" -}}
+	{{if or $scaleInv $div -}}var errs errorIndices
+	{{end -}}
 	switch {
 	case incr:
+		switch t.t.Kind(){
+		{{range .Kinds -}}
+		{{if isNumber . -}}
+		case reflect.{{reflectKind .}}:
+			data := reuse.{{asType . | strip}}s()
+			b := other.({{asType .}})
+			for i := range data {
+				{{if or $div $scaleInv -}}
+					{{if hasPrefix .String "float" -}}
+					{{else if hasPrefix .String "complex" -}}
+					{{else -}}
+					if b == 0 {
+						errs = append(errs, i)
+						continue
+					}
+					{{end -}}
+				{{end -}}
+				data[i] += {{if $isFunc -}}
+					{{if eq $op "math.Pow" -}}
+						{{if eq .String "float32"}}
+							math32.Pow(t.get{{short .}}(i), b)
+						{{else if eq .String "float64" -}}
+							math.Pow(t.get{{short .}}(i), b)
+						{{else if eq .String "complex64" -}}
+							complex64(cmplx.Pow(complex128(t.get{{short .}}(i)), complex128(b)))
+						{{else if eq .String "complex128" -}}
+							cmplx.Pow(t.get{{short .}}(i), b)
+						{{else -}}
+							{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(b)))
+						{{end -}}
+					{{end -}}
+				{{else -}}
+					t.get{{short .}}(i) {{$op}} b
+				{{end -}}
+		}
+		retVal = reuse	
+		{{end -}}
+		{{end -}}
+		}
 	case toReuse:
 		copyDense(reuse, t)
 		reuse.{{lower .OpName}}(other)

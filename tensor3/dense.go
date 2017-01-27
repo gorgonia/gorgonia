@@ -82,9 +82,14 @@ func (t *Dense) fromSlice(x interface{}) {
 	t.hdr = hdr
 }
 
-func (t *Dense) Info() *AP         { return t.AP }
-func (t *Dense) Dtype() Dtype      { return t.t }
-func (t *Dense) Data() interface{} { return t.v }
+func (t *Dense) Info() *AP    { return t.AP }
+func (t *Dense) Dtype() Dtype { return t.t }
+func (t *Dense) Data() interface{} {
+	if t.IsScalar() {
+		return t.get(0)
+	}
+	return t.v
+}
 func (t *Dense) DataSize() int {
 	if t.IsScalar() {
 		return 0
