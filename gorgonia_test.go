@@ -49,10 +49,10 @@ var anyNodeTest = []struct {
 	{"float64", float64(3.14), Float64, scalarShape},
 	{"int", int(3), Int, scalarShape},
 	{"bool", true, Bool, scalarShape},
-	{"tf64.Tensor", tf64.NewTensor(tf64.WithShape(2, 3, 4)), &TensorType{d: 3, of: Float64}, types.Shape{2, 3, 4}},
-	{"tf32.Tensor", tf32.NewTensor(tf32.WithShape(2, 3, 4)), &TensorType{d: 3, of: Float32}, types.Shape{2, 3, 4}},
+	{"tf64.Tensor", tf64.NewTensor(tf64.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float64}, types.Shape{2, 3, 4}},
+	{"tf32.Tensor", tf32.NewTensor(tf32.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float32}, types.Shape{2, 3, 4}},
 	{"ScalarValue", F64(3.14), Float64, scalarShape},
-	{"TensorValue", tf64.NewTensor(tf64.WithShape(2, 3)), &TensorType{d: 2, of: Float64}, types.Shape{2, 3}},
+	{"TensorValue", tf64.NewTensor(tf64.WithShape(2, 3)), &TensorType{Dims: 2, Of: Float64}, types.Shape{2, 3}},
 }
 
 func TestNodeFromAny(t *testing.T) {

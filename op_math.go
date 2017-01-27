@@ -121,7 +121,7 @@ func (op elemBinOp) Type() hm.Type {
 
 	switch rt := retType.(type) {
 	case TensorType:
-		rt.of = Bool
+		rt.Of = Bool
 		retType = rt
 	default:
 		retType = Bool

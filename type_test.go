@@ -88,7 +88,7 @@ func TestTensorTypeBasics(t *testing.T) {
 		// string and format for completeness sake
 		assert.Equal("Tensor", ttts.a.Name())
 		assert.Equal(ttts.format, fmt.Sprintf("%v", ttts.a))
-		assert.Equal(fmt.Sprintf("Tensor-%d %v", ttts.a.d, ttts.a.of), fmt.Sprintf("%#v", ttts.a))
+		assert.Equal(fmt.Sprintf("Tensor-%d %v", ttts.a.Dims, ttts.a.Of), fmt.Sprintf("%#v", ttts.a))
 	}
 
 	tt := newTensorType(1, hm.TypeVariable('x'))
