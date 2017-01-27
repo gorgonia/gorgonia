@@ -797,102 +797,46 @@ func (t *Dense) Trans(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				data[i] += t.getI(i) + b
-			}
+			err = incrTransI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				data[i] += t.getI8(i) + b
-			}
+			err = incrTransI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				data[i] += t.getI16(i) + b
-			}
+			err = incrTransI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				data[i] += t.getI32(i) + b
-			}
+			err = incrTransI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				data[i] += t.getI64(i) + b
-			}
+			err = incrTransI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				data[i] += t.getU(i) + b
-			}
+			err = incrTransU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				data[i] += t.getU8(i) + b
-			}
+			err = incrTransU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				data[i] += t.getU16(i) + b
-			}
+			err = incrTransU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				data[i] += t.getU32(i) + b
-			}
+			err = incrTransU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				data[i] += t.getU64(i) + b
-			}
+			err = incrTransU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] += t.getF32(i) + b
-			}
+			err = incrTransF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += t.getF64(i) + b
-			}
+			err = incrTransF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += t.getC64(i) + b
-			}
+			err = incrTransC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += t.getC128(i) + b
-			}
+			err = incrTransC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:
@@ -968,102 +912,46 @@ func (t *Dense) TransInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				data[i] += t.getI(i) - b
-			}
+			err = incrTransInvI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				data[i] += t.getI8(i) - b
-			}
+			err = incrTransInvI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				data[i] += t.getI16(i) - b
-			}
+			err = incrTransInvI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				data[i] += t.getI32(i) - b
-			}
+			err = incrTransInvI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				data[i] += t.getI64(i) - b
-			}
+			err = incrTransInvI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				data[i] += t.getU(i) - b
-			}
+			err = incrTransInvU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				data[i] += t.getU8(i) - b
-			}
+			err = incrTransInvU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				data[i] += t.getU16(i) - b
-			}
+			err = incrTransInvU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				data[i] += t.getU32(i) - b
-			}
+			err = incrTransInvU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				data[i] += t.getU64(i) - b
-			}
+			err = incrTransInvU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] += t.getF32(i) - b
-			}
+			err = incrTransInvF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += t.getF64(i) - b
-			}
+			err = incrTransInvF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += t.getC64(i) - b
-			}
+			err = incrTransInvC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += t.getC128(i) - b
-			}
+			err = incrTransInvC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:
@@ -1139,102 +1027,46 @@ func (t *Dense) TransInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				data[i] += t.getI(i) - b
-			}
+			err = incrTransInvRI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				data[i] += t.getI8(i) - b
-			}
+			err = incrTransInvRI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				data[i] += t.getI16(i) - b
-			}
+			err = incrTransInvRI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				data[i] += t.getI32(i) - b
-			}
+			err = incrTransInvRI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				data[i] += t.getI64(i) - b
-			}
+			err = incrTransInvRI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				data[i] += t.getU(i) - b
-			}
+			err = incrTransInvRU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				data[i] += t.getU8(i) - b
-			}
+			err = incrTransInvRU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				data[i] += t.getU16(i) - b
-			}
+			err = incrTransInvRU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				data[i] += t.getU32(i) - b
-			}
+			err = incrTransInvRU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				data[i] += t.getU64(i) - b
-			}
+			err = incrTransInvRU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] += t.getF32(i) - b
-			}
+			err = incrTransInvRF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += t.getF64(i) - b
-			}
+			err = incrTransInvRF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += t.getC64(i) - b
-			}
+			err = incrTransInvRC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += t.getC128(i) - b
-			}
+			err = incrTransInvRC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:
@@ -1310,102 +1142,46 @@ func (t *Dense) Scale(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				data[i] += t.getI(i) * b
-			}
+			err = incrScaleI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				data[i] += t.getI8(i) * b
-			}
+			err = incrScaleI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				data[i] += t.getI16(i) * b
-			}
+			err = incrScaleI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				data[i] += t.getI32(i) * b
-			}
+			err = incrScaleI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				data[i] += t.getI64(i) * b
-			}
+			err = incrScaleI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				data[i] += t.getU(i) * b
-			}
+			err = incrScaleU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				data[i] += t.getU8(i) * b
-			}
+			err = incrScaleU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				data[i] += t.getU16(i) * b
-			}
+			err = incrScaleU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				data[i] += t.getU32(i) * b
-			}
+			err = incrScaleU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				data[i] += t.getU64(i) * b
-			}
+			err = incrScaleU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] += t.getF32(i) * b
-			}
+			err = incrScaleF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += t.getF64(i) * b
-			}
+			err = incrScaleF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += t.getC64(i) * b
-			}
+			err = incrScaleC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += t.getC128(i) * b
-			}
+			err = incrScaleC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:
@@ -1477,147 +1253,50 @@ func (t *Dense) ScaleInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		return nil, err
 	}
 
-	var errs errorIndices
 	switch {
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI(i) / b
-			}
+			err = incrScaleInvI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI8(i) / b
-			}
+			err = incrScaleInvI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI16(i) / b
-			}
+			err = incrScaleInvI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI32(i) / b
-			}
+			err = incrScaleInvI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI64(i) / b
-			}
+			err = incrScaleInvI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU(i) / b
-			}
+			err = incrScaleInvU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU8(i) / b
-			}
+			err = incrScaleInvU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU16(i) / b
-			}
+			err = incrScaleInvU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU32(i) / b
-			}
+			err = incrScaleInvU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU64(i) / b
-			}
+			err = incrScaleInvU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] += t.getF32(i) / b
-			}
+			err = incrScaleInvF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += t.getF64(i) / b
-			}
+			err = incrScaleInvF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += t.getC64(i) / b
-			}
+			err = incrScaleInvC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += t.getC128(i) / b
-			}
+			err = incrScaleInvC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:
@@ -1689,147 +1368,50 @@ func (t *Dense) ScaleInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		return nil, err
 	}
 
-	var errs errorIndices
 	switch {
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI(i) / b
-			}
+			err = incrScaleInvRI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI8(i) / b
-			}
+			err = incrScaleInvRI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI16(i) / b
-			}
+			err = incrScaleInvRI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI32(i) / b
-			}
+			err = incrScaleInvRI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getI64(i) / b
-			}
+			err = incrScaleInvRI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU(i) / b
-			}
+			err = incrScaleInvRU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU8(i) / b
-			}
+			err = incrScaleInvRU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU16(i) / b
-			}
+			err = incrScaleInvRU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU32(i) / b
-			}
+			err = incrScaleInvRU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				if b == 0 {
-					errs = append(errs, i)
-					continue
-				}
-				data[i] += t.getU64(i) / b
-			}
+			err = incrScaleInvRU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] += t.getF32(i) / b
-			}
+			err = incrScaleInvRF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += t.getF64(i) / b
-			}
+			err = incrScaleInvRF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += t.getC64(i) / b
-			}
+			err = incrScaleInvRC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += t.getC128(i) / b
-			}
+			err = incrScaleInvRC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:
@@ -1905,103 +1487,46 @@ func (t *Dense) PowOf(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				data[i] += int(math.Pow(float64(t.getI(i)), float64(b)))
-			}
+			err = incrPowOfI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				data[i] += int8(math.Pow(float64(t.getI8(i)), float64(b)))
-			}
+			err = incrPowOfI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				data[i] += int16(math.Pow(float64(t.getI16(i)), float64(b)))
-			}
+			err = incrPowOfI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				data[i] += int32(math.Pow(float64(t.getI32(i)), float64(b)))
-			}
+			err = incrPowOfI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				data[i] += int64(math.Pow(float64(t.getI64(i)), float64(b)))
-			}
+			err = incrPowOfI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				data[i] += uint(math.Pow(float64(t.getU(i)), float64(b)))
-			}
+			err = incrPowOfU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				data[i] += uint8(math.Pow(float64(t.getU8(i)), float64(b)))
-			}
+			err = incrPowOfU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				data[i] += uint16(math.Pow(float64(t.getU16(i)), float64(b)))
-			}
+			err = incrPowOfU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				data[i] += uint32(math.Pow(float64(t.getU32(i)), float64(b)))
-			}
+			err = incrPowOfU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				data[i] += uint64(math.Pow(float64(t.getU64(i)), float64(b)))
-			}
+			err = incrPowOfU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] +=
-					math32.Pow(t.getF32(i), b)
-			}
+			err = incrPowOfF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += math.Pow(t.getF64(i), b)
-			}
+			err = incrPowOfF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(b)))
-			}
+			err = incrPowOfC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += cmplx.Pow(t.getC128(i), b)
-			}
+			err = incrPowOfC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:
@@ -2077,103 +1602,46 @@ func (t *Dense) PowOfR(other interface{}, opts ...FuncOpt) (retVal *Dense, err e
 	case incr:
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := reuse.ints()
-			b := other.(int)
-			for i := range data {
-				data[i] += int(math.Pow(float64(t.getI(i)), float64(b)))
-			}
+			err = incrPowOfRI(t.ints(), reuse.ints(), other.(int))
 			retVal = reuse
 		case reflect.Int8:
-			data := reuse.int8s()
-			b := other.(int8)
-			for i := range data {
-				data[i] += int8(math.Pow(float64(t.getI8(i)), float64(b)))
-			}
+			err = incrPowOfRI8(t.int8s(), reuse.int8s(), other.(int8))
 			retVal = reuse
 		case reflect.Int16:
-			data := reuse.int16s()
-			b := other.(int16)
-			for i := range data {
-				data[i] += int16(math.Pow(float64(t.getI16(i)), float64(b)))
-			}
+			err = incrPowOfRI16(t.int16s(), reuse.int16s(), other.(int16))
 			retVal = reuse
 		case reflect.Int32:
-			data := reuse.int32s()
-			b := other.(int32)
-			for i := range data {
-				data[i] += int32(math.Pow(float64(t.getI32(i)), float64(b)))
-			}
+			err = incrPowOfRI32(t.int32s(), reuse.int32s(), other.(int32))
 			retVal = reuse
 		case reflect.Int64:
-			data := reuse.int64s()
-			b := other.(int64)
-			for i := range data {
-				data[i] += int64(math.Pow(float64(t.getI64(i)), float64(b)))
-			}
+			err = incrPowOfRI64(t.int64s(), reuse.int64s(), other.(int64))
 			retVal = reuse
 		case reflect.Uint:
-			data := reuse.uints()
-			b := other.(uint)
-			for i := range data {
-				data[i] += uint(math.Pow(float64(t.getU(i)), float64(b)))
-			}
+			err = incrPowOfRU(t.uints(), reuse.uints(), other.(uint))
 			retVal = reuse
 		case reflect.Uint8:
-			data := reuse.uint8s()
-			b := other.(uint8)
-			for i := range data {
-				data[i] += uint8(math.Pow(float64(t.getU8(i)), float64(b)))
-			}
+			err = incrPowOfRU8(t.uint8s(), reuse.uint8s(), other.(uint8))
 			retVal = reuse
 		case reflect.Uint16:
-			data := reuse.uint16s()
-			b := other.(uint16)
-			for i := range data {
-				data[i] += uint16(math.Pow(float64(t.getU16(i)), float64(b)))
-			}
+			err = incrPowOfRU16(t.uint16s(), reuse.uint16s(), other.(uint16))
 			retVal = reuse
 		case reflect.Uint32:
-			data := reuse.uint32s()
-			b := other.(uint32)
-			for i := range data {
-				data[i] += uint32(math.Pow(float64(t.getU32(i)), float64(b)))
-			}
+			err = incrPowOfRU32(t.uint32s(), reuse.uint32s(), other.(uint32))
 			retVal = reuse
 		case reflect.Uint64:
-			data := reuse.uint64s()
-			b := other.(uint64)
-			for i := range data {
-				data[i] += uint64(math.Pow(float64(t.getU64(i)), float64(b)))
-			}
+			err = incrPowOfRU64(t.uint64s(), reuse.uint64s(), other.(uint64))
 			retVal = reuse
 		case reflect.Float32:
-			data := reuse.float32s()
-			b := other.(float32)
-			for i := range data {
-				data[i] +=
-					math32.Pow(t.getF32(i), b)
-			}
+			err = incrPowOfRF32(t.float32s(), reuse.float32s(), other.(float32))
 			retVal = reuse
 		case reflect.Float64:
-			data := reuse.float64s()
-			b := other.(float64)
-			for i := range data {
-				data[i] += math.Pow(t.getF64(i), b)
-			}
+			err = incrPowOfRF64(t.float64s(), reuse.float64s(), other.(float64))
 			retVal = reuse
 		case reflect.Complex64:
-			data := reuse.complex64s()
-			b := other.(complex64)
-			for i := range data {
-				data[i] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(b)))
-			}
+			err = incrPowOfRC64(t.complex64s(), reuse.complex64s(), other.(complex64))
 			retVal = reuse
 		case reflect.Complex128:
-			data := reuse.complex128s()
-			b := other.(complex128)
-			for i := range data {
-				data[i] += cmplx.Pow(t.getC128(i), b)
-			}
+			err = incrPowOfRC128(t.complex128s(), reuse.complex128s(), other.(complex128))
 			retVal = reuse
 		}
 	case toReuse:

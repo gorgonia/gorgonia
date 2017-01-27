@@ -128,7 +128,19 @@ func allClose(a, b interface{}) bool {
 	switch at := a.(type) {
 	case []float64:
 		bt := b.([]float64)
-		for i, v := range at{
+		for i, v := range at {
+			if math.IsNaN(v) {
+				if !math.IsNaN(bt[i]) {
+					return false
+				}
+				continue
+			}
+			if math.IsInf(v, 0) {
+				if !math.IsInf(bt[i], 0){
+					return false
+				}
+				continue
+			}
 			if !closef64(v, bt[i]){
 				return false
 			}
@@ -136,7 +148,19 @@ func allClose(a, b interface{}) bool {
 		return true
 	case []float32:
 		bt := b.([]float32)
-		for i, v := range at{
+		for i, v := range at {
+			if math32.IsNaN(v) {
+				if !math32.IsNaN(bt[i]) {
+					return false
+				}
+				continue
+			}
+			if math32.IsInf(v, 0) {
+				if !math32.IsInf(bt[i], 0){
+					return false
+				}
+				continue
+			}
 			if !closef32(v, bt[i]){
 				return false
 			}
@@ -145,6 +169,18 @@ func allClose(a, b interface{}) bool {
 	case []complex64:
 		bt := b.([]complex64)
 		for i, v := range at {
+			if cmplx.IsNaN(complex128(v)) {
+				if !cmplx.IsNaN(complex128(bt[i])) {
+					return false
+				}
+				continue
+			}
+			if cmplx.IsInf(complex128(v)) {
+				if !cmplx.IsInf(complex128(bt[i])){
+					return false
+				}
+				continue
+			}
 			if !cSoclose(complex128(v), complex128(bt[i]),1e-5){
 				return false
 			}
@@ -153,6 +189,18 @@ func allClose(a, b interface{}) bool {
 	case []complex128:
 		bt := b.([]complex128)
 		for i, v := range at{
+			if cmplx.IsNaN(v) {
+				if !cmplx.IsNaN(bt[i]) {
+					return false
+				}
+				continue
+			}
+			if cmplx.IsInf(v) {
+				if !cmplx.IsInf(bt[i]){
+					return false
+				}
+				continue
+			}
 			if !cClose(v, bt[i]){
 				return false
 			}

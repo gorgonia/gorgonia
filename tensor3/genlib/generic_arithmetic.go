@@ -51,15 +51,19 @@ const genericVecVecArithRaw = `func {{lower .OpName}}{{short .Kind}}(a, b []{{as
 	return nil
 }
 `
-const genericVecScalarArithRaw = `func {{lower .OpName}}{{short .Kind}}(a []{{asType .Kind}}, b {{asType .Kind}}) error {
+const genericVecScalarArithRaw = `func {{if .IsIncr}}incr{{.OpName}}{{else}}{{lower .OpName}}{{end}}{{short .Kind}}(a{{if .IsIncr}}, incr{{end}} []{{asType .Kind}}, b {{asType .Kind}}) error {
 	{{if hasPrefix .Kind.String "float" -}}
-		vec{{short .Kind | lower }}.{{.OpName}}(a, b)
+		{{if .IsIncr -}}
+		vec{{short .Kind | lower}}.Incr{{.OpName}}(a, b, incr)
+		{{else -}}
+			vec{{short .Kind | lower }}.{{.OpName}}(a, b)
+		{{end -}}
 	{{else if hasPrefix .Kind.String "complex" -}} 
 		for i, v := range a {
 			{{if hasPrefix .OpName "Pow" -}}
-				a[i] =  {{if hasSuffix .OpName "R" -}}   {{asType .Kind}}(cmplx.Pow(complex128(b), complex128(v)))  {{else -}}  {{asType .Kind}}(cmplx.Pow(complex128(v), complex128(b))) {{end -}}
+				{{if .IsIncr}}incr[i] +{{else}}a[i] {{end}}=  {{if hasSuffix .OpName "R" -}}   {{asType .Kind}}(cmplx.Pow(complex128(b), complex128(v)))  {{else -}}  {{asType .Kind}}(cmplx.Pow(complex128(v), complex128(b))) {{end -}}
 			{{else -}}
-				a[i] = {{if hasSuffix .OpName "R" -}} b {{.OpSymb}} v {{else -}} v {{.OpSymb}} b {{end -}}
+			 	{{if .IsIncr}}incr[i] +{{else}}a[i] {{end}}= {{if hasSuffix .OpName "R" -}} b {{.OpSymb}} v {{else -}} v {{.OpSymb}} b {{end -}}
 			{{end -}}
 			}
 	{{else -}}
@@ -76,7 +80,7 @@ const genericVecScalarArithRaw = `func {{lower .OpName}}{{short .Kind}}(a []{{as
 			}
 
 			{{end -}}
-			a[i] = {{if hasSuffix .OpName "R" -}}
+			{{if .IsIncr}}incr[i] +{{else}}a[i] {{end}}= {{if hasSuffix .OpName "R" -}}
 				{{if .IsFunc -}} 
 					{{asType .Kind}}({{.OpSymb}}(float64(b), float64(v)))
 				{{else -}} 
@@ -110,6 +114,11 @@ func init() {
 	genericVecScalarArith = template.Must(template.New("vecscalarArith").Funcs(funcs).Parse(genericVecScalarArithRaw))
 }
 
+type IncrOp struct {
+	ArithBinOp
+	IsIncr bool
+}
+
 func genericArith(f io.Writer, generic *ManyKinds) {
 	for _, bo := range binOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
@@ -128,7 +137,21 @@ func genericArith(f io.Writer, generic *ManyKinds) {
 		for _, k := range generic.Kinds {
 			if isNumber(k) {
 				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
-				genericVecScalarArith.Execute(f, op)
+				incrOp := IncrOp{op, false}
+				genericVecScalarArith.Execute(f, incrOp)
+				fmt.Fprintln(f, "\n")
+			}
+		}
+		fmt.Fprintln(f, "\n")
+	}
+
+	for _, bo := range vecscalarOps {
+		fmt.Fprintf(f, "/* incr %s */\n\n", bo.OpName)
+		for _, k := range generic.Kinds {
+			if isNumber(k) {
+				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
+				incrOp := IncrOp{op, true}
+				genericVecScalarArith.Execute(f, incrOp)
 				fmt.Fprintln(f, "\n")
 			}
 		}

@@ -112,6 +112,8 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				return false
 			}
 			if !allClose(correct.Data(), check.Data()) {
+				t.Errorf("Failed close")
+				log.Println("Failed close")
 				return false
 			}
 			return true

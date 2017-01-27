@@ -1890,3 +1890,971 @@ func powofrC128(a []complex128, b complex128) error {
 	}
 	return nil
 }
+
+/* incr Trans */
+
+func incrTransI(a, incr []int, b int) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransI8(a, incr []int8, b int8) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransI16(a, incr []int16, b int16) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransI32(a, incr []int32, b int32) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransI64(a, incr []int64, b int64) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransU(a, incr []uint, b uint) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransU8(a, incr []uint8, b uint8) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransU16(a, incr []uint16, b uint16) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransU32(a, incr []uint32, b uint32) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransU64(a, incr []uint64, b uint64) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransF32(a, incr []float32, b float32) error {
+	vecf32.IncrTrans(a, b, incr)
+	return nil
+}
+
+func incrTransF64(a, incr []float64, b float64) error {
+	vecf64.IncrTrans(a, b, incr)
+	return nil
+}
+
+func incrTransC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+func incrTransC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += v + b
+	}
+	return nil
+}
+
+/* incr TransInv */
+
+func incrTransInvI(a, incr []int, b int) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvI8(a, incr []int8, b int8) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvI16(a, incr []int16, b int16) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvI32(a, incr []int32, b int32) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvI64(a, incr []int64, b int64) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvU(a, incr []uint, b uint) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvU8(a, incr []uint8, b uint8) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvU16(a, incr []uint16, b uint16) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvU32(a, incr []uint32, b uint32) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvU64(a, incr []uint64, b uint64) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvF32(a, incr []float32, b float32) error {
+	vecf32.IncrTransInv(a, b, incr)
+	return nil
+}
+
+func incrTransInvF64(a, incr []float64, b float64) error {
+	vecf64.IncrTransInv(a, b, incr)
+	return nil
+}
+
+func incrTransInvC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+func incrTransInvC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += v - b
+	}
+	return nil
+}
+
+/* incr TransInvR */
+
+func incrTransInvRI(a, incr []int, b int) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRI8(a, incr []int8, b int8) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRI16(a, incr []int16, b int16) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRI32(a, incr []int32, b int32) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRI64(a, incr []int64, b int64) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRU(a, incr []uint, b uint) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRU8(a, incr []uint8, b uint8) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRU16(a, incr []uint16, b uint16) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRU32(a, incr []uint32, b uint32) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRU64(a, incr []uint64, b uint64) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRF32(a, incr []float32, b float32) error {
+	vecf32.IncrTransInvR(a, b, incr)
+	return nil
+}
+
+func incrTransInvRF64(a, incr []float64, b float64) error {
+	vecf64.IncrTransInvR(a, b, incr)
+	return nil
+}
+
+func incrTransInvRC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+func incrTransInvRC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += b - v
+	}
+	return nil
+}
+
+/* incr Scale */
+
+func incrScaleI(a, incr []int, b int) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleI8(a, incr []int8, b int8) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleI16(a, incr []int16, b int16) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleI32(a, incr []int32, b int32) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleI64(a, incr []int64, b int64) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleU(a, incr []uint, b uint) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleU8(a, incr []uint8, b uint8) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleU16(a, incr []uint16, b uint16) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleU32(a, incr []uint32, b uint32) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleU64(a, incr []uint64, b uint64) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleF32(a, incr []float32, b float32) error {
+	vecf32.IncrScale(a, b, incr)
+	return nil
+}
+
+func incrScaleF64(a, incr []float64, b float64) error {
+	vecf64.IncrScale(a, b, incr)
+	return nil
+}
+
+func incrScaleC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+func incrScaleC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += v * b
+	}
+	return nil
+}
+
+/* incr ScaleInv */
+
+func incrScaleInvI(a, incr []int, b int) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvI8(a, incr []int8, b int8) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int8(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvI16(a, incr []int16, b int16) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int16(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvI32(a, incr []int32, b int32) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvI64(a, incr []int64, b int64) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvU(a, incr []uint, b uint) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvU8(a, incr []uint8, b uint8) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint8(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvU16(a, incr []uint16, b uint16) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint16(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvU32(a, incr []uint32, b uint32) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvU64(a, incr []uint64, b uint64) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += v / b
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvF32(a, incr []float32, b float32) error {
+	vecf32.IncrScaleInv(a, b, incr)
+	return nil
+}
+
+func incrScaleInvF64(a, incr []float64, b float64) error {
+	vecf64.IncrScaleInv(a, b, incr)
+	return nil
+}
+
+func incrScaleInvC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += v / b
+	}
+	return nil
+}
+
+func incrScaleInvC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += v / b
+	}
+	return nil
+}
+
+/* incr ScaleInvR */
+
+func incrScaleInvRI(a, incr []int, b int) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRI8(a, incr []int8, b int8) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int8(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRI16(a, incr []int16, b int16) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int16(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRI32(a, incr []int32, b int32) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRI64(a, incr []int64, b int64) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == int64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRU(a, incr []uint, b uint) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRU8(a, incr []uint8, b uint8) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint8(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRU16(a, incr []uint16, b uint16) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint16(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRU32(a, incr []uint32, b uint32) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint32(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRU64(a, incr []uint64, b uint64) error {
+	var errs errorIndices
+	for i, v := range a {
+		if v == uint64(0) {
+			errs = append(errs, i)
+			a[i] = 0
+			continue
+		}
+
+		incr[i] += b / v
+	}
+	if errs != nil {
+		return errs
+	}
+	return nil
+}
+
+func incrScaleInvRF32(a, incr []float32, b float32) error {
+	vecf32.IncrScaleInvR(a, b, incr)
+	return nil
+}
+
+func incrScaleInvRF64(a, incr []float64, b float64) error {
+	vecf64.IncrScaleInvR(a, b, incr)
+	return nil
+}
+
+func incrScaleInvRC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += b / v
+	}
+	return nil
+}
+
+func incrScaleInvRC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += b / v
+	}
+	return nil
+}
+
+/* incr PowOf */
+
+func incrPowOfI(a, incr []int, b int) error {
+	for i, v := range a {
+		incr[i] += int(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfI8(a, incr []int8, b int8) error {
+	for i, v := range a {
+		incr[i] += int8(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfI16(a, incr []int16, b int16) error {
+	for i, v := range a {
+		incr[i] += int16(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfI32(a, incr []int32, b int32) error {
+	for i, v := range a {
+		incr[i] += int32(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfI64(a, incr []int64, b int64) error {
+	for i, v := range a {
+		incr[i] += int64(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfU(a, incr []uint, b uint) error {
+	for i, v := range a {
+		incr[i] += uint(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfU8(a, incr []uint8, b uint8) error {
+	for i, v := range a {
+		incr[i] += uint8(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfU16(a, incr []uint16, b uint16) error {
+	for i, v := range a {
+		incr[i] += uint16(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfU32(a, incr []uint32, b uint32) error {
+	for i, v := range a {
+		incr[i] += uint32(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfU64(a, incr []uint64, b uint64) error {
+	for i, v := range a {
+		incr[i] += uint64(math.Pow(float64(v), float64(b)))
+	}
+	return nil
+}
+
+func incrPowOfF32(a, incr []float32, b float32) error {
+	vecf32.IncrPowOf(a, b, incr)
+	return nil
+}
+
+func incrPowOfF64(a, incr []float64, b float64) error {
+	vecf64.IncrPowOf(a, b, incr)
+	return nil
+}
+
+func incrPowOfC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += complex64(cmplx.Pow(complex128(v), complex128(b)))
+	}
+	return nil
+}
+
+func incrPowOfC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += complex128(cmplx.Pow(complex128(v), complex128(b)))
+	}
+	return nil
+}
+
+/* incr PowOfR */
+
+func incrPowOfRI(a, incr []int, b int) error {
+	for i, v := range a {
+		incr[i] += int(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRI8(a, incr []int8, b int8) error {
+	for i, v := range a {
+		incr[i] += int8(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRI16(a, incr []int16, b int16) error {
+	for i, v := range a {
+		incr[i] += int16(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRI32(a, incr []int32, b int32) error {
+	for i, v := range a {
+		incr[i] += int32(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRI64(a, incr []int64, b int64) error {
+	for i, v := range a {
+		incr[i] += int64(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRU(a, incr []uint, b uint) error {
+	for i, v := range a {
+		incr[i] += uint(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRU8(a, incr []uint8, b uint8) error {
+	for i, v := range a {
+		incr[i] += uint8(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRU16(a, incr []uint16, b uint16) error {
+	for i, v := range a {
+		incr[i] += uint16(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRU32(a, incr []uint32, b uint32) error {
+	for i, v := range a {
+		incr[i] += uint32(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRU64(a, incr []uint64, b uint64) error {
+	for i, v := range a {
+		incr[i] += uint64(math.Pow(float64(b), float64(v)))
+	}
+	return nil
+}
+
+func incrPowOfRF32(a, incr []float32, b float32) error {
+	vecf32.IncrPowOfR(a, b, incr)
+	return nil
+}
+
+func incrPowOfRF64(a, incr []float64, b float64) error {
+	vecf64.IncrPowOfR(a, b, incr)
+	return nil
+}
+
+func incrPowOfRC64(a, incr []complex64, b complex64) error {
+	for i, v := range a {
+		incr[i] += complex64(cmplx.Pow(complex128(b), complex128(v)))
+	}
+	return nil
+}
+
+func incrPowOfRC128(a, incr []complex128, b complex128) error {
+	for i, v := range a {
+		incr[i] += complex128(cmplx.Pow(complex128(b), complex128(v)))
+	}
+	return nil
+}

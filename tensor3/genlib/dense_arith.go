@@ -247,48 +247,15 @@ const denseScalarArithRaw = `func (t *Dense) {{.OpName}}(other interface{}, opts
 
 	{{$isFunc := .IsFunc -}}
 	{{$op := .OpSymb -}}
-	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
-	{{$div := hasPrefix .OpName "Div" -}}
-	{{if or $scaleInv $div -}}var errs errorIndices
-	{{end -}}
+	{{$opName := .OpName}}
 	switch {
 	case incr:
 		switch t.t.Kind(){
 		{{range .Kinds -}}
 		{{if isNumber . -}}
 		case reflect.{{reflectKind .}}:
-			data := reuse.{{asType . | strip}}s()
-			b := other.({{asType .}})
-			for i := range data {
-				{{if or $div $scaleInv -}}
-					{{if hasPrefix .String "float" -}}
-					{{else if hasPrefix .String "complex" -}}
-					{{else -}}
-					if b == 0 {
-						errs = append(errs, i)
-						continue
-					}
-					{{end -}}
-				{{end -}}
-				data[i] += {{if $isFunc -}}
-					{{if eq $op "math.Pow" -}}
-						{{if eq .String "float32"}}
-							math32.Pow(t.get{{short .}}(i), b)
-						{{else if eq .String "float64" -}}
-							math.Pow(t.get{{short .}}(i), b)
-						{{else if eq .String "complex64" -}}
-							complex64(cmplx.Pow(complex128(t.get{{short .}}(i)), complex128(b)))
-						{{else if eq .String "complex128" -}}
-							cmplx.Pow(t.get{{short .}}(i), b)
-						{{else -}}
-							{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(b)))
-						{{end -}}
-					{{end -}}
-				{{else -}}
-					t.get{{short .}}(i) {{$op}} b
-				{{end -}}
-		}
-		retVal = reuse	
+			err = incr{{$opName}}{{short .}}(t.{{asType . | strip}}s(), reuse.{{asType . | strip}}s(), other.({{asType .}}))
+			retVal = reuse	
 		{{end -}}
 		{{end -}}
 		}
