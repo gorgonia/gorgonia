@@ -51,10 +51,13 @@ type Node struct {
 	ofInterest    bool // is this node of particular interest? (for debugging)
 }
 
-// NodeConsOpt is a function that provides construction options for any Node
+// NodeConsOpt is a function that provides construction options for any Node.
 type NodeConsOpt func(*Node)
 
-func withType(t hm.Type) NodeConsOpt {
+// WithType is a node construcion option to set a node to the specified type.
+// Types in *Node are immutable once set. If the type has already been specified in the node,
+// a check will be made to see if the both types are the same. If it isn't, it will panic.
+func WithType(t hm.Type) NodeConsOpt {
 	f := func(n *Node) {
 		if n.t == nil {
 			n.t = t
@@ -65,15 +68,28 @@ func withType(t hm.Type) NodeConsOpt {
 	return f
 }
 
-func withChildren(children Nodes) NodeConsOpt {
+// WithChildren sets the children of a node to the specified chidren.
+// This construction option does NOT check if existing children exists, and will overwrite the existing children.
+func WithChildren(children Nodes) NodeConsOpt {
 	f := func(n *Node) {
 		n.children = children
 	}
 	return f
 }
 
-func withOp(op Op) NodeConsOpt {
+// WithOp is a node construction option to set a node's Op to the specified Op.
+// `Op`s in `*Node`s are immutable once set and cannot be changed. If the node already has an Op specified
+// a check will be made to see if the provided Op and the one already specified in the `*Node` is the same -
+// do note that comparison of Ops is done using the `Hashcode()` method of Ops, and hash collisions MAY occur -
+// If both ops are different, this function will panic.
+func WithOp(op Op) NodeConsOpt {
 	f := func(n *Node) {
+		if n.op != nil {
+			if op.Hashcode() != n.op.Hashcode() {
+				panic(fmt.Sprintf("Node Ops are immutable. Cannot set op %v", op))
+			}
+			return
+		}
 		n.op = op
 		if _, ok := op.(stmtOp); ok {
 			n.isStmt = true
@@ -82,14 +98,22 @@ func withOp(op Op) NodeConsOpt {
 	return f
 }
 
-func withGraph(g *ExprGraph) NodeConsOpt {
+// In is a node construction option to set a node's graph.
+// A `*Node`'s graph is immutable. If the graph has already been set, a check will be made that the specifiec *Graph
+// and the *Graph set in *Node are the same. If they are not, the function will panic/
+func In(g *ExprGraph) NodeConsOpt {
 	f := func(n *Node) {
+		if n.g != nil {
+			if g != n.g {
+				panic(fmt.Sprintf("Node Graphs are immutable. Cannot set g %v", g))
+			}
+		}
 		n.g = g
 	}
 	return f
 }
 
-// WithName is a node creation option that gives the *Node the provided name. This is especially useful in debugging graphs.
+// WithName is a node construction option that gives the *Node the provided name. This is especially useful in debugging graphs.
 func WithName(name string) NodeConsOpt {
 	f := func(n *Node) {
 		n.name = name
@@ -97,7 +121,9 @@ func WithName(name string) NodeConsOpt {
 	return f
 }
 
-// WithValue is a node creation option that binds the value to the *Node.
+// WithValue is a node construction option that binds the value to the *Node. This function may panic if:
+//	- Gorgonia was unable to convert interface{} into a Value.
+//	- The type of the Value does not match the type of the nodes.
 func WithValue(any interface{}) NodeConsOpt {
 	v, t, _, err := anyToValue(any)
 	if err != nil {
@@ -119,7 +145,7 @@ func WithValue(any interface{}) NodeConsOpt {
 	return f
 }
 
-// WithInit is a node creation option to initialize a *Node with the InitWFn provided.
+// WithInit is a node construction option to initialize a *Node with the InitWFn provided.
 func WithInit(fn InitWFn) NodeConsOpt {
 	f := func(n *Node) {
 		dt, err := dtypeOf(n.t)
@@ -143,7 +169,8 @@ func WithInit(fn InitWFn) NodeConsOpt {
 	return f
 }
 
-// WithShape is a node creation option to initialize a *Node with a particular shape
+// WithShape is a node construction option to initialize a *Node with a particular shape.
+// This function panics if the shape's dimensions do not match the specified dimensions of the *Node.
 func WithShape(shp ...int) NodeConsOpt {
 	s := types.Shape(shp)
 	f := func(n *Node) {
@@ -160,7 +187,7 @@ func WithShape(shp ...int) NodeConsOpt {
 	return f
 }
 
-// WithGroupName is a node creation option to group a *Node within a particular group. This option is useful for debugging with graphs
+// WithGroupName is a node construction option to group a *Node within a particular group. This option is useful for debugging with graphs.
 func WithGroupName(name string) NodeConsOpt {
 	f := func(n *Node) {
 		if n.group == "" {
@@ -181,7 +208,8 @@ func newNode(opts ...NodeConsOpt) *Node {
 	return n
 }
 
-func newUniqueNode(opts ...NodeConsOpt) *Node {
+// NewUniqueNode creates a new unique node in a graph. If no graph was specified in the construction options then it will just return a graphless node.
+func NewUniqueNode(opts ...NodeConsOpt) *Node {
 	n := newNode(opts...)
 	if n.g == nil {
 		return n
@@ -266,7 +294,7 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 		return n
 	}
 
-	n2 := newNode(withGraph(g), withOp(n.op), WithName(n.name), withType(n.t))
+	n2 := newNode(In(g), WithOp(n.op), WithName(n.name), WithType(n.t))
 	if n.shape != nil {
 		n2.shape = n.shape.Clone()
 		n2.inferredShape = n.inferredShape
@@ -648,11 +676,11 @@ func (n *Node) clone(opts ...NodeConsOpt) *Node {
 		return n
 	}
 
-	nn := newNode(withChildren(n.children),
-		withType(n.t),
-		withOp(n.op),
+	nn := newNode(WithChildren(n.children),
+		WithType(n.t),
+		WithOp(n.op),
 		WithName(n.name),
-		withGraph(n.g),
+		In(n.g),
 	)
 
 	for _, opt := range opts {

@@ -47,37 +47,37 @@ func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 
 // NewScalar creates a Node representing a variable that holds a scalar value
 func NewScalar(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
-	curOpts := []NodeConsOpt{withType(t), withGraph(g), WithShape()}
+	curOpts := []NodeConsOpt{WithType(t), In(g), WithShape()}
 	curOpts = append(curOpts, opts...)
 
-	return newUniqueNode(curOpts...)
+	return NewUniqueNode(curOpts...)
 }
 
 // NewVector creates a Node representing a variable that holds a vector (nx1 matrix)
 func NewVector(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
 	tt := newTensorType(1, t)
-	curOpts := []NodeConsOpt{withType(tt), withGraph(g)}
+	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
-	return newUniqueNode(curOpts...)
+	return NewUniqueNode(curOpts...)
 }
 
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
 func NewMatrix(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
 	tt := newTensorType(2, t)
-	curOpts := []NodeConsOpt{withType(tt), withGraph(g)}
+	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
-	return newUniqueNode(curOpts...)
+	return NewUniqueNode(curOpts...)
 }
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
 func NewTensor(g *ExprGraph, t Dtype, dims int, opts ...NodeConsOpt) *Node {
 	tt := newTensorType(dims, t)
-	curOpts := []NodeConsOpt{withType(tt), withGraph(g)}
+	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
-	return newUniqueNode(curOpts...)
+	return NewUniqueNode(curOpts...)
 }
 
 // NewConstant takes in any reasonable value and makes it a constant node.
@@ -110,7 +110,7 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 		panic(fmt.Sprintf("HELP. Op: %v, t: %v", op, t))
 	}
 
-	consOpts := []NodeConsOpt{withOp(op), withType(t), WithName(name), WithShape(s...), WithValue(val)}
+	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithName(name), WithShape(s...), WithValue(val)}
 	consOpts = append(consOpts, opts...)
 	return newNode(consOpts...)
 }
@@ -129,7 +129,7 @@ func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) 
 		t = newTensorType(s.Dims(), dt)
 	}
 
-	retVal := newUniqueNode(withType(t), withOp(op), withGraph(g), WithShape(shape...))
+	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
 	return retVal
 }
 
@@ -147,7 +147,7 @@ func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...in
 		t = newTensorType(s.Dims(), dt)
 	}
 
-	retVal := newUniqueNode(withType(t), withOp(op), withGraph(g), WithShape(shape...))
+	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
 	return retVal
 }
 
@@ -168,7 +168,7 @@ func BinomialRandomNode(g *ExprGraph, dt Dtype, trials, prob float64, shape ...i
 		t = newTensorType(s.Dims(), dt)
 	}
 
-	retVal := newUniqueNode(withType(t), withOp(op), withGraph(g), WithShape(shape...))
+	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
 	return retVal
 }
 
@@ -275,7 +275,7 @@ func UnsafeLet(n *Node, be interface{}) error {
 func Set(a, b *Node) (retVal *Node) {
 	op := letOp{}
 	name := fmt.Sprintf("%v %s %v", a, op, b)
-	return newUniqueNode(withOp(op), withChildren(Nodes{a, b}), WithName(name), withGraph(a.g))
+	return NewUniqueNode(WithOp(op), WithChildren(Nodes{a, b}), WithName(name), In(a.g))
 }
 
 // Read is one of those special snowflake tumblrina *Nodes. It allows for extraction of the value of the *Node at runtime
@@ -283,7 +283,7 @@ func Set(a, b *Node) (retVal *Node) {
 func Read(n *Node, into *Value) (retVal *Node) {
 	op := readOp{into}
 	name := fmt.Sprintf("read %v into %v", n, into)
-	retVal = newUniqueNode(withOp(op), withChildren(Nodes{n}), WithName(name), withGraph(n.g))
+	retVal = NewUniqueNode(WithOp(op), WithChildren(Nodes{n}), WithName(name), In(n.g))
 	retVal.op = op // this ensures the correct pointer is written
 	retVal.name = name
 	return
