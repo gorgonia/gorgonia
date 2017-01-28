@@ -10,10 +10,10 @@ import (
 func TestNodes(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
-	n0 := newNode(withGraph(g), WithName("n0"))
-	n1 := newNode(withGraph(g), WithName("n1"))
-	n2 := newNode(withGraph(g), WithName("n2"))
-	n3 := newNode(withGraph(g), WithName("n3"))
+	n0 := newNode(In(g), WithName("n0"))
+	n1 := newNode(In(g), WithName("n1"))
+	n2 := newNode(In(g), WithName("n2"))
+	n3 := newNode(In(g), WithName("n3"))
 
 	// calculate hashcode first
 	n0h := n0.Hashcode()
@@ -53,8 +53,8 @@ func TestNodes(t *testing.T) {
 	assert.Equal(len(correct), len(inter))
 
 	t.Log("Testing difference")
-	n4 := newNode(withGraph(g))
-	n5 := newNode(withGraph(g))
+	n4 := newNode(In(g))
+	n5 := newNode(In(g))
 	set = Nodes{n3, n0, n1, n2}
 	other = Nodes{n0, n3, n4, n5}
 
@@ -100,7 +100,7 @@ n3]`,
 		t.Error("Empty list of nodes cannot be of the same graph!")
 	}
 
-	nAbnormal := newNode(withGraph(NewGraph()))
+	nAbnormal := newNode(In(NewGraph()))
 	set = Nodes{n0, n1, nAbnormal, n2}
 	if set.AllSameGraph() {
 		t.Error("One node is in a different graph! This should have returned false")

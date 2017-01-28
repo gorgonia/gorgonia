@@ -23,8 +23,8 @@ func TestInferNodeType(t *testing.T) {
 		{"+(1, 2)",
 			newEBOByType(addOpType, Float64, Float64),
 			Nodes{
-				newNode(withGraph(g), withType(Float64), WithName("a")),
-				newNode(withGraph(g), withType(Float64), WithName("b"))},
+				newNode(In(g), WithType(Float64), WithName("a")),
+				newNode(In(g), WithType(Float64), WithName("b"))},
 			Float64,
 			false},
 
@@ -32,8 +32,8 @@ func TestInferNodeType(t *testing.T) {
 		{"+(1, 2)",
 			newEBOByType(addOpType, Float64, Float32),
 			Nodes{
-				newNode(withGraph(g), withType(Float64), WithName("a")),
-				newNode(withGraph(g), withType(Float32), WithName("b"))},
+				newNode(In(g), WithType(Float64), WithName("a")),
+				newNode(In(g), WithType(Float32), WithName("b"))},
 			Float64,
 			true},
 	}
@@ -68,7 +68,7 @@ var inferTypeTests = []struct {
 	{int64(0), Int64, false},
 	{int32(0), Int32, false},
 	{true, Bool, false},
-	{newNode(withGraph(NewGraph()), withType(Float64), withOp(newEBOByType(addOpType, Float64, Float64))), Float64, false},
+	{newNode(In(NewGraph()), WithType(Float64), WithOp(newEBOByType(addOpType, Float64, Float64))), Float64, false},
 
 	{[]int{0}, nil, true},
 }
@@ -91,7 +91,7 @@ func TestInferType(t *testing.T) {
 
 	// way out there stuff
 	g := NewGraph()
-	n := newNode(withGraph(g), withOp(newEBOByType(addOpType, Float64, Float64)), withChildren(Nodes{newNode(withGraph(g), WithName("a"), withType(Float64)), newNode(withGraph(g), WithName("b"), withType(Float64))}))
+	n := newNode(In(g), WithOp(newEBOByType(addOpType, Float64, Float64)), WithChildren(Nodes{newNode(In(g), WithName("a"), WithType(Float64)), newNode(In(g), WithName("b"), WithType(Float64))}))
 	t0, err := inferType(n)
 	if err != nil {
 		t.Errorf("Special Case #1: %v", err)

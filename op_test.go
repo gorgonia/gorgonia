@@ -4,7 +4,7 @@ import "testing"
 
 func TestStupid(t *testing.T) {
 	g := NewGraph()
-	n := newNode(withType(Float64), withGraph(g))
+	n := newNode(WithType(Float64), In(g))
 	op := newElemUnaryOp(negOpType, n)
 
 	t.Logf("%p %d %s", op, op.unaryOpType(), op.ʘUnaryOperator)

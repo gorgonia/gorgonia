@@ -52,7 +52,7 @@ func newSyncPool(size int) *sync.Pool {
 // Use with caution!!!!
 func BorrowTensor(size int) *Tensor {
 	if !useTensorPool {
-		return NewTensor(WithShape(size, 1))
+		return NewTensor(WithShape(size))
 	}
 
 	poolsClosed.RLock()
