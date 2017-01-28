@@ -221,6 +221,116 @@ func allClose(a, b interface{}) bool {
 	}
 }
 
+func anyToFloat64s(x interface{}) (retVal []float64) {
+	switch xt := x.(type) {
+	case []int:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []int8:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []int16:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []int32:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []int64:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []uint:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []uint8:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []uint16:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []uint32:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []uint64:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			retVal[i] = float64(v)
+		}
+		return
+	case []float32:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			switch {
+			case math32.IsNaN(v):
+				retVal[i] = math.NaN()
+			case math32.IsInf(v, 1):
+				retVal[i] = math.Inf(1)
+			case math32.IsInf(v, -1):
+				retVal[i] = math.Inf(-1)
+			default:
+				retVal[i] = float64(v)
+			}
+		}
+		return
+	case []float64:
+		return xt
+		return
+	case []complex64:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			switch {
+			case cmplx.IsNaN(complex128(v)):
+				retVal[i] = math.NaN()
+			case cmplx.IsInf(complex128(v)):
+				retVal[i] = math.Inf(1)
+			default:
+				retVal[i] = float64(real(v))
+			}
+		}
+		return
+	case []complex128:
+		retVal = make([]float64, len(xt))
+		for i, v := range xt {
+			switch {
+			case cmplx.IsNaN(v):
+				retVal[i] = math.NaN()
+			case cmplx.IsInf(v):
+				retVal[i] = math.Inf(1)
+			default:
+				retVal[i] = real(v)
+			}
+		}
+		return
+	}
+	panic("Unreachable")
+}
+
 type QCDenseB struct {
 	*Dense
 }

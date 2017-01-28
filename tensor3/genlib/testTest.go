@@ -210,6 +210,64 @@ func allClose(a, b interface{}) bool {
 		return reflect.DeepEqual(a, b)
 	}
 }
+
+func anyToFloat64s(x interface{}) (retVal []float64) {
+	switch xt := x.(type) {
+	{{range  .Kinds -}}
+	{{if isNumber . -}}
+	case []{{asType .}}:
+		{{if eq .String "float64" -}}
+			return xt
+		{{else if eq .String "float32" -}}
+			retVal = make([]float64, len(xt))
+			for i, v := range xt {
+				switch {
+				case math32.IsNaN(v):
+					retVal[i] = math.NaN()
+				case math32.IsInf(v, 1):
+					retVal[i] = math.Inf(1)
+				case math32.IsInf(v, -1):
+					retVal[i] = math.Inf(-1)
+				default:
+					retVal[i] = float64(v)
+				}
+			}
+		{{else if eq .String "complex64" -}}
+			retVal = make([]float64, len(xt))
+			for i, v := range xt {
+				switch {
+				case cmplx.IsNaN(complex128(v)):
+					retVal[i] = math.NaN()
+				case cmplx.IsInf(complex128(v)):
+					retVal[i] = math.Inf(1)
+				default:
+					retVal[i] = float64(real(v))
+				}
+			}
+		{{else if eq .String "complex128" -}}
+			retVal = make([]float64, len(xt))
+			for i, v := range xt {
+				switch {
+				case cmplx.IsNaN(v):
+					retVal[i] = math.NaN()
+				case cmplx.IsInf(v):
+					retVal[i] = math.Inf(1)
+				default:
+					retVal[i] = real(v)
+				}
+			}
+		{{else -}}
+			retVal = make([]float64, len(xt))
+			for i, v := range xt {
+				retVal[i]=  float64(v)
+			}
+		{{end -}}
+		return
+	{{end -}}
+	{{end -}}
+	}
+	panic("Unreachable")
+}
 `
 
 const testQCRaw = `type QCDense{{short .}} struct {
