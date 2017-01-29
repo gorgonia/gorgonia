@@ -15,19 +15,22 @@ type ManyKinds struct {
 
 func main() {
 	const (
-		getSetName           = "../dense_getset.go"
-		getSetTestsName      = "../dense_getset_test.go"
-		genUtilsName         = "../genericUtils.go"
-		transposeName        = "../dense_transpose_specializations.go"
-		viewStackName        = "../dense_viewstack_specializations.go"
-		genericArithName     = "../genericArith.go"
-		genericCmpName       = "../genericCmp.go"
-		denseArithName       = "../dense_arith.go"
-		denseArithTestsName  = "../dense_arith_test.go"
-		denseCmpName         = "../dense_cmp.go"
-		denseCmpTestsName    = "../dense_cmp_test.go"
-		denseCompatName      = "../dense_compat.go"
-		denseCompatTestsName = "../dense_compat_test.go"
+		getSetName               = "../dense_getset.go"
+		getSetTestsName          = "../dense_getset_test.go"
+		genUtilsName             = "../genericUtils.go"
+		transposeName            = "../dense_transpose_specializations.go"
+		viewStackName            = "../dense_viewstack_specializations.go"
+		genericArithName         = "../genericArith.go"
+		genericCmpName           = "../genericCmp.go"
+		denseArithName           = "../dense_arith.go"
+		denseArithTestsName      = "../dense_arith_test.go"
+		denseCmpName             = "../dense_cmp.go"
+		denseCmpTestsName        = "../dense_cmp_test.go"
+		denseCompatName          = "../dense_compat.go"
+		denseCompatTestsName     = "../dense_compat_test.go"
+		genericArgMethodsName    = "../genericArgmethods.go"
+		denseArgMethodsName      = "../dense_argmethods.go"
+		denseArgMethodsTestsName = "../dense_argmethods_test.go"
 
 		testTestName = "../test_test.go"
 	)
@@ -46,6 +49,9 @@ func main() {
 	pipeline(denseCompatName, mk, compat)
 	pipeline(denseCompatTestsName, mk, testCompat)
 	pipeline(testTestName, mk, testtest)
+	pipeline(genericArgMethodsName, mk, genericArgmethods)
+	pipeline(denseArgMethodsName, mk, argmethods)
+	pipeline(denseArgMethodsTestsName, mk, argmethodsTests)
 }
 
 func makeManyKinds() *ManyKinds {

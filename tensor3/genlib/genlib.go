@@ -128,6 +128,8 @@ var funcs = template.FuncMap{
 
 	"reflectKind": reflectKind,
 	"asType":      asType,
+
+	"mathPkg": mathPkg,
 }
 
 func isParameterized(a reflect.Kind) bool {
@@ -182,6 +184,16 @@ func isOrd(a reflect.Kind) bool {
 		}
 	}
 	return false
+}
+
+func mathPkg(a reflect.Kind) string {
+	if a == reflect.Float64 {
+		return "math"
+	}
+	if a == reflect.Float32 {
+		return "math32"
+	}
+	return ""
 }
 
 func filter(a []reflect.Kind, is func(reflect.Kind) bool) (retVal []reflect.Kind) {
