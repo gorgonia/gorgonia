@@ -20,14 +20,8 @@ const argmaxRaw = `func argmax{{short .}}(a []{{asType .}}) int {
 			continue
 		}
 
-		{{if eq .String "float64" -}}
-			if math.IsNaN(v) || math.IsInf(v, 1) {
-				max = i
-				f = v
-				break
-			}
-		{{else if eq .String "float32" -}}
-			if math32.IsNaN(v) || math32.IsInf(v, 1) {
+		{{if hasPrefix .String "float" -}}
+			if {{mathPkg .}}.IsNaN(v) || {{mathPkg .}}.IsInf(v, 1) {
 				max = i
 				f = v
 				break
@@ -55,14 +49,8 @@ const argminRaw = `func argmin{{short .}}(a []{{asType .}}) int {
 
 			continue
 		}
-		{{if eq .String "float64" -}}
-			if math.IsNaN(v) || math.IsInf(v, -1) {
-				min = i
-				f = v
-				break
-			}
-		{{else if eq .String "float32" -}}
-			if math32.IsNaN(v) || math32.IsInf(v, -1) {
+		{{if hasPrefix .String "float" -}}
+			if {{mathPkg .}}.IsNaN(v) || {{mathPkg .}}.IsInf(v, -1) {
 				min = i
 				f = v
 				break

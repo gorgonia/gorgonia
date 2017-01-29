@@ -139,7 +139,7 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b {{asType .}}) {{asType .}}. Got %v instead", fn)
 		}
 
-		data := retVal.{{asType . | strip}}s()
+		data := retVal.{{sliceOf .}}
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
 				data[j] = f(data[j], t.get{{short .}}(j + start))
@@ -188,7 +188,7 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be {{asType .}}. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len() - size; start += size {
-			r := reduce{{short .}}(f, def, t.{{asType . | strip}}s()[start:start+size]...)
+			r := reduce{{short .}}(f, def, t.{{sliceOf .}}[start:start+size]...)
 			retVal.set{{short .}}(at, r)
 			at++
 		}	
@@ -231,8 +231,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.{{asType . | strip}}s()[start : start+oStride]
-			rdata := retVal.{{asType . | strip}}s()
+			tdata := t.{{sliceOf .}}[start : start+oStride]
+			rdata := retVal.{{sliceOf .}}
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -313,7 +313,7 @@ func (t *Dense) reduceS(axis int, zeroFn, oneFn, defFn interface{}) (retVal *Den
 		case reflect.{{reflectKind .}}:
 			vecvecFn := zeroFn.(func(a, b []{{asType .}}))
 			for i := 0; i < size - 1 ; i++ {
-				vecvecFn(retVal.{{asType . | strip }}s(), t.{{asType . | strip}}s()[start: start+split])
+				vecvecFn(retVal.{{asType . | strip }}s(), t.{{sliceOf .}}[start: start+split])
 				start += split
 			}
 		{{end -}}
@@ -328,7 +328,7 @@ func (t *Dense) reduceS(axis int, zeroFn, oneFn, defFn interface{}) (retVal *Den
 		case reflect.{{reflectKind .}}:
 			lastFn := oneFn.(func([]{{asType .}}) {{asType .}})
 			for start := 0; start < t.len() - size; start += size {
-				retVal.set{{short .}}(at, lastFn(t.{{asType . | strip}}s()[start: start+size]))
+				retVal.set{{short .}}(at, lastFn(t.{{sliceOf .}}[start: start+size]))
 				at++
 			}
 		{{end -}}
@@ -346,8 +346,8 @@ func (t *Dense) reduceS(axis int, zeroFn, oneFn, defFn interface{}) (retVal *Den
 			def := defFn.(func(a, b {{asType .}}) {{asType .}} )
 			for i := 0; i < outerSize; i++ {
 				start := i * outerStride
-				tdata := t.{{asType . | strip}}s()[start : start+outerStride]
-				rdata := retVal.{{asType . | strip}}s()
+				tdata := t.{{sliceOf .}}[start : start+outerStride]
+				rdata := retVal.{{sliceOf .}}
 				var innerStart, strideTrack int
 				for j := 0; j < expected; j++ {
 					for k := 0; k < size; k++ {

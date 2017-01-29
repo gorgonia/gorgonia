@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-const genericVecVecArithRaw = `func {{lower .OpName}}{{short .Kind}}(a, b []{{asType .Kind}}) error {
+const genericVecVecArithRaw = `func vec{{.OpName}}{{short .Kind}}(a, b []{{asType .Kind}}) error {
 	if len(a) != len(b){
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}

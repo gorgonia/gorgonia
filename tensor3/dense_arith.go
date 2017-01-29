@@ -186,33 +186,33 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 func (t *Dense) add(other *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		addI(t.ints(), other.ints())
+		vecAddI(t.ints(), other.ints())
 	case reflect.Int8:
-		addI8(t.int8s(), other.int8s())
+		vecAddI8(t.int8s(), other.int8s())
 	case reflect.Int16:
-		addI16(t.int16s(), other.int16s())
+		vecAddI16(t.int16s(), other.int16s())
 	case reflect.Int32:
-		addI32(t.int32s(), other.int32s())
+		vecAddI32(t.int32s(), other.int32s())
 	case reflect.Int64:
-		addI64(t.int64s(), other.int64s())
+		vecAddI64(t.int64s(), other.int64s())
 	case reflect.Uint:
-		addU(t.uints(), other.uints())
+		vecAddU(t.uints(), other.uints())
 	case reflect.Uint8:
-		addU8(t.uint8s(), other.uint8s())
+		vecAddU8(t.uint8s(), other.uint8s())
 	case reflect.Uint16:
-		addU16(t.uint16s(), other.uint16s())
+		vecAddU16(t.uint16s(), other.uint16s())
 	case reflect.Uint32:
-		addU32(t.uint32s(), other.uint32s())
+		vecAddU32(t.uint32s(), other.uint32s())
 	case reflect.Uint64:
-		addU64(t.uint64s(), other.uint64s())
+		vecAddU64(t.uint64s(), other.uint64s())
 	case reflect.Float32:
-		addF32(t.float32s(), other.float32s())
+		vecAddF32(t.float32s(), other.float32s())
 	case reflect.Float64:
-		addF64(t.float64s(), other.float64s())
+		vecAddF64(t.float64s(), other.float64s())
 	case reflect.Complex64:
-		addC64(t.complex64s(), other.complex64s())
+		vecAddC64(t.complex64s(), other.complex64s())
 	case reflect.Complex128:
-		addC128(t.complex128s(), other.complex128s())
+		vecAddC128(t.complex128s(), other.complex128s())
 	}
 }
 
@@ -317,33 +317,33 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 func (t *Dense) sub(other *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		subI(t.ints(), other.ints())
+		vecSubI(t.ints(), other.ints())
 	case reflect.Int8:
-		subI8(t.int8s(), other.int8s())
+		vecSubI8(t.int8s(), other.int8s())
 	case reflect.Int16:
-		subI16(t.int16s(), other.int16s())
+		vecSubI16(t.int16s(), other.int16s())
 	case reflect.Int32:
-		subI32(t.int32s(), other.int32s())
+		vecSubI32(t.int32s(), other.int32s())
 	case reflect.Int64:
-		subI64(t.int64s(), other.int64s())
+		vecSubI64(t.int64s(), other.int64s())
 	case reflect.Uint:
-		subU(t.uints(), other.uints())
+		vecSubU(t.uints(), other.uints())
 	case reflect.Uint8:
-		subU8(t.uint8s(), other.uint8s())
+		vecSubU8(t.uint8s(), other.uint8s())
 	case reflect.Uint16:
-		subU16(t.uint16s(), other.uint16s())
+		vecSubU16(t.uint16s(), other.uint16s())
 	case reflect.Uint32:
-		subU32(t.uint32s(), other.uint32s())
+		vecSubU32(t.uint32s(), other.uint32s())
 	case reflect.Uint64:
-		subU64(t.uint64s(), other.uint64s())
+		vecSubU64(t.uint64s(), other.uint64s())
 	case reflect.Float32:
-		subF32(t.float32s(), other.float32s())
+		vecSubF32(t.float32s(), other.float32s())
 	case reflect.Float64:
-		subF64(t.float64s(), other.float64s())
+		vecSubF64(t.float64s(), other.float64s())
 	case reflect.Complex64:
-		subC64(t.complex64s(), other.complex64s())
+		vecSubC64(t.complex64s(), other.complex64s())
 	case reflect.Complex128:
-		subC128(t.complex128s(), other.complex128s())
+		vecSubC128(t.complex128s(), other.complex128s())
 	}
 }
 
@@ -448,33 +448,33 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 func (t *Dense) mul(other *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		mulI(t.ints(), other.ints())
+		vecMulI(t.ints(), other.ints())
 	case reflect.Int8:
-		mulI8(t.int8s(), other.int8s())
+		vecMulI8(t.int8s(), other.int8s())
 	case reflect.Int16:
-		mulI16(t.int16s(), other.int16s())
+		vecMulI16(t.int16s(), other.int16s())
 	case reflect.Int32:
-		mulI32(t.int32s(), other.int32s())
+		vecMulI32(t.int32s(), other.int32s())
 	case reflect.Int64:
-		mulI64(t.int64s(), other.int64s())
+		vecMulI64(t.int64s(), other.int64s())
 	case reflect.Uint:
-		mulU(t.uints(), other.uints())
+		vecMulU(t.uints(), other.uints())
 	case reflect.Uint8:
-		mulU8(t.uint8s(), other.uint8s())
+		vecMulU8(t.uint8s(), other.uint8s())
 	case reflect.Uint16:
-		mulU16(t.uint16s(), other.uint16s())
+		vecMulU16(t.uint16s(), other.uint16s())
 	case reflect.Uint32:
-		mulU32(t.uint32s(), other.uint32s())
+		vecMulU32(t.uint32s(), other.uint32s())
 	case reflect.Uint64:
-		mulU64(t.uint64s(), other.uint64s())
+		vecMulU64(t.uint64s(), other.uint64s())
 	case reflect.Float32:
-		mulF32(t.float32s(), other.float32s())
+		vecMulF32(t.float32s(), other.float32s())
 	case reflect.Float64:
-		mulF64(t.float64s(), other.float64s())
+		vecMulF64(t.float64s(), other.float64s())
 	case reflect.Complex64:
-		mulC64(t.complex64s(), other.complex64s())
+		vecMulC64(t.complex64s(), other.complex64s())
 	case reflect.Complex128:
-		mulC128(t.complex128s(), other.complex128s())
+		vecMulC128(t.complex128s(), other.complex128s())
 	}
 }
 
@@ -623,33 +623,33 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 func (t *Dense) div(other *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		divI(t.ints(), other.ints())
+		vecDivI(t.ints(), other.ints())
 	case reflect.Int8:
-		divI8(t.int8s(), other.int8s())
+		vecDivI8(t.int8s(), other.int8s())
 	case reflect.Int16:
-		divI16(t.int16s(), other.int16s())
+		vecDivI16(t.int16s(), other.int16s())
 	case reflect.Int32:
-		divI32(t.int32s(), other.int32s())
+		vecDivI32(t.int32s(), other.int32s())
 	case reflect.Int64:
-		divI64(t.int64s(), other.int64s())
+		vecDivI64(t.int64s(), other.int64s())
 	case reflect.Uint:
-		divU(t.uints(), other.uints())
+		vecDivU(t.uints(), other.uints())
 	case reflect.Uint8:
-		divU8(t.uint8s(), other.uint8s())
+		vecDivU8(t.uint8s(), other.uint8s())
 	case reflect.Uint16:
-		divU16(t.uint16s(), other.uint16s())
+		vecDivU16(t.uint16s(), other.uint16s())
 	case reflect.Uint32:
-		divU32(t.uint32s(), other.uint32s())
+		vecDivU32(t.uint32s(), other.uint32s())
 	case reflect.Uint64:
-		divU64(t.uint64s(), other.uint64s())
+		vecDivU64(t.uint64s(), other.uint64s())
 	case reflect.Float32:
-		divF32(t.float32s(), other.float32s())
+		vecDivF32(t.float32s(), other.float32s())
 	case reflect.Float64:
-		divF64(t.float64s(), other.float64s())
+		vecDivF64(t.float64s(), other.float64s())
 	case reflect.Complex64:
-		divC64(t.complex64s(), other.complex64s())
+		vecDivC64(t.complex64s(), other.complex64s())
 	case reflect.Complex128:
-		divC128(t.complex128s(), other.complex128s())
+		vecDivC128(t.complex128s(), other.complex128s())
 	}
 }
 
@@ -755,33 +755,33 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 func (t *Dense) pow(other *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		powI(t.ints(), other.ints())
+		vecPowI(t.ints(), other.ints())
 	case reflect.Int8:
-		powI8(t.int8s(), other.int8s())
+		vecPowI8(t.int8s(), other.int8s())
 	case reflect.Int16:
-		powI16(t.int16s(), other.int16s())
+		vecPowI16(t.int16s(), other.int16s())
 	case reflect.Int32:
-		powI32(t.int32s(), other.int32s())
+		vecPowI32(t.int32s(), other.int32s())
 	case reflect.Int64:
-		powI64(t.int64s(), other.int64s())
+		vecPowI64(t.int64s(), other.int64s())
 	case reflect.Uint:
-		powU(t.uints(), other.uints())
+		vecPowU(t.uints(), other.uints())
 	case reflect.Uint8:
-		powU8(t.uint8s(), other.uint8s())
+		vecPowU8(t.uint8s(), other.uint8s())
 	case reflect.Uint16:
-		powU16(t.uint16s(), other.uint16s())
+		vecPowU16(t.uint16s(), other.uint16s())
 	case reflect.Uint32:
-		powU32(t.uint32s(), other.uint32s())
+		vecPowU32(t.uint32s(), other.uint32s())
 	case reflect.Uint64:
-		powU64(t.uint64s(), other.uint64s())
+		vecPowU64(t.uint64s(), other.uint64s())
 	case reflect.Float32:
-		powF32(t.float32s(), other.float32s())
+		vecPowF32(t.float32s(), other.float32s())
 	case reflect.Float64:
-		powF64(t.float64s(), other.float64s())
+		vecPowF64(t.float64s(), other.float64s())
 	case reflect.Complex64:
-		powC64(t.complex64s(), other.complex64s())
+		vecPowC64(t.complex64s(), other.complex64s())
 	case reflect.Complex128:
-		powC128(t.complex128s(), other.complex128s())
+		vecPowC128(t.complex128s(), other.complex128s())
 	}
 }
 

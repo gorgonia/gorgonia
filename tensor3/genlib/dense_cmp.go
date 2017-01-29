@@ -78,8 +78,8 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 
 		{{if or $eeq $ord -}}
 	case reflect.{{reflectKind .}}:
-		td := t.{{asType . | strip}}s()
-		od := other.{{asType . | strip}}s()
+		td := t.{{sliceOf .}}
+		od := other.{{sliceOf .}}
 			{{if isNumber . -}}
 				if same {
 					ret := {{lower $op}}DDSame{{short .}}(td, od)

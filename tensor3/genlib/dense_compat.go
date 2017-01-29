@@ -119,7 +119,7 @@ func convToFloat64s(t *Dense) (retVal []float64){
 				}
 			}
 		{{else -}}
-			for i, v := range t.{{asType . | strip}}s() {
+			for i, v := range t.{{sliceOf .}} {
 				retVal[i]=  float64(v)
 			}
 		{{end -}}

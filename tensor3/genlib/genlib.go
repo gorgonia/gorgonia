@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"text/template"
@@ -128,6 +129,7 @@ var funcs = template.FuncMap{
 
 	"reflectKind": reflectKind,
 	"asType":      asType,
+	"sliceOf":     sliceOf,
 
 	"mathPkg": mathPkg,
 }
@@ -256,4 +258,9 @@ func reflectKind(a reflect.Kind) string {
 
 func asType(a reflect.Kind) string {
 	return clean(a.String())
+}
+
+func sliceOf(a reflect.Kind) string {
+	s := fmt.Sprintf("%ss()", a)
+	return strip(clean(s))
 }

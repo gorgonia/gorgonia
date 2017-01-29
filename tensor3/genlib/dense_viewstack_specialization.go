@@ -7,14 +7,14 @@ import (
 )
 
 const doviewstackSpecialRaw = `func (t *Dense) doViewStack{{short .}}(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int){
-	data := retVal.{{asType . | strip}}s()[:0]
+	data := retVal.{{sliceOf .}}[:0]
 	for i := 0; i < batches; i++ {
 		for j := 0; j < axisStride; j++ {
 			id, ok := <-ch
 			if !ok {
 				break
 			}
-			data = append(data, t.{{asType . | strip}}s()[id])
+			data = append(data, t.{{sliceOf .}}[id])
 		}
 		for j, ot := range others {
 			for k := 0; k < axisStride; k++ {
@@ -22,7 +22,7 @@ const doviewstackSpecialRaw = `func (t *Dense) doViewStack{{short .}}(retVal *De
 				if !ok {
 					break
 				}
-				data = append(data, ot.{{asType . | strip}}s()[id])
+				data = append(data, ot.{{sliceOf .}}[id])
 			}
 		}
 	}

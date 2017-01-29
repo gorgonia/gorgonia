@@ -69,7 +69,7 @@ func (t *Dense) {{lower .ArgName}}(it *FlatIterator) (retVal *Dense, err error) 
 		{{else -}}
 		case reflect.{{reflectKind .}}:
 			if it == nil {
-				retVal = New(FromScalar({{lower $arg}}{{short .}}(t.{{asType . | strip}}s())))
+				retVal = New(FromScalar({{lower $arg}}{{short .}}(t.{{sliceOf .}})))
 				return
 			}
 			data := t.{{asType . | strip }}s()

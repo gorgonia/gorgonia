@@ -8,7 +8,7 @@ import (
 
 const asSliceRaw = `func (t *Dense) {{asType . | strip }}s() []{{asType .}} { return *(*[]{{asType .}})(unsafe.Pointer(t.hdr)) }
 `
-const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{asType .}}) { t.{{asType . | strip}}s()[i] = x }
+const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{asType .}}) { t.{{sliceOf .}}[i] = x }
 `
 const getBasicRaw = `func (t *Dense) get{{short .}}(i int) {{asType .}} { return t.{{lower .String | clean | strip }}s()[i]}
 `
@@ -62,7 +62,7 @@ const memsetRaw = `func (t *Dense) Memset(x interface{}) error {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.{{asType . | strip}}s()
+		data := t.{{sliceOf .}}
 		for i := range data{
 			data[i] = xv
 		}
@@ -89,7 +89,7 @@ const zeroRaw = `func (t *Dense) Zero() {
 		{{if isParameterized . -}}
 		{{else -}}
 	case reflect.{{reflectKind .}}:
-		data := t.{{asType . | strip}}s()
+		data := t.{{sliceOf .}}
 		for i := range data {
 			data[i] = {{if eq .String "bool" -}}
 				false
@@ -137,7 +137,7 @@ const copyRaw = `func copyDense(dest, src *Dense) int {
 		{{if isParameterized .}}
 		{{else -}}
 	case reflect.{{reflectKind .}}:
-		return copy(dest.{{asType . | strip}}s(), src.{{asType . | strip}}s())
+		return copy(dest.{{sliceOf .}}, src.{{sliceOf .}})
 		{{end -}}
 	{{end -}}
 	default:
@@ -157,7 +157,7 @@ const copySlicedRaw = `func copySliced(dest *Dense, dstart, dend int, src *Dense
 		{{if isParameterized .}}
 		{{else -}}
 	case reflect.{{reflectKind .}}:
-		return copy(dest.{{asType . | strip}}s()[dstart:dend], src.{{asType . | strip}}s()[sstart:send])
+		return copy(dest.{{sliceOf .}}[dstart:dend], src.{{sliceOf .}}[sstart:send])
 		{{end -}}
 	{{end -}}
 	default:
@@ -224,7 +224,7 @@ func (t *Dense) slice(start, end int) {
 		{{if isParameterized .}}
 		{{else -}}
 	case reflect.{{reflectKind .}}:
-		data := t.{{asType . | strip}}s()[start:end]
+		data := t.{{sliceOf .}}[start:end]
 		t.fromSlice(data)
 		{{end -}}
 	{{end -}}

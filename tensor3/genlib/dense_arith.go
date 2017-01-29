@@ -171,7 +171,7 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 		{{range .Kinds -}}
 			{{if isNumber . -}}
 		case reflect.{{reflectKind .}}:
-			data := reuse.{{asType . | strip}}s()
+			data := reuse.{{sliceOf .}}
 			for i := range data {
 				{{if or $div $scaleInv -}}
 					{{if hasPrefix .String "float" -}}
@@ -232,7 +232,7 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 	{{range .Kinds -}}
 		{{if isNumber . -}}
 	case reflect.{{reflectKind .}}:
-		{{lower $op}}{{short .}}(t.{{asType . | strip}}s(), other.{{asType . | strip}}s())
+		vec{{$op}}{{short .}}(t.{{sliceOf .}}, other.{{sliceOf .}})
 		{{end -}}
 	{{end -}}
 	}
@@ -254,7 +254,7 @@ const denseScalarArithRaw = `func (t *Dense) {{.OpName}}(other interface{}, opts
 		{{range .Kinds -}}
 		{{if isNumber . -}}
 		case reflect.{{reflectKind .}}:
-			err = incr{{$opName}}{{short .}}(t.{{asType . | strip}}s(), reuse.{{asType . | strip}}s(), other.({{asType .}}))
+			err = incr{{$opName}}{{short .}}(t.{{sliceOf .}}, reuse.{{sliceOf .}}, other.({{asType .}}))
 			retVal = reuse	
 		{{end -}}
 		{{end -}}
@@ -282,7 +282,7 @@ const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other 
 		{{if isNumber . -}}
 	case reflect.{{reflectKind .}}:
 		b := other.({{asType .}})
-		{{lower $op}}{{short .}}(t.{{asType . | strip}}s(), b)
+		{{lower $op}}{{short .}}(t.{{sliceOf .}}, b)
 		{{end -}}
 		
 	{{end -}}

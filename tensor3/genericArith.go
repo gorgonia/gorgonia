@@ -15,7 +15,7 @@ GENERATED FILE. DO NOT EDIT
 
 /* Add */
 
-func addI(a, b []int) error {
+func vecAddI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -27,7 +27,7 @@ func addI(a, b []int) error {
 	return nil
 }
 
-func addI8(a, b []int8) error {
+func vecAddI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -39,7 +39,7 @@ func addI8(a, b []int8) error {
 	return nil
 }
 
-func addI16(a, b []int16) error {
+func vecAddI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -51,7 +51,7 @@ func addI16(a, b []int16) error {
 	return nil
 }
 
-func addI32(a, b []int32) error {
+func vecAddI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -63,7 +63,7 @@ func addI32(a, b []int32) error {
 	return nil
 }
 
-func addI64(a, b []int64) error {
+func vecAddI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -75,7 +75,7 @@ func addI64(a, b []int64) error {
 	return nil
 }
 
-func addU(a, b []uint) error {
+func vecAddU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -87,7 +87,7 @@ func addU(a, b []uint) error {
 	return nil
 }
 
-func addU8(a, b []uint8) error {
+func vecAddU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -99,7 +99,7 @@ func addU8(a, b []uint8) error {
 	return nil
 }
 
-func addU16(a, b []uint16) error {
+func vecAddU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -111,7 +111,7 @@ func addU16(a, b []uint16) error {
 	return nil
 }
 
-func addU32(a, b []uint32) error {
+func vecAddU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -123,7 +123,7 @@ func addU32(a, b []uint32) error {
 	return nil
 }
 
-func addU64(a, b []uint64) error {
+func vecAddU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -135,7 +135,7 @@ func addU64(a, b []uint64) error {
 	return nil
 }
 
-func addF32(a, b []float32) error {
+func vecAddF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -144,7 +144,7 @@ func addF32(a, b []float32) error {
 	return nil
 }
 
-func addF64(a, b []float64) error {
+func vecAddF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -153,7 +153,7 @@ func addF64(a, b []float64) error {
 	return nil
 }
 
-func addC64(a, b []complex64) error {
+func vecAddC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -164,7 +164,7 @@ func addC64(a, b []complex64) error {
 	return nil
 }
 
-func addC128(a, b []complex128) error {
+func vecAddC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -177,7 +177,7 @@ func addC128(a, b []complex128) error {
 
 /* Sub */
 
-func subI(a, b []int) error {
+func vecSubI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -189,7 +189,7 @@ func subI(a, b []int) error {
 	return nil
 }
 
-func subI8(a, b []int8) error {
+func vecSubI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -201,7 +201,7 @@ func subI8(a, b []int8) error {
 	return nil
 }
 
-func subI16(a, b []int16) error {
+func vecSubI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -213,7 +213,7 @@ func subI16(a, b []int16) error {
 	return nil
 }
 
-func subI32(a, b []int32) error {
+func vecSubI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -225,7 +225,7 @@ func subI32(a, b []int32) error {
 	return nil
 }
 
-func subI64(a, b []int64) error {
+func vecSubI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -237,7 +237,7 @@ func subI64(a, b []int64) error {
 	return nil
 }
 
-func subU(a, b []uint) error {
+func vecSubU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -249,7 +249,7 @@ func subU(a, b []uint) error {
 	return nil
 }
 
-func subU8(a, b []uint8) error {
+func vecSubU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -261,7 +261,7 @@ func subU8(a, b []uint8) error {
 	return nil
 }
 
-func subU16(a, b []uint16) error {
+func vecSubU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -273,7 +273,7 @@ func subU16(a, b []uint16) error {
 	return nil
 }
 
-func subU32(a, b []uint32) error {
+func vecSubU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -285,7 +285,7 @@ func subU32(a, b []uint32) error {
 	return nil
 }
 
-func subU64(a, b []uint64) error {
+func vecSubU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -297,7 +297,7 @@ func subU64(a, b []uint64) error {
 	return nil
 }
 
-func subF32(a, b []float32) error {
+func vecSubF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -306,7 +306,7 @@ func subF32(a, b []float32) error {
 	return nil
 }
 
-func subF64(a, b []float64) error {
+func vecSubF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -315,7 +315,7 @@ func subF64(a, b []float64) error {
 	return nil
 }
 
-func subC64(a, b []complex64) error {
+func vecSubC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -326,7 +326,7 @@ func subC64(a, b []complex64) error {
 	return nil
 }
 
-func subC128(a, b []complex128) error {
+func vecSubC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -339,7 +339,7 @@ func subC128(a, b []complex128) error {
 
 /* Mul */
 
-func mulI(a, b []int) error {
+func vecMulI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -351,7 +351,7 @@ func mulI(a, b []int) error {
 	return nil
 }
 
-func mulI8(a, b []int8) error {
+func vecMulI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -363,7 +363,7 @@ func mulI8(a, b []int8) error {
 	return nil
 }
 
-func mulI16(a, b []int16) error {
+func vecMulI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -375,7 +375,7 @@ func mulI16(a, b []int16) error {
 	return nil
 }
 
-func mulI32(a, b []int32) error {
+func vecMulI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -387,7 +387,7 @@ func mulI32(a, b []int32) error {
 	return nil
 }
 
-func mulI64(a, b []int64) error {
+func vecMulI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -399,7 +399,7 @@ func mulI64(a, b []int64) error {
 	return nil
 }
 
-func mulU(a, b []uint) error {
+func vecMulU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -411,7 +411,7 @@ func mulU(a, b []uint) error {
 	return nil
 }
 
-func mulU8(a, b []uint8) error {
+func vecMulU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -423,7 +423,7 @@ func mulU8(a, b []uint8) error {
 	return nil
 }
 
-func mulU16(a, b []uint16) error {
+func vecMulU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -435,7 +435,7 @@ func mulU16(a, b []uint16) error {
 	return nil
 }
 
-func mulU32(a, b []uint32) error {
+func vecMulU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -447,7 +447,7 @@ func mulU32(a, b []uint32) error {
 	return nil
 }
 
-func mulU64(a, b []uint64) error {
+func vecMulU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -459,7 +459,7 @@ func mulU64(a, b []uint64) error {
 	return nil
 }
 
-func mulF32(a, b []float32) error {
+func vecMulF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -468,7 +468,7 @@ func mulF32(a, b []float32) error {
 	return nil
 }
 
-func mulF64(a, b []float64) error {
+func vecMulF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -477,7 +477,7 @@ func mulF64(a, b []float64) error {
 	return nil
 }
 
-func mulC64(a, b []complex64) error {
+func vecMulC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -488,7 +488,7 @@ func mulC64(a, b []complex64) error {
 	return nil
 }
 
-func mulC128(a, b []complex128) error {
+func vecMulC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -501,7 +501,7 @@ func mulC128(a, b []complex128) error {
 
 /* Div */
 
-func divI(a, b []int) error {
+func vecDivI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -523,7 +523,7 @@ func divI(a, b []int) error {
 	return nil
 }
 
-func divI8(a, b []int8) error {
+func vecDivI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -545,7 +545,7 @@ func divI8(a, b []int8) error {
 	return nil
 }
 
-func divI16(a, b []int16) error {
+func vecDivI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -567,7 +567,7 @@ func divI16(a, b []int16) error {
 	return nil
 }
 
-func divI32(a, b []int32) error {
+func vecDivI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -589,7 +589,7 @@ func divI32(a, b []int32) error {
 	return nil
 }
 
-func divI64(a, b []int64) error {
+func vecDivI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -611,7 +611,7 @@ func divI64(a, b []int64) error {
 	return nil
 }
 
-func divU(a, b []uint) error {
+func vecDivU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -633,7 +633,7 @@ func divU(a, b []uint) error {
 	return nil
 }
 
-func divU8(a, b []uint8) error {
+func vecDivU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -655,7 +655,7 @@ func divU8(a, b []uint8) error {
 	return nil
 }
 
-func divU16(a, b []uint16) error {
+func vecDivU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -677,7 +677,7 @@ func divU16(a, b []uint16) error {
 	return nil
 }
 
-func divU32(a, b []uint32) error {
+func vecDivU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -699,7 +699,7 @@ func divU32(a, b []uint32) error {
 	return nil
 }
 
-func divU64(a, b []uint64) error {
+func vecDivU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -721,7 +721,7 @@ func divU64(a, b []uint64) error {
 	return nil
 }
 
-func divF32(a, b []float32) error {
+func vecDivF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -730,7 +730,7 @@ func divF32(a, b []float32) error {
 	return nil
 }
 
-func divF64(a, b []float64) error {
+func vecDivF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -739,7 +739,7 @@ func divF64(a, b []float64) error {
 	return nil
 }
 
-func divC64(a, b []complex64) error {
+func vecDivC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -750,7 +750,7 @@ func divC64(a, b []complex64) error {
 	return nil
 }
 
-func divC128(a, b []complex128) error {
+func vecDivC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -763,7 +763,7 @@ func divC128(a, b []complex128) error {
 
 /* Pow */
 
-func powI(a, b []int) error {
+func vecPowI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -775,7 +775,7 @@ func powI(a, b []int) error {
 	return nil
 }
 
-func powI8(a, b []int8) error {
+func vecPowI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -787,7 +787,7 @@ func powI8(a, b []int8) error {
 	return nil
 }
 
-func powI16(a, b []int16) error {
+func vecPowI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -799,7 +799,7 @@ func powI16(a, b []int16) error {
 	return nil
 }
 
-func powI32(a, b []int32) error {
+func vecPowI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -811,7 +811,7 @@ func powI32(a, b []int32) error {
 	return nil
 }
 
-func powI64(a, b []int64) error {
+func vecPowI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -823,7 +823,7 @@ func powI64(a, b []int64) error {
 	return nil
 }
 
-func powU(a, b []uint) error {
+func vecPowU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -835,7 +835,7 @@ func powU(a, b []uint) error {
 	return nil
 }
 
-func powU8(a, b []uint8) error {
+func vecPowU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -847,7 +847,7 @@ func powU8(a, b []uint8) error {
 	return nil
 }
 
-func powU16(a, b []uint16) error {
+func vecPowU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -859,7 +859,7 @@ func powU16(a, b []uint16) error {
 	return nil
 }
 
-func powU32(a, b []uint32) error {
+func vecPowU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -871,7 +871,7 @@ func powU32(a, b []uint32) error {
 	return nil
 }
 
-func powU64(a, b []uint64) error {
+func vecPowU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -883,7 +883,7 @@ func powU64(a, b []uint64) error {
 	return nil
 }
 
-func powF32(a, b []float32) error {
+func vecPowF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -892,7 +892,7 @@ func powF32(a, b []float32) error {
 	return nil
 }
 
-func powF64(a, b []float64) error {
+func vecPowF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -901,7 +901,7 @@ func powF64(a, b []float64) error {
 	return nil
 }
 
-func powC64(a, b []complex64) error {
+func vecPowC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
@@ -912,7 +912,7 @@ func powC64(a, b []complex64) error {
 	return nil
 }
 
-func powC128(a, b []complex128) error {
+func vecPowC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
