@@ -89,7 +89,7 @@ const argminCorrect = `var argminCorrect = []struct {
 	{Shape{2,3,5,2}, []int{
 		0, 1, 0, 2, 2, 1, 3, 2, 3, 2, 1, 0, 3, 3, 0, 1, 0, 3, 0, 2, 0, 1, 0,
 		1, 3, 0, 2, 1, 0, 0, 3, 1, 3, 1, 2, 2, 1, 2, 0, 1, 3, 0, 1, 0, 1, 0,
-		2, 1, 0, 3, 0, 2, 0, 0, 0, 1, 0, 1, 1, 
+		2, 1, 0, 3, 0, 2, 0, 0, 0, 1, 0, 1, 1, 1,
 	}},
 	{Shape{2,3,4,2}, []int{
 		1, 0, 0, 0, 2, 3, 4, 0, 3, 0, 3, 0, 4, 4, 3, 1, 0, 2, 3, 0, 3, 0, 0,
@@ -108,8 +108,9 @@ const argminCorrect = `var argminCorrect = []struct {
 `
 
 type ArgMethodTest struct {
-	Kind      reflect.Kind
-	ArgMethod string
+	Kind       reflect.Kind
+	ArgMethod  string
+	ArgAllAxes int
 }
 
 const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t *testing.T){
@@ -132,7 +133,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 		return
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
-	assert.Equal(7, {{.ArgMethod}}.ScalarValue())
+	assert.Equal({{.ArgAllAxes}}, {{.ArgMethod}}.ScalarValue())
 
 	{{if hasPrefix .Kind.String "float" -}}
 	// test with NaN
@@ -141,7 +142,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 		t.Errorf("Failed test with NaN", err)
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
-	assert.Equal(2, {{.ArgMethod}}.ScalarValue())
+	assert.Equal(2, {{.ArgMethod}}.ScalarValue(), "NaN test")
 
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}.Inf(1),4}))
@@ -149,7 +150,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 		t.Errorf("Failed test with +Inf", err)
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
-	assert.Equal(2, {{.ArgMethod}}.ScalarValue())
+	assert.Equal({{if eq .ArgMethod "argmax"}}2{{else}}0{{end}}, {{.ArgMethod}}.ScalarValue(), "+Inf test")
 
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}.Inf(-1),4 }))
@@ -157,7 +158,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 		t.Errorf("Failed test with -Inf", err)
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
-	assert.Equal(2, {{.ArgMethod}}.ScalarValue())
+	assert.Equal({{if eq .ArgMethod "argmin"}}2{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "-Inf test")
 	{{end -}}
 
 	// idiotsville
@@ -188,9 +189,9 @@ func argmethodsTests(f io.Writer, generic *ManyKinds) {
 	fmt.Fprintf(f, "\n%s\n%s\n", argmaxCorrect, argminCorrect)
 	for _, k := range generic.Kinds {
 		if isNumber(k) && isOrd(k) {
-			op := ArgMethodTest{k, "argmax"}
+			op := ArgMethodTest{k, "argmax", 7}
 			testArgMethods.Execute(f, op)
-			op = ArgMethodTest{k, "argmin"}
+			op = ArgMethodTest{k, "argmin", 11}
 			testArgMethods.Execute(f, op)
 		}
 	}

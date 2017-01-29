@@ -25,7 +25,6 @@ func argminI(a []int) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -71,7 +70,6 @@ func argminI8(a []int8) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -117,7 +115,6 @@ func argminI16(a []int16) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -163,7 +160,6 @@ func argminI32(a []int32) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -209,7 +205,6 @@ func argminI64(a []int64) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -255,7 +250,6 @@ func argminU(a []uint) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -301,7 +295,6 @@ func argminU8(a []uint8) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -347,7 +340,6 @@ func argminU16(a []uint16) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -393,7 +385,6 @@ func argminU32(a []uint32) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -439,7 +430,6 @@ func argminU64(a []uint64) int {
 
 			continue
 		}
-
 		if v < f {
 			min = i
 			f = v
@@ -485,7 +475,6 @@ func argminF32(a []float32) int {
 
 			continue
 		}
-
 		if math32.IsNaN(v) || math32.IsInf(v, -1) {
 			min = i
 			f = v
@@ -541,7 +530,6 @@ func argminF64(a []float64) int {
 
 			continue
 		}
-
 		if math.IsNaN(v) || math.IsInf(v, -1) {
 			min = i
 			f = v

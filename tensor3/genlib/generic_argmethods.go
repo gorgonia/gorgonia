@@ -55,7 +55,6 @@ const argminRaw = `func argmin{{short .}}(a []{{asType .}}) int {
 
 			continue
 		}
-
 		{{if eq .String "float64" -}}
 			if math.IsNaN(v) || math.IsInf(v, -1) {
 				min = i
