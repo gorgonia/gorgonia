@@ -240,3 +240,18 @@ func (t *Dense) ostrides() []int {
 	}
 	return t.Strides()
 }
+
+// Shallow clone clones the *Dense without making a copy of the underlying array
+func (t *Dense) shallowClone() *Dense {
+	retVal := new(Dense)
+	retVal.AP = t.AP.Clone()
+	retVal.data = t.data
+	retVal.v = t.v
+	retVal.t = t.t
+	retVal.hdr = &reflect.SliceHeader{
+		Data: t.hdr.Data,
+		Len:  t.hdr.Len,
+		Cap:  t.hdr.Cap,
+	}
+	return retVal
+}
