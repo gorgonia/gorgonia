@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -65,8 +64,6 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	case adok && bdok:
 		return ad.Mul(bd, opts...)
 	case adok && !bdok:
-		log.Printf("TransInv: a: %v, b %v", a, b)
-		defer log.Printf("a %v", retVal)
 		return ad.Scale(b, opts...)
 	case !adok && bdok:
 		return bd.Scale(a, opts...)
@@ -172,13 +169,11 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				err = errors.Errorf(shapeMismatch, ScalarShape(), incr.Shape())
 				return
 			}
-			log.Printf("use Incr : %v", incr)
 			if _, err = incr.Trans(res, UseUnsafe()); err != nil {
 				err = errors.Wrapf(err, opFail, "Dot scalar incr")
 				return
 			}
 			retVal = incr
-			log.Printf("retVal %v", retVal)
 		case reuse != nil:
 			reuse.set(0, res)
 			reuse.reshape()
@@ -186,7 +181,6 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		default:
 			retVal = New(FromScalar(res))
 		}
-		log.Printf("Returning %v", retVal)
 		return
 	case a.IsScalar():
 		switch {

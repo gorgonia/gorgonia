@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/cmplx"
 	"reflect"
@@ -324,74 +323,51 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 	if fo.t.Type == nil {
 		as = Float64
 	}
-	log.Printf("as %v toCopy %v | %v", as, toCopy, m.RawMatrix().Data)
 
 	switch as.Kind() {
 	case reflect.Int:
 		backing := convFromFloat64s(Int, m.RawMatrix().Data).([]int)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Int8:
 		backing := convFromFloat64s(Int8, m.RawMatrix().Data).([]int8)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Int16:
 		backing := convFromFloat64s(Int16, m.RawMatrix().Data).([]int16)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Int32:
 		backing := convFromFloat64s(Int32, m.RawMatrix().Data).([]int32)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Int64:
 		backing := convFromFloat64s(Int64, m.RawMatrix().Data).([]int64)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Uint:
 		backing := convFromFloat64s(Uint, m.RawMatrix().Data).([]uint)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Uint8:
 		backing := convFromFloat64s(Uint8, m.RawMatrix().Data).([]uint8)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Uint16:
 		backing := convFromFloat64s(Uint16, m.RawMatrix().Data).([]uint16)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Uint32:
 		backing := convFromFloat64s(Uint32, m.RawMatrix().Data).([]uint32)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Uint64:
 		backing := convFromFloat64s(Uint64, m.RawMatrix().Data).([]uint64)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Float32:
 		backing := convFromFloat64s(Float32, m.RawMatrix().Data).([]float32)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Float64:
 		var backing []float64
@@ -402,19 +378,14 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 			backing = m.RawMatrix().Data
 		}
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Complex64:
 		backing := convFromFloat64s(Complex64, m.RawMatrix().Data).([]complex64)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	case reflect.Complex128:
 		backing := convFromFloat64s(Complex128, m.RawMatrix().Data).([]complex128)
-		log.Printf("backing %v %T", backing, backing)
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	default:
 		panic(fmt.Sprintf("Unsupported Dtype - cannot convert float64 to %v", as))
@@ -442,7 +413,6 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	var data []float64
 	switch {
 	case t.t.Kind() == reflect.Float64 && toCopy && !t.IsMaterializable():
-		log.Printf("copy")
 		data = make([]float64, t.len())
 		copy(data, t.float64s())
 	case !t.IsMaterializable():

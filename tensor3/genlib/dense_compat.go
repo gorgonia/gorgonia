@@ -164,7 +164,6 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 	if fo.t.Type == nil {
 		as = Float64
 	}
-	log.Printf("as %v toCopy %v | %v", as, toCopy, m.RawMatrix().Data)
 
 	switch as.Kind() {
 	{{range .Kinds -}}
@@ -180,10 +179,8 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 			}
 		{{else -}}
 			backing := convFromFloat64s({{asType . | title}}, m.RawMatrix().Data).([]{{asType .}})
-			log.Printf("backing %v %T", backing, backing)
 		{{end -}}
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("As: %v RetVal:\n%v", as, retVal)
 		return retVal
 	{{end -}}
 	{{end -}}
@@ -214,7 +211,6 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	var data []float64
 	switch {
 	case t.t.Kind() == reflect.Float64 && toCopy  && !t.IsMaterializable():
-		log.Printf("copy")
 		data = make([]float64, t.len())
 		copy(data, t.float64s())
 	case !t.IsMaterializable():	

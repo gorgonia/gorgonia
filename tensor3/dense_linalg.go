@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/gonum/blas"
@@ -166,7 +165,6 @@ func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err err
 	}
 
 	if retVal == nil {
-		log.Println("reuse is nil")
 		retVal = recycledDense(t.t, expectedShape)
 	}
 

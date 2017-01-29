@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"testing"
 	"testing/quick"
 )
@@ -71,7 +70,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -137,7 +135,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -203,7 +200,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -269,7 +265,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -335,7 +330,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -401,7 +395,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -467,7 +460,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -533,7 +525,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -599,7 +590,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -665,7 +655,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -731,7 +720,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -797,7 +785,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -863,7 +850,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -929,7 +915,6 @@ func TestAddBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1071,7 +1056,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1109,7 +1093,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1147,7 +1130,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1185,7 +1167,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1223,7 +1204,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1261,7 +1241,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1299,7 +1278,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1337,7 +1315,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1375,7 +1352,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1413,7 +1389,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1451,7 +1426,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1489,7 +1463,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1527,7 +1500,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1565,7 +1537,6 @@ func TestSubBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1736,7 +1707,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1803,7 +1773,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1870,7 +1839,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -1937,7 +1905,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2004,7 +1971,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2071,7 +2037,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2138,7 +2103,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2205,7 +2169,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2272,7 +2235,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2339,7 +2301,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2406,7 +2367,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2473,7 +2433,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2540,7 +2499,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2607,7 +2565,6 @@ func TestMulBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2754,7 +2711,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2793,7 +2749,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2832,7 +2787,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2871,7 +2825,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2910,7 +2863,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2949,7 +2901,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -2988,7 +2939,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3027,7 +2977,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3066,7 +3015,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3105,7 +3053,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3144,7 +3091,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3183,7 +3129,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3222,7 +3167,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3261,7 +3205,6 @@ func TestDivBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3404,7 +3347,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3439,7 +3381,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3474,7 +3415,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3509,7 +3449,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3544,7 +3483,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3579,7 +3517,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3614,7 +3551,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3649,7 +3585,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3684,7 +3619,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3719,7 +3653,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3754,7 +3687,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3789,7 +3721,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3824,7 +3755,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
@@ -3859,7 +3789,6 @@ func TestPowBasicProperties(t *testing.T) {
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
-			log.Println("Failed close")
 			return false
 		}
 		return true
