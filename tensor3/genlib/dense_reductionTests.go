@@ -35,6 +35,30 @@ func TestDense_Reduce(t *testing.T){
 		}
 		assert.True(drt.correctShape.Eq(T2.Shape()))
 		assert.Equal(drt.correct, T2.Data())
+
+		// stupids:
+		_, err = T.Reduce(drt.fn, drt.def, 1000)
+		assert.NotNil(err)
+
+		// wrong function type
+		var f interface{}
+		f = func(a, b float64)float64{return 0}
+		if drt.of == Float64 {
+			f = func(a, b int)int{return 0}
+		}
+
+		_, err = T.Reduce(f, drt.correct, 0)
+		assert.NotNil(err)
+
+		// wrong default value type
+		var def2 interface{}
+		def2 = 3.14
+		if drt.of == Float64 {
+			def2 = int(1)
+		}
+
+		_, err = T.Reduce(drt.fn, def2, 3) // only last axis requires a default value
+		assert.NotNil(err)
 	}
 }
 `
