@@ -284,8 +284,10 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 	return nil
 }
 
-// reduceS is a specialization for number reductions, used in methods such as Sum, Prod, Max etc
-func (t *Dense) reduceS(axis int, zeroFn, oneFn, defFn interface{}) (retVal *Dense) {
+{{range .Kinds -}}
+{{if isNumber . -}}
+// sReduce{{short .}} is a specialization for {{asType .}} reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduce{{short .}}(axis int, zeroFn func(a, b []{{asType .}}) error, lastFn func([]{{asType .}}) {{asType .}}, defFn func(a, b {{asType .}}) {{asType .}}) (retVal *Dense) {
 	if t.IsScalar() {
 		return t
 	}
@@ -304,77 +306,58 @@ func (t *Dense) reduceS(axis int, zeroFn, oneFn, defFn interface{}) (retVal *Den
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copySliced(retVal, 0, split, t, 0, split)
+		copy(retVal.{{sliceOf .}}[0:split], t.{{sliceOf .}}[0:split])
 
 		start := split
-		switch t.t.Kind() {
-		{{range .Kinds -}}
-		{{if isNumber .}}
-		case reflect.{{reflectKind .}}:
-			vecvecFn := zeroFn.(func(a, b []{{asType .}}))
-			for i := 0; i < size - 1 ; i++ {
-				vecvecFn(retVal.{{asType . | strip }}s(), t.{{sliceOf .}}[start: start+split])
-				start += split
+		for i := 0; i < size - 1 ; i++ {
+			if err := zeroFn(retVal.{{sliceOf .}}, t.{{sliceOf .}}[start: start+split]); err != nil {
+				panic(err)
 			}
-		{{end -}}
-		{{end -}}
+			start += split
 		}
 	case lastAxis:
 		// second most efficient
 		var at int
-		switch t.t.Kind() {
-		{{range .Kinds -}}
-		{{if isNumber .}}
-		case reflect.{{reflectKind .}}:
-			lastFn := oneFn.(func([]{{asType .}}) {{asType .}})
-			for start := 0; start < t.len() - size; start += size {
-				retVal.set{{short .}}(at, lastFn(t.{{sliceOf .}}[start: start+size]))
-				at++
-			}
-		{{end -}}
-		{{end -}}
+		for start := 0; start <= t.len() - size; start += size {
+			retVal.set{{short .}}(at, lastFn(t.{{sliceOf .}}[start: start+size]))
+			at++
 		}
 	default:
 		outerSize := t.Shape()[0]
 		outerStride := t.Strides()[0]
 		stride := t.Strides()[axis]
 		expected := retVal.Strides()[0]
-		switch t.t.Kind() {
-		{{range .Kinds -}}
-		{{if isNumber . -}}
-		case reflect.{{reflectKind .}}:
-			def := defFn.(func(a, b {{asType .}}) {{asType .}} )
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.{{sliceOf .}}[start : start+outerStride]
-				rdata := retVal.{{sliceOf .}}
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a,b)
-						}
+		
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.{{sliceOf .}}[start : start+outerStride]
+			rdata := retVal.{{sliceOf .}}
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a,b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		{{end -}}
-		{{end -}}
-	}
+		}
 	}
 	return retVal
 }
+{{end -}}
+{{end -}}
 `
 
 var (

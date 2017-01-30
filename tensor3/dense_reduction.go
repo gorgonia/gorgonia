@@ -1171,8 +1171,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 	return nil
 }
 
-// reduceS is a specialization for number reductions, used in methods such as Sum, Prod, Max etc
-func (t *Dense) reduceS(axis int, zeroFn, oneFn, defFn interface{}) (retVal *Dense) {
+// sReduceI is a specialization for int reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceI(axis int, zeroFn func(a, b []int) error, lastFn func([]int) int, defFn func(a, b int) int) (retVal *Dense) {
 	if t.IsScalar() {
 		return t
 	}
@@ -1191,595 +1191,974 @@ func (t *Dense) reduceS(axis int, zeroFn, oneFn, defFn interface{}) (retVal *Den
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copySliced(retVal, 0, split, t, 0, split)
+		copy(retVal.ints()[0:split], t.ints()[0:split])
 
 		start := split
-		switch t.t.Kind() {
-
-		case reflect.Int:
-			vecvecFn := zeroFn.(func(a, b []int))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.ints(), t.ints()[start:start+split])
-				start += split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.ints(), t.ints()[start:start+split]); err != nil {
+				panic(err)
 			}
-
-		case reflect.Int8:
-			vecvecFn := zeroFn.(func(a, b []int8))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.int8s(), t.int8s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Int16:
-			vecvecFn := zeroFn.(func(a, b []int16))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.int16s(), t.int16s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Int32:
-			vecvecFn := zeroFn.(func(a, b []int32))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.int32s(), t.int32s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Int64:
-			vecvecFn := zeroFn.(func(a, b []int64))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.int64s(), t.int64s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Uint:
-			vecvecFn := zeroFn.(func(a, b []uint))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.uints(), t.uints()[start:start+split])
-				start += split
-			}
-
-		case reflect.Uint8:
-			vecvecFn := zeroFn.(func(a, b []uint8))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.uint8s(), t.uint8s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Uint16:
-			vecvecFn := zeroFn.(func(a, b []uint16))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.uint16s(), t.uint16s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Uint32:
-			vecvecFn := zeroFn.(func(a, b []uint32))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.uint32s(), t.uint32s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Uint64:
-			vecvecFn := zeroFn.(func(a, b []uint64))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.uint64s(), t.uint64s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Float32:
-			vecvecFn := zeroFn.(func(a, b []float32))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.float32s(), t.float32s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Float64:
-			vecvecFn := zeroFn.(func(a, b []float64))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.float64s(), t.float64s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Complex64:
-			vecvecFn := zeroFn.(func(a, b []complex64))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.complex64s(), t.complex64s()[start:start+split])
-				start += split
-			}
-
-		case reflect.Complex128:
-			vecvecFn := zeroFn.(func(a, b []complex128))
-			for i := 0; i < size-1; i++ {
-				vecvecFn(retVal.complex128s(), t.complex128s()[start:start+split])
-				start += split
-			}
+			start += split
 		}
 	case lastAxis:
 		// second most efficient
 		var at int
-		switch t.t.Kind() {
-
-		case reflect.Int:
-			lastFn := oneFn.(func([]int) int)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setI(at, lastFn(t.ints()[start:start+size]))
-				at++
-			}
-
-		case reflect.Int8:
-			lastFn := oneFn.(func([]int8) int8)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setI8(at, lastFn(t.int8s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Int16:
-			lastFn := oneFn.(func([]int16) int16)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setI16(at, lastFn(t.int16s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Int32:
-			lastFn := oneFn.(func([]int32) int32)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setI32(at, lastFn(t.int32s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Int64:
-			lastFn := oneFn.(func([]int64) int64)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setI64(at, lastFn(t.int64s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Uint:
-			lastFn := oneFn.(func([]uint) uint)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setU(at, lastFn(t.uints()[start:start+size]))
-				at++
-			}
-
-		case reflect.Uint8:
-			lastFn := oneFn.(func([]uint8) uint8)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setU8(at, lastFn(t.uint8s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Uint16:
-			lastFn := oneFn.(func([]uint16) uint16)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setU16(at, lastFn(t.uint16s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Uint32:
-			lastFn := oneFn.(func([]uint32) uint32)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setU32(at, lastFn(t.uint32s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Uint64:
-			lastFn := oneFn.(func([]uint64) uint64)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setU64(at, lastFn(t.uint64s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Float32:
-			lastFn := oneFn.(func([]float32) float32)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setF32(at, lastFn(t.float32s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Float64:
-			lastFn := oneFn.(func([]float64) float64)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setF64(at, lastFn(t.float64s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Complex64:
-			lastFn := oneFn.(func([]complex64) complex64)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setC64(at, lastFn(t.complex64s()[start:start+size]))
-				at++
-			}
-
-		case reflect.Complex128:
-			lastFn := oneFn.(func([]complex128) complex128)
-			for start := 0; start < t.len()-size; start += size {
-				retVal.setC128(at, lastFn(t.complex128s()[start:start+size]))
-				at++
-			}
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setI(at, lastFn(t.ints()[start:start+size]))
+			at++
 		}
 	default:
 		outerSize := t.Shape()[0]
 		outerStride := t.Strides()[0]
 		stride := t.Strides()[axis]
 		expected := retVal.Strides()[0]
-		switch t.t.Kind() {
-		case reflect.Int:
-			def := defFn.(func(a, b int) int)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.ints()[start : start+outerStride]
-				rdata := retVal.ints()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.ints()[start : start+outerStride]
+			rdata := retVal.ints()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		case reflect.Int8:
-			def := defFn.(func(a, b int8) int8)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.int8s()[start : start+outerStride]
-				rdata := retVal.int8s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
-					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
-				}
+		}
+	}
+	return retVal
+}
+
+// sReduceI8 is a specialization for int8 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceI8(axis int, zeroFn func(a, b []int8) error, lastFn func([]int8) int8, defFn func(a, b int8) int8) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.int8s()[0:split], t.int8s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.int8s(), t.int8s()[start:start+split]); err != nil {
+				panic(err)
 			}
-		case reflect.Int16:
-			def := defFn.(func(a, b int16) int16)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.int16s()[start : start+outerStride]
-				rdata := retVal.int16s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setI8(at, lastFn(t.int8s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.int8s()[start : start+outerStride]
+			rdata := retVal.int8s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		case reflect.Int32:
-			def := defFn.(func(a, b int32) int32)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.int32s()[start : start+outerStride]
-				rdata := retVal.int32s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
-					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
-				}
+		}
+	}
+	return retVal
+}
+
+// sReduceI16 is a specialization for int16 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceI16(axis int, zeroFn func(a, b []int16) error, lastFn func([]int16) int16, defFn func(a, b int16) int16) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.int16s()[0:split], t.int16s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.int16s(), t.int16s()[start:start+split]); err != nil {
+				panic(err)
 			}
-		case reflect.Int64:
-			def := defFn.(func(a, b int64) int64)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.int64s()[start : start+outerStride]
-				rdata := retVal.int64s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setI16(at, lastFn(t.int16s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.int16s()[start : start+outerStride]
+			rdata := retVal.int16s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		case reflect.Uint:
-			def := defFn.(func(a, b uint) uint)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.uints()[start : start+outerStride]
-				rdata := retVal.uints()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
-					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
-				}
+		}
+	}
+	return retVal
+}
+
+// sReduceI32 is a specialization for int32 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceI32(axis int, zeroFn func(a, b []int32) error, lastFn func([]int32) int32, defFn func(a, b int32) int32) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.int32s()[0:split], t.int32s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.int32s(), t.int32s()[start:start+split]); err != nil {
+				panic(err)
 			}
-		case reflect.Uint8:
-			def := defFn.(func(a, b uint8) uint8)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.uint8s()[start : start+outerStride]
-				rdata := retVal.uint8s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setI32(at, lastFn(t.int32s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.int32s()[start : start+outerStride]
+			rdata := retVal.int32s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		case reflect.Uint16:
-			def := defFn.(func(a, b uint16) uint16)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.uint16s()[start : start+outerStride]
-				rdata := retVal.uint16s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
-					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
-				}
+		}
+	}
+	return retVal
+}
+
+// sReduceI64 is a specialization for int64 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceI64(axis int, zeroFn func(a, b []int64) error, lastFn func([]int64) int64, defFn func(a, b int64) int64) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.int64s()[0:split], t.int64s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.int64s(), t.int64s()[start:start+split]); err != nil {
+				panic(err)
 			}
-		case reflect.Uint32:
-			def := defFn.(func(a, b uint32) uint32)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.uint32s()[start : start+outerStride]
-				rdata := retVal.uint32s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setI64(at, lastFn(t.int64s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.int64s()[start : start+outerStride]
+			rdata := retVal.int64s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		case reflect.Uint64:
-			def := defFn.(func(a, b uint64) uint64)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.uint64s()[start : start+outerStride]
-				rdata := retVal.uint64s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
-					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
-				}
+		}
+	}
+	return retVal
+}
+
+// sReduceU is a specialization for uint reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceU(axis int, zeroFn func(a, b []uint) error, lastFn func([]uint) uint, defFn func(a, b uint) uint) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.uints()[0:split], t.uints()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.uints(), t.uints()[start:start+split]); err != nil {
+				panic(err)
 			}
-		case reflect.Float32:
-			def := defFn.(func(a, b float32) float32)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.float32s()[start : start+outerStride]
-				rdata := retVal.float32s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setU(at, lastFn(t.uints()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.uints()[start : start+outerStride]
+			rdata := retVal.uints()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		case reflect.Float64:
-			def := defFn.(func(a, b float64) float64)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.float64s()[start : start+outerStride]
-				rdata := retVal.float64s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
-					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
-				}
+		}
+	}
+	return retVal
+}
+
+// sReduceU8 is a specialization for uint8 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceU8(axis int, zeroFn func(a, b []uint8) error, lastFn func([]uint8) uint8, defFn func(a, b uint8) uint8) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.uint8s()[0:split], t.uint8s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.uint8s(), t.uint8s()[start:start+split]); err != nil {
+				panic(err)
 			}
-		case reflect.Complex64:
-			def := defFn.(func(a, b complex64) complex64)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.complex64s()[start : start+outerStride]
-				rdata := retVal.complex64s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setU8(at, lastFn(t.uint8s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.uint8s()[start : start+outerStride]
+			rdata := retVal.uint8s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
-		case reflect.Complex128:
-			def := defFn.(func(a, b complex128) complex128)
-			for i := 0; i < outerSize; i++ {
-				start := i * outerStride
-				tdata := t.complex128s()[start : start+outerStride]
-				rdata := retVal.complex128s()
-				var innerStart, strideTrack int
-				for j := 0; j < expected; j++ {
-					for k := 0; k < size; k++ {
-						readFrom := innerStart + k*stride
-						writeTo := i*expected + j
-						a := rdata[writeTo]
-						b := tdata[readFrom]
-						if k == 0 {
-							rdata[writeTo] = b
-						} else {
-							rdata[writeTo] = def(a, b)
-						}
+		}
+	}
+	return retVal
+}
+
+// sReduceU16 is a specialization for uint16 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceU16(axis int, zeroFn func(a, b []uint16) error, lastFn func([]uint16) uint16, defFn func(a, b uint16) uint16) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.uint16s()[0:split], t.uint16s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.uint16s(), t.uint16s()[start:start+split]); err != nil {
+				panic(err)
+			}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setU16(at, lastFn(t.uint16s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.uint16s()[start : start+outerStride]
+			rdata := retVal.uint16s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
 					}
-					strideTrack++
-					if strideTrack >= stride {
-						strideTrack = 0
-						innerStart += stride
-					}
-					innerStart++
 				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return retVal
+}
+
+// sReduceU32 is a specialization for uint32 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceU32(axis int, zeroFn func(a, b []uint32) error, lastFn func([]uint32) uint32, defFn func(a, b uint32) uint32) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.uint32s()[0:split], t.uint32s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.uint32s(), t.uint32s()[start:start+split]); err != nil {
+				panic(err)
+			}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setU32(at, lastFn(t.uint32s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.uint32s()[start : start+outerStride]
+			rdata := retVal.uint32s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return retVal
+}
+
+// sReduceU64 is a specialization for uint64 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceU64(axis int, zeroFn func(a, b []uint64) error, lastFn func([]uint64) uint64, defFn func(a, b uint64) uint64) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.uint64s()[0:split], t.uint64s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.uint64s(), t.uint64s()[start:start+split]); err != nil {
+				panic(err)
+			}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setU64(at, lastFn(t.uint64s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.uint64s()[start : start+outerStride]
+			rdata := retVal.uint64s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return retVal
+}
+
+// sReduceF32 is a specialization for float32 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceF32(axis int, zeroFn func(a, b []float32) error, lastFn func([]float32) float32, defFn func(a, b float32) float32) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.float32s()[0:split], t.float32s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.float32s(), t.float32s()[start:start+split]); err != nil {
+				panic(err)
+			}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setF32(at, lastFn(t.float32s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.float32s()[start : start+outerStride]
+			rdata := retVal.float32s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return retVal
+}
+
+// sReduceF64 is a specialization for float64 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceF64(axis int, zeroFn func(a, b []float64) error, lastFn func([]float64) float64, defFn func(a, b float64) float64) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.float64s()[0:split], t.float64s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.float64s(), t.float64s()[start:start+split]); err != nil {
+				panic(err)
+			}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setF64(at, lastFn(t.float64s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.float64s()[start : start+outerStride]
+			rdata := retVal.float64s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return retVal
+}
+
+// sReduceC64 is a specialization for complex64 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceC64(axis int, zeroFn func(a, b []complex64) error, lastFn func([]complex64) complex64, defFn func(a, b complex64) complex64) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.complex64s()[0:split], t.complex64s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.complex64s(), t.complex64s()[start:start+split]); err != nil {
+				panic(err)
+			}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setC64(at, lastFn(t.complex64s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.complex64s()[start : start+outerStride]
+			rdata := retVal.complex64s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
+			}
+		}
+	}
+	return retVal
+}
+
+// sReduceC128 is a specialization for complex128 reductions, used in methods such as Sum, Prod, Max etc
+func (t *Dense) sReduceC128(axis int, zeroFn func(a, b []complex128) error, lastFn func([]complex128) complex128, defFn func(a, b complex128) complex128) (retVal *Dense) {
+	if t.IsScalar() {
+		return t
+	}
+
+	var newShape Shape
+	for i, s := range t.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+	retVal = New(Of(t.t), WithShape(newShape...))
+	size := t.Shape()[axis]
+	lastAxis := t.Dims() - 1
+	switch axis {
+	case 0:
+		// most efficient
+		split := t.len() / size
+		copy(retVal.complex128s()[0:split], t.complex128s()[0:split])
+
+		start := split
+		for i := 0; i < size-1; i++ {
+			if err := zeroFn(retVal.complex128s(), t.complex128s()[start:start+split]); err != nil {
+				panic(err)
+			}
+			start += split
+		}
+	case lastAxis:
+		// second most efficient
+		var at int
+		for start := 0; start <= t.len()-size; start += size {
+			retVal.setC128(at, lastFn(t.complex128s()[start:start+size]))
+			at++
+		}
+	default:
+		outerSize := t.Shape()[0]
+		outerStride := t.Strides()[0]
+		stride := t.Strides()[axis]
+		expected := retVal.Strides()[0]
+
+		for i := 0; i < outerSize; i++ {
+			start := i * outerStride
+			tdata := t.complex128s()[start : start+outerStride]
+			rdata := retVal.complex128s()
+			var innerStart, strideTrack int
+			for j := 0; j < expected; j++ {
+				for k := 0; k < size; k++ {
+					readFrom := innerStart + k*stride
+					writeTo := i*expected + j
+					a := rdata[writeTo]
+					b := tdata[readFrom]
+					if k == 0 {
+						rdata[writeTo] = b
+					} else {
+						rdata[writeTo] = defFn(a, b)
+					}
+				}
+				strideTrack++
+				if strideTrack >= stride {
+					strideTrack = 0
+					innerStart += stride
+				}
+				innerStart++
 			}
 		}
 	}

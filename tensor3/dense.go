@@ -198,6 +198,8 @@ func (t *Dense) fix() {
 	}
 
 	switch {
+	case t.IsScalar() && t.data == nil:
+		t.makeArray(1)
 	case t.Shape() == nil && t.data != nil:
 		size := t.hdr.Len
 		if size == 1 {

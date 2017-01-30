@@ -241,3 +241,18 @@ func reduceUnsafePointer(f func(a, b unsafe.Pointer) unsafe.Pointer, def unsafe.
 	}
 	return
 }
+
+func sumI(a []int) int                  { return reduceI(addI, 0, a...) }
+func sumI8(a []int8) int8               { return reduceI8(addI8, 0, a...) }
+func sumI16(a []int16) int16            { return reduceI16(addI16, 0, a...) }
+func sumI32(a []int32) int32            { return reduceI32(addI32, 0, a...) }
+func sumI64(a []int64) int64            { return reduceI64(addI64, 0, a...) }
+func sumU(a []uint) uint                { return reduceU(addU, 0, a...) }
+func sumU8(a []uint8) uint8             { return reduceU8(addU8, 0, a...) }
+func sumU16(a []uint16) uint16          { return reduceU16(addU16, 0, a...) }
+func sumU32(a []uint32) uint32          { return reduceU32(addU32, 0, a...) }
+func sumU64(a []uint64) uint64          { return reduceU64(addU64, 0, a...) }
+func sumF32(a []float32) float32        { return reduceF32(addF32, 0, a...) }
+func sumF64(a []float64) float64        { return reduceF64(addF64, 0, a...) }
+func sumC64(a []complex64) complex64    { return reduceC64(addC64, 0, a...) }
+func sumC128(a []complex128) complex128 { return reduceC128(addC128, 0, a...) }

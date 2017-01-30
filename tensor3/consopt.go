@@ -49,11 +49,6 @@ func WithShape(dims ...int) ConsOpt {
 			throw := BorrowInts(len(dims))
 			copy(throw, dims)
 			tt.setShape(throw...)
-
-			// special case for scalars
-			if len(throw) == 0 {
-				// tt.data = makeArray(tt.t, 1)
-			}
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -84,43 +79,6 @@ func FromScalar(x interface{}) ConsOpt {
 			tt.v = x
 			tt.t = Dtype{xt}
 			tt.hdr = hdr
-
-			// if tt.data != nil {
-			// 	if err := tt.data.Set(0, s); err != nil {
-			// 		panic(err)
-			// 	}
-			// 	return
-			// }
-
-			// switch st := s.(type) {
-			// case float64:
-			// 	tt.data = f64s{st}
-			// 	tt.t = Float64
-			// case float32:
-			// 	tt.data = f32s{st}
-			// 	tt.t = Float32
-			// case int:
-			// 	tt.data = ints{st}
-			// 	tt.t = Int
-			// case int64:
-			// 	tt.data = i64s{st}
-			// 	tt.t = Int64
-			// case int32:
-			// 	tt.data = i32s{st}
-			// 	tt.t = Int32
-			// case byte:
-			// 	tt.data = u8s{st}
-			// 	tt.t = Byte
-			// case bool:
-			// 	tt.data = bs{st}
-			// 	tt.t = Bool
-			// case Dtyper:
-			// 	dt := st.Dtype()
-			// 	tt.data = makeArray(dt, 1)
-			// 	tt.data.Set(0, dt.ZeroValue())
-			// default:
-			// 	panic("Scalar value unsupported")
-			// }
 		default:
 			panic("Unsupported Tensor Type")
 		}

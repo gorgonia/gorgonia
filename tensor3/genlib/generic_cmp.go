@@ -17,6 +17,7 @@ const genericVecVecCmpSameRaw = `func {{lower .OpName}}DDSame{{short .Kind}}(a, 
 	}
 	return retVal
 }
+
 `
 
 const genericVecVecCmpBoolRaw = `func {{lower .OpName}}DDBools{{short .Kind}}(a, b []{{asType .Kind}}) (retVal []bool) {
@@ -26,6 +27,7 @@ const genericVecVecCmpBoolRaw = `func {{lower .OpName}}DDBools{{short .Kind}}(a,
 	}
 	return retVal
 }
+
 `
 
 const genericVecScalarCmpSameRaw = `func {{lower .OpName}}DSSame{{short .Kind}}(a []{{asType .Kind}}, b {{asType .Kind}}) (retVal []{{asType .Kind}}) {
@@ -39,6 +41,7 @@ const genericVecScalarCmpSameRaw = `func {{lower .OpName}}DSSame{{short .Kind}}(
 	}
 	return retVal
 }
+
 `
 const genericVecScalarCmpBoolRaw = `func {{lower .OpName}}DSBools{{short .Kind}}(a []{{asType .Kind}}, b {{asType .Kind}}) (retVal []bool) {
 	retVal = make([]bool, len(a))
@@ -47,6 +50,7 @@ const genericVecScalarCmpBoolRaw = `func {{lower .OpName}}DSBools{{short .Kind}}
 	}
 	return retVal
 }
+
 `
 
 var (
@@ -71,17 +75,13 @@ func genericCmp(f io.Writer, generic *ManyKinds) {
 			if bo.is(k) {
 				op := ArithBinOp{k, bo.OpName, bo.OpSymb, false}
 				genericVecVecCmpBool.Execute(f, op)
-				fmt.Fprint(f, "\n")
 				if isNumber(k) {
 					genericVecVecCmpSame.Execute(f, op)
-					fmt.Fprint(f, "\n")
 				}
 
 				genericVecScalarCmpBool.Execute(f, op)
-				fmt.Fprint(f, "\n")
 				if isNumber(k) {
 					genericVecScalarCmpSame.Execute(f, op)
-					fmt.Fprint(f, "\n")
 				}
 			}
 			fmt.Fprintln(f, "\n")

@@ -38,12 +38,17 @@ const genericReduceRaw = `func reduce{{short .}}(f func(a, b {{asType .}}) {{asT
 
 `
 
+const genericSumRaw = `func sum{{short .}}(a []{{asType .}}) {{asType .}}{ return reduce{{short .}}(add{{short .}}, 0, a...)}
+`
+
 var (
 	genericReduce *template.Template
+	genericSum    *template.Template
 )
 
 func init() {
 	genericReduce = template.Must(template.New("genericReduce").Funcs(funcs).Parse(genericReduceRaw))
+	genericSum = template.Must(template.New("genericSum").Funcs(funcs).Parse(genericSumRaw))
 }
 
 func genericReduction(f io.Writer, generic *ManyKinds) {
@@ -51,6 +56,13 @@ func genericReduction(f io.Writer, generic *ManyKinds) {
 	for _, k := range generic.Kinds {
 		if !isParameterized(k) {
 			genericReduce.Execute(f, k)
+		}
+	}
+
+	for _, k := range generic.Kinds {
+		if isNumber(k) {
+			genericSum.Execute(f, k)
+
 		}
 	}
 }
