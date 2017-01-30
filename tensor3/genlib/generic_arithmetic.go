@@ -104,14 +104,20 @@ const genericVecScalarArithRaw = `func {{if .IsIncr}}incr{{.OpName}}{{else}}{{lo
 }
 `
 
+// scalar scalar is for reduction
+const genericScalarScalarArithRaw = `func {{lower .OpName}}{{short .Kind}}(a, b {{asType .Kind}}) (c {{asType .Kind}}) {return a {{.OpSymb}} b}
+`
+
 var (
-	genericVecScalarArith *template.Template
-	genericVecVecArith    *template.Template
+	genericVecScalarArith    *template.Template
+	genericVecVecArith       *template.Template
+	genericScalarScalarArith *template.Template
 )
 
 func init() {
 	genericVecVecArith = template.Must(template.New("vecvecArith").Funcs(funcs).Parse(genericVecVecArithRaw))
 	genericVecScalarArith = template.Must(template.New("vecscalarArith").Funcs(funcs).Parse(genericVecScalarArithRaw))
+	genericScalarScalarArith = template.Must(template.New("scalscalArith").Funcs(funcs).Parse(genericScalarScalarArithRaw))
 }
 
 type IncrOp struct {
@@ -156,5 +162,13 @@ func genericArith(f io.Writer, generic *ManyKinds) {
 			}
 		}
 		fmt.Fprintln(f, "\n")
+	}
+
+	// generic scalar-scalar
+	for _, k := range generic.Kinds {
+		if isNumber(k) {
+			op := ArithBinOp{k, "Add", "+", false}
+			genericScalarScalarArith.Execute(f, op)
+		}
 	}
 }

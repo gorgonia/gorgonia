@@ -2858,3 +2858,18 @@ func incrPowOfRC128(a, incr []complex128, b complex128) error {
 	}
 	return nil
 }
+
+func addI(a, b int) (c int)                  { return a + b }
+func addI8(a, b int8) (c int8)               { return a + b }
+func addI16(a, b int16) (c int16)            { return a + b }
+func addI32(a, b int32) (c int32)            { return a + b }
+func addI64(a, b int64) (c int64)            { return a + b }
+func addU(a, b uint) (c uint)                { return a + b }
+func addU8(a, b uint8) (c uint8)             { return a + b }
+func addU16(a, b uint16) (c uint16)          { return a + b }
+func addU32(a, b uint32) (c uint32)          { return a + b }
+func addU64(a, b uint64) (c uint64)          { return a + b }
+func addF32(a, b float32) (c float32)        { return a + b }
+func addF64(a, b float64) (c float64)        { return a + b }
+func addC64(a, b complex64) (c complex64)    { return a + b }
+func addC128(a, b complex128) (c complex128) { return a + b }

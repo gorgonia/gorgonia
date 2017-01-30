@@ -35,3 +35,11 @@ type Oner interface {
 type MemSetter interface {
 	Memset(interface{}) error
 }
+
+// A Number is any type that can perform arithmetics. This allows for extensibility
+type Number interface {
+	Add(Number) (Number, error)
+	Sub(Number) (Number, error)
+	Mul(Number) (Number, error)
+	Div(Number) (Number, error)
+}
