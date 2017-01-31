@@ -55,14 +55,49 @@ func Range(dt Dtype, start, end int) interface{} {
 }
 `
 
+const randomRaw = `// Random creates an array of random numbers of the given type
+//
+// WARNING: This function is super dodgy at the moment
+func Random(dt Dtype, size int) interface{} {
+	switch dt.Kind() {
+	{{range .Kinds -}}
+	{{if isNumber . -}}
+	case reflect.{{reflectKind .}}:
+		r := make([]{{asType .}}, size)
+		for i := range r {
+			r[i] = {{if hasPrefix .String "int" -}}
+				{{asType .}}(rand.Int())
+			{{else if hasPrefix .String "uint" -}}
+				{{asType .}}(rand.Uint32())
+			{{else if hasPrefix .String "complex64" -}}
+				complex(rand.Float32(), float32(0))
+			{{else if hasPrefix .String "complex128" -}}
+				complex(rand.Float64(), float64(0))
+			{{else if eq .String "float64" -}}
+				rand.NormFloat64()
+			{{else if eq .String "float32" -}}
+				float32(rand.NormFloat64())
+			{{end -}}
+		}
+		return r
+	{{end -}}
+	{{end -}}
+	}
+	panic("unreachable")
+}
+`
+
 var (
-	Range *template.Template
+	Range  *template.Template
+	Random *template.Template
 )
 
 func init() {
 	Range = template.Must(template.New("Range").Funcs(funcs).Parse(rangeRaw))
+	Random = template.Must(template.New("Random").Funcs(funcs).Parse(randomRaw))
 }
 
 func utils(f io.Writer, generic *ManyKinds) {
 	Range.Execute(f, generic)
+	Random.Execute(f, generic)
 }

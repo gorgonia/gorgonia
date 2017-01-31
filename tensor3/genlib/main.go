@@ -36,6 +36,8 @@ func main() {
 		denseReductionTestsName       = "../dense_reduction_test.go"
 		denseReductionMethodsName     = "../dense_reduction_methods.go"
 		denseReductionMethodsTestName = "../dense_reduction_methods_test.go"
+		denseMapperName               = "../dense_mapper.go"
+		denseApplyTestsName           = "../dense_apply_test.go"
 
 		testTestName = "../test_test.go"
 	)
@@ -62,6 +64,8 @@ func main() {
 	pipeline(denseReductionTestsName, mk, denseReductionTests)
 	pipeline(denseReductionMethodsName, mk, generateDenseReductionMethods)
 	pipeline(denseReductionMethodsTestName, mk, generateDenseReductionMethodsTests)
+	pipeline(denseMapperName, mk, generateDenseMapper)
+	pipeline(denseApplyTestsName, mk, generateDenseApplyTests)
 }
 
 func makeManyKinds() *ManyKinds {

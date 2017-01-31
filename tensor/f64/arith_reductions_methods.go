@@ -1,6 +1,10 @@
 package tensorf64
 
-import "github.com/chewxy/gorgonia/tensor/types"
+import (
+	"log"
+
+	"github.com/chewxy/gorgonia/tensor/types"
+)
 
 /*
 This file contains code that deals with the reduction of a Tensor by axis.
@@ -141,16 +145,20 @@ func (t *Tensor) Reduce(f func(a, b float64) float64, def float64, axis int) (re
 }
 
 func (t *Tensor) reduce(axis int, zeroFn func(a, b []float64), oneFn func([]float64) float64, defFn func(a, b float64) float64) (retVal *Tensor) {
+	log.Printf("sReduce")
 	if t.IsScalar() {
 		return t
 	}
 
 	var newShape types.Shape
 	for i, s := range t.Shape() {
+		log.Printf("i %v newShape %v", i, newShape)
 		if i == axis {
+			log.Printf("newShape cont'd %v", newShape)
 			continue
 		}
 		newShape = append(newShape, s)
+		log.Printf("newShape %v", newShape)
 	}
 	retVal = NewTensor(WithShape(newShape...))
 	size := t.Shape()[axis]
@@ -158,19 +166,24 @@ func (t *Tensor) reduce(axis int, zeroFn func(a, b []float64), oneFn func([]floa
 	case 0:
 		// most efficient
 		split := len(t.data) / size
+		log.Printf("HERE: split %d, len: %d  retVal %d, newShape %v", split, len(t.data), len(retVal.data), newShape)
 		copy(retVal.data[0:split], t.data[0:split])
+		log.Printf("DONE. Retval %v, T:%v", retVal, t)
 
 		start := split
 		for i := 0; i < size-1; i++ {
 			zeroFn(retVal.data, t.data[start:start+split])
+			log.Printf("After zeroFn %v", retVal)
 			start += split
 		}
 	case len(t.Shape()) - 1:
 		// second most efficient
 		var at int
 		for start := 0; start <= len(t.data)-size; start += size {
+			log.Printf("start: %d,  retVal: %v", start, retVal)
 			s := oneFn(t.data[start : start+size])
 			retVal.data[at] = s
+			log.Printf("retval: %v", retVal)
 			at++
 		}
 	default:
@@ -231,7 +244,7 @@ func (t *Tensor) Sum(along ...int) (retVal *Tensor, err error) {
 			err = types.DimMismatchErr(axis, retVal.Dims())
 			return
 		}
-
+		log.Printf("summig along %v", axis)
 		retVal = retVal.sum(axis)
 	}
 	return

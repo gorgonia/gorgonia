@@ -21,3 +21,11 @@ TODO:
 
 * Identity optimizations for op
 * Zero value optimizations
+* fix SVD tests
+* fix Random() - super dodgy
+
+
+Interesting things:
+Memset(0xdeadbeef) -> memset(uintptr(0)) 
+Memset(uintptr(0xdeadbeef)) -> correct!
+this is because 0xdeadbeef is interpreted as an int

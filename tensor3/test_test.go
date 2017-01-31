@@ -66,9 +66,10 @@ func tolerancef64(a, b, e float64) bool {
 	}
 	return d < e
 }
-func closef64(a, b float64) bool      { return tolerancef64(a, b, 1e-14) }
-func veryclosef64(a, b float64) bool  { return tolerancef64(a, b, 4e-16) }
-func soclosef64(a, b, e float64) bool { return tolerancef64(a, b, e) }
+func closeenoughf64(a, b float64) bool { return tolerancef64(a, b, 1e-8) }
+func closef64(a, b float64) bool       { return tolerancef64(a, b, 1e-14) }
+func veryclosef64(a, b float64) bool   { return tolerancef64(a, b, 4e-16) }
+func soclosef64(a, b, e float64) bool  { return tolerancef64(a, b, e) }
 func alikef64(a, b float64) bool {
 	switch {
 	case math.IsNaN(a) && math.IsNaN(b):
@@ -134,9 +135,16 @@ func cAlike(a, b complex128) bool {
 	return false
 }
 
-func allClose(a, b interface{}) bool {
+func allClose(a, b interface{}, approxFn ...interface{}) bool {
 	switch at := a.(type) {
 	case []float64:
+		closeness := closef64
+		var ok bool
+		if len(approxFn) > 0 {
+			if closeness, ok = approxFn[0].(func(a, b float64) bool); !ok {
+				closeness = closef64
+			}
+		}
 		bt := b.([]float64)
 		for i, v := range at {
 			if math.IsNaN(v) {
@@ -151,12 +159,19 @@ func allClose(a, b interface{}) bool {
 				}
 				continue
 			}
-			if !closef64(v, bt[i]) {
+			if !closeness(v, bt[i]) {
 				return false
 			}
 		}
 		return true
 	case []float32:
+		closeness := closef32
+		var ok bool
+		if len(approxFn) > 0 {
+			if closeness, ok = approxFn[0].(func(a, b float32) bool); !ok {
+				closeness = closef32
+			}
+		}
 		bt := b.([]float32)
 		for i, v := range at {
 			if math32.IsNaN(v) {
@@ -171,7 +186,7 @@ func allClose(a, b interface{}) bool {
 				}
 				continue
 			}
-			if !closef32(v, bt[i]) {
+			if !closeness(v, bt[i]) {
 				return false
 			}
 		}
