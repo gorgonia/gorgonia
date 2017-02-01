@@ -1,6 +1,10 @@
 package tensor
 
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/pkg/errors"
+)
 
 /*
 GENERATED FILE. DO NOT EDIT
@@ -2686,4 +2690,579 @@ func lteDSBoolsStr(a []string, b string) (retVal []bool) {
 		retVal[i] = v <= b
 	}
 	return retVal
+}
+
+func vecMinI(a, b []int) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxI(a, b []int) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinI8(a, b []int8) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxI8(a, b []int8) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinI16(a, b []int16) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxI16(a, b []int16) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinI32(a, b []int32) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxI32(a, b []int32) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinI64(a, b []int64) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxI64(a, b []int64) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinU(a, b []uint) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxU(a, b []uint) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinU8(a, b []uint8) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxU8(a, b []uint8) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinU16(a, b []uint16) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxU16(a, b []uint16) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinU32(a, b []uint32) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxU32(a, b []uint32) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinU64(a, b []uint64) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxU64(a, b []uint64) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinUintptr(a, b []uintptr) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxUintptr(a, b []uintptr) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinF32(a, b []float32) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxF32(a, b []float32) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinF64(a, b []float64) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxF64(a, b []float64) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMinStr(a, b []string) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMaxStr(a, b []string) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func minI(a, b int) (c int) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxI(a, b int) (c int) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minI8(a, b int8) (c int8) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxI8(a, b int8) (c int8) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minI16(a, b int16) (c int16) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxI16(a, b int16) (c int16) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minI32(a, b int32) (c int32) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxI32(a, b int32) (c int32) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minI64(a, b int64) (c int64) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxI64(a, b int64) (c int64) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minU(a, b uint) (c uint) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxU(a, b uint) (c uint) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minU8(a, b uint8) (c uint8) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxU8(a, b uint8) (c uint8) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minU16(a, b uint16) (c uint16) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxU16(a, b uint16) (c uint16) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minU32(a, b uint32) (c uint32) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxU32(a, b uint32) (c uint32) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minU64(a, b uint64) (c uint64) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxU64(a, b uint64) (c uint64) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minUintptr(a, b uintptr) (c uintptr) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxUintptr(a, b uintptr) (c uintptr) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minF32(a, b float32) (c float32) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxF32(a, b float32) (c float32) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minF64(a, b float64) (c float64) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxF64(a, b float64) (c float64) {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minStr(a, b string) (c string) {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxStr(a, b string) (c string) {
+	if a > b {
+		return a
+	}
+	return b
 }

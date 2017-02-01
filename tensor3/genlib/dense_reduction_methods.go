@@ -16,6 +16,8 @@ type ReductionOp struct {
 
 var reductionOps = []ReductionOp{
 	{OpName: "sum", VecVec: "vecAdd", OpOfVec: "sum", GenericName: "add"},
+	{OpName: "max", VecVec: "vecMax", OpOfVec: "sliceMax", GenericName: "max"},
+	{OpName: "min", VecVec: "vecMin", OpOfVec: "sliceMin", GenericName: "min"},
 }
 
 const denseReductionMethodsRaw = ` // {{title .OpName}} returns the {{.OpName}} of the elements of the tensor along the given axes.
@@ -83,6 +85,9 @@ func init() {
 func generateDenseReductionMethods(f io.Writer, generic *ManyKinds) {
 	for _, op := range reductionOps {
 		op.Kinds = generic.Kinds
+		if op.OpName == "min" || op.OpName == "max" {
+			op.Kinds = filter(op.Kinds, isOrd)
+		}
 		denseReductionMethods.Execute(f, op)
 	}
 }

@@ -256,3 +256,170 @@ func sumF32(a []float32) float32        { return reduceF32(addF32, 0, a...) }
 func sumF64(a []float64) float64        { return reduceF64(addF64, 0, a...) }
 func sumC64(a []complex64) complex64    { return reduceC64(addC64, 0, a...) }
 func sumC128(a []complex128) complex128 { return reduceC128(addC128, 0, a...) }
+func sliceMinI(a []int) int {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI(minI, a[0], a[1:]...)
+}
+
+func sliceMaxI(a []int) int {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI(maxI, a[0], a[1:]...)
+}
+
+func sliceMinI8(a []int8) int8 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI8(minI8, a[0], a[1:]...)
+}
+
+func sliceMaxI8(a []int8) int8 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI8(maxI8, a[0], a[1:]...)
+}
+
+func sliceMinI16(a []int16) int16 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI16(minI16, a[0], a[1:]...)
+}
+
+func sliceMaxI16(a []int16) int16 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI16(maxI16, a[0], a[1:]...)
+}
+
+func sliceMinI32(a []int32) int32 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI32(minI32, a[0], a[1:]...)
+}
+
+func sliceMaxI32(a []int32) int32 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI32(maxI32, a[0], a[1:]...)
+}
+
+func sliceMinI64(a []int64) int64 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI64(minI64, a[0], a[1:]...)
+}
+
+func sliceMaxI64(a []int64) int64 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceI64(maxI64, a[0], a[1:]...)
+}
+
+func sliceMinU(a []uint) uint {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU(minU, a[0], a[1:]...)
+}
+
+func sliceMaxU(a []uint) uint {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU(maxU, a[0], a[1:]...)
+}
+
+func sliceMinU8(a []uint8) uint8 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU8(minU8, a[0], a[1:]...)
+}
+
+func sliceMaxU8(a []uint8) uint8 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU8(maxU8, a[0], a[1:]...)
+}
+
+func sliceMinU16(a []uint16) uint16 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU16(minU16, a[0], a[1:]...)
+}
+
+func sliceMaxU16(a []uint16) uint16 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU16(maxU16, a[0], a[1:]...)
+}
+
+func sliceMinU32(a []uint32) uint32 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU32(minU32, a[0], a[1:]...)
+}
+
+func sliceMaxU32(a []uint32) uint32 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU32(maxU32, a[0], a[1:]...)
+}
+
+func sliceMinU64(a []uint64) uint64 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU64(minU64, a[0], a[1:]...)
+}
+
+func sliceMaxU64(a []uint64) uint64 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceU64(maxU64, a[0], a[1:]...)
+}
+
+func sliceMinF32(a []float32) float32 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceF32(minF32, a[0], a[1:]...)
+}
+
+func sliceMaxF32(a []float32) float32 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceF32(maxF32, a[0], a[1:]...)
+}
+
+func sliceMinF64(a []float64) float64 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceF64(minF64, a[0], a[1:]...)
+}
+
+func sliceMaxF64(a []float64) float64 {
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduceF64(maxF64, a[0], a[1:]...)
+}

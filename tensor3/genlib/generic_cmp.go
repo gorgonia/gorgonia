@@ -53,11 +53,58 @@ const genericVecScalarCmpBoolRaw = `func {{lower .OpName}}DSBools{{short .Kind}}
 
 `
 
+const genericVecVecMinMaxRaw = `func vecMin{{short . | title}}(a, b []{{asType .}}) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func vecMax{{short . | title}}(a, b []{{asType .}}) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+`
+
+// scalar scalar is for reduction
+const genericScalarScalarMinMaxRaw = `func min{{short .}}(a, b {{asType .}}) (c {{asType .}}) {if a < b {
+	return a
+	}
+	return b
+}
+
+func max{{short .}}(a, b {{asType .}}) (c {{asType .}}) {if a > b {
+	return a
+	}
+	return b
+}
+`
+
 var (
 	genericVecVecCmpSame    *template.Template
 	genericVecVecCmpBool    *template.Template
 	genericVecScalarCmpSame *template.Template
 	genericVecScalarCmpBool *template.Template
+
+	genericVecVecMinMax *template.Template
+	genericMinMax       *template.Template
 )
 
 func init() {
@@ -66,6 +113,9 @@ func init() {
 
 	genericVecScalarCmpSame = template.Must(template.New("vsCmpSame").Funcs(funcs).Parse(genericVecScalarCmpSameRaw))
 	genericVecScalarCmpBool = template.Must(template.New("vsCmpBool").Funcs(funcs).Parse(genericVecScalarCmpBoolRaw))
+
+	genericVecVecMinMax = template.Must(template.New("genericVecVecMinMax").Funcs(funcs).Parse(genericVecVecMinMaxRaw))
+	genericMinMax = template.Must(template.New("genericMinMax").Funcs(funcs).Parse(genericScalarScalarMinMaxRaw))
 }
 
 func genericCmp(f io.Writer, generic *ManyKinds) {
@@ -86,5 +136,11 @@ func genericCmp(f io.Writer, generic *ManyKinds) {
 			}
 			fmt.Fprintln(f, "\n")
 		}
+	}
+	for _, k := range filter(generic.Kinds, isOrd) {
+		genericVecVecMinMax.Execute(f, k)
+	}
+	for _, k := range filter(generic.Kinds, isOrd) {
+		genericMinMax.Execute(f, k)
 	}
 }

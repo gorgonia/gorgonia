@@ -69,6 +69,10 @@ func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return t.Apply(f, opts...)
 		}
+		if !isFloat(t.t) {
+			err = errors.Errorf("PointwiseSquare only works on numbers")
+			return
+		}
 
 		// otherwise, we have optimizations for this
 		var reuse *Dense
@@ -138,6 +142,10 @@ func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				return
 			}
 			return t.Apply(f, opts...)
+		}
+		if !isFloat(t.t) {
+			err = errors.Errorf("PointwiseSquare only works on numbers")
+			return
 		}
 
 		// otherwise, we have optimizations for this

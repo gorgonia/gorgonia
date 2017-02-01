@@ -40,15 +40,32 @@ const genericReduceRaw = `func reduce{{short .}}(f func(a, b {{asType .}}) {{asT
 
 const genericSumRaw = `func sum{{short .}}(a []{{asType .}}) {{asType .}}{ return reduce{{short .}}(add{{short .}}, 0, a...)}
 `
+const genericSliceMinMaxRaw = `func sliceMin{{short .}}(a []{{asType .}}) {{asType .}}{
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduce{{short .}}(min{{short .}}, a[0], a[1:]...)
+}
+
+func sliceMax{{short .}}(a []{{asType .}}) {{asType .}}{
+	if len(a) < 1 {
+		panic("Max of empty slice is meaningless")
+	}
+	return reduce{{short .}}(max{{short .}}, a[0], a[1:]...)
+}
+
+`
 
 var (
-	genericReduce *template.Template
-	genericSum    *template.Template
+	genericReduce      *template.Template
+	genericSum         *template.Template
+	genericSliceMinMax *template.Template
 )
 
 func init() {
 	genericReduce = template.Must(template.New("genericReduce").Funcs(funcs).Parse(genericReduceRaw))
 	genericSum = template.Must(template.New("genericSum").Funcs(funcs).Parse(genericSumRaw))
+	genericSliceMinMax = template.Must(template.New("genericSliceMinMax").Funcs(funcs).Parse(genericSliceMinMaxRaw))
 }
 
 func genericReduction(f io.Writer, generic *ManyKinds) {
@@ -59,10 +76,13 @@ func genericReduction(f io.Writer, generic *ManyKinds) {
 		}
 	}
 
-	for _, k := range generic.Kinds {
-		if isNumber(k) {
-			genericSum.Execute(f, k)
+	for _, k := range filter(generic.Kinds, isNumber) {
+		genericSum.Execute(f, k)
+	}
 
+	for _, k := range filter(generic.Kinds, isOrd) {
+		if isNumber(k) {
+			genericSliceMinMax.Execute(f, k)
 		}
 	}
 }

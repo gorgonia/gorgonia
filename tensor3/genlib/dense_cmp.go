@@ -125,6 +125,7 @@ var (
 
 func init() {
 	ddElEqOrd = template.Must(template.New("ElEqOrdDD").Funcs(funcs).Parse(eleqordDDRaw))
+
 }
 
 func denseCmp(f io.Writer, generic *ManyKinds) {
@@ -135,4 +136,5 @@ func denseCmp(f io.Writer, generic *ManyKinds) {
 		ddElEqOrd.Execute(f, op)
 		fmt.Fprintln(f, "\n")
 	}
+
 }
