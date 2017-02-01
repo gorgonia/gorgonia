@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/pkg/errors"
 )
@@ -176,6 +177,30 @@ func getDense(t Tensor) (*Dense, error) {
 	if retVal, ok := t.(*Dense); ok {
 		return retVal, nil
 	}
+
+	// TODO: when sparse matrices are created, add a clause here to return early
+
+	if densor, ok := t.(Densor); ok {
+		return densor.Dense(), nil
+	}
+
+	v := reflect.ValueOf(t)
+	tt := reflect.TypeOf(t)
+	var s, zero reflect.Value
+	if tt.Kind() == reflect.Ptr {
+		of := tt.Elem()
+		if of.Kind() != reflect.Struct {
+			return nil, errors.Errorf("Cannot extract *Dense from %v of %T", t, t)
+		}
+		s = v.Elem()
+	} else if tt.Kind() == reflect.Struct {
+		s = v
+	}
+	d := s.FieldByName("Dense")
+	if d != zero {
+		return d.Interface().(*Dense), nil
+	}
+
 	return nil, errors.Errorf(extractionFail, "*Dense", t)
 }
 

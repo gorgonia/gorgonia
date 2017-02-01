@@ -350,7 +350,6 @@ type QCDenseB struct {
 	*Dense
 }
 
-func (q *QCDenseB) D() *Dense { return q.Dense }
 func (*QCDenseB) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]bool, size)
 	for i := range s {
@@ -366,7 +365,6 @@ type QCDenseI struct {
 	*Dense
 }
 
-func (q *QCDenseI) D() *Dense { return q.Dense }
 func (*QCDenseI) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]int, size)
 	for i := range s {
@@ -382,7 +380,6 @@ type QCDenseI8 struct {
 	*Dense
 }
 
-func (q *QCDenseI8) D() *Dense { return q.Dense }
 func (*QCDenseI8) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]int8, size)
 	for i := range s {
@@ -398,7 +395,6 @@ type QCDenseI16 struct {
 	*Dense
 }
 
-func (q *QCDenseI16) D() *Dense { return q.Dense }
 func (*QCDenseI16) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]int16, size)
 	for i := range s {
@@ -414,7 +410,6 @@ type QCDenseI32 struct {
 	*Dense
 }
 
-func (q *QCDenseI32) D() *Dense { return q.Dense }
 func (*QCDenseI32) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]int32, size)
 	for i := range s {
@@ -430,7 +425,6 @@ type QCDenseI64 struct {
 	*Dense
 }
 
-func (q *QCDenseI64) D() *Dense { return q.Dense }
 func (*QCDenseI64) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]int64, size)
 	for i := range s {
@@ -446,7 +440,6 @@ type QCDenseU struct {
 	*Dense
 }
 
-func (q *QCDenseU) D() *Dense { return q.Dense }
 func (*QCDenseU) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]uint, size)
 	for i := range s {
@@ -462,7 +455,6 @@ type QCDenseU8 struct {
 	*Dense
 }
 
-func (q *QCDenseU8) D() *Dense { return q.Dense }
 func (*QCDenseU8) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]uint8, size)
 	for i := range s {
@@ -478,7 +470,6 @@ type QCDenseU16 struct {
 	*Dense
 }
 
-func (q *QCDenseU16) D() *Dense { return q.Dense }
 func (*QCDenseU16) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]uint16, size)
 	for i := range s {
@@ -494,7 +485,6 @@ type QCDenseU32 struct {
 	*Dense
 }
 
-func (q *QCDenseU32) D() *Dense { return q.Dense }
 func (*QCDenseU32) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]uint32, size)
 	for i := range s {
@@ -510,7 +500,6 @@ type QCDenseU64 struct {
 	*Dense
 }
 
-func (q *QCDenseU64) D() *Dense { return q.Dense }
 func (*QCDenseU64) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]uint64, size)
 	for i := range s {
@@ -526,7 +515,6 @@ type QCDenseUintptr struct {
 	*Dense
 }
 
-func (q *QCDenseUintptr) D() *Dense { return q.Dense }
 func (*QCDenseUintptr) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]uintptr, size)
 	for i := range s {
@@ -542,7 +530,6 @@ type QCDenseF32 struct {
 	*Dense
 }
 
-func (q *QCDenseF32) D() *Dense { return q.Dense }
 func (*QCDenseF32) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]float32, size)
 	for i := range s {
@@ -558,7 +545,6 @@ type QCDenseF64 struct {
 	*Dense
 }
 
-func (q *QCDenseF64) D() *Dense { return q.Dense }
 func (*QCDenseF64) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]float64, size)
 	for i := range s {
@@ -574,7 +560,6 @@ type QCDenseC64 struct {
 	*Dense
 }
 
-func (q *QCDenseC64) D() *Dense { return q.Dense }
 func (*QCDenseC64) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]complex64, size)
 	for i := range s {
@@ -590,7 +575,6 @@ type QCDenseC128 struct {
 	*Dense
 }
 
-func (q *QCDenseC128) D() *Dense { return q.Dense }
 func (*QCDenseC128) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]complex128, size)
 	for i := range s {
@@ -606,7 +590,6 @@ type QCDenseStr struct {
 	*Dense
 }
 
-func (q *QCDenseStr) D() *Dense { return q.Dense }
 func (*QCDenseStr) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]string, size)
 	for i := range s {
@@ -622,7 +605,6 @@ type QCDenseUnsafePointer struct {
 	*Dense
 }
 
-func (q *QCDenseUnsafePointer) D() *Dense { return q.Dense }
 func (*QCDenseUnsafePointer) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]unsafe.Pointer, size)
 	for i := range s {

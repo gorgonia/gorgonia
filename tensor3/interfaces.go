@@ -43,3 +43,8 @@ type Number interface {
 	Mul(Number) (Number, error)
 	Div(Number) (Number, error)
 }
+
+// A Densor is any type that can return a *Dense
+type Densor interface {
+	Dense() *Dense
+}

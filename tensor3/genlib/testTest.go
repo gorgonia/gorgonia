@@ -288,7 +288,6 @@ func anyToFloat64s(x interface{}) (retVal []float64) {
 const testQCRaw = `type QCDense{{short .}} struct {
 	*Dense 
 }
-func (q *QCDense{{short .}}) D() *Dense{return q.Dense}
 func (*QCDense{{short .}}) Generate(r *rand.Rand, size int) reflect.Value {
 	s := make([]{{asType .}}, size)
 	for i := range s {
