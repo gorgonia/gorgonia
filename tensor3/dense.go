@@ -35,10 +35,14 @@ func recycledDense(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) {
 }
 
 func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) {
+	size := shape.TotalSize()
+	if shape.IsScalar() {
+		size = 1
+	}
 	if isSimpleKind(dt.Kind()) {
-		retVal = borrowDense(dt, shape.TotalSize())
+		retVal = borrowDense(dt, size)
 	} else {
-		retVal = newDense(dt, shape.TotalSize())
+		retVal = newDense(dt, size)
 	}
 
 	for _, opt := range opts {

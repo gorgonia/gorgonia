@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"math"
 	"reflect"
 
@@ -93,7 +92,6 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 
 	// simple case
 	if len(axes) == 0 {
-		log.Printf("len(axes) == 0")
 		if ord.IsUnordered() || (ord.IsFrobenius() && dims == 2) || (ord == Norm(2) && dims == 1) {
 			backup := t.AP
 			ap := BorrowAP(1)
@@ -128,7 +126,6 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			axes[i] = i
 		}
 	}
-	log.Printf("len(axes) %v, %v", len(axes), axes)
 
 	switch len(axes) {
 	case 1:
@@ -191,23 +188,18 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			}
 			return retVal.Sum(axes...)
 		default:
-			log.Printf("Default")
 			if ret, err = cloned.Apply(normN); err != nil {
 				return
 			}
-			log.Printf("ret: %v", ret)
 			if retVal, err = getDense(ret); err != nil {
 				err = errors.Wrapf(err, opFail, "Norm-N")
 				return
 			}
-			log.Printf("retVal %v", retVal)
 
 			if retVal, err = retVal.Sum(axes...); err != nil {
 				return
 			}
-			log.Printf("retVal  after sum %v", retVal)
 			retVal, err = retVal.PowOf(oneOverOrd)
-			log.Printf("retVal  after powOf %v, err %v", retVal == nil, err)
 			return
 		}
 	case 2:
@@ -344,7 +336,6 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			return nil, errors.Errorf("Not yet implemented: Norm for Axes %v, ord %v", axes, ord)
 		}
 	default:
-		log.Printf("Default case")
 		err = errors.Errorf(dimMismatch, 2, len(axes))
 		return
 	}

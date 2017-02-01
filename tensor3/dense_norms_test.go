@@ -3,7 +3,6 @@ package tensor
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"testing"
 
@@ -25,7 +24,6 @@ var normtests = []NormOrder{
 func testNormVal(T *Dense, ord NormOrder, want float64) error {
 	retVal, err := T.Norm(ord)
 	if err != nil {
-		log.Printf("err == %v", err)
 		return err
 	}
 
@@ -35,7 +33,7 @@ func testNormVal(T *Dense, ord NormOrder, want float64) error {
 
 	got := retVal.ScalarValue().(float64)
 	if !closef64(want, got) && !(math.IsNaN(want) && alikef64(want, got)) {
-		return errors.New(fmt.Sprintf("Norm %v, Backing %v: Want %f, got %f instead", ord, T.data, want, got))
+		return errors.New(fmt.Sprintf("Norm %v, Backing %v: Want %f, got %f instead", ord, T.Data(), want, got))
 	}
 	return nil
 }
@@ -74,9 +72,7 @@ func TestTensor_Norm(t *testing.T) {
 	for ord, want := range corrects {
 		for _, b := range backings {
 			T = New(WithShape(len(backing)), WithBacking(b))
-			log.Printf("Ord: %v, Want %v. Backing: %v", ord, want, b)
 			if err = testNormVal(T, ord, want); err != nil {
-				t.Logf("HERE")
 				t.Error(err)
 			}
 		}
@@ -177,8 +173,8 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		for i, e := range expecteds {
 			sliced, _ = retVal.Slice(ss(i))
 			sliced = sliced.Materialize().(*Dense)
-			if !allClose(e.data, sliced.data) {
-				t.Errorf("Axis = 0; Ord = %v; Expected %v. Got %v instead. ret %v, i: %d", ord, e.data, sliced.data, retVal, i)
+			if !allClose(e.Data(), sliced.Data()) {
+				t.Errorf("Axis = 0; Ord = %v; Expected %v. Got %v instead. ret %v, i: %d", ord, e.Data(), sliced.Data(), retVal, i)
 			}
 		}
 
@@ -199,8 +195,8 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		for i, e := range expecteds {
 			sliced, _ = retVal.Slice(ss(i))
 			sliced = sliced.Materialize().(*Dense)
-			if !allClose(e.data, sliced.data) {
-				t.Errorf("Axis = 1; Ord = %v;Expected %v. Got %v instead", ord, e.data, sliced.data)
+			if !allClose(e.Data(), sliced.Data()) {
+				t.Errorf("Axis = 1; Ord = %v; Expected %v. Got %v instead", ord, e.Data(), sliced.Data())
 			}
 		}
 	}
@@ -274,7 +270,7 @@ func TestTensor_Norm_Axis(t *testing.T) {
 
 				for i, e := range expecteds {
 					sliced, _ = retVal.Slice(ss(i))
-					assert.Equal(e.data, sliced.data, "ord %v, rowAxis: %v, colAxis %v", ord, rowAxis, colAxis)
+					assert.Equal(e.Data(), sliced.Data(), "ord %v, rowAxis: %v, colAxis %v", ord, rowAxis, colAxis)
 				}
 			}
 		}
