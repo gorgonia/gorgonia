@@ -20,3 +20,8 @@ func TestFromScalar(t *testing.T) {
 	data := T.float64s()
 	assert.Equal(t, []float64{3.14}, data)
 }
+
+func Test_recycledDense(t *testing.T) {
+	T := recycledDense(Float64, ScalarShape())
+	assert.Equal(t, float64(0), T.Data())
+}

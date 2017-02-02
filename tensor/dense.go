@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/pkg/errors"
 )
 
@@ -147,7 +146,7 @@ func (t *Dense) IsMaterializable() bool {
 	return t.viewOf != nil || t.old != nil
 }
 
-// Eq checks that two types.Tensor are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
+// Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
 func (t *Dense) Eq(other interface{}) bool {
 	if ot, ok := other.(*Dense); ok {
 		if ot == t {
@@ -227,7 +226,7 @@ func (t *Dense) sanity() error {
 	size := t.hdr.Len
 	expected := t.Size()
 	if t.viewOf == nil && size != expected && !t.IsScalar() {
-		return types.NewError(types.ShapeMismatch, "Expected backing data to have %d elements from shape %v. Got %d instead", expected, t.Shape(), size)
+		return errors.Errorf(shapeMismatch, t.Shape(), size)
 	}
 	// TODO: sanity check for views
 	return nil

@@ -40,6 +40,8 @@ func main() {
 		denseApplyTestsName           = "../dense_apply_test.go"
 		apiUnaryGenName               = "../api_unary_generated.go"
 		apiUnaryGenTestsName          = "../api_unary_generated_test.go"
+		denseGenName                  = "../dense_generated.go"
+		denseGenTestsName             = "../dense_generated_test.go"
 
 		testTestName = "../test_test.go"
 	)
@@ -70,6 +72,8 @@ func main() {
 	pipeline(denseApplyTestsName, mk, generateDenseApplyTests)
 	pipeline(apiUnaryGenName, mk, generateUnaryAPIFuncs)
 	pipeline(apiUnaryGenTestsName, mk, generateUnaryTests)
+	pipeline(denseGenName, mk, generateDenseConstructionFns)
+	pipeline(denseGenTestsName, mk, generateDenseTests)
 }
 
 func makeManyKinds() *ManyKinds {
