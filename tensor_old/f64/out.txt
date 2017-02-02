@@ -1,0 +1,230 @@
+=== RUN   TestArgmax
+--- PASS: TestArgmax (0.00s)
+=== RUN   TestArgmin
+--- PASS: TestArgmin (0.00s)
+=== RUN   TestAdd
+--- PASS: TestAdd (0.00s)
+	arith_api_test.go:20: T-T
+	arith_api_test.go:74: T-s
+	arith_api_test.go:123: s-T
+	arith_api_test.go:169: s-s
+	arith_api_test.go:174: Wrong shape
+	arith_api_test.go:179: at.shape: %v, bt.shape %v | %T (5) (3) false
+=== RUN   TestSub
+--- PASS: TestSub (0.00s)
+	arith_api_test.go:239: T-T
+	arith_api_test.go:292: T-s
+	arith_api_test.go:340: s-T
+	arith_api_test.go:384: s-s
+	arith_api_test.go:389: Wrong shape
+=== RUN   TestPointwiseMul
+--- PASS: TestPointwiseMul (0.00s)
+	arith_api_test.go:450: T-T
+	arith_api_test.go:503: T-s
+	arith_api_test.go:555: s-T
+	arith_api_test.go:601: s-s
+	arith_api_test.go:606: Wrong shape
+=== RUN   TestPointwiseDiv
+--- PASS: TestPointwiseDiv (0.00s)
+	arith_api_test.go:667: T-T
+	arith_api_test.go:685: T-s
+	arith_api_test.go:701: Test skipped for stupid floating point reasons
+	arith_api_test.go:705: s-T
+	arith_api_test.go:717: s-s
+	arith_api_test.go:722: Wrong shape
+=== RUN   TestPointwisePow
+--- PASS: TestPointwisePow (0.00s)
+	arith_api_test.go:738: T-T
+	arith_api_test.go:756: T-s
+	arith_api_test.go:773: s-T
+	arith_api_test.go:785: s-s
+	arith_api_test.go:790: Wrong shape
+=== RUN   TestPointwiseSquare
+--- PASS: TestPointwiseSquare (0.00s)
+=== RUN   TestSqrt
+--- PASS: TestSqrt (0.00s)
+=== RUN   TestClamp
+--- PASS: TestClamp (0.00s)
+=== RUN   TestSign
+--- PASS: TestSign (0.00s)
+=== RUN   TestDot
+--- PASS: TestDot (0.00s)
+	arith_linalg_api_test.go:21: Vec⋅Vec
+	arith_linalg_api_test.go:33: Vec⋅Mat dot, should be equal to Aᵀb
+	arith_linalg_api_test.go:44: Mat⋅Mat
+	arith_linalg_api_test.go:60: 3T⋅3T
+	arith_linalg_api_test.go:97: 3T⋅4T
+	arith_linalg_api_test.go:126: 3T⋅Vec
+	arith_linalg_api_test.go:139: Vec⋅3T
+	arith_linalg_api_test.go:156: Mat⋅3T
+	arith_linalg_api_test.go:175: Mat⋅Vec with reuse
+	arith_linalg_api_test.go:186: 3T⋅vec with reuse
+	arith_linalg_api_test.go:201: vec⋅Mat with reuse
+=== RUN   TestTTrace
+--- PASS: TestTTrace (0.00s)
+=== RUN   TestVecVecDot
+--- PASS: TestVecVecDot (0.00s)
+=== RUN   TestTdotProd
+--- PASS: TestTdotProd (0.00s)
+=== RUN   TestTMatVecMul
+--- PASS: TestTMatVecMul (0.00s)
+=== RUN   TestTmatVecMul
+--- PASS: TestTmatVecMul (0.00s)
+=== RUN   TestTMatMul
+--- PASS: TestTMatMul (0.00s)
+=== RUN   TestTmatMul
+--- PASS: TestTmatMul (0.00s)
+=== RUN   TestTOuter
+--- PASS: TestTOuter (0.00s)
+=== RUN   TestTouter
+--- PASS: TestTouter (0.00s)
+=== RUN   TestTensorMul
+--- PASS: TestTensorMul (0.00s)
+=== RUN   TestTreduce
+--- PASS: TestTreduce (0.00s)
+=== RUN   TestTsum
+--- PASS: TestTsum (0.00s)
+=== RUN   TestTSum
+--- PASS: TestTSum (0.00s)
+=== RUN   TestTmax
+--- PASS: TestTmax (0.00s)
+=== RUN   TestTMax
+--- PASS: TestTMax (0.00s)
+=== RUN   TestTmin
+--- PASS: TestTmin (0.00s)
+=== RUN   TestTMin
+--- PASS: TestTMin (0.00s)
+=== RUN   TestSafeVecAdd
+--- PASS: TestSafeVecAdd (0.00s)
+=== RUN   TestVecTrans
+--- PASS: TestVecTrans (0.00s)
+=== RUN   TestVecTransFrom
+--- PASS: TestVecTransFrom (0.00s)
+	arith_test.go:34: [0 -1 -2 -3]
+=== RUN   TestCmp
+--- PASS: TestCmp (0.00s)
+	cmp_api_test.go:23: Lt T-T
+	cmp_api_test.go:32: Gt T-T
+	cmp_api_test.go:41: Lte T-T
+	cmp_api_test.go:50: Gte T-T
+	cmp_api_test.go:59: Eq T-T
+	cmp_api_test.go:68: Ne T-T
+	cmp_api_test.go:79: Lt T-S
+	cmp_api_test.go:88: Gt T-S
+	cmp_api_test.go:97: Lte T-S
+	cmp_api_test.go:106: Gte T-S
+	cmp_api_test.go:115: Eq T-S
+	cmp_api_test.go:124: Ne T-S
+	cmp_api_test.go:135: Lt S-T
+	cmp_api_test.go:144: Gt S-T
+	cmp_api_test.go:153: Lte S-T
+	cmp_api_test.go:162: Gte S-T
+	cmp_api_test.go:171: Eq S-T
+	cmp_api_test.go:180: Ne S-T
+	cmp_api_test.go:191: Lt idiots
+	cmp_api_test.go:196: Gt idiots
+	cmp_api_test.go:201: Lte idiots
+	cmp_api_test.go:206: Gte idiots
+	cmp_api_test.go:211: Eq idiots
+	cmp_api_test.go:216: Ne idiots
+=== RUN   TestFromMat64
+--- PASS: TestFromMat64 (0.00s)
+=== RUN   TestToMat64
+--- PASS: TestToMat64 (0.00s)
+=== RUN   TestTFormat
+--- PASS: TestTFormat (0.00s)
+=== RUN   TestGobShite
+--- PASS: TestGobShite (0.00s)
+=== RUN   TestSaveLoadNumpy
+--- PASS: TestSaveLoadNumpy (0.43s)
+=== RUN   TestWriteJSON
+--- PASS: TestWriteJSON (0.00s)
+=== RUN   TestAt
+--- PASS: TestAt (0.00s)
+=== RUN   TestT_transposeIndex
+--- PASS: TestT_transposeIndex (0.00s)
+=== RUN   TestTranspose
+--- PASS: TestTranspose (0.00s)
+=== RUN   TestTUT
+--- PASS: TestTUT (0.00s)
+=== RUN   TestTRepeat
+--- PASS: TestTRepeat (0.00s)
+=== RUN   TestTSlice
+--- PASS: TestTSlice (0.00s)
+	matop_test.go:525: a[0]
+	matop_test.go:525: a[0:2]
+	matop_test.go:525: a[1:5:2]
+	matop_test.go:525: c[0]
+	matop_test.go:525: c[0:2]
+	matop_test.go:525: c[1:5:2]
+	matop_test.go:525: r[0]
+	matop_test.go:525: r[0:2]
+	matop_test.go:525: r[0:5:2]
+	matop_test.go:525: r[:, 0]
+	matop_test.go:525: r[:, 0:2]
+	matop_test.go:525: r[:, 1:5:2]
+	matop_test.go:525: A[0]
+	matop_test.go:525: A[0:2]
+	matop_test.go:525: A[0, 0]
+	matop_test.go:525: A[0, 1:5]
+	matop_test.go:525: A[0, 1:5:2]
+	matop_test.go:525: A[:, 0]
+	matop_test.go:525: A[:, 1:5]
+	matop_test.go:525: A[:, 1:5:2]
+=== RUN   TestT_at_itol
+--- PASS: TestT_at_itol (0.00s)
+	matop_test.go:578: Matrix (3, 4) [4 1]
+		⎡ 0   1   2   3⎤
+		⎢ 4   5   6   7⎥
+		⎣ 8   9  10  11⎦
+	matop_test.go:623: Matrix (2, 3) [3 1]
+		⎡0  1  2⎤
+		⎣3  4  5⎦
+	matop_test.go:628: (3, 2), (3, 2)
+	matop_test.go:629: [1 3], [3 1]
+	matop_test.go:659: IndexError: Index 3 is out of bounds for axis 1 which has size 3. Happened at: /Users/chewxy/workspace/goddamnlangrepo/src/github.com/chewxy/gorgonia/tensor/types/utils.go:81
+=== RUN   TestCopyTo
+--- PASS: TestCopyTo (0.00s)
+	matop_test.go:690: NotYetImplemented: CopyTo is not yet implemented for views. Happened at: github.com/chewxy/gorgonia/tensor/f64/_test/_obj_test/errors.go:18
+=== RUN   TestTensorPool
+--- PASS: TestTensorPool (0.00s)
+=== RUN   TestCreate
+--- PASS: TestCreate (0.00s)
+	tensor_test.go:13: Standard, expected way of creating an ndarray
+	tensor_test.go:23: Creating with just passing in a backing
+	tensor_test.go:28: Creating with just a shape
+	tensor_test.go:32: Creating an ndarray with a mis match shape and elements
+	tensor_test.go:39: Making a scalar value a Tensor
+	tensor_test.go:43: Creating a ndarray with nothing passed in
+=== RUN   TestReshape
+--- PASS: TestReshape (0.00s)
+	tensor_test.go:57: Testing standard reshape
+	tensor_test.go:67: Testing wrong reshape
+=== RUN   TestOnes
+--- PASS: TestOnes (0.00s)
+	tensor_test.go:79: Testing usual use case
+	tensor_test.go:87: Testing stupid sizes: no size
+=== RUN   TestClone
+--- PASS: TestClone (0.00s)
+=== RUN   TestI
+--- PASS: TestI (0.00s)
+	tensor_test.go:177: Matrix (4, 4) [4 1]
+		⎡0  0  0  0⎤
+		⎢1  0  0  0⎥
+		⎢0  1  0  0⎥
+		⎣0  0  1  0⎦
+=== RUN   TestRangeFloat64
+--- PASS: TestRangeFloat64 (0.00s)
+=== RUN   TestReduce
+--- PASS: TestReduce (0.00s)
+=== RUN   TestMaterialize
+--- PASS: TestMaterialize (0.00s)
+=== RUN   ExampleTensor_Sum
+--- PASS: ExampleTensor_Sum (0.00s)
+=== RUN   ExampleTensor_Max
+--- PASS: ExampleTensor_Max (0.00s)
+=== RUN   ExampleTensor_Min
+--- PASS: ExampleTensor_Min (0.00s)
+PASS
+coverage: 78.2% of statements
+ok  	github.com/chewxy/gorgonia/tensor/f64	0.455s

@@ -3,7 +3,7 @@ package gorgonia
 import (
 	"math"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 )
 
 // maxInt is the maximum value of the machine-dependent int type.
@@ -96,4 +96,4 @@ var (
 	zerof64ConstOp = zerof64.op.(constant)
 )
 
-var oneone = types.Shape{1, 1}
+var oneone = tensor.Shape{1, 1}
