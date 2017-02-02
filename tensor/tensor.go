@@ -23,6 +23,7 @@ type Tensor interface {
 	T(axes ...int) error
 	UT()
 	Transpose() // Transpose actually moves the data
+	Slice(...Slice) (Tensor, error)
 
 	// data related interface
 	Zeroer

@@ -299,14 +299,14 @@ func (t *Dense) CopyTo(other *Dense) error {
 // Any modification to the values in V, will be reflected in T as well.
 //
 // The method treats <nil> as equivalent to a colon slice. T.Slice(nil) is equivalent to T[:] in Numpy syntax
-func (t *Dense) Slice(slices ...Slice) (view *Dense, err error) {
+func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 	var newAP *AP
 	var ndStart, ndEnd int
 	if newAP, ndStart, ndEnd, err = t.AP.S(t.len(), slices...); err != nil {
 		return
 	}
 
-	view = new(Dense)
+	view := new(Dense)
 	view.t = t.t
 	view.viewOf = t
 	view.AP = newAP
@@ -316,7 +316,7 @@ func (t *Dense) Slice(slices ...Slice) (view *Dense, err error) {
 	view.hdr.Len = t.hdr.Len
 	view.hdr.Cap = t.hdr.Cap
 	view.slice(ndStart, ndEnd)
-	return
+	return view, err
 }
 
 // RollAxis rolls the axis backwards until it lies in the given position.
@@ -388,10 +388,11 @@ func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 		slices := make([]Slice, axis+1)
 		slices[axis] = makeRS(start, end)
 
-		var v *Dense
-		if v, err = retVal.Slice(slices...); err != nil {
+		var sliced Tensor
+		if sliced, err = retVal.Slice(slices...); err != nil {
 			return
 		}
+		v := sliced.(*Dense)
 		if err = assignArray(v, T); err != nil {
 			return
 		}

@@ -135,7 +135,8 @@ func TestTensor_Norm(t *testing.T) {
 
 func TestTensor_Norm_Axis(t *testing.T) {
 	assert := assert.New(t)
-	var T, sliced, expected, retVal *Dense
+	var T, s, expected, retVal *Dense
+	var sliced Tensor
 	var err error
 	var backing []float64
 	var ords []NormOrder
@@ -159,8 +160,8 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		var expecteds []*Dense
 		for k := 0; k < T.Shape()[1]; k++ {
 			sliced, _ = T.Slice(nil, ss(k))
-			sliced = sliced.Materialize().(*Dense)
-			expected, _ = sliced.Norm(ord)
+			s = sliced.Materialize().(*Dense)
+			expected, _ = s.Norm(ord)
 			expecteds = append(expecteds, expected)
 		}
 
@@ -172,7 +173,7 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		assert.Equal(len(expecteds), retVal.Shape()[0])
 		for i, e := range expecteds {
 			sliced, _ = retVal.Slice(ss(i))
-			sliced = sliced.Materialize().(*Dense)
+			sliced = sliced.Materialize()
 			if !allClose(e.Data(), sliced.Data()) {
 				t.Errorf("Axis = 0; Ord = %v; Expected %v. Got %v instead. ret %v, i: %d", ord, e.Data(), sliced.Data(), retVal, i)
 			}
@@ -183,7 +184,8 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		expecteds = expecteds[:0]
 		for k := 0; k < T.Shape()[0]; k++ {
 			sliced, _ = T.Slice(ss(k))
-			expected, _ = sliced.Norm(ord)
+			s = sliced.(*Dense)
+			expected, _ = s.Norm(ord)
 			expecteds = append(expecteds, expected)
 		}
 		if retVal, err = T.Norm(ord, 1); err != nil {
@@ -259,7 +261,8 @@ func TestTensor_Norm_Axis(t *testing.T) {
 						sliced.T()
 					}
 					sliced = sliced.Materialize().(*Dense)
-					expected, _ = sliced.Norm(ord)
+					s = sliced.(*Dense)
+					expected, _ = s.Norm(ord)
 					expecteds = append(expecteds, expected)
 				}
 

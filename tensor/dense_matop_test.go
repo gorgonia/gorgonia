@@ -407,7 +407,8 @@ func TestDense_Repeat(t *testing.T) {
 
 func TestDense_CopyTo(t *testing.T) {
 	assert := assert.New(t)
-	var T, T2, T3 *Dense
+	var T, T2 *Dense
+	var T3 Tensor
 	var err error
 
 	T = New(WithShape(2), WithBacking([]float64{1, 2}))
@@ -427,7 +428,7 @@ func TestDense_CopyTo(t *testing.T) {
 	T = New(Of(Byte), WithShape(3, 3))
 	T2 = New(Of(Byte), WithShape(2, 2))
 	T3, _ = T.Slice(makeRS(0, 2), makeRS(0, 2)) // T[0:2, 0:2], shape == (2,2)
-	if err = T2.CopyTo(T3); err != nil {
+	if err = T2.CopyTo(T3.(*Dense)); err != nil {
 		t.Log(err) // for now it's a not yet implemented error. TODO: FIX THIS
 	}
 
@@ -486,7 +487,8 @@ var denseSliceTests = []struct {
 
 func TestDense_Slice(t *testing.T) {
 	assert := assert.New(t)
-	var T, V *Dense
+	var T *Dense
+	var V Tensor
 	var err error
 
 	for _, sts := range denseSliceTests {
@@ -508,7 +510,7 @@ func TestDense_Slice(t *testing.T) {
 	assert.True(Shape{2}.Eq(V.Shape()))
 	assert.Equal([]int{3}, V.Strides())
 	assert.Equal([]float32{0, 1, 2, 3}, V.Data())
-	assert.Nil(V.old)
+	assert.Nil(V.(*Dense).old)
 
 	// slice a sliced
 	V, err = V.Slice(makeRS(1, 2))
@@ -713,10 +715,12 @@ func TestDense_Stack(t *testing.T) {
 		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
 		switch {
 		case sts.slices != nil && sts.transform == nil:
-			if T, err = T.Slice(sts.slices...); err != nil {
+			var sliced Tensor
+			if sliced, err = T.Slice(sts.slices...); err != nil {
 				t.Error(err)
 				continue
 			}
+			T = sliced.(*Dense)
 		case sts.transform != nil && sts.slices == nil:
 			T.T(sts.transform...)
 		}
@@ -727,10 +731,12 @@ func TestDense_Stack(t *testing.T) {
 			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
 			switch {
 			case sts.slices != nil && sts.transform == nil:
-				if T1, err = T1.Slice(sts.slices...); err != nil {
+				var sliced Tensor
+				if sliced, err = T1.Slice(sts.slices...); err != nil {
 					t.Error(err)
 					continue
 				}
+				T1 = sliced.(*Dense)
 			case sts.transform != nil && sts.slices == nil:
 				T1.T(sts.transform...)
 			}

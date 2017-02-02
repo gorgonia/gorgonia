@@ -46,10 +46,13 @@ func TestToMat64(t *testing.T) {
 		conv := anyToFloat64s(tmt.data)
 		assert.Equal(conv, m.RawMatrix().Data, "i %d from %v", i, tmt.dt)
 
-		if T, err = T.Slice(nil, makeRS(0, 2)); err != nil {
+		var sliced Tensor
+		if sliced, err = T.Slice(nil, makeRS(0, 2)); err != nil {
 			t.Errorf("Slice failed %v", err)
 			continue
 		}
+		T = sliced.(*Dense)
+
 		if m, err = ToMat64(T); err != nil {
 			t.Errorf("ToMat of slice test %d failed : %v", i, err)
 			continue

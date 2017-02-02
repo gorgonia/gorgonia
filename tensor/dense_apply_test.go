@@ -71,11 +71,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateB); err != nil {
 				t.Error(err)
 				return false
@@ -154,11 +156,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateI); err != nil {
 				t.Error(err)
 				return false
@@ -258,11 +262,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateI8); err != nil {
 				t.Error(err)
 				return false
@@ -362,11 +368,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateI16); err != nil {
 				t.Error(err)
 				return false
@@ -466,11 +474,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateI32); err != nil {
 				t.Error(err)
 				return false
@@ -570,11 +580,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateI64); err != nil {
 				t.Error(err)
 				return false
@@ -674,11 +686,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateU); err != nil {
 				t.Error(err)
 				return false
@@ -778,11 +792,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateU8); err != nil {
 				t.Error(err)
 				return false
@@ -882,11 +898,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateU16); err != nil {
 				t.Error(err)
 				return false
@@ -986,11 +1004,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateU32); err != nil {
 				t.Error(err)
 				return false
@@ -1090,11 +1110,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateU64); err != nil {
 				t.Error(err)
 				return false
@@ -1194,11 +1216,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateUintptr); err != nil {
 				t.Error(err)
 				return false
@@ -1277,11 +1301,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateF32); err != nil {
 				t.Error(err)
 				return false
@@ -1381,11 +1407,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateF64); err != nil {
 				t.Error(err)
 				return false
@@ -1485,11 +1513,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateC64); err != nil {
 				t.Error(err)
 				return false
@@ -1589,11 +1619,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateC128); err != nil {
 				t.Error(err)
 				return false
@@ -1693,11 +1725,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateStr); err != nil {
 				t.Error(err)
 				return false
@@ -1776,11 +1810,13 @@ func TestDense_Apply(t *testing.T) {
 
 		// sliced
 		if a.len() > 10 {
+			var sliced Tensor
 			var b *Dense
-			if b, err = a.Slice(makeRS(0, 10)); err != nil {
+			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
+			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutateUnsafePointer); err != nil {
 				t.Error(err)
 				return false
