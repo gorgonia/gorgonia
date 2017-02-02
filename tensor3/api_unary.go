@@ -64,13 +64,13 @@ func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			case reflect.Float32:
 				f = math32.Sqrt
 			default:
-				err = errors.Errorf("PointwiseSquare only works on numbers")
+				err = errors.Errorf("Sqrt only works on floats")
 				return
 			}
 			return t.Apply(f, opts...)
 		}
 		if !isFloat(t.t) {
-			err = errors.Errorf("PointwiseSquare only works on numbers")
+			err = errors.Errorf("Sqrt only works on floats")
 			return
 		}
 
@@ -138,13 +138,13 @@ func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			case reflect.Float32:
 				f = func(a float32) float32 { return float32(1) / math32.Sqrt(a) }
 			default:
-				err = errors.Errorf("PointwiseSquare only works on numbers")
+				err = errors.Errorf("InvSqrt only works on floats")
 				return
 			}
 			return t.Apply(f, opts...)
 		}
 		if !isFloat(t.t) {
-			err = errors.Errorf("PointwiseSquare only works on numbers")
+			err = errors.Errorf("InvSqrt only works on floats")
 			return
 		}
 
