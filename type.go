@@ -3,7 +3,7 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 )
 
@@ -30,7 +30,7 @@ func (t Dtype) Normalize(k, v hm.TypeVarSet) (hm.Type, error) { return t, nil }
 func (t Dtype) Types() hm.Types                               { return nil }
 func (t Dtype) Format(state fmt.State, c rune)                { state.Write([]byte(t.String())) }
 func (t Dtype) Eq(other hm.Type) bool                         { return t == other }
-func (t Dtype) TensorDtype() types.Dtype                      { return types.Dtype(t) }
+func (t Dtype) TensorDtype() tensor.Dtype                     { return tensor.Dtype(t) }
 
 /*Tensor Type*/
 

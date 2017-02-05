@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"math"
 
+	"github.com/chewxy/gorgonia/tensor"
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 )
@@ -306,40 +306,40 @@ func (o tBinOp) isArith() bool                  { return o.ʘBinaryOperatorType.
 
 func (o tBinOp) Do(same bool, inputs ...Value) (Value, error) {
 	if same {
-		return o.do(inputs, types.AsSameType())
+		return o.do(inputs, tensor.AsSameType())
 	}
 	return o.do(inputs)
 }
 
 func (o tBinOp) UnsafeDo(retSame bool, inputs ...Value) (Value, error) {
 	if retSame {
-		return o.do(inputs, types.AsSameType(), types.UseUnsafe())
+		return o.do(inputs, tensor.AsSameType(), tensor.UseUnsafe())
 	}
-	return o.do(inputs, types.UseUnsafe())
+	return o.do(inputs, tensor.UseUnsafe())
 }
 func (o tBinOp) UsePreallocDo(v Value, retSame bool, inputs ...Value) (retVal Value, err error) {
-	t, ok := v.(types.Tensor)
+	t, ok := v.(tensor.Tensor)
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", v, v)
 	}
 
 	reuse := t
 	if retSame {
-		return o.do(inputs, types.WithReuse(reuse), types.AsSameType())
+		return o.do(inputs, tensor.WithReuse(reuse), tensor.AsSameType())
 	}
-	return o.do(inputs, types.WithReuse(reuse))
+	return o.do(inputs, tensor.WithReuse(reuse))
 }
 
 func (o tBinOp) IncrDo(incr Value, retSame bool, inputs ...Value) (err error) {
-	reuse, ok := incr.(types.Tensor)
+	reuse, ok := incr.(tensor.Tensor)
 	if ok {
-		_, err = o.do(inputs, types.WithIncr(reuse))
+		_, err = o.do(inputs, tensor.WithIncr(reuse))
 		return
 	}
 
 	var retVal Value
 	if retSame {
-		if retVal, err = o.do(inputs, types.AsSameType()); err != nil {
+		if retVal, err = o.do(inputs, tensor.AsSameType()); err != nil {
 			return errors.Wrapf(err, doFail, o)
 		}
 	} else {
@@ -358,7 +358,7 @@ func (o tBinOp) IncrDo(incr Value, retSame bool, inputs ...Value) (err error) {
 	return
 }
 
-func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error) {
+func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
 	if err = checkArity(o, len(vals)); err != nil {
 		return
 	}
@@ -374,7 +374,7 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 	// extract the goddamn values
 	var a, b interface{}
 	if o.tensorLeft {
-		t, ok := vals[0].(types.Tensor)
+		t, ok := vals[0].(tensor.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected left value to be Tensor. Got %v of %T instead", vals[0], vals[0])
 		}
@@ -385,13 +385,13 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 			b = float64(other)
 		case F32:
 			b = float32(other)
-		case types.Tensor:
+		case tensor.Tensor:
 			b = other.Materialize()
 		default:
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])
 		}
 	} else {
-		t, ok := vals[1].(types.Tensor)
+		t, ok := vals[1].(tensor.Tensor)
 		if !ok {
 			return nil, errors.Errorf("Expected right value to be Tensor. Got %v of %T instead", vals[1], vals[1])
 		}
@@ -402,7 +402,7 @@ func (o tBinOp) do(vals []Value, opts ...types.FuncOpt) (retVal Value, err error
 			a = float64(other)
 		case F32:
 			a = float32(other)
-		case types.Tensor:
+		case tensor.Tensor:
 			a = other.Materialize()
 		default:
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])

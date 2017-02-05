@@ -7,11 +7,10 @@ import (
 
 	. "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 )
 
 // manually generate a fake dataset which is y=2x+random
-func xy(dt Dtype) (x types.Tensor, y types.Tensor) {
+func xy(dt Dtype) (x tensor.Tensor, y tensor.Tensor) {
 	var xBack, yBack interface{}
 	switch dt {
 	case Float32:
@@ -22,8 +21,8 @@ func xy(dt Dtype) (x types.Tensor, y types.Tensor) {
 		yBack = []float64{2.5, 4.2, 6.1, 8, 9.992, 11.7, 15.1, 16, 18.1, 19.89}
 	}
 
-	x = tensor.New(types.Dtype(dt), tensor.WithBacking(xBack), tensor.WithShape(10))
-	y = tensor.New(types.Dtype(dt), tensor.WithBacking(yBack), tensor.WithShape(10))
+	x = tensor.New(tensor.Dtype(dt), tensor.WithBacking(xBack), tensor.WithShape(10))
+	y = tensor.New(tensor.Dtype(dt), tensor.WithBacking(yBack), tensor.WithShape(10))
 	return
 }
 

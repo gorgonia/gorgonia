@@ -6,9 +6,9 @@ import (
 	"hash/fnv"
 	"time"
 
+	"github.com/chewxy/gorgonia/tensor"
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
@@ -33,7 +33,7 @@ const (
 
 type randomOp struct {
 	which randomness
-	shape types.Shape
+	shape tensor.Shape
 	dt    Dtype
 
 	a, b float64 // when uniform, a,b = low, high; when gaussian, a,b = mean, stdev
@@ -42,7 +42,7 @@ type randomOp struct {
 func makeRandomOp(which randomness, dt Dtype, a, b float64, shape ...int) randomOp {
 	return randomOp{
 		which: which,
-		shape: types.Shape(shape),
+		shape: tensor.Shape(shape),
 		dt:    dt,
 		a:     a,
 		b:     b,
@@ -61,7 +61,7 @@ func (op randomOp) Type() hm.Type {
 	return tt
 }
 
-func (op randomOp) InferShape(...DimSizer) (types.Shape, error) { return op.shape, nil }
+func (op randomOp) InferShape(...DimSizer) (tensor.Shape, error) { return op.shape, nil }
 
 func (op randomOp) Do(...Value) (retVal Value, err error) {
 	if op.shape.IsScalar() {

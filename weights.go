@@ -4,9 +4,9 @@ import (
 	"math"
 	"time"
 
+	"github.com/chewxy/gorgonia/tensor"
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 )
@@ -22,7 +22,7 @@ type InitWFn func(dt Dtype, s ...int) interface{}
 
 func Zeroes() InitWFn {
 	f := func(dt Dtype, s ...int) interface{} {
-		size := types.Shape(s).TotalSize()
+		size := tensor.Shape(s).TotalSize()
 		switch dt {
 		case Float64:
 			return make([]float64, size)
@@ -41,7 +41,7 @@ func Zeroes() InitWFn {
 
 func RangedFrom(start int) InitWFn {
 	f := func(dt Dtype, s ...int) interface{} {
-		size := types.Shape(s).TotalSize()
+		size := tensor.Shape(s).TotalSize()
 		switch dt {
 		case Float64:
 			return tf64.RangeFloat64(start, size)
@@ -130,7 +130,7 @@ func GlorotU(gain float64) InitWFn {
 
 // Gausian64 returns a []float64 drawn from a gaussian distribution as defined by the mean and stdev
 func Gaussian64(mean, stdev float64, s ...int) []float64 {
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 
 	rand := rng.NewGaussianGenerator(time.Now().UnixNano())
 	retVal := make([]float64, size)
@@ -142,7 +142,7 @@ func Gaussian64(mean, stdev float64, s ...int) []float64 {
 
 // Gausian32 returns a []float32 drawn from a gaussian distribution as defined by the mean and stdev
 func Gaussian32(mean, stdev float64, s ...int) []float32 {
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 
 	rand := rng.NewGaussianGenerator(time.Now().UnixNano())
 	retVal := make([]float32, size)
@@ -154,7 +154,7 @@ func Gaussian32(mean, stdev float64, s ...int) []float32 {
 
 // Uniform64 returns a []float64 drawn from a uniform distribution between [low, high) that is provided
 func Uniform64(low, high float64, s ...int) []float64 {
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 
 	rand := rng.NewUniformGenerator(time.Now().UnixNano())
 	retVal := make([]float64, size)
@@ -166,7 +166,7 @@ func Uniform64(low, high float64, s ...int) []float64 {
 
 // Uniform32 returns a []float64 drawn from a uniform distribution between [low, high) that is provided
 func Uniform32(low, high float64, s ...int) []float32 {
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 	l := float32(low)
 	h := float32(high)
 
@@ -179,7 +179,7 @@ func Uniform32(low, high float64, s ...int) []float32 {
 }
 
 func Binomial64(trials, prob float64, s ...int) []float64 {
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 	t := int64(trials)
 
 	rand := rng.NewBinomialGenerator(time.Now().UnixNano())
@@ -191,7 +191,7 @@ func Binomial64(trials, prob float64, s ...int) []float64 {
 }
 
 func Binomial32(trials, prob float64, s ...int) []float32 {
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 	t := int64(trials)
 
 	rand := rng.NewBinomialGenerator(time.Now().UnixNano())
@@ -217,7 +217,7 @@ func GlorotEtAlN64(gain float64, s ...int) []float64 {
 		fieldSize *= v
 	}
 
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 	fanIn := float64((n1 + n2) * fieldSize)
 
 	stdev := gain * math.Sqrt(2.0/fanIn)
@@ -257,7 +257,7 @@ func GlorotEtAlU64(gain float64, s ...int) []float64 {
 		fieldSize *= v
 	}
 
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 	fanIn := float64((n1 + n2) * fieldSize)
 
 	stdev := gain * math.Sqrt(2.0/fanIn)
@@ -303,7 +303,7 @@ func HeEtAlN64(gain float64, s ...int) []float64 {
 		}
 	}
 
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 	stdev := gain * math.Sqrt(1.0/fanIn)
 
 	rand := rng.NewGaussianGenerator(time.Now().UnixNano())
@@ -336,7 +336,7 @@ func HeEtAlU64(gain float64, s ...int) []float64 {
 		}
 	}
 
-	size := types.Shape(s).TotalSize()
+	size := tensor.Shape(s).TotalSize()
 	stdev := gain * math.Sqrt(1.0/fanIn)
 
 	lo := 0.0 - math.Sqrt(3.0)*stdev

@@ -4,18 +4,12 @@ import (
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
-
-	tb "github.com/chewxy/gorgonia/tensor/b"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	ti "github.com/chewxy/gorgonia/tensor/i"
 )
 
 type Dtyper interface {
-	Dtype() Dtype
+	Dtype() tensor.Dtype
 }
 
 type Typer interface {
@@ -41,7 +35,7 @@ type CopierFrom interface {
 // TypeOf returns the Type of the value
 func TypeOf(v Value) hm.Type {
 	switch t := v.(type) {
-	case types.Tensor:
+	case tensor.Tensor:
 		dt, dim := tensorInfo(t)
 		return newTensorType(dim, dt)
 	case Scalar:
@@ -55,31 +49,24 @@ func TypeOf(v Value) hm.Type {
 }
 
 // DtypeOf returns the Dtype of a Value
-func DtypeOf(v Value) Dtype {
+func DtypeOf(v Value) tensor.Dtype {
 	switch vt := v.(type) {
 	case F64:
-		return Float64
+		return tensor.Float64
 	case F32:
-		return Float32
+		return tensor.Float32
 	case I:
-		return Int
+		return tensor.Int
 	case I32:
-		return Int32
+		return tensor.Int32
 	case I64:
-		return Int64
+		return tensor.Int64
 	case U8:
-		return Byte
+		return tensor.Byte
 	case B:
-		return Bool
-	case *tf64.Tensor:
-		return Float64
-	case *tf32.Tensor:
-		return Float32
-	case *ti.Tensor:
-		return Int
-	case *tb.Tensor:
-		return Bool
-
+		return tensor.Bool
+	case *tensor.Dense:
+		return vt.Dtype()
 	case Dtyper:
 		return vt.Dtype()
 	default:
@@ -95,8 +82,8 @@ func ValueEq(a, b Value) bool {
 			return scalarEq(at, bt)
 		}
 		return false
-	case types.Tensor:
-		if bt, ok := b.(types.Tensor); ok {
+	case tensor.Tensor:
+		if bt, ok := b.(tensor.Tensor); ok {
 			return at.Eq(bt)
 		}
 		return false
@@ -124,8 +111,8 @@ func CloneValue(v Value) (Value, error) {
 		return vt, nil
 	case B:
 		return vt, nil
-	case types.Tensor:
-		return tensor.Clone(vt), nil
+	case tensor.Tensor:
+		return tensor.Clone(vt).(tensor.Tensor), nil
 	case Cloner:
 		return vt.Clone()
 	default:
@@ -151,7 +138,7 @@ func ZeroValue(v Value) Value {
 		return U8(0)
 	case B:
 		return B(false)
-	case types.Tensor:
+	case tensor.Tensor:
 		vt.Zero()
 		return vt
 	case ZeroValuer:
@@ -167,10 +154,10 @@ func Copy(dest, src Value) (Value, error) {
 	switch srcT := src.(type) {
 	case Scalar:
 		return src, nil
-	case types.Tensor:
-		var destT types.Tensor
-		if destT, ok = dest.(types.Tensor); !ok {
-			return nil, errors.Errorf("Expected dest to be a types.Tensor. Got %T instead", dest)
+	case tensor.Tensor:
+		var destT tensor.Tensor
+		if destT, ok = dest.(tensor.Tensor); !ok {
+			return nil, errors.Errorf("Expected dest to be a tensor.Tensor. Got %T instead", dest)
 		}
 		err := tensor.Copy(destT, srcT)
 		return dest, err

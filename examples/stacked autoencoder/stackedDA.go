@@ -9,7 +9,6 @@ import (
 
 	. "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 )
 
 type StackedDA struct {
@@ -83,7 +82,7 @@ func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hi
 	}
 }
 
-func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
+func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 	var inputs, model Nodes
 	var machines []VM
 
@@ -120,7 +119,7 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 	for i, da := range sda.autoencoders {
 		var layerCosts []float64
 		for batch := 0; batch < batches; batch++ {
-			var input types.Tensor
+			var input tensor.Tensor
 			if input, err = tensor.Slice(x, S(start, start+sda.BatchSize)); err != nil {
 				return
 			}
@@ -156,7 +155,7 @@ func (sda *StackedDA) Pretrain(x types.Tensor, epoch int) (err error) {
 	return nil
 }
 
-func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
+func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) {
 	var model Nodes
 	for i, da := range sda.autoencoders {
 		if i > 0 {
@@ -224,7 +223,7 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 
 		g := sda.g.SubgraphRoots(cost)
 
-		var input types.Tensor
+		var input tensor.Tensor
 		if input, err = tensor.Slice(x, S(start, end)); err != nil {
 			return
 		}
@@ -244,7 +243,7 @@ func (sda *StackedDA) Finetune(x types.Tensor, y []int, epoch int) (err error) {
 	return nil
 }
 
-func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
+func (sda *StackedDA) Forwards(x tensor.Tensor) (res tensor.Tensor, err error) {
 	// logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
 	// logger := log.New(logfile, "", 0)
 
@@ -265,7 +264,7 @@ func (sda *StackedDA) Forwards(x types.Tensor) (res types.Tensor, err error) {
 		return
 	}
 
-	res = logprobs.Value().(types.Tensor)
+	res = logprobs.Value().(tensor.Tensor)
 	return
 }
 

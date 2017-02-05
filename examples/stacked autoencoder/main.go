@@ -16,7 +16,6 @@ import (
 	T "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
 	ti "github.com/chewxy/gorgonia/tensor/i"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/gonum/blas/native"
 )
 
@@ -42,7 +41,7 @@ func init() {
 	trainingLog = log.New(trainingWriter, "", log.Ltime|log.Lmicroseconds)
 }
 
-func loadMNIST(t string) (inputs, targets types.Tensor) {
+func loadMNIST(t string) (inputs, targets tensor.Tensor) {
 	var labelData []Label
 	var imageData []RawImage
 	var height, width int
@@ -83,7 +82,7 @@ func loadMNIST(t string) (inputs, targets types.Tensor) {
 	return inputs, targets
 }
 
-func predictBatch(logprobs types.Tensor, batchSize int) (guesses []int, err error) {
+func predictBatch(logprobs tensor.Tensor, batchSize int) (guesses []int, err error) {
 	var argmax *ti.Tensor
 	if batchSize == 1 {
 		argmax, err = tensor.Argmin(logprobs, 0)
@@ -97,7 +96,7 @@ func predictBatch(logprobs types.Tensor, batchSize int) (guesses []int, err erro
 	return
 }
 
-func makeTargets(targets types.Tensor) []int {
+func makeTargets(targets tensor.Tensor) []int {
 	ys := make([]int, targets.Shape()[0])
 	ys = ys[:0]
 	for i := 0; i < targets.Shape()[0]; i++ {
@@ -193,7 +192,7 @@ func main() {
 	// Visualize
 	visualizeLayer := *viz
 	verboseLog("Visualizing %dth layer", visualizeLayer)
-	finalWeights := tensor.Clone(sda.autoencoders[visualizeLayer].w.Value().(types.Tensor))
+	finalWeights := tensor.Clone(sda.autoencoders[visualizeLayer].w.Value().(tensor.Tensor))
 	finalWeights.T()
 	finalWeights.Transpose()
 	for i := 0; i < finalWeights.Shape()[0]; i++ {
@@ -213,7 +212,7 @@ func main() {
 	// but in this demo, we're going to skip all those
 	verboseLog("pred")
 	testX, testY := loadMNIST("test")
-	var one, correct, lp types.Tensor
+	var one, correct, lp tensor.Tensor
 	if one, err = tensor.Slice(testX, T.S(0, batchSize)); err != nil {
 		log.Fatal(err)
 	}

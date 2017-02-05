@@ -1,17 +1,17 @@
 package gorgonia
 
-import "github.com/chewxy/gorgonia/tensor/types"
+import "github.com/chewxy/gorgonia/tensor"
 
-var scalarShape = types.ScalarShape()
+var scalarShape = tensor.ScalarShape()
 
 type axes []int
 type coordinates []int
 
 // only works for 2D
-func transpose2D(shape types.Shape) types.Shape {
+func transpose2D(shape tensor.Shape) tensor.Shape {
 	if len(shape) != 2 {
 		return shape
 	}
 
-	return types.Shape{shape[1], shape[0]}
+	return tensor.Shape{shape[1], shape[0]}
 }

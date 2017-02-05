@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -22,13 +22,13 @@ type I64 int64
 type U8 byte
 type B bool
 
-func (v F64) Shape() types.Shape { return scalarShape }
-func (v F32) Shape() types.Shape { return scalarShape }
-func (v I) Shape() types.Shape   { return scalarShape }
-func (v I64) Shape() types.Shape { return scalarShape }
-func (v I32) Shape() types.Shape { return scalarShape }
-func (v U8) Shape() types.Shape  { return scalarShape }
-func (v B) Shape() types.Shape   { return scalarShape }
+func (v F64) Shape() tensor.Shape { return scalarShape }
+func (v F32) Shape() tensor.Shape { return scalarShape }
+func (v I) Shape() tensor.Shape   { return scalarShape }
+func (v I64) Shape() tensor.Shape { return scalarShape }
+func (v I32) Shape() tensor.Shape { return scalarShape }
+func (v U8) Shape() tensor.Shape  { return scalarShape }
+func (v B) Shape() tensor.Shape   { return scalarShape }
 
 func (v F64) Size() int { return 0 }
 func (v F32) Size() int { return 0 }
@@ -141,7 +141,7 @@ func anyToValue(any interface{}) (val Value, t hm.Type, dt Dtype, err error) {
 		val, dt = anyToScalar(any)
 		t = dt
 		return
-	case types.Tensor:
+	case tensor.Tensor:
 		val = a
 		t = TypeOf(a)
 		dt = DtypeOf(a)

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -346,7 +345,7 @@ func (f fragment) String() string {
 type alloc struct {
 	id int // node ID
 	t  hm.Type
-	s  types.Shape
+	s  tensor.Shape
 
 	readFrom []register
 	writeTo  register
@@ -389,11 +388,11 @@ mustalloc:
 	node := m.p.g.Node(instr.id).(*Node)
 	if node.boundTo != nil {
 		switch v := node.boundTo.(type) {
-		case types.Tensor:
+		case tensor.Tensor:
 			m.storage[dest] = v
 			return nil
 		case *dualValue:
-			if tv, ok := v.Value.(types.Tensor); ok {
+			if tv, ok := v.Value.(tensor.Tensor); ok {
 				m.storage[dest] = tv
 				return nil
 			}
@@ -467,7 +466,7 @@ type execOp struct {
 	op          Op
 	inputTypes  hm.Types
 	outputType  hm.Type
-	outputShape types.Shape
+	outputShape tensor.Shape
 
 	id int
 

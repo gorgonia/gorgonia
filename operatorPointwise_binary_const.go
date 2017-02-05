@@ -1,10 +1,11 @@
 package gorgonia
 
 import (
+	"github.com/chewxy/gorgonia/tensor"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
+
+	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 )
-import tf32 "github.com/chewxy/gorgonia/tensor/f32"
 
 var (
 	/* scalar-tensor float64 and vice versa */
@@ -41,10 +42,10 @@ var (
 	tnef32  = tf32CmpOp(tf32.Ne)
 )
 
-type tf32BinOp func(a, b interface{}, opts ...types.FuncOpt) (*tf32.Tensor, error)
-type tf32CmpOp func(a, b interface{}, opts ...types.FuncOpt) (types.Tensor, error)
-type tf64BinOp func(a, b interface{}, opts ...types.FuncOpt) (*tf64.Tensor, error)
-type tf64CmpOp func(a, b interface{}, opts ...types.FuncOpt) (types.Tensor, error)
+type tf32BinOp func(a, b interface{}, opts ...tensor.FuncOpt) (*tf32.Tensor, error)
+type tf32CmpOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
+type tf64BinOp func(a, b interface{}, opts ...tensor.FuncOpt) (*tf64.Tensor, error)
+type tf64CmpOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
 
 type ʘBinaryOperatorType byte
 

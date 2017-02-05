@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"testing"
 
+	"github.com/chewxy/gorgonia/tensor"
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,11 +23,11 @@ func TestNewConstant(t *testing.T) {
 	expectedTT := newTensorType(2, Float64)
 	expectedType = expectedTT
 
-	assert.Equal(types.Shape{3, 3}, ct.shape)
+	assert.Equal(tensor.Shape{3, 3}, ct.shape)
 	assert.Equal(expectedType, ct.t)
 
 	ct = NewConstant(T, WithName("From TensorValue"))
-	assert.Equal(types.Shape{3, 3}, ct.shape)
+	assert.Equal(tensor.Shape{3, 3}, ct.shape)
 	assert.Equal(expectedType, ct.t)
 	assert.Equal("From TensorValue", ct.name)
 
@@ -43,16 +43,16 @@ var anyNodeTest = []struct {
 	any  interface{}
 
 	correctType  hm.Type
-	correctShape types.Shape
+	correctShape tensor.Shape
 }{
 	{"float32", float32(3.14), Float32, scalarShape},
 	{"float64", float64(3.14), Float64, scalarShape},
 	{"int", int(3), Int, scalarShape},
 	{"bool", true, Bool, scalarShape},
-	{"tf64.Tensor", tf64.NewTensor(tf64.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float64}, types.Shape{2, 3, 4}},
-	{"tf32.Tensor", tf32.NewTensor(tf32.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float32}, types.Shape{2, 3, 4}},
+	{"tf64.Tensor", tf64.NewTensor(tf64.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float64}, tensor.Shape{2, 3, 4}},
+	{"tf32.Tensor", tf32.NewTensor(tf32.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float32}, tensor.Shape{2, 3, 4}},
 	{"ScalarValue", F64(3.14), Float64, scalarShape},
-	{"TensorValue", tf64.NewTensor(tf64.WithShape(2, 3)), &TensorType{Dims: 2, Of: Float64}, types.Shape{2, 3}},
+	{"TensorValue", tf64.NewTensor(tf64.WithShape(2, 3)), &TensorType{Dims: 2, Of: Float64}, tensor.Shape{2, 3}},
 }
 
 func TestNodeFromAny(t *testing.T) {

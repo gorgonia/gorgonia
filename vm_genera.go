@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 )
 
@@ -196,7 +196,7 @@ func (m *lispMachine) forward() (err error) {
 		machineLogf("Inputs")
 		enterLoggingContext()
 		for i, in := range inputs {
-			if inT, ok := in.Value.(types.Tensor); ok {
+			if inT, ok := in.Value.(tensor.Tensor); ok {
 				machineLogf("%d; %v", i, inT.Info())
 			}
 		}

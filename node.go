@@ -9,9 +9,9 @@ import (
 	"unsafe"
 
 	"github.com/awalterschulze/gographviz"
+	"github.com/chewxy/gorgonia/tensor"
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -20,7 +20,7 @@ import (
 type Node struct {
 	// metadata of the node
 	t     hm.Type // pruned types only plz
-	shape types.Shape
+	shape tensor.Shape
 
 	// this node is the result of applying the op to the children
 	op       Op
@@ -172,7 +172,7 @@ func WithInit(fn InitWFn) NodeConsOpt {
 // WithShape is a node construction option to initialize a *Node with a particular shape.
 // This function panics if the shape's dimensions do not match the specified dimensions of the *Node.
 func WithShape(shp ...int) NodeConsOpt {
-	s := types.Shape(shp)
+	s := tensor.Shape(shp)
 	f := func(n *Node) {
 		nd := n.Dims()
 		// if nd == 1 && s.IsVector() {
@@ -349,7 +349,7 @@ func (n *Node) Dims() int {
 }
 
 // Shape returns the shape of the node
-func (n *Node) Shape() types.Shape { return n.shape.Clone() }
+func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
 
 // IsVec returns whether this node is a vector
 func (n *Node) IsVec() bool { return n.IsVector() }
@@ -570,7 +570,7 @@ func (n *Node) unbind() {
 		returnDV(dv)
 	}
 
-	if t, ok := n.boundTo.(types.Tensor); ok {
+	if t, ok := n.boundTo.(tensor.Tensor); ok {
 		returnTensor(t)
 	}
 	n.boundTo = nil
@@ -662,7 +662,7 @@ func (n *Node) fixEdges() {
 	}
 }
 
-func (n *Node) setShape(s types.Shape, inferred bool) {
+func (n *Node) setShape(s tensor.Shape, inferred bool) {
 	n.shape = s
 	n.inferredShape = inferred
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -15,7 +14,7 @@ type dualValue struct {
 }
 
 func (dv *dualValue) SetDeriv(d Value) error {
-	if t, ok := d.(types.Tensor); ok && t.IsScalar() {
+	if t, ok := d.(tensor.Tensor); ok && t.IsScalar() {
 		d, _ = anyToScalar(t.ScalarValue())
 	}
 	dv.d = d
@@ -118,7 +117,7 @@ func variableDV(val Value) *dualValue {
 	switch v := val.(type) {
 	case Scalar:
 		retVal.d = one(DtypeOf(v))
-	case types.Tensor:
+	case tensor.Tensor:
 		shp := v.Shape()
 		dt := dtypeToTensorDtype(DtypeOf(v))
 		retVal.d = tensor.Ones(dt, shp...)
@@ -252,7 +251,7 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	switch v := retVal.d.(type) {
 	case Scalar:
 		retVal.d = one(DtypeOf(v))
-	case types.Tensor:
+	case tensor.Tensor:
 		err = v.SetAll(1)
 		retVal.d = v
 	default:

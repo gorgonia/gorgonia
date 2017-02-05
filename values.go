@@ -3,12 +3,12 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 )
 
 // Value represents a value that Gorgonia accepts
 type Value interface {
-	Shape() types.Shape
+	Shape() tensor.Shape
 	Size() int
 	Data() interface{}
 

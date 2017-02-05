@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"fmt"
 
+	"github.com/chewxy/gorgonia/tensor"
 	tf32 "github.com/chewxy/gorgonia/tensor/f32"
 	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -23,7 +23,7 @@ func Must(n *Node, err error, opts ...NodeConsOpt) *Node {
 	return n
 }
 
-// NodeFromAny creates a Node from a types.Tensor, automatically filling in shape and type info
+// NodeFromAny creates a Node from a tensor.Tensor, automatically filling in shape and type info
 func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 	v, t, dt, err := anyToValue(any)
 	if err != nil {
@@ -85,7 +85,7 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var op Op
 	var t hm.Type
 	var name string
-	var s types.Shape
+	var s tensor.Shape
 	var val Value
 
 	name = fmt.Sprintf("%v", v)
@@ -99,7 +99,7 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 		val, t = anyToScalar(v)
 		s = scalarShape
 		op = constantScalar{val.(Scalar)}
-	case types.Tensor:
+	case tensor.Tensor:
 		op = constantTensor{a}
 		val = a
 		s = a.Shape()
@@ -120,7 +120,7 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
 func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) *Node {
 	op := makeRandomOp(uniform, dt, low, high, shape...)
-	s := types.Shape(shape)
+	s := tensor.Shape(shape)
 
 	var t hm.Type
 	if s.Eq(scalarShape) {
@@ -138,7 +138,7 @@ func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) 
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
 func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...int) *Node {
 	op := makeRandomOp(gaussian, dt, mean, stdev, shape...)
-	s := types.Shape(shape)
+	s := tensor.Shape(shape)
 
 	var t hm.Type
 	if s.Eq(scalarShape) {
@@ -159,7 +159,7 @@ func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...in
 // API uniformity, trials is passed in as a float64, but will be truncated to an int at runtime.
 func BinomialRandomNode(g *ExprGraph, dt Dtype, trials, prob float64, shape ...int) *Node {
 	op := makeRandomOp(binomial, dt, trials, prob, shape...)
-	s := types.Shape(shape)
+	s := tensor.Shape(shape)
 
 	var t hm.Type
 	if s.Eq(scalarShape) {
@@ -240,10 +240,10 @@ func Let(n *Node, be interface{}) error {
 
 // UnsafeLet binds a Value to any node, not just a variable node. This means that you can use it to change any node's value at the runtime of the graph. UNSAFE!
 //
-// Additional notes: if `be` is a types.Slice, and the node's op is a sliceOp or sliceIncrOp, the op's slice will be replaced with the new slice.
+// Additional notes: if `be` is a tensor.Slice, and the node's op is a sliceOp or sliceIncrOp, the op's slice will be replaced with the new slice.
 func UnsafeLet(n *Node, be interface{}) error {
 	switch v := be.(type) {
-	case types.Slice:
+	case tensor.Slice:
 		switch so := n.op.(type) {
 		case *sliceOp:
 			so.Slice = v
