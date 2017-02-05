@@ -679,7 +679,7 @@ func (t *Dense) transpose(expStrides []int) {
 			dest := t.transposeIndex(i, axes, expStrides)
 
 			if track.IsSet(i) && track.IsSet(dest) {
-				t.set(i, saved)
+				t.Set(i, saved)
 				saved = reflect.Zero(t.t.Type).Interface()
 
 				for i < size && track.IsSet(i) {
@@ -693,8 +693,8 @@ func (t *Dense) transpose(expStrides []int) {
 			}
 
 			track.Set(i)
-			tmp = t.get(i)
-			t.set(i, saved)
+			tmp = t.Get(i)
+			t.Set(i, saved)
 			saved = tmp
 
 			i = dest

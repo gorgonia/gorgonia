@@ -21,7 +21,7 @@ const argmaxRaw = `func argmax{{short .}}(a []{{asType .}}) int {
 		}
 
 		{{if hasPrefix .String "float" -}}
-			if {{mathPkg .}}.IsNaN(v) || {{mathPkg .}}.IsInf(v, 1) {
+			if {{mathPkg .}}IsNaN(v) || {{mathPkg .}}IsInf(v, 1) {
 				max = i
 				f = v
 				break
@@ -50,7 +50,7 @@ const argminRaw = `func argmin{{short .}}(a []{{asType .}}) int {
 			continue
 		}
 		{{if hasPrefix .String "float" -}}
-			if {{mathPkg .}}.IsNaN(v) || {{mathPkg .}}.IsInf(v, -1) {
+			if {{mathPkg .}}IsNaN(v) || {{mathPkg .}}IsInf(v, -1) {
 				min = i
 				f = v
 				break

@@ -421,7 +421,7 @@ func TestDense_CopyTo(t *testing.T) {
 	assert.Equal(T2.Data(), T.Data())
 
 	// now, modify T1's data
-	T.set(0, float64(5000))
+	T.Set(0, float64(5000))
 	assert.NotEqual(T2.Data(), T.Data())
 
 	// test views

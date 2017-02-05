@@ -44,7 +44,7 @@ func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse,
 			return
 		}
 
-		if reuse.len() != a.len() {
+		if reuse.len() != a.Shape().TotalSize() {
 			err = errors.Errorf(shapeMismatch, reuse.Shape(), a.Shape())
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
@@ -76,7 +76,7 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 			return
 		}
 
-		if reuse.len() != a.len() {
+		if reuse.len() != a.Shape().TotalSize() {
 			err = errors.Errorf(shapeMismatch, reuse.Shape(), a.Shape())
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
@@ -93,6 +93,13 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
+	var it, ot *FlatIterator
+	if t.IsMaterializable() {
+		it = NewFlatIterator(t.AP)
+	}
+	if other.IsMaterializable() {
+		ot = NewFlatIterator(other.AP)
+	}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
@@ -170,50 +177,592 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 		retVal = reuse
 	case toReuse:
-		copyDense(reuse, t)
-		reuse.add(other)
+		if t.IsMaterializable() {
+			copyDenseIter(reuse, t, nil, it)
+		} else {
+			copyDense(reuse, t) // technically copyDenseIter would have done the same but it's much slower
+		}
+		err = reuse.add(other, nil, ot)
 		retVal = reuse
 	case safe:
-		retVal = recycledDense(t.t, t.shape.Clone())
-		copyDense(retVal, t)
-		retVal.add(other)
+		if t.IsMaterializable() {
+			retVal = t.Materialize().(*Dense)
+		} else {
+			retVal = t.Clone().(*Dense)
+		}
+		err = retVal.add(other, nil, ot)
 	case !safe:
-		t.add(other)
+		err = t.add(other, it, ot)
 		retVal = t
 	}
 	return
 }
-func (t *Dense) add(other *Dense) {
+func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		vecAddI(t.ints(), other.ints())
+		tdata := t.ints()
+		odata := other.ints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddI(tdata, odata)
+		}
 	case reflect.Int8:
-		vecAddI8(t.int8s(), other.int8s())
+		tdata := t.int8s()
+		odata := other.int8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddI8(tdata, odata)
+		}
 	case reflect.Int16:
-		vecAddI16(t.int16s(), other.int16s())
+		tdata := t.int16s()
+		odata := other.int16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddI16(tdata, odata)
+		}
 	case reflect.Int32:
-		vecAddI32(t.int32s(), other.int32s())
+		tdata := t.int32s()
+		odata := other.int32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddI32(tdata, odata)
+		}
 	case reflect.Int64:
-		vecAddI64(t.int64s(), other.int64s())
+		tdata := t.int64s()
+		odata := other.int64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddI64(tdata, odata)
+		}
 	case reflect.Uint:
-		vecAddU(t.uints(), other.uints())
+		tdata := t.uints()
+		odata := other.uints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddU(tdata, odata)
+		}
 	case reflect.Uint8:
-		vecAddU8(t.uint8s(), other.uint8s())
+		tdata := t.uint8s()
+		odata := other.uint8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddU8(tdata, odata)
+		}
 	case reflect.Uint16:
-		vecAddU16(t.uint16s(), other.uint16s())
+		tdata := t.uint16s()
+		odata := other.uint16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddU16(tdata, odata)
+		}
 	case reflect.Uint32:
-		vecAddU32(t.uint32s(), other.uint32s())
+		tdata := t.uint32s()
+		odata := other.uint32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddU32(tdata, odata)
+		}
 	case reflect.Uint64:
-		vecAddU64(t.uint64s(), other.uint64s())
+		tdata := t.uint64s()
+		odata := other.uint64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddU64(tdata, odata)
+		}
 	case reflect.Float32:
-		vecAddF32(t.float32s(), other.float32s())
+		tdata := t.float32s()
+		odata := other.float32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddF32(tdata, odata)
+		}
 	case reflect.Float64:
-		vecAddF64(t.float64s(), other.float64s())
+		tdata := t.float64s()
+		odata := other.float64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddF64(tdata, odata)
+		}
 	case reflect.Complex64:
-		vecAddC64(t.complex64s(), other.complex64s())
+		tdata := t.complex64s()
+		odata := other.complex64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddC64(tdata, odata)
+		}
 	case reflect.Complex128:
-		vecAddC128(t.complex128s(), other.complex128s())
+		tdata := t.complex128s()
+		odata := other.complex128s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] + odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] + odata[j]
+				i++
+			}
+		default:
+			vecAddC128(tdata, odata)
+		}
+	default:
+		// TODO: Handle Number interface
 	}
+	return nil
 }
 
 /* Sub */
@@ -224,6 +773,13 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
+	var it, ot *FlatIterator
+	if t.IsMaterializable() {
+		it = NewFlatIterator(t.AP)
+	}
+	if other.IsMaterializable() {
+		ot = NewFlatIterator(other.AP)
+	}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
@@ -301,50 +857,592 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 		retVal = reuse
 	case toReuse:
-		copyDense(reuse, t)
-		reuse.sub(other)
+		if t.IsMaterializable() {
+			copyDenseIter(reuse, t, nil, it)
+		} else {
+			copyDense(reuse, t) // technically copyDenseIter would have done the same but it's much slower
+		}
+		err = reuse.sub(other, nil, ot)
 		retVal = reuse
 	case safe:
-		retVal = recycledDense(t.t, t.shape.Clone())
-		copyDense(retVal, t)
-		retVal.sub(other)
+		if t.IsMaterializable() {
+			retVal = t.Materialize().(*Dense)
+		} else {
+			retVal = t.Clone().(*Dense)
+		}
+		err = retVal.sub(other, nil, ot)
 	case !safe:
-		t.sub(other)
+		err = t.sub(other, it, ot)
 		retVal = t
 	}
 	return
 }
-func (t *Dense) sub(other *Dense) {
+func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		vecSubI(t.ints(), other.ints())
+		tdata := t.ints()
+		odata := other.ints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubI(tdata, odata)
+		}
 	case reflect.Int8:
-		vecSubI8(t.int8s(), other.int8s())
+		tdata := t.int8s()
+		odata := other.int8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubI8(tdata, odata)
+		}
 	case reflect.Int16:
-		vecSubI16(t.int16s(), other.int16s())
+		tdata := t.int16s()
+		odata := other.int16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubI16(tdata, odata)
+		}
 	case reflect.Int32:
-		vecSubI32(t.int32s(), other.int32s())
+		tdata := t.int32s()
+		odata := other.int32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubI32(tdata, odata)
+		}
 	case reflect.Int64:
-		vecSubI64(t.int64s(), other.int64s())
+		tdata := t.int64s()
+		odata := other.int64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubI64(tdata, odata)
+		}
 	case reflect.Uint:
-		vecSubU(t.uints(), other.uints())
+		tdata := t.uints()
+		odata := other.uints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubU(tdata, odata)
+		}
 	case reflect.Uint8:
-		vecSubU8(t.uint8s(), other.uint8s())
+		tdata := t.uint8s()
+		odata := other.uint8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubU8(tdata, odata)
+		}
 	case reflect.Uint16:
-		vecSubU16(t.uint16s(), other.uint16s())
+		tdata := t.uint16s()
+		odata := other.uint16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubU16(tdata, odata)
+		}
 	case reflect.Uint32:
-		vecSubU32(t.uint32s(), other.uint32s())
+		tdata := t.uint32s()
+		odata := other.uint32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubU32(tdata, odata)
+		}
 	case reflect.Uint64:
-		vecSubU64(t.uint64s(), other.uint64s())
+		tdata := t.uint64s()
+		odata := other.uint64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubU64(tdata, odata)
+		}
 	case reflect.Float32:
-		vecSubF32(t.float32s(), other.float32s())
+		tdata := t.float32s()
+		odata := other.float32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubF32(tdata, odata)
+		}
 	case reflect.Float64:
-		vecSubF64(t.float64s(), other.float64s())
+		tdata := t.float64s()
+		odata := other.float64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubF64(tdata, odata)
+		}
 	case reflect.Complex64:
-		vecSubC64(t.complex64s(), other.complex64s())
+		tdata := t.complex64s()
+		odata := other.complex64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubC64(tdata, odata)
+		}
 	case reflect.Complex128:
-		vecSubC128(t.complex128s(), other.complex128s())
+		tdata := t.complex128s()
+		odata := other.complex128s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] - odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] - odata[j]
+				i++
+			}
+		default:
+			vecSubC128(tdata, odata)
+		}
+	default:
+		// TODO: Handle Number interface
 	}
+	return nil
 }
 
 /* Mul */
@@ -355,6 +1453,13 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
+	var it, ot *FlatIterator
+	if t.IsMaterializable() {
+		it = NewFlatIterator(t.AP)
+	}
+	if other.IsMaterializable() {
+		ot = NewFlatIterator(other.AP)
+	}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
@@ -432,50 +1537,592 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 		retVal = reuse
 	case toReuse:
-		copyDense(reuse, t)
-		reuse.mul(other)
+		if t.IsMaterializable() {
+			copyDenseIter(reuse, t, nil, it)
+		} else {
+			copyDense(reuse, t) // technically copyDenseIter would have done the same but it's much slower
+		}
+		err = reuse.mul(other, nil, ot)
 		retVal = reuse
 	case safe:
-		retVal = recycledDense(t.t, t.shape.Clone())
-		copyDense(retVal, t)
-		retVal.mul(other)
+		if t.IsMaterializable() {
+			retVal = t.Materialize().(*Dense)
+		} else {
+			retVal = t.Clone().(*Dense)
+		}
+		err = retVal.mul(other, nil, ot)
 	case !safe:
-		t.mul(other)
+		err = t.mul(other, it, ot)
 		retVal = t
 	}
 	return
 }
-func (t *Dense) mul(other *Dense) {
+func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		vecMulI(t.ints(), other.ints())
+		tdata := t.ints()
+		odata := other.ints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulI(tdata, odata)
+		}
 	case reflect.Int8:
-		vecMulI8(t.int8s(), other.int8s())
+		tdata := t.int8s()
+		odata := other.int8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulI8(tdata, odata)
+		}
 	case reflect.Int16:
-		vecMulI16(t.int16s(), other.int16s())
+		tdata := t.int16s()
+		odata := other.int16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulI16(tdata, odata)
+		}
 	case reflect.Int32:
-		vecMulI32(t.int32s(), other.int32s())
+		tdata := t.int32s()
+		odata := other.int32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulI32(tdata, odata)
+		}
 	case reflect.Int64:
-		vecMulI64(t.int64s(), other.int64s())
+		tdata := t.int64s()
+		odata := other.int64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulI64(tdata, odata)
+		}
 	case reflect.Uint:
-		vecMulU(t.uints(), other.uints())
+		tdata := t.uints()
+		odata := other.uints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulU(tdata, odata)
+		}
 	case reflect.Uint8:
-		vecMulU8(t.uint8s(), other.uint8s())
+		tdata := t.uint8s()
+		odata := other.uint8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulU8(tdata, odata)
+		}
 	case reflect.Uint16:
-		vecMulU16(t.uint16s(), other.uint16s())
+		tdata := t.uint16s()
+		odata := other.uint16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulU16(tdata, odata)
+		}
 	case reflect.Uint32:
-		vecMulU32(t.uint32s(), other.uint32s())
+		tdata := t.uint32s()
+		odata := other.uint32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulU32(tdata, odata)
+		}
 	case reflect.Uint64:
-		vecMulU64(t.uint64s(), other.uint64s())
+		tdata := t.uint64s()
+		odata := other.uint64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulU64(tdata, odata)
+		}
 	case reflect.Float32:
-		vecMulF32(t.float32s(), other.float32s())
+		tdata := t.float32s()
+		odata := other.float32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulF32(tdata, odata)
+		}
 	case reflect.Float64:
-		vecMulF64(t.float64s(), other.float64s())
+		tdata := t.float64s()
+		odata := other.float64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulF64(tdata, odata)
+		}
 	case reflect.Complex64:
-		vecMulC64(t.complex64s(), other.complex64s())
+		tdata := t.complex64s()
+		odata := other.complex64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulC64(tdata, odata)
+		}
 	case reflect.Complex128:
-		vecMulC128(t.complex128s(), other.complex128s())
+		tdata := t.complex128s()
+		odata := other.complex128s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] * odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] * odata[j]
+				i++
+			}
+		default:
+			vecMulC128(tdata, odata)
+		}
+	default:
+		// TODO: Handle Number interface
 	}
+	return nil
 }
 
 /* Div */
@@ -487,6 +2134,13 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	var errs errorIndices
+	var it, ot *FlatIterator
+	if t.IsMaterializable() {
+		it = NewFlatIterator(t.AP)
+	}
+	if other.IsMaterializable() {
+		ot = NewFlatIterator(other.AP)
+	}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
@@ -607,50 +2261,716 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 		retVal = reuse
 	case toReuse:
-		copyDense(reuse, t)
-		reuse.div(other)
+		if t.IsMaterializable() {
+			copyDenseIter(reuse, t, nil, it)
+		} else {
+			copyDense(reuse, t) // technically copyDenseIter would have done the same but it's much slower
+		}
+		err = reuse.div(other, nil, ot)
 		retVal = reuse
 	case safe:
-		retVal = recycledDense(t.t, t.shape.Clone())
-		copyDense(retVal, t)
-		retVal.div(other)
+		if t.IsMaterializable() {
+			retVal = t.Materialize().(*Dense)
+		} else {
+			retVal = t.Clone().(*Dense)
+		}
+		err = retVal.div(other, nil, ot)
 	case !safe:
-		t.div(other)
+		err = t.div(other, it, ot)
 		retVal = t
 	}
 	return
 }
-func (t *Dense) div(other *Dense) {
+func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
+	var errs errorIndices
 	switch t.t.Kind() {
 	case reflect.Int:
-		vecDivI(t.ints(), other.ints())
+		tdata := t.ints()
+		odata := other.ints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivI(tdata, odata)
+		}
 	case reflect.Int8:
-		vecDivI8(t.int8s(), other.int8s())
+		tdata := t.int8s()
+		odata := other.int8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivI8(tdata, odata)
+		}
 	case reflect.Int16:
-		vecDivI16(t.int16s(), other.int16s())
+		tdata := t.int16s()
+		odata := other.int16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivI16(tdata, odata)
+		}
 	case reflect.Int32:
-		vecDivI32(t.int32s(), other.int32s())
+		tdata := t.int32s()
+		odata := other.int32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivI32(tdata, odata)
+		}
 	case reflect.Int64:
-		vecDivI64(t.int64s(), other.int64s())
+		tdata := t.int64s()
+		odata := other.int64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivI64(tdata, odata)
+		}
 	case reflect.Uint:
-		vecDivU(t.uints(), other.uints())
+		tdata := t.uints()
+		odata := other.uints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivU(tdata, odata)
+		}
 	case reflect.Uint8:
-		vecDivU8(t.uint8s(), other.uint8s())
+		tdata := t.uint8s()
+		odata := other.uint8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivU8(tdata, odata)
+		}
 	case reflect.Uint16:
-		vecDivU16(t.uint16s(), other.uint16s())
+		tdata := t.uint16s()
+		odata := other.uint16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivU16(tdata, odata)
+		}
 	case reflect.Uint32:
-		vecDivU32(t.uint32s(), other.uint32s())
+		tdata := t.uint32s()
+		odata := other.uint32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivU32(tdata, odata)
+		}
 	case reflect.Uint64:
-		vecDivU64(t.uint64s(), other.uint64s())
+		tdata := t.uint64s()
+		odata := other.uint64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivU64(tdata, odata)
+		}
 	case reflect.Float32:
-		vecDivF32(t.float32s(), other.float32s())
+		tdata := t.float32s()
+		odata := other.float32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivF32(tdata, odata)
+		}
 	case reflect.Float64:
-		vecDivF64(t.float64s(), other.float64s())
+		tdata := t.float64s()
+		odata := other.float64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivF64(tdata, odata)
+		}
 	case reflect.Complex64:
-		vecDivC64(t.complex64s(), other.complex64s())
+		tdata := t.complex64s()
+		odata := other.complex64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivC64(tdata, odata)
+		}
 	case reflect.Complex128:
-		vecDivC128(t.complex128s(), other.complex128s())
+		tdata := t.complex128s()
+		odata := other.complex128s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = tdata[i] / odata[j]
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = tdata[i] / odata[j]
+				i++
+			}
+		default:
+			vecDivC128(tdata, odata)
+		}
+	default:
+		// TODO: Handle Number interface
 	}
+	if errs != nil {
+		err = err
+	}
+	return nil
 }
 
 /* Pow */
@@ -661,6 +2981,13 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		return nil, err
 	}
 
+	var it, ot *FlatIterator
+	if t.IsMaterializable() {
+		it = NewFlatIterator(t.AP)
+	}
+	if other.IsMaterializable() {
+		ot = NewFlatIterator(other.AP)
+	}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
@@ -718,8 +3045,7 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		case reflect.Float32:
 			data := reuse.float32s()
 			for i := range data {
-				data[i] +=
-					math32.Pow(t.getF32(i), other.getF32(i))
+				data[i] += math32.Pow(t.getF32(i), other.getF32(i))
 			}
 		case reflect.Float64:
 			data := reuse.float64s()
@@ -739,50 +3065,592 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 		retVal = reuse
 	case toReuse:
-		copyDense(reuse, t)
-		reuse.pow(other)
+		if t.IsMaterializable() {
+			copyDenseIter(reuse, t, nil, it)
+		} else {
+			copyDense(reuse, t) // technically copyDenseIter would have done the same but it's much slower
+		}
+		err = reuse.pow(other, nil, ot)
 		retVal = reuse
 	case safe:
-		retVal = recycledDense(t.t, t.shape.Clone())
-		copyDense(retVal, t)
-		retVal.pow(other)
+		if t.IsMaterializable() {
+			retVal = t.Materialize().(*Dense)
+		} else {
+			retVal = t.Clone().(*Dense)
+		}
+		err = retVal.pow(other, nil, ot)
 	case !safe:
-		t.pow(other)
+		err = t.pow(other, it, ot)
 		retVal = t
 	}
 	return
 }
-func (t *Dense) pow(other *Dense) {
+func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 	switch t.t.Kind() {
 	case reflect.Int:
-		vecPowI(t.ints(), other.ints())
+		tdata := t.ints()
+		odata := other.ints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = int(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = int(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = int(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowI(tdata, odata)
+		}
 	case reflect.Int8:
-		vecPowI8(t.int8s(), other.int8s())
+		tdata := t.int8s()
+		odata := other.int8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = int8(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = int8(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = int8(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowI8(tdata, odata)
+		}
 	case reflect.Int16:
-		vecPowI16(t.int16s(), other.int16s())
+		tdata := t.int16s()
+		odata := other.int16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = int16(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = int16(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = int16(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowI16(tdata, odata)
+		}
 	case reflect.Int32:
-		vecPowI32(t.int32s(), other.int32s())
+		tdata := t.int32s()
+		odata := other.int32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = int32(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = int32(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = int32(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowI32(tdata, odata)
+		}
 	case reflect.Int64:
-		vecPowI64(t.int64s(), other.int64s())
+		tdata := t.int64s()
+		odata := other.int64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = int64(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = int64(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = int64(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowI64(tdata, odata)
+		}
 	case reflect.Uint:
-		vecPowU(t.uints(), other.uints())
+		tdata := t.uints()
+		odata := other.uints()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = uint(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = uint(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = uint(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowU(tdata, odata)
+		}
 	case reflect.Uint8:
-		vecPowU8(t.uint8s(), other.uint8s())
+		tdata := t.uint8s()
+		odata := other.uint8s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = uint8(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = uint8(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = uint8(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowU8(tdata, odata)
+		}
 	case reflect.Uint16:
-		vecPowU16(t.uint16s(), other.uint16s())
+		tdata := t.uint16s()
+		odata := other.uint16s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = uint16(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = uint16(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = uint16(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowU16(tdata, odata)
+		}
 	case reflect.Uint32:
-		vecPowU32(t.uint32s(), other.uint32s())
+		tdata := t.uint32s()
+		odata := other.uint32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = uint32(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = uint32(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = uint32(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowU32(tdata, odata)
+		}
 	case reflect.Uint64:
-		vecPowU64(t.uint64s(), other.uint64s())
+		tdata := t.uint64s()
+		odata := other.uint64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = uint64(math.Pow(float64(tdata[i]), float64(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = uint64(math.Pow(float64(tdata[i]), float64(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = uint64(math.Pow(float64(tdata[i]), float64(odata[j])))
+				i++
+			}
+		default:
+			vecPowU64(tdata, odata)
+		}
 	case reflect.Float32:
-		vecPowF32(t.float32s(), other.float32s())
+		tdata := t.float32s()
+		odata := other.float32s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = math32.Pow(tdata[i], odata[j])
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = math32.Pow(tdata[i], odata[j])
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = math32.Pow(tdata[i], odata[j])
+				i++
+			}
+		default:
+			vecPowF32(tdata, odata)
+		}
 	case reflect.Float64:
-		vecPowF64(t.float64s(), other.float64s())
+		tdata := t.float64s()
+		odata := other.float64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = math.Pow(tdata[i], odata[j])
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = math.Pow(tdata[i], odata[j])
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = math.Pow(tdata[i], odata[j])
+				i++
+			}
+		default:
+			vecPowF64(tdata, odata)
+		}
 	case reflect.Complex64:
-		vecPowC64(t.complex64s(), other.complex64s())
+		tdata := t.complex64s()
+		odata := other.complex64s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
+				i++
+			}
+		default:
+			vecPowC64(tdata, odata)
+		}
 	case reflect.Complex128:
-		vecPowC128(t.complex128s(), other.complex128s())
+		tdata := t.complex128s()
+		odata := other.complex128s()
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				tdata[i] = cmplx.Pow(tdata[i], odata[j])
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				tdata[i] = cmplx.Pow(tdata[i], odata[j])
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				tdata[i] = cmplx.Pow(tdata[i], odata[j])
+				i++
+			}
+		default:
+			vecPowC128(tdata, odata)
+		}
+	default:
+		// TODO: Handle Number interface
 	}
+	return nil
 }
 
 /* Trans */

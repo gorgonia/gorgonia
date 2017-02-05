@@ -202,7 +202,7 @@ func (f *fmtState) acceptableRune(d *Dense) {
 func (f *fmtState) calcWidth(d *Dense) {
 	format := f.cleanFmt()
 	for i := 0; i < d.len(); i++ {
-		w, _ := fmt.Fprintf(f.buf, format, d.get(i))
+		w, _ := fmt.Fprintf(f.buf, format, d.Get(i))
 		if w > f.w {
 			f.w = w
 		}
@@ -229,7 +229,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 	f := newFmtState(s, c)
 	if t.IsScalar() {
 		o := f.originalFmt()
-		fmt.Fprintf(f, o, t.get(0))
+		fmt.Fprintf(f, o, t.Get(0))
 		return
 	}
 
@@ -258,7 +258,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 		switch {
 		case f.ext:
 			for i := 0; i < t.len(); i++ {
-				fmt.Fprintf(f, format, t.get(i))
+				fmt.Fprintf(f, format, t.Get(i))
 				if i < t.len()-1 {
 					f.Write(f.pad[:1])
 				}
@@ -268,7 +268,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 			var c, i int
 			var err error
 			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				fmt.Fprintf(f, format, t.get(i))
+				fmt.Fprintf(f, format, t.Get(i))
 				f.Write(f.pad[:1])
 
 				c++
@@ -285,7 +285,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 			}
 		default:
 			for i := 0; i < f.pc; i++ {
-				fmt.Fprintf(f, format, t.get(i))
+				fmt.Fprintf(f, format, t.Get(i))
 				f.Write(f.pad[:1])
 			}
 			if f.pc < t.len() {
@@ -345,7 +345,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 
 		// actual printing of the value
 		if f.cols <= f.pc || (col < f.pc/2 || (col >= f.cols-f.pc/2)) {
-			w, _ := fmt.Fprintf(f.buf, format, t.get(next))
+			w, _ := fmt.Fprintf(f.buf, format, t.Get(next))
 			f.Write(f.pad[:f.w-w]) // prepad
 			f.Write(f.buf.Bytes()) // write
 

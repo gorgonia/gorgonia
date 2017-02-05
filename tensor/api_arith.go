@@ -175,7 +175,7 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			retVal = incr
 		case reuse != nil:
-			reuse.set(0, res)
+			reuse.Set(0, res)
 			reuse.reshape()
 			retVal = reuse
 		default:

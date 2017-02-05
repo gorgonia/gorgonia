@@ -48,13 +48,11 @@ const testDenseApplyRaw = `func TestDense_Apply(t *testing.T){
 
 		// sliced
 		if a.len() > 10 {
-			var sliced Tensor
 			var b *Dense
-			if sliced, err = a.Slice(makeRS(0, 10)); err != nil {
+			if b, err = sliceDense(a.Dense, makeRS(0, 10)); err != nil {
 				t.Error(err)
 				return false
 			}
-			b = sliced.(*Dense)
 			if ret, err = b.Apply(mutate{{short .}}); err != nil {
 				t.Error(err)
 				return false

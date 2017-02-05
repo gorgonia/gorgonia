@@ -201,7 +201,7 @@ func (t *Dense) At(coords ...int) (interface{}, error) {
 		return nil, errors.Wrap(err, "At()")
 	}
 
-	return t.get(at), nil
+	return t.Get(at), nil
 }
 
 // Repeat is like Numpy's repeat. It repeats the elements of an array.
@@ -289,10 +289,9 @@ func (t *Dense) CopyTo(other *Dense) error {
 	return errors.Errorf(methodNYI, "CopyTo", "views")
 }
 
-// Slice performs slicing on the ndarrays. It returns a view which shares the same underlying memory as the original ndarray.
-// In the original design, views are read-only. However, as things have changed, views are now mutable.
+// Slice performs slicing on the *Dense Tensor. It returns a view which shares the same underlying memory as the original *Dense.
 //
-// Example. Given:
+// Given:
 //		T = NewTensor(WithShape(2,2), WithBacking(RangeFloat64(0,4)))
 //		V, _ := T.Slice(nil, singleSlice(1)) // T[:, 1]
 //

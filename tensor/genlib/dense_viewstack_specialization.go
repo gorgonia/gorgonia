@@ -44,7 +44,7 @@ const doviewstackRaw = `func (t *Dense) doViewStack(retVal *Dense, axisStride, b
 				if !ok {
 					break
 				}
-				retVal.set(index, t.get(id))
+				retVal.Set(index, t.Get(id))
 				index++
 			}
 			for j, ot := range others {
@@ -53,7 +53,7 @@ const doviewstackRaw = `func (t *Dense) doViewStack(retVal *Dense, axisStride, b
 					if !ok {
 						break
 					}
-					retVal.set(index, ot.get(id))
+					retVal.Set(index, ot.Get(id))
 					index++
 				}
 			}

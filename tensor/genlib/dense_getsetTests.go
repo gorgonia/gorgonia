@@ -62,8 +62,8 @@ func TestDense_setget(t *testing.T) {
 	for _, gts := range denseSetGetTests {
 		T := New(Of(gts.of), WithShape(len(gts.correct)))
 		for i, v := range gts.correct {
-			T.set(i, v)
-			got := T.get(i)
+			T.Set(i, v)
+			got := T.Get(i)
 			assert.Equal(v, got)
 		}
 	}

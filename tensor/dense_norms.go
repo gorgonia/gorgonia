@@ -30,14 +30,12 @@ func (t *Dense) multiSVDNorm(rowAxis, colAxis int) (retVal *Dense, err error) {
 	case 3:
 		toStack := make([]*Dense, retVal.Shape()[0])
 		for i := 0; i < retVal.Shape()[0]; i++ {
-			var sliced Tensor
-			var s, ithS *Dense
-			if sliced, err = retVal.Slice(ss(i)); err != nil {
+			var sliced, ithS *Dense
+			if sliced, err = sliceDense(retVal, ss(i)); err != nil {
 				return
 			}
-			s = sliced.(*Dense)
 
-			if ithS, _, _, err = s.SVD(false, false); err != nil {
+			if ithS, _, _, err = sliced.SVD(false, false); err != nil {
 				return
 			}
 

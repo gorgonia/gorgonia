@@ -29,6 +29,51 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+
+	idenSlicedI := func(a *QCDenseI) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int, 5)
+		correct = newDense(Int, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
 	// commutativity
 	commI := func(a, b *QCDenseI) bool {
 		ret1, _ := a.Add(b.Dense)
@@ -92,6 +137,51 @@ func TestAddBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+
+	idenSlicedI8 := func(a *QCDenseI8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int8, 5)
+		correct = newDense(Int8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
 	}
 	// commutativity
@@ -159,6 +249,51 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+
+	idenSlicedI16 := func(a *QCDenseI16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int16, 5)
+		correct = newDense(Int16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
 	// commutativity
 	commI16 := func(a, b *QCDenseI16) bool {
 		ret1, _ := a.Add(b.Dense)
@@ -222,6 +357,51 @@ func TestAddBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+
+	idenSlicedI32 := func(a *QCDenseI32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int32, 5)
+		correct = newDense(Int32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
 	}
 	// commutativity
@@ -289,6 +469,51 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+
+	idenSlicedI64 := func(a *QCDenseI64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int64, 5)
+		correct = newDense(Int64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
 	// commutativity
 	commI64 := func(a, b *QCDenseI64) bool {
 		ret1, _ := a.Add(b.Dense)
@@ -352,6 +577,51 @@ func TestAddBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+
+	idenSlicedU := func(a *QCDenseU) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint, 5)
+		correct = newDense(Uint, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
 	}
 	// commutativity
@@ -419,6 +689,51 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+
+	idenSlicedU8 := func(a *QCDenseU8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint8, 5)
+		correct = newDense(Uint8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
 	// commutativity
 	commU8 := func(a, b *QCDenseU8) bool {
 		ret1, _ := a.Add(b.Dense)
@@ -482,6 +797,51 @@ func TestAddBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+
+	idenSlicedU16 := func(a *QCDenseU16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint16, 5)
+		correct = newDense(Uint16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
 	}
 	// commutativity
@@ -549,6 +909,51 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+
+	idenSlicedU32 := func(a *QCDenseU32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint32, 5)
+		correct = newDense(Uint32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
 	// commutativity
 	commU32 := func(a, b *QCDenseU32) bool {
 		ret1, _ := a.Add(b.Dense)
@@ -612,6 +1017,51 @@ func TestAddBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+
+	idenSlicedU64 := func(a *QCDenseU64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint64, 5)
+		correct = newDense(Uint64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
 	}
 	// commutativity
@@ -679,6 +1129,51 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+
+	idenSlicedF32 := func(a *QCDenseF32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float32, 5)
+		correct = newDense(Float32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
 	// commutativity
 	commF32 := func(a, b *QCDenseF32) bool {
 		ret1, _ := a.Add(b.Dense)
@@ -742,6 +1237,51 @@ func TestAddBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+
+	idenSlicedF64 := func(a *QCDenseF64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float64, 5)
+		correct = newDense(Float64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
 	}
 	// commutativity
@@ -809,6 +1349,51 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+
+	idenSlicedC64 := func(a *QCDenseC64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex64, 5)
+		correct = newDense(Complex64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
 	// commutativity
 	commC64 := func(a, b *QCDenseC64) bool {
 		ret1, _ := a.Add(b.Dense)
@@ -872,6 +1457,51 @@ func TestAddBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+
+	idenSlicedC128 := func(a *QCDenseC128) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex128, 5)
+		correct = newDense(Complex128, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex128, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Add(identity); err != nil {
+			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
 	}
 	// commutativity
@@ -1043,6 +1673,51 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+
+	idenSlicedI := func(a *QCDenseI) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int, 5)
+		correct = newDense(Int, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
 	// incr
 	incrI := func(a, b, incr *QCDenseI) bool {
 		// build correct
@@ -1078,6 +1753,51 @@ func TestSubBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+
+	idenSlicedI8 := func(a *QCDenseI8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int8, 5)
+		correct = newDense(Int8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
 	}
 	// incr
@@ -1117,6 +1837,51 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+
+	idenSlicedI16 := func(a *QCDenseI16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int16, 5)
+		correct = newDense(Int16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
 	// incr
 	incrI16 := func(a, b, incr *QCDenseI16) bool {
 		// build correct
@@ -1152,6 +1917,51 @@ func TestSubBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+
+	idenSlicedI32 := func(a *QCDenseI32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int32, 5)
+		correct = newDense(Int32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
 	}
 	// incr
@@ -1191,6 +2001,51 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+
+	idenSlicedI64 := func(a *QCDenseI64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int64, 5)
+		correct = newDense(Int64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
 	// incr
 	incrI64 := func(a, b, incr *QCDenseI64) bool {
 		// build correct
@@ -1226,6 +2081,51 @@ func TestSubBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+
+	idenSlicedU := func(a *QCDenseU) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint, 5)
+		correct = newDense(Uint, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
 	}
 	// incr
@@ -1265,6 +2165,51 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+
+	idenSlicedU8 := func(a *QCDenseU8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint8, 5)
+		correct = newDense(Uint8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
 	// incr
 	incrU8 := func(a, b, incr *QCDenseU8) bool {
 		// build correct
@@ -1300,6 +2245,51 @@ func TestSubBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+
+	idenSlicedU16 := func(a *QCDenseU16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint16, 5)
+		correct = newDense(Uint16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
 	}
 	// incr
@@ -1339,6 +2329,51 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+
+	idenSlicedU32 := func(a *QCDenseU32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint32, 5)
+		correct = newDense(Uint32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
 	// incr
 	incrU32 := func(a, b, incr *QCDenseU32) bool {
 		// build correct
@@ -1374,6 +2409,51 @@ func TestSubBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+
+	idenSlicedU64 := func(a *QCDenseU64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint64, 5)
+		correct = newDense(Uint64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
 	}
 	// incr
@@ -1413,6 +2493,51 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+
+	idenSlicedF32 := func(a *QCDenseF32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float32, 5)
+		correct = newDense(Float32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
 	// incr
 	incrF32 := func(a, b, incr *QCDenseF32) bool {
 		// build correct
@@ -1448,6 +2573,51 @@ func TestSubBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+
+	idenSlicedF64 := func(a *QCDenseF64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float64, 5)
+		correct = newDense(Float64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
 	}
 	// incr
@@ -1487,6 +2657,51 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+
+	idenSlicedC64 := func(a *QCDenseC64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex64, 5)
+		correct = newDense(Complex64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
 	// incr
 	incrC64 := func(a, b, incr *QCDenseC64) bool {
 		// build correct
@@ -1522,6 +2737,51 @@ func TestSubBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+
+	idenSlicedC128 := func(a *QCDenseC128) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex128, 5)
+		correct = newDense(Complex128, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex128, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		if ret, err = a2.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Sub(identity); err != nil {
+			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
 	}
 	// incr
@@ -1666,6 +2926,53 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+
+	idenSlicedI := func(a *QCDenseI) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int, 5)
+		identity.Memset(int(1))
+		correct = newDense(Int, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
 	// commutativity
 	commI := func(a, b *QCDenseI) bool {
 		ret1, _ := a.Mul(b.Dense)
@@ -1730,6 +3037,53 @@ func TestMulBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+
+	idenSlicedI8 := func(a *QCDenseI8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int8, 5)
+		identity.Memset(int8(1))
+		correct = newDense(Int8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int8(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
 	}
 	// commutativity
@@ -1798,6 +3152,53 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+
+	idenSlicedI16 := func(a *QCDenseI16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int16, 5)
+		identity.Memset(int16(1))
+		correct = newDense(Int16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int16(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
 	// commutativity
 	commI16 := func(a, b *QCDenseI16) bool {
 		ret1, _ := a.Mul(b.Dense)
@@ -1862,6 +3263,53 @@ func TestMulBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+
+	idenSlicedI32 := func(a *QCDenseI32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int32, 5)
+		identity.Memset(int32(1))
+		correct = newDense(Int32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int32(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
 	}
 	// commutativity
@@ -1930,6 +3378,53 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+
+	idenSlicedI64 := func(a *QCDenseI64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int64, 5)
+		identity.Memset(int64(1))
+		correct = newDense(Int64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int64(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
 	// commutativity
 	commI64 := func(a, b *QCDenseI64) bool {
 		ret1, _ := a.Mul(b.Dense)
@@ -1994,6 +3489,53 @@ func TestMulBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+
+	idenSlicedU := func(a *QCDenseU) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint, 5)
+		identity.Memset(uint(1))
+		correct = newDense(Uint, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
 	}
 	// commutativity
@@ -2062,6 +3604,53 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+
+	idenSlicedU8 := func(a *QCDenseU8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint8, 5)
+		identity.Memset(uint8(1))
+		correct = newDense(Uint8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint8(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
 	// commutativity
 	commU8 := func(a, b *QCDenseU8) bool {
 		ret1, _ := a.Mul(b.Dense)
@@ -2126,6 +3715,53 @@ func TestMulBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+
+	idenSlicedU16 := func(a *QCDenseU16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint16, 5)
+		identity.Memset(uint16(1))
+		correct = newDense(Uint16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint16(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
 	}
 	// commutativity
@@ -2194,6 +3830,53 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+
+	idenSlicedU32 := func(a *QCDenseU32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint32, 5)
+		identity.Memset(uint32(1))
+		correct = newDense(Uint32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint32(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
 	// commutativity
 	commU32 := func(a, b *QCDenseU32) bool {
 		ret1, _ := a.Mul(b.Dense)
@@ -2258,6 +3941,53 @@ func TestMulBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+
+	idenSlicedU64 := func(a *QCDenseU64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint64, 5)
+		identity.Memset(uint64(1))
+		correct = newDense(Uint64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint64(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
 	}
 	// commutativity
@@ -2326,6 +4056,53 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+
+	idenSlicedF32 := func(a *QCDenseF32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float32, 5)
+		identity.Memset(float32(1))
+		correct = newDense(Float32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(float32(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
 	// commutativity
 	commF32 := func(a, b *QCDenseF32) bool {
 		ret1, _ := a.Mul(b.Dense)
@@ -2390,6 +4167,53 @@ func TestMulBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+
+	idenSlicedF64 := func(a *QCDenseF64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float64, 5)
+		identity.Memset(float64(1))
+		correct = newDense(Float64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(float64(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
 	}
 	// commutativity
@@ -2458,6 +4282,53 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+
+	idenSlicedC64 := func(a *QCDenseC64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex64, 5)
+		identity.Memset(complex64(1))
+		correct = newDense(Complex64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(complex64(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
 	// commutativity
 	commC64 := func(a, b *QCDenseC64) bool {
 		ret1, _ := a.Mul(b.Dense)
@@ -2522,6 +4393,53 @@ func TestMulBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+
+	idenSlicedC128 := func(a *QCDenseC128) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex128, 5)
+		identity.Memset(complex128(1))
+		correct = newDense(Complex128, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex128, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(complex128(1))
+		if ret, err = a2.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Mul(identity); err != nil {
+			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
 	}
 	// commutativity
@@ -2698,6 +4616,53 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI, nil); err != nil {
 		t.Errorf("Identity test for int failed %v", err)
 	}
+
+	idenSlicedI := func(a *QCDenseI) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int, 5)
+		identity.Memset(int(1))
+		correct = newDense(Int, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI, nil); err != nil {
+		t.Errorf("Identity test for int failed %v", err)
+	}
 	// incr
 	incrI := func(a, b, incr *QCDenseI) bool {
 		// build correct
@@ -2734,6 +4699,53 @@ func TestDivBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI8, nil); err != nil {
+		t.Errorf("Identity test for int8 failed %v", err)
+	}
+
+	idenSlicedI8 := func(a *QCDenseI8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int8, 5)
+		identity.Memset(int8(1))
+		correct = newDense(Int8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int8(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI8, nil); err != nil {
 		t.Errorf("Identity test for int8 failed %v", err)
 	}
 	// incr
@@ -2774,6 +4786,53 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI16, nil); err != nil {
 		t.Errorf("Identity test for int16 failed %v", err)
 	}
+
+	idenSlicedI16 := func(a *QCDenseI16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int16, 5)
+		identity.Memset(int16(1))
+		correct = newDense(Int16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int16(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI16, nil); err != nil {
+		t.Errorf("Identity test for int16 failed %v", err)
+	}
 	// incr
 	incrI16 := func(a, b, incr *QCDenseI16) bool {
 		// build correct
@@ -2810,6 +4869,53 @@ func TestDivBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenI32, nil); err != nil {
+		t.Errorf("Identity test for int32 failed %v", err)
+	}
+
+	idenSlicedI32 := func(a *QCDenseI32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int32, 5)
+		identity.Memset(int32(1))
+		correct = newDense(Int32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int32(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI32, nil); err != nil {
 		t.Errorf("Identity test for int32 failed %v", err)
 	}
 	// incr
@@ -2850,6 +4956,53 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenI64, nil); err != nil {
 		t.Errorf("Identity test for int64 failed %v", err)
 	}
+
+	idenSlicedI64 := func(a *QCDenseI64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Int64, 5)
+		identity.Memset(int64(1))
+		correct = newDense(Int64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Int64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(int64(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedI64, nil); err != nil {
+		t.Errorf("Identity test for int64 failed %v", err)
+	}
 	// incr
 	incrI64 := func(a, b, incr *QCDenseI64) bool {
 		// build correct
@@ -2886,6 +5039,53 @@ func TestDivBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU, nil); err != nil {
+		t.Errorf("Identity test for uint failed %v", err)
+	}
+
+	idenSlicedU := func(a *QCDenseU) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint, 5)
+		identity.Memset(uint(1))
+		correct = newDense(Uint, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU, nil); err != nil {
 		t.Errorf("Identity test for uint failed %v", err)
 	}
 	// incr
@@ -2926,6 +5126,53 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU8, nil); err != nil {
 		t.Errorf("Identity test for uint8 failed %v", err)
 	}
+
+	idenSlicedU8 := func(a *QCDenseU8) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint8, 5)
+		identity.Memset(uint8(1))
+		correct = newDense(Uint8, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint8, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint8(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU8, nil); err != nil {
+		t.Errorf("Identity test for uint8 failed %v", err)
+	}
 	// incr
 	incrU8 := func(a, b, incr *QCDenseU8) bool {
 		// build correct
@@ -2962,6 +5209,53 @@ func TestDivBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU16, nil); err != nil {
+		t.Errorf("Identity test for uint16 failed %v", err)
+	}
+
+	idenSlicedU16 := func(a *QCDenseU16) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint16, 5)
+		identity.Memset(uint16(1))
+		correct = newDense(Uint16, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint16, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint16(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU16, nil); err != nil {
 		t.Errorf("Identity test for uint16 failed %v", err)
 	}
 	// incr
@@ -3002,6 +5296,53 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenU32, nil); err != nil {
 		t.Errorf("Identity test for uint32 failed %v", err)
 	}
+
+	idenSlicedU32 := func(a *QCDenseU32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint32, 5)
+		identity.Memset(uint32(1))
+		correct = newDense(Uint32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint32(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU32, nil); err != nil {
+		t.Errorf("Identity test for uint32 failed %v", err)
+	}
 	// incr
 	incrU32 := func(a, b, incr *QCDenseU32) bool {
 		// build correct
@@ -3038,6 +5379,53 @@ func TestDivBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenU64, nil); err != nil {
+		t.Errorf("Identity test for uint64 failed %v", err)
+	}
+
+	idenSlicedU64 := func(a *QCDenseU64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Uint64, 5)
+		identity.Memset(uint64(1))
+		correct = newDense(Uint64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Uint64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(uint64(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedU64, nil); err != nil {
 		t.Errorf("Identity test for uint64 failed %v", err)
 	}
 	// incr
@@ -3078,6 +5466,53 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenF32, nil); err != nil {
 		t.Errorf("Identity test for float32 failed %v", err)
 	}
+
+	idenSlicedF32 := func(a *QCDenseF32) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float32, 5)
+		identity.Memset(float32(1))
+		correct = newDense(Float32, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float32, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(float32(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF32, nil); err != nil {
+		t.Errorf("Identity test for float32 failed %v", err)
+	}
 	// incr
 	incrF32 := func(a, b, incr *QCDenseF32) bool {
 		// build correct
@@ -3114,6 +5549,53 @@ func TestDivBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenF64, nil); err != nil {
+		t.Errorf("Identity test for float64 failed %v", err)
+	}
+
+	idenSlicedF64 := func(a *QCDenseF64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Float64, 5)
+		identity.Memset(float64(1))
+		correct = newDense(Float64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Float64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(float64(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedF64, nil); err != nil {
 		t.Errorf("Identity test for float64 failed %v", err)
 	}
 	// incr
@@ -3154,6 +5636,53 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(idenC64, nil); err != nil {
 		t.Errorf("Identity test for complex64 failed %v", err)
 	}
+
+	idenSlicedC64 := func(a *QCDenseC64) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex64, 5)
+		identity.Memset(complex64(1))
+		correct = newDense(Complex64, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex64, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(complex64(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC64, nil); err != nil {
+		t.Errorf("Identity test for complex64 failed %v", err)
+	}
 	// incr
 	incrC64 := func(a, b, incr *QCDenseC64) bool {
 		// build correct
@@ -3190,6 +5719,53 @@ func TestDivBasicProperties(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(idenC128, nil); err != nil {
+		t.Errorf("Identity test for complex128 failed %v", err)
+	}
+
+	idenSlicedC128 := func(a *QCDenseC128) bool {
+		var ret, correct, identity *Dense
+		var err error
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		identity = newDense(Complex128, 5)
+		identity.Memset(complex128(1))
+		correct = newDense(Complex128, 5)
+		copyDense(correct, a.Dense)
+
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// other requires iterator
+		a2 := a1.Materialize().(*Dense)
+		identity = newDense(Complex128, a.len())
+		identity, _ = sliceDense(identity, makeRS(0, 5))
+		identity.Memset(complex128(1))
+		if ret, err = a2.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		if ret, err = a1.Div(identity); err != nil {
+			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(idenSlicedC128, nil); err != nil {
 		t.Errorf("Identity test for complex128 failed %v", err)
 	}
 	// incr

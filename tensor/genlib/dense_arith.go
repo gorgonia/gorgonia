@@ -109,7 +109,7 @@ const prepArithRaw = `func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse 
 			return 
 		}
 
-		if reuse.len() != a.len() {
+		if reuse.len() != a.Shape().TotalSize() {
 			err =  errors.Errorf(shapeMismatch, reuse.Shape(), a.Shape())
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
@@ -142,7 +142,7 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 			return 
 		}
 
-		if reuse.len() != a.len() {
+		if reuse.len() != a.Shape().TotalSize() {
 			err =  errors.Errorf(shapeMismatch, reuse.Shape(), a.Shape())
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
@@ -164,6 +164,13 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 	{{$div := hasPrefix .OpName "Div" -}}
 	{{if or $scaleInv $div -}}var errs errorIndices
 	{{end -}}
+	var it, ot *FlatIterator
+	if t.IsMaterializable() {
+		it = NewFlatIterator(t.AP)
+	}
+	if other.IsMaterializable() {
+		ot = NewFlatIterator(other.AP)
+	}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
@@ -174,9 +181,7 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 			data := reuse.{{sliceOf .}}
 			for i := range data {
 				{{if or $div $scaleInv -}}
-					{{if hasPrefix .String "float" -}}
-					{{else if hasPrefix .String "complex" -}}
-					{{else -}}
+					{{if isntFloat . -}}
 					if other.get{{short .}}(i) == 0 {
 						errs = append(errs, i)
 						continue
@@ -185,14 +190,10 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 				{{end -}}
 				data[i] += {{if $isFunc -}}
 					{{if eq $op "math.Pow" -}}
-						{{if eq .String "float32"}}
-							math32.Pow(t.get{{short .}}(i), other.get{{short .}}(i))
-						{{else if eq .String "float64" -}}
-							math.Pow(t.get{{short .}}(i), other.get{{short .}}(i))
-						{{else if eq .String "complex64" -}}
-							complex64(cmplx.Pow(complex128(t.get{{short .}}(i)), complex128(other.get{{short .}}(i))))
-						{{else if eq .String "complex128" -}}
-							cmplx.Pow(t.get{{short .}}(i), other.get{{short .}}(i))
+						{{if eq .String "complex64" -}}
+							complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(i))))
+						{{else if isFloat . -}}
+							{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(i))
 						{{else -}}
 							{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(i))))
 						{{end -}}
@@ -211,31 +212,150 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 		{{end -}}
 		retVal = reuse
 	case toReuse:
-		copyDense(reuse, t)
-		reuse.{{lower .OpName}}(other)
+		if t.IsMaterializable(){
+			copyDenseIter(reuse, t, nil, it)
+		} else {
+			copyDense(reuse, t) // technically copyDenseIter would have done the same but it's much slower
+		}
+		err = reuse.{{lower .OpName}}(other, nil, ot)
 		retVal = reuse
 	case safe:
-		retVal = recycledDense(t.t, t.shape.Clone())
-		copyDense(retVal, t)
-		retVal.{{lower .OpName}}(other)
+		if t.IsMaterializable(){
+			retVal = t.Materialize().(*Dense)
+		} else {
+			retVal = t.Clone().(*Dense)
+		}
+		err = retVal.{{lower .OpName}}(other, nil, ot)
 	case !safe:
-		t.{{lower .OpName}}(other)
+		err = t.{{lower .OpName}}(other, it, ot)
 		retVal = t
 	}
 	return
 }
 `
 
-const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *Dense){
+const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *Dense, it, ot *FlatIterator) (err error){
+	{{$isFunc := .IsFunc -}}
+	{{$op := .OpSymb -}}
+	{{$opName := .OpName -}}
+	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+	{{$div := hasPrefix .OpName "Div" -}}
+	{{if or $scaleInv $div -}}var errs errorIndices
+	{{end -}}
 	switch t.t.Kind() {
-	{{$op := .OpName -}}
 	{{range .Kinds -}}
 		{{if isNumber . -}}
 	case reflect.{{reflectKind .}}:
-		vec{{$op}}{{short .}}(t.{{sliceOf .}}, other.{{sliceOf .}})
+		tdata := t.{{sliceOf .}}
+		odata := other.{{sliceOf .}}
+		var i, j int
+		switch {
+		case it != nil && ot != nil:
+			for {
+				if i, err = it.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					if _, ok := err.(NoOpError); !ok {
+						return
+					}
+					err = nil
+					break
+				}
+				{{if or $div $scaleInv -}}
+					{{if isntFloat . -}}
+					if odata[j] == 0 {
+						errs = append(errs, j)
+						continue
+					}
+					{{end -}}
+				{{end -}}
+				tdata[i] = {{if $isFunc -}}
+					{{if eq $op "math.Pow" -}}
+						{{if eq .String "complex64" -}}
+							complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
+						{{else if isFloat . -}}
+							{{mathPkg .}}Pow(tdata[i], odata[j])
+						{{else -}}
+							{{asType .}}({{$op}}(float64(tdata[i]), float64(odata[j])))
+						{{end -}}
+					{{end -}}
+				{{else -}}
+					tdata[i] {{$op}} odata[j]
+				{{end -}}
+			}
+		case it != nil && ot == nil:
+			for i, err = it.Next(); err == nil; i, err = it.Next(){
+				{{if or $div $scaleInv -}}
+					{{if isntFloat . -}}
+					if odata[j] == 0 {
+						errs = append(errs, j)
+						continue
+					}
+					{{end -}}
+				{{end -}}
+				tdata[i] = {{if $isFunc -}}
+					{{if eq $op "math.Pow" -}}
+						{{if eq .String "complex64" -}}
+							complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
+						{{else if isFloat . -}}
+							{{mathPkg .}}Pow(tdata[i], odata[j])
+						{{else -}}
+							{{asType .}}({{$op}}(float64(tdata[i]), float64(odata[j])))
+						{{end -}}
+					{{end -}}
+				{{else -}}
+					tdata[i] {{$op}} odata[j]
+				{{end -}}
+				j++
+			}
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			err = nil
+		case it == nil && ot != nil:
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				{{if or $div $scaleInv -}}
+					{{if isntFloat . -}}
+					if odata[j] == 0 {
+						errs = append(errs, j)
+						continue
+					}
+					{{end -}}
+				{{end -}}
+				tdata[i] = {{if $isFunc -}}
+					{{if eq $op "math.Pow" -}}
+						{{if eq .String "complex64" -}}
+							complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
+						{{else if isFloat . -}}
+							{{mathPkg .}}Pow(tdata[i], odata[j])
+						{{else -}}
+							{{asType .}}({{$op}}(float64(tdata[i]), float64(odata[j])))
+						{{end -}}
+					{{end -}}
+				{{else -}}
+					tdata[i] {{$op}} odata[j]
+				{{end -}}
+				i++
+			}
+		default:
+			vec{{$opName}}{{short .}}(tdata, odata)
+		}
 		{{end -}}
 	{{end -}}
+	default:
+		// TODO: Handle Number interface
 	}
+	{{if or $scaleInv $div -}}
+		if errs != nil {
+			err = err
+		}
+	{{end -}}
+	return nil
 }
 `
 

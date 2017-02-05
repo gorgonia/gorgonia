@@ -158,10 +158,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 		args := make([]reflect.Value, 0, fnT.NumIn())
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				args = append(args, reflect.ValueOf(retVal.get(j)))
-				args = append(args, reflect.ValueOf(t.get(start + j)))
+				args = append(args, reflect.ValueOf(retVal.Get(j)))
+				args = append(args, reflect.ValueOf(t.Get(start + j)))
 				v := f.Call(args)[0].Interface()
-				retVal.set(j, v)
+				retVal.Set(j, v)
 				args = args[:0]
 			}
 			start += split
@@ -205,7 +205,7 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			sliced := t.shallowClone()
 			sliced.slice(start, start+size)
 			r := reduceRef(f, fnT, def, sliced)
-			retVal.set(at, r)
+			retVal.Set(at, r)
 			at++
 		}
 	}
@@ -267,10 +267,10 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 				for k := 0; k < size; k++ {
 					readFrom := innerStart + k*stride
 					writeTo := i*expected + j
-					args = append(args, reflect.ValueOf(retVal.get(writeTo)))
-					args = append(args, reflect.ValueOf(sliced.get(readFrom)))
+					args = append(args, reflect.ValueOf(retVal.Get(writeTo)))
+					args = append(args, reflect.ValueOf(sliced.Get(readFrom)))
 					v := f.Call(args)[0].Interface()
-					retVal.set(writeTo, v)
+					retVal.Set(writeTo, v)
 				}
 				strideTrack++
 				if strideTrack >= stride {

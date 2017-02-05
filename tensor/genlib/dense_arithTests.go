@@ -36,6 +36,60 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 			if err := quick.Check(iden{{short .}}, nil); err != nil {
 				t.Errorf("Identity test for {{.}} failed %v",err)
 			}
+
+			idenSliced{{short .}} := func(a *QCDense{{short .}}) bool {
+				var ret, correct, identity *Dense
+				var err error
+
+				// t requires iterator
+				a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+				identity = newDense({{asType . | title | strip}}, 5)
+				{{if ne $iden 0 -}}
+					identity.Memset({{asType .}}({{$iden}}))
+				{{end -}}
+				correct = newDense({{asType . | title | strip}}, 5)
+				copyDense(correct, a.Dense)
+
+				if ret, err = a1.{{$op}}(identity); err != nil {
+					t.Errorf("{{$op}} failed %v. Iden: %v, a1: %v", err, identity, a1)
+					return false
+				}
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+
+				// other requires iterator
+				a2 := a1.Materialize() .(*Dense)
+				identity = newDense({{asType . | title | strip}}, a.len())
+				identity, _ = sliceDense(identity, makeRS(0, 5))
+				{{if ne $iden 0 -}}
+					identity.Memset({{asType .}}({{$iden}}))
+				{{end -}}
+
+				if ret, err = a2.{{$op}}(identity); err != nil {
+					t.Errorf("{{$op}} failed %v. Iden: %v, a1: %v", err, identity, a1)
+					return false
+				}
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+
+				// both requires iterator
+				if ret, err = a1.{{$op}}(identity); err != nil {
+					t.Errorf("{{$op}} failed %v. Iden: %v, a1: %v", err, identity, a1)
+					return false
+				}
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+
+
+
+				return true
+			}
+			if err := quick.Check(idenSliced{{short .}}, nil); err != nil {
+				t.Errorf("Identity test for {{.}} failed %v",err)
+			}
 		{{end -}}
 		{{if eq $op "Pow" -}}
 			pow0{{short .}} := func(a *QCDense{{short .}}) bool {

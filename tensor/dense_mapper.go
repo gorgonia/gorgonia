@@ -240,8 +240,8 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 		}
 		args := make([]reflect.Value, 0, fnT.NumIn())
 		for i := 0; i < t.len(); i++ {
-			args = append(args, reflect.ValueOf(t.get(i)))
-			t.set(i, f.Call(args)[0].Interface())
+			args = append(args, reflect.ValueOf(t.Get(i)))
+			t.Set(i, f.Call(args)[0].Interface())
 			args = args[:0]
 		}
 	}
@@ -568,8 +568,8 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		args := make([]reflect.Value, 0, fnT.NumIn())
 		var i int
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
-			args = append(args, reflect.ValueOf(t.get(i)))
-			t.set(i, f.Call(args)[0].Interface())
+			args = append(args, reflect.ValueOf(t.Get(i)))
+			t.Set(i, f.Call(args)[0].Interface())
 			args = args[:0]
 		}
 		if _, noop := err.(NoOpError); !noop {

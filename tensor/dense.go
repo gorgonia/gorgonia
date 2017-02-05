@@ -89,7 +89,7 @@ func (t *Dense) Info() *AP    { return t.AP }
 func (t *Dense) Dtype() Dtype { return t.t }
 func (t *Dense) Data() interface{} {
 	if t.IsScalar() {
-		return t.get(0)
+		return t.Get(0)
 	}
 	return t.v
 }
@@ -133,7 +133,7 @@ func (t *Dense) ScalarValue() interface{} {
 		panic(fmt.Sprintf("ScalarValue only works when the Tensor is a representation of a scalar value. The value of the tensor is %v", t))
 	}
 
-	return t.get(0)
+	return t.Get(0)
 }
 
 //  IsView indicates if the Tensor is a view of another (typically from slicing)

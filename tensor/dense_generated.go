@@ -76,19 +76,18 @@ func I(dt Dtype, r, c, k int) Tensor {
 		i = (-k) * c
 	}
 
-	var slicedT Tensor
+	var s *Dense
 	var err error
 	end := c - k
 	if end > r {
-		slicedT, err = ret.Slice(nil)
+		s, err = sliceDense(ret, nil)
 	} else {
-		slicedT, err = ret.Slice(rs{0, end, 1})
+		s, err = sliceDense(ret, rs{0, end, 1})
 	}
 
 	if err != nil {
 		panic(err)
 	}
-	s := slicedT.(*Dense)
 	var nexts []int
 	iter := NewFlatIterator(s.AP)
 	nexts, err = iter.Slice(rs{i, s.Size(), c + 1})

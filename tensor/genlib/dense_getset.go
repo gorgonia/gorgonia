@@ -12,7 +12,7 @@ const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{asType .}}) { t.{
 `
 const getBasicRaw = `func (t *Dense) get{{short .}}(i int) {{asType .}} { return t.{{lower .String | clean | strip }}s()[i]}
 `
-const getRaw = `func (t *Dense) get(i int) interface{} {
+const getRaw = `func (t *Dense) Get(i int) interface{} {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
@@ -30,7 +30,7 @@ const getRaw = `func (t *Dense) get(i int) interface{} {
 }
 
 `
-const setRaw = `func (t *Dense) set(i int, x interface{}) {
+const setRaw = `func (t *Dense) Set(i int, x interface{}) {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
@@ -209,7 +209,7 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 			{{end -}}
 		{{end -}}
 		default:
-			dest.set(i, src.get(j))
+			dest.Set(i, src.Get(j))
 		}
 		count++
 	}

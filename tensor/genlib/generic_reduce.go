@@ -14,7 +14,7 @@ const reflectBasedReduceRaw = `func reduceRef(f reflect.Value, fnT reflect.Type,
 
 	args := make([]reflect.Value, 0, fnT.NumIn())
 	for i := 0; i < l.len(); i++ {
-		v := reflect.ValueOf(l.get(i))
+		v := reflect.ValueOf(l.Get(i))
 		args = append(args, retVal)
 		args = append(args, v)
 		retVal = f.Call(args)[0]

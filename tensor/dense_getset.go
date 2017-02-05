@@ -182,7 +182,7 @@ func (t *Dense) makeArray(size int) {
 	}
 }
 
-func (t *Dense) set(i int, x interface{}) {
+func (t *Dense) Set(i int, x interface{}) {
 	switch t.t.Kind() {
 	case reflect.Bool:
 		xv := x.(bool)
@@ -248,7 +248,7 @@ func (t *Dense) set(i int, x interface{}) {
 	}
 }
 
-func (t *Dense) get(i int) interface{} {
+func (t *Dense) Get(i int) interface{} {
 	switch t.t.Kind() {
 	case reflect.Bool:
 		return t.getB(i)
@@ -748,7 +748,7 @@ func copyDenseIter(dest, src *Dense, diter, siter *FlatIterator) (int, error) {
 		case reflect.UnsafePointer:
 			dest.setUnsafePointer(i, src.getUnsafePointer(j))
 		default:
-			dest.set(i, src.get(j))
+			dest.Set(i, src.Get(j))
 		}
 		count++
 	}

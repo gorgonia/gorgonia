@@ -125,3 +125,11 @@ func getFloatDense(t Tensor) (retVal *Dense, err error) {
 	}
 	return
 }
+
+func sliceDense(t *Dense, slices ...Slice) (retVal *Dense, err error) {
+	var sliced Tensor
+	if sliced, err = t.Slice(slices...); err != nil {
+		return nil, err
+	}
+	return sliced.(*Dense), nil
+}

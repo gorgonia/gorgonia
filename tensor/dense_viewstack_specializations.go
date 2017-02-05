@@ -432,7 +432,7 @@ func (t *Dense) doViewStack(retVal *Dense, axisStride, batches int, ch chan int,
 				if !ok {
 					break
 				}
-				retVal.set(index, t.get(id))
+				retVal.Set(index, t.Get(id))
 				index++
 			}
 			for j, ot := range others {
@@ -441,7 +441,7 @@ func (t *Dense) doViewStack(retVal *Dense, axisStride, batches int, ch chan int,
 					if !ok {
 						break
 					}
-					retVal.set(index, ot.get(id))
+					retVal.Set(index, ot.Get(id))
 					index++
 				}
 			}

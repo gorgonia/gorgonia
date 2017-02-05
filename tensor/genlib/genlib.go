@@ -120,6 +120,7 @@ var funcs = template.FuncMap{
 	"isRangeable":     isRangeable,
 	"isSpecialized":   isSpecialized,
 	"isNumber":        isNumber,
+	"isFloat":         isFloat,
 	"isEq":            isEq,
 	"isOrd":           isOrd,
 
@@ -132,6 +133,8 @@ var funcs = template.FuncMap{
 	"sliceOf":     sliceOf,
 
 	"mathPkg": mathPkg,
+
+	"isntFloat": isntFloat,
 }
 
 func isParameterized(a reflect.Kind) bool {
@@ -190,13 +193,25 @@ func isOrd(a reflect.Kind) bool {
 
 func mathPkg(a reflect.Kind) string {
 	if a == reflect.Float64 {
-		return "math"
+		return "math."
 	}
 	if a == reflect.Float32 {
-		return "math32"
+		return "math32."
+	}
+	if a == reflect.Complex64 || a == reflect.Complex128 {
+		return "cmplx."
 	}
 	return ""
 }
+func isFloat(a reflect.Kind) bool {
+	if a == reflect.Float32 || a == reflect.Float64 || a == reflect.Complex64 || a == reflect.Complex128 {
+		return true
+	}
+	return false
+
+}
+
+func isntFloat(a reflect.Kind) bool { return !isFloat(a) }
 
 func filter(a []reflect.Kind, is func(reflect.Kind) bool) (retVal []reflect.Kind) {
 	for _, k := range a {
