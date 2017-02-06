@@ -673,6 +673,11 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 }
 
 func (t *Dense) Zero() {
+	if t.IsMaterializable() {
+		if err := t.zeroIter(); err != nil {
+			panic(err)
+		}
+	}
 	switch t.t.Kind() {
 	case reflect.Bool:
 		data := t.bools()
@@ -776,6 +781,134 @@ func (t *Dense) Zero() {
 			val.Set(reflect.Zero(t.t))
 		}
 	}
+}
+
+func (t *Dense) zeroIter() (err error) {
+	it := NewFlatIterator(t.AP)
+	var i int
+	switch t.t.Kind() {
+	case reflect.Bool:
+		data := t.bools()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = false
+
+		}
+		err = handleNoOp(err)
+	case reflect.Int:
+		data := t.ints()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Int8:
+		data := t.int8s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Int16:
+		data := t.int16s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Int32:
+		data := t.int32s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Int64:
+		data := t.int64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Uint:
+		data := t.uints()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Uint8:
+		data := t.uint8s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Uint16:
+		data := t.uint16s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Uint32:
+		data := t.uint32s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Uint64:
+		data := t.uint64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Uintptr:
+		data := t.uintptrs()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Float32:
+		data := t.float32s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Float64:
+		data := t.float64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Complex64:
+		data := t.complex64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.Complex128:
+		data := t.complex128s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = 0
+		}
+		err = handleNoOp(err)
+	case reflect.String:
+		data := t.strings()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = ""
+
+		}
+		err = handleNoOp(err)
+	case reflect.UnsafePointer:
+		data := t.unsafePointers()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = nil
+
+		}
+		err = handleNoOp(err)
+	default:
+		ptr := uintptr(t.data)
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(reflect.Zero(t.t))
+		}
+		err = handleNoOp(err)
+	}
+	return nil
 }
 
 func copyDense(dest, src *Dense) int {

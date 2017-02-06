@@ -593,12 +593,20 @@ const denseScalarArithRaw = `func (t *Dense) {{.OpName}}(other interface{}, opts
 		{{end -}}
 		}
 	case toReuse:
-		copyDense(reuse, t)
+		if t.IsMaterializable(){
+			it := NewFlatIterator(t.AP)
+			copyDenseIter(reuse, t, nil, it)
+		} else {
+			copyDense(reuse, t) 
+		}
 		reuse.{{lower .OpName}}(other)
 		retVal = reuse
 	case safe:
-		retVal = recycledDense(t.t, t.Shape().Clone())
-		copyDense(retVal, t)
+		if t.IsMaterializable(){
+			retVal = t.Materialize().(*Dense)
+		} else {
+			retVal = t.Clone().(*Dense)
+		}
 		retVal.{{lower .OpName}}(other)
 	case !safe:
 		t.{{lower .OpName}}(other)
@@ -608,18 +616,51 @@ const denseScalarArithRaw = `func (t *Dense) {{.OpName}}(other interface{}, opts
 }
 `
 
-const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other interface{}){
+const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other interface{}) (err error){
+	{{$isFunc := .IsFunc -}}
+	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+	{{$div := hasPrefix .OpName "Div" -}}
 	switch t.t.Kind() {
-	{{$op := .OpName -}}
+	{{$opName := .OpName -}}
+	{{$op := .OpSymb -}}
 	{{range .Kinds -}}
 		{{if isNumber . -}}
 	case reflect.{{reflectKind .}}:
 		b := other.({{asType .}})
-		{{lower $op}}{{short .}}(t.{{sliceOf .}}, b)
+		if t.IsMaterializable() {
+			{{if or $scaleInv $div -}}
+				if b == 0 {
+					err = t.zeroIter()
+					return
+				}
+				err = errors.Errorf(div0, -1)
+			{{end -}}
+			it := NewFlatIterator(t.AP)
+			var i int
+			data := t.{{sliceOf .}}
+			for i, err = it.Next(); err == nil; i, err = it.Next(){
+				data[i] = {{if $isFunc -}}
+					{{if eq $op "math.Pow" -}}
+						{{if eq .String "complex64" -}}
+							complex64(cmplx.Pow(complex128(data[i]), complex128(b)))
+						{{else if isFloat . -}}
+							{{mathPkg .}}Pow(data[i], b)
+						{{else -}}
+							{{asType .}}({{$op}}(float64(data[i]), float64(b)))
+						{{end -}}
+					{{end -}}
+				{{else -}}
+					data[i] {{$op}} b
+				{{end -}}
+			}
+			return nil
+		}
+		{{lower $opName}}{{short .}}(t.{{sliceOf .}}, b)
 		{{end -}}
 		
 	{{end -}}
 	}
+	return nil
 }
 `
 

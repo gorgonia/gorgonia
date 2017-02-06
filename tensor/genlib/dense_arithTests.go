@@ -454,6 +454,35 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 			if err := quick.Check(iden{{short .}}, nil); err != nil {
 				t.Errorf("Identity test for {{.}} failed %v",err)
 			}
+
+			idenIter{{short .}} := func(a *QCDense{{short .}}) bool {
+				var a1, ret, correct *Dense
+				var identity {{asType .}}
+				{{if ne $iden 0 -}}
+					identity = {{$iden}}
+				{{end -}}
+				correct = newDense({{asType . | title | strip}}, a.len())
+				copyDense(correct, a.Dense)
+				correct, _ = sliceDense(correct, makeRS(0,5))
+				correct = correct.Materialize().(*Dense)
+
+				a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+				ret, _ = a1.{{$op}}(identity, UseUnsafe())
+				if !allClose(correct.Data(), ret.Data()) {
+					return false
+				}
+
+				// safe:
+				ret, _ = a1.{{$op}}(identity)
+				if !allClose(correct.Data(), ret.Data()) {
+					return false
+				}
+
+				return true
+			}
+			if err := quick.Check(idenIter{{short .}}, nil); err != nil {
+				t.Errorf("Identity test with iterable for {{.}} failed %v",err)
+			}
 		{{end -}}
 		{{if hasSuffix $op "R" -}}
 
@@ -469,9 +498,36 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				if !allClose(correct.Data(), ret.Data()){
 					return false
 				}
+
 				return true
 			}
 			if err := quick.Check(pow0{{short .}}, nil); err != nil {
+				t.Errorf("Pow 0 failed")
+			}
+
+			pow0Iter{{short .}} := func(a *QCDense{{short .}}) bool {
+				var a1, ret, correct *Dense 
+				var zero {{asType .}}
+				correct = newDense({{asType . | title | strip}}, a.len())
+				correct.Memset({{asType .}}(1))
+
+				correct, _ = sliceDense(correct, makeRS(0,5))
+				correct = correct.Materialize().(*Dense)
+
+				a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+				ret, _ = a1.{{$op}}(zero, UseUnsafe())
+				if !allClose(correct.Data(), ret.Data()) {
+					return false
+				}
+
+				// safe 
+				ret, _ = a1.{{$op}}(zero)
+				if !allClose(correct.Data(), ret.Data()) {
+					return false
+				}
+				return true
+			}
+			if err := quick.Check(pow0Iter{{short .}}, nil); err != nil {
 				t.Errorf("Pow 0 failed")
 			}
 		{{end -}}
@@ -505,8 +561,6 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				t.Errorf("Correct: %v, check %v", correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
 				return false
 			}
-
-
 
 			return true
 		}

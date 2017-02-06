@@ -120,6 +120,11 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 `
 
 const zeroRaw = `func (t *Dense) Zero() {
+	if t.IsMaterializable() {
+		if err := t.zeroIter(); err !=nil {
+			panic(err)
+		}
+	}
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
@@ -144,6 +149,38 @@ const zeroRaw = `func (t *Dense) Zero() {
 			val.Set(reflect.Zero(t.t))
 		}
 	}
+}
+
+func (t *Dense) zeroIter() (err error){
+	it := NewFlatIterator(t.AP)
+	var i int
+	switch t.t.Kind() {
+	{{range .Kinds -}}
+		{{if isParameterized . -}}
+		{{else -}}
+	case reflect.{{reflectKind .}}:
+		data := t.{{sliceOf .}}
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			data[i] = {{if eq .String "bool" -}}
+				false
+			{{else if eq .String "string" -}}""
+			{{else if eq .String "unsafe.Pointer" -}}nil
+			{{else -}}0{{end}}
+		}
+		err = handleNoOp(err)
+		{{end -}}
+	{{end -}}
+	default:
+		ptr := uintptr(t.data)
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(reflect.Zero(t.t))
+		}
+		err = handleNoOp(err)
+	}
+	return nil
 }
 `
 const makeDataRaw = `func (t *Dense) makeArray(size int) {
