@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,7 +12,7 @@ import (
 func TestDtypeBasics(t *testing.T) {
 	assert := assert.New(t)
 
-	var t0 Dtype
+	var t0 tensor.Dtype
 	var a hm.TypeVariable
 
 	t0 = Float64

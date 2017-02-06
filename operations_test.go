@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +29,7 @@ func TestApplyOp(t *testing.T) {
 	assert.Equal(g, added.g)
 	assert.Equal(Float64, added.t)
 
-	ct = NewConstant(tf64.Ones(3, 3)) // no graph set for ct
+	ct = NewConstant(tensor.Ones(tensor.Float64, 3, 3)) // no graph set for ct
 	op = newElemBinOp(addOpType, cpi, ct)
 	added, err = applyOpWithName(op, "+ pi constTensor(3,3)_ones", cpi, ct)
 	if err != nil {
@@ -173,50 +172,50 @@ var gtTests = []struct {
 
 	// s-t
 	{
-		F64(1), tensor.New(tensor.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
+		F64(1), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
 		true,
-		tensor.New(tensor.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{1, 0})),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{1, 0})),
 		false,
 	},
 
 	{
-		F32(1), tensor.New(tensor.Float32, tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
+		F32(1), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
 		false,
-		tensor.New(tensor.Bool, tensor.WithShape(2), tensor.WithBacking([]bool{true, false})),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{true, false})),
 		false,
 	},
 
 	// t-s
 	{
-		tensor.New(tensor.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), F64(1),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), F64(1),
 		true,
-		tensor.New(tensor.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{0, 1})),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 1})),
 		false,
 	},
 
 	{
-		tensor.New(tensor.Float32, tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), F32(1),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), F32(1),
 		false,
-		tensor.New(tensor.Bool, tensor.WithShape(2), tensor.WithBacking([]bool{false, true})),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{false, true})),
 		false,
 	},
 
 	// t-t
 	{
-		tensor.New(tensor.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 1, 2, 3, 4, 5})),
-		tensor.New(tensor.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{5, 4, 3, 2, 1, 0})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 1, 2, 3, 4, 5})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{5, 4, 3, 2, 1, 0})),
 		true,
 
-		tensor.New(tensor.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 1, 1, 1})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 0, 0, 1, 1, 1})),
 		false,
 	},
 
 	{
-		tensor.New(tensor.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 1, 2, 3, 4, 5})),
-		tensor.New(tensor.Float64, tensor.WithShape(2, 3), tensor.WithBacking([]float64{5, 4, 3, 2, 1, 0})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{0, 1, 2, 3, 4, 5})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{5, 4, 3, 2, 1, 0})),
 		false,
 
-		tensor.New(tensor.Bool, tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, true, true, true})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]bool{false, false, false, true, true, true})),
 		false,
 	},
 
@@ -224,13 +223,13 @@ var gtTests = []struct {
 
 	// different shapes
 	{
-		tensor.New(tensor.Float32, tensor.WithShape(2)), tensor.New(tensor.Float32, tensor.WithShape(4)),
+		tensor.New(tensor.WithShape(2)), tensor.New(tensor.Float32, tensor.WithShape(4)),
 		true, nil, true,
 	},
 
 	// different dtypes
 	{
-		tensor.New(tensor.Float64, tensor.WithShape(2)), tensor.New(tensor.Float32, tensor.WithShape(2)),
+		tensor.New(tensor.WithShape(2)), tensor.New(tensor.Float32, tensor.WithShape(2)),
 		true, nil, true,
 	},
 }
@@ -344,7 +343,7 @@ func TestGt(t *testing.T) {
 func TestSoftMax(t *testing.T) {
 	assert := assert.New(t)
 	g := NewGraph()
-	xT := tf64.NewTensor(tf64.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
+	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
 	x := NewVector(g, Float64, WithShape(5), WithValue(xT))
 	sm := Must(SoftMax(x))
 	logsm := Must(Neg(Must(Log(sm))))
@@ -376,7 +375,7 @@ func TestSoftMax(t *testing.T) {
 	// machine 2, graph 2
 
 	g2 := NewGraph()
-	xT2 := tf64.NewTensor(tf64.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
+	xT2 := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
 	x2 := NewVector(g, Float64, WithShape(5), WithValue(xT2))
 	sm2 := Must(SoftMax(x2))
 	logsm2 := Must(Neg(Must(Log(sm2))))
@@ -414,10 +413,10 @@ var sliceTests = []struct {
 	{"vec[0:2]", tensor.Shape{2}, []tensor.Slice{S(0, 2)}, tensor.Shape{2}, []float64{0, 1}, false},
 	{"Mat[0]", tensor.Shape{2, 3}, []tensor.Slice{S(0)}, tensor.Shape{3}, []float64{0, 1, 2}, false},
 	{"Mat[:, 0]", tensor.Shape{2, 3}, []tensor.Slice{nil, S(0)}, tensor.Shape{2}, []float64{0, 1, 2, 3}, false},
-	{"3Tensor[0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0)}, tensor.Shape{3, 4}, tf64.RangeFloat64(0, 12), false},
-	{"3Tensor[0:2]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0, 2)}, tensor.Shape{2, 3, 4}, tf64.RangeFloat64(0, 24), false},
-	{"3Tensor[:, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{nil, S(0)}, tensor.Shape{2, 4}, tf64.RangeFloat64(0, 16), false},
-	{"3Tensor[0, :, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0), nil, S(0)}, tensor.Shape{3}, tf64.RangeFloat64(0, 9), false},
+	{"3Tensor[0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0)}, tensor.Shape{3, 4}, tensor.RangeFloat64(0, 12), false},
+	{"3Tensor[0:2]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0, 2)}, tensor.Shape{2, 3, 4}, tensor.RangeFloat64(0, 24), false},
+	{"3Tensor[:, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{nil, S(0)}, tensor.Shape{2, 4}, tensor.RangeFloat64(0, 16), false},
+	{"3Tensor[0, :, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0), nil, S(0)}, tensor.Shape{3}, tensor.RangeFloat64(0, 9), false},
 
 	{"vec[:, 0]", tensor.Shape{2}, []tensor.Slice{nil, S(0)}, nil, nil, true},
 }
@@ -670,7 +669,7 @@ func TestNorm(t *testing.T) {
 	}
 	m := NewLispMachine(g, ExecuteFwdOnly())
 
-	xT := tf64.NewTensor(tf64.WithShape(3, 3), tf64.WithBacking(tf64.RangeFloat64(0, 9)))
+	xT := tensor.New(tensor.WithShape(3, 3), tensor.WithBacking(tensor.RangeFloat64(0, 9)))
 	Let(x, xT)
 	m.RunAll()
 

@@ -1,6 +1,9 @@
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/chewxy/gorgonia/tensor"
+	"github.com/pkg/errors"
+)
 
 // BinaryXent is a convenience function for doing binary crossentropy stuff.
 // The formula is as below:
@@ -10,7 +13,7 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 	var logO, omt, omo, tLogO *Node
 
 	// which constant one to use?
-	var dt Dtype
+	var dt tensor.Dtype
 	if dt, err = dtypeOf(output.t); err != nil {
 		return nil, errors.Wrapf(err, dtypeExtractionFail, output.t)
 	}
@@ -63,7 +66,7 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 		return x, nil
 	}
 
-	var dt Dtype
+	var dt tensor.Dtype
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
 	}
@@ -100,7 +103,7 @@ func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 // your own by just following this.
 func Rectify(x *Node) (retVal *Node, err error) {
 	var zero *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	// which zero to use?
 	if dt, err = dtypeOf(x.t); err != nil {

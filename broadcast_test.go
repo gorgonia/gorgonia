@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,8 +47,8 @@ func TestBroadcast2(t *testing.T) {
 	var m *lispMachine
 	var err error
 
-	xT := tf64.NewTensor(tf64.WithShape(2, 3), tf64.WithBacking(tf64.RangeFloat64(0, 6)))
-	yT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{100, 200}))
+	xT := tensor.New(tensor.WithShape(2, 3), tensor.WithBacking(tensor.Range(tensor.Float64, 0, 6)))
+	yT := tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{100, 200}))
 
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))

@@ -3,7 +3,7 @@ package gorgonia
 import (
 	"testing"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,8 +40,8 @@ func TestDVBindVar(t *testing.T) {
 	}
 	assert.Equal(t, 1.0, retVal.d.(Scalar).Any())
 
-	x = tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}))
-	x = tf64.NewTensor(tf64.WithBacking([]float64{4, 3, 2, 1}))
+	x = tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}))
+	x = tensor.New(tensor.WithBacking([]float64{4, 3, 2, 1}))
 	op = newEBOByType(addOpType, TypeOf(x), TypeOf(y))
 	xdv = constantDV(x)
 	ydv = constantDV(y)

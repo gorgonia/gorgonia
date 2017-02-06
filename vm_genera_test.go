@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -79,8 +79,8 @@ func TestLispMachineMechanics(t *testing.T) {
 
 	xBack := []float64{1, 5}
 	yBack := []float64{2, 4}
-	Let(x, tf64.NewTensor(tf64.WithShape(x.shape...), tf64.WithBacking(xBack)))
-	Let(y, tf64.NewTensor(tf64.WithShape(y.shape...), tf64.WithBacking(yBack)))
+	Let(x, tensor.New(tensor.WithShape(x.shape...), tensor.WithBacking(xBack)))
+	Let(y, tensor.New(tensor.WithShape(y.shape...), tensor.WithBacking(yBack)))
 
 	machine := NewLispMachine(g)
 	err = machine.RunAll()
@@ -89,7 +89,7 @@ func TestLispMachineMechanics(t *testing.T) {
 	}
 
 	gBack := []float64{1, 1}
-	grad := tf64.NewTensor(tf64.WithShape(x.shape...), tf64.WithBacking(gBack))
+	grad := tensor.New(tensor.WithShape(x.shape...), tensor.WithBacking(gBack))
 	xG, _ := x.Grad()
 	yG, _ := y.Grad()
 

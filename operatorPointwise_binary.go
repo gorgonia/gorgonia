@@ -29,7 +29,7 @@ type ʘBinaryOperator interface {
 
 type scalarBinOp struct {
 	ʘBinaryOperatorType
-	t Dtype
+	t tensor.Dtype
 }
 
 func (o scalarBinOp) Arity() int                     { return 2 }

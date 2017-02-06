@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -172,9 +171,9 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	var err error
 
 	var xG Value
-	var xT, yT *tf64.Tensor
+	var xT, yT *tensor.Dense
 
-	yT = tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{3.14, 3.14}))
 
 	// scalar repeated into a vec/colvec
 	if _, x, _, err = repeatOpDiff(0, scalarShape, 3.14, yT); err != nil {
@@ -191,8 +190,8 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal(2.0, extractF64(xG))
 
 	// vector repeated unto itself
-	xT = tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{3.14, 3.14}))
-	yT = tf64.NewTensor(tf64.WithShape(4), tf64.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
+	xT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(4), tensor.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
 	if _, x, _, err = repeatOpDiff(0, tensor.Shape{2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
@@ -200,8 +199,8 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal([]float64{2, 2}, extractF64s(xG))
 
 	// colvec repeated unto itself
-	xT = tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{3.14, 3.14}))
-	yT = tf64.NewTensor(tf64.WithShape(4, 1), tf64.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
+	xT = tensor.New(tensor.WithShape(2, 1), tensor.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(4, 1), tensor.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
 	if _, x, _, err = repeatOpDiff(0, tensor.Shape{2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
@@ -209,8 +208,8 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal([]float64{2, 2}, extractF64s(xG))
 
 	// rowvec repeated unto itself
-	xT = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{3.14, 3.14}))
-	yT = tf64.NewTensor(tf64.WithShape(1, 4), tf64.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
+	xT = tensor.New(tensor.WithShape(1, 2), tensor.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(1, 4), tensor.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
 	if _, x, _, err = repeatOpDiff(1, tensor.Shape{1, 2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
@@ -218,8 +217,8 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal([]float64{2, 2}, extractF64s(xG))
 
 	// matrix on axis 0
-	xT = tf64.NewTensor(tf64.WithShape(2, 2), tf64.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
-	yT = tf64.NewTensor(tf64.WithShape(4, 2), tf64.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
+	xT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
+	yT = tensor.New(tensor.WithShape(4, 2), tensor.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
 	if _, x, _, err = repeatOpDiff(0, tensor.Shape{1, 2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
@@ -227,8 +226,8 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal([]float64{2, 2, 2, 2}, extractF64s(xG))
 
 	// matrix on axis 1
-	xT = tf64.NewTensor(tf64.WithShape(2, 2), tf64.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
-	yT = tf64.NewTensor(tf64.WithShape(4, 2), tf64.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
+	xT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
+	yT = tensor.New(tensor.WithShape(4, 2), tensor.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
 	if _, x, _, err = repeatOpDiff(1, tensor.Shape{1, 2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
@@ -273,10 +272,10 @@ func TestConcatOp(t *testing.T) {
 	Must(Sum(aa)) // cost
 
 	aBack := []float64{1, 2}
-	aT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking(aBack))
+	aT := tensor.New(tensor.WithShape(2), tensor.WithBacking(aBack))
 
 	xBack := []float64{1, 2}
-	xT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking(xBack))
+	xT := tensor.New(tensor.WithShape(2), tensor.WithBacking(xBack))
 
 	prog, locMap, err := Compile(g)
 	if err != nil {

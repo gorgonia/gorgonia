@@ -3,7 +3,7 @@ package gorgonia
 import (
 	"sync"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/gonum/blas"
 	"github.com/gonum/blas/native"
 )
@@ -43,7 +43,7 @@ func Use(b BLAS) {
 
 	whichblas = b
 	f64 := b.(blas.Float64)
-	tf64.Use(f64)
+	tensor.Use(f64)
 
 	// TODO:
 	// float32

@@ -410,13 +410,13 @@ mustalloc:
 		// allocate a "scalar" vector
 	}
 
-	var dt Dtype
-	if dt, ok = tt.Of.(Dtype); !ok {
+	var dt tensor.Dtype
+	if dt, ok = tt.Of.(tensor.Dtype); !ok {
 		return errors.Errorf("No dtype to allocate. Type: %T", tt.Of)
 	}
 
 	//TODO: runtime shape check
-	t := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(instr.s...))
+	t := tensor.New(dt, tensor.WithShape(instr.s...))
 	m.storage[dest] = t
 	return
 }

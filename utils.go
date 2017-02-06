@@ -27,7 +27,7 @@ func nodeToGraphNode(in []*Node) (out []graph.Node) {
 }
 
 func tensorInfo(t tensor.Tensor) (dt tensor.Dtype, dim int) {
-	dt := t.Dtype()
+	dt = t.Dtype()
 	dim = t.Dims()
 	return
 }

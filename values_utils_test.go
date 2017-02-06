@@ -19,8 +19,8 @@ var cloneValTests = []struct {
 	{U8(10), false},
 	{B(true), false},
 
-	{tensor.New(tensor.Float64, tensor.WithShape(2, 4, 6)), true},
-	{tensor.New(tensor.Float32, tensor.WithShape(2, 4, 6)), true},
+	{tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(2, 4, 6)), true},
+	{tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2, 4, 6)), true},
 }
 
 func TestCloneValue(t *testing.T) {

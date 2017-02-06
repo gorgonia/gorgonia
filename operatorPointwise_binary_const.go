@@ -121,7 +121,7 @@ func (b ʘBinaryOperatorType) isArith() bool {
 	return false
 }
 
-var binOps = [maxʘBinaryOpType]*tf64BinOp{
+var binOps = [maxʘBinaryOpType]*denseBinOp{
 	&tadd,
 	&tsub,
 	&tmul,
@@ -135,7 +135,7 @@ var binOps = [maxʘBinaryOpType]*tf64BinOp{
 	nil, // ne
 }
 
-var cmpOps = [maxʘBinaryOpType]*tf64CmpOp{
+var cmpOps = [maxʘBinaryOpType]*denseCmpOp{
 	nil, // add
 	nil, // sub
 	nil, // mul

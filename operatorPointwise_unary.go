@@ -294,7 +294,7 @@ func lnDiff(x, y *Node) (err error) {
 // 1/(x*ln(2))
 func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var log2 *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
@@ -326,7 +326,7 @@ func log2Diff(x, y *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 
 	var log2 *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return errors.Wrap(err, dtypeOfFail)
@@ -379,7 +379,7 @@ func negDiff(x, y *Node) (err error) {
 
 func squareDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var two *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
@@ -413,7 +413,7 @@ func squareDiff(x, y *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 
 	var two *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return errors.Wrap(err, dtypeOfFail)
@@ -447,7 +447,7 @@ func squareDiff(x, y *Node) (err error) {
 
 func sqrtDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var two *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
@@ -479,7 +479,7 @@ func sqrtDiff(x, y *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 
 	var two *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return errors.Wrap(err, dtypeOfFail)
@@ -560,7 +560,7 @@ func inverseDiff(x, y *Node) (err error) {
 
 func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var three *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
@@ -597,7 +597,7 @@ func cubeDiff(x, y *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 
 	var three *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return errors.Wrap(err, dtypeOfFail)
@@ -636,7 +636,7 @@ func cubeDiff(x, y *Node) (err error) {
 
 func tanhDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var one *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
@@ -673,7 +673,7 @@ func tanhDiff(x, y *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 
 	var one *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return errors.Wrap(err, dtypeOfFail)
@@ -715,7 +715,7 @@ func tanhDiff(x, y *Node) (err error) {
 
 func sigmoidDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var one *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
@@ -752,7 +752,7 @@ func sigmoidDiff(x, y *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 
 	var one *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return errors.Wrap(err, dtypeOfFail)
@@ -794,7 +794,7 @@ func sigmoidDiff(x, y *Node) (err error) {
 // 1/(x+1)
 func log1pDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var one *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return nil, errors.Wrap(err, dtypeOfFail)
@@ -826,7 +826,7 @@ func log1pDiff(x, y *Node) (err error) {
 	ydv := y.boundTo.(*dualValue)
 
 	var one *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(x.t); err != nil {
 		return errors.Wrap(err, dtypeOfFail)

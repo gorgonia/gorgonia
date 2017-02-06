@@ -3,9 +3,7 @@ package gorgonia
 import (
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	nd "github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,18 +14,18 @@ func TestNewConstant(t *testing.T) {
 	var expectedType hm.Type
 
 	t.Log("Testing New Constant Tensors")
-	backing := tf64.RandomFloat64(9)
-	T := tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(3, 3))
+	backing := nd.Random(Float64, 9)
+	T := nd.New(nd.WithBacking(backing), nd.WithShape(3, 3))
 
 	ct := NewConstant(T)
 	expectedTT := newTensorType(2, Float64)
 	expectedType = expectedTT
 
-	assert.Equal(tensor.Shape{3, 3}, ct.shape)
+	assert.Equal(nd.Shape{3, 3}, ct.shape)
 	assert.Equal(expectedType, ct.t)
 
 	ct = NewConstant(T, WithName("From TensorValue"))
-	assert.Equal(tensor.Shape{3, 3}, ct.shape)
+	assert.Equal(nd.Shape{3, 3}, ct.shape)
 	assert.Equal(expectedType, ct.t)
 	assert.Equal("From TensorValue", ct.name)
 
@@ -43,16 +41,16 @@ var anyNodeTest = []struct {
 	any  interface{}
 
 	correctType  hm.Type
-	correctShape tensor.Shape
+	correctShape nd.Shape
 }{
 	{"float32", float32(3.14), Float32, scalarShape},
 	{"float64", float64(3.14), Float64, scalarShape},
 	{"int", int(3), Int, scalarShape},
 	{"bool", true, Bool, scalarShape},
-	{"tf64.Tensor", tf64.NewTensor(tf64.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float64}, tensor.Shape{2, 3, 4}},
-	{"tf32.Tensor", tf32.NewTensor(tf32.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float32}, tensor.Shape{2, 3, 4}},
+	{"nd.Tensor", nd.New(nd.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float64}, nd.Shape{2, 3, 4}},
+	{"nd.Tensor", nd.New(nd.WithShape(2, 3, 4)), &TensorType{Dims: 3, Of: Float32}, nd.Shape{2, 3, 4}},
 	{"ScalarValue", F64(3.14), Float64, scalarShape},
-	{"TensorValue", tf64.NewTensor(tf64.WithShape(2, 3)), &TensorType{Dims: 2, Of: Float64}, tensor.Shape{2, 3}},
+	{"TensorValue", nd.New(nd.WithShape(2, 3)), &TensorType{Dims: 2, Of: Float64}, nd.Shape{2, 3}},
 }
 
 func TestNodeFromAny(t *testing.T) {

@@ -248,7 +248,7 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 			if _, err = tensor.Mul(gt, stepSize, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
-			if _, err = tensor.Mul(upd, gt, tensor.UseUnsafe); err != nil {
+			if _, err = tensor.Mul(upd, gt, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -406,8 +406,8 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 				batch = F64(s.batch)
 				clip = F64(s.clip)
 				negClip = F64(-s.clip)
-				beta1 = f64(s.beta1)
-				beta2 = f64(s.beta2)
+				beta1 = F64(s.beta1)
+				beta2 = F64(s.beta2)
 				eps = F64(s.eps)
 				eta = F64(-s.eta)
 				one = F64(1)
@@ -419,8 +419,8 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 				batch = F32(s.batch)
 				clip = F32(s.clip)
 				negClip = F32(s.clip)
-				beta1 = f32(s.beta1)
-				beta2 = f32(s.beta2)
+				beta1 = F32(s.beta1)
+				beta2 = F32(s.beta2)
 				eps = F32(s.eps)
 				eta = F32(-s.eta)
 				one = F32(1)
@@ -767,7 +767,6 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 
 		case F32:
 			g := float32(grad.(F32))
-			w := float32(wt)
 
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
@@ -806,7 +805,6 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			dv.d = zero(Float32)
 		case F64:
 			g := float64(grad.(F64))
-			w := float64(wt)
 
 			l1reg := s.l1reg
 			l2reg := s.l2reg
@@ -957,7 +955,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			w = weights.(*tensor.Dense)
 
 			if s.useL2Reg {
-				if regularized, err = tensor.eMul(w, l2reg); err != nil {
+				if regularized, err = tensor.Mul(w, l2reg); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
