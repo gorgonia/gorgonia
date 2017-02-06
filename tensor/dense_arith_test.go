@@ -8564,6 +8564,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(int(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -8742,6 +8743,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(int8(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -8920,6 +8922,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(int16(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -9098,6 +9101,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(int32(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -9276,6 +9280,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(int64(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -9454,6 +9459,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(uint(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -9632,6 +9638,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(uint8(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -9810,6 +9817,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(uint16(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -9988,6 +9996,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(uint32(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -10166,6 +10175,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(uint64(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -10344,6 +10354,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(float32(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -10522,6 +10533,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(float64(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -10700,6 +10712,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(complex64(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 
@@ -10878,6 +10891,7 @@ func TestDivBasicProperties(t *testing.T) {
 		var correct, clonedIncr, ret, check *Dense
 
 		// build correct
+		b.Dense.Memset(complex128(1))
 		ret, _ = a.Div(b.Dense)
 		correct, _ = incr.Add(ret)
 

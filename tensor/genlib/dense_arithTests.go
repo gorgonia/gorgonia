@@ -186,6 +186,9 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 			var correct, clonedIncr, ret, check *Dense
 
 			// build correct
+			{{if eq $op "Div" -}} 
+				b.Dense.Memset({{asType .}}(1))
+			{{end -}}
 			ret, _ = a.{{$op}}(b.Dense)
 			correct, _ = incr.Add(ret)
 
