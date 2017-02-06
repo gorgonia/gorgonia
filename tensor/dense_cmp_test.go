@@ -45,6 +45,77 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fB, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterB := func(a, b, c *QCDenseB) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterB, nil); err != nil {
+		t.Error(err)
+	}
 	fI := func(a, b, c *QCDenseI) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -75,6 +146,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI := func(a, b, c *QCDenseI) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI, nil); err != nil {
 		t.Error(err)
 	}
 	fI8 := func(a, b, c *QCDenseI8) bool {
@@ -109,6 +300,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI8, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI8 := func(a, b, c *QCDenseI8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI8, nil); err != nil {
+		t.Error(err)
+	}
 	fI16 := func(a, b, c *QCDenseI16) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -139,6 +450,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI16, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI16 := func(a, b, c *QCDenseI16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI16, nil); err != nil {
 		t.Error(err)
 	}
 	fI32 := func(a, b, c *QCDenseI32) bool {
@@ -173,6 +604,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI32, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI32 := func(a, b, c *QCDenseI32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI32, nil); err != nil {
+		t.Error(err)
+	}
 	fI64 := func(a, b, c *QCDenseI64) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -203,6 +754,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI64, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI64 := func(a, b, c *QCDenseI64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI64, nil); err != nil {
 		t.Error(err)
 	}
 	fU := func(a, b, c *QCDenseU) bool {
@@ -237,6 +908,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU := func(a, b, c *QCDenseU) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU, nil); err != nil {
+		t.Error(err)
+	}
 	fU8 := func(a, b, c *QCDenseU8) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -267,6 +1058,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU8, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU8 := func(a, b, c *QCDenseU8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU8, nil); err != nil {
 		t.Error(err)
 	}
 	fU16 := func(a, b, c *QCDenseU16) bool {
@@ -301,6 +1212,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU16, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU16 := func(a, b, c *QCDenseU16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU16, nil); err != nil {
+		t.Error(err)
+	}
 	fU32 := func(a, b, c *QCDenseU32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -331,6 +1362,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU32 := func(a, b, c *QCDenseU32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU32, nil); err != nil {
 		t.Error(err)
 	}
 	fU64 := func(a, b, c *QCDenseU64) bool {
@@ -365,6 +1516,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU64 := func(a, b, c *QCDenseU64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU64, nil); err != nil {
+		t.Error(err)
+	}
 	fUintptr := func(a, b, c *QCDenseUintptr) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -395,6 +1666,77 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fUintptr, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterUintptr := func(a, b, c *QCDenseUintptr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUintptr, nil); err != nil {
 		t.Error(err)
 	}
 	fF32 := func(a, b, c *QCDenseF32) bool {
@@ -429,6 +1771,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fF32, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterF32 := func(a, b, c *QCDenseF32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF32, nil); err != nil {
+		t.Error(err)
+	}
 	fF64 := func(a, b, c *QCDenseF64) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -459,6 +1921,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fF64, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterF64 := func(a, b, c *QCDenseF64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF64, nil); err != nil {
 		t.Error(err)
 	}
 	fC64 := func(a, b, c *QCDenseC64) bool {
@@ -493,6 +2075,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fC64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterC64 := func(a, b, c *QCDenseC64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []complex64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.complex64s()
+		bcs = bxc.complex64s()
+		acs = axc.complex64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.complex64s()
+		bcs = bxc.complex64s()
+		acs = axc.complex64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.complex64s()
+		bcs = bxc.complex64s()
+		acs = axc.complex64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterC64, nil); err != nil {
+		t.Error(err)
+	}
 	fC128 := func(a, b, c *QCDenseC128) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -523,6 +2225,126 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fC128, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterC128 := func(a, b, c *QCDenseC128) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []complex128
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b2, AsSameType())
+		bxc, _ = b1.eqDD(c2, AsSameType())
+		axc, _ = a1.eqDD(c2, AsSameType())
+
+		abs = axb.complex128s()
+		bcs = bxc.complex128s()
+		acs = axc.complex128s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.eqDD(b1, AsSameType())
+		bxc, _ = b2.eqDD(c1, AsSameType())
+		axc, _ = a2.eqDD(c1, AsSameType())
+
+		abs = axb.complex128s()
+		bcs = bxc.complex128s()
+		acs = axc.complex128s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.eqDD(b1, AsSameType())
+		bxc, _ = b1.eqDD(c1, AsSameType())
+		axc, _ = a1.eqDD(c1, AsSameType())
+
+		abs = axb.complex128s()
+		bcs = bxc.complex128s()
+		acs = axc.complex128s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterC128, nil); err != nil {
 		t.Error(err)
 	}
 	fStr := func(a, b, c *QCDenseStr) bool {
@@ -557,6 +2379,77 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fStr, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterStr := func(a, b, c *QCDenseStr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterStr, nil); err != nil {
+		t.Error(err)
+	}
 	fUnsafePointer := func(a, b, c *QCDenseUnsafePointer) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -587,6 +2480,77 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fUnsafePointer, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterUnsafePointer := func(a, b, c *QCDenseUnsafePointer) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.eqDD(b2)
+		bxc, _ = b1.eqDD(c2)
+		axc, _ = a1.eqDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.eqDD(b1)
+		bxc, _ = b2.eqDD(c1)
+		axc, _ = a2.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.eqDD(b1)
+		bxc, _ = b1.eqDD(c1)
+		axc, _ = a1.eqDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUnsafePointer, nil); err != nil {
 		t.Error(err)
 	}
 }
@@ -1541,6 +3505,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI := func(a, b, c *QCDenseI) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI, nil); err != nil {
+		t.Error(err)
+	}
 	fI8 := func(a, b, c *QCDenseI8) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -1571,6 +3655,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI8, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI8 := func(a, b, c *QCDenseI8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI8, nil); err != nil {
 		t.Error(err)
 	}
 	fI16 := func(a, b, c *QCDenseI16) bool {
@@ -1605,6 +3809,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI16, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI16 := func(a, b, c *QCDenseI16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI16, nil); err != nil {
+		t.Error(err)
+	}
 	fI32 := func(a, b, c *QCDenseI32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -1635,6 +3959,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI32 := func(a, b, c *QCDenseI32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI32, nil); err != nil {
 		t.Error(err)
 	}
 	fI64 := func(a, b, c *QCDenseI64) bool {
@@ -1669,6 +4113,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI64 := func(a, b, c *QCDenseI64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI64, nil); err != nil {
+		t.Error(err)
+	}
 	fU := func(a, b, c *QCDenseU) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -1699,6 +4263,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU := func(a, b, c *QCDenseU) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU, nil); err != nil {
 		t.Error(err)
 	}
 	fU8 := func(a, b, c *QCDenseU8) bool {
@@ -1733,6 +4417,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU8, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU8 := func(a, b, c *QCDenseU8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU8, nil); err != nil {
+		t.Error(err)
+	}
 	fU16 := func(a, b, c *QCDenseU16) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -1763,6 +4567,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU16, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU16 := func(a, b, c *QCDenseU16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU16, nil); err != nil {
 		t.Error(err)
 	}
 	fU32 := func(a, b, c *QCDenseU32) bool {
@@ -1797,6 +4721,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU32, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU32 := func(a, b, c *QCDenseU32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU32, nil); err != nil {
+		t.Error(err)
+	}
 	fU64 := func(a, b, c *QCDenseU64) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -1827,6 +4871,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU64, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU64 := func(a, b, c *QCDenseU64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU64, nil); err != nil {
 		t.Error(err)
 	}
 	fUintptr := func(a, b, c *QCDenseUintptr) bool {
@@ -1861,6 +5025,77 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fUintptr, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterUintptr := func(a, b, c *QCDenseUintptr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUintptr, nil); err != nil {
+		t.Error(err)
+	}
 	fF32 := func(a, b, c *QCDenseF32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -1891,6 +5126,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fF32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterF32 := func(a, b, c *QCDenseF32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF32, nil); err != nil {
 		t.Error(err)
 	}
 	fF64 := func(a, b, c *QCDenseF64) bool {
@@ -1925,6 +5280,126 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fF64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterF64 := func(a, b, c *QCDenseF64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b2, AsSameType())
+		bxc, _ = b1.gtDD(c2, AsSameType())
+		axc, _ = a1.gtDD(c2, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gtDD(b1, AsSameType())
+		bxc, _ = b2.gtDD(c1, AsSameType())
+		axc, _ = a2.gtDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gtDD(b1, AsSameType())
+		bxc, _ = b1.gtDD(c1, AsSameType())
+		axc, _ = a1.gtDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF64, nil); err != nil {
+		t.Error(err)
+	}
 	fStr := func(a, b, c *QCDenseStr) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -1955,6 +5430,77 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fStr, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterStr := func(a, b, c *QCDenseStr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.gtDD(b2)
+		bxc, _ = b1.gtDD(c2)
+		axc, _ = a1.gtDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.gtDD(b1)
+		bxc, _ = b2.gtDD(c1)
+		axc, _ = a2.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.gtDD(b1)
+		bxc, _ = b1.gtDD(c1)
+		axc, _ = a1.gtDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterStr, nil); err != nil {
 		t.Error(err)
 	}
 }
@@ -2743,6 +6289,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI := func(a, b, c *QCDenseI) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI, nil); err != nil {
+		t.Error(err)
+	}
 	fI8 := func(a, b, c *QCDenseI8) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -2773,6 +6439,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI8, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI8 := func(a, b, c *QCDenseI8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI8, nil); err != nil {
 		t.Error(err)
 	}
 	fI16 := func(a, b, c *QCDenseI16) bool {
@@ -2807,6 +6593,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI16, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI16 := func(a, b, c *QCDenseI16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI16, nil); err != nil {
+		t.Error(err)
+	}
 	fI32 := func(a, b, c *QCDenseI32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -2837,6 +6743,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI32 := func(a, b, c *QCDenseI32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI32, nil); err != nil {
 		t.Error(err)
 	}
 	fI64 := func(a, b, c *QCDenseI64) bool {
@@ -2871,6 +6897,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI64 := func(a, b, c *QCDenseI64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI64, nil); err != nil {
+		t.Error(err)
+	}
 	fU := func(a, b, c *QCDenseU) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -2901,6 +7047,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU := func(a, b, c *QCDenseU) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU, nil); err != nil {
 		t.Error(err)
 	}
 	fU8 := func(a, b, c *QCDenseU8) bool {
@@ -2935,6 +7201,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU8, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU8 := func(a, b, c *QCDenseU8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU8, nil); err != nil {
+		t.Error(err)
+	}
 	fU16 := func(a, b, c *QCDenseU16) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -2965,6 +7351,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU16, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU16 := func(a, b, c *QCDenseU16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU16, nil); err != nil {
 		t.Error(err)
 	}
 	fU32 := func(a, b, c *QCDenseU32) bool {
@@ -2999,6 +7505,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU32, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU32 := func(a, b, c *QCDenseU32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU32, nil); err != nil {
+		t.Error(err)
+	}
 	fU64 := func(a, b, c *QCDenseU64) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -3029,6 +7655,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU64, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU64 := func(a, b, c *QCDenseU64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU64, nil); err != nil {
 		t.Error(err)
 	}
 	fUintptr := func(a, b, c *QCDenseUintptr) bool {
@@ -3063,6 +7809,77 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fUintptr, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterUintptr := func(a, b, c *QCDenseUintptr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUintptr, nil); err != nil {
+		t.Error(err)
+	}
 	fF32 := func(a, b, c *QCDenseF32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -3093,6 +7910,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fF32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterF32 := func(a, b, c *QCDenseF32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF32, nil); err != nil {
 		t.Error(err)
 	}
 	fF64 := func(a, b, c *QCDenseF64) bool {
@@ -3127,6 +8064,126 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fF64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterF64 := func(a, b, c *QCDenseF64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b2, AsSameType())
+		bxc, _ = b1.gteDD(c2, AsSameType())
+		axc, _ = a1.gteDD(c2, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.gteDD(b1, AsSameType())
+		bxc, _ = b2.gteDD(c1, AsSameType())
+		axc, _ = a2.gteDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.gteDD(b1, AsSameType())
+		bxc, _ = b1.gteDD(c1, AsSameType())
+		axc, _ = a1.gteDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF64, nil); err != nil {
+		t.Error(err)
+	}
 	fStr := func(a, b, c *QCDenseStr) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -3157,6 +8214,77 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fStr, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterStr := func(a, b, c *QCDenseStr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.gteDD(b2)
+		bxc, _ = b1.gteDD(c2)
+		axc, _ = a1.gteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.gteDD(b1)
+		bxc, _ = b2.gteDD(c1)
+		axc, _ = a2.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.gteDD(b1)
+		bxc, _ = b1.gteDD(c1)
+		axc, _ = a1.gteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterStr, nil); err != nil {
 		t.Error(err)
 	}
 }
@@ -3945,6 +9073,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI := func(a, b, c *QCDenseI) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI, nil); err != nil {
+		t.Error(err)
+	}
 	fI8 := func(a, b, c *QCDenseI8) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -3975,6 +9223,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI8, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI8 := func(a, b, c *QCDenseI8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI8, nil); err != nil {
 		t.Error(err)
 	}
 	fI16 := func(a, b, c *QCDenseI16) bool {
@@ -4009,6 +9377,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI16, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI16 := func(a, b, c *QCDenseI16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI16, nil); err != nil {
+		t.Error(err)
+	}
 	fI32 := func(a, b, c *QCDenseI32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -4039,6 +9527,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI32 := func(a, b, c *QCDenseI32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI32, nil); err != nil {
 		t.Error(err)
 	}
 	fI64 := func(a, b, c *QCDenseI64) bool {
@@ -4073,6 +9681,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI64 := func(a, b, c *QCDenseI64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI64, nil); err != nil {
+		t.Error(err)
+	}
 	fU := func(a, b, c *QCDenseU) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -4103,6 +9831,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU := func(a, b, c *QCDenseU) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU, nil); err != nil {
 		t.Error(err)
 	}
 	fU8 := func(a, b, c *QCDenseU8) bool {
@@ -4137,6 +9985,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU8, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU8 := func(a, b, c *QCDenseU8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU8, nil); err != nil {
+		t.Error(err)
+	}
 	fU16 := func(a, b, c *QCDenseU16) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -4167,6 +10135,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU16, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU16 := func(a, b, c *QCDenseU16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU16, nil); err != nil {
 		t.Error(err)
 	}
 	fU32 := func(a, b, c *QCDenseU32) bool {
@@ -4201,6 +10289,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU32, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU32 := func(a, b, c *QCDenseU32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU32, nil); err != nil {
+		t.Error(err)
+	}
 	fU64 := func(a, b, c *QCDenseU64) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -4231,6 +10439,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU64, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU64 := func(a, b, c *QCDenseU64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU64, nil); err != nil {
 		t.Error(err)
 	}
 	fUintptr := func(a, b, c *QCDenseUintptr) bool {
@@ -4265,6 +10593,77 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fUintptr, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterUintptr := func(a, b, c *QCDenseUintptr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUintptr, nil); err != nil {
+		t.Error(err)
+	}
 	fF32 := func(a, b, c *QCDenseF32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -4295,6 +10694,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fF32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterF32 := func(a, b, c *QCDenseF32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF32, nil); err != nil {
 		t.Error(err)
 	}
 	fF64 := func(a, b, c *QCDenseF64) bool {
@@ -4329,6 +10848,126 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fF64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterF64 := func(a, b, c *QCDenseF64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b2, AsSameType())
+		bxc, _ = b1.ltDD(c2, AsSameType())
+		axc, _ = a1.ltDD(c2, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.ltDD(b1, AsSameType())
+		bxc, _ = b2.ltDD(c1, AsSameType())
+		axc, _ = a2.ltDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.ltDD(b1, AsSameType())
+		bxc, _ = b1.ltDD(c1, AsSameType())
+		axc, _ = a1.ltDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF64, nil); err != nil {
+		t.Error(err)
+	}
 	fStr := func(a, b, c *QCDenseStr) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -4359,6 +10998,77 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fStr, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterStr := func(a, b, c *QCDenseStr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.ltDD(b2)
+		bxc, _ = b1.ltDD(c2)
+		axc, _ = a1.ltDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.ltDD(b1)
+		bxc, _ = b2.ltDD(c1)
+		axc, _ = a2.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.ltDD(b1)
+		bxc, _ = b1.ltDD(c1)
+		axc, _ = a1.ltDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterStr, nil); err != nil {
 		t.Error(err)
 	}
 }
@@ -5147,6 +11857,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI := func(a, b, c *QCDenseI) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.ints()
+		bcs = bxc.ints()
+		acs = axc.ints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI, nil); err != nil {
+		t.Error(err)
+	}
 	fI8 := func(a, b, c *QCDenseI8) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -5177,6 +12007,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI8, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI8 := func(a, b, c *QCDenseI8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.int8s()
+		bcs = bxc.int8s()
+		acs = axc.int8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI8, nil); err != nil {
 		t.Error(err)
 	}
 	fI16 := func(a, b, c *QCDenseI16) bool {
@@ -5211,6 +12161,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI16, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI16 := func(a, b, c *QCDenseI16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.int16s()
+		bcs = bxc.int16s()
+		acs = axc.int16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI16, nil); err != nil {
+		t.Error(err)
+	}
 	fI32 := func(a, b, c *QCDenseI32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -5241,6 +12311,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fI32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterI32 := func(a, b, c *QCDenseI32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.int32s()
+		bcs = bxc.int32s()
+		acs = axc.int32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI32, nil); err != nil {
 		t.Error(err)
 	}
 	fI64 := func(a, b, c *QCDenseI64) bool {
@@ -5275,6 +12465,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fI64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterI64 := func(a, b, c *QCDenseI64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []int64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.int64s()
+		bcs = bxc.int64s()
+		acs = axc.int64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI64, nil); err != nil {
+		t.Error(err)
+	}
 	fU := func(a, b, c *QCDenseU) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -5305,6 +12615,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU := func(a, b, c *QCDenseU) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.uints()
+		bcs = bxc.uints()
+		acs = axc.uints()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU, nil); err != nil {
 		t.Error(err)
 	}
 	fU8 := func(a, b, c *QCDenseU8) bool {
@@ -5339,6 +12769,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU8, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU8 := func(a, b, c *QCDenseU8) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.uint8s()
+		bcs = bxc.uint8s()
+		acs = axc.uint8s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU8, nil); err != nil {
+		t.Error(err)
+	}
 	fU16 := func(a, b, c *QCDenseU16) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -5369,6 +12919,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU16, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU16 := func(a, b, c *QCDenseU16) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.uint16s()
+		bcs = bxc.uint16s()
+		acs = axc.uint16s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU16, nil); err != nil {
 		t.Error(err)
 	}
 	fU32 := func(a, b, c *QCDenseU32) bool {
@@ -5403,6 +13073,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fU32, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterU32 := func(a, b, c *QCDenseU32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.uint32s()
+		bcs = bxc.uint32s()
+		acs = axc.uint32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU32, nil); err != nil {
+		t.Error(err)
+	}
 	fU64 := func(a, b, c *QCDenseU64) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -5433,6 +13223,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fU64, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterU64 := func(a, b, c *QCDenseU64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []uint64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.uint64s()
+		bcs = bxc.uint64s()
+		acs = axc.uint64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU64, nil); err != nil {
 		t.Error(err)
 	}
 	fUintptr := func(a, b, c *QCDenseUintptr) bool {
@@ -5467,6 +13377,77 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fUintptr, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterUintptr := func(a, b, c *QCDenseUintptr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUintptr, nil); err != nil {
+		t.Error(err)
+	}
 	fF32 := func(a, b, c *QCDenseF32) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -5497,6 +13478,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fF32, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterF32 := func(a, b, c *QCDenseF32) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.float32s()
+		bcs = bxc.float32s()
+		acs = axc.float32s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF32, nil); err != nil {
 		t.Error(err)
 	}
 	fF64 := func(a, b, c *QCDenseF64) bool {
@@ -5531,6 +13632,126 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 	if err := quick.Check(fF64, nil); err != nil {
 		t.Error(err)
 	}
+
+	fIterF64 := func(a, b, c *QCDenseF64) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		var abs, bcs, acs []float64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b2, AsSameType())
+		bxc, _ = b1.lteDD(c2, AsSameType())
+		axc, _ = a1.lteDD(c2, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// b iter bools
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.lteDD(b1, AsSameType())
+		bxc, _ = b2.lteDD(c1, AsSameType())
+		axc, _ = a2.lteDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.lteDD(b1, AsSameType())
+		bxc, _ = b1.lteDD(c1, AsSameType())
+		axc, _ = a1.lteDD(c1, AsSameType())
+
+		abs = axb.float64s()
+		bcs = bxc.float64s()
+		acs = axc.float64s()
+
+		for i, vab := range abs {
+			if vab == 1 && bcs[i] == 1 {
+				if acs[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF64, nil); err != nil {
+		t.Error(err)
+	}
 	fStr := func(a, b, c *QCDenseStr) bool {
 		var axb, bxc, axc *Dense
 		var err error
@@ -5561,6 +13782,77 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		return true
 	}
 	if err := quick.Check(fStr, nil); err != nil {
+		t.Error(err)
+	}
+
+	fIterStr := func(a, b, c *QCDenseStr) bool {
+		var axb, bxc, axc *Dense
+		var a1, b1, c1 *Dense // sliced
+		var a2, b2, c2 *Dense // materialized slice
+
+		var abb, bcb, acb []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+		c2 = c1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.lteDD(b2)
+		bxc, _ = b1.lteDD(c2)
+		axc, _ = a1.lteDD(c2)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// b iter
+		axb, _ = a2.lteDD(b1)
+		bxc, _ = b2.lteDD(c1)
+		axc, _ = a2.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.lteDD(b1)
+		bxc, _ = b1.lteDD(c1)
+		axc, _ = a1.lteDD(c1)
+
+		abb = axb.bools()
+		bcb = bxc.bools()
+		acb = axc.bools()
+
+		for i, vab := range abb {
+			if vab && bcb[i] {
+				if !acb[i] {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterStr, nil); err != nil {
 		t.Error(err)
 	}
 }

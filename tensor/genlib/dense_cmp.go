@@ -59,6 +59,38 @@ const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse 
 	}
 	return
 }
+
+func prepUnaryDenseCmp(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, same, toReuse bool, err error){
+	fo := parseFuncOpts(opts...)
+	reuseT, _ := fo.incrReuse()
+	safe = fo.safe()
+	same = fo.same
+	if !safe{
+		same = true
+	}
+	toReuse = reuseT != nil
+
+	if toReuse {
+		reuse = reuseT.(*Dense)
+		if same {
+			if reuse.t.Kind() != a.t.Kind() {
+				err = errors.Errorf(dtypeMismatch, a.t, reuse.t)
+				return
+			}	
+		} else {
+			if reuse.t.Kind() != reflect.Bool {
+				err = errors.Errorf(dtypeMismatch, reflect.Bool, reuse.t)
+				return
+			}
+		}
+
+		if  err = reuseDenseCheck(reuse, a); err != nil {
+			err = errors.Wrap(err, "Cannot use reuse")
+			return
+		}
+	}
+	return
+}
 `
 
 const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -67,31 +99,142 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 		return nil, err
 	}
 
-	{{$op := .OpName}}
+	{{$opName := .OpName -}}
+	{{$op := .OpSymb -}}
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{ $eq := isEq . -}}
 		{{ $ord := isOrd . -}}
-		{{ $opEq := eq $op "Eq" -}}
-		{{ $eeq := and $eq $opEq}}
+		{{ $opEq := eq $opName "Eq" -}}
+		{{ $eeq := and $eq $opEq -}}
 
 		{{if or $eeq $ord -}}
 	case reflect.{{reflectKind .}}:
 		td := t.{{sliceOf .}}
 		od := other.{{sliceOf .}}
+		var i, j, k int
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable() && other.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			ot := NewFlatIterator(other.AP)
+			{{if isNumber . -}}
+				var bs []bool
+				var ss []{{asType .}}
+				if same {
+					ss = make([]{{asType .}}, t.Shape().TotalSize())
+					ret = ss
+				} else{
+					bs = make([]bool, t.Shape().TotalSize())
+					ret = bs
+				}
+
+			{{else -}}
+				bs := make([]bool, t.Shape().TotalSize())
+				ret = bs
+			{{end -}}
+			for {
+				if i, err = it.Next(); err != nil {
+					err = handleNoOp(err)
+					break
+				}
+				if j, err = ot.Next(); err != nil {
+					err = handleNoOp(err)
+					break	
+				}
+				{{if isNumber . -}}
+					if same {
+						if td[i] {{$op}} od[j] {
+							ss[k] = 1
+						}
+					} else {
+						bs[k] = td[i] {{$op}} od[j]
+					}
+				{{else -}}
+					bs[k] = td[i] {{$op}} od[j]
+				{{end -}}
+				k++
+			}
+			err = handleNoOp(err)
+		case t.IsMaterializable() && !other.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			{{if isNumber . -}}
+				var bs []bool
+				var ss []{{asType .}}
+				if same {
+					ss = make([]{{asType .}}, t.Shape().TotalSize())
+					ret = ss
+				} else{
+					bs = make([]bool, t.Shape().TotalSize())
+					ret = bs
+				}
+
+			{{else -}}
+				bs := make([]bool, t.Shape().TotalSize())
+				ret = bs
+			{{end -}}
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				{{if isNumber . -}}
+					if same {
+						if td[i] {{$op}} od[j] {
+							ss[k] = 1
+						}
+					} else {
+						bs[k] = td[i] {{$op}} od[j]
+					}
+				{{else -}}
+					bs[k] = td[i] {{$op}} od[j]
+				{{end -}}
+				j++
+				k++	
+			}
+			err = handleNoOp(err)
+		case !t.IsMaterializable() && other.IsMaterializable():
+			ot := NewFlatIterator(t.AP)
+			{{if isNumber . -}}
+				var bs []bool
+				var ss []{{asType .}}
+				if same {
+					ss = make([]{{asType .}}, t.Shape().TotalSize())
+					ret = ss
+				} else{
+					bs = make([]bool, t.Shape().TotalSize())
+					ret = bs
+				}
+
+			{{else -}}
+				bs := make([]bool, t.Shape().TotalSize())
+				ret = bs
+			{{end -}}
+			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+				{{if isNumber . -}}
+					if same {
+						if td[i] {{$op}} od[j] {
+							ss[k] = 1
+						}
+					} else {
+						bs[k] = td[i] {{$op}} od[j]
+					}
+				{{else -}}
+					bs[k] = td[i] {{$op}} od[j]
+				{{end -}}
+				i++
+				k++	
+			}
+			err = handleNoOp(err)
+		default:
 			{{if isNumber . -}}
 				if same {
-					ret := {{lower $op}}DDSame{{short .}}(td, od)
-					retVal.fromSlice(ret)
+					ret = {{lower $opName}}DDSame{{short .}}(td, od)
 				} else {
-					ret := {{lower $op}}DDBools{{short .}}(td, od)
-					retVal.fromSlice(ret)
+					ret = {{lower $opName}}DDBools{{short .}}(td, od)
 				}
 			{{else -}}
-				ret := {{lower $op}}DDBools{{short .}}(td, od)
-				retVal.fromSlice(ret)
+				ret = {{lower $opName}}DDBools{{short .}}(td, od)
 			{{end -}}
+		}
+		retVal.fromSlice(ret)
 
 		{{end -}}
 
@@ -117,6 +260,15 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 	return
 }
 
+`
+
+const eleqordDSRaw = `func (t *Dense) {{lower .OpName}}DS(other interface{}, opts ...FuncOpt) (retVal *Dense, err error){
+	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, other, opts...)
+	if err != nil {
+		return nil, err
+	}
+	{{$op := .OpName}}
+}
 `
 
 var (

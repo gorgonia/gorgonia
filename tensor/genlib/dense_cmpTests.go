@@ -41,6 +41,138 @@ const testDDCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DD_Transitiv
 		if err := quick.Check(f{{short .}}, nil); err != nil {
 			t.Error(err)
 		}
+
+		fIter{{short .}} := func(a, b, c *QCDense{{short .}}) bool {
+			var axb, bxc, axc *Dense
+			var a1, b1, c1 *Dense // sliced
+			var a2, b2, c2 *Dense // materialized slice
+
+			var abb, bcb, acb []bool
+			{{if isNumber . -}}
+			var abs, bcs, acs []{{asType .}}
+			{{end -}}
+
+			// set up
+			a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+			a2 = a1.Materialize().(*Dense)
+			b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+			b2 = b1.Materialize().(*Dense)
+			c1, _ = sliceDense(c.Dense, makeRS(0, 5))
+			c2 = c1.Materialize().(*Dense)
+
+			// a iter {{if isNumber .}}bools{{end}}
+			axb, _ = a1.{{lower $op}}DD(b2)
+			bxc, _ = b1.{{lower $op}}DD(c2)
+			axc, _ = a1.{{lower $op}}DD(c2)
+
+			abb = axb.bools()
+			bcb = bxc.bools()
+			acb = axc.bools()
+
+			for i, vab := range abb {
+				if vab && bcb[i] {
+					if !acb[i] {
+						return false
+					}
+				}
+			}
+
+			{{if isNumber . -}}
+			// a iter asSame
+			axb, _ = a1.{{lower $op}}DD(b2, AsSameType())
+			bxc, _ = b1.{{lower $op}}DD(c2, AsSameType())
+			axc, _ = a1.{{lower $op}}DD(c2, AsSameType())
+
+			abs = axb.{{sliceOf .}}
+			bcs = bxc.{{sliceOf .}}
+			acs = axc.{{sliceOf .}}
+
+			for i, vab := range abs {
+				if vab == 1 && bcs[i]==1 {
+					if acs[i] != 1 {
+						return false
+					}
+				}
+			}
+			{{end -}}
+
+			// b iter {{if isNumber .}}bools{{end}}
+			axb, _ = a2.{{lower $op}}DD(b1)
+			bxc, _ = b2.{{lower $op}}DD(c1)
+			axc, _ = a2.{{lower $op}}DD(c1)
+
+			abb = axb.bools()
+			bcb = bxc.bools()
+			acb = axc.bools()
+
+			for i, vab := range abb {
+				if vab && bcb[i] {
+					if !acb[i] {
+						return false
+					}
+				}
+			}
+
+			{{if isNumber . -}}
+			// a iter asSame
+			axb, _ = a2.{{lower $op}}DD(b1, AsSameType())
+			bxc, _ = b2.{{lower $op}}DD(c1, AsSameType())
+			axc, _ = a2.{{lower $op}}DD(c1, AsSameType())
+
+			abs = axb.{{sliceOf .}}
+			bcs = bxc.{{sliceOf .}}
+			acs = axc.{{sliceOf .}}
+
+			for i, vab := range abs {
+				if vab == 1 && bcs[i]==1 {
+					if acs[i] != 1 {
+						return false
+					}
+				}
+			}
+			{{end -}}
+
+			// both a and b iter {{if isNumber .}}bools{{end}}
+			axb, _ = a1.{{lower $op}}DD(b1)
+			bxc, _ = b1.{{lower $op}}DD(c1)
+			axc, _ = a1.{{lower $op}}DD(c1)
+
+			abb = axb.bools()
+			bcb = bxc.bools()
+			acb = axc.bools()
+
+			for i, vab := range abb {
+				if vab && bcb[i] {
+					if !acb[i] {
+						return false
+					}
+				}
+			}
+
+			{{if isNumber . -}}
+			// a iter asSame
+			axb, _ = a1.{{lower $op}}DD(b1, AsSameType())
+			bxc, _ = b1.{{lower $op}}DD(c1, AsSameType())
+			axc, _ = a1.{{lower $op}}DD(c1, AsSameType())
+
+			abs = axb.{{sliceOf .}}
+			bcs = bxc.{{sliceOf .}}
+			acs = axc.{{sliceOf .}}
+
+			for i, vab := range abs {
+				if vab == 1 && bcs[i]==1 {
+					if acs[i] != 1 {
+						return false
+					}
+				}
+			}
+			{{end -}}
+
+			return true
+		}
+		if err := quick.Check(fIter{{short .}}, nil); err != nil {
+			t.Error(err)
+		}
 	{{end -}}
 }
 `
