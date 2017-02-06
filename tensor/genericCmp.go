@@ -636,6 +636,632 @@ func eqDSBoolsUnsafePointer(a []unsafe.Pointer, b unsafe.Pointer) (retVal []bool
 	return retVal
 }
 
+/* Ne */
+
+func neDDBoolsB(a, b []bool) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDSBoolsB(a []bool, b bool) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDDBoolsI(a, b []int) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameI(a, b []int) (retVal []int) {
+	retVal = make([]int, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsI(a []int, b int) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameI(a []int, b int) (retVal []int) {
+	retVal = make([]int, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsI8(a, b []int8) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameI8(a, b []int8) (retVal []int8) {
+	retVal = make([]int8, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsI8(a []int8, b int8) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameI8(a []int8, b int8) (retVal []int8) {
+	retVal = make([]int8, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsI16(a, b []int16) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameI16(a, b []int16) (retVal []int16) {
+	retVal = make([]int16, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsI16(a []int16, b int16) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameI16(a []int16, b int16) (retVal []int16) {
+	retVal = make([]int16, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsI32(a, b []int32) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameI32(a, b []int32) (retVal []int32) {
+	retVal = make([]int32, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsI32(a []int32, b int32) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameI32(a []int32, b int32) (retVal []int32) {
+	retVal = make([]int32, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsI64(a, b []int64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameI64(a, b []int64) (retVal []int64) {
+	retVal = make([]int64, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsI64(a []int64, b int64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameI64(a []int64, b int64) (retVal []int64) {
+	retVal = make([]int64, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsU(a, b []uint) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameU(a, b []uint) (retVal []uint) {
+	retVal = make([]uint, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsU(a []uint, b uint) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameU(a []uint, b uint) (retVal []uint) {
+	retVal = make([]uint, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsU8(a, b []uint8) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameU8(a, b []uint8) (retVal []uint8) {
+	retVal = make([]uint8, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsU8(a []uint8, b uint8) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameU8(a []uint8, b uint8) (retVal []uint8) {
+	retVal = make([]uint8, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsU16(a, b []uint16) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameU16(a, b []uint16) (retVal []uint16) {
+	retVal = make([]uint16, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsU16(a []uint16, b uint16) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameU16(a []uint16, b uint16) (retVal []uint16) {
+	retVal = make([]uint16, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsU32(a, b []uint32) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameU32(a, b []uint32) (retVal []uint32) {
+	retVal = make([]uint32, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsU32(a []uint32, b uint32) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameU32(a []uint32, b uint32) (retVal []uint32) {
+	retVal = make([]uint32, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsU64(a, b []uint64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameU64(a, b []uint64) (retVal []uint64) {
+	retVal = make([]uint64, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsU64(a []uint64, b uint64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameU64(a []uint64, b uint64) (retVal []uint64) {
+	retVal = make([]uint64, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDDBoolsF32(a, b []float32) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameF32(a, b []float32) (retVal []float32) {
+	retVal = make([]float32, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsF32(a []float32, b float32) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameF32(a []float32, b float32) (retVal []float32) {
+	retVal = make([]float32, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsF64(a, b []float64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameF64(a, b []float64) (retVal []float64) {
+	retVal = make([]float64, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsF64(a []float64, b float64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameF64(a []float64, b float64) (retVal []float64) {
+	retVal = make([]float64, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsC64(a, b []complex64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameC64(a, b []complex64) (retVal []complex64) {
+	retVal = make([]complex64, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsC64(a []complex64, b complex64) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameC64(a []complex64, b complex64) (retVal []complex64) {
+	retVal = make([]complex64, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsC128(a, b []complex128) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDDSameC128(a, b []complex128) (retVal []complex128) {
+	retVal = make([]complex128, len(a))
+	for i, v := range a {
+		if v != b[i] {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDSBoolsC128(a []complex128, b complex128) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDSSameC128(a []complex128, b complex128) (retVal []complex128) {
+	retVal = make([]complex128, len(a))
+	for i, v := range a {
+		if v != b {
+			retVal[i] = 1
+		} else {
+			retVal[i] = 0
+		}
+	}
+	return retVal
+}
+
+func neDDBoolsStr(a, b []string) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDSBoolsStr(a []string, b string) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
+func neDDBoolsUnsafePointer(a, b []unsafe.Pointer) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b[i]
+	}
+	return retVal
+}
+
+func neDSBoolsUnsafePointer(a []unsafe.Pointer, b unsafe.Pointer) (retVal []bool) {
+	retVal = make([]bool, len(a))
+	for i, v := range a {
+		retVal[i] = v != b
+	}
+	return retVal
+}
+
 /* Gt */
 
 func gtDDBoolsI(a, b []int) (retVal []bool) {

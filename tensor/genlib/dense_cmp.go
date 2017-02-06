@@ -14,6 +14,7 @@ var cmpBinOps = []struct {
 	Inverse string
 }{
 	{"Eq", "==", isEq, "Eq"},
+	{"Ne", "!=", isEq, "Ne"},
 	{"Gt", ">", isOrd, "Lt"},
 	{"Gte", ">=", isOrd, "Lte"},
 	{"Lt", "<", isOrd, "Gt"},
@@ -108,7 +109,10 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 		{{ $eq := isEq . -}}
 		{{ $ord := isOrd . -}}
 		{{ $opEq := eq $opName "Eq" -}}
-		{{ $eeq := and $eq $opEq -}}
+		{{ $opNe := eq $opName "Ne" -}}
+		{{ $opE := or $opEq $opNe}}
+
+		{{ $eeq := and $eq $opE -}}
 
 		{{if or $eeq $ord -}}
 	case reflect.{{reflectKind .}}:
@@ -270,13 +274,15 @@ const eleqordDSRaw = `func (t *Dense) {{lower .OpName}}DS(other interface{}, opt
 	}
 	{{$opName := .OpName}}
 	{{$opEq := eq $opName "Eq" -}}
+	{{ $opNe := eq $opName "Ne" -}}
+	{{ $opE := or $opEq $opNe}}
 	{{$op := .OpSymb}}
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 	{{ $eq := isEq . -}}
 		{{ $ord := isOrd . -}}
-		{{ $eeq := and $eq $opEq -}}
+		{{ $eeq := and $eq $opE -}}
 
 		{{if or $eeq $ord -}}
 	case reflect.{{reflectKind .}}:

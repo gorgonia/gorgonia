@@ -353,9 +353,146 @@ const testDSCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DS_Transitiv
 	{{end -}}
 }
 `
+const testDDCmpOpSymmetryRaw = `func TestDense_NeDD_Symmetry(t *testing.T) {
+	{{$op := .OpName -}}
+	{{range .Kinds -}}
+	f{{short .}} := func(a, b *QCDense{{short .}}) bool {
+			var axb, bxa *Dense
+			var err error
+			if axb, err = a.neDD(b.Dense); err != nil {
+				t.Errorf("Test {{$op}} transitivity for {{.}} failed (axb) : %v ", err)
+				return false
+			}
+			if bxa, err = b.neDD(a.Dense); err != nil {
+				t.Errorf("Test {{$op}} transitivity for {{.}} failed (bxa): %v", err)
+				return false
+			}
+
+			ab := axb.bools()
+			ba := bxa.bools()
+
+			for i, vab := range ab {
+				if vab != ba[i] {
+					return false
+				}
+			}
+			return true
+		}
+	if err := quick.Check(f{{short .}}, nil); err != nil {
+		t.Error(err)
+	}
+	fIter{{short .}} := func(a, b, c *QCDense{{short .}}) bool {
+			var axb, bxa *Dense
+			var a1, b1 *Dense // sliced
+			var a2, b2  *Dense // materialized slice
+
+			var abb, bab []bool
+			{{if isNumber . -}}
+			var abs, bas []{{asType .}}
+			{{end -}}
+
+			// set up
+			a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+			a2 = a1.Materialize().(*Dense)
+			b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+			b2 = b1.Materialize().(*Dense)
+
+			// a iter {{if isNumber .}}bools{{end}}
+			axb, _ = a1.{{lower $op}}DD(b2)
+			bxa, _ = b1.{{lower $op}}DD(a2)
+
+			abb = axb.bools()
+			bab = bxa.bools()
+
+			for i, vab := range abb {
+				if vab != bab[i] {
+					return false
+				}
+			}
+
+			{{if isNumber . -}}
+			// a iter asSame
+			axb, _ = a1.{{lower $op}}DD(b2, AsSameType())
+			bxa, _ = b1.{{lower $op}}DD(a2, AsSameType())
+
+			abs = axb.{{sliceOf .}}
+			bas = bxa.{{sliceOf .}}
+
+			for i, vab := range abs {
+				if vab != bas[i] {
+					return false
+				}
+			}
+			{{end -}}
+
+			// b iter {{if isNumber .}}bools{{end}}
+			axb, _ = a2.{{lower $op}}DD(b1)
+			bxa, _ = b2.{{lower $op}}DD(a1)
+
+			abb = axb.bools()
+			bab = bxa.bools()
+
+			for i, vab := range abb {
+				if vab != bab[i] {
+					return false
+				}
+			}
+
+			{{if isNumber . -}}
+			// a iter asSame
+			axb, _ = a2.{{lower $op}}DD(b1, AsSameType())
+			bxa, _ = b2.{{lower $op}}DD(a1, AsSameType())
+
+			abs = axb.{{sliceOf .}}
+			bas = bxa.{{sliceOf .}}
+
+			for i, vab := range abs {
+				if vab != bas[i] {
+					return false
+				}
+			}
+			{{end -}}
+
+			// both a and b iter {{if isNumber .}}bools{{end}}
+			axb, _ = a1.{{lower $op}}DD(b1)
+			bxa, _ = b1.{{lower $op}}DD(a1)
+
+			abb = axb.bools()
+			bab = bxa.bools()
+
+			for i, vab := range abb {
+				if vab != bab[i] {
+					return false
+				}
+			}
+
+			{{if isNumber . -}}
+			// a iter asSame
+			axb, _ = a1.{{lower $op}}DD(b1, AsSameType())
+			bxa, _ = b1.{{lower $op}}DD(a1, AsSameType())
+
+			abs = axb.{{sliceOf .}}
+			bas = bxa.{{sliceOf .}}
+
+			for i, vab := range abs {
+				if vab != bas[i] {
+					return false
+				}
+			}
+			{{end -}}
+
+			return true
+		}
+		if err := quick.Check(fIter{{short .}}, nil); err != nil {
+			t.Error(err)
+		}
+	{{end -}}
+}
+`
 
 var (
 	testDDCmpOpTransitivity *template.Template
+	testDDCmpOpSymmetry     *template.Template
 	testDDCmpOpFuncOpts     *template.Template
 
 	testDSCmpOpTransitivity *template.Template
@@ -364,6 +501,7 @@ var (
 func init() {
 	testDDCmpOpTransitivity = template.Must(template.New("cmpDD Transitivity").Funcs(funcs).Parse(testDDCmpOpTransitivityRaw))
 	testDDCmpOpFuncOpts = template.Must(template.New("cmpDD funcopts").Funcs(funcs).Parse(testDDCmpOpFuncOptsRaw))
+	testDDCmpOpSymmetry = template.Must(template.New("cmpDD Symmetry").Funcs(funcs).Parse(testDDCmpOpSymmetryRaw))
 
 	testDSCmpOpTransitivity = template.Must(template.New("cmpDS Transitivity").Funcs(funcs).Parse(testDSCmpOpTransitivityRaw))
 }
@@ -373,6 +511,11 @@ func denseCmpTests(f io.Writer, generic *ManyKinds) {
 		fmt.Fprintf(f, "/* %s */\n\n\n", bo.OpName)
 		mk := &ManyKinds{filter(generic.Kinds, bo.is)}
 		op := BinOps{mk, bo.OpName, bo.OpSymb, false}
+		if bo.OpName == "Ne" {
+			testDDCmpOpSymmetry.Execute(f, op)
+			fmt.Fprintln(f, "\n")
+			continue // `!=` is not transitive
+		}
 		testDDCmpOpTransitivity.Execute(f, op)
 		fmt.Fprintln(f, "\n")
 		testDDCmpOpFuncOpts.Execute(f, op)
@@ -380,6 +523,10 @@ func denseCmpTests(f io.Writer, generic *ManyKinds) {
 	}
 
 	for _, bo := range cmpBinOps {
+		if bo.OpName == "Ne" {
+			continue // `!=` is not transitive
+		}
+
 		fmt.Fprintf(f, "/* %s - Dense-Scalar */\n\n\n", bo.OpName)
 		mk := &ManyKinds{filter(generic.Kinds, bo.is)}
 		op := CmpBinOps{

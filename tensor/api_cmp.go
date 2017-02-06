@@ -8,17 +8,15 @@ package tensor
 // If both operands are *Dense, shape is checked first.
 // Even though the underlying data may have the same size (say (2,2) vs (4,1)), if they have different shapes, it will error out.
 func Lt(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	boolT := !parseAsFloat64(opts...)
-
-	ad, atok := a.(*Dense)
-	bd, btok := b.(*Dense)
+	ad, adok := a.(*Dense)
+	bd, bdok := b.(*Dense)
 	switch {
 	case adok && bdok:
-		return a.ltDD(bd, opts...)
+		return ad.ltDD(bd, opts...)
 	case adok && !bdok:
-		return a.ltDS(b, opts...)
+		return ad.ltDS(b, opts...)
 	case !adok && bdok:
-		return b.gtDS(a, opts...)
+		return bd.gtDS(a, opts...)
 	}
 
 	panic("unreachable")
@@ -30,17 +28,15 @@ func Lt(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If both operands are *Dense, shape is checked first.
 // Even though the underlying data may have the same size (say (2,2) vs (4,1)), if they have different shapes, it will error out.
 func Gt(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	boolT := !parseAsFloat64(opts...)
-
-	ad, atok := a.(*Dense)
-	bd, btok := b.(*Dense)
+	ad, adok := a.(*Dense)
+	bd, bdok := b.(*Dense)
 	switch {
 	case adok && bdok:
-		return a.gtDD(bd, opts...)
+		return ad.gtDD(bd, opts...)
 	case adok && !bdok:
-		return a.gtDS(b, opts...)
+		return ad.gtDS(b, opts...)
 	case !adok && bdok:
-		return b.ltDS(a, opts...)
+		return bd.ltDS(a, opts...)
 	}
 
 	panic("unreachable")
@@ -52,17 +48,15 @@ func Gt(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If both operands are *Dense, shape is checked first.
 // Even though the underlying data may have the same size (say (2,2) vs (4,1)), if they have different shapes, it will error out.
 func Lte(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	boolT := !parseAsFloat64(opts...)
-
-	ad, atok := a.(*Dense)
-	bd, btok := b.(*Dense)
+	ad, adok := a.(*Dense)
+	bd, bdok := b.(*Dense)
 	switch {
 	case adok && bdok:
-		return a.lteDD(bd, opts...)
+		return ad.lteDD(bd, opts...)
 	case adok && !bdok:
-		return a.lteDS(b, opts...)
+		return ad.lteDS(b, opts...)
 	case !adok && bdok:
-		return b.gteDS(a, opts...)
+		return bd.gteDS(a, opts...)
 	}
 
 	panic("unreachable")
@@ -74,39 +68,55 @@ func Lte(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If both operands are *Dense, shape is checked first.
 // Even though the underlying data may have the same size (say (2,2) vs (4,1)), if they have different shapes, it will error out.
 func Gte(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	boolT := !parseAsFloat64(opts...)
-
-	ad, atok := a.(*Dense)
-	bd, btok := b.(*Dense)
+	ad, adok := a.(*Dense)
+	bd, bdok := b.(*Dense)
 	switch {
 	case adok && bdok:
-		return a.gteDD(bd, opts...)
+		return ad.gteDD(bd, opts...)
 	case adok && !bdok:
-		return a.gteDS(b, opts...)
+		return ad.gteDS(b, opts...)
 	case !adok && bdok:
-		return b.lteDS(a, opts...)
+		return bd.lteDS(a, opts...)
 	}
 
 	panic("unreachable")
 }
 
-// Eq performs a elementwise equality comparison (a == b). a and b can either be float64 or *Dense.
+// ElEq performs a elementwise equality comparison (a == b). a and b can either be float64 or *Dense.
 // It returns the same Tensor type as its input.
 //
 // If both operands are *Dense, shape is checked first.
 // Even though the underlying data may have the same size (say (2,2) vs (4,1)), if they have different shapes, it will error out.
-func Eq(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	boolT := !parseAsFloat64(opts...)
-
-	ad, atok := a.(*Dense)
-	bd, btok := b.(*Dense)
+func ElEq(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	ad, adok := a.(*Dense)
+	bd, bdok := b.(*Dense)
 	switch {
 	case adok && bdok:
-		return a.eqDD(bd, opts...)
+		return ad.eqDD(bd, opts...)
 	case adok && !bdok:
-		return a.eqDS(b, opts...)
+		return ad.eqDS(b, opts...)
 	case !adok && bdok:
-		return b.eqDS(a, opts...)
+		return bd.eqDS(a, opts...)
+	}
+
+	panic("unreachable")
+}
+
+// ElNe performs a elementwise equality comparison (a != b). a and b can either be float64 or *Dense.
+// It returns the same Tensor type as its input.
+//
+// If both operands are *Dense, shape is checked first.
+// Even though the underlying data may have the same size (say (2,2) vs (4,1)), if they have different shapes, it will error out.
+func ElNe(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	ad, adok := a.(*Dense)
+	bd, bdok := b.(*Dense)
+	switch {
+	case adok && bdok:
+		return ad.neDD(bd, opts...)
+	case adok && !bdok:
+		return ad.neDS(b, opts...)
+	case !adok && bdok:
+		return bd.neDS(a, opts...)
 	}
 
 	panic("unreachable")

@@ -3470,6 +3470,1987 @@ func Test_Dense_eqDD_funcOpts(t *testing.T) {
 	}
 }
 
+/* Ne */
+
+func TestDense_NeDD_Symmetry(t *testing.T) {
+	fB := func(a, b *QCDenseB) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for bool failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for bool failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fB, nil); err != nil {
+		t.Error(err)
+	}
+	fIterB := func(a, b, c *QCDenseB) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// b iter
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterB, nil); err != nil {
+		t.Error(err)
+	}
+	fI := func(a, b *QCDenseI) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fI, nil); err != nil {
+		t.Error(err)
+	}
+	fIterI := func(a, b, c *QCDenseI) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []int
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.ints()
+		bas = bxa.ints()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.ints()
+		bas = bxa.ints()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.ints()
+		bas = bxa.ints()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI, nil); err != nil {
+		t.Error(err)
+	}
+	fI8 := func(a, b *QCDenseI8) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int8 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int8 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fI8, nil); err != nil {
+		t.Error(err)
+	}
+	fIterI8 := func(a, b, c *QCDenseI8) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []int8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.int8s()
+		bas = bxa.int8s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.int8s()
+		bas = bxa.int8s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.int8s()
+		bas = bxa.int8s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI8, nil); err != nil {
+		t.Error(err)
+	}
+	fI16 := func(a, b *QCDenseI16) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int16 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int16 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fI16, nil); err != nil {
+		t.Error(err)
+	}
+	fIterI16 := func(a, b, c *QCDenseI16) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []int16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.int16s()
+		bas = bxa.int16s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.int16s()
+		bas = bxa.int16s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.int16s()
+		bas = bxa.int16s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI16, nil); err != nil {
+		t.Error(err)
+	}
+	fI32 := func(a, b *QCDenseI32) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int32 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int32 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fI32, nil); err != nil {
+		t.Error(err)
+	}
+	fIterI32 := func(a, b, c *QCDenseI32) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []int32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.int32s()
+		bas = bxa.int32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.int32s()
+		bas = bxa.int32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.int32s()
+		bas = bxa.int32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI32, nil); err != nil {
+		t.Error(err)
+	}
+	fI64 := func(a, b *QCDenseI64) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int64 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for int64 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fI64, nil); err != nil {
+		t.Error(err)
+	}
+	fIterI64 := func(a, b, c *QCDenseI64) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []int64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.int64s()
+		bas = bxa.int64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.int64s()
+		bas = bxa.int64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.int64s()
+		bas = bxa.int64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterI64, nil); err != nil {
+		t.Error(err)
+	}
+	fU := func(a, b *QCDenseU) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fU, nil); err != nil {
+		t.Error(err)
+	}
+	fIterU := func(a, b, c *QCDenseU) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []uint
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.uints()
+		bas = bxa.uints()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.uints()
+		bas = bxa.uints()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.uints()
+		bas = bxa.uints()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU, nil); err != nil {
+		t.Error(err)
+	}
+	fU8 := func(a, b *QCDenseU8) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint8 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint8 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fU8, nil); err != nil {
+		t.Error(err)
+	}
+	fIterU8 := func(a, b, c *QCDenseU8) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []uint8
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.uint8s()
+		bas = bxa.uint8s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.uint8s()
+		bas = bxa.uint8s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.uint8s()
+		bas = bxa.uint8s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU8, nil); err != nil {
+		t.Error(err)
+	}
+	fU16 := func(a, b *QCDenseU16) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint16 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint16 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fU16, nil); err != nil {
+		t.Error(err)
+	}
+	fIterU16 := func(a, b, c *QCDenseU16) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []uint16
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.uint16s()
+		bas = bxa.uint16s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.uint16s()
+		bas = bxa.uint16s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.uint16s()
+		bas = bxa.uint16s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU16, nil); err != nil {
+		t.Error(err)
+	}
+	fU32 := func(a, b *QCDenseU32) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint32 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint32 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fU32, nil); err != nil {
+		t.Error(err)
+	}
+	fIterU32 := func(a, b, c *QCDenseU32) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []uint32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.uint32s()
+		bas = bxa.uint32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.uint32s()
+		bas = bxa.uint32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.uint32s()
+		bas = bxa.uint32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU32, nil); err != nil {
+		t.Error(err)
+	}
+	fU64 := func(a, b *QCDenseU64) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint64 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uint64 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fU64, nil); err != nil {
+		t.Error(err)
+	}
+	fIterU64 := func(a, b, c *QCDenseU64) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []uint64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.uint64s()
+		bas = bxa.uint64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.uint64s()
+		bas = bxa.uint64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.uint64s()
+		bas = bxa.uint64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterU64, nil); err != nil {
+		t.Error(err)
+	}
+	fUintptr := func(a, b *QCDenseUintptr) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uintptr failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for uintptr failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fUintptr, nil); err != nil {
+		t.Error(err)
+	}
+	fIterUintptr := func(a, b, c *QCDenseUintptr) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// b iter
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUintptr, nil); err != nil {
+		t.Error(err)
+	}
+	fF32 := func(a, b *QCDenseF32) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for float32 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for float32 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fF32, nil); err != nil {
+		t.Error(err)
+	}
+	fIterF32 := func(a, b, c *QCDenseF32) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []float32
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.float32s()
+		bas = bxa.float32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.float32s()
+		bas = bxa.float32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.float32s()
+		bas = bxa.float32s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF32, nil); err != nil {
+		t.Error(err)
+	}
+	fF64 := func(a, b *QCDenseF64) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for float64 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for float64 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fF64, nil); err != nil {
+		t.Error(err)
+	}
+	fIterF64 := func(a, b, c *QCDenseF64) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []float64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.float64s()
+		bas = bxa.float64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.float64s()
+		bas = bxa.float64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.float64s()
+		bas = bxa.float64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterF64, nil); err != nil {
+		t.Error(err)
+	}
+	fC64 := func(a, b *QCDenseC64) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for complex64 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for complex64 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fC64, nil); err != nil {
+		t.Error(err)
+	}
+	fIterC64 := func(a, b, c *QCDenseC64) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []complex64
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.complex64s()
+		bas = bxa.complex64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.complex64s()
+		bas = bxa.complex64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.complex64s()
+		bas = bxa.complex64s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterC64, nil); err != nil {
+		t.Error(err)
+	}
+	fC128 := func(a, b *QCDenseC128) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for complex128 failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for complex128 failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fC128, nil); err != nil {
+		t.Error(err)
+	}
+	fIterC128 := func(a, b, c *QCDenseC128) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		var abs, bas []complex128
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter bools
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b2, AsSameType())
+		bxa, _ = b1.neDD(a2, AsSameType())
+
+		abs = axb.complex128s()
+		bas = bxa.complex128s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// b iter bools
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a2.neDD(b1, AsSameType())
+		bxa, _ = b2.neDD(a1, AsSameType())
+
+		abs = axb.complex128s()
+		bas = bxa.complex128s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		// both a and b iter bools
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// a iter asSame
+		axb, _ = a1.neDD(b1, AsSameType())
+		bxa, _ = b1.neDD(a1, AsSameType())
+
+		abs = axb.complex128s()
+		bas = bxa.complex128s()
+
+		for i, vab := range abs {
+			if vab != bas[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fIterC128, nil); err != nil {
+		t.Error(err)
+	}
+	fStr := func(a, b *QCDenseStr) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for string failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for string failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fStr, nil); err != nil {
+		t.Error(err)
+	}
+	fIterStr := func(a, b, c *QCDenseStr) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// b iter
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterStr, nil); err != nil {
+		t.Error(err)
+	}
+	fUnsafePointer := func(a, b *QCDenseUnsafePointer) bool {
+		var axb, bxa *Dense
+		var err error
+		if axb, err = a.neDD(b.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for unsafe.Pointer failed (axb) : %v ", err)
+			return false
+		}
+		if bxa, err = b.neDD(a.Dense); err != nil {
+			t.Errorf("Test Ne transitivity for unsafe.Pointer failed (bxa): %v", err)
+			return false
+		}
+
+		ab := axb.bools()
+		ba := bxa.bools()
+
+		for i, vab := range ab {
+			if vab != ba[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if err := quick.Check(fUnsafePointer, nil); err != nil {
+		t.Error(err)
+	}
+	fIterUnsafePointer := func(a, b, c *QCDenseUnsafePointer) bool {
+		var axb, bxa *Dense
+		var a1, b1 *Dense // sliced
+		var a2, b2 *Dense // materialized slice
+
+		var abb, bab []bool
+		// set up
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+
+		// a iter
+		axb, _ = a1.neDD(b2)
+		bxa, _ = b1.neDD(a2)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// b iter
+		axb, _ = a2.neDD(b1)
+		bxa, _ = b2.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		// both a and b iter
+		axb, _ = a1.neDD(b1)
+		bxa, _ = b1.neDD(a1)
+
+		abb = axb.bools()
+		bab = bxa.bools()
+
+		for i, vab := range abb {
+			if vab != bab[i] {
+				return false
+			}
+		}
+
+		return true
+	}
+	if err := quick.Check(fIterUnsafePointer, nil); err != nil {
+		t.Error(err)
+	}
+}
+
 /* Gt */
 
 func TestDense_gtDD_Transitivity(t *testing.T) {
