@@ -10,8 +10,6 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -154,16 +152,7 @@ func WithInit(fn InitWFn) NodeConsOpt {
 		}
 
 		var v Value
-		switch dt {
-		case Float64:
-			val := fn(dt, n.shape...).([]float64)
-			v = tf64.NewTensor(tf64.WithShape(n.shape...), tf64.WithBacking(val))
-		case Float32:
-			val := fn(dt, n.shape...).([]float32)
-			v = tf32.NewTensor(tf32.WithShape(n.shape...), tf32.WithBacking(val))
-		default:
-			panic("Not handled yet")
-		}
+		v = tensor.New(tensor.WithShape(n.shape...), tensor.WithBacking(fn(dt, n.shape...)))
 		WithValue(v)(n)
 	}
 	return f
@@ -244,7 +233,7 @@ func (n *Node) isRoot() bool {
 // type related isX() helper methods
 
 // IsScalar indicates if a node represents a a scalar value. This is based on the type of the node, not the actual value associated with the node
-func (n *Node) IsScalar() bool { _, ok := n.t.(Dtype); return ok }
+func (n *Node) IsScalar() bool { _, ok := n.t.(tensor.Dtype); return ok }
 
 // IsVector indicates if a node represents a vector value. This is based on the type of the node, not the actual value associated with the node
 func (n *Node) IsVector() bool {
@@ -341,7 +330,7 @@ func (n *Node) Dims() int {
 	switch nt := n.t.(type) {
 	case TensorType:
 		return nt.Dims
-	case Dtype:
+	case tensor.Dtype:
 		return 0
 	default:
 		panic(fmt.Sprintf("Dims undefined for %v(%T)", nt, nt))

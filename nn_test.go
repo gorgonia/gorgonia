@@ -3,9 +3,11 @@ package gorgonia
 import (
 	"io/ioutil"
 	"testing"
+
+	"github.com/chewxy/gorgonia/tensor"
 )
 
-func dropoutTest(t *testing.T, dt Dtype) error {
+func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 	g := NewGraph()
 	x := NewVector(g, dt, WithShape(10), WithName("x"), WithInit(RangedFrom(0)))
 	w := NewMatrix(g, dt, WithShape(20, 10), WithName("w"), WithInit(RangedFrom(0)))

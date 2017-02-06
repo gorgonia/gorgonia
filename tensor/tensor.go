@@ -24,6 +24,7 @@ type Tensor interface {
 	UT()
 	Transpose() // Transpose actually moves the data
 	Slice(...Slice) (Tensor, error)
+	Apply(fn interface{}, opts ...FuncOpt) (Tensor, error)
 
 	// data related interface
 	Zeroer

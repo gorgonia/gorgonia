@@ -44,8 +44,8 @@ func (dv *dualValue) Clone() (retVal Value, err error) {
 	return
 }
 
-func (dv *dualValue) Type() hm.Type { return TypeOf(dv.Value) }
-func (dv *dualValue) Dtype() Dtype  { return DtypeOf(dv.Value) }
+func (dv *dualValue) Type() hm.Type       { return TypeOf(dv.Value) }
+func (dv *dualValue) Dtype() tensor.Dtype { return DtypeOf(dv.Value) }
 
 func (dv *dualValue) String() string {
 	return fmt.Sprintf("%#+v", dv.Value)

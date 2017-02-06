@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 )
@@ -18,17 +16,17 @@ import (
 // It generates the backing required for the tensors.
 //
 // It's typically used in closures
-type InitWFn func(dt Dtype, s ...int) interface{}
+type InitWFn func(dt tensor.Dtype, s ...int) interface{}
 
 func Zeroes() InitWFn {
-	f := func(dt Dtype, s ...int) interface{} {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
 		switch dt {
-		case Float64:
+		case tensor.Float64:
 			return make([]float64, size)
-		case Float32:
+		case tensor.Float32:
 			return make([]float32, size)
-		case Int:
+		case tensor.Int:
 			return make([]int, size)
 		default:
 			err := errors.Errorf(nyiTypeFail, "Zeroes", dt)
@@ -40,18 +38,9 @@ func Zeroes() InitWFn {
 }
 
 func RangedFrom(start int) InitWFn {
-	f := func(dt Dtype, s ...int) interface{} {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
-		switch dt {
-		case Float64:
-			return tf64.RangeFloat64(start, size)
-		case Float32:
-			return tf32.RangeFloat32(start, size)
-		default:
-			err := errors.Errorf(nyiTypeFail, "Ranged init", dt)
-			panic(err)
-		}
-		panic("unreachable")
+		return tensor.Range(dt, size)
 	}
 	return f
 }
@@ -61,11 +50,11 @@ func RangedFrom(start int) InitWFn {
 //		w := NewMatrix(g, Float64, WithName("w"), WithShape(2,2), WithInit(Gaussian(0, 1)))
 // This will create a backing slice of []float64, with the length of 4, and its values are drawn from a gaussian distro
 func Gaussian(mean, stdev float64) InitWFn {
-	f := func(dt Dtype, s ...int) interface{} {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
-		case Float64:
+		case tensor.Float64:
 			return Gaussian64(mean, stdev, s...)
-		case Float32:
+		case tensor.Float32:
 			return Gaussian32(mean, stdev, s...)
 		default:
 			err := errors.Errorf(nyiTypeFail, "Gaussian init", dt)
@@ -81,11 +70,11 @@ func Gaussian(mean, stdev float64) InitWFn {
 //		w := NewMatrix(g, Float64, WithName("w"), WithShape(2,2), WithInit(Uniform(-1, 1)))
 // This will create a backing slice of []float64, with the length of 4, and its values are drawn from a uniform distro
 func Uniform(low, high float64) InitWFn {
-	f := func(dt Dtype, s ...int) interface{} {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
-		case Float64:
+		case tensor.Float64:
 			return Uniform64(low, high, s...)
-		case Float32:
+		case tensor.Float32:
 			return Uniform32(low, high, s...)
 		default:
 			err := errors.Errorf(nyiTypeFail, "Uniform init", dt)
@@ -97,11 +86,11 @@ func Uniform(low, high float64) InitWFn {
 }
 
 func GlorotN(gain float64) InitWFn {
-	f := func(dt Dtype, s ...int) interface{} {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
-		case Float64:
+		case tensor.Float64:
 			return GlorotEtAlN64(gain, s...)
-		case Float32:
+		case tensor.Float32:
 			return GlorotEtAlN32(gain, s...)
 		default:
 			err := errors.Errorf(nyiTypeFail, "GlorotN", dt)
@@ -113,11 +102,11 @@ func GlorotN(gain float64) InitWFn {
 }
 
 func GlorotU(gain float64) InitWFn {
-	f := func(dt Dtype, s ...int) interface{} {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
-		case Float64:
+		case tensor.Float64:
 			return GlorotEtAlU64(gain, s...)
-		case Float32:
+		case tensor.Float32:
 			return GlorotEtAlU32(gain, s...)
 		default:
 			err := errors.Errorf(nyiTypeFail, "GlorotU", dt)

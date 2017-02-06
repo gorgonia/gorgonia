@@ -21,8 +21,6 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -39,9 +37,9 @@ type elemBinOp struct {
 func newEBOByType(ot ʘBinaryOperatorType, at, bt hm.Type) elemBinOp {
 	var binOp ʘBinaryOperator
 	switch att := at.(type) {
-	case Dtype:
+	case tensor.Dtype:
 		switch bt.(type) {
-		case Dtype:
+		case tensor.Dtype:
 			binOp = scalarBinOp{
 				ʘBinaryOperatorType: ot,
 				t:                   att,
@@ -501,38 +499,26 @@ func (op elemUnaryOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 	a := inputs[0]
 	switch v := a.(type) {
 	case tensor.Tensor:
-		switch vt := v.(type) {
-		case *tf64.Tensor:
-			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
-			fn := (func(float64) float64)(*opFn)
+		var t tensor.Tensor
+		var fn interface{}
+		switch opFn := op.ʘUnaryOperator.(type) {
+		case *sf64UnaryOperator:
+			fn = (func(float64) float64)(*opFn)
+		case *sf32UnaryOperator:
+			fn = (func(float32) float32)(*opFn)
+		}
 
-			// TODO: this is pretty shit.... the tf64 lib provides a whole bunch of these
-			var t tensor.Tensor
-			if t, err = vt.Apply(fn, opts...); err != nil {
-				return nil, errors.Wrap(err, applyFail)
-			}
-			retVal = t
-		case *tf32.Tensor:
-			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
-			fn := (func(float32) float32)(*opFn)
-
-			// TODO: this is pretty shit.... the tf64 lib provides a whole bunch of these
-			var t tensor.Tensor
-			if t, err = vt.Apply(fn, opts...); err != nil {
-				return nil, errors.Wrap(err, applyFail)
-			}
-			retVal = t
-		default:
-			return nil, errors.Errorf(nyiFail, "elemUnaryOp.do", v)
+		if t, err = v.Apply(fn, opts...); err != nil {
+			return nil, errors.Wrap(err, applyFail)
 		}
 	case Scalar:
 		vt := DtypeOf(v)
 		switch vt {
-		case Float32:
+		case tensor.Float32:
 			f := float32(v.(F32))
 			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
 			retVal, _ = anyToScalar((*opFn)(f))
-		case Float64:
+		case tensor.Float64:
 			f := float64(v.(F64))
 			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
 			retVal, _ = anyToScalar((*opFn)(f))

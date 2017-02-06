@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/hm"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
@@ -34,12 +32,12 @@ const (
 type randomOp struct {
 	which randomness
 	shape tensor.Shape
-	dt    Dtype
+	dt    tensor.Dtype
 
 	a, b float64 // when uniform, a,b = low, high; when gaussian, a,b = mean, stdev
 }
 
-func makeRandomOp(which randomness, dt Dtype, a, b float64, shape ...int) randomOp {
+func makeRandomOp(which randomness, dt tensor.Dtype, a, b float64, shape ...int) randomOp {
 	return randomOp{
 		which: which,
 		shape: tensor.Shape(shape),
@@ -104,26 +102,26 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 		switch op.which {
 		case uniform:
 			backing := Uniform64(op.a, op.b, op.shape...)
-			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian64(op.a, op.b, op.shape...)
-			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial64(op.a, op.b, op.shape...)
-			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		}
 		return
 	case Float32:
 		switch op.which {
 		case uniform:
 			backing := Uniform32(op.a, op.b, op.shape...)
-			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian32(op.a, op.b, op.shape...)
-			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial32(op.a, op.b, op.shape...)
-			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		}
 		return
 	default:

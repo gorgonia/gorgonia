@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
+func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err error) {
 	assert := assert.New(t)
 	var randX, randY interface{}
 	switch dt {
@@ -108,7 +108,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
 	return nil
 }
 
-func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
+func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err error) {
 	assert := assert.New(t)
 	var x, y, z, a, b, c, cost *Node
 	var g, g2 *ExprGraph
@@ -126,8 +126,8 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt Dtype) (err error) {
 	// randX := Gaussian(0, 1)(dt, 2, 2)
 	// randY := Gaussian(0, 1)(dt, 2, 2)
 
-	xV := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(2, 2), tensor.WithBacking(randX))
-	yV := tensor.New(dtypeToTensorDtype(dt), tensor.WithShape(2, 2), tensor.WithBacking(randY))
+	xV := tensor.New(dt, tensor.WithShape(2, 2), tensor.WithBacking(randX))
+	yV := tensor.New(dt, tensor.WithShape(2, 2), tensor.WithBacking(randY))
 
 	g = NewGraph()
 	g2 = NewGraph()

@@ -8,9 +8,6 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -132,11 +129,11 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 
 		// cast as ... types
 		switch DtypeOf(t) {
-		case Float64:
+		case tensor.Float64:
 			retVal = F64(size)
-		case Float32:
+		case tensor.Float32:
 			retVal = F32(size)
-		case Int:
+		case tensor.Int:
 			retVal = I(size)
 		default:
 			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
@@ -761,89 +758,26 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	switch T := t.(type) {
-	case tensor.Tensor:
-		cloned := T.Clone().(tensor.Tensor)
-		var v Tensor
-		if v, err = cloned.Slice(slices...); err != nil {
+	case *tensor.Dense:
+		cloned := T.Clone().(*tensor.Dense)
+		var view tensor.Tensor
+		if view, err = cloned.Slice(slices...); err != nil {
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
-		var val interface{}
+		v := view.(*tensor.Dense)
+
 		switch i := incr.(type) {
 		case F64:
+			tensor.Add(v, float64(i), tensor.UseUnsafe())
 		case F32:
-		case tensor.Tensor:
-
+			tensor.Add(v, float32(i), tensor.UseUnsafe())
+		case *tensor.Dense:
+			v.Add(i, tensor.UseUnsafe())
 		}
+		retVal = cloned
+	default:
+		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", T)
 
-		switch tt := T.(type) {
-		case *tf64.Tensor:
-			// actually do shit
-			cloned := tf64.NewTensor(tf64.WithShape(tt.Shape()...))
-			var v64 *tf64.Tensor
-			if v64, err = cloned.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			var val interface{}
-			switch i := incr.(type) {
-			case F64:
-				val = float64(i)
-			case *tf64.Tensor:
-				val = i
-			default:
-				err = errors.Errorf("Incr is of %T. Cannot increment on input which is a *tf64.Tensor", incr)
-				return
-			}
-
-			v64.VAdd(val)
-			retVal = cloned
-
-		case *tf32.Tensor:
-			// actually do shit
-			cloned := tf32.NewTensor(tf32.WithShape(tt.Shape()...))
-			var v32 *tf32.Tensor
-			if v32, err = cloned.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			var val interface{}
-			switch i := incr.(type) {
-			case F32:
-				val = float32(i)
-			case *tf32.Tensor:
-				val = i
-			default:
-				err = errors.Errorf("Incr is of %T. Cannot increment on input which is a *tf32.Tensor", incr)
-				return
-			}
-
-			v32.VAdd(val)
-			retVal = cloned
-		case *ti.Tensor:
-			// actually do shit
-			cloned := ti.NewTensor(ti.WithShape(tt.Shape()...))
-			var vi *ti.Tensor
-			if vi, err = cloned.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			var val interface{}
-			switch i := incr.(type) {
-			case I:
-				val = int(i)
-			case *ti.Tensor:
-				val = i
-			default:
-				err = errors.Errorf("Incr is of %T. Cannot increment on input which is a *ti.Tensor", incr)
-				return
-			}
-
-			vi.VAdd(val)
-			retVal = cloned
-		// case *tb.Tensor:
-		default:
-			return nil, errors.Errorf(nyiFail, "sliceIncrOp()", T)
-		}
 	case Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
 	default:
@@ -1154,15 +1088,9 @@ func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
 		// TODO: fix VAdd hack
 		// add to odvd
 		switch st := sliced.(type) {
-		case *tf64.Tensor:
-			d := idvd.(*tf64.Tensor)
-			d.VAdd(st)
-		case *tf32.Tensor:
-			d := idvd.(*tf32.Tensor)
-			d.VAdd(st)
-		case *ti.Tensor:
-			d := idvd.(*ti.Tensor)
-			d.VAdd(st)
+		case *tensor.Dense:
+			d := idvd.(*tensor.Dense)
+			d.Add(st, tensor.UseUnsafe())
 		default:
 			return errors.Errorf(nyiTypeFail, "DoDiff (hack) ", st)
 		}

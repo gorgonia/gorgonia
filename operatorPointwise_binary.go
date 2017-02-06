@@ -410,7 +410,7 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 	}
 
 	switch d0 {
-	case Float64:
+	case tensor.Float64:
 		// get function, call function
 		if o.isArith() {
 			fn := tf64BinOps[o.ʘBinaryOperatorType]
@@ -426,7 +426,7 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 
 			retVal, err = (*fn)(a, b, opts...)
 		}
-	case Float32:
+	case tensor.Float32:
 		// get function, call function
 		if o.isArith() {
 			fn := tf32BinOps[o.ʘBinaryOperatorType]

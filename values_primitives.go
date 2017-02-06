@@ -107,7 +107,7 @@ func formatScalar(v Scalar, s fmt.State, c rune) {
 	fmt.Fprintf(s, buf.String(), v.Any())
 }
 
-func anyToScalar(any interface{}) (Scalar, Dtype) {
+func anyToScalar(any interface{}) (Scalar, tensor.Dtype) {
 	switch at := any.(type) {
 	case Scalar:
 		return at, DtypeOf(at)
@@ -130,7 +130,7 @@ func anyToScalar(any interface{}) (Scalar, Dtype) {
 	}
 }
 
-func anyToValue(any interface{}) (val Value, t hm.Type, dt Dtype, err error) {
+func anyToValue(any interface{}) (val Value, t hm.Type, dt tensor.Dtype, err error) {
 	switch a := any.(type) {
 	case Value:
 		val = a
@@ -152,42 +152,42 @@ func anyToValue(any interface{}) (val Value, t hm.Type, dt Dtype, err error) {
 	}
 }
 
-func one(dt Dtype) Scalar {
+func one(dt tensor.Dtype) Scalar {
 	switch dt {
-	case Float64:
+	case tensor.Float64:
 		return F64(1)
-	case Float32:
+	case tensor.Float32:
 		return F32(1)
-	case Int:
+	case tensor.Int:
 		return I(1)
-	case Int32:
+	case tensor.Int32:
 		return I32(1)
-	case Int64:
+	case tensor.Int64:
 		return I64(1)
-	case Byte:
+	case tensor.Byte:
 		return U8(1)
-	case Bool:
+	case tensor.Bool:
 		return B(true)
 	default:
 		panic("Unhandled dtype")
 	}
 }
 
-func zero(dt Dtype) Scalar {
+func zero(dt tensor.Dtype) Scalar {
 	switch dt {
-	case Float64:
+	case tensor.Float64:
 		return F64(0)
-	case Float32:
+	case tensor.Float32:
 		return F32(0)
-	case Int:
+	case tensor.Int:
 		return I(0)
-	case Int32:
+	case tensor.Int32:
 		return I32(0)
-	case Int64:
+	case tensor.Int64:
 		return I64(0)
-	case Byte:
+	case tensor.Byte:
 		return U8(0)
-	case Bool:
+	case tensor.Bool:
 		return B(false)
 	default:
 		panic("Unhandled dtype")

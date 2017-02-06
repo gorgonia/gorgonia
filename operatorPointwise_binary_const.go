@@ -47,6 +47,9 @@ type tf32CmpOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, er
 type tf64BinOp func(a, b interface{}, opts ...tensor.FuncOpt) (*tf64.Tensor, error)
 type tf64CmpOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
 
+type denseBinOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
+type denseCmpOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
+
 type ʘBinaryOperatorType byte
 
 const (

@@ -14,8 +14,6 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -302,8 +300,8 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 	a := inputs[0]
 	at := a.(tensor.Tensor)
 	switch t := at.(type) {
-	case *tf64.Tensor:
-		var ret *tf64.Tensor
+	case *tensor.Dense:
+		var ret *tensor.Dense
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
 				retVal, _ = anyToScalar(ret.ScalarValue())
@@ -311,18 +309,7 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 				retVal = ret
 			}
 		} else {
-			return nil, errors.Wrap(err, "failed to apply *tf64.Tensor.Sum()")
-		}
-	case *tf32.Tensor:
-		var ret *tf32.Tensor
-		if ret, err = t.Sum(op.along...); err == nil {
-			if ret.IsScalar() {
-				retVal, _ = anyToScalar(ret.ScalarValue())
-			} else {
-				retVal = ret
-			}
-		} else {
-			return nil, errors.Wrap(err, "failed to apply *tf32.Tensor.Sum()")
+			return nil, errors.Wrap(err, "failed to apply *tensor.Dense.Sum()")
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at)

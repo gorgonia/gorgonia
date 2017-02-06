@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -33,7 +31,7 @@ func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 	opts = append(opts, WithValue(v))
 
 	switch t.(type) {
-	case Dtype:
+	case tensor.Dtype:
 		return NewScalar(g, dt, opts...)
 	case TensorType:
 		opts = append(opts, nil)
@@ -46,7 +44,7 @@ func NodeFromAny(g *ExprGraph, any interface{}, opts ...NodeConsOpt) *Node {
 }
 
 // NewScalar creates a Node representing a variable that holds a scalar value
-func NewScalar(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
+func NewScalar(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	curOpts := []NodeConsOpt{WithType(t), In(g), WithShape()}
 	curOpts = append(curOpts, opts...)
 
@@ -54,7 +52,7 @@ func NewScalar(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewVector creates a Node representing a variable that holds a vector (nx1 matrix)
-func NewVector(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
+func NewVector(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	tt := newTensorType(1, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
@@ -63,7 +61,7 @@ func NewVector(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
-func NewMatrix(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
+func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 	tt := newTensorType(2, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
@@ -72,7 +70,7 @@ func NewMatrix(g *ExprGraph, t Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
-func NewTensor(g *ExprGraph, t Dtype, dims int, opts ...NodeConsOpt) *Node {
+func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
 	tt := newTensorType(dims, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
@@ -118,7 +116,7 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 // UniformRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
 // a uniform distribution. The type of the node depends on the
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
-func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) *Node {
+func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape ...int) *Node {
 	op := makeRandomOp(uniform, dt, low, high, shape...)
 	s := tensor.Shape(shape)
 
@@ -136,7 +134,7 @@ func UniformRandomNode(g *ExprGraph, dt Dtype, low, high float64, shape ...int) 
 // GaussianRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
 // a gaussian distribution with the mean and stdev provided. The type of the node depends on the
 // shape passed in. To get a scalar value at run time, don't pass in any shapes
-func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...int) *Node {
+func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shape ...int) *Node {
 	op := makeRandomOp(gaussian, dt, mean, stdev, shape...)
 	s := tensor.Shape(shape)
 
@@ -157,7 +155,7 @@ func GaussianRandomNode(g *ExprGraph, dt Dtype, mean, stdev float64, shape ...in
 //
 // Whilst technically the number of trials of a binomal distribution should be a discrete value (you can't have half a trial), to keep with
 // API uniformity, trials is passed in as a float64, but will be truncated to an int at runtime.
-func BinomialRandomNode(g *ExprGraph, dt Dtype, trials, prob float64, shape ...int) *Node {
+func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, shape ...int) *Node {
 	op := makeRandomOp(binomial, dt, trials, prob, shape...)
 	s := tensor.Shape(shape)
 
@@ -173,23 +171,9 @@ func BinomialRandomNode(g *ExprGraph, dt Dtype, trials, prob float64, shape ...i
 }
 
 // OneHotVector creates a node representing a one hot vector
-func OneHotVector(id, classes int, t Dtype, opts ...NodeConsOpt) *Node {
-	switch t {
-	case Float64:
-		backing := make([]float64, classes)
-		backing[id] = float64(1)
-		T := tf64.NewTensor(tf64.WithBacking(backing))
-		// dt, d := tensorInfo(T)
-		return NewConstant(T, opts...)
-	case Float32:
-		backing := make([]float32, classes)
-		backing[id] = float32(1)
-		T := tf32.NewTensor(tf32.WithBacking(backing))
-		return NewConstant(T, opts...)
-	default:
-		panic("Not yet implemented for OneHotVector")
-	}
-	panic("unreachable")
+func OneHotVector(id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
+	T := tensor.Ones(t, tensor.Shape{classes})
+	return NewConstant(T, opts...)
 }
 
 // Grad takes a scalar cost node and a list of with-regards-to, and returns the gradient
@@ -206,9 +190,9 @@ func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
 		}
 	}
 
-	var dt Dtype
+	var dt tensor.Dtype
 	var ok bool
-	if dt, ok = cost.t.(Dtype); !ok {
+	if dt, ok = cost.t.(tensor.Dtype); !ok {
 		err = errors.Wrap(err, "Expected a scalar dtype for cost")
 		return
 	}
