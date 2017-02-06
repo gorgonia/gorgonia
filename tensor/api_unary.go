@@ -10,11 +10,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-// PointwiseSquare squares the elements of the ndarray. The reason why it's called PointwiseSquare instead of Square is because
-// A^2 = A · A, and is a valid linalg operation for square matrices (ndarrays with dims() of 2, and both shapes (m, m)).
+// Square squares the elements of the Tensor. This function used to be called PointwiseSquare instead of Square.
+// If you want to achieve a Matrix Square as defined:
+// 		A^2 = A · A,
+// You should call this function instead:
+//		A.MatMul(A)
 //
-// This function is a convenience function. It is no different from A.Mul(A). It does not support the incr option yet
-func PointwiseSquare(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+// This function is a convenience function. It is no different from A.Mul(A).
+func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch at := a.(type) {
 	case *Dense:
 		var reuse *Dense

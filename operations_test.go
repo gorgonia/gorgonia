@@ -223,13 +223,13 @@ var gtTests = []struct {
 
 	// different shapes
 	{
-		tensor.New(tensor.WithShape(2)), tensor.New(tensor.Float32, tensor.WithShape(4)),
+		tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2)), tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(4)),
 		true, nil, true,
 	},
 
 	// different dtypes
 	{
-		tensor.New(tensor.WithShape(2)), tensor.New(tensor.Float32, tensor.WithShape(2)),
+		tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2)), tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2)),
 		true, nil, true,
 	},
 }
@@ -413,10 +413,10 @@ var sliceTests = []struct {
 	{"vec[0:2]", tensor.Shape{2}, []tensor.Slice{S(0, 2)}, tensor.Shape{2}, []float64{0, 1}, false},
 	{"Mat[0]", tensor.Shape{2, 3}, []tensor.Slice{S(0)}, tensor.Shape{3}, []float64{0, 1, 2}, false},
 	{"Mat[:, 0]", tensor.Shape{2, 3}, []tensor.Slice{nil, S(0)}, tensor.Shape{2}, []float64{0, 1, 2, 3}, false},
-	{"3Tensor[0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0)}, tensor.Shape{3, 4}, tensor.RangeFloat64(0, 12), false},
-	{"3Tensor[0:2]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0, 2)}, tensor.Shape{2, 3, 4}, tensor.RangeFloat64(0, 24), false},
-	{"3Tensor[:, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{nil, S(0)}, tensor.Shape{2, 4}, tensor.RangeFloat64(0, 16), false},
-	{"3Tensor[0, :, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0), nil, S(0)}, tensor.Shape{3}, tensor.RangeFloat64(0, 9), false},
+	{"3Tensor[0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0)}, tensor.Shape{3, 4}, tensor.Range(tensor.Float64, 0, 12), false},
+	{"3Tensor[0:2]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0, 2)}, tensor.Shape{2, 3, 4}, tensor.Range(tensor.Float64, 0, 24), false},
+	{"3Tensor[:, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{nil, S(0)}, tensor.Shape{2, 4}, tensor.Range(tensor.Float64, 0, 16), false},
+	{"3Tensor[0, :, 0]", tensor.Shape{2, 3, 4}, []tensor.Slice{S(0), nil, S(0)}, tensor.Shape{3}, tensor.Range(tensor.Float64, 0, 9), false},
 
 	{"vec[:, 0]", tensor.Shape{2}, []tensor.Slice{nil, S(0)}, nil, nil, true},
 }
@@ -547,14 +547,14 @@ var sumTests = []struct {
 }{
 	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, F64(1), F64(1), false},
 	{"Sum(vec, 0)", tensor.Shape{2}, []int{0}, scalarShape, F64(1), F64(1), false},
-	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, F64(15), tensor.New(Float64.TensorDtype(), tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
+	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, F64(15), tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
 	{"Sum(Mat, 0)", tensor.Shape{2, 3}, []int{0}, tensor.Shape{3},
-		tensor.New(Float64.TensorDtype(), tensor.WithShape(3), tensor.WithBacking([]float64{3, 5, 7})),
-		tensor.New(Float64.TensorDtype(), tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false,
+		tensor.New(tensor.WithShape(3), tensor.WithBacking([]float64{3, 5, 7})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false,
 	},
 	{"Sum(Mat, 1)", tensor.Shape{2, 3}, []int{1}, tensor.Shape{2},
-		tensor.New(tensor.Float64, tensor.WithShape(2), tensor.WithBacking([]float64{3, 12})),
-		tensor.New(Float64.TensorDtype(), tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false,
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{3, 12})),
+		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false,
 	},
 
 	// TODO: tests for 3-Tensors
@@ -669,7 +669,7 @@ func TestNorm(t *testing.T) {
 	}
 	m := NewLispMachine(g, ExecuteFwdOnly())
 
-	xT := tensor.New(tensor.WithShape(3, 3), tensor.WithBacking(tensor.RangeFloat64(0, 9)))
+	xT := tensor.New(tensor.WithShape(3, 3), tensor.WithBacking(tensor.Range(tensor.Float64, 0, 9)))
 	Let(x, xT)
 	m.RunAll()
 

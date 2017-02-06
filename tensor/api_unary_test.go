@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var pointwiseSquareTests = []struct {
+var squareTests = []struct {
 	a     interface{}
 	reuse interface{}
 	incr  interface{}
@@ -30,14 +30,14 @@ var pointwiseSquareTests = []struct {
 	{[]float64{2, 4, 6}, []float64{1}, nil, []float64{4, 16, 36}, nil, false, true},
 }
 
-func TestPointwiseSquare(t *testing.T) {
+func TestSquare(t *testing.T) {
 	assert := assert.New(t)
 
-	for i, pst := range pointwiseSquareTests {
+	for i, pst := range squareTests {
 		var a, reuse, incr, T Tensor
 		var err error
 		a = New(WithBacking(pst.a))
-		T, err = PointwiseSquare(a)
+		T, err = Square(a)
 
 		if checkErr(t, pst.err, err, "Safe", i) {
 			continue
@@ -47,7 +47,7 @@ func TestPointwiseSquare(t *testing.T) {
 		// reuse
 		a = New(WithBacking(pst.a))
 		reuse = New(WithBacking(pst.reuse))
-		T, err = PointwiseSquare(a, WithReuse(reuse))
+		T, err = Square(a, WithReuse(reuse))
 
 		if checkErr(t, pst.errReuse, err, "Reuse", i) {
 			continue
@@ -58,7 +58,7 @@ func TestPointwiseSquare(t *testing.T) {
 		// incr
 		a = New(WithBacking(pst.a))
 		incr = New(WithBacking(pst.incr))
-		T, err = PointwiseSquare(a, WithIncr(incr))
+		T, err = Square(a, WithIncr(incr))
 		if checkErr(t, pst.err, err, "Incr", i) {
 			continue
 		}
@@ -67,7 +67,7 @@ func TestPointwiseSquare(t *testing.T) {
 
 		// unsafe
 		a = New(WithBacking(pst.a))
-		T, err = PointwiseSquare(a, UseUnsafe())
+		T, err = Square(a, UseUnsafe())
 
 		if checkErr(t, pst.err, err, "Unsafe", i) {
 			continue

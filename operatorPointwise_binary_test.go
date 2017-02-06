@@ -126,8 +126,8 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	// randX := Gaussian(0, 1)(dt, 2, 2)
 	// randY := Gaussian(0, 1)(dt, 2, 2)
 
-	xV := tensor.New(dt, tensor.WithShape(2, 2), tensor.WithBacking(randX))
-	yV := tensor.New(dt, tensor.WithShape(2, 2), tensor.WithBacking(randY))
+	xV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking(randX))
+	yV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking(randY))
 
 	g = NewGraph()
 	g2 = NewGraph()

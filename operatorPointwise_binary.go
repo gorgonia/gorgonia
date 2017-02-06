@@ -655,7 +655,7 @@ func hadamardDivDiff(x, y, z *Node) (err error) {
 // TODO: go back in time, pay more attention to calculus class in high school and learn how to differentiate x^y
 func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	var one *Node
-	var dt Dtype
+	var dt tensor.Dtype
 
 	if dt, err = dtypeOf(y.t); err != nil {
 		return nil, errors.Wrapf(err, dtypeExtractionFail, y.t)

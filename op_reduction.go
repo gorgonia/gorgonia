@@ -243,8 +243,8 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	switch ydvd := ydv.d.(type) {
 	case Scalar:
 		dt := DtypeOf(ydvd)
-		T = tensor.New(dt.TensorDtype(), tensor.WithShape(xdv.d.Shape().Clone()...))
-		T.SetAll(ydvd.Any())
+		T = tensor.New(tensor.Of(dt), tensor.WithShape(xdv.d.Shape().Clone()...))
+		T.Memset(ydvd.Any())
 	case tensor.Tensor:
 		// handle broadcasting
 		if ydvd.Shape().Dims() == xdv.d.Shape().Dims()-len(op.along) {

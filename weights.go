@@ -40,7 +40,7 @@ func Zeroes() InitWFn {
 func RangedFrom(start int) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
-		return tensor.Range(dt, size)
+		return tensor.Range(dt, start, start+size)
 	}
 	return f
 }

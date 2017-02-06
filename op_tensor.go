@@ -46,10 +46,14 @@ func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	switch tt := inputs[0].(type) {
 	case *tensor.Dense:
-		r := tt.At(op.coordinates...)
+		var r interface{}
+		if r, err = tt.At(op.coordinates...); err != nil {
+			err = errors.Wrapf(err, opDoFail, "atOp.Do()")
+		}
+
 		retVal, _, _, err = anyToValue(r)
 	default:
-		err = errors.Errorf(nyiTypeFail, "atOp.Do()", t)
+		err = errors.Errorf(nyiTypeFail, "atOp.Do()", tt)
 	}
 	return
 }
@@ -401,7 +405,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			retVal = ret
 			return
 		}
-		t = tensor.New(FromScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 	case F32:
 		s := float32(iv)
 		if monotonic && incr {
@@ -410,7 +414,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			retVal = ret
 			return
 		}
-		t = tensor.New(FromScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 	case I:
 		s := int(iv)
 		if monotonic && incr {
@@ -419,7 +423,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			retVal = ret
 			return
 		}
-		t = tensor.New(FromScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 	case B:
 		s := bool(iv)
 		if monotonic && incr {
@@ -428,7 +432,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			retVal = ret
 			return
 		}
-		t = tensor.New(FromScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 
 	// case I32:
 	// 	s := int32(iv)
@@ -451,7 +455,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			// then no need to waste CPU
 			continue
 		}
-		if t, err = t.Repeat(axis, rep); err != nil {
+		if t, err = tensor.Repeat(t, axis, rep); err != nil {
 			err = errors.Wrapf(err, repFail, axis, rep)
 			return
 		}
@@ -609,7 +613,7 @@ func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		if v.IsScalar() {
-			retVal, err = anyTosScalar(v.ScalarValue())
+			retVal, _ = anyToScalar(v.ScalarValue())
 		} else {
 			retVal = v
 		}
@@ -775,9 +779,6 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			v.Add(i, tensor.UseUnsafe())
 		}
 		retVal = cloned
-	default:
-		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", T)
-
 	case Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
 	default:
@@ -1080,7 +1081,7 @@ func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
 		idv := in.boundTo.(*dualValue)
 		idvd := idv.d.(tensor.Tensor)
 
-		sliced, err := tensor.Slice(odvd, S(start, end))
+		sliced, err := odvd.Slice(S(start, end))
 		if err != nil {
 			return err
 		}

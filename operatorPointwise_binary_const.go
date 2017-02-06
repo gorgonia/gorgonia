@@ -17,8 +17,8 @@ var (
 	tgt  = denseCmpOp(tensor.Gt)
 	tlte = denseCmpOp(tensor.Lte)
 	tgte = denseCmpOp(tensor.Gte)
-	teq  = denseCmpOp(tensor.Eq)
-	tne  = denseCmpOp(tensor.Ne)
+	teq  = denseCmpOp(tensor.ElEq)
+	tne  = denseCmpOp(tensor.ElNe)
 )
 
 type denseBinOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)

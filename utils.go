@@ -152,7 +152,7 @@ func hasNaN(v Value) bool {
 	case F32:
 		return math32.IsNaN(float32(vt))
 	case *tensor.Dense:
-		dt := tensor.Dtype()
+		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
 			return false
 		}

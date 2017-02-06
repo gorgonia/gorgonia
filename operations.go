@@ -481,7 +481,7 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 		return
 	}
 
-	var dt Dtype
+	var dt tensor.Dtype
 	if dt, err = dtypeOf(a.t); err != nil {
 		return nil, errors.Wrapf(err, "Failed to determine the dtype of %T", a.t)
 	}

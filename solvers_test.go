@@ -32,8 +32,8 @@ func clampFloat32(v, min, max float32) float32 {
 func tf64Node() Nodes {
 	backingV := []float64{1, 2, 3, 4}
 	backingD := []float64{0.5, -10, 10, 0.5}
-	v := tensor.New(tensor.Float64, tensor.WithBacking(backingV), tensor.WithShape(2, 2))
-	d := tensor.New(tensor.Float64, tensor.WithBacking(backingD), tensor.WithShape(2, 2))
+	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
+	d := tensor.New(tensor.WithBacking(backingD), tensor.WithShape(2, 2))
 
 	dv := dvUnit0(v)
 	dv.d = d
@@ -49,8 +49,8 @@ func tf32Node() Nodes {
 	backingV := []float32{1, 2, 3, 4}
 	backingD := []float32{0.5, -10, 10, 0.5}
 
-	v := tensor.New(tensor.Float32, tensor.WithBacking(backingV), tensor.WithShape(2, 2))
-	d := tensor.New(tensor.Float32, tensor.WithBacking(backingD), tensor.WithShape(2, 2))
+	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
+	d := tensor.New(tensor.WithBacking(backingD), tensor.WithShape(2, 2))
 
 	dv := dvUnit0(v)
 	dv.d = d

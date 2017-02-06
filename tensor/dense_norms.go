@@ -132,7 +132,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 		cloned := t.Clone().(*Dense)
 		switch {
 		case ord.IsUnordered() || ord == Norm(2):
-			if ret, err = PointwiseSquare(cloned); err != nil {
+			if ret, err = Square(cloned); err != nil {
 				return
 			}
 
@@ -309,7 +309,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 				err = errors.Wrapf(err, opFail, "Frobenius Norm, axis = 2")
 				return
 			}
-			if ret, err = PointwiseSquare(retVal); err != nil {
+			if ret, err = Square(retVal); err != nil {
 				return
 			}
 			if retVal, err = getDense(ret); err != nil {

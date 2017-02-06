@@ -119,7 +119,7 @@ func variableDV(val Value) *dualValue {
 		retVal.d = one(DtypeOf(v))
 	case tensor.Tensor:
 		shp := v.Shape()
-		dt := dtypeToTensorDtype(DtypeOf(v))
+		dt := DtypeOf(v)
 		retVal.d = tensor.Ones(dt, shp...)
 	default:
 		panic(fmt.Sprintf("%v(%T) not handled yet", v, v))

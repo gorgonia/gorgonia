@@ -7,17 +7,18 @@ import (
 )
 
 // exported API for arithmetics and the stupidly crazy amount of overloaded semantics
+
 // Add performs a pointwise a+b. a and b can either be float64 or Tensor
 //
 // If both operands are Tensor, shape is checked first.
 // Even though the underlying data may have the same size (say (2,2) vs (4,1)), if they have different shapes, it will error out.
 //
-// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 
 // Add performs elementwise addition on the Tensor(s). These operations are supported:
-//		Add(Tensor, scalar)
-//		Add(scalar, Tensor)
-//		Add(Tensor, Tensor)
+//		Add(*Dense, scalar)
+//		Add(scalar, *Dense)
+//		Add(*Dense, *Dense)
+// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	ad, adok := a.(*Dense)
 	bd, bdok := b.(*Dense)
@@ -34,9 +35,10 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // Sub performs elementwise subtraction on the Tensor(s). These operations are supported:
-//		Sub(Tensor, scalar)
-//		Sub(scalar, Tensor)
-//		Sub(Tensor, Tensor)
+//		Sub(*Dense, scalar)
+//		Sub(scalar, *Dense)
+//		Sub(*Dense, *Dense)
+// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	ad, adok := a.(*Dense)
 	bd, bdok := b.(*Dense)
@@ -53,9 +55,10 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // Mul performs elementwise multiplication on the Tensor(s). These operations are supported:
-//		Mul(Tensor, scalar)
-//		Mul(scalar, Tensor)
-//		Mul(Tensor, Tensor)
+//		Mul(*Dense, scalar)
+//		Mul(scalar, *Dense)
+//		Mul(*Dense, *Dense)
+// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	ad, adok := a.(*Dense)
 	bd, bdok := b.(*Dense)
@@ -72,9 +75,10 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // Div performs elementwise division on the Tensor(s). These operations are supported:
-//		Div(Tensor, scalar)
-//		Div(scalar, Tensor)
-//		Div(Tensor, Tensor)
+//		Div(*Dense, scalar)
+//		Div(scalar, *Dense)
+//		Div(*Dense, *Dense)
+// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	ad, adok := a.(*Dense)
 	bd, bdok := b.(*Dense)
@@ -91,9 +95,10 @@ func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // Pow performs elementwise exponentiation on the Tensor(s). These operations are supported:
-//		Pow(Tensor, scalar)
-//		Pow(scalar, Tensor)
-//		Pow(Tensor, Tensor)
+//		Pow(*Dense, scalar)
+//		Pow(scalar, *Dense)
+//		Pow(*Dense, *Dense)
+// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	ad, adok := a.(*Dense)
 	bd, bdok := b.(*Dense)
@@ -311,4 +316,64 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = rd
 	}
 	return
+}
+
+// MatMul performs matrix-matrix multiplication between two Tensors
+func MatMul(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if a.Dtype() != b.Dtype() {
+		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
+		return
+	}
+
+	switch at := a.(type) {
+	case *Dense:
+		bt := b.(*Dense)
+		return at.MatMul(bt, opts...)
+	}
+	panic("Unreachable")
+}
+
+// MatVecMul performs matrix-vector multiplication between two Tensors. `a` is expected to be a matrix, and `b` is expected to be a vector
+func MatVecMul(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if a.Dtype() != b.Dtype() {
+		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
+		return
+	}
+
+	switch at := a.(type) {
+	case *Dense:
+		bt := b.(*Dense)
+		return at.MatVecMul(bt, opts...)
+	}
+	panic("Unreachable")
+}
+
+// Inner finds the inner products of two vector Tensors. Both arguments to the functions are eexpected to be vectors.
+func Inner(a, b Tensor) (retVal Tensor, err error) {
+	if a.Dtype() != b.Dtype() {
+		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
+		return
+	}
+
+	switch at := a.(type) {
+	case *Dense:
+		bt := b.(*Dense)
+		return at.Inner(bt)
+	}
+	panic("Unreachable")
+}
+
+// Outer performs the outer product of two vector Tensors. Both arguments to the functions are expected to be vectors.
+func Outer(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if a.Dtype() != b.Dtype() {
+		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
+		return
+	}
+
+	switch at := a.(type) {
+	case *Dense:
+		bt := b.(*Dense)
+		return at.Outer(bt, opts...)
+	}
+	panic("Unreachable")
 }

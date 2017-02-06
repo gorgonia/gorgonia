@@ -172,7 +172,7 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 
 // OneHotVector creates a node representing a one hot vector
 func OneHotVector(id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
-	T := tensor.Ones(t, tensor.Shape{classes})
+	T := tensor.Ones(t, classes)
 	return NewConstant(T, opts...)
 }
 
