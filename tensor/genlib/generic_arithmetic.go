@@ -6,19 +6,40 @@ import (
 	"text/template"
 )
 
-const genericVecVecArithRaw = `func vec{{.OpName}}{{short .Kind}}(a, b []{{asType .Kind}}) error {
+const genericVecVecArithRaw = `func {{if .IsIncr}}incrVec{{else}}vec{{end}}{{.OpName}}{{short .Kind}}(a, b{{if .IsIncr}}, incr{{end}} []{{asType .Kind}}) error {
 	if len(a) != len(b){
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
+	a = a[:len(a)]
+	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
+	
+	{{if .IsIncr -}}
+	if len(incr) != len(a) {
+		return errors.Errorf(lenMismatch, len(a), len(incr))
+	}
+	incr = incr[:len(a)]
+	{{end -}}
 
 	{{if hasPrefix .Kind.String "float" -}}
-		vec{{short .Kind | lower }}.{{.OpName}}(a, b)
+		{{if .IsIncr -}}
+			vec{{short .Kind | lower}}.Incr{{.OpName}}(a, b, incr)
+		{{else -}}
+			vec{{short .Kind | lower }}.{{.OpName}}(a, b)
+		{{end -}}
 	{{else if hasPrefix .Kind.String "complex" -}}
 		for i, v := range b {
-			{{if eq .OpName "Pow" -}}
-				a[i] = {{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v)))
+			{{if .IsIncr -}}
+				{{if eq .OpName "Pow" -}}
+					incr[i] += {{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v)))
+				{{else -}}
+					incr[i] += a[i] {{.OpSymb}} v
+				{{end -}}
 			{{else -}}
-				a[i] {{.OpSymb}}= v 
+				{{if eq .OpName "Pow" -}}
+					a[i] = {{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v)))
+				{{else -}}
+					a[i] {{.OpSymb}}= v 
+				{{end -}}
 			{{end -}}
 			}
 	{{else -}}
@@ -30,15 +51,27 @@ const genericVecVecArithRaw = `func vec{{.OpName}}{{short .Kind}}(a, b []{{asTyp
 			{{if or $scaleInv $div -}}
 			if v == {{asType .Kind}}(0) {
 				errs = append(errs, i)
-				a[i] = 0
+				{{if .IsIncr -}}
+					incr[i] = 0
+				{{else -}}
+					a[i] = 0
+				{{end -}}
 				continue
 			}
-
 			{{end -}}
-			{{if .IsFunc -}}
-				a[i] = {{asType .Kind}}({{.OpSymb}} (float64(a[i]), float64(v)))
+
+			{{if .IsIncr -}}
+				{{if .IsFunc -}}
+					incr[i] += {{asType .Kind}}({{.OpSymb}} (float64(a[i]), float64(v)))
+				{{else -}}
+					incr[i] += a[i] {{.OpSymb}} v 
+				{{end -}}
 			{{else -}}
-				a[i] {{.OpSymb}}= v 
+				{{if .IsFunc -}}
+					a[i] = {{asType .Kind}}({{.OpSymb}} (float64(a[i]), float64(v)))
+				{{else -}}
+					a[i] {{.OpSymb}}= v 
+				{{end -}}
 			{{end -}}
 		}
 
@@ -131,7 +164,21 @@ func genericArith(f io.Writer, generic *ManyKinds) {
 		for _, k := range generic.Kinds {
 			if isNumber(k) {
 				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
-				genericVecVecArith.Execute(f, op)
+				incrOp := IncrOp{op, false}
+				genericVecVecArith.Execute(f, incrOp)
+				fmt.Fprintln(f, "\n")
+			}
+		}
+		fmt.Fprintln(f, "\n")
+	}
+
+	for _, bo := range binOps {
+		fmt.Fprintf(f, "/* incr %s */\n\n", bo.OpName)
+		for _, k := range generic.Kinds {
+			if isNumber(k) {
+				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
+				incrOp := IncrOp{op, true}
+				genericVecVecArith.Execute(f, incrOp)
 				fmt.Fprintln(f, "\n")
 			}
 		}

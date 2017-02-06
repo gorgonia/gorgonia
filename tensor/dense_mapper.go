@@ -258,10 +258,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 				v := data[i]
 				data[i] = f(v)
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(bool) bool", fn)
 	case reflect.Int:
@@ -276,10 +273,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(int) int", fn)
 	case reflect.Int8:
@@ -294,10 +288,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(int8) int8", fn)
 	case reflect.Int16:
@@ -312,10 +303,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(int16) int16", fn)
 	case reflect.Int32:
@@ -330,10 +318,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(int32) int32", fn)
 	case reflect.Int64:
@@ -348,10 +333,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(int64) int64", fn)
 	case reflect.Uint:
@@ -366,10 +348,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(uint) uint", fn)
 	case reflect.Uint8:
@@ -384,10 +363,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(uint8) uint8", fn)
 	case reflect.Uint16:
@@ -402,10 +378,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(uint16) uint16", fn)
 	case reflect.Uint32:
@@ -420,10 +393,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(uint32) uint32", fn)
 	case reflect.Uint64:
@@ -438,10 +408,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(uint64) uint64", fn)
 	case reflect.Uintptr:
@@ -452,10 +419,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 				v := data[i]
 				data[i] = f(v)
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(uintptr) uintptr", fn)
 	case reflect.Float32:
@@ -470,10 +434,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(float32) float32", fn)
 	case reflect.Float64:
@@ -488,10 +449,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(float64) float64", fn)
 	case reflect.Complex64:
@@ -506,10 +464,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(complex64) complex64", fn)
 	case reflect.Complex128:
@@ -524,10 +479,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(complex128) complex128", fn)
 	case reflect.String:
@@ -538,10 +490,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 				v := data[i]
 				data[i] = f(v)
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(string) string", fn)
 	case reflect.UnsafePointer:
@@ -552,10 +501,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 				v := data[i]
 				data[i] = f(v)
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func(unsafe.Pointer) unsafe.Pointer", fn)
 	default:
@@ -572,9 +518,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 			t.Set(i, f.Call(args)[0].Interface())
 			args = args[:0]
 		}
-		if _, noop := err.(NoOpError); !noop {
-			return
-		}
+		return handleNoOp(err)
 	}
 	return nil
 }

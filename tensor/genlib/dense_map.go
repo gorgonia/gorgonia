@@ -67,10 +67,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 					data[i] = f(v)
 				{{end -}}
 			}
-			if _, noop := err.(NoOpError); !noop {
-				return 
-			}
-			return nil
+			return handleNoOp(err)
 		}
 		return errors.Errorf(extractionFail, "func({{asType .}}) {{asType .}}", fn)
 	{{end -}}
@@ -89,9 +86,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 			t.Set(i, f.Call(args)[0].Interface())
 			args = args[:0]
 		}
-		if _, noop := err.(NoOpError); !noop {
-			return 
-		}
+		return handleNoOp(err)
 	}
 	return nil
 }

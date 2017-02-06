@@ -421,7 +421,7 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 		it := NewFlatIterator(t.AP)
 		var next int
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
-			if _, noop := err.(NoOpError); err != nil && !noop {
+			if err = handleNoOp(err); err != nil {
 				return
 			}
 			data = append(data, convToFloat64(t.Get(next)))

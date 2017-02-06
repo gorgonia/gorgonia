@@ -103,79 +103,1353 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
+		retVal = reuse
 		switch reuse.t.Kind() {
 		case reflect.Int:
 			data := reuse.ints()
-			for i := range data {
-				data[i] += t.getI(i) + other.getI(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI(i) + other.getI(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) + other.getI(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) + other.getI(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI(i) + other.getI(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddI(t.ints(), other.ints(), reuse.ints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI(i) + other.getI(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI(i) + other.getI(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) + other.getI(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int8:
 			data := reuse.int8s()
-			for i := range data {
-				data[i] += t.getI8(i) + other.getI8(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI8(i) + other.getI8(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) + other.getI8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) + other.getI8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI8(i) + other.getI8(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddI8(t.int8s(), other.int8s(), reuse.int8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI8(i) + other.getI8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI8(i) + other.getI8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) + other.getI8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int16:
 			data := reuse.int16s()
-			for i := range data {
-				data[i] += t.getI16(i) + other.getI16(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI16(i) + other.getI16(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) + other.getI16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) + other.getI16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI16(i) + other.getI16(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddI16(t.int16s(), other.int16s(), reuse.int16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI16(i) + other.getI16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI16(i) + other.getI16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) + other.getI16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int32:
 			data := reuse.int32s()
-			for i := range data {
-				data[i] += t.getI32(i) + other.getI32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI32(i) + other.getI32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) + other.getI32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) + other.getI32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI32(i) + other.getI32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddI32(t.int32s(), other.int32s(), reuse.int32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI32(i) + other.getI32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI32(i) + other.getI32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) + other.getI32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int64:
 			data := reuse.int64s()
-			for i := range data {
-				data[i] += t.getI64(i) + other.getI64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI64(i) + other.getI64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) + other.getI64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) + other.getI64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI64(i) + other.getI64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddI64(t.int64s(), other.int64s(), reuse.int64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI64(i) + other.getI64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI64(i) + other.getI64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) + other.getI64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint:
 			data := reuse.uints()
-			for i := range data {
-				data[i] += t.getU(i) + other.getU(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU(i) + other.getU(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) + other.getU(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) + other.getU(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU(i) + other.getU(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddU(t.uints(), other.uints(), reuse.uints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU(i) + other.getU(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU(i) + other.getU(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) + other.getU(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint8:
 			data := reuse.uint8s()
-			for i := range data {
-				data[i] += t.getU8(i) + other.getU8(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU8(i) + other.getU8(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) + other.getU8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) + other.getU8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU8(i) + other.getU8(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddU8(t.uint8s(), other.uint8s(), reuse.uint8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU8(i) + other.getU8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU8(i) + other.getU8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) + other.getU8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint16:
 			data := reuse.uint16s()
-			for i := range data {
-				data[i] += t.getU16(i) + other.getU16(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU16(i) + other.getU16(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) + other.getU16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) + other.getU16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU16(i) + other.getU16(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddU16(t.uint16s(), other.uint16s(), reuse.uint16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU16(i) + other.getU16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU16(i) + other.getU16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) + other.getU16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint32:
 			data := reuse.uint32s()
-			for i := range data {
-				data[i] += t.getU32(i) + other.getU32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU32(i) + other.getU32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) + other.getU32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) + other.getU32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU32(i) + other.getU32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddU32(t.uint32s(), other.uint32s(), reuse.uint32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU32(i) + other.getU32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU32(i) + other.getU32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) + other.getU32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint64:
 			data := reuse.uint64s()
-			for i := range data {
-				data[i] += t.getU64(i) + other.getU64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU64(i) + other.getU64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) + other.getU64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) + other.getU64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU64(i) + other.getU64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddU64(t.uint64s(), other.uint64s(), reuse.uint64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU64(i) + other.getU64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU64(i) + other.getU64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) + other.getU64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float32:
 			data := reuse.float32s()
-			for i := range data {
-				data[i] += t.getF32(i) + other.getF32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF32(i) + other.getF32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) + other.getF32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) + other.getF32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF32(i) + other.getF32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddF32(t.float32s(), other.float32s(), reuse.float32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF32(i) + other.getF32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF32(i) + other.getF32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) + other.getF32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float64:
 			data := reuse.float64s()
-			for i := range data {
-				data[i] += t.getF64(i) + other.getF64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF64(i) + other.getF64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) + other.getF64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) + other.getF64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF64(i) + other.getF64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddF64(t.float64s(), other.float64s(), reuse.float64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF64(i) + other.getF64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF64(i) + other.getF64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) + other.getF64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex64:
 			data := reuse.complex64s()
-			for i := range data {
-				data[i] += t.getC64(i) + other.getC64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC64(i) + other.getC64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) + other.getC64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) + other.getC64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC64(i) + other.getC64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddC64(t.complex64s(), other.complex64s(), reuse.complex64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC64(i) + other.getC64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC64(i) + other.getC64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) + other.getC64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex128:
 			data := reuse.complex128s()
-			for i := range data {
-				data[i] += t.getC128(i) + other.getC128(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC128(i) + other.getC128(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) + other.getC128(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) + other.getC128(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC128(i) + other.getC128(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecAddC128(t.complex128s(), other.complex128s(), reuse.complex128s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC128(i) + other.getC128(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC128(i) + other.getC128(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) + other.getC128(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		}
-		retVal = reuse
 	case toReuse:
 		if t.IsMaterializable() {
 			copyDenseIter(reuse, t, nil, it)
@@ -207,17 +1481,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -227,10 +1495,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -247,17 +1512,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -267,10 +1526,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -287,17 +1543,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -307,10 +1557,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -327,17 +1574,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -347,10 +1588,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -367,17 +1605,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -387,10 +1619,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -407,17 +1636,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -427,10 +1650,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -447,17 +1667,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -467,10 +1681,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -487,17 +1698,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -507,10 +1712,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -527,17 +1729,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -547,10 +1743,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -567,17 +1760,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -587,10 +1774,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -607,17 +1791,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -627,10 +1805,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -647,17 +1822,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -667,10 +1836,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -687,17 +1853,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -707,10 +1867,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -727,17 +1884,11 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] + odata[j]
@@ -747,10 +1898,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] + odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] + odata[j]
@@ -783,79 +1931,1353 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
+		retVal = reuse
 		switch reuse.t.Kind() {
 		case reflect.Int:
 			data := reuse.ints()
-			for i := range data {
-				data[i] += t.getI(i) - other.getI(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI(i) - other.getI(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) - other.getI(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) - other.getI(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI(i) - other.getI(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubI(t.ints(), other.ints(), reuse.ints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI(i) - other.getI(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI(i) - other.getI(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) - other.getI(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int8:
 			data := reuse.int8s()
-			for i := range data {
-				data[i] += t.getI8(i) - other.getI8(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI8(i) - other.getI8(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) - other.getI8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) - other.getI8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI8(i) - other.getI8(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubI8(t.int8s(), other.int8s(), reuse.int8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI8(i) - other.getI8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI8(i) - other.getI8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) - other.getI8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int16:
 			data := reuse.int16s()
-			for i := range data {
-				data[i] += t.getI16(i) - other.getI16(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI16(i) - other.getI16(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) - other.getI16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) - other.getI16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI16(i) - other.getI16(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubI16(t.int16s(), other.int16s(), reuse.int16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI16(i) - other.getI16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI16(i) - other.getI16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) - other.getI16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int32:
 			data := reuse.int32s()
-			for i := range data {
-				data[i] += t.getI32(i) - other.getI32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI32(i) - other.getI32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) - other.getI32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) - other.getI32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI32(i) - other.getI32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubI32(t.int32s(), other.int32s(), reuse.int32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI32(i) - other.getI32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI32(i) - other.getI32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) - other.getI32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int64:
 			data := reuse.int64s()
-			for i := range data {
-				data[i] += t.getI64(i) - other.getI64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI64(i) - other.getI64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) - other.getI64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) - other.getI64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI64(i) - other.getI64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubI64(t.int64s(), other.int64s(), reuse.int64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI64(i) - other.getI64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI64(i) - other.getI64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) - other.getI64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint:
 			data := reuse.uints()
-			for i := range data {
-				data[i] += t.getU(i) - other.getU(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU(i) - other.getU(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) - other.getU(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) - other.getU(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU(i) - other.getU(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubU(t.uints(), other.uints(), reuse.uints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU(i) - other.getU(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU(i) - other.getU(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) - other.getU(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint8:
 			data := reuse.uint8s()
-			for i := range data {
-				data[i] += t.getU8(i) - other.getU8(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU8(i) - other.getU8(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) - other.getU8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) - other.getU8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU8(i) - other.getU8(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubU8(t.uint8s(), other.uint8s(), reuse.uint8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU8(i) - other.getU8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU8(i) - other.getU8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) - other.getU8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint16:
 			data := reuse.uint16s()
-			for i := range data {
-				data[i] += t.getU16(i) - other.getU16(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU16(i) - other.getU16(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) - other.getU16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) - other.getU16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU16(i) - other.getU16(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubU16(t.uint16s(), other.uint16s(), reuse.uint16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU16(i) - other.getU16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU16(i) - other.getU16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) - other.getU16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint32:
 			data := reuse.uint32s()
-			for i := range data {
-				data[i] += t.getU32(i) - other.getU32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU32(i) - other.getU32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) - other.getU32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) - other.getU32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU32(i) - other.getU32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubU32(t.uint32s(), other.uint32s(), reuse.uint32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU32(i) - other.getU32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU32(i) - other.getU32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) - other.getU32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint64:
 			data := reuse.uint64s()
-			for i := range data {
-				data[i] += t.getU64(i) - other.getU64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU64(i) - other.getU64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) - other.getU64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) - other.getU64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU64(i) - other.getU64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubU64(t.uint64s(), other.uint64s(), reuse.uint64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU64(i) - other.getU64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU64(i) - other.getU64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) - other.getU64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float32:
 			data := reuse.float32s()
-			for i := range data {
-				data[i] += t.getF32(i) - other.getF32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF32(i) - other.getF32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) - other.getF32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) - other.getF32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF32(i) - other.getF32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubF32(t.float32s(), other.float32s(), reuse.float32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF32(i) - other.getF32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF32(i) - other.getF32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) - other.getF32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float64:
 			data := reuse.float64s()
-			for i := range data {
-				data[i] += t.getF64(i) - other.getF64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF64(i) - other.getF64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) - other.getF64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) - other.getF64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF64(i) - other.getF64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubF64(t.float64s(), other.float64s(), reuse.float64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF64(i) - other.getF64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF64(i) - other.getF64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) - other.getF64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex64:
 			data := reuse.complex64s()
-			for i := range data {
-				data[i] += t.getC64(i) - other.getC64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC64(i) - other.getC64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) - other.getC64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) - other.getC64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC64(i) - other.getC64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubC64(t.complex64s(), other.complex64s(), reuse.complex64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC64(i) - other.getC64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC64(i) - other.getC64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) - other.getC64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex128:
 			data := reuse.complex128s()
-			for i := range data {
-				data[i] += t.getC128(i) - other.getC128(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC128(i) - other.getC128(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) - other.getC128(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) - other.getC128(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC128(i) - other.getC128(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecSubC128(t.complex128s(), other.complex128s(), reuse.complex128s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC128(i) - other.getC128(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC128(i) - other.getC128(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) - other.getC128(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		}
-		retVal = reuse
 	case toReuse:
 		if t.IsMaterializable() {
 			copyDenseIter(reuse, t, nil, it)
@@ -887,17 +3309,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -907,10 +3323,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -927,17 +3340,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -947,10 +3354,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -967,17 +3371,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -987,10 +3385,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1007,17 +3402,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1027,10 +3416,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1047,17 +3433,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1067,10 +3447,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1087,17 +3464,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1107,10 +3478,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1127,17 +3495,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1147,10 +3509,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1167,17 +3526,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1187,10 +3540,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1207,17 +3557,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1227,10 +3571,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1247,17 +3588,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1267,10 +3602,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1287,17 +3619,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1307,10 +3633,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1327,17 +3650,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1347,10 +3664,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1367,17 +3681,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1387,10 +3695,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1407,17 +3712,11 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] - odata[j]
@@ -1427,10 +3726,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] - odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] - odata[j]
@@ -1463,79 +3759,1353 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
+		retVal = reuse
 		switch reuse.t.Kind() {
 		case reflect.Int:
 			data := reuse.ints()
-			for i := range data {
-				data[i] += t.getI(i) * other.getI(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI(i) * other.getI(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) * other.getI(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) * other.getI(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI(i) * other.getI(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulI(t.ints(), other.ints(), reuse.ints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI(i) * other.getI(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI(i) * other.getI(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI(i) * other.getI(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int8:
 			data := reuse.int8s()
-			for i := range data {
-				data[i] += t.getI8(i) * other.getI8(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI8(i) * other.getI8(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) * other.getI8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) * other.getI8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI8(i) * other.getI8(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulI8(t.int8s(), other.int8s(), reuse.int8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI8(i) * other.getI8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI8(i) * other.getI8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI8(i) * other.getI8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int16:
 			data := reuse.int16s()
-			for i := range data {
-				data[i] += t.getI16(i) * other.getI16(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI16(i) * other.getI16(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) * other.getI16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) * other.getI16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI16(i) * other.getI16(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulI16(t.int16s(), other.int16s(), reuse.int16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI16(i) * other.getI16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI16(i) * other.getI16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI16(i) * other.getI16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int32:
 			data := reuse.int32s()
-			for i := range data {
-				data[i] += t.getI32(i) * other.getI32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI32(i) * other.getI32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) * other.getI32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) * other.getI32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI32(i) * other.getI32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulI32(t.int32s(), other.int32s(), reuse.int32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI32(i) * other.getI32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI32(i) * other.getI32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI32(i) * other.getI32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int64:
 			data := reuse.int64s()
-			for i := range data {
-				data[i] += t.getI64(i) * other.getI64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getI64(i) * other.getI64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) * other.getI64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) * other.getI64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getI64(i) * other.getI64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulI64(t.int64s(), other.int64s(), reuse.int64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getI64(i) * other.getI64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getI64(i) * other.getI64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getI64(i) * other.getI64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint:
 			data := reuse.uints()
-			for i := range data {
-				data[i] += t.getU(i) * other.getU(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU(i) * other.getU(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) * other.getU(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) * other.getU(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU(i) * other.getU(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulU(t.uints(), other.uints(), reuse.uints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU(i) * other.getU(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU(i) * other.getU(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU(i) * other.getU(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint8:
 			data := reuse.uint8s()
-			for i := range data {
-				data[i] += t.getU8(i) * other.getU8(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU8(i) * other.getU8(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) * other.getU8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) * other.getU8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU8(i) * other.getU8(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulU8(t.uint8s(), other.uint8s(), reuse.uint8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU8(i) * other.getU8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU8(i) * other.getU8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU8(i) * other.getU8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint16:
 			data := reuse.uint16s()
-			for i := range data {
-				data[i] += t.getU16(i) * other.getU16(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU16(i) * other.getU16(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) * other.getU16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) * other.getU16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU16(i) * other.getU16(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulU16(t.uint16s(), other.uint16s(), reuse.uint16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU16(i) * other.getU16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU16(i) * other.getU16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU16(i) * other.getU16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint32:
 			data := reuse.uint32s()
-			for i := range data {
-				data[i] += t.getU32(i) * other.getU32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU32(i) * other.getU32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) * other.getU32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) * other.getU32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU32(i) * other.getU32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulU32(t.uint32s(), other.uint32s(), reuse.uint32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU32(i) * other.getU32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU32(i) * other.getU32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU32(i) * other.getU32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint64:
 			data := reuse.uint64s()
-			for i := range data {
-				data[i] += t.getU64(i) * other.getU64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getU64(i) * other.getU64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) * other.getU64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) * other.getU64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getU64(i) * other.getU64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulU64(t.uint64s(), other.uint64s(), reuse.uint64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getU64(i) * other.getU64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getU64(i) * other.getU64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getU64(i) * other.getU64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float32:
 			data := reuse.float32s()
-			for i := range data {
-				data[i] += t.getF32(i) * other.getF32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF32(i) * other.getF32(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) * other.getF32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) * other.getF32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF32(i) * other.getF32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulF32(t.float32s(), other.float32s(), reuse.float32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF32(i) * other.getF32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF32(i) * other.getF32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) * other.getF32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float64:
 			data := reuse.float64s()
-			for i := range data {
-				data[i] += t.getF64(i) * other.getF64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF64(i) * other.getF64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) * other.getF64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) * other.getF64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF64(i) * other.getF64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulF64(t.float64s(), other.float64s(), reuse.float64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF64(i) * other.getF64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF64(i) * other.getF64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) * other.getF64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex64:
 			data := reuse.complex64s()
-			for i := range data {
-				data[i] += t.getC64(i) * other.getC64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC64(i) * other.getC64(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) * other.getC64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) * other.getC64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC64(i) * other.getC64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulC64(t.complex64s(), other.complex64s(), reuse.complex64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC64(i) * other.getC64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC64(i) * other.getC64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) * other.getC64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex128:
 			data := reuse.complex128s()
-			for i := range data {
-				data[i] += t.getC128(i) * other.getC128(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC128(i) * other.getC128(j)
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) * other.getC128(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) * other.getC128(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC128(i) * other.getC128(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecMulC128(t.complex128s(), other.complex128s(), reuse.complex128s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC128(i) * other.getC128(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC128(i) * other.getC128(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) * other.getC128(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		}
-		retVal = reuse
 	case toReuse:
 		if t.IsMaterializable() {
 			copyDenseIter(reuse, t, nil, it)
@@ -1567,17 +5137,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1587,10 +5151,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1607,17 +5168,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1627,10 +5182,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1647,17 +5199,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1667,10 +5213,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1687,17 +5230,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1707,10 +5244,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1727,17 +5261,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1747,10 +5275,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1767,17 +5292,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1787,10 +5306,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1807,17 +5323,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1827,10 +5337,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1847,17 +5354,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1867,10 +5368,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1887,17 +5385,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1907,10 +5399,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1927,17 +5416,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1947,10 +5430,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -1967,17 +5447,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -1987,10 +5461,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -2007,17 +5478,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -2027,10 +5492,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -2047,17 +5509,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -2067,10 +5523,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -2087,17 +5540,11 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] * odata[j]
@@ -2107,10 +5554,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] * odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] * odata[j]
@@ -2144,122 +5588,1636 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
+		retVal = reuse
 		switch reuse.t.Kind() {
 		case reflect.Int:
 			data := reuse.ints()
-			for i := range data {
-				if other.getI(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getI(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI(i) / other.getI(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI(i) / other.getI(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI(i) / other.getI(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getI(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI(i) / other.getI(j)
+					}
+					err = nil
 				}
-				data[i] += t.getI(i) / other.getI(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivI(t.ints(), other.ints(), reuse.ints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getI(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI(i) / other.getI(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getI(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI(i) / other.getI(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI(i) / other.getI(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int8:
 			data := reuse.int8s()
-			for i := range data {
-				if other.getI8(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getI8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI8(i) / other.getI8(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI8(i) / other.getI8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI8(i) / other.getI8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getI8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI8(i) / other.getI8(j)
+					}
+					err = nil
 				}
-				data[i] += t.getI8(i) / other.getI8(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivI8(t.int8s(), other.int8s(), reuse.int8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getI8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI8(i) / other.getI8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getI8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI8(i) / other.getI8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI8(i) / other.getI8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int16:
 			data := reuse.int16s()
-			for i := range data {
-				if other.getI16(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getI16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI16(i) / other.getI16(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI16(i) / other.getI16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI16(i) / other.getI16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getI16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI16(i) / other.getI16(j)
+					}
+					err = nil
 				}
-				data[i] += t.getI16(i) / other.getI16(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivI16(t.int16s(), other.int16s(), reuse.int16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getI16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI16(i) / other.getI16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getI16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI16(i) / other.getI16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI16(i) / other.getI16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int32:
 			data := reuse.int32s()
-			for i := range data {
-				if other.getI32(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getI32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI32(i) / other.getI32(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI32(i) / other.getI32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI32(i) / other.getI32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getI32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI32(i) / other.getI32(j)
+					}
+					err = nil
 				}
-				data[i] += t.getI32(i) / other.getI32(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivI32(t.int32s(), other.int32s(), reuse.int32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getI32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI32(i) / other.getI32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getI32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI32(i) / other.getI32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI32(i) / other.getI32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int64:
 			data := reuse.int64s()
-			for i := range data {
-				if other.getI64(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getI64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI64(i) / other.getI64(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI64(i) / other.getI64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI64(i) / other.getI64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getI64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI64(i) / other.getI64(j)
+					}
+					err = nil
 				}
-				data[i] += t.getI64(i) / other.getI64(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivI64(t.int64s(), other.int64s(), reuse.int64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getI64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI64(i) / other.getI64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getI64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI64(i) / other.getI64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getI64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getI64(i) / other.getI64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint:
 			data := reuse.uints()
-			for i := range data {
-				if other.getU(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getU(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU(i) / other.getU(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU(i) / other.getU(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU(i) / other.getU(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getU(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU(i) / other.getU(j)
+					}
+					err = nil
 				}
-				data[i] += t.getU(i) / other.getU(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivU(t.uints(), other.uints(), reuse.uints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getU(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU(i) / other.getU(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getU(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU(i) / other.getU(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU(i) / other.getU(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint8:
 			data := reuse.uint8s()
-			for i := range data {
-				if other.getU8(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getU8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU8(i) / other.getU8(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU8(i) / other.getU8(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU8(i) / other.getU8(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getU8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU8(i) / other.getU8(j)
+					}
+					err = nil
 				}
-				data[i] += t.getU8(i) / other.getU8(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivU8(t.uint8s(), other.uint8s(), reuse.uint8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getU8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU8(i) / other.getU8(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getU8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU8(i) / other.getU8(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU8(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU8(i) / other.getU8(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint16:
 			data := reuse.uint16s()
-			for i := range data {
-				if other.getU16(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getU16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU16(i) / other.getU16(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU16(i) / other.getU16(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU16(i) / other.getU16(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getU16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU16(i) / other.getU16(j)
+					}
+					err = nil
 				}
-				data[i] += t.getU16(i) / other.getU16(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivU16(t.uint16s(), other.uint16s(), reuse.uint16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getU16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU16(i) / other.getU16(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getU16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU16(i) / other.getU16(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU16(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU16(i) / other.getU16(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint32:
 			data := reuse.uint32s()
-			for i := range data {
-				if other.getU32(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getU32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU32(i) / other.getU32(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU32(i) / other.getU32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU32(i) / other.getU32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getU32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU32(i) / other.getU32(j)
+					}
+					err = nil
 				}
-				data[i] += t.getU32(i) / other.getU32(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivU32(t.uint32s(), other.uint32s(), reuse.uint32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getU32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU32(i) / other.getU32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getU32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU32(i) / other.getU32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU32(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU32(i) / other.getU32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint64:
 			data := reuse.uint64s()
-			for i := range data {
-				if other.getU64(i) == 0 {
-					errs = append(errs, i)
-					continue
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						if other.getU64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU64(i) / other.getU64(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU64(i) / other.getU64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU64(i) / other.getU64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						if other.getU64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU64(i) / other.getU64(j)
+					}
+					err = nil
 				}
-				data[i] += t.getU64(i) / other.getU64(i)
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivU64(t.uint64s(), other.uint64s(), reuse.uint64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						if other.getU64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU64(i) / other.getU64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						if other.getU64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU64(i) / other.getU64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if other.getU64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
+						data[incrI] += t.getU64(i) / other.getU64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float32:
 			data := reuse.float32s()
-			for i := range data {
-				data[i] += t.getF32(i) / other.getF32(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF32(i) / other.getF32(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) / other.getF32(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) / other.getF32(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF32(i) / other.getF32(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivF32(t.float32s(), other.float32s(), reuse.float32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF32(i) / other.getF32(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF32(i) / other.getF32(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF32(i) / other.getF32(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float64:
 			data := reuse.float64s()
-			for i := range data {
-				data[i] += t.getF64(i) / other.getF64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getF64(i) / other.getF64(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) / other.getF64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) / other.getF64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getF64(i) / other.getF64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivF64(t.float64s(), other.float64s(), reuse.float64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getF64(i) / other.getF64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getF64(i) / other.getF64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getF64(i) / other.getF64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex64:
 			data := reuse.complex64s()
-			for i := range data {
-				data[i] += t.getC64(i) / other.getC64(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC64(i) / other.getC64(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) / other.getC64(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) / other.getC64(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC64(i) / other.getC64(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivC64(t.complex64s(), other.complex64s(), reuse.complex64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC64(i) / other.getC64(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC64(i) / other.getC64(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC64(i) / other.getC64(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex128:
 			data := reuse.complex128s()
-			for i := range data {
-				data[i] += t.getC128(i) / other.getC128(i)
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += t.getC128(i) / other.getC128(j)
+						i++
+						j++
+					}
+					err = errs
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) / other.getC128(j)
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) / other.getC128(j)
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += t.getC128(i) / other.getC128(j)
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecDivC128(t.complex128s(), other.complex128s(), reuse.complex128s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += t.getC128(i) / other.getC128(j)
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += t.getC128(i) / other.getC128(j)
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += t.getC128(i) / other.getC128(j)
+						incrI++
+					}
+					err = nil
+				}
 			}
 		}
 		if errs != nil {
 			err = err
 		}
-		retVal = reuse
 	case toReuse:
 		if t.IsMaterializable() {
 			copyDenseIter(reuse, t, nil, it)
@@ -2292,17 +7250,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2320,10 +7272,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2344,17 +7293,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2372,10 +7315,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2396,17 +7336,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2424,10 +7358,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2448,17 +7379,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2476,10 +7401,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2500,17 +7422,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2528,10 +7444,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2552,17 +7465,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2580,10 +7487,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2604,17 +7508,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2632,10 +7530,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2656,17 +7551,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2684,10 +7573,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2708,17 +7594,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2736,10 +7616,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2760,17 +7637,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if odata[j] == 0 {
@@ -2788,10 +7659,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				if odata[j] == 0 {
@@ -2812,17 +7680,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] / odata[j]
@@ -2832,10 +7694,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] / odata[j]
@@ -2852,17 +7711,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] / odata[j]
@@ -2872,10 +7725,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] / odata[j]
@@ -2892,17 +7742,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] / odata[j]
@@ -2912,10 +7756,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] / odata[j]
@@ -2932,17 +7773,11 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = tdata[i] / odata[j]
@@ -2952,10 +7787,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = tdata[i] / odata[j]
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = tdata[i] / odata[j]
@@ -2991,79 +7823,1353 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
+		retVal = reuse
 		switch reuse.t.Kind() {
 		case reflect.Int:
 			data := reuse.ints()
-			for i := range data {
-				data[i] += int(math.Pow(float64(t.getI(i)), float64(other.getI(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowI(t.ints(), other.ints(), reuse.ints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int8:
 			data := reuse.int8s()
-			for i := range data {
-				data[i] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowI8(t.int8s(), other.int8s(), reuse.int8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int16:
 			data := reuse.int16s()
-			for i := range data {
-				data[i] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowI16(t.int16s(), other.int16s(), reuse.int16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int32:
 			data := reuse.int32s()
-			for i := range data {
-				data[i] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowI32(t.int32s(), other.int32s(), reuse.int32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Int64:
 			data := reuse.int64s()
-			for i := range data {
-				data[i] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowI64(t.int64s(), other.int64s(), reuse.int64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint:
 			data := reuse.uints()
-			for i := range data {
-				data[i] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowU(t.uints(), other.uints(), reuse.uints())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint8:
 			data := reuse.uint8s()
-			for i := range data {
-				data[i] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowU8(t.uint8s(), other.uint8s(), reuse.uint8s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint16:
 			data := reuse.uint16s()
-			for i := range data {
-				data[i] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowU16(t.uint16s(), other.uint16s(), reuse.uint16s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint32:
 			data := reuse.uint32s()
-			for i := range data {
-				data[i] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowU32(t.uint32s(), other.uint32s(), reuse.uint32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Uint64:
 			data := reuse.uint64s()
-			for i := range data {
-				data[i] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowU64(t.uint64s(), other.uint64s(), reuse.uint64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float32:
 			data := reuse.float32s()
-			for i := range data {
-				data[i] += math32.Pow(t.getF32(i), other.getF32(i))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowF32(t.float32s(), other.float32s(), reuse.float32s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Float64:
 			data := reuse.float64s()
-			for i := range data {
-				data[i] += math.Pow(t.getF64(i), other.getF64(i))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowF64(t.float64s(), other.float64s(), reuse.float64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex64:
 			data := reuse.complex64s()
-			for i := range data {
-				data[i] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(i))))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowC64(t.complex64s(), other.complex64s(), reuse.complex64s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		case reflect.Complex128:
 			data := reuse.complex128s()
-			for i := range data {
-				data[i] += cmplx.Pow(t.getC128(i), other.getC128(i))
+			switch {
+			case reuse.IsMaterializable():
+				incrIter := NewFlatIterator(reuse.AP)
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
+						i++
+						j++
+					}
+					err = nil
+				case it != nil && ot == nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
+						j++
+					}
+					err = nil
+				case it == nil && ot != nil:
+					for {
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
+						i++
+					}
+					err = nil
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if incrI, err = incrIter.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+
+						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
+					}
+					err = nil
+				}
+			case !reuse.IsMaterializable():
+				var i, j, incrI int
+				switch {
+				case it == nil && ot == nil:
+					err = incrVecPowC128(t.complex128s(), other.complex128s(), reuse.complex128s())
+				case it != nil && ot == nil:
+					for i, err = it.Next(); err == nil; i, err = it.Next() {
+						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
+						j++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it == nil && ot != nil:
+					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
+						i++
+						incrI++
+					}
+					err = handleNoOp(err)
+				case it != nil && ot != nil:
+					for {
+						if i, err = it.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						if j, err = ot.Next(); err != nil {
+							err = handleNoOp(err)
+							break
+						}
+						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
+						incrI++
+					}
+					err = nil
+				}
 			}
 		}
-		retVal = reuse
 	case toReuse:
 		if t.IsMaterializable() {
 			copyDenseIter(reuse, t, nil, it)
@@ -3095,17 +9201,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = int(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3115,10 +9215,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = int(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = int(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3135,17 +9232,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = int8(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3155,10 +9246,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = int8(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = int8(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3175,17 +9263,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = int16(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3195,10 +9277,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = int16(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = int16(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3215,17 +9294,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = int32(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3235,10 +9308,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = int32(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = int32(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3255,17 +9325,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = int64(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3275,10 +9339,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = int64(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = int64(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3295,17 +9356,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = uint(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3315,10 +9370,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = uint(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = uint(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3335,17 +9387,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = uint8(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3355,10 +9401,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = uint8(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = uint8(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3375,17 +9418,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = uint16(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3395,10 +9432,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = uint16(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = uint16(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3415,17 +9449,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = uint32(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3435,10 +9463,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = uint32(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = uint32(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3455,17 +9480,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = uint64(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3475,10 +9494,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = uint64(math.Pow(float64(tdata[i]), float64(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = uint64(math.Pow(float64(tdata[i]), float64(odata[j])))
@@ -3495,17 +9511,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = math32.Pow(tdata[i], odata[j])
@@ -3515,10 +9525,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = math32.Pow(tdata[i], odata[j])
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = math32.Pow(tdata[i], odata[j])
@@ -3535,17 +9542,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = math.Pow(tdata[i], odata[j])
@@ -3555,10 +9556,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = math.Pow(tdata[i], odata[j])
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = math.Pow(tdata[i], odata[j])
@@ -3575,17 +9573,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
@@ -3595,10 +9587,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
@@ -3615,17 +9604,11 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 		case it != nil && ot != nil:
 			for {
 				if i, err = it.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				if j, err = ot.Next(); err != nil {
-					if _, ok := err.(NoOpError); !ok {
-						return
-					}
-					err = nil
+					err = handleNoOp(err)
 					break
 				}
 				tdata[i] = cmplx.Pow(tdata[i], odata[j])
@@ -3635,10 +9618,7 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 				tdata[i] = cmplx.Pow(tdata[i], odata[j])
 				j++
 			}
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil
+			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
 				tdata[i] = cmplx.Pow(tdata[i], odata[j])

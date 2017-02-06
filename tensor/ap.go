@@ -239,10 +239,7 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 		copy(strides, currentStride)
 		err = UnsafePermute(axes, shape, strides)
 		if err != nil {
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			err = nil // reset err
+			err = handleNoOp(err)
 		}
 	}
 

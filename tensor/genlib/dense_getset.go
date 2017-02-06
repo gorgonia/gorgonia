@@ -53,6 +53,9 @@ const setRaw = `func (t *Dense) Set(i int, x interface{}) {
 `
 
 const memsetRaw = `func (t *Dense) Memset(x interface{}) error {
+	if t.IsMaterializable() {
+		return t.memsetIter(x)
+	}
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
@@ -77,6 +80,39 @@ const memsetRaw = `func (t *Dense) Memset(x interface{}) error {
 			val = reflect.Indirect(val)
 			val.Set(xv)
 		}
+	}
+	return nil
+}
+
+func (t *Dense) memsetIter(x interface{}) (err error) {
+	it := NewFlatIterator(t.AP)
+	var i int
+	switch t.t.Kind() {
+	{{range .Kinds -}}
+		{{if isParameterized . -}}
+		{{else -}}
+	case reflect.{{reflectKind .}}:
+		xv, ok := x.({{asType .}})
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.{{sliceOf .}}
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			data[i] = xv	
+		}
+		err = handleNoOp(err)
+		{{end -}}
+	{{end -}}
+	default:
+		xv := reflect.ValueOf(x)
+		ptr := uintptr(t.data)
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(xv)
+		}
+		err = handleNoOp(err)
 	}
 	return nil
 }
@@ -187,17 +223,15 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 	var err error
 	for {
 		if i, err = diter.Next() ; err != nil {
-			if _, ok := err.(NoOpError); !ok {
+			if err = handleNoOp(err); err != nil{
 				return count, err
 			}
-			err = nil
 			break
 		}
 		if j, err = siter.Next() ; err != nil {
-			if _, ok := err.(NoOpError); !ok {
+			if err = handleNoOp(err); err != nil{
 				return count, err
 			}
-			err = nil
 			break
 		}
 		switch k {

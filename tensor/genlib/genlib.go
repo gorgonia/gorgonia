@@ -203,6 +203,7 @@ func mathPkg(a reflect.Kind) string {
 	}
 	return ""
 }
+
 func isFloat(a reflect.Kind) bool {
 	if a == reflect.Float32 || a == reflect.Float64 || a == reflect.Complex64 || a == reflect.Complex128 {
 		return true

@@ -39,7 +39,6 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 
 			idenSliced{{short .}} := func(a *QCDense{{short .}}) bool {
 				var ret, correct, identity *Dense
-				var err error
 
 				// t requires iterator
 				a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -50,35 +49,26 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				correct = newDense({{asType . | title | strip}}, 5)
 				copyDense(correct, a.Dense)
 
-				if ret, err = a1.{{$op}}(identity); err != nil {
-					t.Errorf("{{$op}} failed %v. Iden: %v, a1: %v", err, identity, a1)
-					return false
-				}
+				ret, _ = a1.{{$op}}(identity, UseUnsafe())
 				if !allClose(correct.Data(), ret.Data()){
 					return false
 				}
 
 				// other requires iterator
-				a2 := a1.Materialize() .(*Dense)
+				a2 := a1.Materialize().(*Dense)
 				identity = newDense({{asType . | title | strip}}, a.len())
 				identity, _ = sliceDense(identity, makeRS(0, 5))
 				{{if ne $iden 0 -}}
 					identity.Memset({{asType .}}({{$iden}}))
 				{{end -}}
 
-				if ret, err = a2.{{$op}}(identity); err != nil {
-					t.Errorf("{{$op}} failed %v. Iden: %v, a1: %v", err, identity, a1)
-					return false
-				}
+				ret,_ = a2.{{$op}}(identity, UseUnsafe())
 				if !allClose(correct.Data(), ret.Data()){
 					return false
 				}
 
 				// both requires iterator
-				if ret, err = a1.{{$op}}(identity); err != nil {
-					t.Errorf("{{$op}} failed %v. Iden: %v, a1: %v", err, identity, a1)
-					return false
-				}
+				ret, _ = a1.{{$op}}(identity, UseUnsafe())
 				if !allClose(correct.Data(), ret.Data()){
 					return false
 				}
@@ -106,6 +96,43 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 			if err := quick.Check(pow0{{short .}}, nil); err != nil {
 				t.Errorf("Pow 0 failed")
 			}
+
+			pow0Iter{{short .}} := func(a *QCDense{{short .}}) bool {
+				var ret, correct, zero *Dense
+
+				// t requires iterator
+				a1, _ := sliceDense(a.Dense, makeRS(0,5))
+				zero = newDense({{asType . | title | strip}}, 5)
+				correct = newDense({{asType . | title | strip}}, 5)
+				correct.Memset({{asType .}}(1))
+				ret, _ = a1.{{$op}}(zero, UseUnsafe())
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+
+				// zero requires iterator
+				a2 := a1.Materialize().(*Dense)
+				zero = newDense({{asType . | title | strip}}, a.len())
+				zero, _ = sliceDense(zero, makeRS(0,5))
+				ret, _ = a2.{{$op}}(zero, UseUnsafe())
+				if !allClose(correct.Data(), ret.Data()){
+					return false
+				}
+
+				// both requires iterator
+				a1, _ = sliceDense(a.Dense, makeRS(6,11))
+				ret, _ = a1.{{$op}}(zero, UseUnsafe())
+				if !allClose(correct.Data(), ret.Data()) {
+					return false
+				}
+
+				return true
+			}
+			if err := quick.Check(pow0Iter{{short .}}, nil); err != nil {
+				t.Errorf("Pow 0 with iterator failed")
+			}
+
+
 		{{end -}}
 		{{if $isComm -}}
 			// commutativity
@@ -156,19 +183,125 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 		{{end -}}
 		// incr
 		incr{{short .}} := func(a, b, incr *QCDense{{short .}}) bool {
-			// build correct
-			ret, _ := a.{{$op}}(b.Dense)
-			correct, _ := incr.Add(ret)
+			var correct, clonedIncr, ret, check *Dense
 
-			check, _ := a.{{$op}}(b.Dense, WithIncr(incr.Dense))
-			if check != incr.Dense {
-				t.Error("Expected incr.Dense == check")
+			// build correct
+			ret, _ = a.{{$op}}(b.Dense)
+			correct, _ = incr.Add(ret)
+
+			clonedIncr = incr.Clone().(*Dense)
+			check, _ = a.{{$op}}(b.Dense, WithIncr(clonedIncr))
+			if check != clonedIncr {
+				t.Error("Expected clonedIncr == check")
 				return false
 			}
 			if !allClose(correct.Data(), check.Data()) {
 				t.Errorf("Failed close")
 				return false
 			}
+
+			// incr iter
+			var oncr, a1, a2, b1, b2 *Dense
+			clonedIncr = incr.Dense.Clone().(*Dense)
+			oncr, _ = sliceDense(clonedIncr, makeRS(0,5))
+			a1, _ = sliceDense(a.Dense, makeRS(0,5))
+			a2 = a1.Materialize().(*Dense)
+			b1, _ = sliceDense(b.Dense, makeRS(0,5))
+			b2 = b1.Materialize().(*Dense)
+			// build correct for incr
+			correct, _ = sliceDense(correct, makeRS(0,5))
+
+			// check: a requires iter
+			check, _ = a1.{{$op}}(b2, WithIncr(oncr))
+			if check !=  oncr {
+				t.Errorf("expected check == oncr when a requires iter")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}
+
+			// check: b requires iter
+			clonedIncr = incr.Dense.Clone().(*Dense)
+			oncr, _ = sliceDense(clonedIncr, makeRS(0,5))
+			check, _ = a2.{{$op}}(b1, WithIncr(oncr))
+			if check !=  oncr {
+				t.Errorf("expected check == oncr when b requires iter")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}
+
+			// check: both a and b requires iter
+			clonedIncr = incr.Dense.Clone().(*Dense)
+			oncr, _ = sliceDense(clonedIncr, makeRS(0,5))
+			check, _ = a1.{{$op}}(b1, WithIncr(oncr))
+			if check !=  oncr {
+				t.Errorf("expected check == oncr when b requires iter")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}
+
+			// check both don't require iter
+			clonedIncr = incr.Dense.Clone().(*Dense)
+			oncr, _ = sliceDense(clonedIncr, makeRS(0,5))
+			check, _ = a2.{{$op}}(b2, WithIncr(oncr))
+			if check !=  oncr {
+				t.Errorf("expected check == oncr when b requires iter")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}
+
+
+			// incr noiter
+			clonedIncr = incr.Dense.Clone().(*Dense)
+			oncr, _ = sliceDense(clonedIncr, makeRS(0,5))
+			oncr = oncr.Materialize().(*Dense)
+			correct = correct.Materialize().(*Dense)
+
+			// check: a requires iter
+			check, _ = a1.{{$op}}(b2, WithIncr(oncr))
+			if check !=  oncr {
+				t.Errorf("expected check == oncr when a requires iter")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}
+
+			// check: b requires iter
+			clonedIncr = incr.Dense.Clone().(*Dense)
+			oncr, _ = sliceDense(clonedIncr, makeRS(0,5))
+			oncr = oncr.Materialize().(*Dense)
+			check, _ = a2.{{$op}}(b1, WithIncr(oncr))
+			if check !=  oncr {
+				t.Errorf("expected check == oncr when b requires iter")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}
+
+			// check: both a and b requires iter
+			clonedIncr = incr.Dense.Clone().(*Dense)
+			oncr, _ = sliceDense(clonedIncr, makeRS(0,5))
+			oncr = oncr.Materialize().(*Dense)
+			check, _ = a1.{{$op}}(b1, WithIncr(oncr))
+			if check !=  oncr {
+				t.Errorf("expected check == oncr when b requires iter")
+				return false
+			}
+			if !allClose(correct.Data(), check.Data()) {
+				return false
+			}			
+
+
+
 			return true
 		}
 		if err := quick.Check(incr{{short .}}, nil); err != nil {
@@ -372,6 +505,9 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				t.Errorf("Correct: %v, check %v", correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
 				return false
 			}
+
+
+
 			return true
 		}
 		if err := quick.Check(incr{{short .}}, nil); err != nil {

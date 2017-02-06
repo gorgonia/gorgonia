@@ -70,11 +70,7 @@ func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error
 func (t *Dense) T(axes ...int) (err error) {
 	var transform *AP
 	if transform, axes, err = t.AP.T(axes...); err != nil {
-		if _, ok := err.(NoOpError); !ok {
-			return
-		}
-		err = nil
-		return
+		return handleNoOp(err)
 	}
 
 	// is there any old transposes that need to be done first?
@@ -138,11 +134,9 @@ func (t *Dense) UT() {
 func (t *Dense) SafeT(axes ...int) (retVal *Dense, err error) {
 	var transform *AP
 	if transform, axes, err = t.AP.T(axes...); err != nil {
-		if _, ok := err.(NoOpError); !ok {
+		if err = handleNoOp(err); err != nil {
 			return
 		}
-		err = nil
-		return
 	}
 
 	retVal = recycledDense(t.t, Shape{t.len()})

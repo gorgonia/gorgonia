@@ -295,6 +295,9 @@ func (t *Dense) Get(i int) interface{} {
 }
 
 func (t *Dense) Memset(x interface{}) error {
+	if t.IsMaterializable() {
+		return t.memsetIter(x)
+	}
 	switch t.t.Kind() {
 	case reflect.Bool:
 		xv, ok := x.(bool)
@@ -467,6 +470,204 @@ func (t *Dense) Memset(x interface{}) error {
 			val = reflect.Indirect(val)
 			val.Set(xv)
 		}
+	}
+	return nil
+}
+
+func (t *Dense) memsetIter(x interface{}) (err error) {
+	it := NewFlatIterator(t.AP)
+	var i int
+	switch t.t.Kind() {
+	case reflect.Bool:
+		xv, ok := x.(bool)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.bools()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Int:
+		xv, ok := x.(int)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.ints()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Int8:
+		xv, ok := x.(int8)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int8s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Int16:
+		xv, ok := x.(int16)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int16s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Int32:
+		xv, ok := x.(int32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int32s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Int64:
+		xv, ok := x.(int64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.int64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Uint:
+		xv, ok := x.(uint)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uints()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Uint8:
+		xv, ok := x.(uint8)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint8s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Uint16:
+		xv, ok := x.(uint16)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint16s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Uint32:
+		xv, ok := x.(uint32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint32s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Uint64:
+		xv, ok := x.(uint64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uint64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Uintptr:
+		xv, ok := x.(uintptr)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.uintptrs()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Float32:
+		xv, ok := x.(float32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.float32s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Float64:
+		xv, ok := x.(float64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.float64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Complex64:
+		xv, ok := x.(complex64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.complex64s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.Complex128:
+		xv, ok := x.(complex128)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.complex128s()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.String:
+		xv, ok := x.(string)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.strings()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	case reflect.UnsafePointer:
+		xv, ok := x.(unsafe.Pointer)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.unsafePointers()
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			data[i] = xv
+		}
+		err = handleNoOp(err)
+	default:
+		xv := reflect.ValueOf(x)
+		ptr := uintptr(t.data)
+		for i, err = it.Next(); err == nil; i, err = it.Next() {
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(xv)
+		}
+		err = handleNoOp(err)
 	}
 	return nil
 }
@@ -697,17 +898,15 @@ func copyDenseIter(dest, src *Dense, diter, siter *FlatIterator) (int, error) {
 	var err error
 	for {
 		if i, err = diter.Next(); err != nil {
-			if _, ok := err.(NoOpError); !ok {
+			if err = handleNoOp(err); err != nil {
 				return count, err
 			}
-			err = nil
 			break
 		}
 		if j, err = siter.Next(); err != nil {
-			if _, ok := err.(NoOpError); !ok {
+			if err = handleNoOp(err); err != nil {
 				return count, err
 			}
-			err = nil
 			break
 		}
 		switch k {

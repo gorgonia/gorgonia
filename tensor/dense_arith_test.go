@@ -32,7 +32,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -40,10 +39,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -52,19 +48,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -104,19 +94,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI := func(a, b, incr *QCDenseI) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -142,7 +235,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -150,10 +242,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -162,19 +251,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -214,19 +297,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI8 := func(a, b, incr *QCDenseI8) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -252,7 +438,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedI16 := func(a *QCDenseI16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -260,10 +445,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -272,19 +454,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -324,19 +500,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI16 := func(a, b, incr *QCDenseI16) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -362,7 +641,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -370,10 +648,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -382,19 +657,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -434,19 +703,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI32 := func(a, b, incr *QCDenseI32) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -472,7 +844,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedI64 := func(a *QCDenseI64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -480,10 +851,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -492,19 +860,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -544,19 +906,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI64 := func(a, b, incr *QCDenseI64) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -582,7 +1047,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -590,10 +1054,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -602,19 +1063,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -654,19 +1109,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU := func(a, b, incr *QCDenseU) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -692,7 +1250,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedU8 := func(a *QCDenseU8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -700,10 +1257,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -712,19 +1266,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -764,19 +1312,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU8 := func(a, b, incr *QCDenseU8) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -802,7 +1453,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -810,10 +1460,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -822,19 +1469,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -874,19 +1515,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU16 := func(a, b, incr *QCDenseU16) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -912,7 +1656,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedU32 := func(a *QCDenseU32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -920,10 +1663,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -932,19 +1672,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -984,19 +1718,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU32 := func(a, b, incr *QCDenseU32) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -1022,7 +1859,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1030,10 +1866,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Uint64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1042,19 +1875,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1094,19 +1921,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU64 := func(a, b, incr *QCDenseU64) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -1132,7 +2062,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedF32 := func(a *QCDenseF32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1140,10 +2069,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Float32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1152,19 +2078,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Float32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1204,19 +2124,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF32 := func(a, b, incr *QCDenseF32) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -1242,7 +2265,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1250,10 +2272,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Float64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1262,19 +2281,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Float64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1314,19 +2327,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF64 := func(a, b, incr *QCDenseF64) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -1352,7 +2468,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedC64 := func(a *QCDenseC64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1360,10 +2475,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Complex64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1372,19 +2484,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Complex64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1424,19 +2530,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC64 := func(a, b, incr *QCDenseC64) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -1462,7 +2671,6 @@ func TestAddBasicProperties(t *testing.T) {
 
 	idenSlicedC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1470,10 +2678,7 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Complex128, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1482,19 +2687,13 @@ func TestAddBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Complex128, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Add(identity); err != nil {
-			t.Errorf("Add failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Add(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1534,19 +2733,122 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC128 := func(a, b, incr *QCDenseC128) bool {
-		// build correct
-		ret, _ := a.Add(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Add(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -1676,7 +2978,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1684,10 +2985,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Int, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1696,19 +2994,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1720,19 +3012,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI := func(a, b, incr *QCDenseI) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -1758,7 +3153,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1766,10 +3160,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Int8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1778,19 +3169,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1802,19 +3187,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI8 := func(a, b, incr *QCDenseI8) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -1840,7 +3328,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedI16 := func(a *QCDenseI16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1848,10 +3335,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Int16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1860,19 +3344,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1884,19 +3362,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI16 := func(a, b, incr *QCDenseI16) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -1922,7 +3503,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -1930,10 +3510,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Int32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1942,19 +3519,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -1966,19 +3537,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI32 := func(a, b, incr *QCDenseI32) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -2004,7 +3678,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedI64 := func(a *QCDenseI64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2012,10 +3685,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Int64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2024,19 +3694,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Int64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2048,19 +3712,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI64 := func(a, b, incr *QCDenseI64) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -2086,7 +3853,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2094,10 +3860,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Uint, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2106,19 +3869,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2130,19 +3887,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU := func(a, b, incr *QCDenseU) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -2168,7 +4028,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedU8 := func(a *QCDenseU8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2176,10 +4035,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Uint8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2188,19 +4044,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2212,19 +4062,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU8 := func(a, b, incr *QCDenseU8) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -2250,7 +4203,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2258,10 +4210,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Uint16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2270,19 +4219,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2294,19 +4237,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU16 := func(a, b, incr *QCDenseU16) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -2332,7 +4378,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedU32 := func(a *QCDenseU32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2340,10 +4385,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Uint32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2352,19 +4394,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2376,19 +4412,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU32 := func(a, b, incr *QCDenseU32) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -2414,7 +4553,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2422,10 +4560,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Uint64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2434,19 +4569,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Uint64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2458,19 +4587,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU64 := func(a, b, incr *QCDenseU64) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -2496,7 +4728,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedF32 := func(a *QCDenseF32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2504,10 +4735,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Float32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2516,19 +4744,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Float32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2540,19 +4762,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF32 := func(a, b, incr *QCDenseF32) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -2578,7 +4903,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2586,10 +4910,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Float64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2598,19 +4919,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Float64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2622,19 +4937,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF64 := func(a, b, incr *QCDenseF64) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -2660,7 +5078,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedC64 := func(a *QCDenseC64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2668,10 +5085,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Complex64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2680,19 +5094,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Complex64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2704,19 +5112,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC64 := func(a, b, incr *QCDenseC64) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -2742,7 +5253,6 @@ func TestSubBasicProperties(t *testing.T) {
 
 	idenSlicedC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2750,10 +5260,7 @@ func TestSubBasicProperties(t *testing.T) {
 		correct = newDense(Complex128, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2762,19 +5269,13 @@ func TestSubBasicProperties(t *testing.T) {
 		a2 := a1.Materialize().(*Dense)
 		identity = newDense(Complex128, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
-		if ret, err = a2.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Sub(identity); err != nil {
-			t.Errorf("Sub failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Sub(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2786,19 +5287,122 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC128 := func(a, b, incr *QCDenseC128) bool {
-		// build correct
-		ret, _ := a.Sub(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Sub(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -2929,7 +5533,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -2938,10 +5541,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -2951,19 +5551,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Int, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3003,19 +5597,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI := func(a, b, incr *QCDenseI) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -3042,7 +5739,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3051,10 +5747,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3064,19 +5757,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Int8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int8(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3116,19 +5803,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI8 := func(a, b, incr *QCDenseI8) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -3155,7 +5945,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedI16 := func(a *QCDenseI16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3164,10 +5953,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3177,19 +5963,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Int16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int16(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3229,19 +6009,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI16 := func(a, b, incr *QCDenseI16) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -3268,7 +6151,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3277,10 +6159,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3290,19 +6169,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Int32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int32(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3342,19 +6215,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI32 := func(a, b, incr *QCDenseI32) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -3381,7 +6357,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedI64 := func(a *QCDenseI64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3390,10 +6365,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Int64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3403,19 +6375,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Int64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int64(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3455,19 +6421,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI64 := func(a, b, incr *QCDenseI64) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -3494,7 +6563,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3503,10 +6571,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3516,19 +6581,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Uint, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3568,19 +6627,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU := func(a, b, incr *QCDenseU) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -3607,7 +6769,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedU8 := func(a *QCDenseU8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3616,10 +6777,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3629,19 +6787,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Uint8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint8(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3681,19 +6833,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU8 := func(a, b, incr *QCDenseU8) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -3720,7 +6975,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3729,10 +6983,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3742,19 +6993,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Uint16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint16(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3794,19 +7039,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU16 := func(a, b, incr *QCDenseU16) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -3833,7 +7181,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedU32 := func(a *QCDenseU32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3842,10 +7189,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3855,19 +7199,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Uint32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint32(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3907,19 +7245,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU32 := func(a, b, incr *QCDenseU32) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -3946,7 +7387,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -3955,10 +7395,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Uint64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -3968,19 +7405,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Uint64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint64(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4020,19 +7451,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU64 := func(a, b, incr *QCDenseU64) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -4059,7 +7593,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedF32 := func(a *QCDenseF32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4068,10 +7601,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Float32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4081,19 +7611,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Float32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(float32(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4133,19 +7657,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF32 := func(a, b, incr *QCDenseF32) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -4172,7 +7799,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4181,10 +7807,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Float64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4194,19 +7817,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Float64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(float64(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4246,19 +7863,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF64 := func(a, b, incr *QCDenseF64) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -4285,7 +8005,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedC64 := func(a *QCDenseC64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4294,10 +8013,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Complex64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4307,19 +8023,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Complex64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(complex64(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4359,19 +8069,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC64 := func(a, b, incr *QCDenseC64) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -4398,7 +8211,6 @@ func TestMulBasicProperties(t *testing.T) {
 
 	idenSlicedC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4407,10 +8219,7 @@ func TestMulBasicProperties(t *testing.T) {
 		correct = newDense(Complex128, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4420,19 +8229,13 @@ func TestMulBasicProperties(t *testing.T) {
 		identity = newDense(Complex128, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(complex128(1))
-		if ret, err = a2.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Mul(identity); err != nil {
-			t.Errorf("Mul failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Mul(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4472,19 +8275,122 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC128 := func(a, b, incr *QCDenseC128) bool {
-		// build correct
-		ret, _ := a.Mul(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Mul(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -4619,7 +8525,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedI := func(a *QCDenseI) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4628,10 +8533,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Int, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4641,19 +8543,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Int, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4665,19 +8561,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI := func(a, b, incr *QCDenseI) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -4704,7 +8703,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4713,10 +8711,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Int8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4726,19 +8721,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Int8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int8(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4750,19 +8739,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI8 := func(a, b, incr *QCDenseI8) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -4789,7 +8881,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedI16 := func(a *QCDenseI16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4798,10 +8889,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Int16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4811,19 +8899,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Int16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int16(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4835,19 +8917,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI16 := func(a, b, incr *QCDenseI16) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -4874,7 +9059,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4883,10 +9067,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Int32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4896,19 +9077,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Int32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int32(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4920,19 +9095,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI32 := func(a, b, incr *QCDenseI32) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -4959,7 +9237,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedI64 := func(a *QCDenseI64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -4968,10 +9245,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Int64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -4981,19 +9255,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Int64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(int64(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5005,19 +9273,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrI64 := func(a, b, incr *QCDenseI64) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -5044,7 +9415,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5053,10 +9423,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Uint, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5066,19 +9433,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Uint, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5090,19 +9451,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU := func(a, b, incr *QCDenseU) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -5129,7 +9593,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedU8 := func(a *QCDenseU8) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5138,10 +9601,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Uint8, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5151,19 +9611,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Uint8, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint8(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5175,19 +9629,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU8 := func(a, b, incr *QCDenseU8) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -5214,7 +9771,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5223,10 +9779,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Uint16, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5236,19 +9789,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Uint16, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint16(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5260,19 +9807,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU16 := func(a, b, incr *QCDenseU16) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -5299,7 +9949,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedU32 := func(a *QCDenseU32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5308,10 +9957,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Uint32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5321,19 +9967,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Uint32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint32(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5345,19 +9985,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU32 := func(a, b, incr *QCDenseU32) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -5384,7 +10127,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5393,10 +10135,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Uint64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5406,19 +10145,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Uint64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(uint64(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5430,19 +10163,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrU64 := func(a, b, incr *QCDenseU64) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -5469,7 +10305,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedF32 := func(a *QCDenseF32) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5478,10 +10313,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Float32, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5491,19 +10323,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Float32, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(float32(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5515,19 +10341,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF32 := func(a, b, incr *QCDenseF32) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -5554,7 +10483,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5563,10 +10491,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Float64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5576,19 +10501,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Float64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(float64(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5600,19 +10519,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrF64 := func(a, b, incr *QCDenseF64) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -5639,7 +10661,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedC64 := func(a *QCDenseC64) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5648,10 +10669,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Complex64, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5661,19 +10679,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Complex64, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(complex64(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5685,19 +10697,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC64 := func(a, b, incr *QCDenseC64) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -5724,7 +10839,6 @@ func TestDivBasicProperties(t *testing.T) {
 
 	idenSlicedC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
-		var err error
 
 		// t requires iterator
 		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
@@ -5733,10 +10847,7 @@ func TestDivBasicProperties(t *testing.T) {
 		correct = newDense(Complex128, 5)
 		copyDense(correct, a.Dense)
 
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5746,19 +10857,13 @@ func TestDivBasicProperties(t *testing.T) {
 		identity = newDense(Complex128, a.len())
 		identity, _ = sliceDense(identity, makeRS(0, 5))
 		identity.Memset(complex128(1))
-		if ret, err = a2.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a2.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
 
 		// both requires iterator
-		if ret, err = a1.Div(identity); err != nil {
-			t.Errorf("Div failed %v. Iden: %v, a1: %v", err, identity, a1)
-			return false
-		}
+		ret, _ = a1.Div(identity, UseUnsafe())
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}
@@ -5770,19 +10875,122 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	// incr
 	incrC128 := func(a, b, incr *QCDenseC128) bool {
-		// build correct
-		ret, _ := a.Div(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Div(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -5910,21 +11118,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterI := func(a *QCDenseI) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Int, 5)
+		correct = newDense(Int, 5)
+		correct.Memset(int(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Int, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterI, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrI := func(a, b, incr *QCDenseI) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -5944,21 +11291,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I8, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterI8 := func(a *QCDenseI8) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Int8, 5)
+		correct = newDense(Int8, 5)
+		correct.Memset(int8(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Int8, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterI8, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrI8 := func(a, b, incr *QCDenseI8) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -5978,21 +11464,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I16, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterI16 := func(a *QCDenseI16) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Int16, 5)
+		correct = newDense(Int16, 5)
+		correct.Memset(int16(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Int16, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterI16, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrI16 := func(a, b, incr *QCDenseI16) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -6012,21 +11637,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterI32 := func(a *QCDenseI32) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Int32, 5)
+		correct = newDense(Int32, 5)
+		correct.Memset(int32(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Int32, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterI32, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrI32 := func(a, b, incr *QCDenseI32) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -6046,21 +11810,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0I64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterI64 := func(a *QCDenseI64) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Int64, 5)
+		correct = newDense(Int64, 5)
+		correct.Memset(int64(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Int64, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterI64, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrI64 := func(a, b, incr *QCDenseI64) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -6080,21 +11983,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterU := func(a *QCDenseU) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Uint, 5)
+		correct = newDense(Uint, 5)
+		correct.Memset(uint(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Uint, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterU, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrU := func(a, b, incr *QCDenseU) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -6114,21 +12156,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U8, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterU8 := func(a *QCDenseU8) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Uint8, 5)
+		correct = newDense(Uint8, 5)
+		correct.Memset(uint8(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Uint8, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterU8, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrU8 := func(a, b, incr *QCDenseU8) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -6148,21 +12329,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U16, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterU16 := func(a *QCDenseU16) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Uint16, 5)
+		correct = newDense(Uint16, 5)
+		correct.Memset(uint16(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Uint16, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterU16, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrU16 := func(a, b, incr *QCDenseU16) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -6182,21 +12502,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterU32 := func(a *QCDenseU32) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Uint32, 5)
+		correct = newDense(Uint32, 5)
+		correct.Memset(uint32(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Uint32, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterU32, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrU32 := func(a, b, incr *QCDenseU32) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -6216,21 +12675,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0U64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterU64 := func(a *QCDenseU64) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Uint64, 5)
+		correct = newDense(Uint64, 5)
+		correct.Memset(uint64(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Uint64, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterU64, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrU64 := func(a, b, incr *QCDenseU64) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -6250,21 +12848,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0F32, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterF32 := func(a *QCDenseF32) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Float32, 5)
+		correct = newDense(Float32, 5)
+		correct.Memset(float32(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Float32, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterF32, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrF32 := func(a, b, incr *QCDenseF32) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -6284,21 +13021,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0F64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterF64 := func(a *QCDenseF64) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Float64, 5)
+		correct = newDense(Float64, 5)
+		correct.Memset(float64(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Float64, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterF64, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrF64 := func(a, b, incr *QCDenseF64) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -6318,21 +13194,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0C64, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterC64 := func(a *QCDenseC64) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Complex64, 5)
+		correct = newDense(Complex64, 5)
+		correct.Memset(complex64(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Complex64, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterC64, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrC64 := func(a, b, incr *QCDenseC64) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -6352,21 +13367,160 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(pow0C128, nil); err != nil {
 		t.Errorf("Pow 0 failed")
 	}
+
+	pow0IterC128 := func(a *QCDenseC128) bool {
+		var ret, correct, zero *Dense
+
+		// t requires iterator
+		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
+		zero = newDense(Complex128, 5)
+		correct = newDense(Complex128, 5)
+		correct.Memset(complex128(1))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// zero requires iterator
+		a2 := a1.Materialize().(*Dense)
+		zero = newDense(Complex128, a.len())
+		zero, _ = sliceDense(zero, makeRS(0, 5))
+		ret, _ = a2.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		// both requires iterator
+		a1, _ = sliceDense(a.Dense, makeRS(6, 11))
+		ret, _ = a1.Pow(zero, UseUnsafe())
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(pow0IterC128, nil); err != nil {
+		t.Errorf("Pow 0 with iterator failed")
+	}
+
 	// incr
 	incrC128 := func(a, b, incr *QCDenseC128) bool {
-		// build correct
-		ret, _ := a.Pow(b.Dense)
-		correct, _ := incr.Add(ret)
+		var correct, clonedIncr, ret, check *Dense
 
-		check, _ := a.Pow(b.Dense, WithIncr(incr.Dense))
-		if check != incr.Dense {
-			t.Error("Expected incr.Dense == check")
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
 			t.Errorf("Failed close")
 			return false
 		}
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			return false
+		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -6511,6 +13665,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -6547,6 +13702,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -6583,6 +13739,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -6619,6 +13776,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -6655,6 +13813,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -6691,6 +13850,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -6727,6 +13887,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -6763,6 +13924,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -6799,6 +13961,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -6835,6 +13998,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -6871,6 +14035,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -6907,6 +14072,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -6943,6 +14109,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -6979,6 +14146,7 @@ func TestTransBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -7020,6 +14188,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -7056,6 +14225,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -7092,6 +14262,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -7128,6 +14299,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -7164,6 +14336,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -7200,6 +14373,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -7236,6 +14410,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -7272,6 +14447,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -7308,6 +14484,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -7344,6 +14521,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -7380,6 +14558,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -7416,6 +14595,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -7452,6 +14632,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -7488,6 +14669,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -7512,6 +14694,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -7531,6 +14714,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -7550,6 +14734,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -7569,6 +14754,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -7588,6 +14774,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -7607,6 +14794,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -7626,6 +14814,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -7645,6 +14834,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -7664,6 +14854,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -7683,6 +14874,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -7702,6 +14894,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -7721,6 +14914,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -7740,6 +14934,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -7759,6 +14954,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -7801,6 +14997,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -7838,6 +15035,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -7875,6 +15073,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -7912,6 +15111,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -7949,6 +15149,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -7986,6 +15187,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -8023,6 +15225,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -8060,6 +15263,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -8097,6 +15301,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -8134,6 +15339,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -8171,6 +15377,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -8208,6 +15415,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -8245,6 +15453,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -8282,6 +15491,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -8324,6 +15534,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -8361,6 +15572,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -8398,6 +15610,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -8435,6 +15648,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -8472,6 +15686,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -8509,6 +15724,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -8546,6 +15762,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -8583,6 +15800,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -8620,6 +15838,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -8657,6 +15876,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -8694,6 +15914,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -8731,6 +15952,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -8768,6 +15990,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -8805,6 +16028,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -8829,6 +16053,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -8848,6 +16073,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -8867,6 +16093,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -8886,6 +16113,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -8905,6 +16133,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -8924,6 +16153,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -8943,6 +16173,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -8962,6 +16193,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -8981,6 +16213,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -9000,6 +16233,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -9019,6 +16253,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -9038,6 +16273,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -9057,6 +16293,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -9076,6 +16313,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -9114,6 +16352,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -9147,6 +16386,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -9180,6 +16420,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -9213,6 +16454,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -9246,6 +16488,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -9279,6 +16522,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -9312,6 +16556,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -9345,6 +16590,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -9378,6 +16624,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -9411,6 +16658,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -9444,6 +16692,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -9477,6 +16726,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -9510,6 +16760,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -9543,6 +16794,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
@@ -9567,6 +16819,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI, nil); err != nil {
@@ -9586,6 +16839,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
@@ -9605,6 +16859,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI16, nil); err != nil {
@@ -9624,6 +16879,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
@@ -9643,6 +16899,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrI64, nil); err != nil {
@@ -9662,6 +16919,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU, nil); err != nil {
@@ -9681,6 +16939,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU8, nil); err != nil {
@@ -9700,6 +16959,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
@@ -9719,6 +16979,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU32, nil); err != nil {
@@ -9738,6 +16999,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
@@ -9757,6 +17019,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF32, nil); err != nil {
@@ -9776,6 +17039,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
@@ -9795,6 +17059,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC64, nil); err != nil {
@@ -9814,6 +17079,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
+
 		return true
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
