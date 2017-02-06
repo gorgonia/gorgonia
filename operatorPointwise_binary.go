@@ -4,8 +4,6 @@ import (
 	"math"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 )
@@ -409,42 +407,20 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 		}
 	}
 
-	switch d0 {
-	case tensor.Float64:
-		// get function, call function
-		if o.isArith() {
-			fn := tf64BinOps[o.ʘBinaryOperatorType]
-			if fn == nil {
-				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
-			}
-			retVal, err = (*fn)(a, b, opts...)
-		} else {
-			fn := tf64CmpOps[o.ʘBinaryOperatorType]
-			if fn == nil {
-				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
-			}
+	if o.isArith() {
+		fn := binOps[o.ʘBinaryOperatorType]
+		if fn == nil {
+			return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
+		}
+		retVal, err = (*fn)(a, b, opts...)
+	} else {
+		fn := cmpOps[o.ʘBinaryOperatorType]
+		if fn == nil {
+			return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
+		}
+		retVal, err = (*fn)(a, b, opts...)
 
-			retVal, err = (*fn)(a, b, opts...)
-		}
-	case tensor.Float32:
-		// get function, call function
-		if o.isArith() {
-			fn := tf32BinOps[o.ʘBinaryOperatorType]
-			if fn == nil {
-				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
-			}
-			retVal, err = (*fn)(a, b, opts...)
-		} else {
-			fn := tf32CmpOps[o.ʘBinaryOperatorType]
-			if fn == nil {
-				return nil, errors.Errorf("nil function returned for %v", o.ʘBinaryOperatorType)
-			}
-			retVal, err = (*fn)(a, b, opts...)
-		}
-	default:
-		return nil, errors.Errorf(nyiFail, "tBinOp.do()", d0)
 	}
-
 	return
 }
 
@@ -740,12 +716,16 @@ func hadamardPowDiff(x, y, z *Node) (err error) {
 		ym1 = ydvt - F64(1)
 	case F32:
 		ym1 = ydvt - F32(1)
-	case *tf64.Tensor:
-		if ym1, err = tf64.Sub(ydvt, float64(1)); err != nil {
-			return
+	case *tensor.Dense:
+		var one interface{}
+		switch x.t {
+		case tensor.Float64:
+			one = float64(1)
+		case tensor.Float32:
+			one = float32(1)
+
 		}
-	case *tf32.Tensor:
-		if ym1, err = tf32.Sub(ydvt, float32(1)); err != nil {
+		if ym1, err = tensor.Sub(ydvt, one); err != nil {
 			return
 		}
 	default:

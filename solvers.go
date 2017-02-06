@@ -4,8 +4,6 @@ import (
 	"math"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 )
@@ -201,128 +199,74 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 		cv := cached.Value
 		// cw = cw*decay + (1-decay) * grad^2
 		switch cw := cv.(type) {
-		case *tf32.Tensor:
-			var gt, gt2, w, regularized *tf32.Tensor
-			decay := float32(s.decay)
-			omdecay := float32(1.0 - s.decay)
-			stepSize := float32(s.eta)
-			eps := float32(s.eps)
-			l2reg := float32(s.l2reg)
-			clip := float32(s.clip)
-
-			gt = grad.(*tf32.Tensor)
-			if gt2, err = tf32.PointwiseSquare(gt); err != nil {
-				return errors.Wrap(err, pointWiseSquareFail)
+		case *tensor.Dense:
+			var gt, gt2, w, regularized *tensor.Dense
+			var decay, omdecay, stepSize, eps, l2reg, clip, negClip Value
+			switch cw.Dtype() {
+			case tensor.Float64:
+				decay = F64(s.decay)
+				omdecay = F64(1.0 - s.decay)
+				stepSize = F64(-s.eta)
+				eps = F64(s.eps)
+				l2reg = F64(s.l2reg)
+				clip = F64(s.clip)
+				negClip = F64(-s.clip)
+			case tensor.Float32:
+				decay = F32(s.decay)
+				omdecay = F32(1.0 - s.decay)
+				stepSize = F32(-s.eta)
+				eps = F32(s.eps)
+				l2reg = F32(s.l2reg)
+				clip = F32(s.clip)
+				negClip = F32(-s.clip)
 			}
 
-			tf32.PointwiseMul(cw, decay, tensor.UseUnsafe())
-			tf32.PointwiseMul(gt2, omdecay, tensor.UseUnsafe())
-			tf32.Add(cw, gt2, tensor.UseUnsafe())
+			gt = grad.(*tensor.Dense)
+			if gt2, err = tensor.Square(gt); err != nil {
+				return errors.Wrap(err, pointWiseSquareFail)
+			}
+			tensor.Mul(cw, decay.Data(), tensor.UseUnsafe())
+			tensor.Mul(gt2, omdecay.Data(), tensor.UseUnsafe())
+			tensor.Add(cw, gt2, tensor.UseUnsafe())
 			defer returnTensor(gt2)
 
 			if s.useClip {
-				if _, err = tf32.Clamp(gt, -clip, clip, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Clamp(gt, negClip.Data(), clip.Data(), tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
 
-			// update and regularize
-			var upd *tf32.Tensor
-			if upd, err = tf32.Add(cw, eps); err != nil {
+			// regularize
+			var upd *tensor.Dense
+			if upd, err = tensor.Add(cw, eps); err != nil {
 				return errors.Wrap(err, "Failed to carry Add()")
 			}
 
-			if _, err = tf32.InvSqrt(upd, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.InvSqrt(upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, invSqrtFail)
 			}
-			if _, err = tf32.PointwiseMul(gt, -stepSize, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(gt, stepSize, tensor.UseUnsafe()); err != nil {
+				return errors.Wrap(err, pointWiseMulFail)
+			}
+			if _, err = tensor.Mul(upd, gt, tensor.UseUnsafe); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tf32.PointwiseMul(upd, gt, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			w = weights.(*tf32.Tensor)
-
+			// update
+			w = weights.(*tensor.Dense)
 			if s.useL2Reg {
-				if regularized, err = tf32.PointwiseMul(w, l2reg); err != nil {
+				if regularized, err = tensor.Mul(w, l2reg); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
-
-				if _, err = tf32.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, subFail)
 				}
 				defer returnTensor(regularized)
 			}
 
-			if _, err = tf32.Add(w, upd, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(w, upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
-
-			defer returnTensor(upd)
-
-			// zero all
-			gt.Zero()
-		case *tf64.Tensor:
-			var gt, gt2, w, regularized *tf64.Tensor
-			decay := s.decay
-			omdecay := 1.0 - s.decay
-			stepSize := s.eta
-			eps := s.eps
-			l2reg := s.l2reg
-			clip := s.clip
-
-			gt = grad.(*tf64.Tensor)
-			if gt2, err = tf64.PointwiseSquare(gt); err != nil { // safe version
-				return errors.Wrap(err, pointWiseSquareFail)
-			}
-
-			tf64.PointwiseMul(cw, decay, tensor.UseUnsafe())
-			tf64.PointwiseMul(gt2, omdecay, tensor.UseUnsafe())
-			tf64.Add(cw, gt2, tensor.UseUnsafe())
-			defer returnTensor(gt2)
-
-			if s.useClip {
-				if _, err = tf64.Clamp(gt, -clip, clip, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, clampFail)
-				}
-			}
-
-			// update and regularize
-			var upd *tf64.Tensor
-			if upd, err = tf64.Add(cw, eps); err != nil {
-				return errors.Wrap(err, addFail)
-			}
-
-			if _, err = tf64.InvSqrt(upd, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, invSqrtFail)
-			}
-			if _, err = tf64.PointwiseMul(gt, -stepSize, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			if _, err = tf64.PointwiseMul(upd, gt, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			w = weights.(*tf64.Tensor)
-
-			if s.useL2Reg {
-				if regularized, err = tf64.PointwiseMul(w, l2reg); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-
-				if _, err = tf64.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, clampFail)
-				}
-				defer returnTensor(regularized)
-			}
-
-			if _, err = tf64.Add(w, upd, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, clampFail)
-			}
-
 			defer returnTensor(upd)
 
 			// zero all
@@ -448,45 +392,64 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 		cvv := cached.d     // variances of gradients
 
 		switch m := cvm.(type) {
-		case *tf32.Tensor:
-			g := grad.(*tf32.Tensor)
-			w := weights.(*tf32.Tensor)
-			v := cvv.(*tf32.Tensor)
+		case *tensor.Dense:
+			g := grad.(*tensor.Dense)
+			w := weights.(*tensor.Dense)
+			v := cvv.(*tensor.Dense)
 
-			l1reg := float32(s.l1reg)
-			l2reg := float32(s.l2reg)
-			batch := float32(s.batch)
-			clip := float32(s.clip)
-			beta1 := float32(s.beta1)
-			beta2 := float32(s.beta2)
-			eps := float32(s.eps)
-			eta := float32(s.eta)
+			var l1reg, l2reg, batch, clip, negClip, beta1, beta2, eps, eta, one Value
+			var correctionV1, correctionV2 Value
+			switch m.Dtype() {
+			case tensor.Float64:
+				l1reg = F64(s.l1reg)
+				l2reg = F64(s.l2reg)
+				batch = F64(s.batch)
+				clip = F64(s.clip)
+				negClip = F64(-s.clip)
+				beta1 = f64(s.beta1)
+				beta2 = f64(s.beta2)
+				eps = F64(s.eps)
+				eta = F64(-s.eta)
+				one = F64(1)
+				correctionV1 = F64(correction1)
+				correctionV2 = F64(correction2)
+			case tensor.Float32:
+				l1reg = F32(s.l1reg)
+				l2reg = F32(s.l2reg)
+				batch = F32(s.batch)
+				clip = F32(s.clip)
+				negClip = F32(s.clip)
+				beta1 = f32(s.beta1)
+				beta2 = f32(s.beta2)
+				eps = F32(s.eps)
+				eta = F32(-s.eta)
+				one = F32(1)
+				correctionV1 = F32(correction1)
+				correctionV2 = F32(correction2)
+			}
 
 			// prep the regularization of gradients
-			if s.useL1Reg {
-				var l1regs *tf32.Tensor
-				if l1regs, err = tf32.Sign(w); err != nil {
-					return errors.Wrap(err, signFail)
+			if useL1Reg {
+				var l1regs *tensor.Dense
+				if l1regs, err = tensor.Sign(w); err != nil {
+					errors.Wrap(err, signFail)
 				}
-
-				if l1regs, err = tf32.PointwiseMul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
+				if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointwiseMulFail)
 				}
-
-				if g, err = tf32.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
-
 				defer returnTensor(l1regs)
 			}
 
 			if s.useL2Reg {
-				var l2regs *tf32.Tensor
-				if l2regs, err = tf32.PointwiseMul(l2reg, w); err != nil {
+				var l2regs *tensor.Dense
+				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
-				if g, err = tf32.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
@@ -494,13 +457,13 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			}
 
 			if batch > 1 {
-				if g, err = tf32.PointwiseMul(1/batch, g, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Mul((one / batch).Data(), g, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 			}
 
 			if s.useClip && clip > 0 {
-				if g, err = tf32.Clamp(g, -clip, clip, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
@@ -511,199 +474,72 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			//		(β_2 * v_t-1) + (1 - β_2)*(g_t)^2 .............	2
 
 			// equation(1)
-			t1 := g.Clone()
-			if t1, err = tf32.PointwiseMul((1 - beta1), t1, tensor.UseUnsafe()); err != nil {
+			t1 := g.Clone().(*tensor.Dense)
+			if t1, err = tensor.Mul((one - beta1).Data(), t1, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation(2)
-			if g, err = tf32.PointwiseMul(g, g, tensor.UseUnsafe()); err != nil {
+			if g, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
-			if g, err = tf32.PointwiseMul((1 - beta2), g, tensor.UseUnsafe()); err != nil {
+			if g, err = tensor.Mul((one - beta2).Data(), g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation (1)
-			if t1, err = tf32.PointwiseMul(beta1, m, tensor.WithIncr(t1)); err != nil {
+			if t1, err = tensor.Mul(beta1.Data(), m, tensor.WithIncr(t1)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation (2)
-			if g, err = tf32.PointwiseMul(beta2, v, tensor.WithIncr(g)); err != nil {
+			if g, err = tensor.Mul(beta2.Data(), v, tensor.WithIncr(g)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			defer returnTensor(m)
 			defer returnTensor(v)
 			cached.SetValue(t1)
-			cached.SetDeriv(g.Clone())
+			cached.SetDeriv(g.Clone().(*tensor.Dense))
 
 			// now deal with the hats
-			mHats := t1.Clone()
-			vHats := g.Clone()
+			mHats := t1.Clone().(*tensor.Dense)
+			vHats := g.Clone().(*tensor.Dense)
 
-			if mHats, err = tf32.PointwiseMul((float32(1) / float32(correction1)), mHats, tensor.UseUnsafe()); err != nil {
+			if mHats, err = tensor.Mul((one / correctionV1).Data(), mHats, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if vHats, err = tf32.PointwiseMul((float32(1) / float32(correction2)), vHats, tensor.UseUnsafe()); err != nil {
+			if vHats, err = tensor.Mul((one / correctionV2).Data(), vHats, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// update := -eta * mHat / (sqrt(vHat) + epsilon)
-			if vHats, err = tf32.Sqrt(vHats, tensor.UseUnsafe()); err != nil {
+			if vHats, err = tensor.Sqrt(vHats, tensor.UseUnsafe()); err != nil {
 				return // TODO: rewrite this to use InvSqrt
 			}
 
-			if vHats, err = tf32.Add(eps, vHats, tensor.UseUnsafe()); err != nil {
+			if vHats, err = tensor.Add(eps.Data(), vHats, tensor.UseUnsafe()); err != nil {
 				return
 			}
 
-			if mHats, err = tf32.PointwiseMul(-eta, mHats, tensor.UseUnsafe()); err != nil {
+			if mHats, err = tensor.Mul(eta.Data(), mHats, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if w, err = tf32.PointwiseDiv(mHats, vHats, tensor.WithIncr(w)); err != nil {
+			if w, err = tensor.Div(mHats, vHats, tensor.WithIncr(w)); err != nil {
 				return
 			}
 
 			defer returnTensor(vHats)
 			defer returnTensor(mHats)
 
-			if _, err = tf64.Add(w, mHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(w, mHats, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
 
 			g.Zero()
-		case *tf64.Tensor:
-			g := grad.(*tf64.Tensor)
-			w := weights.(*tf64.Tensor)
-			v := cvv.(*tf64.Tensor)
 
-			l1reg := s.l1reg
-			l2reg := s.l2reg
-			batch := s.batch
-			clip := s.clip
-			beta1 := s.beta1
-			beta2 := s.beta2
-			eps := s.eps
-			eta := s.eta
-
-			// prep the regularization of gradients
-			if s.useL1Reg {
-				var l1regs *tf64.Tensor
-				if l1regs, err = tf64.Sign(w); err != nil {
-					return errors.Wrap(err, signFail)
-				}
-
-				if l1regs, err = tf64.PointwiseMul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-
-				if g, err = tf64.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, addFail)
-				}
-
-				defer returnTensor(l1regs)
-			}
-
-			if s.useL2Reg {
-				var l2regs *tf64.Tensor
-				if l2regs, err = tf64.PointwiseMul(l2reg, w); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-
-				if g, err = tf64.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, addFail)
-				}
-
-				defer returnTensor(l2regs)
-			}
-
-			if batch > 1 {
-				if g, err = tf64.PointwiseMul(1/batch, g, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-			}
-
-			if s.useClip && clip > 0 {
-				if g, err = tf64.Clamp(g, -clip, clip, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, clampFail)
-				}
-			}
-
-			// prep done. Now let's apply the formula:
-			// the formula is
-			//		(β_1 * m_t-1) + (1 - β_1)g_t ..................	1
-			//		(β_2 * v_t-1) + (1 - β_2)*(g_t)^2 .............	2
-
-			// equation(1)
-			t1 := g.Clone()
-			if t1, err = tf64.PointwiseMul((1 - beta1), t1, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			// equation(2)
-			if g, err = tf64.PointwiseMul(g, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-			if g, err = tf64.PointwiseMul((1 - beta2), g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			// equation (1)
-			if t1, err = tf64.PointwiseMul(beta1, m, tensor.WithIncr(t1)); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			// equation (2)
-			if g, err = tf64.PointwiseMul(beta2, v, tensor.WithIncr(g)); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			defer returnTensor(m)
-			defer returnTensor(v)
-			cached.SetValue(t1)
-			cached.SetDeriv(g.Clone()) // g belongs to the node's dual value, so clone here
-
-			// now deal with the hats
-			mHats := t1.Clone()
-			vHats := g.Clone()
-
-			if mHats, err = tf64.PointwiseMul((1 / correction1), mHats, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			if vHats, err = tf64.PointwiseMul((1 / correction2), vHats, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			// update := -eta * mHat / (sqrt(vHat) + epsilon)
-			if vHats, err = tf64.Sqrt(vHats, tensor.UseUnsafe()); err != nil {
-				return // TODO: rewrite this to use InvSqrt
-			}
-
-			if vHats, err = tf64.Add(eps, vHats, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, addFail)
-			}
-
-			if mHats, err = tf64.PointwiseMul(-eta, mHats, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			if w, err = tf64.PointwiseDiv(mHats, vHats, tensor.WithIncr(w)); err != nil {
-				return errors.Wrap(err, "Failed to carry out PointWiseDiv()")
-			}
-
-			defer returnTensor(vHats)
-			defer returnTensor(mHats)
-
-			if _, err = tf64.Add(w, mHats, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, addFail)
-			}
-
-			g.Zero()
 		case F32:
 			g := float32(grad.(F32))
 			w := float32(weights.(F32))
@@ -853,29 +689,42 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 		grad := dv.d
 		weights := dv.Value
 
-		switch wt := weights.(type) {
-		case *tf32.Tensor:
-			w := wt
-			g := grad.(*tf32.Tensor)
+		switch w := weights.(type) {
+		case *tensor.Dense:
+			g := grad.(*tensor.Dense)
 
-			l1reg := float32(s.l1reg)
-			l2reg := float32(s.l2reg)
-			batch := float32(s.batch)
-			clip := float32(s.clip)
-			eta := float32(s.eta)
-
+			var l1reg, l2reg, batch, clip, negClip, eta Value
+			var one Value
+			switch w.Dtype() {
+			case tensor.Float64:
+				l1reg = F64(s.l1reg)
+				l2reg = F64(s.l2reg)
+				batch = F64(s.batch)
+				clip = F64(s.clip)
+				negClip = F64(-s.clip)
+				eta = F64(-s.eta)
+				one = F64(1)
+			case tensor.Float32:
+				l1reg = F32(s.l1reg)
+				l2reg = F32(s.l2reg)
+				batch = F32(s.batch)
+				clip = F32(s.clip)
+				negClip = F32(-s.clip)
+				eta = F32(-s.eta)
+				one = F32(1)
+			}
 			// prep the regularization of gradients
-			var l1regs, l2regs *tf32.Tensor
+			var l1regs, l2regs *tensor.Dense
 			if s.useL1Reg {
-				if l1regs, err = tf32.Sign(w); err != nil {
+				if l1regs, err = tensor.Sign(w); err != nil {
 					return errors.Wrap(err, signFail)
 				}
 
-				if l1regs, err = tf32.PointwiseMul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
+				if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
-				if g, err = tf32.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
@@ -883,11 +732,11 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			}
 
 			if s.useL2Reg {
-				if l2regs, err = tf32.PointwiseMul(l2reg, w); err != nil {
+				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
-				if g, err = tf32.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
@@ -895,88 +744,27 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			}
 
 			if batch > 1 {
-				if g, err = tf32.PointwiseMul(1/batch, g, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Mul(one/batch, g, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 			}
 
 			if s.useClip && clip > 0 {
-				if g, err = tf32.Clamp(g, -clip, clip, tensor.UseUnsafe()); err != nil {
+				if g, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
 
-			if g, err = tf32.PointwiseMul(-eta, g, tensor.UseUnsafe()); err != nil {
+			if g, err = tensor.Mul(eta, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tf32.Add(w, g, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(w, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
 
 			g.Zero()
 
-		case *tf64.Tensor:
-			w := wt
-			g := grad.(*tf64.Tensor)
-
-			l1reg := s.l1reg
-			l2reg := s.l2reg
-			batch := s.batch
-			clip := s.clip
-			eta := s.eta
-
-			// prep the regularization of gradients
-			var l1regs, l2regs *tf64.Tensor
-			if s.useL1Reg {
-				if l1regs, err = tf64.Sign(w); err != nil {
-					return errors.Wrap(err, signFail)
-				}
-
-				if l1regs, err = tf64.PointwiseMul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-
-				if g, err = tf64.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, addFail)
-				}
-
-				defer returnTensor(l1regs)
-			}
-
-			if s.useL2Reg {
-				if l2regs, err = tf64.PointwiseMul(l2reg, w); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-
-				if g, err = tf64.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, addFail)
-				}
-
-				defer returnTensor(l2regs)
-			}
-
-			if batch > 1 {
-				if g, err = tf64.PointwiseMul(1/batch, g, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-			}
-
-			if s.useClip && clip > 0 {
-				if g, err = tf64.Clamp(g, -clip, clip, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, clampFail)
-				}
-			}
-
-			if g, err = tf64.PointwiseMul(-eta, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			if _, err = tf64.Add(w, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, addFail)
-			}
-
-			g.Zero()
 		case F32:
 			g := float32(grad.(F32))
 			w := float32(wt)
@@ -1113,63 +901,74 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 		cv := cached.Value
 
 		switch cw := cv.(type) {
-		case *tf32.Tensor:
-			var w, g, c, g2, regularized *tf32.Tensor
+		case *tensor.Dense:
+			var w, g, c, g2, regularized *tensor.Dense
 
-			l2reg := float32(s.l2reg)
-			clip := float32(s.clip)
-			eps := float32(s.eps)
-			eta := float32(s.eta)
+			var l2reg, clip, negClip, eps, eta Value
+			switch cw.Dtype() {
+			case tensor.Float64:
+				l2reg = F64(s.l2reg)
+				clip = F64(s.clip)
+				negClip = F64(-s.clip)
+				eps = F64(s.eps)
+				eta = F64(-s.eta)
+			case tensor.Float32:
+				l2reg = F32(s.l2reg)
+				clip = F32(s.clip)
+				negClip = F32(-s.clip)
+				eps = F32(s.eps)
+				eta = F32(-s.eta)
+			}
 
-			g = grad.(*tf32.Tensor)
-			if g2, err = tf32.PointwiseSquare(g); err != nil { // safe version
+			g = grad.(*tensor.Dense)
+			if g2, err = tensor.Square(g); err != nil {
 				return errors.Wrap(err, pointWiseSquareFail)
 			}
 
 			c = cw
-			tf32.Add(c, g2, tensor.UseUnsafe())
+			tensor.Add(c, g2, tensor.UseUnsafe())
 			defer returnTensor(g2)
 
 			if s.useClip {
-				if _, err = tf32.Clamp(g, -clip, clip, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Clamp(g, negClip.Data(), clip.Data(), tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
 
 			// update
-			var upd *tf32.Tensor
+			var upd *tensor.Dense
 
-			if upd, err = tf32.Add(c, eps); err != nil {
+			if upd, err = tensor.Add(c, eps); err != nil {
 				return errors.Wrap(err, addFail)
 			}
 
-			if _, err = tf32.InvSqrt(upd, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.InvSqrt(upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, invSqrtFail)
 			}
-			if _, err = tf32.PointwiseMul(g, -eta, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(g, -eta, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tf32.PointwiseMul(upd, g, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(upd, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// regularize
-			w = weights.(*tf32.Tensor)
+			w = weights.(*tensor.Dense)
 
 			if s.useL2Reg {
-				if regularized, err = tf32.PointwiseMul(w, l2reg); err != nil {
+				if regularized, err = tensor.eMul(w, l2reg); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
-				if _, err = tf32.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, subFail)
 				}
 
 				defer returnTensor(regularized)
 			}
 
-			if _, err = tf32.Add(w, upd, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(w, upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
 			defer returnTensor(upd)
@@ -1177,67 +976,6 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			// zero all
 			g.Zero()
 
-		case *tf64.Tensor:
-			var w, g, c, g2, regularized *tf64.Tensor
-
-			l2reg := s.l2reg
-			clip := s.clip
-			eps := s.eps
-			eta := s.eta
-
-			g = grad.(*tf64.Tensor)
-			if g2, err = tf64.PointwiseSquare(g); err != nil { // safe version
-				return errors.Wrap(err, pointWiseSquareFail)
-			}
-
-			c = cw
-			tf64.Add(c, g2, tensor.UseUnsafe())
-			defer returnTensor(g2)
-
-			if s.useClip {
-				if _, err = tf64.Clamp(g, -clip, clip, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, clampFail)
-				}
-			}
-
-			// update
-			var upd *tf64.Tensor
-
-			if upd, err = tf64.Add(c, eps); err != nil {
-				return errors.Wrap(err, clampFail)
-			}
-
-			if _, err = tf64.InvSqrt(upd, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, invSqrtFail)
-			}
-			if _, err = tf64.PointwiseMul(g, -eta, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			if _, err = tf64.PointwiseMul(upd, g, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, pointWiseMulFail)
-			}
-
-			// regularize
-			w = weights.(*tf64.Tensor)
-
-			if s.useL2Reg {
-				if regularized, err = tf64.PointwiseMul(w, l2reg); err != nil {
-					return errors.Wrap(err, pointWiseMulFail)
-				}
-
-				if _, err = tf64.Sub(upd, regularized, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, subFail)
-				}
-			}
-
-			if _, err = tf64.Add(w, upd, tensor.UseUnsafe()); err != nil {
-				return errors.Wrap(err, addFail)
-			}
-			defer returnTensor(upd)
-
-			// zero all
-			g.Zero()
 		case F32:
 			var w, g, c float32
 

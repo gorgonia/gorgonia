@@ -4,10 +4,6 @@ import (
 	"sync"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tb "github.com/chewxy/gorgonia/tensor/b"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	ti "github.com/chewxy/gorgonia/tensor/i"
 )
 
 var nodePool = &sync.Pool{
@@ -67,18 +63,7 @@ func returnDV(dv *dualValue) {
 }
 
 func returnTensor(t tensor.Tensor) {
-	switch tt := t.(type) {
-	case *tf64.Tensor:
-		tf64.ReturnTensor(tt)
-	case *tf32.Tensor:
-		tf32.ReturnTensor(tt)
-	case *ti.Tensor:
-		ti.ReturnTensor(tt)
-	case *tb.Tensor:
-		tb.ReturnTensor(tt)
-	default:
-		return
-	}
+	tensor.ReturnTensor(t)
 }
 
 func returnValue(v Value) {
