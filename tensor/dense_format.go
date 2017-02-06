@@ -201,7 +201,7 @@ func (f *fmtState) acceptableRune(d *Dense) {
 
 func (f *fmtState) calcWidth(d *Dense) {
 	format := f.cleanFmt()
-	f.w = 0 // min
+	f.w = 0
 	for i := 0; i < d.len(); i++ {
 		w, _ := fmt.Fprintf(f.buf, format, d.Get(i))
 		if w > f.w {

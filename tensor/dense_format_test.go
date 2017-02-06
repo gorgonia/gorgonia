@@ -24,7 +24,7 @@ func TestDense_Format(t *testing.T) {
 	// short vector
 	T = New(Of(Float64), WithShape(4))
 	res = fmt.Sprintf("%v", T)
-	expected = "[  0    0    0    0]"
+	expected = "[0  0  0  0]"
 	assert.Equal(expected, res)
 	T = New(WithShape(2, 2), WithBacking([]float64{3.141515163242, 20, 5.15, 6.28}))
 
@@ -173,9 +173,9 @@ Tensor-3 (2, 3, 2) [6 2 1]
 	res = fmt.Sprintf("\n%+s", V)
 	expected = `
 Matrix (3, 2) [2 1]
-⎡  6    7⎤
-⎢  8    9⎥
-⎣ 10   11⎦
+⎡ 6   7⎤
+⎢ 8   9⎥
+⎣10  11⎦
 `
 	assert.Equal(expected, res, res)
 
@@ -193,8 +193,8 @@ Matrix (2, 2) [6 1]
 	V.T()
 	expected = `
 Matrix (2, 2) [1 6]
-⎡  2    8⎤
-⎣  3    9⎦
+⎡2  8⎤
+⎣3  9⎦
 `
 
 	res = fmt.Sprintf("\n%+s", V)
@@ -225,7 +225,7 @@ Matrix (2, 2) [1 6]
 	if err != nil {
 		t.Error(err)
 	}
-	expected = `[  5    6    7    8    9]`
+	expected = `[5  6  7  8  9]`
 	res = fmt.Sprintf("%v", V)
 	assert.Equal(expected, res)
 }
