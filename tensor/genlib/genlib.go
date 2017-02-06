@@ -146,6 +146,8 @@ func isParameterized(a reflect.Kind) bool {
 	return false
 }
 
+func isNotParameterized(a reflect.Kind) bool { return !isParameterized(a) }
+
 func isRangeable(a reflect.Kind) bool {
 	for _, v := range rangeable {
 		if v == a {

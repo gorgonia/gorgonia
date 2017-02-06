@@ -8,15 +8,16 @@ import (
 )
 
 var cmpBinOps = []struct {
-	OpName string
-	OpSymb string
-	is     func(reflect.Kind) bool
+	OpName  string
+	OpSymb  string
+	is      func(reflect.Kind) bool
+	Inverse string
 }{
-	{"Eq", "==", isEq},
-	{"Gt", ">", isOrd},
-	{"Gte", ">=", isOrd},
-	{"Lt", "<", isOrd},
-	{"Lte", "<=", isOrd},
+	{"Eq", "==", isEq, "Eq"},
+	{"Gt", ">", isOrd, "Lt"},
+	{"Gte", ">=", isOrd, "Lte"},
+	{"Lt", "<", isOrd, "Gt"},
+	{"Lte", "<=", isOrd, "Gte"},
 }
 
 const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse *Dense, safe, same, toReuse bool, err error) {
@@ -263,21 +264,101 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 `
 
 const eleqordDSRaw = `func (t *Dense) {{lower .OpName}}DS(other interface{}, opts ...FuncOpt) (retVal *Dense, err error){
-	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, other, opts...)
+	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, opts...)
 	if err != nil {
 		return nil, err
 	}
-	{{$op := .OpName}}
+	{{$opName := .OpName}}
+	{{$opEq := eq $opName "Eq" -}}
+	{{$op := .OpSymb}}
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+	{{range .Kinds -}}
+	{{ $eq := isEq . -}}
+		{{ $ord := isOrd . -}}
+		{{ $eeq := and $eq $opEq -}}
+
+		{{if or $eeq $ord -}}
+	case reflect.{{reflectKind .}}:
+		data := t.{{sliceOf .}}
+		b := other.({{asType .}})
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int 
+			{{if isNumber . -}}
+				var bs []bool
+				var ss []{{asType .}}
+				if same {
+					ss = make([]{{asType .}}, t.Shape().TotalSize())
+					ret = ss
+				} else{
+					bs = make([]bool, t.Shape().TotalSize())
+					ret = bs
+				}
+
+			{{else -}}
+				bs := make([]bool, t.Shape().TotalSize())
+				ret = bs
+			{{end -}}
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				{{if isNumber .}}
+					if same {
+						if data[i] {{$op}} b{
+							ss[j] = 1
+						}
+					} else {
+						bs[j] = data[i] {{$op}} b
+					}
+				{{else -}}
+					bs[j] = data[i] {{$op}} b
+				{{end -}}
+				j++
+			}
+		default:
+			{{if isNumber . -}}
+				if same {
+					ret = {{lower $opName}}DSSame{{short .}}(data, b)
+				} else {
+					ret = {{lower $opName}}DSBools{{short .}}(data, b)
+				}
+			{{else -}}
+			ret = {{lower $opName}}DSBools{{short .}}(data, b)
+			{{end -}}
+		}
+		retVal.fromSlice(ret)
+		{{end -}}
+	{{end -}}
+	default:
+		err = errors.Errorf(unsupportedDtype, t.t, "{{lower .OpName}}")
+		return
+	}
+	retVal.fix()
+	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
+	return
 }
 `
 
 var (
 	ddElEqOrd *template.Template
+	dsElEqOrd *template.Template
 )
 
 func init() {
 	ddElEqOrd = template.Must(template.New("ElEqOrdDD").Funcs(funcs).Parse(eleqordDDRaw))
-
+	dsElEqOrd = template.Must(template.New("ElEqOrdDS").Funcs(funcs).Parse(eleqordDSRaw))
 }
 
 func denseCmp(f io.Writer, generic *ManyKinds) {
@@ -286,6 +367,13 @@ func denseCmp(f io.Writer, generic *ManyKinds) {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
 		op := BinOps{generic, bo.OpName, bo.OpSymb, false}
 		ddElEqOrd.Execute(f, op)
+		fmt.Fprintln(f, "\n")
+	}
+
+	for _, bo := range cmpBinOps {
+		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
+		op := BinOps{generic, bo.OpName, bo.OpSymb, false}
+		dsElEqOrd.Execute(f, op)
 		fmt.Fprintln(f, "\n")
 	}
 

@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"reflect"
+	"unsafe"
 
 	"github.com/pkg/errors"
 )
@@ -6700,6 +6701,2666 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		return
 	}
 
+	retVal.fix()
+	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
+	return
+}
+
+/* Eq */
+
+func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+	case reflect.Bool:
+		data := t.bools()
+		b := other.(bool)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] == b
+				j++
+			}
+		default:
+			ret = eqDSBoolsB(data, b)
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int:
+		data := t.ints()
+		b := other.(int)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int
+			if same {
+				ss = make([]int, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameI(data, b)
+			} else {
+				ret = eqDSBoolsI(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int8:
+		data := t.int8s()
+		b := other.(int8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int8
+			if same {
+				ss = make([]int8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameI8(data, b)
+			} else {
+				ret = eqDSBoolsI8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int16:
+		data := t.int16s()
+		b := other.(int16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int16
+			if same {
+				ss = make([]int16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameI16(data, b)
+			} else {
+				ret = eqDSBoolsI16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int32:
+		data := t.int32s()
+		b := other.(int32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int32
+			if same {
+				ss = make([]int32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameI32(data, b)
+			} else {
+				ret = eqDSBoolsI32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int64:
+		data := t.int64s()
+		b := other.(int64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int64
+			if same {
+				ss = make([]int64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameI64(data, b)
+			} else {
+				ret = eqDSBoolsI64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint:
+		data := t.uints()
+		b := other.(uint)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint
+			if same {
+				ss = make([]uint, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameU(data, b)
+			} else {
+				ret = eqDSBoolsU(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint8:
+		data := t.uint8s()
+		b := other.(uint8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint8
+			if same {
+				ss = make([]uint8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameU8(data, b)
+			} else {
+				ret = eqDSBoolsU8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint16:
+		data := t.uint16s()
+		b := other.(uint16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint16
+			if same {
+				ss = make([]uint16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameU16(data, b)
+			} else {
+				ret = eqDSBoolsU16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint32:
+		data := t.uint32s()
+		b := other.(uint32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint32
+			if same {
+				ss = make([]uint32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameU32(data, b)
+			} else {
+				ret = eqDSBoolsU32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint64:
+		data := t.uint64s()
+		b := other.(uint64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint64
+			if same {
+				ss = make([]uint64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameU64(data, b)
+			} else {
+				ret = eqDSBoolsU64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uintptr:
+		data := t.uintptrs()
+		b := other.(uintptr)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] == b
+				j++
+			}
+		default:
+			ret = eqDSBoolsUintptr(data, b)
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float32:
+		data := t.float32s()
+		b := other.(float32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float32
+			if same {
+				ss = make([]float32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameF32(data, b)
+			} else {
+				ret = eqDSBoolsF32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float64:
+		data := t.float64s()
+		b := other.(float64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float64
+			if same {
+				ss = make([]float64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameF64(data, b)
+			} else {
+				ret = eqDSBoolsF64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Complex64:
+		data := t.complex64s()
+		b := other.(complex64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []complex64
+			if same {
+				ss = make([]complex64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameC64(data, b)
+			} else {
+				ret = eqDSBoolsC64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Complex128:
+		data := t.complex128s()
+		b := other.(complex128)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []complex128
+			if same {
+				ss = make([]complex128, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] == b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] == b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = eqDSSameC128(data, b)
+			} else {
+				ret = eqDSBoolsC128(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.String:
+		data := t.strings()
+		b := other.(string)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] == b
+				j++
+			}
+		default:
+			ret = eqDSBoolsStr(data, b)
+		}
+		retVal.fromSlice(ret)
+	case reflect.UnsafePointer:
+		data := t.unsafePointers()
+		b := other.(unsafe.Pointer)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] == b
+				j++
+			}
+		default:
+			ret = eqDSBoolsUnsafePointer(data, b)
+		}
+		retVal.fromSlice(ret)
+	default:
+		err = errors.Errorf(unsupportedDtype, t.t, "eq")
+		return
+	}
+	retVal.fix()
+	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
+	return
+}
+
+/* Gt */
+
+func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+	case reflect.Int:
+		data := t.ints()
+		b := other.(int)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int
+			if same {
+				ss = make([]int, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameI(data, b)
+			} else {
+				ret = gtDSBoolsI(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int8:
+		data := t.int8s()
+		b := other.(int8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int8
+			if same {
+				ss = make([]int8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameI8(data, b)
+			} else {
+				ret = gtDSBoolsI8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int16:
+		data := t.int16s()
+		b := other.(int16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int16
+			if same {
+				ss = make([]int16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameI16(data, b)
+			} else {
+				ret = gtDSBoolsI16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int32:
+		data := t.int32s()
+		b := other.(int32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int32
+			if same {
+				ss = make([]int32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameI32(data, b)
+			} else {
+				ret = gtDSBoolsI32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int64:
+		data := t.int64s()
+		b := other.(int64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int64
+			if same {
+				ss = make([]int64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameI64(data, b)
+			} else {
+				ret = gtDSBoolsI64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint:
+		data := t.uints()
+		b := other.(uint)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint
+			if same {
+				ss = make([]uint, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameU(data, b)
+			} else {
+				ret = gtDSBoolsU(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint8:
+		data := t.uint8s()
+		b := other.(uint8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint8
+			if same {
+				ss = make([]uint8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameU8(data, b)
+			} else {
+				ret = gtDSBoolsU8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint16:
+		data := t.uint16s()
+		b := other.(uint16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint16
+			if same {
+				ss = make([]uint16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameU16(data, b)
+			} else {
+				ret = gtDSBoolsU16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint32:
+		data := t.uint32s()
+		b := other.(uint32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint32
+			if same {
+				ss = make([]uint32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameU32(data, b)
+			} else {
+				ret = gtDSBoolsU32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint64:
+		data := t.uint64s()
+		b := other.(uint64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint64
+			if same {
+				ss = make([]uint64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameU64(data, b)
+			} else {
+				ret = gtDSBoolsU64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uintptr:
+		data := t.uintptrs()
+		b := other.(uintptr)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] > b
+				j++
+			}
+		default:
+			ret = gtDSBoolsUintptr(data, b)
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float32:
+		data := t.float32s()
+		b := other.(float32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float32
+			if same {
+				ss = make([]float32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameF32(data, b)
+			} else {
+				ret = gtDSBoolsF32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float64:
+		data := t.float64s()
+		b := other.(float64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float64
+			if same {
+				ss = make([]float64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] > b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] > b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gtDSSameF64(data, b)
+			} else {
+				ret = gtDSBoolsF64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.String:
+		data := t.strings()
+		b := other.(string)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] > b
+				j++
+			}
+		default:
+			ret = gtDSBoolsStr(data, b)
+		}
+		retVal.fromSlice(ret)
+	default:
+		err = errors.Errorf(unsupportedDtype, t.t, "gt")
+		return
+	}
+	retVal.fix()
+	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
+	return
+}
+
+/* Gte */
+
+func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+	case reflect.Int:
+		data := t.ints()
+		b := other.(int)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int
+			if same {
+				ss = make([]int, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameI(data, b)
+			} else {
+				ret = gteDSBoolsI(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int8:
+		data := t.int8s()
+		b := other.(int8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int8
+			if same {
+				ss = make([]int8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameI8(data, b)
+			} else {
+				ret = gteDSBoolsI8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int16:
+		data := t.int16s()
+		b := other.(int16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int16
+			if same {
+				ss = make([]int16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameI16(data, b)
+			} else {
+				ret = gteDSBoolsI16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int32:
+		data := t.int32s()
+		b := other.(int32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int32
+			if same {
+				ss = make([]int32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameI32(data, b)
+			} else {
+				ret = gteDSBoolsI32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int64:
+		data := t.int64s()
+		b := other.(int64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int64
+			if same {
+				ss = make([]int64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameI64(data, b)
+			} else {
+				ret = gteDSBoolsI64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint:
+		data := t.uints()
+		b := other.(uint)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint
+			if same {
+				ss = make([]uint, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameU(data, b)
+			} else {
+				ret = gteDSBoolsU(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint8:
+		data := t.uint8s()
+		b := other.(uint8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint8
+			if same {
+				ss = make([]uint8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameU8(data, b)
+			} else {
+				ret = gteDSBoolsU8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint16:
+		data := t.uint16s()
+		b := other.(uint16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint16
+			if same {
+				ss = make([]uint16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameU16(data, b)
+			} else {
+				ret = gteDSBoolsU16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint32:
+		data := t.uint32s()
+		b := other.(uint32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint32
+			if same {
+				ss = make([]uint32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameU32(data, b)
+			} else {
+				ret = gteDSBoolsU32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint64:
+		data := t.uint64s()
+		b := other.(uint64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint64
+			if same {
+				ss = make([]uint64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameU64(data, b)
+			} else {
+				ret = gteDSBoolsU64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uintptr:
+		data := t.uintptrs()
+		b := other.(uintptr)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] >= b
+				j++
+			}
+		default:
+			ret = gteDSBoolsUintptr(data, b)
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float32:
+		data := t.float32s()
+		b := other.(float32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float32
+			if same {
+				ss = make([]float32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameF32(data, b)
+			} else {
+				ret = gteDSBoolsF32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float64:
+		data := t.float64s()
+		b := other.(float64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float64
+			if same {
+				ss = make([]float64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] >= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] >= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = gteDSSameF64(data, b)
+			} else {
+				ret = gteDSBoolsF64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.String:
+		data := t.strings()
+		b := other.(string)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] >= b
+				j++
+			}
+		default:
+			ret = gteDSBoolsStr(data, b)
+		}
+		retVal.fromSlice(ret)
+	default:
+		err = errors.Errorf(unsupportedDtype, t.t, "gte")
+		return
+	}
+	retVal.fix()
+	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
+	return
+}
+
+/* Lt */
+
+func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+	case reflect.Int:
+		data := t.ints()
+		b := other.(int)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int
+			if same {
+				ss = make([]int, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameI(data, b)
+			} else {
+				ret = ltDSBoolsI(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int8:
+		data := t.int8s()
+		b := other.(int8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int8
+			if same {
+				ss = make([]int8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameI8(data, b)
+			} else {
+				ret = ltDSBoolsI8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int16:
+		data := t.int16s()
+		b := other.(int16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int16
+			if same {
+				ss = make([]int16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameI16(data, b)
+			} else {
+				ret = ltDSBoolsI16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int32:
+		data := t.int32s()
+		b := other.(int32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int32
+			if same {
+				ss = make([]int32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameI32(data, b)
+			} else {
+				ret = ltDSBoolsI32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int64:
+		data := t.int64s()
+		b := other.(int64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int64
+			if same {
+				ss = make([]int64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameI64(data, b)
+			} else {
+				ret = ltDSBoolsI64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint:
+		data := t.uints()
+		b := other.(uint)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint
+			if same {
+				ss = make([]uint, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameU(data, b)
+			} else {
+				ret = ltDSBoolsU(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint8:
+		data := t.uint8s()
+		b := other.(uint8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint8
+			if same {
+				ss = make([]uint8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameU8(data, b)
+			} else {
+				ret = ltDSBoolsU8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint16:
+		data := t.uint16s()
+		b := other.(uint16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint16
+			if same {
+				ss = make([]uint16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameU16(data, b)
+			} else {
+				ret = ltDSBoolsU16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint32:
+		data := t.uint32s()
+		b := other.(uint32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint32
+			if same {
+				ss = make([]uint32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameU32(data, b)
+			} else {
+				ret = ltDSBoolsU32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint64:
+		data := t.uint64s()
+		b := other.(uint64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint64
+			if same {
+				ss = make([]uint64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameU64(data, b)
+			} else {
+				ret = ltDSBoolsU64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uintptr:
+		data := t.uintptrs()
+		b := other.(uintptr)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] < b
+				j++
+			}
+		default:
+			ret = ltDSBoolsUintptr(data, b)
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float32:
+		data := t.float32s()
+		b := other.(float32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float32
+			if same {
+				ss = make([]float32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameF32(data, b)
+			} else {
+				ret = ltDSBoolsF32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float64:
+		data := t.float64s()
+		b := other.(float64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float64
+			if same {
+				ss = make([]float64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] < b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] < b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = ltDSSameF64(data, b)
+			} else {
+				ret = ltDSBoolsF64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.String:
+		data := t.strings()
+		b := other.(string)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] < b
+				j++
+			}
+		default:
+			ret = ltDSBoolsStr(data, b)
+		}
+		retVal.fromSlice(ret)
+	default:
+		err = errors.Errorf(unsupportedDtype, t.t, "lt")
+		return
+	}
+	retVal.fix()
+	err = retVal.sanity()
+
+	switch {
+	case toReuse:
+		copyDense(reuse, retVal)
+		ReturnTensor(retVal)
+		retVal = reuse
+	case !safe:
+		copyDense(t, retVal)
+		ReturnTensor(retVal)
+		retVal = t
+	}
+	return
+}
+
+/* Lte */
+
+func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
+	reuse, safe, same, toReuse, err := prepUnaryDenseCmp(t, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	switch t.t.Kind() {
+	case reflect.Int:
+		data := t.ints()
+		b := other.(int)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int
+			if same {
+				ss = make([]int, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameI(data, b)
+			} else {
+				ret = lteDSBoolsI(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int8:
+		data := t.int8s()
+		b := other.(int8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int8
+			if same {
+				ss = make([]int8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameI8(data, b)
+			} else {
+				ret = lteDSBoolsI8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int16:
+		data := t.int16s()
+		b := other.(int16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int16
+			if same {
+				ss = make([]int16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameI16(data, b)
+			} else {
+				ret = lteDSBoolsI16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int32:
+		data := t.int32s()
+		b := other.(int32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int32
+			if same {
+				ss = make([]int32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameI32(data, b)
+			} else {
+				ret = lteDSBoolsI32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Int64:
+		data := t.int64s()
+		b := other.(int64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []int64
+			if same {
+				ss = make([]int64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameI64(data, b)
+			} else {
+				ret = lteDSBoolsI64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint:
+		data := t.uints()
+		b := other.(uint)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint
+			if same {
+				ss = make([]uint, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameU(data, b)
+			} else {
+				ret = lteDSBoolsU(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint8:
+		data := t.uint8s()
+		b := other.(uint8)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint8
+			if same {
+				ss = make([]uint8, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameU8(data, b)
+			} else {
+				ret = lteDSBoolsU8(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint16:
+		data := t.uint16s()
+		b := other.(uint16)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint16
+			if same {
+				ss = make([]uint16, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameU16(data, b)
+			} else {
+				ret = lteDSBoolsU16(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint32:
+		data := t.uint32s()
+		b := other.(uint32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint32
+			if same {
+				ss = make([]uint32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameU32(data, b)
+			} else {
+				ret = lteDSBoolsU32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uint64:
+		data := t.uint64s()
+		b := other.(uint64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []uint64
+			if same {
+				ss = make([]uint64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameU64(data, b)
+			} else {
+				ret = lteDSBoolsU64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Uintptr:
+		data := t.uintptrs()
+		b := other.(uintptr)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] <= b
+				j++
+			}
+		default:
+			ret = lteDSBoolsUintptr(data, b)
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float32:
+		data := t.float32s()
+		b := other.(float32)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float32
+			if same {
+				ss = make([]float32, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameF32(data, b)
+			} else {
+				ret = lteDSBoolsF32(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.Float64:
+		data := t.float64s()
+		b := other.(float64)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			var bs []bool
+			var ss []float64
+			if same {
+				ss = make([]float64, t.Shape().TotalSize())
+				ret = ss
+			} else {
+				bs = make([]bool, t.Shape().TotalSize())
+				ret = bs
+			}
+
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+
+				if same {
+					if data[i] <= b {
+						ss[j] = 1
+					}
+				} else {
+					bs[j] = data[i] <= b
+				}
+				j++
+			}
+		default:
+			if same {
+				ret = lteDSSameF64(data, b)
+			} else {
+				ret = lteDSBoolsF64(data, b)
+			}
+		}
+		retVal.fromSlice(ret)
+	case reflect.String:
+		data := t.strings()
+		b := other.(string)
+		var ret interface{} // slice of some sort
+		switch {
+		case t.IsMaterializable():
+			it := NewFlatIterator(t.AP)
+			var i, j int
+			bs := make([]bool, t.Shape().TotalSize())
+			ret = bs
+			for i, err = it.Next(); err == nil; i, err = it.Next() {
+				bs[j] = data[i] <= b
+				j++
+			}
+		default:
+			ret = lteDSBoolsStr(data, b)
+		}
+		retVal.fromSlice(ret)
+	default:
+		err = errors.Errorf(unsupportedDtype, t.t, "lte")
+		return
+	}
 	retVal.fix()
 	err = retVal.sanity()
 
