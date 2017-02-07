@@ -15,7 +15,6 @@ import (
 
 	T "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
-	ti "github.com/chewxy/gorgonia/tensor/i"
 	"github.com/gonum/blas/native"
 )
 
@@ -31,6 +30,8 @@ var verbose = flag.Bool("v", false, "Verbose?")
 
 var trainingWriter io.Writer
 var trainingLog *log.Logger
+
+var Float tensor.Dtype = tensor.Float64
 
 func init() {
 	var err error
@@ -70,8 +71,8 @@ func loadMNIST(t string) (inputs, targets tensor.Tensor) {
 	targets = prepareY(labelData)
 
 	if t == "dev" {
-		inputs, _ = tensor.Slice(inputs, T.S(0, 100))
-		targets, _ = tensor.Slice(targets, T.S(0, 100))
+		inputs, _ = inputs.Slice(T.S(0, 100))
+		targets, _ = targets.Slice(T.S(0, 100))
 	}
 
 	verboseLog("%s Images: %d. | Width: %d, Height: %d\n", t, len(imageData), width, height)
@@ -83,7 +84,7 @@ func loadMNIST(t string) (inputs, targets tensor.Tensor) {
 }
 
 func predictBatch(logprobs tensor.Tensor, batchSize int) (guesses []int, err error) {
-	var argmax *ti.Tensor
+	var argmax tensor.Tensor
 	if batchSize == 1 {
 		argmax, err = tensor.Argmin(logprobs, 0)
 	} else {
@@ -100,7 +101,7 @@ func makeTargets(targets tensor.Tensor) []int {
 	ys := make([]int, targets.Shape()[0])
 	ys = ys[:0]
 	for i := 0; i < targets.Shape()[0]; i++ {
-		ysl, _ := tensor.Slice(targets, T.S(i))
+		ysl, _ := targets.Slice(T.S(i))
 		raw := ysl.Data().([]float64)
 		for i, v := range raw {
 			if v == 0.9 {
@@ -192,11 +193,11 @@ func main() {
 	// Visualize
 	visualizeLayer := *viz
 	verboseLog("Visualizing %dth layer", visualizeLayer)
-	finalWeights := tensor.Clone(sda.autoencoders[visualizeLayer].w.Value().(tensor.Tensor))
+	finalWeights := sda.autoencoders[visualizeLayer].w.Value().(tensor.Tensor).Clone().(tensor.Tensor) // TODO: rewrite this plz, it's hard to understand
 	finalWeights.T()
 	finalWeights.Transpose()
 	for i := 0; i < finalWeights.Shape()[0]; i++ {
-		rowT, _ := tensor.Slice(finalWeights, T.S(i))
+		rowT, _ := finalWeights.Slice(T.S(i))
 		row := rowT.Data().([]float64)
 		img := visualizeRow(row)
 
@@ -213,11 +214,11 @@ func main() {
 	verboseLog("pred")
 	testX, testY := loadMNIST("test")
 	var one, correct, lp tensor.Tensor
-	if one, err = tensor.Slice(testX, T.S(0, batchSize)); err != nil {
+	if one, err = testX.Slice(T.S(0, batchSize)); err != nil {
 		log.Fatal(err)
 	}
 
-	if correct, err = tensor.Slice(testY, T.S(0, batchSize)); err != nil {
+	if correct, err = testY.Slice(T.S(0, batchSize)); err != nil {
 		log.Fatal(err)
 	}
 

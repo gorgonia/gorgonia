@@ -8,7 +8,7 @@ import (
 	"math"
 	"os"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 )
 
 const numLabels = 10
@@ -110,7 +110,7 @@ func reversePixelWeight(px float64) byte {
 	return byte((pixelRange*px - pixelRange) / 0.9)
 }
 
-func prepareX(M []RawImage) (retVal *tf64.Tensor) {
+func prepareX(M []RawImage) (retVal tensor.Tensor) {
 	rows := len(M)
 	cols := len(M[0])
 
@@ -121,11 +121,11 @@ func prepareX(M []RawImage) (retVal *tf64.Tensor) {
 			backing = append(backing, pixelWeight(M[i][j]))
 		}
 	}
-	retVal = tf64.NewTensor(tf64.WithShape(rows, cols), tf64.WithBacking(backing))
+	retVal = tensor.New(tensor.WithShape(rows, cols), tensor.WithBacking(backing))
 	return
 }
 
-func prepareY(N []Label) (retVal *tf64.Tensor) {
+func prepareY(N []Label) (retVal tensor.Tensor) {
 	rows := len(N)
 	cols := 10
 	backing := make([]float64, rows*cols, rows*cols)
@@ -140,7 +140,7 @@ func prepareY(N []Label) (retVal *tf64.Tensor) {
 			}
 		}
 	}
-	retVal = tf64.NewTensor(tf64.WithShape(rows, cols), tf64.WithBacking(backing))
+	retVal = tensor.New(tensor.WithShape(rows, cols), tensor.WithBacking(backing))
 	return
 }
 

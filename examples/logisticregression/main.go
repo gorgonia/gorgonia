@@ -13,7 +13,7 @@ import (
 	"time"
 
 	T "github.com/chewxy/gorgonia"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 	// cblas "github.com/gonum/blas/cgo"
 )
 
@@ -30,11 +30,11 @@ const (
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write mem profile to file")
 var static = flag.Bool("static", false, "Use static test file")
-var wT *tf64.Tensor
-var yT *tf64.Tensor
-var xT *tf64.Tensor
+var wT tensor.Tensor
+var yT tensor.Tensor
+var xT tensor.Tensor
 
-const Float = T.Float64
+var Float = tensor.Float64
 
 func handleError(err error) {
 	if err != nil {
@@ -43,16 +43,27 @@ func handleError(err error) {
 }
 
 func init() {
-	xBacking := tf64.RandomFloat64(N * feats)
-	wBacking := tf64.RandomFloat64(feats)
-	yBacking := make([]float64, N)
-	for i := range yBacking {
-		yBacking[i] = float64(rand.Intn(2))
+	xBacking := tensor.Random(Float, N*feats)
+	wBacking := tensor.Random(Float, feats)
+	var yBacking interface{}
+	switch Float {
+	case tensor.Float64:
+		backing := make([]float64, N)
+		for i := range backing {
+			backing[i] = float64(rand.Intn(2))
+		}
+		yBacking = backing
+	case tensor.Float32:
+		backing := make([]float32, N)
+		for i := range backing {
+			backing[i] = float32(rand.Intn(2))
+		}
+		yBacking = backing
 	}
 
-	xT = tf64.NewTensor(tf64.WithBacking(xBacking), tf64.WithShape(N, feats))
-	yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N))
-	wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats))
+	xT = tensor.New(tensor.WithBacking(xBacking), tensor.WithShape(N, feats))
+	yT = tensor.New(tensor.WithBacking(yBacking), tensor.WithShape(N))
+	wT = tensor.New(tensor.WithBacking(wBacking), tensor.WithShape(feats))
 }
 
 func main() {
@@ -61,10 +72,11 @@ func main() {
 	log.SetFlags(0)
 
 	if *static {
+		Float = tensor.Float64 // because the loadStatck function only loads []float64
 		wBacking, xBacking, yBacking := loadStatic()
-		xT = tf64.NewTensor(tf64.WithBacking(xBacking), tf64.WithShape(N, feats))
-		yT = tf64.NewTensor(tf64.WithBacking(yBacking), tf64.WithShape(N))
-		wT = tf64.NewTensor(tf64.WithBacking(wBacking), tf64.WithShape(feats))
+		xT = tensor.New(tensor.WithBacking(xBacking), tensor.WithShape(N, feats))
+		yT = tensor.New(tensor.WithBacking(yBacking), tensor.WithShape(N))
+		wT = tensor.New(tensor.WithBacking(wBacking), tensor.WithShape(feats))
 	}
 
 	// T.Use(cblas.Implementation{})

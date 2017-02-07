@@ -120,7 +120,7 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 		var layerCosts []float64
 		for batch := 0; batch < batches; batch++ {
 			var input tensor.Tensor
-			if input, err = tensor.Slice(x, S(start, start+sda.BatchSize)); err != nil {
+			if input, err = x.Slice(S(start, start+sda.BatchSize)); err != nil {
 				return
 			}
 
@@ -224,7 +224,7 @@ func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) 
 		g := sda.g.SubgraphRoots(cost)
 
 		var input tensor.Tensor
-		if input, err = tensor.Slice(x, S(start, end)); err != nil {
+		if input, err = x.Slice(S(start, end)); err != nil {
 			return
 		}
 

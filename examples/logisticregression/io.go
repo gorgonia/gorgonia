@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 )
 
 func loadStatic() (w, x, y []float64) {
@@ -35,7 +35,7 @@ func loadStatic() (w, x, y []float64) {
 		}
 	} else {
 		log.Println("could not read from file")
-		x = tf64.RandomFloat64(N * feats)
+		x = tensor.Random(Float, N*feats).([]float64)
 	}
 
 	w0, err := os.Open("testdata/W_ds1.10.csv")
@@ -59,7 +59,7 @@ func loadStatic() (w, x, y []float64) {
 			log.Fatalf("Expected %d rows. Got %d instead", feats, len(w))
 		}
 	} else {
-		w = tf64.RandomFloat64(feats)
+		w = tensor.Random(Float, feats).([]float64)
 	}
 
 	y0, err := os.Open("testdata/Y_ds1.10.csv")
