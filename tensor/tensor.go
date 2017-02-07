@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"encoding/gob"
 	"fmt"
 	"io"
 	"reflect"
@@ -48,9 +49,9 @@ type Tensor interface {
 
 	// all Tensors are serializable to these formats
 	WriteNpy(io.Writer) error
-	// ReadNpy(io.Reader) error
-	// gob.GobEncoder
-	// gob.GobDecoder
+	ReadNpy(io.Reader) error
+	gob.GobEncoder
+	gob.GobDecoder
 }
 
 // Dotter is used to implement sparse matrices

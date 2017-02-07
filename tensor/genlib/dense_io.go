@@ -38,7 +38,7 @@ func (w binaryWriter) Error() string {
 // This method does not close the writer. Closing (if needed) is deferred to the caller
 func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	var npdt string
-	if npdt, err = t.t.NumpyDtype(); err != nil{
+	if npdt, err = t.t.numpyDtype(); err != nil{
 		return 
 	}
 
@@ -67,6 +67,84 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 		return bw
 	}
 	return nil
+}
+`
+
+const gobEncodeRaw = `func (t *Dense) GobEncode() (p []byte, err error){
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err = encoder.Encode(t.t.id()); err != nil {
+		return
+	}
+
+	if err = encoder.Encode(t.Shape()); err != nil {
+		return
+	}
+
+	if err = encoder.Encode(t.Strides()); err != nil {
+		return
+	}
+
+	switch t.t.Kind() {
+	{{range .Kinds -}}
+	case reflect.{{reflectKind .}}:
+		if err = encoder.Encode(t.{{sliceOf .}}); err != nil {
+			return
+		}
+	{{end -}}
+	case reflect.String:
+		if err = encoder.Encode(t.strings()); err != nil {
+			return
+		}
+	}
+
+	return buf.Bytes(), err
+}
+`
+
+const gobDecodeRaw = `func (t *Dense) GobDecode(p []byte) (err error){
+	buf := bytes.NewBuffer(p)
+	decoder := gob.NewDecoder(buf)
+
+	var dt Dtype
+	var id int
+	if err = decoder.Decode(&id); err != nil {
+		return
+	}
+	if dt, err = fromTypeID(id); err != nil {
+		return
+	}
+	t.t = dt
+
+	var shape Shape
+	if err = decoder.Decode(&shape); err != nil {
+		return
+	}
+
+	var strides []int
+	if err = decoder.Decode(&strides); err != nil {
+		return
+	}
+	t.AP = NewAP(shape, strides)
+
+	switch dt.Kind() {
+	{{range .Kinds -}}
+	case reflect.{{reflectKind . -}}:
+		var data []{{asType .}}
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	{{end -}}
+	case reflect.String:
+		var data []string
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	}
+	t.fix()
+	return t.sanity()
 }
 `
 
@@ -175,15 +253,25 @@ const readNpyRaw = `func (t *Dense) ReadNpy(r io.Reader) (err error){
 `
 
 var (
-	readNpy *template.Template
+	readNpy   *template.Template
+	gobEncode *template.Template
+	gobDecode *template.Template
 )
 
 func init() {
 	readNpy = template.Must(template.New("readNpy").Funcs(funcs).Parse(readNpyRaw))
+	gobEncode = template.Must(template.New("gobEncode").Funcs(funcs).Parse(gobEncodeRaw))
+	gobDecode = template.Must(template.New("gobDecode").Funcs(funcs).Parse(gobDecodeRaw))
 }
 
 func generateDenseIO(f io.Writer, generic *ManyKinds) {
-	fmt.Fprintln(f, writeNpyRaw)
 	mk := &ManyKinds{Kinds: filter(generic.Kinds, isNumber)}
+
+	// writes
+	fmt.Fprintln(f, writeNpyRaw)
+	gobEncode.Execute(f, mk)
+
+	// reads
 	readNpy.Execute(f, mk)
+	gobDecode.Execute(f, mk)
 }

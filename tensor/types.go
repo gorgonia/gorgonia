@@ -25,9 +25,18 @@ func (dt Dtype) Types() hm.Types                               { return nil }
 func (dt Dtype) Format(s fmt.State, c rune)                    { fmt.Fprintf(s, "%s", dt.Name()) }
 func (dt Dtype) Eq(other hm.Type) bool                         { return other == dt }
 
+func (dt Dtype) id() int {
+	for i, v := range allTypes {
+		if v == dt {
+			return i
+		}
+	}
+	return -1
+}
+
 // NumpyDtype returns the Numpy's Dtype equivalent. This is predominantly used in converting a Tensor to a Numpy ndarray,
 // however, not all Dtypes are supported
-func (dt Dtype) NumpyDtype() (string, error) {
+func (dt Dtype) numpyDtype() (string, error) {
 	switch dt {
 	case Bool:
 		return "b1", nil
@@ -62,6 +71,12 @@ func (dt Dtype) NumpyDtype() (string, error) {
 	default:
 		return "v", errors.Errorf("Unsupported Dtype conversion")
 	}
+}
+func fromTypeID(i int) (Dtype, error) {
+	if i > len(allTypes) || i < 0 {
+		return Dtype{}, errors.Errorf("Unsupported Dtype for serialization")
+	}
+	return allTypes[i], nil
 }
 
 func fromNumpyDtype(t string) (Dtype, error) {
@@ -154,6 +169,11 @@ var (
 	Uintptr       = Dtype{reflect.TypeOf(uintptr(0))}
 	UnsafePointer = Dtype{reflect.TypeOf(unsafe.Pointer(&Uintptr))}
 )
+
+// allTypes for indexing
+var allTypes = []Dtype{
+	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+}
 
 // specialized types indicate that there are specialized code generated for these types
 var specializedTypes = []Dtype{

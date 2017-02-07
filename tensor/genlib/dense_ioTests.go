@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"text/template"
 )
 
 const testLoadSaveNumpyRaw = `func TestSaveLoadNumpy(t *testing.T){
@@ -66,6 +67,52 @@ const testLoadSaveNumpyRaw = `func TestSaveLoadNumpy(t *testing.T){
 }
 `
 
+const testGobEncodeDecodeRaw = ` var denseGobTestData = []interface{}{
+	{{range .Kinds -}}
+	[]{{asType .}}{1, 5, 10, {{if hasPrefix .String "uint"}}255{{else}}-1{{end}} },
+	{{end -}}
+	[]string{"hello", "world", "hello", "世界"},
+}
+func TestDense_GobEncodeDecode(t *testing.T){
+	assert := assert.New(t)
+	var err error
+	for _, gtd := range denseGobTestData {
+		buf := new(bytes.Buffer)
+		encoder := gob.NewEncoder(buf)
+		decoder := gob.NewDecoder(buf)
+		
+		T := New(WithShape(2,2), WithBacking(gtd))
+		if err = encoder.Encode(T); err != nil{
+			t.Errorf("Error while encoding %v: %v", gtd, err)
+			continue
+		}
+
+		T2 := new(Dense)
+		if err = decoder.Decode(T2); err != nil {
+			t.Errorf("Error while decoding %v: %v", gtd, err)
+			continue
+		}
+
+		assert.Equal(T.Shape(), T2.Shape())
+		assert.Equal(T.Strides(), T2.Strides())
+		assert.Equal(T.Data(), T2.Data())
+	}
+
+}
+`
+
+var (
+	testGobEncodeDecode *template.Template
+)
+
+func init() {
+	testGobEncodeDecode = template.Must(template.New("gob encode decode").Funcs(funcs).Parse(testGobEncodeDecodeRaw))
+}
+
 func generateDenseIOTests(f io.Writer, generic *ManyKinds) {
+	mk := &ManyKinds{Kinds: filter(generic.Kinds, isNumber)}
 	fmt.Fprintln(f, testLoadSaveNumpyRaw)
+
+	testGobEncodeDecode.Execute(f, mk)
+
 }

@@ -1,7 +1,9 @@
 package tensor
 
 import (
+	"bytes"
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"io"
 	"reflect"
@@ -48,7 +50,7 @@ func (w binaryWriter) Error() string {
 // This method does not close the writer. Closing (if needed) is deferred to the caller
 func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	var npdt string
-	if npdt, err = t.t.NumpyDtype(); err != nil {
+	if npdt, err = t.t.numpyDtype(); err != nil {
 		return
 	}
 
@@ -79,6 +81,86 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	return nil
 }
 
+func (t *Dense) GobEncode() (p []byte, err error) {
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err = encoder.Encode(t.t.id()); err != nil {
+		return
+	}
+
+	if err = encoder.Encode(t.Shape()); err != nil {
+		return
+	}
+
+	if err = encoder.Encode(t.Strides()); err != nil {
+		return
+	}
+
+	switch t.t.Kind() {
+	case reflect.Int:
+		if err = encoder.Encode(t.ints()); err != nil {
+			return
+		}
+	case reflect.Int8:
+		if err = encoder.Encode(t.int8s()); err != nil {
+			return
+		}
+	case reflect.Int16:
+		if err = encoder.Encode(t.int16s()); err != nil {
+			return
+		}
+	case reflect.Int32:
+		if err = encoder.Encode(t.int32s()); err != nil {
+			return
+		}
+	case reflect.Int64:
+		if err = encoder.Encode(t.int64s()); err != nil {
+			return
+		}
+	case reflect.Uint:
+		if err = encoder.Encode(t.uints()); err != nil {
+			return
+		}
+	case reflect.Uint8:
+		if err = encoder.Encode(t.uint8s()); err != nil {
+			return
+		}
+	case reflect.Uint16:
+		if err = encoder.Encode(t.uint16s()); err != nil {
+			return
+		}
+	case reflect.Uint32:
+		if err = encoder.Encode(t.uint32s()); err != nil {
+			return
+		}
+	case reflect.Uint64:
+		if err = encoder.Encode(t.uint64s()); err != nil {
+			return
+		}
+	case reflect.Float32:
+		if err = encoder.Encode(t.float32s()); err != nil {
+			return
+		}
+	case reflect.Float64:
+		if err = encoder.Encode(t.float64s()); err != nil {
+			return
+		}
+	case reflect.Complex64:
+		if err = encoder.Encode(t.complex64s()); err != nil {
+			return
+		}
+	case reflect.Complex128:
+		if err = encoder.Encode(t.complex128s()); err != nil {
+			return
+		}
+	case reflect.String:
+		if err = encoder.Encode(t.strings()); err != nil {
+			return
+		}
+	}
+
+	return buf.Bytes(), err
+}
 func (t *Dense) ReadNpy(r io.Reader) (err error) {
 	var magic [6]byte
 	if _, err = r.Read(magic[:]); err != nil {
@@ -267,6 +349,126 @@ func (t *Dense) ReadNpy(r io.Reader) (err error) {
 	}
 	t.AP = BorrowAP(len(shape))
 	t.setShape(shape...)
+	t.fix()
+	return t.sanity()
+}
+func (t *Dense) GobDecode(p []byte) (err error) {
+	buf := bytes.NewBuffer(p)
+	decoder := gob.NewDecoder(buf)
+
+	var dt Dtype
+	var id int
+	if err = decoder.Decode(&id); err != nil {
+		return
+	}
+	if dt, err = fromTypeID(id); err != nil {
+		return
+	}
+	t.t = dt
+
+	var shape Shape
+	if err = decoder.Decode(&shape); err != nil {
+		return
+	}
+
+	var strides []int
+	if err = decoder.Decode(&strides); err != nil {
+		return
+	}
+	t.AP = NewAP(shape, strides)
+
+	switch dt.Kind() {
+	case reflect.Int:
+		var data []int
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Int8:
+		var data []int8
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Int16:
+		var data []int16
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Int32:
+		var data []int32
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Int64:
+		var data []int64
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Uint:
+		var data []uint
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Uint8:
+		var data []uint8
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Uint16:
+		var data []uint16
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Uint32:
+		var data []uint32
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Uint64:
+		var data []uint64
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Float32:
+		var data []float32
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Float64:
+		var data []float64
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Complex64:
+		var data []complex64
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.Complex128:
+		var data []complex128
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	case reflect.String:
+		var data []string
+		if err = decoder.Decode(&data); err != nil {
+			return
+		}
+		t.fromSlice(data)
+	}
 	t.fix()
 	return t.sanity()
 }

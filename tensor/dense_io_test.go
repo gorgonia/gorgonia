@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"bytes"
+	"encoding/gob"
 	"os"
 	"os/exec"
 	"testing"
@@ -70,4 +71,49 @@ func TestSaveLoadNumpy(t *testing.T) {
 	assert.Equal(T.Shape(), T2.Shape())
 	assert.Equal(T.Strides(), T2.Strides())
 	assert.Equal(T.Data(), T2.Data())
+}
+
+var denseGobTestData = []interface{}{
+	[]int{1, 5, 10, -1},
+	[]int8{1, 5, 10, -1},
+	[]int16{1, 5, 10, -1},
+	[]int32{1, 5, 10, -1},
+	[]int64{1, 5, 10, -1},
+	[]uint{1, 5, 10, 255},
+	[]uint8{1, 5, 10, 255},
+	[]uint16{1, 5, 10, 255},
+	[]uint32{1, 5, 10, 255},
+	[]uint64{1, 5, 10, 255},
+	[]float32{1, 5, 10, -1},
+	[]float64{1, 5, 10, -1},
+	[]complex64{1, 5, 10, -1},
+	[]complex128{1, 5, 10, -1},
+	[]string{"hello", "world", "hello", "世界"},
+}
+
+func TestDense_GobEncodeDecode(t *testing.T) {
+	assert := assert.New(t)
+	var err error
+	for _, gtd := range denseGobTestData {
+		buf := new(bytes.Buffer)
+		encoder := gob.NewEncoder(buf)
+		decoder := gob.NewDecoder(buf)
+
+		T := New(WithShape(2, 2), WithBacking(gtd))
+		if err = encoder.Encode(T); err != nil {
+			t.Errorf("Error while encoding %v: %v", gtd, err)
+			continue
+		}
+
+		T2 := new(Dense)
+		if err = decoder.Decode(T2); err != nil {
+			t.Errorf("Error while decoding %v: %v", gtd, err)
+			continue
+		}
+
+		assert.Equal(T.Shape(), T2.Shape())
+		assert.Equal(T.Strides(), T2.Strides())
+		assert.Equal(T.Data(), T2.Data())
+	}
+
 }
