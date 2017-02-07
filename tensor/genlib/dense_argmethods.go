@@ -14,7 +14,8 @@ type ArgMethod struct {
 
 var argnames = []string{"Argmax", "Argmin"}
 
-const argMethodRaw = `func (t *Dense) {{.ArgName}}(axis int)(retVal *Dense, err error){
+const argMethodRaw = `// {{.ArgName}} finds the index of the {{if eq .ArgName "Argmax"}}max{{else}}min{{end}} value along the axis provided
+func (t *Dense) {{.ArgName}}(axis int)(retVal *Dense, err error){
 	if axis == AllAxes {
 		return t.{{lower .ArgName}}(nil)
 	}

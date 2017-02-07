@@ -87,6 +87,7 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 
 /* Add */
 
+// Add performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
@@ -1846,6 +1847,7 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 
 /* Sub */
 
+// Sub performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
@@ -3605,6 +3607,7 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 
 /* Mul */
 
+// Mul performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
@@ -5364,6 +5367,7 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 
 /* Div */
 
+// Div performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
@@ -7815,6 +7819,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 
 /* Pow */
 
+// Pow performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {

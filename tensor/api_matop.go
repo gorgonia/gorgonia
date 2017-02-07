@@ -44,6 +44,7 @@ func Concat(axis int, t Tensor, others ...Tensor) (retVal Tensor, err error) {
 	panic("Unreachable")
 }
 
+// Copy copies a tensor to another. For *Dense views, only the relevant slots are copied.
 func Copy(dst, src Tensor) error {
 	switch st := src.(type) {
 	case *Dense:

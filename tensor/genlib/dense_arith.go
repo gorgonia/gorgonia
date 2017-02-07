@@ -152,7 +152,8 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 }
 `
 
-const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err error){
+const denseDenseArithRaw = `// {{.OpName}} performs the operation on another *Dense. It takes a list of FuncOpts.
+func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err error){
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
 		return nil, err

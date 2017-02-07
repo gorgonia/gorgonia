@@ -7,11 +7,12 @@ Package `tensor` is a package that provides efficient, generic n-dimensional arr
 
 ## Generic Features ##
 
+## How This Package is Developed ##
 
-## Known Bugs ##
-Tests: 
-	- Inverse tests fail, and have been disabled (not generated)
-	- Bugs involving changing from int/uint type to float type and back
+
+## Things Knowingly Untested For ##
+- Inverse tests fail, and have been disabled (not generated)
+- Bugs involving changing from int/uint type to float type and back
 		- Identity tests for Pow
 
 ### Edge Cases: ###
@@ -25,8 +26,9 @@ Due to use of `testing/quick`, a number of edge cases were found, and primarily 
 		// identity property of exponentiation: a ^ 1 ==  a
 		a := New(WithBacking([]int(1,2,3)))
 		b, _ := a.PowOf(1) // or a.Pow(New(WithBacking([]{1,1,1})))
-		t := a.ElemEq(b) // false
-		```
+		t := a.ElemEq(b) // []bool{false, false, false}
+	```
+
 2. Large number float operations - inverse of Vector-Scalar ops have not been generated because tests to handle the correctness of weird cases haven't been written
 
 TODO: 

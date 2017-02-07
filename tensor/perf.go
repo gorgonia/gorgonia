@@ -132,7 +132,7 @@ func ReturnTensor(t Tensor) {
 			tt.transposeWith = nil
 		}
 
-		tt.Unlock()
+		tt.unlock()
 		pool.Put(tt)
 	}
 }

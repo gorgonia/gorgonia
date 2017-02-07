@@ -169,7 +169,7 @@ func (t *Dense) Transpose() {
 	}()
 
 	expShape := t.Shape()
-	expStrides := expShape.CalcStrides() // important! because the strides would have changed once the underlying data changed
+	expStrides := expShape.calcStrides() // important! because the strides would have changed once the underlying data changed
 	defer ReturnInts(expStrides)
 	defer func() {
 		t.setShape(expShape...)
@@ -415,7 +415,7 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 		cur++
 	}
 
-	newStrides := newShape.CalcStrides()
+	newStrides := newShape.calcStrides()
 	ap := NewAP(newShape, newStrides)
 
 	allNoMat := !t.IsMaterializable()

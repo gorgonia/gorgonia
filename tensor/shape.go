@@ -11,11 +11,12 @@ func ScalarShape() Shape { return Shape{} }
 type Shape []int
 type Strides []int
 
+// TotalSize returns the number of elements expected in a Tensor of a certain shape
 func (s Shape) TotalSize() int {
 	return ProdInts([]int(s))
 }
 
-func (s Shape) CalcStrides() []int {
+func (s Shape) calcStrides() []int {
 	// retVal := make([]int, len(s))
 	retVal := BorrowInts(len(s))
 
@@ -78,7 +79,7 @@ func (s Shape) Eq(other Shape) bool {
 }
 
 func (s Shape) Clone() Shape {
-	retVal := make(Shape, len(s))
+	retVal := make(Shape, len(s), len(s))
 	copy(retVal, s)
 	return retVal
 }

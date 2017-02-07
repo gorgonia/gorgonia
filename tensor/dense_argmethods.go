@@ -12,6 +12,7 @@ GENERATED FILE. DO NOT EDIT
 
 /* Argmax */
 
+// Argmax finds the index of the max value along the axis provided
 func (t *Dense) Argmax(axis int) (retVal *Dense, err error) {
 	if axis == AllAxes {
 		return t.argmax(nil)
@@ -366,6 +367,7 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 
 /* Argmin */
 
+// Argmin finds the index of the min value along the axis provided
 func (t *Dense) Argmin(axis int) (retVal *Dense, err error) {
 	if axis == AllAxes {
 		return t.argmin(nil)
