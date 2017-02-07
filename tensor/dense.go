@@ -24,6 +24,11 @@ type Dense struct {
 	viewOf *Dense
 }
 
+// NewDense creates a new *Dense. It tries its best to get from the tensor pool.
+func NewDense(dt Dtype, shape Shape, opts ...ConsOpt) *Dense {
+	return recycledDense(dt, shape, opts...)
+}
+
 func recycledDense(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) {
 	retVal = recycledDenseNoFix(dt, shape, opts...)
 	retVal.fix()

@@ -763,7 +763,7 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	switch T := t.(type) {
 	case *tensor.Dense:
-		grad := tensor.New(tensor.Of(T.Dtype()), tensor.WithShape(T.Shape().Clone()...))
+		grad := tensor.NewDense(T.Dtype(), T.Shape().Clone())
 		var v tensor.Tensor
 		if v, err = grad.Slice(slices...); err != nil {
 			return nil, errors.Wrapf(err, sliceFail, slices)
