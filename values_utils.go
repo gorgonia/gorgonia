@@ -21,7 +21,7 @@ type ValueEqualer interface {
 }
 
 type Cloner interface {
-	Clone() (Value, error)
+	Clone() interface{}
 }
 
 type CopierTo interface {
@@ -112,9 +112,9 @@ func CloneValue(v Value) (Value, error) {
 	case B:
 		return vt, nil
 	case tensor.Tensor:
-		return tensor.Clone(vt).(tensor.Tensor), nil
+		return vt.Clone.(tensor.Tensor), nil
 	case Cloner:
-		return vt.Clone()
+		return vt.Clone().(Value), nil
 	default:
 		return nil, errors.Errorf("Unable to clone value of type %T", v)
 	}

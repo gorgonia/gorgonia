@@ -1019,6 +1019,10 @@ func copyDenseIter(dest, src *Dense, diter, siter *FlatIterator) (int, error) {
 		panic("Cannot copy arrays of different types")
 	}
 
+	if diter == nil && siter == nil && !dest.IsMaterializable() && !src.IsMaterializable() {
+		return copyDense(dest, src), nil
+	}
+
 	if diter == nil {
 		diter = NewFlatIterator(dest.AP)
 	}

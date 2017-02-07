@@ -43,3 +43,24 @@ func Concat(axis int, t Tensor, others ...Tensor) (retVal Tensor, err error) {
 	}
 	panic("Unreachable")
 }
+
+func Copy(dst, src Tensor) error {
+	switch st := src.(type) {
+	case *Dense:
+		dt, ok := dst.(*Dense)
+		if !ok {
+			return errors.Errorf("Cannot copy from *Dense to %T", dst)
+		}
+
+		var siter, diter *FlatIterator
+		if st.IsMaterializable() {
+			siter = NewFlatIterator(st.AP)
+		}
+		if dt.IsMaterializable() {
+			diter = NewFlatIterator(dt.AP)
+		}
+		_, err := copyDenseIter(dt, st, diter, siter)
+		return err
+	}
+	panic("Unreachable")
+}

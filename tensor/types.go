@@ -7,6 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 )
 
 // Dtype represents a data type of a Tensor. Concretely it's implemented as an embedded reflect.Type
@@ -23,6 +24,89 @@ func (dt Dtype) Normalize(k, v hm.TypeVarSet) (hm.Type, error) { return dt, nil 
 func (dt Dtype) Types() hm.Types                               { return nil }
 func (dt Dtype) Format(s fmt.State, c rune)                    { fmt.Fprintf(s, "%s", dt.Name()) }
 func (dt Dtype) Eq(other hm.Type) bool                         { return other == dt }
+
+// NumpyDtype returns the Numpy's Dtype equivalent. This is predominantly used in converting a Tensor to a Numpy ndarray,
+// however, not all Dtypes are supported
+func (dt Dtype) NumpyDtype() (string, error) {
+	switch dt {
+	case Bool:
+		return "b1", nil
+	case Int:
+		return fmt.Sprintf("i%d", dt.Size()), nil
+	case Int8:
+		return "i1", nil
+	case Int16:
+		return "i2", nil
+	case Int32:
+		return "i4", nil
+	case Int64:
+		return "i8", nil
+	case Uint:
+		return fmt.Sprintf("u%d", dt.Size()), nil
+	case Uint8:
+		return "u1", nil
+	case Uint16:
+		return "u2", nil
+	case Uint32:
+		return "u4", nil
+	case Uint64:
+		return "u8", nil
+	case Float32:
+		return "f4", nil
+	case Float64:
+		return "f8", nil
+	case Complex64:
+		return "c8", nil
+	case Complex128:
+		return "c16", nil
+	default:
+		return "v", errors.Errorf("Unsupported Dtype conversion")
+	}
+}
+
+func fromNumpyDtype(t string) (Dtype, error) {
+	switch t {
+	case "b1":
+		return Bool, nil
+	case "i1":
+		return Int8, nil
+	case "i2":
+		return Int16, nil
+	case "i4":
+		if Int.Size() == 4 {
+			return Int, nil
+		}
+		return Int32, nil
+	case "i8":
+		if Int.Size() == 8 {
+			return Int, nil
+		}
+		return Int64, nil
+	case "u1":
+		return Uint8, nil
+	case "u2":
+		return Uint16, nil
+	case "u4":
+		if Uint.Size() == 4 {
+			return Uint, nil
+		}
+		return Uint32, nil
+	case "u8":
+		if Uint.Size() == 8 {
+			return Uint, nil
+		}
+		return Uint64, nil
+	case "f4":
+		return Float32, nil
+	case "f8":
+		return Float64, nil
+	case "c8":
+		return Complex64, nil
+	case "c16":
+		return Complex128, nil
+	}
+	return Dtype{}, errors.Errorf("Unsupported Dtype conversion from %q to Dtype", t)
+}
 
 var parameterizedKinds = [...]reflect.Kind{
 	reflect.Array,

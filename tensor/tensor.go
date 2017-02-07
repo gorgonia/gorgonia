@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -46,7 +47,7 @@ type Tensor interface {
 	fmt.Stringer
 
 	// all Tensors are serializable to these formats
-	// WriteNpy(io.Writer) error
+	WriteNpy(io.Writer) error
 	// ReadNpy(io.Reader) error
 	// gob.GobEncoder
 	// gob.GobDecoder
