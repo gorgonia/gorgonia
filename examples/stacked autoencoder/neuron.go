@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	. "github.com/chewxy/gorgonia"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 )
 
 type Neuron struct {
@@ -93,7 +93,7 @@ func (n *Neuron) GobDecode(p []byte) (err error) {
 	buf := bytes.NewBuffer(p)
 	decoder := gob.NewDecoder(buf)
 
-	var wT, bT *tf64.Tensor
+	var wT, bT *tensor.Dense
 	if err = decoder.Decode(&wT); err != nil {
 		return
 	}

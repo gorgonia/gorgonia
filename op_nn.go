@@ -6,9 +6,7 @@ import (
 	"hash/fnv"
 	"time"
 
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
@@ -33,16 +31,16 @@ const (
 
 type randomOp struct {
 	which randomness
-	shape types.Shape
-	dt    Dtype
+	shape tensor.Shape
+	dt    tensor.Dtype
 
 	a, b float64 // when uniform, a,b = low, high; when gaussian, a,b = mean, stdev
 }
 
-func makeRandomOp(which randomness, dt Dtype, a, b float64, shape ...int) randomOp {
+func makeRandomOp(which randomness, dt tensor.Dtype, a, b float64, shape ...int) randomOp {
 	return randomOp{
 		which: which,
-		shape: types.Shape(shape),
+		shape: tensor.Shape(shape),
 		dt:    dt,
 		a:     a,
 		b:     b,
@@ -61,7 +59,7 @@ func (op randomOp) Type() hm.Type {
 	return tt
 }
 
-func (op randomOp) InferShape(...DimSizer) (types.Shape, error) { return op.shape, nil }
+func (op randomOp) InferShape(...DimSizer) (tensor.Shape, error) { return op.shape, nil }
 
 func (op randomOp) Do(...Value) (retVal Value, err error) {
 	if op.shape.IsScalar() {
@@ -104,26 +102,26 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 		switch op.which {
 		case uniform:
 			backing := Uniform64(op.a, op.b, op.shape...)
-			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian64(op.a, op.b, op.shape...)
-			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial64(op.a, op.b, op.shape...)
-			retVal = tf64.NewTensor(tf64.WithBacking(backing), tf64.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		}
 		return
 	case Float32:
 		switch op.which {
 		case uniform:
 			backing := Uniform32(op.a, op.b, op.shape...)
-			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case gaussian:
 			backing := Gaussian32(op.a, op.b, op.shape...)
-			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		case binomial:
 			backing := Binomial32(op.a, op.b, op.shape...)
-			retVal = tf32.NewTensor(tf32.WithBacking(backing), tf32.WithShape(op.shape...))
+			retVal = tensor.New(tensor.WithBacking(backing), tensor.WithShape(op.shape...))
 		}
 		return
 	default:

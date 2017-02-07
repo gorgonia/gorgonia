@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -15,7 +14,7 @@ type dualValue struct {
 }
 
 func (dv *dualValue) SetDeriv(d Value) error {
-	if t, ok := d.(types.Tensor); ok && t.IsScalar() {
+	if t, ok := d.(tensor.Tensor); ok && t.IsScalar() {
 		d, _ = anyToScalar(t.ScalarValue())
 	}
 	dv.d = d
@@ -45,8 +44,8 @@ func (dv *dualValue) Clone() (retVal Value, err error) {
 	return
 }
 
-func (dv *dualValue) Type() hm.Type { return TypeOf(dv.Value) }
-func (dv *dualValue) Dtype() Dtype  { return DtypeOf(dv.Value) }
+func (dv *dualValue) Type() hm.Type       { return TypeOf(dv.Value) }
+func (dv *dualValue) Dtype() tensor.Dtype { return DtypeOf(dv.Value) }
 
 func (dv *dualValue) String() string {
 	return fmt.Sprintf("%#+v", dv.Value)
@@ -118,9 +117,9 @@ func variableDV(val Value) *dualValue {
 	switch v := val.(type) {
 	case Scalar:
 		retVal.d = one(DtypeOf(v))
-	case types.Tensor:
+	case tensor.Tensor:
 		shp := v.Shape()
-		dt := dtypeToTensorDtype(DtypeOf(v))
+		dt := DtypeOf(v)
 		retVal.d = tensor.Ones(dt, shp...)
 	default:
 		panic(fmt.Sprintf("%v(%T) not handled yet", v, v))
@@ -252,8 +251,13 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	switch v := retVal.d.(type) {
 	case Scalar:
 		retVal.d = one(DtypeOf(v))
-	case types.Tensor:
-		err = v.SetAll(1)
+	case tensor.Tensor:
+		switch v.Dtype() {
+		case tensor.Float64:
+			err = v.Memset(float64(1))
+		case tensor.Float32:
+			err = v.Memset(float32(1))
+		}
 		retVal.d = v
 	default:
 		err = errors.Errorf(nyiTypeFail, "dvBindVar0", retVal.d)

@@ -5,7 +5,7 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -65,7 +65,7 @@ func extractF64(v Value) float64 {
 	switch vt := v.(type) {
 	case F64:
 		return float64(vt)
-	case types.Tensor:
+	case tensor.Tensor:
 		if !vt.IsScalar() {
 			panic("Got a non scalar result!")
 		}
@@ -84,7 +84,7 @@ func extractF32(v Value) float32 {
 	switch vt := v.(type) {
 	case F32:
 		return float32(vt)
-	case types.Tensor:
+	case tensor.Tensor:
 		if !vt.IsScalar() {
 			panic("Got a non scalar result!")
 		}

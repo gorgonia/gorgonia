@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 )
 
 var cloneValTests = []struct {
@@ -20,8 +19,8 @@ var cloneValTests = []struct {
 	{U8(10), false},
 	{B(true), false},
 
-	{tensor.New(types.Float64, tensor.WithShape(2, 4, 6)), true},
-	{tensor.New(types.Float32, tensor.WithShape(2, 4, 6)), true},
+	{tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(2, 4, 6)), true},
+	{tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2, 4, 6)), true},
 }
 
 func TestCloneValue(t *testing.T) {

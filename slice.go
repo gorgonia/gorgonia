@@ -1,7 +1,7 @@
 package gorgonia
 
 // type SliceValue interface {
-// 	types.Slice
+// 	tensor.Slice
 // 	Value
 // }
 
@@ -10,7 +10,7 @@ type sli struct {
 	start, end, step int
 }
 
-// S creates a types.Slice.
+// S creates a tensor.Slice.
 // end is optional. It should be passed in as the first param of the optionals.
 // step is optional. It should be passed in as the second param of the optionals.
 //
@@ -42,7 +42,7 @@ func (s sli) End() int   { return s.end }
 func (s sli) Step() int  { return s.step }
 
 // sli implements SliceValue such that a slice can be passed into Let
-// func (s sli) Shape() types.Shape             { return nil }
+// func (s sli) Shape() tensor.Shape             { return nil }
 // func (s sli) Size() int                      { return -1 }
 // func (s sli) Data() interface{}              { return s }
 // func (s sli) Format(state fmt.State, c rune) { fmt.Fprintf(state, "%d:%d:%d", s.start, s.end, s.step) }

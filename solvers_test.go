@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,8 +32,8 @@ func clampFloat32(v, min, max float32) float32 {
 func tf64Node() Nodes {
 	backingV := []float64{1, 2, 3, 4}
 	backingD := []float64{0.5, -10, 10, 0.5}
-	v := tensor.New(types.Float64, tensor.WithBacking(backingV), tensor.WithShape(2, 2))
-	d := tensor.New(types.Float64, tensor.WithBacking(backingD), tensor.WithShape(2, 2))
+	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
+	d := tensor.New(tensor.WithBacking(backingD), tensor.WithShape(2, 2))
 
 	dv := dvUnit0(v)
 	dv.d = d
@@ -50,8 +49,8 @@ func tf32Node() Nodes {
 	backingV := []float32{1, 2, 3, 4}
 	backingD := []float32{0.5, -10, 10, 0.5}
 
-	v := tensor.New(types.Float32, tensor.WithBacking(backingV), tensor.WithShape(2, 2))
-	d := tensor.New(types.Float32, tensor.WithBacking(backingD), tensor.WithShape(2, 2))
+	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
+	d := tensor.New(tensor.WithBacking(backingD), tensor.WithShape(2, 2))
 
 	dv := dvUnit0(v)
 	dv.d = d
@@ -90,7 +89,7 @@ func manualRMSProp64(t *testing.T, s *RMSPropSolver, model Nodes) {
 			t.Error(err)
 		}
 
-		sCache := s.cache[0].Value.(types.Tensor)
+		sCache := s.cache[0].Value.(tensor.Tensor)
 		assert.Equal(correct, backingV, "Iteration: %d", i)
 		assert.Equal(cached, sCache.Data(), "Iteration: %d", i)
 
@@ -130,7 +129,7 @@ func manualRMSProp32(t *testing.T, s *RMSPropSolver, model Nodes) {
 			t.Error(err)
 		}
 
-		sCache := s.cache[0].Value.(types.Tensor)
+		sCache := s.cache[0].Value.(tensor.Tensor)
 		assert.True(floatsEqual32(correct, backingV))
 		assert.True(floatsEqual32(cached, sCache.Data().([]float32)))
 	}

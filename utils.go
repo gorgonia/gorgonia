@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	ti "github.com/chewxy/gorgonia/tensor/i"
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/math32"
 	"github.com/gonum/graph"
 	"github.com/pkg/errors"
@@ -29,23 +26,8 @@ func nodeToGraphNode(in []*Node) (out []graph.Node) {
 	return
 }
 
-func dtypeToDtype(t types.Dtype) Dtype {
-	if t >= types.MAXDTYPE || Dtype(t) >= Ptr {
-		panic("Unsupported Dtype")
-	}
-	return Dtype(t)
-}
-
-func dtypeToTensorDtype(t Dtype) types.Dtype {
-	if t >= Ptr || types.Dtype(t) >= types.MAXDTYPE {
-		panic("Unsupported Dtype")
-	}
-	return types.Dtype(t)
-}
-
-func tensorInfo(t types.Tensor) (dt Dtype, dim int) {
-	tdt := t.Dtype()
-	dt = dtypeToDtype(tdt)
+func tensorInfo(t tensor.Tensor) (dt tensor.Dtype, dim int) {
+	dt = t.Dtype()
 	dim = t.Dims()
 	return
 }
@@ -83,11 +65,11 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 	return
 }
 
-func valuesToTensors(values []Value) (retVal []types.Tensor, err error) {
-	retVal = make([]types.Tensor, len(values))
+func valuesToTensors(values []Value) (retVal []tensor.Tensor, err error) {
+	retVal = make([]tensor.Tensor, len(values))
 	for i, v := range values {
-		if vt, ok := v.(types.Tensor); !ok {
-			return nil, errors.Errorf("Expected values to all be types.Tensor. Got %v of %T in %dth index of the slice", v, v, i)
+		if vt, ok := v.(tensor.Tensor); !ok {
+			return nil, errors.Errorf("Expected values to all be tensor.Tensor. Got %v of %T in %dth index of the slice", v, v, i)
 		} else {
 			retVal[i] = vt
 		}
@@ -120,22 +102,11 @@ func intRange(start, end int) []int {
 	return retVal
 }
 
-func ones(dt Dtype, sizes ...int) (retVal Value) {
+func ones(dt tensor.Dtype, sizes ...int) (retVal Value) {
 	if len(sizes) == 0 {
 		return one(dt)
 	}
-
-	switch dt {
-	case Float64:
-		return tf64.Ones(sizes...)
-	case Float32:
-		return tf32.Ones(sizes...)
-	case Int:
-		return ti.Ones(sizes...)
-	default:
-		panic(fmt.Sprintf("Dtype of %v not yet implemented for ones()"))
-	}
-	return
+	return tensor.Ones(dt, sizes...)
 }
 
 func hasInf(v Value) bool {
@@ -144,19 +115,25 @@ func hasInf(v Value) bool {
 		return math.IsInf(float64(vt), 0)
 	case F32:
 		return math32.IsInf(float32(vt), 0)
-	case *tf64.Tensor:
-		data := vt.Data().([]float64)
-		for _, datum := range data {
-			if math.IsInf(datum, 0) {
-				return true
-			}
+	case *tensor.Dense:
+		dt := vt.Dtype()
+		if dt != tensor.Float64 && dt != tensor.Float32 {
+			return false
 		}
-		return false
-	case *tf32.Tensor:
-		data := vt.Data().([]float32)
-		for _, datum := range data {
-			if math32.IsInf(datum, 0) {
-				return true
+		switch dt {
+		case tensor.Float32:
+			data := vt.Data().([]float32)
+			for _, datum := range data {
+				if math32.IsInf(datum, 0) {
+					return true
+				}
+			}
+		case tensor.Float64:
+			data := vt.Data().([]float64)
+			for _, datum := range data {
+				if math.IsInf(datum, 0) {
+					return true
+				}
 			}
 		}
 		return false
@@ -174,19 +151,25 @@ func hasNaN(v Value) bool {
 		return math.IsNaN(float64(vt))
 	case F32:
 		return math32.IsNaN(float32(vt))
-	case *tf64.Tensor:
-		data := vt.Data().([]float64)
-		for _, datum := range data {
-			if math.IsNaN(datum) {
-				return true
-			}
+	case *tensor.Dense:
+		dt := vt.Dtype()
+		if dt != tensor.Float64 && dt != tensor.Float32 {
+			return false
 		}
-		return false
-	case *tf32.Tensor:
-		data := vt.Data().([]float32)
-		for _, datum := range data {
-			if math32.IsNaN(datum) {
-				return true
+		switch dt {
+		case tensor.Float32:
+			data := vt.Data().([]float32)
+			for _, datum := range data {
+				if math32.IsNaN(datum) {
+					return true
+				}
+			}
+		case tensor.Float64:
+			data := vt.Data().([]float64)
+			for _, datum := range data {
+				if math.IsNaN(datum) {
+					return true
+				}
 			}
 		}
 		return false

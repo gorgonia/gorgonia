@@ -14,9 +14,6 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -50,8 +47,8 @@ func (op maxOp) Type() hm.Type {
 	return hm.NewFnType(t, retType)
 }
 
-func (op maxOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
-func (op maxOp) DiffWRT(i int) []bool                        { return []bool{true} }
+func (op maxOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO, THIS IS INCORRECT
+func (op maxOp) DiffWRT(i int) []bool                         { return []bool{true} }
 
 func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
@@ -128,10 +125,10 @@ func (op maxOp) isUnary() bool  { return true }
 type sumOp struct {
 	along      axes
 	d          int
-	inputShape types.Shape
+	inputShape tensor.Shape
 }
 
-func newSumOp(along axes, s types.Shape, d int) sumOp {
+func newSumOp(along axes, s tensor.Shape, d int) sumOp {
 	return sumOp{
 		along:      along,
 		d:          d,
@@ -152,15 +149,15 @@ func (op sumOp) Type() hm.Type {
 	}
 
 	// if it's a monotonic axes, it's basically summing everything.
-	if monotonic, incr1 := types.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(op.inputShape) {
+	if monotonic, incr1 := tensor.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(op.inputShape) {
 		return hm.NewFnType(t, a)
 	}
 
 	return hm.NewFnType(t, newTensorType(op.d-1, a))
 }
 
-func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
-	in := inputs[0].(types.Shape)
+func (op sumOp) InferShape(inputs ...DimSizer) (shape tensor.Shape, err error) {
+	in := inputs[0].(tensor.Shape)
 	shapeLogf("input shape: %v", in)
 	switch {
 	case in.IsScalar():
@@ -177,7 +174,7 @@ func (op sumOp) InferShape(inputs ...DimSizer) (shape types.Shape, err error) {
 		}
 
 		// special case (sum all)
-		if monotonic, incr1 := types.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(shape) && op.along[0] == 0 {
+		if monotonic, incr1 := tensor.IsMonotonicInts(op.along); monotonic && incr1 && len(op.along) == len(shape) && op.along[0] == 0 {
 			shape = scalarShape
 			return
 		}
@@ -242,13 +239,13 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	ydv := output.boundTo.(*dualValue)
 	xShape := xdv.Value.Shape()
 
-	var T types.Tensor
+	var T tensor.Tensor
 	switch ydvd := ydv.d.(type) {
 	case Scalar:
 		dt := DtypeOf(ydvd)
-		T = tensor.New(dt.TensorDtype(), tensor.WithShape(xdv.d.Shape().Clone()...))
-		T.SetAll(ydvd.Any())
-	case types.Tensor:
+		T = tensor.New(tensor.Of(dt), tensor.WithShape(xdv.d.Shape().Clone()...))
+		T.Memset(ydvd.Any())
+	case tensor.Tensor:
 		// handle broadcasting
 		if ydvd.Shape().Dims() == xdv.d.Shape().Dims()-len(op.along) {
 			newShape := xdv.d.Shape().Clone()
@@ -301,10 +298,10 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 
 	a := inputs[0]
-	at := a.(types.Tensor)
+	at := a.(tensor.Tensor)
 	switch t := at.(type) {
-	case *tf64.Tensor:
-		var ret *tf64.Tensor
+	case *tensor.Dense:
+		var ret *tensor.Dense
 		if ret, err = t.Sum(op.along...); err == nil {
 			if ret.IsScalar() {
 				retVal, _ = anyToScalar(ret.ScalarValue())
@@ -312,18 +309,7 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 				retVal = ret
 			}
 		} else {
-			return nil, errors.Wrap(err, "failed to apply *tf64.Tensor.Sum()")
-		}
-	case *tf32.Tensor:
-		var ret *tf32.Tensor
-		if ret, err = t.Sum(op.along...); err == nil {
-			if ret.IsScalar() {
-				retVal, _ = anyToScalar(ret.ScalarValue())
-			} else {
-				retVal = ret
-			}
-		} else {
-			return nil, errors.Wrap(err, "failed to apply *tf32.Tensor.Sum()")
+			return nil, errors.Wrap(err, "failed to apply *tensor.Dense.Sum()")
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "sumOp.Do()", at)

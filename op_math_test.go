@@ -3,12 +3,12 @@ package gorgonia
 import (
 	"testing"
 
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
+	"github.com/chewxy/gorgonia/tensor"
 )
 
 func TestBasicArithmeticDo(t *testing.T) {
 	g := NewGraph()
-	xb := tf64.NewTensor(tf64.WithBacking([]float64{1, 2, 3, 4}))
+	xb := tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}))
 	x := NewVector(g, Float64, WithValue(xb))
 
 	res := Must(Sub(onef64, x))

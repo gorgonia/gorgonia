@@ -3,34 +3,21 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 )
 
-// Dtype is data type
-type Dtype byte
+var (
+	Float64 = tensor.Float64
+	Float32 = tensor.Float32
+	Int     = tensor.Int
+	Int64   = tensor.Int64
+	Int32   = tensor.Int32
+	Byte    = tensor.Uint8
+	Bool    = tensor.Bool
 
-const (
-	Float64 Dtype = iota
-	Float32
-	Int
-	Int64
-	Int32
-	Byte
-	Bool
-
-	Ptr // equivalent to interface{}. Ugh Ugh Ugh
-	MAXDTYPE
+	Ptr = tensor.UnsafePointer // equivalent to interface{}. Ugh Ugh Ugh
 )
-
-func (t Dtype) Name() string                                  { return t.String() }
-func (t Dtype) Apply(hm.Subs) hm.Substitutable                { return t }
-func (t Dtype) FreeTypeVar() hm.TypeVarSet                    { return nil }
-func (t Dtype) Normalize(k, v hm.TypeVarSet) (hm.Type, error) { return t, nil }
-func (t Dtype) Types() hm.Types                               { return nil }
-func (t Dtype) Format(state fmt.State, c rune)                { state.Write([]byte(t.String())) }
-func (t Dtype) Eq(other hm.Type) bool                         { return t == other }
-func (t Dtype) TensorDtype() types.Dtype                      { return types.Dtype(t) }
 
 /*Tensor Type*/
 

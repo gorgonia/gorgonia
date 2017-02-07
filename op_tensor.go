@@ -8,11 +8,6 @@ import (
 	"hash/fnv"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tb "github.com/chewxy/gorgonia/tensor/b"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	ti "github.com/chewxy/gorgonia/tensor/i"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -36,29 +31,29 @@ func (op atOp) Type() hm.Type {
 	return hm.NewFnType(tt, a)
 }
 
-func (op atOp) ReturnsPtr() bool                                       { return false }
-func (op atOp) OverwritesInput() int                                   { return -1 }
-func (op atOp) CallsExtern() bool                                      { return false }
-func (op atOp) InferShape(...DimSizer) (retVal types.Shape, err error) { return scalarShape, nil }
-func (op atOp) DiffWRT(i int) []bool                                   { return make([]bool, i) }
-func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)             { return nil, nondiffErr(op) }
-func (op atOp) String() string                                         { return fmt.Sprintf("At(%v)", op.coordinates) }
+func (op atOp) ReturnsPtr() bool                                        { return false }
+func (op atOp) OverwritesInput() int                                    { return -1 }
+func (op atOp) CallsExtern() bool                                       { return false }
+func (op atOp) InferShape(...DimSizer) (retVal tensor.Shape, err error) { return scalarShape, nil }
+func (op atOp) DiffWRT(i int) []bool                                    { return make([]bool, i) }
+func (op atOp) SymDiff(Nodes, *Node, *Node) (Nodes, error)              { return nil, nondiffErr(op) }
+func (op atOp) String() string                                          { return fmt.Sprintf("At(%v)", op.coordinates) }
 
 func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
-	t := inputs[0].(types.Tensor)
-	switch tt := t.(type) {
-	case *tf64.Tensor:
-		r := tt.At(op.coordinates...)
-		retVal, _, _, err = anyToValue(r)
-	case *tf32.Tensor:
-		r := tt.At(op.coordinates...)
+	switch tt := inputs[0].(type) {
+	case *tensor.Dense:
+		var r interface{}
+		if r, err = tt.At(op.coordinates...); err != nil {
+			err = errors.Wrapf(err, opDoFail, "atOp.Do()")
+		}
+
 		retVal, _, _, err = anyToValue(r)
 	default:
-		err = errors.Errorf(nyiTypeFail, "atOp.Do()", t)
+		err = errors.Errorf(nyiTypeFail, "atOp.Do()", tt)
 	}
 	return
 }
@@ -100,11 +95,11 @@ func (op sizeOp) Type() hm.Type {
 	return hm.NewFnType(tt, a)
 }
 
-func (op sizeOp) ReturnsPtr() bool                            { return false }
-func (op sizeOp) OverwritesInput() int                        { return -1 }
-func (op sizeOp) CallsExtern() bool                           { return false }
-func (op sizeOp) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil } // TODO: return error
-func (op sizeOp) DiffWRT(i int) []bool                        { return []bool{false} }
+func (op sizeOp) ReturnsPtr() bool                             { return false }
+func (op sizeOp) OverwritesInput() int                         { return -1 }
+func (op sizeOp) CallsExtern() bool                            { return false }
+func (op sizeOp) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil } // TODO: return error
+func (op sizeOp) DiffWRT(i int) []bool                         { return []bool{false} }
 func (op sizeOp) String() string {
 	if op.val != 0 {
 		return fmt.Sprintf("SizeOf=%d", op.val)
@@ -129,7 +124,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		if _, ok := t.(B); ok {
 			retVal = I(1)
 		}
-	case types.Tensor:
+	case tensor.Tensor:
 		sh := t.Shape()
 		if op.axis >= len(sh) {
 			return nil, errors.Errorf("Shape is %v. Want size of %d", sh, op.axis)
@@ -138,11 +133,11 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 
 		// cast as ... types
 		switch DtypeOf(t) {
-		case Float64:
+		case tensor.Float64:
 			retVal = F64(size)
-		case Float32:
+		case tensor.Float32:
 			retVal = F32(size)
-		case Int:
+		case tensor.Int:
 			retVal = I(size)
 		default:
 			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
@@ -179,7 +174,7 @@ func (op sizeOp) DimSize(d int) (int, error) {
 type repeatOp struct {
 	along axes
 
-	inputShape types.Shape
+	inputShape tensor.Shape
 	d          int
 
 	arg0Dim  int
@@ -248,8 +243,8 @@ func (op repeatOp) ReturnsPtr() bool     { return true }
 func (op repeatOp) OverwritesInput() int { return -1 }
 func (op repeatOp) CallsExtern() bool    { return false }
 
-func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
-	input := inputs[0].(types.Shape)
+func (op repeatOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+	input := inputs[0].(tensor.Shape)
 	repeats := inputs[1:]
 
 	knownRepeats := make([]int, len(repeats))
@@ -259,9 +254,9 @@ func (op repeatOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error
 		}
 	}
 
-	if monotonic, incr := types.IsMonotonicInts(op.along); monotonic && incr && input.IsScalar() {
+	if monotonic, incr := tensor.IsMonotonicInts(op.along); monotonic && incr && input.IsScalar() {
 		if input.IsScalar() {
-			retVal = types.Shape(types.BorrowInts(len(knownRepeats)))
+			retVal = tensor.Shape(tensor.BorrowInts(len(knownRepeats)))
 			copy(retVal, knownRepeats)
 			return
 		}
@@ -322,7 +317,7 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 
 	// we make it a colVec
 	if xshape.IsVector() && !xshape.IsColVec() && !xshape.IsRowVec() {
-		xshape = types.Shape{xshape[0], 1}
+		xshape = tensor.Shape{xshape[0], 1}
 	}
 
 	if xshape.IsScalar() {
@@ -350,7 +345,7 @@ func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
 				along := []int{axis + 1}
 
 				// a scalar can never get to this path
-				t := d.(types.Tensor)
+				t := d.(tensor.Tensor)
 				if err = t.Reshape(newShape...); err != nil {
 					err = errors.Wrapf(err, reshapeFail, newShape, t.DataSize())
 					return
@@ -397,51 +392,47 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		return
 	}
 
-	monotonic, incr := types.IsMonotonicInts(op.along)
+	monotonic, incr := tensor.IsMonotonicInts(op.along)
 
 	// process inputs[0]
-	var t types.Tensor
+	var t tensor.Tensor
 	switch iv := inputs[0].(type) {
 	case F64:
 		s := float64(iv)
 		if monotonic && incr {
-			ret := tf64.NewTensor(tf64.WithShape(reps...))
-			err = ret.SetAll(s)
+			ret := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(reps...))
+			ret.Memset(s)
 			retVal = ret
-
 			return
 		}
-		t = tf64.NewTensor(tf64.AsScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 	case F32:
 		s := float32(iv)
 		if monotonic && incr {
-			ret := tf32.NewTensor(tf32.WithShape(reps...))
-			err = ret.SetAll(s)
+			ret := tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(reps...))
+			ret.Memset(s)
 			retVal = ret
-
 			return
 		}
-		t = tf32.NewTensor(tf32.AsScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 	case I:
 		s := int(iv)
 		if monotonic && incr {
-			ret := ti.NewTensor(ti.WithShape(reps...))
-			err = ret.SetAll(s)
+			ret := tensor.New(tensor.Of(tensor.Int), tensor.WithShape(reps...))
+			ret.Memset(s)
 			retVal = ret
-
 			return
 		}
-		t = ti.NewTensor(ti.AsScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 	case B:
 		s := bool(iv)
 		if monotonic && incr {
-			ret := tb.NewTensor(tb.WithShape(reps...))
-			err = ret.SetAll(s)
+			ret := tensor.New(tensor.Of(tensor.Bool), tensor.WithShape(reps...))
+			ret.Memset(s)
 			retVal = ret
-
 			return
 		}
-		t = tb.NewTensor(tb.AsScalar(s))
+		t = tensor.New(tensor.FromScalar(s))
 
 	// case I32:
 	// 	s := int32(iv)
@@ -449,7 +440,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	// 	s := int64(iv)
 	// case U8:
 	// 	s := byte(iv)
-	case types.Tensor:
+	case tensor.Tensor:
 		t = iv
 	default:
 		err = errors.Errorf(nyiTypeFail, "repeatOp.Do()", inputs[0])
@@ -499,7 +490,7 @@ func (op repeatOp) Hashcode() uint32 {
 
 // sliceOp represents a slicing operation. If end <= start, it means ":"
 type sliceOp struct {
-	types.Slice
+	tensor.Slice
 
 	along int // along which axis to slice?
 
@@ -507,7 +498,7 @@ type sliceOp struct {
 	d int // how many dimensions were the original tensor
 }
 
-func newSliceOp(s types.Slice, along, d int) *sliceOp {
+func newSliceOp(s tensor.Slice, along, d int) *sliceOp {
 	return &sliceOp{
 		Slice: s,
 		along: along,
@@ -546,9 +537,9 @@ func (op *sliceOp) Type() hm.Type {
 	return hm.NewFnType(tt, tt)
 }
 
-func (op *sliceOp) InferShape(inputs ...DimSizer) (s types.Shape, err error) {
-	input := inputs[0].(types.Shape)
-	slices := make([]types.Slice, op.along+1)
+func (op *sliceOp) InferShape(inputs ...DimSizer) (s tensor.Shape, err error) {
+	input := inputs[0].(tensor.Shape)
+	slices := make([]tensor.Slice, op.along+1)
 	slices[op.along] = op.Slice
 
 	return input.S(slices...)
@@ -609,57 +600,22 @@ func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	t := inputs[0]
 	// prep the slices
-	var slices []types.Slice
-	slices = make([]types.Slice, len(t.Shape()))
+	var slices []tensor.Slice
+	slices = make([]tensor.Slice, len(t.Shape()))
 
 	if !op.all() {
 		slices[op.along] = op
 	}
 	switch T := t.(type) {
-	case types.Tensor:
-		switch tt := T.(type) {
-		case *tf64.Tensor:
-			// actually do shit
-			var v64 *tf64.Tensor // it's a view though
-			if v64, err = tt.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			// prep retVal
-			if v64.IsScalar() {
-				retVal, _ = anyToScalar(v64.ScalarValue())
-			} else {
-				retVal = v64
-			}
-		case *tf32.Tensor:
-			// actually do shit
-			var v32 *tf32.Tensor // it's a view though
-			if v32, err = tt.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			// prep retVal
-			if v32.IsScalar() {
-				retVal, _ = anyToScalar(v32.ScalarValue())
-			} else {
-				retVal = v32
-			}
-		case *ti.Tensor:
-			// actually do shit
-			var vi *ti.Tensor // it's a view though
-			if vi, err = tt.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			// prep retVal
-			if vi.IsScalar() {
-				retVal, _ = anyToScalar(vi.ScalarValue())
-			} else {
-				retVal = vi
-			}
-		// case *tb.Tensor:
-		default:
-			return nil, errors.Errorf(nyiFail, "sliceOp.Do()", T)
+	case tensor.Tensor:
+		var v tensor.Tensor
+		if v, err = T.Slice(slices...); err != nil {
+			return nil, errors.Wrapf(err, sliceFail, slices)
+		}
+		if v.IsScalar() {
+			retVal, _ = anyToScalar(v.ScalarValue())
+		} else {
+			retVal = v
 		}
 	case Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
@@ -740,8 +696,8 @@ func (op sliceIncrOp) Type() hm.Type {
 
 func (op sliceIncrOp) Arity() int { return 2 }
 
-func (op sliceIncrOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
-	retVal = inputs[0].(types.Shape)
+func (op sliceIncrOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+	retVal = inputs[0].(tensor.Shape)
 	return
 }
 
@@ -800,82 +756,27 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	incr := inputs[1]
 
 	// prep the slices
-	slices := make([]types.Slice, op.d)
+	slices := make([]tensor.Slice, op.d)
 	if !op.all() {
 		slices[op.along] = op
 	}
 
 	switch T := t.(type) {
-	case types.Tensor:
-		switch tt := T.(type) {
-		case *tf64.Tensor:
-			// actually do shit
-			cloned := tf64.NewTensor(tf64.WithShape(tt.Shape()...))
-			var v64 *tf64.Tensor
-			if v64, err = cloned.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			var val interface{}
-			switch i := incr.(type) {
-			case F64:
-				val = float64(i)
-			case *tf64.Tensor:
-				val = i
-			default:
-				err = errors.Errorf("Incr is of %T. Cannot increment on input which is a *tf64.Tensor", incr)
-				return
-			}
-
-			v64.VAdd(val)
-			retVal = cloned
-
-		case *tf32.Tensor:
-			// actually do shit
-			cloned := tf32.NewTensor(tf32.WithShape(tt.Shape()...))
-			var v32 *tf32.Tensor
-			if v32, err = cloned.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			var val interface{}
-			switch i := incr.(type) {
-			case F32:
-				val = float32(i)
-			case *tf32.Tensor:
-				val = i
-			default:
-				err = errors.Errorf("Incr is of %T. Cannot increment on input which is a *tf32.Tensor", incr)
-				return
-			}
-
-			v32.VAdd(val)
-			retVal = cloned
-		case *ti.Tensor:
-			// actually do shit
-			cloned := ti.NewTensor(ti.WithShape(tt.Shape()...))
-			var vi *ti.Tensor
-			if vi, err = cloned.Slice(slices...); err != nil {
-				return nil, errors.Wrapf(err, sliceFail, slices)
-			}
-
-			var val interface{}
-			switch i := incr.(type) {
-			case I:
-				val = int(i)
-			case *ti.Tensor:
-				val = i
-			default:
-				err = errors.Errorf("Incr is of %T. Cannot increment on input which is a *ti.Tensor", incr)
-				return
-			}
-
-			vi.VAdd(val)
-			retVal = cloned
-		// case *tb.Tensor:
-		default:
-			return nil, errors.Errorf(nyiFail, "sliceIncrOp()", T)
+	case *tensor.Dense:
+		grad := tensor.NewDense(T.Dtype(), T.Shape().Clone())
+		var v tensor.Tensor
+		if v, err = grad.Slice(slices...); err != nil {
+			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
+		switch i := incr.(type) {
+		case F64:
+			tensor.Add(v, float64(i), tensor.UseUnsafe())
+		case F32:
+			tensor.Add(v, float32(i), tensor.UseUnsafe())
+		case *tensor.Dense:
+			tensor.Add(v, i, tensor.UseUnsafe())
+		}
+		retVal = grad
 	case Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
 	default:
@@ -954,15 +855,15 @@ func (op transposeOp) Type() hm.Type {
 	return hm.NewFnType(tt, tt)
 }
 
-func (op transposeOp) InferShape(inputs ...DimSizer) (retVal types.Shape, err error) {
-	input := inputs[0].(types.Shape)
+func (op transposeOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
+	input := inputs[0].(tensor.Shape)
 	if input.IsScalar() {
 		return nil, errors.Errorf(undefinedOnShape, op, input)
 	}
 
-	retVal = make(types.Shape, len(input))
+	retVal = make(tensor.Shape, len(input))
 	copy(retVal, input)
-	err = types.UnsafePermute(op.pattern, retVal)
+	err = tensor.UnsafePermute(op.pattern, retVal)
 	return
 }
 
@@ -995,9 +896,9 @@ func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		newPattern[p] = i
 	}
 
-	var zdvdT types.Tensor
+	var zdvdT tensor.Tensor
 	var ok bool
-	if zdvdT, ok = zdv.d.(types.Tensor); !ok {
+	if zdvdT, ok = zdv.d.(tensor.Tensor); !ok {
 		return errors.Errorf("Expected the gradient of the output node to be a Tensor. Got %v instead", zdv.d)
 	}
 
@@ -1024,9 +925,9 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 		return
 	}
 
-	t := inputs[0].(types.Tensor)
+	t := inputs[0].(tensor.Tensor)
 
-	throwaway := types.BorrowInts(len(op.pattern))
+	throwaway := tensor.BorrowInts(len(op.pattern))
 	copy(throwaway, op.pattern)
 	return tensor.T(t, throwaway...)
 
@@ -1034,7 +935,7 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	// the reason for this is because the .T() method of a Tensor
 	// will use the axes in the .transposedWith field
 	// Later when .UT() is called, the .transposedWith field is recycled into the pool
-	// throwaway := types.BorrowInts(len(op.pattern))
+	// throwaway := tensor.BorrowInts(len(op.pattern))
 	// copy(throwaway, op.pattern)
 
 	// t.T(throwaway...)
@@ -1094,7 +995,7 @@ func (op concatOp) Type() hm.Type {
 	return hm.NewFnType(fnt...)
 }
 
-func (op concatOp) InferShape(ds ...DimSizer) (types.Shape, error) {
+func (op concatOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
 	if len(ds) == 0 {
 		return nil, errors.Errorf("No shapes passed in!")
 	}
@@ -1166,7 +1067,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 
 func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
 	odv := output.boundTo.(*dualValue)
-	odvd := odv.d.(types.Tensor)
+	odvd := odv.d.(tensor.Tensor)
 
 	var start int
 	for _, in := range inputs {
@@ -1176,9 +1077,9 @@ func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
 		end := in.shape[op.axis] + start
 
 		idv := in.boundTo.(*dualValue)
-		idvd := idv.d.(types.Tensor)
+		idvd := idv.d.(tensor.Tensor)
 
-		sliced, err := tensor.Slice(odvd, S(start, end))
+		sliced, err := odvd.Slice(S(start, end))
 		if err != nil {
 			return err
 		}
@@ -1186,15 +1087,9 @@ func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
 		// TODO: fix VAdd hack
 		// add to odvd
 		switch st := sliced.(type) {
-		case *tf64.Tensor:
-			d := idvd.(*tf64.Tensor)
-			d.VAdd(st)
-		case *tf32.Tensor:
-			d := idvd.(*tf32.Tensor)
-			d.VAdd(st)
-		case *ti.Tensor:
-			d := idvd.(*ti.Tensor)
-			d.VAdd(st)
+		case *tensor.Dense:
+			d := idvd.(*tensor.Dense)
+			d.Add(st, tensor.UseUnsafe())
 		default:
 			return errors.Errorf(nyiTypeFail, "DoDiff (hack) ", st)
 		}

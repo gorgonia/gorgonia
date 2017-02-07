@@ -3,11 +3,7 @@ package gorgonia
 import (
 	"sync"
 
-	tb "github.com/chewxy/gorgonia/tensor/b"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	ti "github.com/chewxy/gorgonia/tensor/i"
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 )
 
 var nodePool = &sync.Pool{
@@ -54,10 +50,10 @@ func borrowDV() *dualValue { return dvpool.Get().(*dualValue) }
 func returnDV(dv *dualValue) {
 	returnValue(dv.d)
 	returnValue(dv.Value)
-	// if dvdT, ok := dv.d.(types.Tensor); ok {
+	// if dvdT, ok := dv.d.(tensor.Tensor); ok {
 	// 	returnTensor(dvdT)
 	// }
-	// if dvvT, ok := dv.Value.(types.Tensor); ok {
+	// if dvvT, ok := dv.Value.(tensor.Tensor); ok {
 	// 	returnTensor(dvvT)
 	// }
 
@@ -66,23 +62,12 @@ func returnDV(dv *dualValue) {
 	dvpool.Put(dv)
 }
 
-func returnTensor(t types.Tensor) {
-	switch tt := t.(type) {
-	case *tf64.Tensor:
-		tf64.ReturnTensor(tt)
-	case *tf32.Tensor:
-		tf32.ReturnTensor(tt)
-	case *ti.Tensor:
-		ti.ReturnTensor(tt)
-	case *tb.Tensor:
-		tb.ReturnTensor(tt)
-	default:
-		return
-	}
+func returnTensor(t tensor.Tensor) {
+	tensor.ReturnTensor(t)
 }
 
 func returnValue(v Value) {
-	if t, ok := v.(types.Tensor); ok {
+	if t, ok := v.(tensor.Tensor); ok {
 		returnTensor(t)
 	}
 }

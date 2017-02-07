@@ -132,9 +132,9 @@ func TestSumOpDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(x.Value(), a.Value())
-	assert.Equal(xG, aG)
-	assert.Equal(y.Value(), b.Value())
+	assert.True(ValueEq(x.Value(), a.Value()))
+	assert.True(ValueEq(xG, aG))
+	assert.True(ValueEq(y.Value(), b.Value()))
 
 	/* Sum is not the root node */
 
@@ -188,10 +188,9 @@ func TestSumOpDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(x.Value(), a.Value())
-	assert.Equal(xG, aG)
-	assert.Equal(y.Value(), b.Value())
-	assert.Equal(yG, bG)
-	assert.Equal(z.Value(), c.Value())
-
+	assert.True(ValueEq(x.Value(), a.Value()))
+	assert.True(ValueEq(xG, aG))
+	assert.True(ValueEq(y.Value(), b.Value()))
+	assert.True(ValueEq(yG, bG))
+	assert.True(ValueEq(z.Value(), c.Value()))
 }

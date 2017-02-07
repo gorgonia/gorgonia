@@ -1,12 +1,11 @@
 package gorgonia
 
 import (
-	"encoding/binary"
 	"fmt"
 	"hash"
 	"hash/fnv"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -15,8 +14,8 @@ type DimSizer interface {
 	DimSize(int) (int, error)
 }
 
-// ShapesToDimSizers is a convenience function to convert a slice of types.Shape to a slice of DimSizer
-func ShapesToDimSizers(shapes []types.Shape) []DimSizer {
+// ShapesToDimSizers is a convenience function to convert a slice of tensor.Shape to a slice of DimSizer
+func ShapesToDimSizers(shapes []tensor.Shape) []DimSizer {
 	retVal := make([]DimSizer, len(shapes))
 	for i, s := range shapes {
 		retVal[i] = s
@@ -24,12 +23,12 @@ func ShapesToDimSizers(shapes []types.Shape) []DimSizer {
 	return retVal
 }
 
-// DimSizersToShapes is a convenience function to convert a slice of DimSizer to a slice of types.Shape. It will return an error if any of them isn't a types.Shape
-func DimSizersToShapes(ds []DimSizer) ([]types.Shape, error) {
-	retVal := make([]types.Shape, len(ds))
+// DimSizersToShapes is a convenience function to convert a slice of DimSizer to a slice of tensor.Shape. It will return an error if any of them isn't a tensor.Shape
+func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
+	retVal := make([]tensor.Shape, len(ds))
 	var ok bool
 	for i, d := range ds {
-		if retVal[i], ok = d.(types.Shape); !ok {
+		if retVal[i], ok = d.(tensor.Shape); !ok {
 			return nil, errors.Errorf("Dimsizer %d is not a Shape.", i)
 		}
 	}
@@ -51,7 +50,7 @@ type Op interface {
 	Type() hm.Type
 
 	// returns the output shape as a function of the inputs
-	InferShape(...DimSizer) (types.Shape, error)
+	InferShape(...DimSizer) (tensor.Shape, error)
 
 	/* Machine related */
 
@@ -110,6 +109,7 @@ type ADOp interface {
 	DoDiff(inputs Nodes, output *Node) error
 }
 
+// A SDOp is an Op that supports symbolic differentiation
 type SDOp interface {
 	Op
 
@@ -143,6 +143,16 @@ type UnsafeDoer interface {
 	UnsafeDo(inputs ...Value) (Value, error)
 }
 
+// CUDADoer uses CUDA to perform the Op.
+type CUDADoer interface {
+	CUDADo(inputs ...Value) (Value, error)
+}
+
+// CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
+type CLDoer interface {
+	CLDo(inputs ...Value) (Value, error)
+}
+
 // a constant is an unchanging value. I think everyone would know what a constant is
 // a constant op is an op that creates a constant. It is also a Value of a constant value
 type constant interface {
@@ -156,24 +166,20 @@ type constantScalar struct {
 	v Scalar
 }
 
-func (c constantScalar) Arity() int                                  { return 0 }
-func (c constantScalar) Type() hm.Type                               { return TypeOf(c.v) }
-func (c constantScalar) InferShape(...DimSizer) (types.Shape, error) { return scalarShape, nil }
-func (c constantScalar) ReturnsPtr() bool                            { return false }
-func (c constantScalar) CallsExtern() bool                           { return false }
-func (c constantScalar) OverwritesInput() int                        { return -1 }
-func (c constantScalar) DiffWRT(i int) []bool                        { return nil }
-func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error)  { return nil, nil }
+func (c constantScalar) Arity() int                                   { return 0 }
+func (c constantScalar) Type() hm.Type                                { return TypeOf(c.v) }
+func (c constantScalar) InferShape(...DimSizer) (tensor.Shape, error) { return scalarShape, nil }
+func (c constantScalar) ReturnsPtr() bool                             { return false }
+func (c constantScalar) CallsExtern() bool                            { return false }
+func (c constantScalar) OverwritesInput() int                         { return -1 }
+func (c constantScalar) DiffWRT(i int) []bool                         { return nil }
+func (c constantScalar) SymDiff(Nodes, *Node, *Node) (Nodes, error)   { return nil, nil }
 
 func (c constantScalar) Do(...Value) (Value, error) { return c.v, nil }
 func (c constantScalar) String() string             { return fmt.Sprintf("const %s", c.v) }
 
 func (c constantScalar) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "const ")
-	if err := binary.Write(h, binary.LittleEndian, TypeOf(c.v)); err != nil {
-		panic(err)
-	}
-	fmt.Fprintf(h, "of %v", c.v)
+	fmt.Fprintf(h, "const %v: %v", TypeOf(c.v), c.v)
 }
 
 func (c constantScalar) Hashcode() uint32 {
@@ -186,12 +192,12 @@ func (c constantScalar) isconstant() bool { return true }
 func (c constantScalar) Value() Value     { return c.v }
 
 type constantTensor struct {
-	v types.Tensor
+	v tensor.Tensor
 }
 
-func (c constantTensor) Arity() int                                  { return 1 }
-func (c constantTensor) Type() hm.Type                               { return TypeOf(c.v) }
-func (c constantTensor) InferShape(...DimSizer) (types.Shape, error) { return c.v.Shape(), nil }
+func (c constantTensor) Arity() int                                   { return 1 }
+func (c constantTensor) Type() hm.Type                                { return TypeOf(c.v) }
+func (c constantTensor) InferShape(...DimSizer) (tensor.Shape, error) { return c.v.Shape(), nil }
 
 // danger! The only reason why this is the case is because matrices may be too large. copying is costly.
 // constants should return value but for the sake of memory, we're going to return pointers
@@ -204,8 +210,7 @@ func (c constantTensor) Do(...Value) (Value, error)                 { return c.v
 func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", TypeOf(c.v)) }
 
 func (c constantTensor) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "const %v", c.Type())
-	fmt.Fprintf(h, "%v", c.v)
+	fmt.Fprintf(h, "const %v:%v", c.Type(), c.v)
 }
 
 func (c constantTensor) Hashcode() uint32 {

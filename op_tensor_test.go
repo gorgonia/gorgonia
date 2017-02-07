@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,69 +14,69 @@ var repeatOpTests = []struct {
 	val  Value
 
 	correct       Value
-	expectedShape types.Shape
+	expectedShape tensor.Shape
 	err           bool
 }{
 	{
 		"repeat matrix on axis 0", 2, []int{0},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tensor.WithShape(4, 2)),
-		types.Shape{4, 2}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
+		tensor.New(tensor.WithBacking([]float64{1, 2, 1, 2, 3, 4, 3, 4}), tensor.WithShape(4, 2)),
+		tensor.Shape{4, 2}, false,
 	},
 
 	{
 		"repeat matrix on axis 1", 2, []int{1},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tensor.WithShape(2, 4)),
-		types.Shape{2, 4}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}), tensor.WithShape(2, 2)),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2, 3, 3, 4, 4}), tensor.WithShape(2, 4)),
+		tensor.Shape{2, 4}, false,
 	},
 
 	{
 		"repeat col vec on axis 0", 2, []int{0},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4, 1)),
-		types.Shape{4, 1}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4, 1)),
+		tensor.Shape{4, 1}, false,
 	},
 
 	{
 		"repeat col vec on axis 1", 2, []int{1},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
-		types.Shape{2, 2}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2, 1)),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
+		tensor.Shape{2, 2}, false,
 	},
 
 	{
 		"repeat row vec on axis 0", 2, []int{0},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2, 1, 2}), tensor.WithShape(2, 2)),
-		types.Shape{2, 2}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
+		tensor.New(tensor.WithBacking([]float64{1, 2, 1, 2}), tensor.WithShape(2, 2)),
+		tensor.Shape{2, 2}, false,
 	},
 
 	{
 		"repeat row vec on axis 1", 2, []int{1},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(1, 4)),
-		types.Shape{1, 4}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(1, 2)),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(1, 4)),
+		tensor.Shape{1, 4}, false,
 	},
 
 	{
 		"repeat vector on axis 0", 2, []int{0},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4)),
-		types.Shape{4}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(4)),
+		tensor.Shape{4}, false,
 	},
 
 	{
 		"repeat vector on axis 1", 2, []int{1},
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
-		tensor.New(types.Float64, tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
-		types.Shape{2, 2}, false,
+		tensor.New(tensor.WithBacking([]float64{1, 2}), tensor.WithShape(2)),
+		tensor.New(tensor.WithBacking([]float64{1, 1, 2, 2}), tensor.WithShape(2, 2)),
+		tensor.Shape{2, 2}, false,
 	},
 
 	{
 		"repeat scalar", 2, []int{0},
-		F64(3.14), tensor.New(types.Float64, tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
-		types.Shape{2}, false,
+		F64(3.14), tensor.New(tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
+		tensor.Shape{2}, false,
 	},
 }
 
@@ -114,7 +112,7 @@ func TestRepeatOp(t *testing.T) {
 		}
 
 	infershape:
-		var s types.Shape
+		var s tensor.Shape
 		size := sizeOp{val: rots.rep}
 		s, err = repeat.InferShape(rots.val.Shape(), size)
 		switch {
@@ -134,7 +132,7 @@ func TestRepeatOp(t *testing.T) {
 	}
 }
 
-func repeatOpDiff(repeatOn int, shape types.Shape, xV, yV interface{}) (g *ExprGraph, x, y *Node, err error) {
+func repeatOpDiff(repeatOn int, shape tensor.Shape, xV, yV interface{}) (g *ExprGraph, x, y *Node, err error) {
 	g = NewGraph()
 	switch shape.Dims() {
 	case 0:
@@ -173,9 +171,9 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	var err error
 
 	var xG Value
-	var xT, yT *tf64.Tensor
+	var xT, yT *tensor.Dense
 
-	yT = tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{3.14, 3.14}))
 
 	// scalar repeated into a vec/colvec
 	if _, x, _, err = repeatOpDiff(0, scalarShape, 3.14, yT); err != nil {
@@ -192,45 +190,45 @@ func TestRepeatOpDoDiff(t *testing.T) {
 	assert.Equal(2.0, extractF64(xG))
 
 	// vector repeated unto itself
-	xT = tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking([]float64{3.14, 3.14}))
-	yT = tf64.NewTensor(tf64.WithShape(4), tf64.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
-	if _, x, _, err = repeatOpDiff(0, types.Shape{2}, xT, yT); err != nil {
+	xT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(4), tensor.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
+	if _, x, _, err = repeatOpDiff(0, tensor.Shape{2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
 	xG, _ = x.Grad()
 	assert.Equal([]float64{2, 2}, extractF64s(xG))
 
 	// colvec repeated unto itself
-	xT = tf64.NewTensor(tf64.WithShape(2, 1), tf64.WithBacking([]float64{3.14, 3.14}))
-	yT = tf64.NewTensor(tf64.WithShape(4, 1), tf64.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
-	if _, x, _, err = repeatOpDiff(0, types.Shape{2}, xT, yT); err != nil {
+	xT = tensor.New(tensor.WithShape(2, 1), tensor.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(4, 1), tensor.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
+	if _, x, _, err = repeatOpDiff(0, tensor.Shape{2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
 	xG, _ = x.Grad()
 	assert.Equal([]float64{2, 2}, extractF64s(xG))
 
 	// rowvec repeated unto itself
-	xT = tf64.NewTensor(tf64.WithShape(1, 2), tf64.WithBacking([]float64{3.14, 3.14}))
-	yT = tf64.NewTensor(tf64.WithShape(1, 4), tf64.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
-	if _, x, _, err = repeatOpDiff(1, types.Shape{1, 2}, xT, yT); err != nil {
+	xT = tensor.New(tensor.WithShape(1, 2), tensor.WithBacking([]float64{3.14, 3.14}))
+	yT = tensor.New(tensor.WithShape(1, 4), tensor.WithBacking([]float64{3.14, 3.14, 3.14, 3.14}))
+	if _, x, _, err = repeatOpDiff(1, tensor.Shape{1, 2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
 	xG, _ = x.Grad()
 	assert.Equal([]float64{2, 2}, extractF64s(xG))
 
 	// matrix on axis 0
-	xT = tf64.NewTensor(tf64.WithShape(2, 2), tf64.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
-	yT = tf64.NewTensor(tf64.WithShape(4, 2), tf64.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
-	if _, x, _, err = repeatOpDiff(0, types.Shape{1, 2}, xT, yT); err != nil {
+	xT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
+	yT = tensor.New(tensor.WithShape(4, 2), tensor.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
+	if _, x, _, err = repeatOpDiff(0, tensor.Shape{1, 2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
 	xG, _ = x.Grad()
 	assert.Equal([]float64{2, 2, 2, 2}, extractF64s(xG))
 
 	// matrix on axis 1
-	xT = tf64.NewTensor(tf64.WithShape(2, 2), tf64.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
-	yT = tf64.NewTensor(tf64.WithShape(4, 2), tf64.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
-	if _, x, _, err = repeatOpDiff(1, types.Shape{1, 2}, xT, yT); err != nil {
+	xT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{3.14, 2.718, 1.618, 1.414}))
+	yT = tensor.New(tensor.WithShape(4, 2), tensor.WithBacking([]float64{3.14, 2.718, 3.14, 2.718, 1.618, 1.414, 1.618, 1.414}))
+	if _, x, _, err = repeatOpDiff(1, tensor.Shape{1, 2}, xT, yT); err != nil {
 		t.Fatal(err)
 	}
 	xG, _ = x.Grad()
@@ -250,7 +248,7 @@ func TestTransposeOp(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(types.Shape{3, 2}, AT.shape)
+	assert.Equal(tensor.Shape{3, 2}, AT.shape)
 }
 
 func TestConcatOp(t *testing.T) {
@@ -274,10 +272,10 @@ func TestConcatOp(t *testing.T) {
 	Must(Sum(aa)) // cost
 
 	aBack := []float64{1, 2}
-	aT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking(aBack))
+	aT := tensor.New(tensor.WithShape(2), tensor.WithBacking(aBack))
 
 	xBack := []float64{1, 2}
-	xT := tf64.NewTensor(tf64.WithShape(2), tf64.WithBacking(xBack))
+	xT := tensor.New(tensor.WithShape(2), tensor.WithBacking(xBack))
 
 	prog, locMap, err := Compile(g)
 	if err != nil {
@@ -299,7 +297,7 @@ func TestConcatOp(t *testing.T) {
 
 	xG, _ := x.Grad()
 	aG, _ := a.Grad()
-	assert.Equal(xG, aG)
-	assert.Equal(xx.Value(), aa.Value())
+	assert.True(ValueEq(xG, aG))
+	assert.True(ValueEq(xx.Value(), aa.Value()))
 
 }

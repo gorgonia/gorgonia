@@ -7,11 +7,10 @@ import (
 
 	. "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/gorgonia/tensor/types"
 )
 
 // manually generate a fake dataset which is y=2x+random
-func xy(dt Dtype) (x types.Tensor, y types.Tensor) {
+func xy(dt tensor.Dtype) (x tensor.Tensor, y tensor.Tensor) {
 	var xBack, yBack interface{}
 	switch dt {
 	case Float32:
@@ -22,24 +21,24 @@ func xy(dt Dtype) (x types.Tensor, y types.Tensor) {
 		yBack = []float64{2.5, 4.2, 6.1, 8, 9.992, 11.7, 15.1, 16, 18.1, 19.89}
 	}
 
-	x = tensor.New(types.Dtype(dt), tensor.WithBacking(xBack), tensor.WithShape(10))
-	y = tensor.New(types.Dtype(dt), tensor.WithBacking(yBack), tensor.WithShape(10))
+	x = tensor.New(tensor.WithBacking(xBack), tensor.WithShape(10))
+	y = tensor.New(tensor.WithBacking(yBack), tensor.WithShape(10))
 	return
 }
 
-func random(dt Dtype) Value {
+func random(dt tensor.Dtype) Value {
 	rand.Seed(13370)
 	switch dt {
-	case Float32:
+	case tensor.Float32:
 		return F32(rand.Float32())
-	case Float64:
+	case tensor.Float64:
 		return F64(rand.Float64())
 	default:
 		panic("Unhandled dtype")
 	}
 }
 
-func linearRegression(Float Dtype) {
+func linearRegression(Float tensor.Dtype) {
 	var xT, yT Value
 	xT, yT = xy(Float)
 
@@ -89,6 +88,6 @@ func Example_linearRegression() {
 	linearRegression(Float64)
 
 	// Output:
-	// Float32: y = 1.975x + 0.302
-	// Float64: y = 1.975x + 0.302
+	// float32: y = 1.975x + 0.302
+	// float64: y = 1.975x + 0.302
 }

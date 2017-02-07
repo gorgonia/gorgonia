@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -77,7 +78,7 @@ func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
 
 func isScalarType(t hm.Type) bool {
 	switch tt := t.(type) {
-	case Dtype:
+	case tensor.Dtype:
 		return true
 	case TensorType:
 		if tt.Dims == 0 {
@@ -91,9 +92,9 @@ func isScalarType(t hm.Type) bool {
 	}
 }
 
-func dtypeOf(t hm.Type) (retVal Dtype, err error) {
+func dtypeOf(t hm.Type) (retVal tensor.Dtype, err error) {
 	switch p := t.(type) {
-	case Dtype:
+	case tensor.Dtype:
 		retVal = p
 	case TensorType:
 		return dtypeOf(p.Of)

@@ -3,7 +3,7 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
@@ -57,7 +57,7 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 		return
 	}
 
-	var s types.Shape
+	var s tensor.Shape
 	if s, err = op.InferShape(Nodes(children).dimSizers()...); err == nil {
 		shapeLogf("inferred shape %v", s)
 		retVal = NewUniqueNode(WithType(retType), WithOp(op), WithChildren(children), In(g), WithShape(s...))
@@ -481,7 +481,7 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 		return
 	}
 
-	var dt Dtype
+	var dt tensor.Dtype
 	if dt, err = dtypeOf(a.t); err != nil {
 		return nil, errors.Wrapf(err, "Failed to determine the dtype of %T", a.t)
 	}
@@ -603,9 +603,9 @@ func SizeOf(axis int, x *Node) (retVal *Node, err error) {
 }
 
 // Slice slices a *Node. For T[:] slices, pass in nil. Will error out if node's type is not a Tensor
-func Slice(n *Node, slices ...types.Slice) (retVal *Node, err error) {
+func Slice(n *Node, slices ...tensor.Slice) (retVal *Node, err error) {
 	if _, ok := n.t.(TensorType); !ok {
-		return nil, errors.Errorf("Cannot slice on non Tensor types. Got %T", n.t)
+		return nil, errors.Errorf("Cannot slice on non Tensor tensor. Got %T", n.t)
 	}
 
 	if len(slices) > n.shape.Dims() {
@@ -647,7 +647,7 @@ func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 	}
 
 	// if axes is 0, 1, 2, 3... then no op
-	if monotonic, incr1 := types.IsMonotonicInts(axes); monotonic && incr1 && axes[0] == 0 {
+	if monotonic, incr1 := tensor.IsMonotonicInts(axes); monotonic && incr1 && axes[0] == 0 {
 		retVal = n
 		return
 	}

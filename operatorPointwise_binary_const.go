@@ -1,50 +1,28 @@
 package gorgonia
 
-import (
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	"github.com/chewxy/gorgonia/tensor/types"
-)
-import tf32 "github.com/chewxy/gorgonia/tensor/f32"
+import "github.com/chewxy/gorgonia/tensor"
 
 var (
 	/* scalar-tensor float64 and vice versa */
 
 	// arith
-	taddf64 = tf64BinOp(tf64.Add)
-	tsubf64 = tf64BinOp(tf64.Sub)
-	tmulf64 = tf64BinOp(tf64.PointwiseMul)
-	tdivf64 = tf64BinOp(tf64.PointwiseDiv)
-	tpowf64 = tf64BinOp(tf64.PointwisePow)
+	tadd = denseBinOp(tensor.Add)
+	tsub = denseBinOp(tensor.Sub)
+	tmul = denseBinOp(tensor.Mul)
+	tdiv = denseBinOp(tensor.Div)
+	tpow = denseBinOp(tensor.Pow)
 
 	// cmp
-	tltf64  = tf64CmpOp(tf64.Lt)
-	tgtf64  = tf64CmpOp(tf64.Gt)
-	tltef64 = tf64CmpOp(tf64.Lte)
-	tgtef64 = tf64CmpOp(tf64.Gte)
-	teqf64  = tf64CmpOp(tf64.Eq)
-	tnef64  = tf64CmpOp(tf64.Ne)
-
-	/* tf32 */
-
-	taddf32 = tf32BinOp(tf32.Add)
-	tsubf32 = tf32BinOp(tf32.Sub)
-	tmulf32 = tf32BinOp(tf32.PointwiseMul)
-	tdivf32 = tf32BinOp(tf32.PointwiseDiv)
-	tpowf32 = tf32BinOp(tf32.PointwisePow)
-
-	// cmp
-	tltf32  = tf32CmpOp(tf32.Lt)
-	tgtf32  = tf32CmpOp(tf32.Gt)
-	tltef32 = tf32CmpOp(tf32.Lte)
-	tgtef32 = tf32CmpOp(tf32.Gte)
-	teqf32  = tf32CmpOp(tf32.Eq)
-	tnef32  = tf32CmpOp(tf32.Ne)
+	tlt  = denseCmpOp(tensor.Lt)
+	tgt  = denseCmpOp(tensor.Gt)
+	tlte = denseCmpOp(tensor.Lte)
+	tgte = denseCmpOp(tensor.Gte)
+	teq  = denseCmpOp(tensor.ElEq)
+	tne  = denseCmpOp(tensor.ElNe)
 )
 
-type tf32BinOp func(a, b interface{}, opts ...types.FuncOpt) (*tf32.Tensor, error)
-type tf32CmpOp func(a, b interface{}, opts ...types.FuncOpt) (types.Tensor, error)
-type tf64BinOp func(a, b interface{}, opts ...types.FuncOpt) (*tf64.Tensor, error)
-type tf64CmpOp func(a, b interface{}, opts ...types.FuncOpt) (types.Tensor, error)
+type denseBinOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
+type denseCmpOp func(a, b interface{}, opts ...tensor.FuncOpt) (tensor.Tensor, error)
 
 type ʘBinaryOperatorType byte
 
@@ -143,12 +121,12 @@ func (b ʘBinaryOperatorType) isArith() bool {
 	return false
 }
 
-var tf64BinOps = [maxʘBinaryOpType]*tf64BinOp{
-	&taddf64,
-	&tsubf64,
-	&tmulf64,
-	&tdivf64,
-	&tpowf64,
+var binOps = [maxʘBinaryOpType]*denseBinOp{
+	&tadd,
+	&tsub,
+	&tmul,
+	&tdiv,
+	&tpow,
 	nil, // lt
 	nil, // gt
 	nil, // lte
@@ -157,44 +135,16 @@ var tf64BinOps = [maxʘBinaryOpType]*tf64BinOp{
 	nil, // ne
 }
 
-var tf64CmpOps = [maxʘBinaryOpType]*tf64CmpOp{
+var cmpOps = [maxʘBinaryOpType]*denseCmpOp{
 	nil, // add
 	nil, // sub
 	nil, // mul
 	nil, // div
 	nil, // pow
-	&tltf64,
-	&tgtf64,
-	&tltef64,
-	&tgtef64,
-	&teqf64,
-	&tnef64,
-}
-
-var tf32BinOps = [maxʘBinaryOpType]*tf32BinOp{
-	&taddf32,
-	&tsubf32,
-	&tmulf32,
-	&tdivf32,
-	&tpowf32,
-	nil, // lt
-	nil, // gt
-	nil, // lte
-	nil, // gte
-	nil, // eq
-	nil, // ne
-}
-
-var tf32CmpOps = [maxʘBinaryOpType]*tf32CmpOp{
-	nil, // add
-	nil, // sub
-	nil, // mul
-	nil, // div
-	nil, // pow
-	&tltf32,
-	&tgtf32,
-	&tltef32,
-	&tgtef32,
-	&teqf32,
-	&tnef32,
+	&tlt,
+	&tgt,
+	&tlte,
+	&tgte,
+	&teq,
+	&tne,
 }

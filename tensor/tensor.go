@@ -1,189 +1,138 @@
 package tensor
 
 import (
+	"encoding/gob"
 	"fmt"
+	"io"
+	"reflect"
 
-	tb "github.com/chewxy/gorgonia/tensor/b"
-	tf32 "github.com/chewxy/gorgonia/tensor/f32"
-	tf64 "github.com/chewxy/gorgonia/tensor/f64"
-	ti "github.com/chewxy/gorgonia/tensor/i"
-	"github.com/chewxy/gorgonia/tensor/types"
+	"github.com/pkg/errors"
 )
 
-type tensorConsOpt func(types.Dtype) types.ConsOpt
+type Tensor interface {
+	// info about the ndarray
+	Info() *AP
+	Shape() Shape
+	Strides() []int
+	Dtype() Dtype
+	Dims() int
+	Size() int
+	DataSize() int
 
-func New(dt types.Dtype, opts ...tensorConsOpt) types.Tensor {
-	consOpts := make([]types.ConsOpt, len(opts))
-	for i, opt := range opts {
-		consOpts[i] = opt(dt)
-	}
+	// ops
+	At(...int) (interface{}, error)
+	Reshape(...int) error
+	T(axes ...int) error
+	UT()
+	Transpose() // Transpose actually moves the data
+	Slice(...Slice) (Tensor, error)
+	Apply(fn interface{}, opts ...FuncOpt) (Tensor, error)
 
-	switch dt {
-	case types.Float64:
-		return tf64.NewTensor(consOpts...)
-	case types.Float32:
-		return tf32.NewTensor(consOpts...)
-	case types.Int:
-		return ti.NewTensor(consOpts...)
-	case types.Int64:
-	case types.Int32:
-	case types.Byte:
-	case types.Bool:
-		return tb.NewTensor(consOpts...)
-	}
-	panic("Unreachable")
+	// data related interface
+	Zeroer
+	MemSetter
+	Dataer
+	Eq
+	Cloner
+
+	// type overloading shit
+	IsScalar() bool
+	ScalarValue() interface{}
+
+	// view related shit
+	IsView() bool
+	Materialize() Tensor
+
+	// formatters
+	fmt.Formatter
+	fmt.Stringer
+
+	// all Tensors are serializable to these formats
+	WriteNpy(io.Writer) error
+	ReadNpy(io.Reader) error
+	gob.GobEncoder
+	gob.GobDecoder
 }
 
-func WithShape(s ...int) tensorConsOpt {
-	f := func(dt types.Dtype) types.ConsOpt {
-		switch dt {
-		case types.Float64:
-			return tf64.WithShape(s...)
-		case types.Float32:
-			return tf32.WithShape(s...)
-		case types.Int:
-			return ti.WithShape(s...)
-		case types.Bool:
-			return tb.WithShape(s...)
-		default:
-			panic("Not Yet Implemented")
+// Dotter is used to implement sparse matrices
+type Dotter interface {
+	Tensor
+	Dot(Tensor, ...FuncOpt) (Tensor, error)
+}
+
+// New creates a new Dense Tensor. For sparse arrays use their relevant construction function
+func New(opts ...ConsOpt) *Dense {
+	d := new(Dense)
+	d.AP = new(AP)
+	for _, opt := range opts {
+		opt(d)
+	}
+	d.fix()
+	if err := d.sanity(); err != nil {
+		panic(err)
+	}
+
+	return d
+}
+
+func getDense(t Tensor) (*Dense, error) {
+	if t == nil {
+		return nil, nil
+	}
+
+	if retVal, ok := t.(*Dense); ok {
+		return retVal, nil
+	}
+
+	// TODO: when sparse matrices are created, add a clause here to return early
+
+	if densor, ok := t.(Densor); ok {
+		return densor.Dense(), nil
+	}
+
+	v := reflect.ValueOf(t)
+	tt := reflect.TypeOf(t)
+	var s, zero reflect.Value
+	if tt.Kind() == reflect.Ptr {
+		of := tt.Elem()
+		if of.Kind() != reflect.Struct {
+			return nil, errors.Errorf("Cannot extract *Dense from %v of %T", t, t)
 		}
+		s = v.Elem()
+	} else if tt.Kind() == reflect.Struct {
+		s = v
 	}
-	return f
-}
-
-func WithBacking(any interface{}) tensorConsOpt {
-	f := func(dt types.Dtype) types.ConsOpt {
-		switch dt {
-		case types.Float64:
-			backing := any.([]float64)
-			return tf64.WithBacking(backing)
-		case types.Float32:
-			backing := any.([]float32)
-			return tf32.WithBacking(backing)
-		case types.Int:
-			backing := any.([]int)
-			return ti.WithBacking(backing)
-		case types.Bool:
-			backing := any.([]bool)
-			return tb.WithBacking(backing)
-		default:
-			panic("Not Yet Implemented")
-		}
+	d := s.FieldByName("Dense")
+	if d != zero {
+		return d.Interface().(*Dense), nil
 	}
-	return f
+
+	return nil, errors.Errorf(extractionFail, "*Dense", t)
 }
 
-func AsScalar(any interface{}) tensorConsOpt {
-	f := func(dt types.Dtype) types.ConsOpt {
-		switch dt {
-		case types.Float64:
-			s := any.(float64)
-			return tf64.AsScalar(s)
-		case types.Float32:
-			s := any.(float32)
-			return tf32.AsScalar(s)
-		case types.Int:
-			s := any.(int)
-			return ti.AsScalar(s)
-		case types.Bool:
-			s := any.(bool)
-			return tb.AsScalar(s)
-		default:
-			panic("Not yet implemented")
-		}
+// getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
+func getFloatDense(t Tensor) (retVal *Dense, err error) {
+	if t == nil {
+		return
 	}
-	return f
-}
-
-type Argmaxer interface {
-	Argmax(int) (*ti.Tensor, error)
-}
-
-type Argminer interface {
-	Argmin(int) (*ti.Tensor, error)
-}
-
-func Clone(t types.Tensor) types.Tensor {
-	switch tt := t.(type) {
-	case *tf64.Tensor:
-		return tt.Clone()
-	case *tf32.Tensor:
-		return tt.Clone()
-	case *ti.Tensor:
-		return tt.Clone()
-	case *tb.Tensor:
-		return tt.Clone()
-	default:
-		panic(fmt.Sprintf("Cloning not yet implemented for %T", t))
+	if retVal, err = getDense(t); err != nil {
+		err = errors.Wrapf(err, opFail, "getFloatDense")
+		return
 	}
-	panic("Unreachable")
+	if retVal == nil {
+		return
+	}
+	if !isFloat(retVal.t) {
+		err = errors.Errorf(dtypeMismatch, retVal.t, retVal.data)
+		return
+	}
+	return
 }
 
-func Copy(to, from types.Tensor) error {
-	switch ft := from.(type) {
-	case *tf64.Tensor:
-		tt, ok := to.(*tf64.Tensor)
-		if !ok {
-			return types.NewError(types.DtypeMismatch, "%T and %T are not of the same type", from, to)
-		}
-
-		return ft.CopyTo(tt)
-	case *tf32.Tensor:
-		tt, ok := to.(*tf32.Tensor)
-		if !ok {
-			return types.NewError(types.DtypeMismatch, "%T and %T are not of the same type", from, to)
-		}
-
-		return ft.CopyTo(tt)
-	case *ti.Tensor:
-		tt, ok := to.(*ti.Tensor)
-		if !ok {
-			return types.NewError(types.DtypeMismatch, "%T and %T are not of the same type", from, to)
-		}
-
-		return ft.CopyTo(tt)
-	case *tb.Tensor:
-		tt, ok := to.(*tb.Tensor)
-		if !ok {
-			return types.NewError(types.DtypeMismatch, "%T and %T are not of the same type", from, to)
-		}
-
-		return ft.CopyTo(tt)
-	default:
-		return types.NewError(types.NotYetImplemented, "Copying data not yet implemented for %T", from)
+func sliceDense(t *Dense, slices ...Slice) (retVal *Dense, err error) {
+	var sliced Tensor
+	if sliced, err = t.Slice(slices...); err != nil {
+		return nil, err
 	}
-	return nil
-}
-
-func Ones(dt types.Dtype, sizes ...int) types.Tensor {
-	switch dt {
-	case types.Float64:
-		return tf64.Ones(sizes...)
-	case types.Float32:
-		return tf32.Ones(sizes...)
-	case types.Int:
-		return ti.Ones(sizes...)
-	case types.Bool:
-		return tb.Ones(sizes...)
-	default:
-		panic(fmt.Sprintf("dt of %v not handled yet", dt))
-	}
-	panic("unreachabale")
-}
-
-func Zeroes(dt types.Dtype, sizes ...int) types.Tensor {
-	switch dt {
-	case types.Float64:
-		return tf64.Zeroes(sizes...)
-	case types.Float32:
-		return tf32.Zeroes(sizes...)
-	case types.Int:
-		return ti.Zeroes(sizes...)
-	case types.Bool:
-		return tb.Zeroes(sizes...)
-	default:
-		panic(fmt.Sprintf("dt of %v not handled yet", dt))
-	}
-	panic("unreachable")
+	return sliced.(*Dense), nil
 }
