@@ -263,7 +263,7 @@ func TransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) int 
 	/*
 		coordss, _ := Permute(pattern, oldCoord)
 		coords := coordss[0]
-		index, _ := types.Ltoi(newShape, strides, coords...)
+		index, _ := Ltoi(newShape, strides, coords...)
 	*/
 
 	// The above is the "conceptual" algorithm.

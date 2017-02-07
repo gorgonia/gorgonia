@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/chewxy/gorgonia/tensor_old/types"
 	"github.com/pkg/errors"
 )
 
@@ -176,7 +175,7 @@ func (t *Dense) ReadNpy(r io.Reader) (err error) {
 		return
 	}
 	if version != 1 {
-		err = types.NewError(types.IOError, "Only version 1 of numpy's serialization is currently supported")
+		err = errors.New("Only verion 1.0 of numpy's serialization format is currently supported (65535 bytes ought to be enough for a header)")
 		return
 	}
 
@@ -185,7 +184,7 @@ func (t *Dense) ReadNpy(r io.Reader) (err error) {
 		return
 	}
 	if minor != 0 {
-		err = types.NewError(types.IOError, "Only version 1.0 of numpy's serialization is currently supported")
+		err = errors.New("Only verion 1.0 of numpy's serialization format is currently supported (65535 bytes ought to be enough for a header)")
 		return
 	}
 
@@ -202,7 +201,7 @@ func (t *Dense) ReadNpy(r io.Reader) (err error) {
 	desc := regexp.MustCompile(`'descr':\s*'([^']*)'`)
 	match := desc.FindSubmatch(header)
 	if match == nil {
-		err = types.NewError(types.IOError, "No dtype information found")
+		err = errors.New("No dtype information in npy file")
 		return
 	}
 
