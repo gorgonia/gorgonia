@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"encoding/binary"
 	"fmt"
 	"hash"
 	"hash/fnv"
@@ -180,11 +179,7 @@ func (c constantScalar) Do(...Value) (Value, error) { return c.v, nil }
 func (c constantScalar) String() string             { return fmt.Sprintf("const %s", c.v) }
 
 func (c constantScalar) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "const ")
-	if err := binary.Write(h, binary.LittleEndian, TypeOf(c.v)); err != nil {
-		panic(err)
-	}
-	fmt.Fprintf(h, "of %v", c.v)
+	fmt.Fprintf(h, "const %v: %v", TypeOf(c.v), c.v)
 }
 
 func (c constantScalar) Hashcode() uint32 {
@@ -215,8 +210,7 @@ func (c constantTensor) Do(...Value) (Value, error)                 { return c.v
 func (c constantTensor) String() string                             { return fmt.Sprintf("const %s", TypeOf(c.v)) }
 
 func (c constantTensor) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "const %v", c.Type())
-	fmt.Fprintf(h, "%v", c.v)
+	fmt.Fprintf(h, "const %v:%v", c.Type(), c.v)
 }
 
 func (c constantTensor) Hashcode() uint32 {

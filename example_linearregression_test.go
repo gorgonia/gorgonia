@@ -21,8 +21,8 @@ func xy(dt tensor.Dtype) (x tensor.Tensor, y tensor.Tensor) {
 		yBack = []float64{2.5, 4.2, 6.1, 8, 9.992, 11.7, 15.1, 16, 18.1, 19.89}
 	}
 
-	x = tensor.New(dt, tensor.WithBacking(xBack), tensor.WithShape(10))
-	y = tensor.New(dt, tensor.WithBacking(yBack), tensor.WithShape(10))
+	x = tensor.New(tensor.WithBacking(xBack), tensor.WithShape(10))
+	y = tensor.New(tensor.WithBacking(yBack), tensor.WithShape(10))
 	return
 }
 

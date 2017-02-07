@@ -42,8 +42,7 @@ func Use(b BLAS) {
 	// those lines were few of the better additions to the Special Edition. There, I said it. The Special Edition is superior. Except Han still shot first in my mind.
 
 	whichblas = b
-	f64 := b.(blas.Float64)
-	tensor.Use(f64)
+	tensor.Use(b)
 
 	// TODO:
 	// float32

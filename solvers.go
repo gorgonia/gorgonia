@@ -200,44 +200,44 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 		// cw = cw*decay + (1-decay) * grad^2
 		switch cw := cv.(type) {
 		case *tensor.Dense:
-			var gt, gt2, w, regularized *tensor.Dense
-			var decay, omdecay, stepSize, eps, l2reg, clip, negClip Value
+			var gt, gt2, w, regularized tensor.Tensor
+			var decay, omdecay, stepSize, eps, l2reg, clip, negClip interface{}
 			switch cw.Dtype() {
 			case tensor.Float64:
-				decay = F64(s.decay)
-				omdecay = F64(1.0 - s.decay)
-				stepSize = F64(-s.eta)
-				eps = F64(s.eps)
-				l2reg = F64(s.l2reg)
-				clip = F64(s.clip)
-				negClip = F64(-s.clip)
+				decay = s.decay
+				omdecay = 1.0 - s.decay
+				stepSize = -s.eta
+				eps = s.eps
+				l2reg = s.l2reg
+				clip = s.clip
+				negClip = -s.clip
 			case tensor.Float32:
-				decay = F32(s.decay)
-				omdecay = F32(1.0 - s.decay)
-				stepSize = F32(-s.eta)
-				eps = F32(s.eps)
-				l2reg = F32(s.l2reg)
-				clip = F32(s.clip)
-				negClip = F32(-s.clip)
+				decay = float32(s.decay)
+				omdecay = float32(1.0 - s.decay)
+				stepSize = float32(-s.eta)
+				eps = float32(s.eps)
+				l2reg = float32(s.l2reg)
+				clip = float32(s.clip)
+				negClip = float32(-s.clip)
 			}
 
-			gt = grad.(*tensor.Dense)
+			gt = grad.(tensor.Tensor)
 			if gt2, err = tensor.Square(gt); err != nil {
 				return errors.Wrap(err, pointWiseSquareFail)
 			}
-			tensor.Mul(cw, decay.Data(), tensor.UseUnsafe())
-			tensor.Mul(gt2, omdecay.Data(), tensor.UseUnsafe())
+			tensor.Mul(cw, decay, tensor.UseUnsafe())
+			tensor.Mul(gt2, omdecay, tensor.UseUnsafe())
 			tensor.Add(cw, gt2, tensor.UseUnsafe())
 			defer returnTensor(gt2)
 
 			if s.useClip {
-				if _, err = tensor.Clamp(gt, negClip.Data(), clip.Data(), tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Clamp(gt, negClip, clip, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
 
 			// regularize
-			var upd *tensor.Dense
+			var upd tensor.Tensor
 			if upd, err = tensor.Add(cw, eps); err != nil {
 				return errors.Wrap(err, "Failed to carry Add()")
 			}
@@ -397,73 +397,75 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			w := weights.(*tensor.Dense)
 			v := cvv.(*tensor.Dense)
 
-			var l1reg, l2reg, batch, clip, negClip, beta1, beta2, eps, eta, one Value
-			var correctionV1, correctionV2 Value
+			var l1reg, l2reg, clip, negClip, beta1, beta2, omβ1, omβ2, eps, eta, onePerBatch interface{}
+			var correctionV1, correctionV2 interface{}
 			switch m.Dtype() {
 			case tensor.Float64:
-				l1reg = F64(s.l1reg)
-				l2reg = F64(s.l2reg)
-				batch = F64(s.batch)
-				clip = F64(s.clip)
-				negClip = F64(-s.clip)
-				beta1 = F64(s.beta1)
-				beta2 = F64(s.beta2)
-				eps = F64(s.eps)
-				eta = F64(-s.eta)
-				one = F64(1)
-				correctionV1 = F64(correction1)
-				correctionV2 = F64(correction2)
+				l1reg = s.l1reg
+				l2reg = s.l2reg
+				clip = s.clip
+				negClip = -s.clip
+				beta1 = s.beta1
+				beta2 = s.beta2
+				omβ1 = float64(1) - s.beta1
+				omβ2 = float64(1) - s.beta2
+				eps = s.eps
+				eta = -s.eta
+				onePerBatch = float64(1) / s.batch
+				correctionV1 = float64(1) / float64(correction1)
+				correctionV2 = float64(1) / float64(correction2)
 			case tensor.Float32:
-				l1reg = F32(s.l1reg)
-				l2reg = F32(s.l2reg)
-				batch = F32(s.batch)
-				clip = F32(s.clip)
-				negClip = F32(s.clip)
-				beta1 = F32(s.beta1)
-				beta2 = F32(s.beta2)
-				eps = F32(s.eps)
-				eta = F32(-s.eta)
-				one = F32(1)
-				correctionV1 = F32(correction1)
-				correctionV2 = F32(correction2)
+				l1reg = float32(s.l1reg)
+				l2reg = float32(s.l2reg)
+				clip = float32(s.clip)
+				negClip = float32(s.clip)
+				beta1 = float32(s.beta1)
+				beta2 = float32(s.beta2)
+				omβ1 = float32(1) - float32(s.beta1)
+				omβ2 = float32(1) - float32(s.beta2)
+				eps = float32(s.eps)
+				eta = float32(-s.eta)
+				onePerBatch = float32(1) / float32(s.batch)
+				correctionV1 = float32(1) / float32(correction1)
+				correctionV2 = float32(1) / float32(correction2)
 			}
 
 			// prep the regularization of gradients
-			if useL1Reg {
-				var l1regs *tensor.Dense
+			if s.useL1Reg {
+				var l1regs tensor.Tensor
 				if l1regs, err = tensor.Sign(w); err != nil {
 					errors.Wrap(err, signFail)
 				}
 				if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
-					return errors.Wrap(err, pointwiseMulFail)
+					return errors.Wrap(err, pointWiseMulFail)
 				}
-				if g, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 				defer returnTensor(l1regs)
 			}
 
 			if s.useL2Reg {
-				var l2regs *tensor.Dense
+				var l2regs tensor.Tensor
 				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
-				if g, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
 				defer returnTensor(l2regs)
 			}
 
-			if batch > 1 {
-				if g, err = tensor.Mul((one / batch).Data(), g, tensor.UseUnsafe()); err != nil {
+			if s.batch > 1 {
+				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 			}
 
-			if s.useClip && clip > 0 {
-				if g, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
+			if s.useClip && s.clip > 0 {
+				if _, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
@@ -475,25 +477,25 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 
 			// equation(1)
 			t1 := g.Clone().(*tensor.Dense)
-			if t1, err = tensor.Mul((one - beta1).Data(), t1, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(omβ1, t1, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation(2)
-			if g, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(g, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
-			if g, err = tensor.Mul((one - beta2).Data(), g, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(omβ2, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation (1)
-			if t1, err = tensor.Mul(beta1.Data(), m, tensor.WithIncr(t1)); err != nil {
+			if _, err = tensor.Mul(beta1, m, tensor.WithIncr(t1)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// equation (2)
-			if g, err = tensor.Mul(beta2.Data(), v, tensor.WithIncr(g)); err != nil {
+			if _, err = tensor.Mul(beta2, v, tensor.WithIncr(g)); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -506,28 +508,28 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			mHats := t1.Clone().(*tensor.Dense)
 			vHats := g.Clone().(*tensor.Dense)
 
-			if mHats, err = tensor.Mul((one / correctionV1).Data(), mHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(correctionV1, mHats, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if vHats, err = tensor.Mul((one / correctionV2).Data(), vHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(correctionV2, vHats, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
 			// update := -eta * mHat / (sqrt(vHat) + epsilon)
-			if vHats, err = tensor.Sqrt(vHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Sqrt(vHats, tensor.UseUnsafe()); err != nil {
 				return // TODO: rewrite this to use InvSqrt
 			}
 
-			if vHats, err = tensor.Add(eps.Data(), vHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(eps, vHats, tensor.UseUnsafe()); err != nil {
 				return
 			}
 
-			if mHats, err = tensor.Mul(eta.Data(), mHats, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(eta, mHats, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if w, err = tensor.Div(mHats, vHats, tensor.WithIncr(w)); err != nil {
+			if _, err = tensor.Div(mHats, vHats, tensor.WithIncr(w)); err != nil {
 				return
 			}
 
@@ -693,28 +695,26 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 		case *tensor.Dense:
 			g := grad.(*tensor.Dense)
 
-			var l1reg, l2reg, batch, clip, negClip, eta Value
-			var one Value
+			var l1reg, l2reg, clip, negClip, eta interface{}
+			var onePerBatch interface{}
 			switch w.Dtype() {
 			case tensor.Float64:
-				l1reg = F64(s.l1reg)
-				l2reg = F64(s.l2reg)
-				batch = F64(s.batch)
-				clip = F64(s.clip)
-				negClip = F64(-s.clip)
-				eta = F64(-s.eta)
-				one = F64(1)
+				l1reg = s.l1reg
+				l2reg = s.l2reg
+				clip = s.clip
+				negClip = -s.clip
+				eta = -s.eta
+				onePerBatch = float64(1) / s.batch
 			case tensor.Float32:
-				l1reg = F32(s.l1reg)
-				l2reg = F32(s.l2reg)
-				batch = F32(s.batch)
-				clip = F32(s.clip)
-				negClip = F32(-s.clip)
-				eta = F32(-s.eta)
-				one = F32(1)
+				l1reg = float32(s.l1reg)
+				l2reg = float32(s.l2reg)
+				clip = float32(s.clip)
+				negClip = float32(-s.clip)
+				eta = float32(-s.eta)
+				onePerBatch = float32(1) / float32(s.batch)
 			}
 			// prep the regularization of gradients
-			var l1regs, l2regs *tensor.Dense
+			var l1regs, l2regs tensor.Tensor
 			if s.useL1Reg {
 				if l1regs, err = tensor.Sign(w); err != nil {
 					return errors.Wrap(err, signFail)
@@ -724,7 +724,7 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
-				if g, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
@@ -736,26 +736,26 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
-				if g, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, addFail)
 				}
 
 				defer returnTensor(l2regs)
 			}
 
-			if batch > 1 {
-				if g, err = tensor.Mul(one/batch, g, tensor.UseUnsafe()); err != nil {
+			if s.batch > 1 {
+				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 			}
 
-			if s.useClip && clip > 0 {
-				if g, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
+			if s.useClip && s.clip > 0 {
+				if _, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
 
-			if g, err = tensor.Mul(eta, g, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(eta, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
@@ -766,13 +766,13 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			g.Zero()
 
 		case F32:
-			g := float32(grad.(F32))
+			g := grad.(F32)
 
-			l1reg := float32(s.l1reg)
-			l2reg := float32(s.l2reg)
-			batch := float32(s.batch)
-			clip := float32(s.clip)
-			eta := float32(s.eta)
+			l1reg := F32(s.l1reg)
+			l2reg := F32(s.l2reg)
+			batch := F32(s.batch)
+			clip := F32(s.clip)
+			eta := F32(s.eta)
 
 			if s.useL1Reg {
 				if w < 0 {
@@ -804,13 +804,13 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			dv.Value, _ = anyToScalar(w)
 			dv.d = zero(Float32)
 		case F64:
-			g := float64(grad.(F64))
+			g := F64(grad.(F64))
 
-			l1reg := s.l1reg
-			l2reg := s.l2reg
-			batch := s.batch
-			clip := s.clip
-			eta := s.eta
+			l1reg := F64(s.l1reg)
+			l2reg := F64(s.l2reg)
+			batch := F64(s.batch)
+			clip := F64(s.clip)
+			eta := F64(s.eta)
 
 			if s.useL1Reg {
 				if w < 0 {
@@ -842,7 +842,7 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			dv.Value, _ = anyToScalar(w)
 			dv.d = zero(Float64)
 		default:
-			return errors.Errorf(nyiFail, "VanillaSolver.step", wt)
+			return errors.Errorf(nyiFail, "VanillaSolver.step", w)
 		}
 	}
 	return
@@ -900,22 +900,22 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 
 		switch cw := cv.(type) {
 		case *tensor.Dense:
-			var w, g, c, g2, regularized *tensor.Dense
+			var w, g, c, g2, regularized tensor.Tensor
 
-			var l2reg, clip, negClip, eps, eta Value
+			var l2reg, clip, negClip, eps, eta interface{}
 			switch cw.Dtype() {
 			case tensor.Float64:
-				l2reg = F64(s.l2reg)
-				clip = F64(s.clip)
-				negClip = F64(-s.clip)
-				eps = F64(s.eps)
-				eta = F64(-s.eta)
+				l2reg = s.l2reg
+				clip = s.clip
+				negClip = -s.clip
+				eps = s.eps
+				eta = -s.eta
 			case tensor.Float32:
-				l2reg = F32(s.l2reg)
-				clip = F32(s.clip)
-				negClip = F32(-s.clip)
-				eps = F32(s.eps)
-				eta = F32(-s.eta)
+				l2reg = float32(s.l2reg)
+				clip = float32(s.clip)
+				negClip = float32(-s.clip)
+				eps = float32(s.eps)
+				eta = float32(-s.eta)
 			}
 
 			g = grad.(*tensor.Dense)
@@ -928,14 +928,13 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			defer returnTensor(g2)
 
 			if s.useClip {
-				if _, err = tensor.Clamp(g, negClip.Data(), clip.Data(), tensor.UseUnsafe()); err != nil {
+				if _, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
 					return errors.Wrap(err, clampFail)
 				}
 			}
 
 			// update
-			var upd *tensor.Dense
-
+			var upd tensor.Tensor
 			if upd, err = tensor.Add(c, eps); err != nil {
 				return errors.Wrap(err, addFail)
 			}
@@ -943,7 +942,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			if _, err = tensor.InvSqrt(upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, invSqrtFail)
 			}
-			if _, err = tensor.Mul(g, -eta, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Mul(g, eta, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 

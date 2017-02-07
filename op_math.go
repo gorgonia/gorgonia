@@ -511,6 +511,7 @@ func (op elemUnaryOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		if t, err = v.Apply(fn, opts...); err != nil {
 			return nil, errors.Wrap(err, applyFail)
 		}
+		retVal = t
 	case Scalar:
 		vt := DtypeOf(v)
 		switch vt {

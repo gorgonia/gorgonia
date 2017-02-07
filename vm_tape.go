@@ -416,7 +416,7 @@ mustalloc:
 	}
 
 	//TODO: runtime shape check
-	t := tensor.New(tensor.WithShape(instr.s...))
+	t := tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...))
 	m.storage[dest] = t
 	return
 }

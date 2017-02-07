@@ -112,7 +112,7 @@ func CloneValue(v Value) (Value, error) {
 	case B:
 		return vt, nil
 	case tensor.Tensor:
-		return vt.Clone.(tensor.Tensor), nil
+		return vt.Clone().(tensor.Tensor), nil
 	case Cloner:
 		return vt.Clone().(Value), nil
 	default:

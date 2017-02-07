@@ -252,7 +252,12 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 	case Scalar:
 		retVal.d = one(DtypeOf(v))
 	case tensor.Tensor:
-		err = v.SetAll(1)
+		switch v.Dtype() {
+		case tensor.Float64:
+			err = v.Memset(float64(1))
+		case tensor.Float32:
+			err = v.Memset(float32(1))
+		}
 		retVal.d = v
 	default:
 		err = errors.Errorf(nyiTypeFail, "dvBindVar0", retVal.d)
