@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/alecthomas/assert"
+	"github.com/stretchr/testify/assert"
 	"github.com/chewxy/math32"
 )
 
