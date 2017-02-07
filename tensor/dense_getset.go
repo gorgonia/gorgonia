@@ -1156,3 +1156,143 @@ func (t *Dense) slice(start, end int) {
 		t.fromSlice(v.Interface())
 	}
 }
+
+// Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
+func (t *Dense) Eq(other interface{}) bool {
+	if ot, ok := other.(*Dense); ok {
+		if ot == t {
+			return true
+		}
+
+		if ot.len() != t.len() {
+			return false
+		}
+
+		if t.t != ot.t {
+			return false
+		}
+
+		if !t.Shape().Eq(ot.Shape()) {
+			return false
+		}
+
+		switch t.t.Kind() {
+		case reflect.Bool:
+			for i, v := range t.bools() {
+				if ot.getB(i) != v {
+					return false
+				}
+			}
+		case reflect.Int:
+			for i, v := range t.ints() {
+				if ot.getI(i) != v {
+					return false
+				}
+			}
+		case reflect.Int8:
+			for i, v := range t.int8s() {
+				if ot.getI8(i) != v {
+					return false
+				}
+			}
+		case reflect.Int16:
+			for i, v := range t.int16s() {
+				if ot.getI16(i) != v {
+					return false
+				}
+			}
+		case reflect.Int32:
+			for i, v := range t.int32s() {
+				if ot.getI32(i) != v {
+					return false
+				}
+			}
+		case reflect.Int64:
+			for i, v := range t.int64s() {
+				if ot.getI64(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint:
+			for i, v := range t.uints() {
+				if ot.getU(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint8:
+			for i, v := range t.uint8s() {
+				if ot.getU8(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint16:
+			for i, v := range t.uint16s() {
+				if ot.getU16(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint32:
+			for i, v := range t.uint32s() {
+				if ot.getU32(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint64:
+			for i, v := range t.uint64s() {
+				if ot.getU64(i) != v {
+					return false
+				}
+			}
+		case reflect.Uintptr:
+			for i, v := range t.uintptrs() {
+				if ot.getUintptr(i) != v {
+					return false
+				}
+			}
+		case reflect.Float32:
+			for i, v := range t.float32s() {
+				if ot.getF32(i) != v {
+					return false
+				}
+			}
+		case reflect.Float64:
+			for i, v := range t.float64s() {
+				if ot.getF64(i) != v {
+					return false
+				}
+			}
+		case reflect.Complex64:
+			for i, v := range t.complex64s() {
+				if ot.getC64(i) != v {
+					return false
+				}
+			}
+		case reflect.Complex128:
+			for i, v := range t.complex128s() {
+				if ot.getC128(i) != v {
+					return false
+				}
+			}
+		case reflect.String:
+			for i, v := range t.strings() {
+				if ot.getStr(i) != v {
+					return false
+				}
+			}
+		case reflect.UnsafePointer:
+			for i, v := range t.unsafePointers() {
+				if ot.getUnsafePointer(i) != v {
+					return false
+				}
+			}
+		default:
+			for i := 0; i < t.len(); i++ {
+				if !reflect.DeepEqual(t.Get(i), ot.Get(i)) {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	return false
+}

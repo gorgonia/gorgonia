@@ -26,7 +26,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	}
 
 	binOp := newEBOByType(op, dt, dt)
-	t.Logf("%v %v %v", randX, op, randY)
+	t.Logf("ssBinOp %v %v %v", randX, op, randY)
 
 	var g, g2 *ExprGraph
 	var x, y, z *Node
@@ -123,6 +123,7 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		randY = []float64{2, 2, 2, 2}
 	}
 
+	t.Logf("ttBinOp: %v %v %v", randX, op, randY)
 	// randX := Gaussian(0, 1)(dt, 2, 2)
 	// randY := Gaussian(0, 1)(dt, 2, 2)
 
@@ -230,11 +231,13 @@ func TestBinOps(t *testing.T) {
 			t.Errorf("Float32 version err: %v", err)
 		}
 
+		t.Logf("Float64 T-T test")
 		err = ttBinOpTest(t, op, Float64)
 		if err != nil {
 			t.Errorf("ttBinOp Float64 version err %v", err)
 		}
 
+		t.Logf("Float32 T-T test")
 		err = ttBinOpTest(t, op, Float32)
 		if err != nil {
 			t.Errorf("ttBinOp Float64 version err %v", err)

@@ -146,29 +146,29 @@ func (t *Dense) IsMaterializable() bool {
 	return t.viewOf != nil || t.old != nil
 }
 
-// Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
-func (t *Dense) Eq(other interface{}) bool {
-	if ot, ok := other.(*Dense); ok {
-		if ot == t {
-			return true
-		}
+// // Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
+// func (t *Dense) Eq(other interface{}) bool {
+// 	if ot, ok := other.(*Dense); ok {
+// 		if ot == t {
+// 			return true
+// 		}
 
-		if ot.len() != t.len() {
-			return false
-		}
+// 		if ot.len() != t.len() {
+// 			return false
+// 		}
 
-		if !t.Shape().Eq(ot.Shape()) {
-			return false
-		}
+// 		if !t.Shape().Eq(ot.Shape()) {
+// 			return false
+// 		}
 
-		if t.data != ot.data {
-			return false
-		}
+// 		if t.data != ot.data {
+// 			return false
+// 		}
 
-		return true
-	}
-	return false
-}
+// 		return true
+// 	}
+// 	return false
+// }
 
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {

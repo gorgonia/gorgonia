@@ -718,12 +718,11 @@ func hadamardPowDiff(x, y, z *Node) (err error) {
 		ym1 = ydvt - F32(1)
 	case *tensor.Dense:
 		var one interface{}
-		switch x.t {
+		switch ydvt.Dtype() {
 		case tensor.Float64:
 			one = float64(1)
 		case tensor.Float32:
 			one = float32(1)
-
 		}
 		if ym1, err = tensor.Sub(ydvt, one); err != nil {
 			return

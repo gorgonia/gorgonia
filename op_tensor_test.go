@@ -297,7 +297,7 @@ func TestConcatOp(t *testing.T) {
 
 	xG, _ := x.Grad()
 	aG, _ := a.Grad()
-	assert.Equal(xG, aG)
-	assert.Equal(xx.Value(), aa.Value())
+	assert.True(ValueEq(xG, aG))
+	assert.True(ValueEq(xx.Value(), aa.Value()))
 
 }

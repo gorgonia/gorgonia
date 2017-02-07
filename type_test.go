@@ -30,9 +30,9 @@ func TestDtypeBasics(t *testing.T) {
 	assert.Equal(t0, t1)
 
 	// for completeness sake
-	assert.Equal("Float64", t0.Name())
-	assert.Equal("Float64", t0.String())
-	assert.Equal("Float64", fmt.Sprintf("%v", t0))
+	assert.Equal("float64", t0.Name())
+	assert.Equal("float64", t0.String())
+	assert.Equal("float64", fmt.Sprintf("%v", t0))
 
 }
 
@@ -137,9 +137,9 @@ func init() {
 		format string
 	}{
 
-		{newTensorType(1, Float64), newTensorType(1, Float64), true, hm.Types{Float64}, "Vector Float64"},
-		{newTensorType(1, Float64), newTensorType(1, Float32), false, hm.Types{Float64}, "Vector Float64"},
-		{newTensorType(1, Float64), newTensorType(2, Float64), false, hm.Types{Float64}, "Vector Float64"},
+		{newTensorType(1, Float64), newTensorType(1, Float64), true, hm.Types{Float64}, "Vector float64"},
+		{newTensorType(1, Float64), newTensorType(1, Float32), false, hm.Types{Float64}, "Vector float64"},
+		{newTensorType(1, Float64), newTensorType(2, Float64), false, hm.Types{Float64}, "Vector float64"},
 		{newTensorType(1, hm.TypeVariable('a')), newTensorType(1, hm.TypeVariable('a')), true, hm.Types{hm.TypeVariable('a')}, "Vector a"},
 		{newTensorType(1, hm.TypeVariable('a')), newTensorType(1, hm.TypeVariable('b')), false, hm.Types{hm.TypeVariable('a')}, "Vector a"},
 	}

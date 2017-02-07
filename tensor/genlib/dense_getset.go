@@ -311,6 +311,50 @@ func (t *Dense) slice(start, end int) {
 }
 `
 
+const denseEqRaw = `// Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
+func (t *Dense) Eq(other interface{}) bool {
+	if ot, ok := other.(*Dense); ok {
+		if ot == t {
+			return true
+		}
+
+		if ot.len() != t.len() {
+			return false
+		}
+
+		if t.t != ot.t {
+			return false
+		}
+
+		if !t.Shape().Eq(ot.Shape()) {
+			return false
+		}
+
+		switch t.t.Kind() {
+		{{range .Kinds -}}
+			{{if isParameterized . -}}
+			{{else -}}
+		case reflect.{{reflectKind .}}:
+			for i, v := range t.{{sliceOf .}} {
+				if ot.get{{short .}}(i) != v {
+					return false
+				}
+			}
+			{{end -}}
+		{{end -}}
+		default:
+			for i := 0; i < t.len(); i++{
+				if !reflect.DeepEqual(t.Get(i), ot.Get(i)){
+					return false
+				}
+			}
+		}
+		return true
+	}
+	return false
+}
+`
+
 var (
 	AsSlice    *template.Template
 	SimpleSet  *template.Template
@@ -324,6 +368,7 @@ var (
 	CopySliced *template.Template
 	CopyIter   *template.Template
 	Slice      *template.Template
+	Eq         *template.Template
 )
 
 func init() {
@@ -339,7 +384,7 @@ func init() {
 	CopySliced = template.Must(template.New("copySliced").Funcs(funcs).Parse(copySlicedRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
 	Slice = template.Must(template.New("slice").Funcs(funcs).Parse(sliceRaw))
-
+	Eq = template.Must(template.New("eq").Funcs(funcs).Parse(denseEqRaw))
 }
 
 func getset(f io.Writer, generic *ManyKinds) {
@@ -369,4 +414,6 @@ func getset(f io.Writer, generic *ManyKinds) {
 	CopyIter.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Slice.Execute(f, generic)
+	fmt.Fprintf(f, "\n\n\n")
+	Eq.Execute(f, generic)
 }
