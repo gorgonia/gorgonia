@@ -42,7 +42,6 @@ const argMethodRaw = `func (t *Dense) {{.ArgName}}(axis int)(retVal *Dense, err 
 	if _, ok := err.(NoOpError); !ok && err != nil {
 		return
 	} else if ok {
-		err = nil // reset errs
 		newAP = t.AP.Clone()
 	}
 	defer ReturnAP(newAP)

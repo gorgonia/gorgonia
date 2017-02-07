@@ -118,7 +118,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -132,7 +131,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) + other.getI(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -146,7 +144,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) + other.getI(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -164,7 +161,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI(i) + other.getI(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -198,7 +194,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) + other.getI(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int8:
@@ -214,7 +209,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -228,7 +222,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) + other.getI8(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -242,7 +235,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) + other.getI8(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -260,7 +252,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI8(i) + other.getI8(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -294,7 +285,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) + other.getI8(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int16:
@@ -310,7 +300,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -324,7 +313,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) + other.getI16(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -338,7 +326,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) + other.getI16(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -356,7 +343,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI16(i) + other.getI16(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -390,7 +376,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) + other.getI16(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int32:
@@ -406,7 +391,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -420,7 +404,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) + other.getI32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -434,7 +417,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) + other.getI32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -452,7 +434,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI32(i) + other.getI32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -486,7 +467,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) + other.getI32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int64:
@@ -502,7 +482,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -516,7 +495,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) + other.getI64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -530,7 +508,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) + other.getI64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -548,7 +525,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI64(i) + other.getI64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -582,7 +558,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) + other.getI64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint:
@@ -598,7 +573,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -612,7 +586,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) + other.getU(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -626,7 +599,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) + other.getU(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -644,7 +616,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU(i) + other.getU(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -678,7 +649,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) + other.getU(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint8:
@@ -694,7 +664,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -708,7 +677,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) + other.getU8(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -722,7 +690,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) + other.getU8(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -740,7 +707,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU8(i) + other.getU8(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -774,7 +740,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) + other.getU8(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint16:
@@ -790,7 +755,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -804,7 +768,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) + other.getU16(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -818,7 +781,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) + other.getU16(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -836,7 +798,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU16(i) + other.getU16(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -870,7 +831,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) + other.getU16(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint32:
@@ -886,7 +846,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -900,7 +859,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) + other.getU32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -914,7 +872,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) + other.getU32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -932,7 +889,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU32(i) + other.getU32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -966,7 +922,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) + other.getU32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint64:
@@ -982,7 +937,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -996,7 +950,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) + other.getU64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -1010,7 +963,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) + other.getU64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1028,7 +980,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU64(i) + other.getU64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -1062,7 +1013,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) + other.getU64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float32:
@@ -1078,7 +1028,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1092,7 +1041,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) + other.getF32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -1106,7 +1054,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) + other.getF32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1124,7 +1071,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF32(i) + other.getF32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -1158,7 +1104,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) + other.getF32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float64:
@@ -1174,7 +1119,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1188,7 +1132,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) + other.getF64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -1202,7 +1145,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) + other.getF64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1220,7 +1162,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF64(i) + other.getF64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -1254,7 +1195,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) + other.getF64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex64:
@@ -1270,7 +1210,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1284,7 +1223,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) + other.getC64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -1298,7 +1236,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) + other.getC64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1316,7 +1253,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC64(i) + other.getC64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -1350,7 +1286,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) + other.getC64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex128:
@@ -1366,7 +1301,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1380,7 +1314,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) + other.getC128(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -1394,7 +1327,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) + other.getC128(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1412,7 +1344,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC128(i) + other.getC128(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -1446,7 +1377,6 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) + other.getC128(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		}
@@ -1910,7 +1840,8 @@ func (t *Dense) add(other *Dense, it, ot *FlatIterator) (err error) {
 	default:
 		// TODO: Handle Number interface
 	}
-	return nil
+
+	return
 }
 
 /* Sub */
@@ -1946,7 +1877,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1960,7 +1890,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) - other.getI(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -1974,7 +1903,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) - other.getI(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -1992,7 +1920,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI(i) - other.getI(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2026,7 +1953,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) - other.getI(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int8:
@@ -2042,7 +1968,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2056,7 +1981,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) - other.getI8(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2070,7 +1994,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) - other.getI8(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2088,7 +2011,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI8(i) - other.getI8(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2122,7 +2044,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) - other.getI8(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int16:
@@ -2138,7 +2059,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2152,7 +2072,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) - other.getI16(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2166,7 +2085,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) - other.getI16(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2184,7 +2102,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI16(i) - other.getI16(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2218,7 +2135,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) - other.getI16(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int32:
@@ -2234,7 +2150,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2248,7 +2163,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) - other.getI32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2262,7 +2176,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) - other.getI32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2280,7 +2193,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI32(i) - other.getI32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2314,7 +2226,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) - other.getI32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int64:
@@ -2330,7 +2241,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2344,7 +2254,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) - other.getI64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2358,7 +2267,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) - other.getI64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2376,7 +2284,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI64(i) - other.getI64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2410,7 +2317,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) - other.getI64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint:
@@ -2426,7 +2332,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2440,7 +2345,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) - other.getU(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2454,7 +2358,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) - other.getU(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2472,7 +2375,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU(i) - other.getU(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2506,7 +2408,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) - other.getU(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint8:
@@ -2522,7 +2423,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2536,7 +2436,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) - other.getU8(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2550,7 +2449,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) - other.getU8(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2568,7 +2466,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU8(i) - other.getU8(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2602,7 +2499,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) - other.getU8(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint16:
@@ -2618,7 +2514,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2632,7 +2527,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) - other.getU16(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2646,7 +2540,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) - other.getU16(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2664,7 +2557,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU16(i) - other.getU16(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2698,7 +2590,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) - other.getU16(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint32:
@@ -2714,7 +2605,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2728,7 +2618,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) - other.getU32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2742,7 +2631,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) - other.getU32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2760,7 +2648,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU32(i) - other.getU32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2794,7 +2681,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) - other.getU32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint64:
@@ -2810,7 +2696,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2824,7 +2709,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) - other.getU64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2838,7 +2722,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) - other.getU64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2856,7 +2739,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU64(i) - other.getU64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2890,7 +2772,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) - other.getU64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float32:
@@ -2906,7 +2787,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2920,7 +2800,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) - other.getF32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -2934,7 +2813,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) - other.getF32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -2952,7 +2830,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF32(i) - other.getF32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -2986,7 +2863,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) - other.getF32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float64:
@@ -3002,7 +2878,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3016,7 +2891,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) - other.getF64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -3030,7 +2904,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) - other.getF64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3048,7 +2921,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF64(i) - other.getF64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -3082,7 +2954,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) - other.getF64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex64:
@@ -3098,7 +2969,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3112,7 +2982,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) - other.getC64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -3126,7 +2995,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) - other.getC64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3144,7 +3012,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC64(i) - other.getC64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -3178,7 +3045,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) - other.getC64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex128:
@@ -3194,7 +3060,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3208,7 +3073,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) - other.getC128(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -3222,7 +3086,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) - other.getC128(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3240,7 +3103,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC128(i) - other.getC128(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -3274,7 +3136,6 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) - other.getC128(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		}
@@ -3738,7 +3599,8 @@ func (t *Dense) sub(other *Dense, it, ot *FlatIterator) (err error) {
 	default:
 		// TODO: Handle Number interface
 	}
-	return nil
+
+	return
 }
 
 /* Mul */
@@ -3774,7 +3636,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3788,7 +3649,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) * other.getI(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -3802,7 +3662,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) * other.getI(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3820,7 +3679,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI(i) * other.getI(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -3854,7 +3712,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) * other.getI(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int8:
@@ -3870,7 +3727,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3884,7 +3740,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) * other.getI8(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -3898,7 +3753,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) * other.getI8(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3916,7 +3770,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI8(i) * other.getI8(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -3950,7 +3803,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) * other.getI8(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int16:
@@ -3966,7 +3818,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -3980,7 +3831,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) * other.getI16(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -3994,7 +3844,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) * other.getI16(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4012,7 +3861,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI16(i) * other.getI16(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4046,7 +3894,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) * other.getI16(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int32:
@@ -4062,7 +3909,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4076,7 +3922,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) * other.getI32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4090,7 +3935,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) * other.getI32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4108,7 +3952,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI32(i) * other.getI32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4142,7 +3985,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) * other.getI32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int64:
@@ -4158,7 +4000,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4172,7 +4013,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) * other.getI64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4186,7 +4026,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) * other.getI64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4204,7 +4043,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getI64(i) * other.getI64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4238,7 +4076,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) * other.getI64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint:
@@ -4254,7 +4091,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4268,7 +4104,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) * other.getU(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4282,7 +4117,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) * other.getU(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4300,7 +4134,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU(i) * other.getU(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4334,7 +4167,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) * other.getU(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint8:
@@ -4350,7 +4182,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4364,7 +4195,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) * other.getU8(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4378,7 +4208,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) * other.getU8(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4396,7 +4225,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU8(i) * other.getU8(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4430,7 +4258,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) * other.getU8(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint16:
@@ -4446,7 +4273,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4460,7 +4286,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) * other.getU16(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4474,7 +4299,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) * other.getU16(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4492,7 +4316,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU16(i) * other.getU16(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4526,7 +4349,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) * other.getU16(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint32:
@@ -4542,7 +4364,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4556,7 +4377,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) * other.getU32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4570,7 +4390,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) * other.getU32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4588,7 +4407,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU32(i) * other.getU32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4622,7 +4440,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) * other.getU32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint64:
@@ -4638,7 +4455,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4652,7 +4468,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) * other.getU64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4666,7 +4481,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) * other.getU64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4684,7 +4498,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getU64(i) * other.getU64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4718,7 +4531,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) * other.getU64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float32:
@@ -4734,7 +4546,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4748,7 +4559,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) * other.getF32(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4762,7 +4572,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) * other.getF32(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4780,7 +4589,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF32(i) * other.getF32(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4814,7 +4622,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) * other.getF32(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float64:
@@ -4830,7 +4637,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4844,7 +4650,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) * other.getF64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4858,7 +4663,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) * other.getF64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4876,7 +4680,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF64(i) * other.getF64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -4910,7 +4713,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) * other.getF64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex64:
@@ -4926,7 +4728,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4940,7 +4741,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) * other.getC64(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -4954,7 +4754,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) * other.getC64(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -4972,7 +4771,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC64(i) * other.getC64(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -5006,7 +4804,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) * other.getC64(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex128:
@@ -5022,7 +4819,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -5036,7 +4832,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) * other.getC128(j)
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -5050,7 +4845,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) * other.getC128(j)
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -5068,7 +4862,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC128(i) * other.getC128(j)
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -5102,7 +4895,6 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) * other.getC128(j)
 						incrI++
 					}
-					err = nil
 				}
 			}
 		}
@@ -5566,7 +5358,8 @@ func (t *Dense) mul(other *Dense, it, ot *FlatIterator) (err error) {
 	default:
 		// TODO: Handle Number interface
 	}
-	return nil
+
+	return
 }
 
 /* Div */
@@ -5607,6 +5400,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -5625,7 +5421,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) / other.getI(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -5643,7 +5442,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) / other.getI(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -5665,7 +5467,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getI(i) / other.getI(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -5711,7 +5516,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI(i) / other.getI(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Int8:
@@ -5731,6 +5539,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -5749,7 +5560,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) / other.getI8(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -5767,7 +5581,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) / other.getI8(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -5789,7 +5606,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getI8(i) / other.getI8(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -5835,7 +5655,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI8(i) / other.getI8(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Int16:
@@ -5855,6 +5678,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -5873,7 +5699,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) / other.getI16(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -5891,7 +5720,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) / other.getI16(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -5913,7 +5745,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getI16(i) / other.getI16(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -5959,7 +5794,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI16(i) / other.getI16(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Int32:
@@ -5979,6 +5817,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -5997,7 +5838,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) / other.getI32(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6015,7 +5859,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) / other.getI32(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6037,7 +5884,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getI32(i) / other.getI32(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6083,7 +5933,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI32(i) / other.getI32(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Int64:
@@ -6103,6 +5956,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6121,7 +5977,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) / other.getI64(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6139,7 +5998,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) / other.getI64(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6161,7 +6023,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getI64(i) / other.getI64(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6207,7 +6072,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getI64(i) / other.getI64(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Uint:
@@ -6227,6 +6095,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6245,7 +6116,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) / other.getU(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6263,7 +6137,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) / other.getU(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6285,7 +6162,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getU(i) / other.getU(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6331,7 +6211,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU(i) / other.getU(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Uint8:
@@ -6351,6 +6234,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6369,7 +6255,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) / other.getU8(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6387,7 +6276,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) / other.getU8(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6409,7 +6301,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getU8(i) / other.getU8(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6455,7 +6350,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU8(i) / other.getU8(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Uint16:
@@ -6475,6 +6373,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6493,7 +6394,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) / other.getU16(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6511,7 +6415,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) / other.getU16(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6533,7 +6440,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getU16(i) / other.getU16(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6579,7 +6489,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU16(i) / other.getU16(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Uint32:
@@ -6599,6 +6512,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6617,7 +6533,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) / other.getU32(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6635,7 +6554,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) / other.getU32(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6657,7 +6579,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getU32(i) / other.getU32(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6703,7 +6628,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU32(i) / other.getU32(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Uint64:
@@ -6723,6 +6651,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6741,7 +6672,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) / other.getU64(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6759,7 +6693,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) / other.getU64(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6781,7 +6718,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						}
 						data[incrI] += t.getU64(i) / other.getU64(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6827,7 +6767,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getU64(i) / other.getU64(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Float32:
@@ -6843,6 +6786,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6857,7 +6803,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) / other.getF32(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6871,7 +6820,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) / other.getF32(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6889,7 +6841,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF32(i) / other.getF32(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -6923,7 +6878,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF32(i) / other.getF32(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Float64:
@@ -6939,6 +6897,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -6953,7 +6914,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) / other.getF64(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -6967,7 +6931,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) / other.getF64(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -6985,7 +6952,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getF64(i) / other.getF64(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -7019,7 +6989,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getF64(i) / other.getF64(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Complex64:
@@ -7035,6 +7008,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -7049,7 +7025,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) / other.getC64(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -7063,7 +7042,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) / other.getC64(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -7081,7 +7063,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC64(i) / other.getC64(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -7115,7 +7100,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC64(i) / other.getC64(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		case reflect.Complex128:
@@ -7131,6 +7119,9 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
+					if err != nil {
+						return
+					}
 					err = errs
 				case it != nil && ot == nil:
 					for {
@@ -7145,7 +7136,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) / other.getC128(j)
 						j++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -7159,7 +7153,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) / other.getC128(j)
 						i++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -7177,7 +7174,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += t.getC128(i) / other.getC128(j)
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -7211,7 +7211,10 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += t.getC128(i) / other.getC128(j)
 						incrI++
 					}
-					err = nil
+					if err != nil {
+						return
+					}
+					err = errs
 				}
 			}
 		}
@@ -7799,10 +7802,15 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 	default:
 		// TODO: Handle Number interface
 	}
+
+	if err != nil {
+		return
+	}
+
 	if errs != nil {
 		err = err
 	}
-	return nil
+	return
 }
 
 /* Pow */
@@ -7838,7 +7846,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -7852,7 +7859,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -7866,7 +7872,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -7884,7 +7889,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -7918,7 +7922,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int(math.Pow(float64(t.getI(i)), float64(other.getI(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int8:
@@ -7934,7 +7937,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -7948,7 +7950,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -7962,7 +7963,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -7980,7 +7980,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8014,7 +8013,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int8(math.Pow(float64(t.getI8(i)), float64(other.getI8(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int16:
@@ -8030,7 +8028,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8044,7 +8041,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8058,7 +8054,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8076,7 +8071,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8110,7 +8104,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int16(math.Pow(float64(t.getI16(i)), float64(other.getI16(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int32:
@@ -8126,7 +8119,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8140,7 +8132,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8154,7 +8145,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8172,7 +8162,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8206,7 +8195,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int32(math.Pow(float64(t.getI32(i)), float64(other.getI32(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Int64:
@@ -8222,7 +8210,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8236,7 +8223,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8250,7 +8236,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8268,7 +8253,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8302,7 +8286,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += int64(math.Pow(float64(t.getI64(i)), float64(other.getI64(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint:
@@ -8318,7 +8301,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8332,7 +8314,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8346,7 +8327,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8364,7 +8344,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8398,7 +8377,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint(math.Pow(float64(t.getU(i)), float64(other.getU(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint8:
@@ -8414,7 +8392,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8428,7 +8405,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8442,7 +8418,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8460,7 +8435,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8494,7 +8468,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint8(math.Pow(float64(t.getU8(i)), float64(other.getU8(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint16:
@@ -8510,7 +8483,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8524,7 +8496,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8538,7 +8509,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8556,7 +8526,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8590,7 +8559,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint16(math.Pow(float64(t.getU16(i)), float64(other.getU16(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint32:
@@ -8606,7 +8574,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8620,7 +8587,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8634,7 +8600,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8652,7 +8617,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8686,7 +8650,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint32(math.Pow(float64(t.getU32(i)), float64(other.getU32(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Uint64:
@@ -8702,7 +8665,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8716,7 +8678,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8730,7 +8691,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8748,7 +8708,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8782,7 +8741,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += uint64(math.Pow(float64(t.getU64(i)), float64(other.getU64(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float32:
@@ -8798,7 +8756,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8812,7 +8769,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8826,7 +8782,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8844,7 +8799,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8878,7 +8832,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += math32.Pow(t.getF32(i), other.getF32(j))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Float64:
@@ -8894,7 +8847,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8908,7 +8860,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -8922,7 +8873,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -8940,7 +8890,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -8974,7 +8923,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += math.Pow(t.getF64(i), other.getF64(j))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex64:
@@ -8990,7 +8938,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -9004,7 +8951,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -9018,7 +8964,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -9036,7 +8981,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -9070,7 +9014,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		case reflect.Complex128:
@@ -9086,7 +9029,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						i++
 						j++
 					}
-					err = nil
 				case it != nil && ot == nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -9100,7 +9042,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
 						j++
 					}
-					err = nil
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil {
@@ -9114,7 +9055,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
 						i++
 					}
-					err = nil
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil {
@@ -9132,7 +9072,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
 					}
-					err = nil
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -9166,7 +9105,6 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 						data[incrI] += cmplx.Pow(t.getC128(i), other.getC128(j))
 						incrI++
 					}
-					err = nil
 				}
 			}
 		}
@@ -9630,7 +9568,8 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 	default:
 		// TODO: Handle Number interface
 	}
-	return nil
+
+	return
 }
 
 /* Trans */
@@ -10716,9 +10655,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.ints()
@@ -10733,9 +10676,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int8s()
@@ -10750,9 +10697,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int16s()
@@ -10767,9 +10718,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int32s()
@@ -10784,9 +10739,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int64s()
@@ -10801,9 +10760,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uints()
@@ -10818,9 +10781,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint8s()
@@ -10835,9 +10802,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint16s()
@@ -10852,9 +10823,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint32s()
@@ -10869,9 +10844,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint64s()
@@ -10886,9 +10865,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.float32s()
@@ -10903,9 +10886,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.float64s()
@@ -10920,9 +10907,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.complex64s()
@@ -10937,9 +10928,13 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.complex128s()
@@ -11036,9 +11031,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.ints()
@@ -11053,9 +11052,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int8s()
@@ -11070,9 +11073,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int16s()
@@ -11087,9 +11094,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int32s()
@@ -11104,9 +11115,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.int64s()
@@ -11121,9 +11136,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uints()
@@ -11138,9 +11157,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint8s()
@@ -11155,9 +11178,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint16s()
@@ -11172,9 +11199,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint32s()
@@ -11189,9 +11220,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.uint64s()
@@ -11206,9 +11241,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.float32s()
@@ -11223,9 +11262,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.float64s()
@@ -11240,9 +11283,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.complex64s()
@@ -11257,9 +11304,13 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 		if t.IsMaterializable() {
 			if b == 0 {
 				err = t.zeroIter()
+				if err != nil {
+					err = errors.Wrapf(err, div0, -1)
+					return
+				}
+				err = errors.Errorf(div0, -1)
 				return
 			}
-			err = errors.Errorf(div0, -1)
 			it := NewFlatIterator(t.AP)
 			var i int
 			data := t.complex128s()

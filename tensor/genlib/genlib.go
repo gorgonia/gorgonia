@@ -103,7 +103,7 @@ var elOrd = [...]reflect.Kind{
 	reflect.Uint16,
 	reflect.Uint32,
 	reflect.Uint64,
-	reflect.Uintptr,
+	// reflect.Uintptr, // comparison of pointers is not that great an idea - it can technically be done but should not be encouraged
 	reflect.Float32,
 	reflect.Float64,
 	// reflect.Complex64,

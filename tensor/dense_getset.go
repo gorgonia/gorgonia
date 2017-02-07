@@ -669,7 +669,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 
 func (t *Dense) Zero() {
@@ -908,7 +908,7 @@ func (t *Dense) zeroIter() (err error) {
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 
 func copyDense(dest, src *Dense) int {

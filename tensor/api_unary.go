@@ -37,6 +37,7 @@ func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			var ret *Dense
 			if ret, err = at.Mul(at); err != nil {
 				err = errors.Wrapf(err, opFail, "Mul")
+				return
 			}
 			return reuse.Add(ret, UseUnsafe())
 		case toReuse:

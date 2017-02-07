@@ -114,7 +114,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 
 `
@@ -180,7 +180,7 @@ func (t *Dense) zeroIter() (err error){
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 `
 const makeDataRaw = `func (t *Dense) makeArray(size int) {

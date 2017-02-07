@@ -214,9 +214,10 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 						j++
 					}
 					{{if or $div $scaleInv -}}
+						if err != nil {
+							return
+						}
 						err = errs
-					{{else -}}
-						err = nil
 					{{end -}}
 				case it != nil && ot == nil:
 					for {
@@ -251,7 +252,12 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 						{{end -}}
 						j++
 					}
-					err = nil
+					{{if or $div $scaleInv -}}
+						if err != nil {
+							return
+						}
+						err = errs
+					{{end -}}
 				case it == nil && ot != nil:
 					for {
 						if j, err = ot.Next(); err != nil{
@@ -285,7 +291,12 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 						{{end -}}
 						i++
 					}
-					err = nil
+					{{if or $div $scaleInv -}}
+						if err != nil {
+							return
+						}
+						err = errs
+					{{end -}}
 				case it != nil && ot != nil:
 					for {
 						if i, err = it.Next(); err != nil{
@@ -324,7 +335,12 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
 						{{end -}}
 					}
-					err = nil					
+					{{if or $div $scaleInv -}}
+						if err != nil {
+							return
+						}
+						err = errs
+					{{end -}}					
 				}
 			case !reuse.IsMaterializable():
 				var i, j, incrI int
@@ -421,7 +437,12 @@ const denseDenseArithRaw = `func (t *Dense) {{.OpName}}(other *Dense, opts ...Fu
 
 						incrI++
 					}
-					err = nil
+					{{if or $div $scaleInv -}}
+						if err != nil {
+							return
+						}
+						err = errs
+					{{end -}}
 				}
 			}
 			{{end -}}
@@ -563,12 +584,17 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 	default:
 		// TODO: Handle Number interface
 	}
+
 	{{if or $scaleInv $div -}}
+		if err != nil {
+			return
+		}
+
 		if errs != nil {
 			err = err
 		}
 	{{end -}}
-	return nil
+	return
 }
 `
 
@@ -631,9 +657,13 @@ const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other 
 			{{if or $scaleInv $div -}}
 				if b == 0 {
 					err = t.zeroIter()
+					if err != nil {
+						err = errors.Wrapf(err, div0, -1)
+						return
+					}
+					err = errors.Errorf(div0, -1)
 					return
 				}
-				err = errors.Errorf(div0, -1)
 			{{end -}}
 			it := NewFlatIterator(t.AP)
 			var i int

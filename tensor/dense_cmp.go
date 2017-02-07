@@ -1623,6 +1623,9 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "eq")
+	}
+
+	if err != nil {
 		return
 	}
 
@@ -3181,6 +3184,9 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "ne")
+	}
+
+	if err != nil {
 		return
 	}
 
@@ -4161,55 +4167,6 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 		retVal.fromSlice(ret)
 
-	case reflect.Uintptr:
-		td := t.uintptrs()
-		od := other.uintptrs()
-		var i, j, k int
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable() && other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			ot := NewFlatIterator(other.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for {
-				if i, err = it.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				if j, err = ot.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				bs[k] = td[i] > od[j]
-				k++
-			}
-			err = handleNoOp(err)
-		case t.IsMaterializable() && !other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[k] = td[i] > od[j]
-				j++
-				k++
-			}
-			err = handleNoOp(err)
-		case !t.IsMaterializable() && other.IsMaterializable():
-			ot := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
-				bs[k] = td[i] > od[j]
-				i++
-				k++
-			}
-			err = handleNoOp(err)
-		default:
-			ret = gtDDBoolsUintptr(td, od)
-		}
-		retVal.fromSlice(ret)
-
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -4451,6 +4408,9 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "gt")
+	}
+
+	if err != nil {
 		return
 	}
 
@@ -5431,55 +5391,6 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 		retVal.fromSlice(ret)
 
-	case reflect.Uintptr:
-		td := t.uintptrs()
-		od := other.uintptrs()
-		var i, j, k int
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable() && other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			ot := NewFlatIterator(other.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for {
-				if i, err = it.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				if j, err = ot.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				bs[k] = td[i] >= od[j]
-				k++
-			}
-			err = handleNoOp(err)
-		case t.IsMaterializable() && !other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[k] = td[i] >= od[j]
-				j++
-				k++
-			}
-			err = handleNoOp(err)
-		case !t.IsMaterializable() && other.IsMaterializable():
-			ot := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
-				bs[k] = td[i] >= od[j]
-				i++
-				k++
-			}
-			err = handleNoOp(err)
-		default:
-			ret = gteDDBoolsUintptr(td, od)
-		}
-		retVal.fromSlice(ret)
-
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -5721,6 +5632,9 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "gte")
+	}
+
+	if err != nil {
 		return
 	}
 
@@ -6701,55 +6615,6 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 		retVal.fromSlice(ret)
 
-	case reflect.Uintptr:
-		td := t.uintptrs()
-		od := other.uintptrs()
-		var i, j, k int
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable() && other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			ot := NewFlatIterator(other.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for {
-				if i, err = it.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				if j, err = ot.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				bs[k] = td[i] < od[j]
-				k++
-			}
-			err = handleNoOp(err)
-		case t.IsMaterializable() && !other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[k] = td[i] < od[j]
-				j++
-				k++
-			}
-			err = handleNoOp(err)
-		case !t.IsMaterializable() && other.IsMaterializable():
-			ot := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
-				bs[k] = td[i] < od[j]
-				i++
-				k++
-			}
-			err = handleNoOp(err)
-		default:
-			ret = ltDDBoolsUintptr(td, od)
-		}
-		retVal.fromSlice(ret)
-
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -6991,6 +6856,9 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "lt")
+	}
+
+	if err != nil {
 		return
 	}
 
@@ -7971,55 +7839,6 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 		retVal.fromSlice(ret)
 
-	case reflect.Uintptr:
-		td := t.uintptrs()
-		od := other.uintptrs()
-		var i, j, k int
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable() && other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			ot := NewFlatIterator(other.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for {
-				if i, err = it.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				if j, err = ot.Next(); err != nil {
-					err = handleNoOp(err)
-					break
-				}
-				bs[k] = td[i] <= od[j]
-				k++
-			}
-			err = handleNoOp(err)
-		case t.IsMaterializable() && !other.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[k] = td[i] <= od[j]
-				j++
-				k++
-			}
-			err = handleNoOp(err)
-		case !t.IsMaterializable() && other.IsMaterializable():
-			ot := NewFlatIterator(t.AP)
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
-				bs[k] = td[i] <= od[j]
-				i++
-				k++
-			}
-			err = handleNoOp(err)
-		default:
-			ret = lteDDBoolsUintptr(td, od)
-		}
-		retVal.fromSlice(ret)
-
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
@@ -8261,6 +8080,9 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "lte")
+	}
+
+	if err != nil {
 		return
 	}
 
@@ -9900,24 +9722,6 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 		retVal.fromSlice(ret)
-	case reflect.Uintptr:
-		data := t.uintptrs()
-		b := other.(uintptr)
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			var i, j int
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[j] = data[i] > b
-				j++
-			}
-		default:
-			ret = gtDSBoolsUintptr(data, b)
-		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
@@ -10408,24 +10212,6 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			} else {
 				ret = gteDSBoolsU64(data, b)
 			}
-		}
-		retVal.fromSlice(ret)
-	case reflect.Uintptr:
-		data := t.uintptrs()
-		b := other.(uintptr)
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			var i, j int
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[j] = data[i] >= b
-				j++
-			}
-		default:
-			ret = gteDSBoolsUintptr(data, b)
 		}
 		retVal.fromSlice(ret)
 	case reflect.Float32:
@@ -10920,24 +10706,6 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 		retVal.fromSlice(ret)
-	case reflect.Uintptr:
-		data := t.uintptrs()
-		b := other.(uintptr)
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			var i, j int
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[j] = data[i] < b
-				j++
-			}
-		default:
-			ret = ltDSBoolsUintptr(data, b)
-		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
@@ -11428,24 +11196,6 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			} else {
 				ret = lteDSBoolsU64(data, b)
 			}
-		}
-		retVal.fromSlice(ret)
-	case reflect.Uintptr:
-		data := t.uintptrs()
-		b := other.(uintptr)
-		var ret interface{} // slice of some sort
-		switch {
-		case t.IsMaterializable():
-			it := NewFlatIterator(t.AP)
-			var i, j int
-			bs := make([]bool, t.Shape().TotalSize())
-			ret = bs
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
-				bs[j] = data[i] <= b
-				j++
-			}
-		default:
-			ret = lteDSBoolsUintptr(data, b)
 		}
 		retVal.fromSlice(ret)
 	case reflect.Float32:

@@ -215,18 +215,18 @@ func (t *Dense) ReadNpy(r io.Reader) (err error) {
 	rowOrder := regexp.MustCompile(`'fortran_order':\s*(False|True)`)
 	match = rowOrder.FindSubmatch(header)
 	if match == nil {
-		err = errors.Errorf("No Row Order information found in the numpy file")
+		err = errors.New("No Row Order information found in the numpy file")
 		return
 	}
 	if string(match[1]) != "False" {
-		err = errors.Errorf("Cannot yet read from Fortran Ordered Numpy files")
+		err = errors.New("Cannot yet read from Fortran Ordered Numpy files")
 		return
 	}
 
 	shpRe := regexp.MustCompile(`'shape':\s*\(([^\(]*)\)`)
 	match = shpRe.FindSubmatch(header)
 	if match == nil {
-		err = errors.Errorf("No shape information found")
+		err = errors.New("No shape information found in npy file")
 		return
 	}
 	sizesStr := strings.Split(string(match[1]), ",")

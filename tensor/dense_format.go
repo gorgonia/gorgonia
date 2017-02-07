@@ -36,18 +36,18 @@ var (
 
 type fmtState struct {
 	fmt.State
-	c rune
 
 	buf                *bytes.Buffer
 	pad                []byte
 	hElision, vElision []byte
 
-	w, p int
 	meta bool
 	flat bool
 	ext  bool
 	comp bool
+	c    rune // c is here mainly for struct packing reasons
 
+	w, p int // width and precision
 	base int // used only for int/byte arrays
 
 	rows, cols int

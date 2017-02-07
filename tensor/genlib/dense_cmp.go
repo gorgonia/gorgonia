@@ -246,6 +246,9 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 	{{end -}}
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "{{lower .OpName}}")
+	}
+	
+	if err != nil{
 		return
 	}
 

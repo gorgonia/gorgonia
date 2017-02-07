@@ -30,13 +30,13 @@ const genericVecVecArithRaw = `func {{if .IsIncr}}incrVec{{else}}vec{{end}}{{.Op
 		for i, v := range b {
 			{{if .IsIncr -}}
 				{{if eq .OpName "Pow" -}}
-					incr[i] += {{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v)))
+					incr[i] += {{if eq .Kind.String "complex64"}}{{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v))){{else}}cmplx.Pow(a[i], v){{end}}
 				{{else -}}
 					incr[i] += a[i] {{.OpSymb}} v
 				{{end -}}
 			{{else -}}
 				{{if eq .OpName "Pow" -}}
-					a[i] = {{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v)))
+					a[i] = {{if eq .Kind.String "complex64"}}{{asType .Kind}}(cmplx.Pow(complex128(a[i]), complex128(v))){{else}}cmplx.Pow(a[i], v){{end}}
 				{{else -}}
 					a[i] {{.OpSymb}}= v 
 				{{end -}}
