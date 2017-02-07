@@ -88,6 +88,6 @@ func Example_linearRegression() {
 	linearRegression(Float64)
 
 	// Output:
-	// Float32: y = 1.975x + 0.302
-	// Float64: y = 1.975x + 0.302
+	// float32: y = 1.975x + 0.302
+	// float64: y = 1.975x + 0.302
 }

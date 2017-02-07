@@ -27,10 +27,10 @@ func TestMapFormat(t *testing.T) {
 	m2[y] = y
 
 	s = fmt.Sprintf("%-#v", FmtNodeMap(m2))
-	expected0 = fmt.Sprintf("map[Node.ID]*gorgonia.Node {\n\t%x: x :: Vector Float64\n\t%x: y :: Float64\n}", x.ID(), y.ID())
-	expected1 = fmt.Sprintf("map[Node.ID]*gorgonia.Node {\n\t%x: y :: Float64\n\t%x: x :: Vector Float64\n}", y.ID(), x.ID())
+	expected0 = fmt.Sprintf("map[Node.ID]*gorgonia.Node {\n\t%x: x :: Vector float64\n\t%x: y :: float64\n}", x.ID(), y.ID())
+	expected1 = fmt.Sprintf("map[Node.ID]*gorgonia.Node {\n\t%x: y :: float64\n\t%x: x :: Vector float64\n}", y.ID(), x.ID())
 	if s != expected0 && s != expected1 {
-		t.Errorf("Case 2 failed")
+		t.Errorf("Case 2 failed. Expected : %q. Got %q instead", expected0, s)
 	}
 
 	s = fmt.Sprintf("%-#d", FmtNodeMap(m2))
@@ -43,7 +43,7 @@ func TestMapFormat(t *testing.T) {
 	m3 := make(map[*Node]Nodes)
 	m3[x] = Nodes{x, y}
 	s = fmt.Sprintf("%-v", FmtNodeMap(m3))
-	expected0 = fmt.Sprintf("map[Node.Name]gorgonia.Nodes {\n\tx :: Vector Float64: [x, y]\n}")
+	expected0 = fmt.Sprintf("map[Node.Name]gorgonia.Nodes {\n\tx :: Vector float64: [x, y]\n}")
 	if s != expected0 {
 		t.Errorf("Case 4 failed. Expected : %q. Got %q instead", expected0, s)
 	}

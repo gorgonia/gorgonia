@@ -763,22 +763,20 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	switch T := t.(type) {
 	case *tensor.Dense:
-		cloned := T.Clone().(*tensor.Dense)
-		var view tensor.Tensor
-		if view, err = cloned.Slice(slices...); err != nil {
+		grad := tensor.New(tensor.Of(T.Dtype()), tensor.WithShape(T.Shape().Clone()...))
+		var v tensor.Tensor
+		if v, err = grad.Slice(slices...); err != nil {
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
-		v := view.(*tensor.Dense)
-
 		switch i := incr.(type) {
 		case F64:
 			tensor.Add(v, float64(i), tensor.UseUnsafe())
 		case F32:
 			tensor.Add(v, float32(i), tensor.UseUnsafe())
 		case *tensor.Dense:
-			v.Add(i, tensor.UseUnsafe())
+			tensor.Add(v, i, tensor.UseUnsafe())
 		}
-		retVal = cloned
+		retVal = grad
 	case Scalar:
 		return nil, errors.New("Cannot slice a scalar value")
 	default:

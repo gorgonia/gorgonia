@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -229,7 +230,7 @@ var gtTests = []struct {
 
 	// different dtypes
 	{
-		tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2)), tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2)),
+		tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(2)), tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(2)),
 		true, nil, true,
 	},
 }
@@ -247,7 +248,7 @@ func TestGt(t *testing.T) {
 		switch {
 		case gtts.err:
 			if err == nil {
-				t.Error("Expected an error")
+				t.Errorf("Expected an error in Test %d", i)
 			}
 			continue
 		case !gtts.err && err != nil:
@@ -529,6 +530,7 @@ func TestSlice(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ioutil.WriteFile("blah.dot", []byte(g.ToDot()), 0644)
 	assert.Equal(t, []float64{0, 0, 0, 0, 0, 1}, xG.Data())
 	// visual inspection
 	// t.Logf("x: \n%+v,\n%+v", x.Value(), xG)
