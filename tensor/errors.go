@@ -36,6 +36,7 @@ func (e errorIndices) Error() string  { return fmt.Sprintf("Error in indices %v"
 const (
 	emptyTensor       = "Tensor is uninitialized (no shape, no data)"
 	dimMismatch       = "Dimension mismatch. Expected %d, got %d"
+	atleastDims       = "Tensor has to be at least %d dimensions"
 	dtypeMismatch     = "Dtype mismatch. Expected %v. Got %v"
 	indexOOBAxis      = "Index %d is out of bounds for axis %d which has size %d"
 	invalidAxis       = "Invalid axis %d for ndarray with %d dimensions"
