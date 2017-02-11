@@ -1,5 +1,7 @@
 package tensor
 
+import "github.com/pkg/errors"
+
 func overlaps(a, b *Dense) bool {
 	if a.cap() == 0 || b.cap() == 0 {
 		return false
@@ -27,12 +29,20 @@ func assignArray(dest, src *Dense) (err error) {
 	dd := dest.Dims()
 	sd := src.Dims()
 
-	ds := dest.Strides()
-	ss := src.Strides()
+	dstrides := dest.Strides()
+	sstrides := src.Strides()
+
+	var ds, ss int
+	ds = dstrides[0]
+	if src.IsVector() {
+		ss = sstrides[0]
+	} else {
+		ss = sstrides[sd-1]
+	}
 
 	// when dd == 1, and the strides point in the same direction
 	// we copy to a temporary if there is an overlap of data
-	if ((dd == 1 && sd >= 1 && ds[0]*ss[sd-1] < 0) || dd > 1) && overlaps(dest, src) {
+	if ((dd == 1 && sd >= 1 && ds*ss < 0) || dd > 1) && overlaps(dest, src) {
 		// create temp
 		// copiedSrc = true
 	}
@@ -58,7 +68,8 @@ func assignArray(dest, src *Dense) (err error) {
 	}
 
 	var newStrides []int
-	if newStrides, err = BroadcastStrides(dest.Shape(), tmpShape, ds, tmpStrides); err != nil {
+	if newStrides, err = BroadcastStrides(dest.Shape(), tmpShape, dstrides, tmpStrides); err != nil {
+		err = errors.Wrapf(err, "BroadcastStrides failed")
 		return
 	}
 	dap := dest.AP

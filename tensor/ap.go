@@ -288,6 +288,10 @@ func BroadcastStrides(destShape, srcShape Shape, destStrides, srcStrides []int) 
 	dims := len(destShape)
 	start := dims - len(srcShape)
 
+	if destShape.IsVector() && srcShape.IsVector() {
+		return []int{srcStrides[0]}, nil
+	}
+
 	if start < 0 {
 		//error
 		err = errors.Errorf(dimMismatch, dims, len(srcShape))
@@ -302,11 +306,13 @@ func BroadcastStrides(destShape, srcShape Shape, destStrides, srcStrides []int) 
 			retVal[i] = 0
 		case s != destShape[i]:
 			// error
+			err = errors.Errorf("Cannot broadcast from %v to %v", srcShape, destShape)
+			return
 		default:
 			retVal[i] = srcStrides[i-start]
 		}
 	}
-	for i := 0; i > start; i++ {
+	for i := 0; i < start; i++ {
 		retVal[i] = 0
 	}
 	return
