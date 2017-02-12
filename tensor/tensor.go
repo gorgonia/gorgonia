@@ -25,6 +25,7 @@ type Tensor interface {
 
 	// ops
 	At(...int) (interface{}, error)
+	SetAt(v interface{}, coord ...int) error
 	Reshape(...int) error
 	T(axes ...int) error
 	UT()

@@ -198,6 +198,20 @@ func (t *Dense) At(coords ...int) (interface{}, error) {
 	return t.Get(at), nil
 }
 
+// SetAt sets the value at the given coordinate
+func (t *Dense) SetAt(v interface{}, coords ...int) error {
+	if len(coords) != t.Dims() {
+		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
+	}
+
+	at, err := t.at(coords...)
+	if err != nil {
+		return errors.Wrap(err, "SetAt()")
+	}
+	t.Set(at, v)
+	return nil
+}
+
 // Repeat is like Numpy's repeat. It repeats the elements of an array.
 // The repeats param defines how many times each element in the axis is repeated.
 // Just like NumPy, the repeats param is broadcasted to fit the size of the given axis.
