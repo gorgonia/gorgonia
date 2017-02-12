@@ -132,7 +132,8 @@ var funcs = template.FuncMap{
 	"asType":      asType,
 	"sliceOf":     sliceOf,
 
-	"mathPkg": mathPkg,
+	"mathPkg":   mathPkg,
+	"bitSizeOf": bitSizeOf,
 
 	"isntFloat": isntFloat,
 }
@@ -204,6 +205,22 @@ func mathPkg(a reflect.Kind) string {
 		return "cmplx."
 	}
 	return ""
+}
+
+func bitSizeOf(a reflect.Kind) string {
+	switch a {
+	case reflect.Int, reflect.Uint:
+		return "0"
+	case reflect.Int8, reflect.Uint8:
+		return "8"
+	case reflect.Int16, reflect.Uint16:
+		return "16"
+	case reflect.Int32, reflect.Uint32, reflect.Float32:
+		return "32"
+	case reflect.Int64, reflect.Uint64, reflect.Float64:
+		return "64"
+	}
+	return "UNKNOWN BIT SIZE"
 }
 
 func isFloat(a reflect.Kind) bool {
