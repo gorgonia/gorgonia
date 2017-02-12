@@ -70,6 +70,57 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 }
 `
 
+const writeCSVRaw = `func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
+	// checks:
+	if !t.IsMatrix() {
+		// error
+		err = errors.Errorf("Cannot write *Dense to CSV. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())
+		return
+	}
+	format := "%v"
+	if len(formats) > 0{
+		format = formats[0]
+	}
+
+	cw := csv.NewWriter(w)
+	it := NewFlatIterator(t.AP)
+	coord := it.Coord()
+
+	// rows := t.Shape()[0]
+	cols := t.Shape()[1]
+	record := make([]string, 0, cols)
+	var i, lastCol int
+	for i, err = it.Next(); err == nil; i, err = it.Next() {
+		record = append(record, fmt.Sprintf(format, t.Get(i)))
+		if lastCol == cols-1 {
+			if err = cw.Write(record); err != nil {
+				// TODO: wrap errors
+				return
+			}
+			cw.Flush()
+			record = record[:0]
+		}
+
+		// cleanup
+		switch {
+		case t.IsRowVec():
+			// lastRow = coord[len(coord)-2]
+			lastCol = coord[len(coord)-1]
+		case t.IsColVec():
+			// lastRow = coord[len(coord)-1]
+			lastCol = coord[len(coord)-2]
+		case t.IsVector():
+			lastCol = coord[len(coord)-1]
+		default:
+			// lastRow = coord[len(coord)-2]
+			lastCol = coord[len(coord)-1]
+		}
+	}
+	return nil
+}
+
+`
+
 const gobEncodeRaw = `func (t *Dense) GobEncode() (p []byte, err error){
 	var buf bytes.Buffer
 	encoder := gob.NewEncoder(&buf)
@@ -252,14 +303,127 @@ const readNpyRaw = `func (t *Dense) ReadNpy(r io.Reader) (err error){
 }
 `
 
+const readCSVRaw = `func convFromStrs(to Dtype, record []string) (interface{}, error) {
+	var err error
+	switch to.Kind() {
+		{{range .Kinds -}}
+		{{if isNumber . -}}
+		{{if isOrd . -}}
+	case reflect.{{reflectKind .}}:
+		retVal := make([]{{asType .}}, len(record))
+		for i, v := range record {
+			{{if eq .String "float64" -}}
+				if retVal[i], err = strconv.ParseFloat(v, 64); err != nil {
+					return nil, err
+				}
+			{{else if eq .String "float32" -}}
+				var f float64
+				if f, err = strconv.ParseFloat(v, 32); err != nil {
+					return nil, err
+				}
+				retVal[i] = float32(f)
+			{{else if hasPrefix .String "int" -}}
+				var i64 int64
+				if i64, err = strconv.ParseInt(v, 10, {{bitSizeOf .}}); err != nil {
+					return nil, err
+				}
+				retVal[i] = {{asType .}}(i64)
+			{{else if hasPrefix .String "uint" -}}
+				var u uint64
+				if u, err = strconv.ParseUint(v, 10, {{bitSizeOf .}}); err != nil {
+					return nil, err
+				}
+				retVal[i] = {{asType .}}(u)
+			{{end -}}
+		}
+		return retVal, nil
+		{{end -}}
+		{{end -}}
+		{{end -}}
+	default:
+		return nil,errors.Errorf(methodNYI, "convFromStrs", to)
+	}
+}
+
+func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
+	fo := parseFuncOpts(opts...)
+	as := fo.t
+	if fo.t.Type == nil {
+		as = Float64
+	}
+
+	cr := csv.NewReader(r)
+
+	var record []string
+	var row interface{}
+	var rows, cols int
+
+	switch as.Kind() {
+		{{range .Kinds -}}
+		{{if isNumber . -}}
+		{{if isOrd . -}}
+	case reflect.{{reflectKind .}}:
+		backing := make([]{{asType .}}, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF{
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs({{asType . | strip | title}}, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]{{asType .}})...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+		{{end -}}
+		{{end -}}
+		{{end -}}
+	case reflect.String:
+		backing := make([]string, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF{
+				break
+			}
+
+			if err != nil {
+				return
+			}
+			backing = append(backing, record...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	default:
+		return errors.Errorf("%v not yet handled", as)
+	}
+	return errors.Errorf("not yet handled")
+}
+`
+
 var (
 	readNpy   *template.Template
 	gobEncode *template.Template
 	gobDecode *template.Template
+	readCSV   *template.Template
 )
 
 func init() {
 	readNpy = template.Must(template.New("readNpy").Funcs(funcs).Parse(readNpyRaw))
+	readCSV = template.Must(template.New("readCSV").Funcs(funcs).Parse(readCSVRaw))
 	gobEncode = template.Must(template.New("gobEncode").Funcs(funcs).Parse(gobEncodeRaw))
 	gobDecode = template.Must(template.New("gobDecode").Funcs(funcs).Parse(gobDecodeRaw))
 }
@@ -269,9 +433,13 @@ func generateDenseIO(f io.Writer, generic *ManyKinds) {
 
 	// writes
 	fmt.Fprintln(f, writeNpyRaw)
+	fmt.Fprintln(f, "\n")
+	fmt.Fprintln(f, writeCSVRaw)
+	fmt.Fprintln(f, "\n")
 	gobEncode.Execute(f, mk)
 
 	// reads
 	readNpy.Execute(f, mk)
 	gobDecode.Execute(f, mk)
+	readCSV.Execute(f, mk)
 }

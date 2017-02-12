@@ -67,7 +67,42 @@ const testLoadSaveNumpyRaw = `func TestSaveLoadNumpy(t *testing.T){
 }
 `
 
-const testGobEncodeDecodeRaw = ` var denseGobTestData = []interface{}{
+const testWriteCSVRaw = `func TestSaveLoadCSV(t *testing.T) {
+	assert := assert.New(t)
+	for _, gtd := range serializationTestData {
+		if _, ok := gtd.([]complex64); ok{
+			continue
+		}
+		if _, ok := gtd.([]complex128); ok{
+			continue
+		}
+
+		buf := new(bytes.Buffer)
+
+		T := New(WithShape(2,2), WithBacking(gtd))
+		if err := T.WriteCSV(buf); err != nil {
+			t.Error(err)
+		}
+
+		T2 := new(Dense)
+		if err := T2.ReadCSV(buf, As(T.t)); err != nil {
+			t.Error(err)
+		}
+
+		assert.Equal(T.Shape(), T2.Shape(), "Test: %v", gtd)
+		assert.Equal(T.Data(), T2.Data())
+
+	}
+
+	T := New(WithShape(2,2), WithBacking([]float64{1, 5, 10, -1}))
+	f, _ := os.OpenFile("test.csv", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	T.WriteCSV(f)
+	f.Close()
+}
+
+`
+
+const testGobEncodeDecodeRaw = ` var serializationTestData = []interface{}{
 	{{range .Kinds -}}
 	[]{{asType .}}{1, 5, 10, {{if hasPrefix .String "uint"}}255{{else}}-1{{end}} },
 	{{end -}}
@@ -76,7 +111,7 @@ const testGobEncodeDecodeRaw = ` var denseGobTestData = []interface{}{
 func TestDense_GobEncodeDecode(t *testing.T){
 	assert := assert.New(t)
 	var err error
-	for _, gtd := range denseGobTestData {
+	for _, gtd := range serializationTestData {
 		buf := new(bytes.Buffer)
 		encoder := gob.NewEncoder(buf)
 		decoder := gob.NewDecoder(buf)
@@ -112,6 +147,7 @@ func init() {
 func generateDenseIOTests(f io.Writer, generic *ManyKinds) {
 	mk := &ManyKinds{Kinds: filter(generic.Kinds, isNumber)}
 	fmt.Fprintln(f, testLoadSaveNumpyRaw)
+	fmt.Fprintln(f, testWriteCSVRaw)
 
 	testGobEncodeDecode.Execute(f, mk)
 
