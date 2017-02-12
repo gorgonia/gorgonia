@@ -6,10 +6,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ScalarShape represents a scalar. It has no dimensions, no sizes
 func ScalarShape() Shape { return Shape{} }
 
+// Shape represents the dimensions of a Tensor. A (2,3) matrix has a shape of (2,3) - 2 rows, 3 columns.
+// Likewise, a shape of (2,3,4) means a Tensor has 3 dimensions: 2 layers, 3 rows, 4 columns.
+//
+// Vectors are of particular note. This package defines a shape of (x, 1) as a column vector and
+// a (1, x) as a row vector. Row vectors and column vectors are matrices as well. It is important to note that
+// row and column vectors and vanilla vectors are comparable under some circumstances
 type Shape []int
-type Strides []int
 
 // TotalSize returns the number of elements expected in a Tensor of a certain shape
 func (s Shape) TotalSize() int {
@@ -42,6 +48,10 @@ func (s Shape) calcStrides() []int {
 	return retVal
 }
 
+// Eq indicates if a shape is equal with another. There is a soft concept of equality when it comes to vectors.
+//
+// If s is a column vector and other is a vanilla vector, they're considered equal if the size of the column dimension is the same as the vector size;
+// if s is a row vector and other is a vanilla vector, they're considered equal if the size of the row dimension is the same as the vector size
 func (s Shape) Eq(other Shape) bool {
 	if s.IsScalar() && other.IsScalar() {
 		return true
@@ -59,10 +69,6 @@ func (s Shape) Eq(other Shape) bool {
 				return true
 			}
 			return false
-			// case s.IsColVec() && other.IsRowVec():
-			// 	return false
-			// case s.IsRowVec() && other.IsColVec():
-			// 	return false
 		}
 	}
 
@@ -78,6 +84,7 @@ func (s Shape) Eq(other Shape) bool {
 	return true
 }
 
+// Clone clones a shape.
 func (s Shape) Clone() Shape {
 	retVal := make(Shape, len(s), len(s))
 	copy(retVal, s)
@@ -268,6 +275,7 @@ func (s Shape) Concat(axis int, ss ...Shape) (newShape Shape, err error) {
 	return
 }
 
+// Format implements fmt.Formatter, and formats a shape nicely
 func (s Shape) Format(st fmt.State, r rune) {
 	switch r {
 	case 'v', 's':
