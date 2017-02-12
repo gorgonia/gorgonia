@@ -70,7 +70,8 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 }
 `
 
-const writeCSVRaw = `func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
+const writeCSVRaw = `// WriteCSV writes the *Dense to a CSV. It accepts an optional string formatting ("%v", "%f", etc...), which controls what is written to the CSV.
+func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	// checks:
 	if !t.IsMatrix() {
 		// error
@@ -121,7 +122,8 @@ const writeCSVRaw = `func (t *Dense) WriteCSV(w io.Writer, formats ...string) (e
 
 `
 
-const gobEncodeRaw = `func (t *Dense) GobEncode() (p []byte, err error){
+const gobEncodeRaw = `// GobEncode implements gob.GobEncoder
+func (t *Dense) GobEncode() (p []byte, err error){
 	var buf bytes.Buffer
 	encoder := gob.NewEncoder(&buf)
 	if err = encoder.Encode(t.t.id()); err != nil {
@@ -153,7 +155,8 @@ const gobEncodeRaw = `func (t *Dense) GobEncode() (p []byte, err error){
 }
 `
 
-const gobDecodeRaw = `func (t *Dense) GobDecode(p []byte) (err error){
+const gobDecodeRaw = `// GobDecode implements gob.GobDecoder
+func (t *Dense) GobDecode(p []byte) (err error){
 	buf := bytes.NewBuffer(p)
 	decoder := gob.NewDecoder(buf)
 
@@ -199,7 +202,8 @@ const gobDecodeRaw = `func (t *Dense) GobDecode(p []byte) (err error){
 }
 `
 
-const readNpyRaw = `func (t *Dense) ReadNpy(r io.Reader) (err error){
+const readNpyRaw = `// ReadNpy reads NumPy formatted files into a *Dense
+func (t *Dense) ReadNpy(r io.Reader) (err error){
 	var magic [6]byte
 	if _, err = r.Read(magic[:]); err != nil {
 		return
@@ -303,7 +307,8 @@ const readNpyRaw = `func (t *Dense) ReadNpy(r io.Reader) (err error){
 }
 `
 
-const readCSVRaw = `func convFromStrs(to Dtype, record []string) (interface{}, error) {
+const readCSVRaw = `// convFromStrs conversts a []string to a slice of the Dtype provided
+func convFromStrs(to Dtype, record []string) (interface{}, error) {
 	var err error
 	switch to.Kind() {
 		{{range .Kinds -}}
@@ -345,6 +350,9 @@ const readCSVRaw = `func convFromStrs(to Dtype, record []string) (interface{}, e
 	}
 }
 
+// ReadCSV reads a CSV into a *Dense. It will override the underlying data.
+//
+// BUG(chewxy): reading CSV doesn't handle CSVs with different columns per row yet.
 func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 	fo := parseFuncOpts(opts...)
 	as := fo.t
