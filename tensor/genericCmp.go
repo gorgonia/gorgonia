@@ -1664,22 +1664,6 @@ func gtDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 	return retVal
 }
 
-func gtDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b[i]
-	}
-	return retVal
-}
-
-func gtDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b
-	}
-	return retVal
-}
-
 func gtDDBoolsF32(a, b []float32) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -2174,22 +2158,6 @@ func gteDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 		} else {
 			retVal[i] = 0
 		}
-	}
-	return retVal
-}
-
-func gteDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b[i]
-	}
-	return retVal
-}
-
-func gteDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b
 	}
 	return retVal
 }
@@ -2692,22 +2660,6 @@ func ltDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 	return retVal
 }
 
-func ltDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b[i]
-	}
-	return retVal
-}
-
-func ltDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b
-	}
-	return retVal
-}
-
 func ltDDBoolsF32(a, b []float32) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -3206,22 +3158,6 @@ func lteDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 	return retVal
 }
 
-func lteDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b[i]
-	}
-	return retVal
-}
-
-func lteDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b
-	}
-	return retVal
-}
-
 func lteDDBoolsF32(a, b []float32) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -3598,34 +3534,6 @@ func vecMaxU64(a, b []uint64) error {
 	}
 	return nil
 }
-func vecMinUintptr(a, b []uintptr) error {
-	if len(a) != len(b) {
-		return errors.Errorf(lenMismatch, len(a), len(b))
-	}
-	a = a[:len(a)]
-	b = b[:len(a)]
-	for i, v := range a {
-		bv := b[i]
-		if bv < v {
-			a[i] = bv
-		}
-	}
-	return nil
-}
-func vecMaxUintptr(a, b []uintptr) error {
-	if len(a) != len(b) {
-		return errors.Errorf(lenMismatch, len(a), len(b))
-	}
-	a = a[:len(a)]
-	b = b[:len(a)]
-	for i, v := range a {
-		bv := b[i]
-		if bv > v {
-			a[i] = bv
-		}
-	}
-	return nil
-}
 func vecMinF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
@@ -3835,19 +3743,6 @@ func minU64(a, b uint64) (c uint64) {
 }
 
 func maxU64(a, b uint64) (c uint64) {
-	if a > b {
-		return a
-	}
-	return b
-}
-func minUintptr(a, b uintptr) (c uintptr) {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func maxUintptr(a, b uintptr) (c uintptr) {
 	if a > b {
 		return a
 	}

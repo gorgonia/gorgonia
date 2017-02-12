@@ -10,7 +10,7 @@ import (
 	"github.com/chewxy/math32"
 )
 
-// similar to numpy argsort
+// SortIndex is similar to numpy's argsort
 // TODO: tidy this up
 func SortIndex(in interface{}) (out []int) {
 	switch list := in.(type) {

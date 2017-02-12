@@ -59,6 +59,7 @@ func (t *Dense) {{title .OpName}}(along ...int)(retVal *Dense, err error) {
 	}
 	return
 }
+
 func (t *Dense) {{.OpName}}(axis int)(retVal *Dense){
 	{{$vecvec := .VecVec -}}
 	{{$generic := .GenericName -}}

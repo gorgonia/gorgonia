@@ -6,6 +6,7 @@ import "reflect"
 GENERATED FILE. DO NOT EDIT
 */
 
+// Ones creates a *Dense with the provided shape and type
 func Ones(dt Dtype, shape ...int) Tensor {
 	d := recycledDense(dt, shape)
 	switch d.t.Kind() {

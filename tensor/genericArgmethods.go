@@ -477,8 +477,7 @@ func argminF32(a []float32) int {
 		}
 		if math32.IsNaN(v) || math32.IsInf(v, -1) {
 			min = i
-			f = v
-			break
+			return min
 		}
 		if v < f {
 			min = i
@@ -504,8 +503,7 @@ func argmaxF32(a []float32) int {
 
 		if math32.IsNaN(v) || math32.IsInf(v, 1) {
 			max = i
-			f = v
-			break
+			return max
 		}
 		if v > f {
 			max = i
@@ -532,8 +530,7 @@ func argminF64(a []float64) int {
 		}
 		if math.IsNaN(v) || math.IsInf(v, -1) {
 			min = i
-			f = v
-			break
+			return min
 		}
 		if v < f {
 			min = i
@@ -559,8 +556,7 @@ func argmaxF64(a []float64) int {
 
 		if math.IsNaN(v) || math.IsInf(v, 1) {
 			max = i
-			f = v
-			break
+			return max
 		}
 		if v > f {
 			max = i

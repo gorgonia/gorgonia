@@ -36,18 +36,18 @@ var (
 
 type fmtState struct {
 	fmt.State
-	c rune
 
 	buf                *bytes.Buffer
 	pad                []byte
 	hElision, vElision []byte
 
-	w, p int
 	meta bool
 	flat bool
 	ext  bool
 	comp bool
+	c    rune // c is here mainly for struct packing reasons
 
+	w, p int // width and precision
 	base int // used only for int/byte arrays
 
 	rows, cols int
@@ -226,6 +226,14 @@ func (f *fmtState) writeVElision() {
 	f.Write(f.vElision)
 }
 
+// Format implements fmt.Formatter. Formatting can be controlled with verbs and flags. All default Go verbs are supported and work as expected.
+// By default, only 8 columns and rows are printed (the first and the last 4 columns and rows, while the middle columns and rows are ellided)
+// Special flags are:
+// 		'-' for printing a flat array of values
+//		'+' for printing extra metadata before printing the tensor (it prints shape, stride and type, which are useful for debugging)
+//		'#' for printing the full tensor - there are no elisions. Overrides the 's' verb
+//
+// Special care also needs be taken for the verb 's' - it prints a super compressed version of the tensor, only printing 4 cols and 4 rows.
 func (t *Dense) Format(s fmt.State, c rune) {
 	f := newFmtState(s, c)
 	if t.IsScalar() {

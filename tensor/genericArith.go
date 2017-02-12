@@ -1048,7 +1048,7 @@ func vecPowC128(a, b []complex128) error {
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
-		a[i] = complex128(cmplx.Pow(complex128(a[i]), complex128(v)))
+		a[i] = cmplx.Pow(a[i], v)
 	}
 	return nil
 }
@@ -2368,7 +2368,7 @@ func incrVecPowC128(a, b, incr []complex128) error {
 	}
 	incr = incr[:len(a)]
 	for i, v := range b {
-		incr[i] += complex128(cmplx.Pow(complex128(a[i]), complex128(v)))
+		incr[i] += cmplx.Pow(a[i], v)
 	}
 	return nil
 }

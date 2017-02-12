@@ -5,7 +5,8 @@ import (
 	"text/template"
 )
 
-const onesRaw = `func Ones(dt Dtype, shape ...int) Tensor {
+const onesRaw = `// Ones creates a *Dense with the provided shape and type
+func Ones(dt Dtype, shape ...int) Tensor {
 	d := recycledDense(dt, shape)
 	switch d.t.Kind() {
 		{{range .Kinds -}}

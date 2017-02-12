@@ -9,18 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var normtests = []NormOrder{
-	FrobeniusNorm(),
-	NuclearNorm(),
-	InfNorm(),
-	NegInfNorm(),
-	Norm(0),
-	Norm(1),
-	Norm(-1),
-	Norm(2),
-	Norm(-2),
-}
-
 func testNormVal(T *Dense, ord NormOrder, want float64) error {
 	retVal, err := T.Norm(ord)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
 type Dense struct {
 	*AP
 
@@ -90,14 +91,21 @@ func (t *Dense) fromSlice(x interface{}) {
 	t.hdr = hdr
 }
 
-func (t *Dense) Info() *AP    { return t.AP }
+// Info returns the accesspattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
+func (t *Dense) Info() *AP { return t.AP }
+
+// Dtype returns the data type of the *Dense tensor.
 func (t *Dense) Dtype() Dtype { return t.t }
+
+// Data returns the underlying array. If the *Dense represents a scalar value, the scalar value is returned instead
 func (t *Dense) Data() interface{} {
 	if t.IsScalar() {
 		return t.Get(0)
 	}
 	return t.v
 }
+
+// DataSize returns the size of the array. Typically t.DataSize() == t.Shape().TotalSize()
 func (t *Dense) DataSize() int {
 	if t.IsScalar() {
 		return 0
@@ -151,30 +159,6 @@ func (t *Dense) IsMaterializable() bool {
 	return t.viewOf != nil || t.old != nil
 }
 
-// // Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
-// func (t *Dense) Eq(other interface{}) bool {
-// 	if ot, ok := other.(*Dense); ok {
-// 		if ot == t {
-// 			return true
-// 		}
-
-// 		if ot.len() != t.len() {
-// 			return false
-// 		}
-
-// 		if !t.Shape().Eq(ot.Shape()) {
-// 			return false
-// 		}
-
-// 		if t.data != ot.data {
-// 			return false
-// 		}
-
-// 		return true
-// 	}
-// 	return false
-// }
-
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {
 	retVal := recycledDense(t.t, t.Shape().Clone())
@@ -186,7 +170,7 @@ func (t *Dense) Clone() interface{} {
 	}
 
 	copyDense(retVal, t)
-	retVal.Lock()
+	retVal.lock()
 	return retVal
 }
 
@@ -194,9 +178,9 @@ func (t *Dense) cap() int { return t.hdr.Cap }
 func (t *Dense) len() int { return t.hdr.Len } // exactly the same as DataSize
 
 func (t *Dense) setShape(s ...int) {
-	t.Unlock()
+	t.unlock()
 	t.SetShape(s...)
-	t.Lock()
+	t.lock()
 	return
 }
 
@@ -219,7 +203,7 @@ func (t *Dense) fix() {
 		size := t.Shape().TotalSize()
 		t.makeArray(size)
 	}
-	t.Lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
+	t.lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
 }
 
 // sanity is a function that sanity checks that a tensor is correct.
@@ -237,6 +221,7 @@ func (t *Dense) sanity() error {
 	return nil
 }
 
+// oshape returns the original shape
 func (t *Dense) oshape() Shape {
 	if t.old != nil {
 		return t.old.Shape()

@@ -81,6 +81,7 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	return nil
 }
 
+// WriteCSV writes the *Dense to a CSV. It accepts an optional string formatting ("%v", "%f", etc...), which controls what is written to the CSV.
 func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	// checks:
 	if !t.IsMatrix() {
@@ -130,6 +131,7 @@ func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	return nil
 }
 
+// GobEncode implements gob.GobEncoder
 func (t *Dense) GobEncode() (p []byte, err error) {
 	var buf bytes.Buffer
 	encoder := gob.NewEncoder(&buf)
@@ -210,6 +212,8 @@ func (t *Dense) GobEncode() (p []byte, err error) {
 
 	return buf.Bytes(), err
 }
+
+// ReadNpy reads NumPy formatted files into a *Dense
 func (t *Dense) ReadNpy(r io.Reader) (err error) {
 	var magic [6]byte
 	if _, err = r.Read(magic[:]); err != nil {
@@ -401,6 +405,8 @@ func (t *Dense) ReadNpy(r io.Reader) (err error) {
 	t.fix()
 	return t.sanity()
 }
+
+// GobDecode implements gob.GobDecoder
 func (t *Dense) GobDecode(p []byte) (err error) {
 	buf := bytes.NewBuffer(p)
 	decoder := gob.NewDecoder(buf)
@@ -521,6 +527,8 @@ func (t *Dense) GobDecode(p []byte) (err error) {
 	t.fix()
 	return t.sanity()
 }
+
+// convFromStrs conversts a []string to a slice of the Dtype provided
 func convFromStrs(to Dtype, record []string) (interface{}, error) {
 	var err error
 	switch to.Kind() {
@@ -647,6 +655,9 @@ func convFromStrs(to Dtype, record []string) (interface{}, error) {
 	}
 }
 
+// ReadCSV reads a CSV into a *Dense. It will override the underlying data.
+//
+// BUG(chewxy): reading CSV doesn't handle CSVs with different columns per row yet.
 func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 	fo := parseFuncOpts(opts...)
 	as := fo.t

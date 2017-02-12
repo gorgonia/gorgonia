@@ -97,9 +97,9 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			ap := BorrowAP(1)
 			defer ReturnAP(ap)
 
-			ap.Unlock()
+			ap.unlock()
 			ap.SetShape(t.Size())
-			ap.Lock()
+			ap.lock()
 
 			t.AP = ap
 			if ret, err = Dot(t, t); err != nil { // returns a scalar

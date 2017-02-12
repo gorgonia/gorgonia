@@ -72,6 +72,7 @@ func (dt Dtype) numpyDtype() (string, error) {
 		return "v", errors.Errorf("Unsupported Dtype conversion")
 	}
 }
+
 func fromTypeID(i int) (Dtype, error) {
 	if i > len(allTypes) || i < 0 {
 		return Dtype{}, errors.Errorf("Unsupported Dtype for serialization")

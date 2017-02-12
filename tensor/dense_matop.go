@@ -169,7 +169,7 @@ func (t *Dense) Transpose() {
 	}()
 
 	expShape := t.Shape()
-	expStrides := expShape.CalcStrides() // important! because the strides would have changed once the underlying data changed
+	expStrides := expShape.calcStrides() // important! because the strides would have changed once the underlying data changed
 	defer ReturnInts(expStrides)
 	defer func() {
 		t.setShape(expShape...)
@@ -196,6 +196,20 @@ func (t *Dense) At(coords ...int) (interface{}, error) {
 	}
 
 	return t.Get(at), nil
+}
+
+// SetAt sets the value at the given coordinate
+func (t *Dense) SetAt(v interface{}, coords ...int) error {
+	if len(coords) != t.Dims() {
+		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
+	}
+
+	at, err := t.at(coords...)
+	if err != nil {
+		return errors.Wrap(err, "SetAt()")
+	}
+	t.Set(at, v)
+	return nil
 }
 
 // Repeat is like Numpy's repeat. It repeats the elements of an array.
@@ -452,7 +466,7 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 		cur++
 	}
 
-	newStrides := newShape.CalcStrides()
+	newStrides := newShape.calcStrides()
 	ap := NewAP(newShape, newStrides)
 
 	allNoMat := !t.IsMaterializable()

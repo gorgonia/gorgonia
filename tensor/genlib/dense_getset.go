@@ -12,7 +12,8 @@ const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{asType .}}) { t.{
 `
 const getBasicRaw = `func (t *Dense) get{{short .}}(i int) {{asType .}} { return t.{{lower .String | clean | strip }}s()[i]}
 `
-const getRaw = `func (t *Dense) Get(i int) interface{} {
+const getRaw = `// Get returns the ith element of the underlying array of the *Dense tensor.
+func (t *Dense) Get(i int) interface{} {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
@@ -30,7 +31,8 @@ const getRaw = `func (t *Dense) Get(i int) interface{} {
 }
 
 `
-const setRaw = `func (t *Dense) Set(i int, x interface{}) {
+const setRaw = `// Set sets the value of the underlying array at the index i. 
+func (t *Dense) Set(i int, x interface{}) {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
@@ -52,7 +54,8 @@ const setRaw = `func (t *Dense) Set(i int, x interface{}) {
 
 `
 
-const memsetRaw = `func (t *Dense) Memset(x interface{}) error {
+const memsetRaw = `// Memset sets all values in the *Dense tensor to x.
+func (t *Dense) Memset(x interface{}) error {
 	if t.IsMaterializable() {
 		return t.memsetIter(x)
 	}
@@ -114,12 +117,13 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 
 `
 
-const zeroRaw = `func (t *Dense) Zero() {
+const zeroRaw = `// Zero zeroes out the underlying array of the *Dense tensor
+func (t *Dense) Zero() {
 	if t.IsMaterializable() {
 		if err := t.zeroIter(); err !=nil {
 			panic(err)
@@ -180,7 +184,7 @@ func (t *Dense) zeroIter() (err error){
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 `
 const makeDataRaw = `func (t *Dense) makeArray(size int) {
