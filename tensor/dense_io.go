@@ -3,6 +3,7 @@ package tensor
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/csv"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -76,6 +77,55 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 
 	if bw.error != nil {
 		return bw
+	}
+	return nil
+}
+
+func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
+	// checks:
+	if !t.IsMatrix() {
+		// error
+		err = errors.Errorf("Cannot write *Dense to CSV. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())
+		return
+	}
+	format := "%v"
+	if len(formats) > 0 {
+		format = formats[0]
+	}
+
+	cw := csv.NewWriter(w)
+	it := NewFlatIterator(t.AP)
+	coord := it.Coord()
+
+	// rows := t.Shape()[0]
+	cols := t.Shape()[1]
+	record := make([]string, 0, cols)
+	var i, lastCol int
+	for i, err = it.Next(); err == nil; i, err = it.Next() {
+		record = append(record, fmt.Sprintf(format, t.Get(i)))
+		if lastCol == cols-1 {
+			if err = cw.Write(record); err != nil {
+				// TODO: wrap errors
+				return
+			}
+			cw.Flush()
+			record = record[:0]
+		}
+
+		// cleanup
+		switch {
+		case t.IsRowVec():
+			// lastRow = coord[len(coord)-2]
+			lastCol = coord[len(coord)-1]
+		case t.IsColVec():
+			// lastRow = coord[len(coord)-1]
+			lastCol = coord[len(coord)-2]
+		case t.IsVector():
+			lastCol = coord[len(coord)-1]
+		default:
+			// lastRow = coord[len(coord)-2]
+			lastCol = coord[len(coord)-1]
+		}
 	}
 	return nil
 }
@@ -470,4 +520,444 @@ func (t *Dense) GobDecode(p []byte) (err error) {
 	}
 	t.fix()
 	return t.sanity()
+}
+func convFromStrs(to Dtype, record []string) (interface{}, error) {
+	var err error
+	switch to.Kind() {
+	case reflect.Int:
+		retVal := make([]int, len(record))
+		for i, v := range record {
+			var i64 int64
+			if i64, err = strconv.ParseInt(v, 10, 0); err != nil {
+				return nil, err
+			}
+			retVal[i] = int(i64)
+		}
+		return retVal, nil
+	case reflect.Int8:
+		retVal := make([]int8, len(record))
+		for i, v := range record {
+			var i64 int64
+			if i64, err = strconv.ParseInt(v, 10, 8); err != nil {
+				return nil, err
+			}
+			retVal[i] = int8(i64)
+		}
+		return retVal, nil
+	case reflect.Int16:
+		retVal := make([]int16, len(record))
+		for i, v := range record {
+			var i64 int64
+			if i64, err = strconv.ParseInt(v, 10, 16); err != nil {
+				return nil, err
+			}
+			retVal[i] = int16(i64)
+		}
+		return retVal, nil
+	case reflect.Int32:
+		retVal := make([]int32, len(record))
+		for i, v := range record {
+			var i64 int64
+			if i64, err = strconv.ParseInt(v, 10, 32); err != nil {
+				return nil, err
+			}
+			retVal[i] = int32(i64)
+		}
+		return retVal, nil
+	case reflect.Int64:
+		retVal := make([]int64, len(record))
+		for i, v := range record {
+			var i64 int64
+			if i64, err = strconv.ParseInt(v, 10, 64); err != nil {
+				return nil, err
+			}
+			retVal[i] = int64(i64)
+		}
+		return retVal, nil
+	case reflect.Uint:
+		retVal := make([]uint, len(record))
+		for i, v := range record {
+			var u uint64
+			if u, err = strconv.ParseUint(v, 10, 0); err != nil {
+				return nil, err
+			}
+			retVal[i] = uint(u)
+		}
+		return retVal, nil
+	case reflect.Uint8:
+		retVal := make([]uint8, len(record))
+		for i, v := range record {
+			var u uint64
+			if u, err = strconv.ParseUint(v, 10, 8); err != nil {
+				return nil, err
+			}
+			retVal[i] = uint8(u)
+		}
+		return retVal, nil
+	case reflect.Uint16:
+		retVal := make([]uint16, len(record))
+		for i, v := range record {
+			var u uint64
+			if u, err = strconv.ParseUint(v, 10, 16); err != nil {
+				return nil, err
+			}
+			retVal[i] = uint16(u)
+		}
+		return retVal, nil
+	case reflect.Uint32:
+		retVal := make([]uint32, len(record))
+		for i, v := range record {
+			var u uint64
+			if u, err = strconv.ParseUint(v, 10, 32); err != nil {
+				return nil, err
+			}
+			retVal[i] = uint32(u)
+		}
+		return retVal, nil
+	case reflect.Uint64:
+		retVal := make([]uint64, len(record))
+		for i, v := range record {
+			var u uint64
+			if u, err = strconv.ParseUint(v, 10, 64); err != nil {
+				return nil, err
+			}
+			retVal[i] = uint64(u)
+		}
+		return retVal, nil
+	case reflect.Float32:
+		retVal := make([]float32, len(record))
+		for i, v := range record {
+			var f float64
+			if f, err = strconv.ParseFloat(v, 32); err != nil {
+				return nil, err
+			}
+			retVal[i] = float32(f)
+		}
+		return retVal, nil
+	case reflect.Float64:
+		retVal := make([]float64, len(record))
+		for i, v := range record {
+			if retVal[i], err = strconv.ParseFloat(v, 64); err != nil {
+				return nil, err
+			}
+		}
+		return retVal, nil
+	default:
+		return nil, errors.Errorf(methodNYI, "convFromStrs", to)
+	}
+}
+
+func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
+	fo := parseFuncOpts(opts...)
+	as := fo.t
+	if fo.t.Type == nil {
+		as = Float64
+	}
+
+	cr := csv.NewReader(r)
+
+	var record []string
+	var row interface{}
+	var rows, cols int
+
+	switch as.Kind() {
+	case reflect.Int:
+		backing := make([]int, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Int, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]int)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Int8:
+		backing := make([]int8, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Int8, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]int8)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Int16:
+		backing := make([]int16, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Int16, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]int16)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Int32:
+		backing := make([]int32, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Int32, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]int32)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Int64:
+		backing := make([]int64, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Int64, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]int64)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Uint:
+		backing := make([]uint, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Uint, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]uint)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Uint8:
+		backing := make([]uint8, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Uint8, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]uint8)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Uint16:
+		backing := make([]uint16, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Uint16, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]uint16)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Uint32:
+		backing := make([]uint32, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Uint32, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]uint32)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Uint64:
+		backing := make([]uint64, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Uint64, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]uint64)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Float32:
+		backing := make([]float32, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Float32, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]float32)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.Float64:
+		backing := make([]float64, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+
+			if row, err = convFromStrs(Float64, record); err != nil {
+				return
+			}
+			backing = append(backing, row.([]float64)...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	case reflect.String:
+		backing := make([]string, 0)
+		for {
+			record, err = cr.Read()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return
+			}
+			backing = append(backing, record...)
+			cols = len(record)
+			rows++
+		}
+		t.fromSlice(backing)
+		t.AP = new(AP)
+		t.AP.SetShape(rows, cols)
+		return nil
+	default:
+		return errors.Errorf("%v not yet handled", as)
+	}
+	return errors.Errorf("not yet handled")
 }
