@@ -1,4 +1,4 @@
-# Package Tensor #
+# Package `tensor` [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia/tensor?status.svg)](https://godoc.org/github.com/chewxy/gorgonia/tensor) #
 Package `tensor` is a package that provides efficient, generic (by some definitions of generic) n-dimensional arrays in Go. Also in this package are functions and methods that are used commonly in arithmetic, comparison and linear algebra operations.
 
 The main purpose of this package is to support the operations required by [Gorgonia](https://github.com/chewxy/gorgonia).
@@ -58,6 +58,8 @@ Coming soon
 
 ## Usage ##
 
+To install: `go get -u "github.com/chewxy/gorgonia/tensor"`
+
 To create a matrix with package `tensor` is easy:
 
 ```go
@@ -90,12 +92,12 @@ fmt.Printf("b:\n%1.1f\n", b)
 // ⎣20.0  21.0  22.0  23.0⎦
 ```
 
-Accessing and Setting data is fairly easy (be warned, this is the inefficient way if you want to do a batch access/setting):
+Accessing and Setting data is fairly easy. Dimensions are 0-indexed, so if you come from an R background, suck it up like I did. Be warned, this is the inefficient way if you want to do a batch access/setting:
 
 ```go
 // Accessing data:
 b := New(WithBacking(Range(Float32, 0, 24)), WithShape(2, 3, 4))
-x, _ := b.At(0, 1, 2) // in Numpy syntax: b[0,1,2]
+x, _ := b.At(0, 1, 2)
 fmt.Printf("x: %v\n", x)
 
 // Setting data
@@ -119,13 +121,15 @@ Bear in mind to pass in data of the correct type. This example will cause a pani
 ```go
 // Accessing data:
 b := New(WithBacking(Range(Float32, 0, 24)), WithShape(2, 3, 4))
-x, _ := b.At(0, 1, 2) // in Numpy syntax: b[0,1,2]
+x, _ := b.At(0, 1, 2)
 fmt.Printf("x: %v\n", x)
 
 // Setting data
 b.SetAt(1000, 0, 1, 2)
 fmt.Printf("b:\n%v", b)
 ```
+
+There is a whole laundry list of methods and functions available at the [godoc](https://godoc.org/github.com/chewxy/gorgonia/tensor) page
 
 
 ## Design of `*Dense` ##

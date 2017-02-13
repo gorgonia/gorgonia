@@ -6,11 +6,11 @@ import (
 )
 
 var habbo sync.Mutex
-var usePool bool = true
+var usePool = true
 
 // tensorPool is a pool of *Tensor grouped by size. It's guarded by poolsClosed
 var poolsClosed sync.RWMutex
-var densePool map[reflect.Kind]map[int]*sync.Pool = make(map[reflect.Kind]map[int]*sync.Pool)
+var densePool = make(map[reflect.Kind]map[int]*sync.Pool)
 
 const (
 	maxAPDims = 8
@@ -87,7 +87,7 @@ end:
 	return pool.Get().(*Dense)
 }
 
-// ReturnTensor returns a Tensor to their respective pools. Use with caution
+// ReturnTensor returns a Tensor to their respective pools. USE WITH CAUTION
 func ReturnTensor(t Tensor) {
 	if !usePool {
 		return
@@ -142,6 +142,7 @@ func ReturnTensor(t Tensor) {
 // apPool supports tensors up to 4-dimensions. Because, c'mon, you're not likely to use anything more than 5
 var apPool [maxAPDims]sync.Pool
 
+// BorrowAP gets an AP from the pool. USE WITH CAUTION.
 func BorrowAP(dims int) *AP {
 	if dims >= maxAPDims {
 		ap := new(AP)
@@ -157,6 +158,7 @@ func BorrowAP(dims int) *AP {
 	return ap
 }
 
+// ReturnAP returns the AP to the pool. USE WITH CAUTION.
 func ReturnAP(ap *AP) {
 	if ap.Dims() >= maxAPDims {
 		return
@@ -185,6 +187,7 @@ func init() {
 	}
 }
 
+// BorrowInts borrows a slice of ints from the pool. USE WITH CAUTION.
 func BorrowInts(size int) []int {
 	if size >= 8 {
 		return make([]int, size)
@@ -197,6 +200,7 @@ func BorrowInts(size int) []int {
 	return retVal.([]int)
 }
 
+// ReturnInts returns a slice from the pool. USE WITH CAUTION.
 func ReturnInts(is []int) {
 	if is == nil {
 		return

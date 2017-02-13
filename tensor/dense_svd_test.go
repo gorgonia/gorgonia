@@ -1,12 +1,11 @@
 package tensor
 
 import (
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/gonum/matrix"
 	"github.com/gonum/matrix/mat64"
+	"github.com/pkg/errors"
 )
 
 // tests for SVD adapted from Gonum's SVD tests.
@@ -79,8 +78,7 @@ func testSVD(T, T2, s, u, v *Dense, t string, i int) (err error) {
 	var sigma, reconstructed *Dense
 
 	if !allClose(T2.Data(), T.Data(), closeenoughf64) {
-		return errors.New(fmt.Sprintf("A call to SVD modified the underlying data! %s Test %d", t, i))
-
+		return errors.Errorf("A call to SVD modified the underlying data! %s Test %d", t, i)
 	}
 
 	shape := T2.Shape()
@@ -101,7 +99,7 @@ func testSVD(T, T2, s, u, v *Dense, t string, i int) (err error) {
 	}
 
 	if !allClose(T2.data, reconstructed.Data(), closeenoughf64) {
-		return errors.New(fmt.Sprintf("Expected reconstructed to be %v. Got %v instead", T2.Data(), reconstructed.Data()))
+		return errors.Errorf("Expected reconstructed to be %v. Got %v instead", T2.Data(), reconstructed.Data())
 	}
 	return nil
 }

@@ -16,9 +16,10 @@ type ArithBinOp struct {
 
 type BinOps struct {
 	*ManyKinds
-	OpName string
-	OpSymb string
-	IsFunc bool
+	OpName     string
+	OpSymb     string
+	CommonName string
+	IsFunc     bool
 }
 
 type ArithBinOps struct {
@@ -55,8 +56,9 @@ var binOps = []struct {
 }
 
 var vecscalarOps = []struct {
-	OpName string
-	OpSymb string
+	OpName     string
+	CommonName string
+	OpSymb     string
 
 	IsFunc bool
 
@@ -68,14 +70,14 @@ var vecscalarOps = []struct {
 	InvOpName     string
 	InvOpSymb     string
 }{
-	{"Trans", "+", false, true, 0, true, true, false, "", ""},
-	{"TransInv", "-", false, true, 0, false, false, false, "Trans", "+"},
-	{"TransInvR", "-", false, false, 0, false, false, false, "", ""},
-	{"Scale", "*", false, true, 1, true, true, false, "", ""}, // no good way to test inverse w/o  implicit broadcast
-	{"ScaleInv", "/", false, true, 1, false, false, false, "Scale", "*"},
-	{"ScaleInvR", "/", false, false, 0, false, false, false, "", ""},    // identity is 0 on purpose
-	{"PowOf", "math.Pow", true, false, 0, false, false, false, "", ""},  // identity is 0 on purpose
-	{"PowOfR", "math.Pow", true, false, 0, false, false, false, "", ""}, // identity is 0 on purpose
+	{"Trans", "addition", "+", false, true, 0, true, true, false, "", ""},
+	{"TransInv", "subtraction", "-", false, true, 0, false, false, false, "Trans", "+"},
+	{"TransInvR", "subtraction", "-", false, false, 0, false, false, false, "", ""},
+	{"Scale", "multiplication", "*", false, true, 1, true, true, false, "", ""}, // no good way to test inverse w/o  implicit broadcast
+	{"ScaleInv", "division", "/", false, true, 1, false, false, false, "Scale", "*"},
+	{"ScaleInvR", "division", "/", false, false, 0, false, false, false, "", ""},          // identity is 0 on purpose
+	{"PowOf", "exponentiation", "math.Pow", true, false, 0, false, false, false, "", ""},  // identity is 0 on purpose
+	{"PowOfR", "exponentiation", "math.Pow", true, false, 0, false, false, false, "", ""}, // identity is 0 on purpose
 }
 
 const prepArithRaw = `func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
@@ -599,7 +601,9 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 }
 `
 
-const denseScalarArithRaw = `func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, err error){
+const denseScalarArithRaw = `// {{.OpName}} performs {{.CommonName}} on a *Dense and a scalar value. The scalar value has to be of the same 
+// type as defined in the *Dense, otherwise an error will be returned.
+func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, err error){
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
 		return nil, err
@@ -724,7 +728,13 @@ func arith(f io.Writer, generic *ManyKinds) {
 	}
 	for _, bo := range vecscalarOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
-		op := BinOps{generic, bo.OpName, bo.OpSymb, bo.IsFunc}
+		op := BinOps{
+			ManyKinds:  generic,
+			OpName:     bo.OpName,
+			CommonName: bo.CommonName,
+			OpSymb:     bo.OpSymb,
+			IsFunc:     bo.IsFunc,
+		}
 		dsArith.Execute(f, op)
 		dsArithTable.Execute(f, op)
 		fmt.Fprintln(f, "\n")

@@ -136,7 +136,7 @@ func (t *Dense) reshape(dims ...int) error {
 // 	// t.data.Zero()
 // }
 
-// ScalarValue() returns the scalar value of a *Tensor,
+// ScalarValue returns the scalar value of a *Tensor,
 // IF and ONLY IF it's a Tensor representation of a scalar value.
 // This is required because operations like a (vec · vec) would return a scalar value.
 // I didn't want to return interface{} for all the API methods, so the next best solution is to

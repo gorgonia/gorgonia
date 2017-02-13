@@ -673,7 +673,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 
 	switch as.Kind() {
 	case reflect.Int:
-		backing := make([]int, 0)
+		var backing []int
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -696,7 +696,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Int8:
-		backing := make([]int8, 0)
+		var backing []int8
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -719,7 +719,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Int16:
-		backing := make([]int16, 0)
+		var backing []int16
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -742,7 +742,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Int32:
-		backing := make([]int32, 0)
+		var backing []int32
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -765,7 +765,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Int64:
-		backing := make([]int64, 0)
+		var backing []int64
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -788,7 +788,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Uint:
-		backing := make([]uint, 0)
+		var backing []uint
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -811,7 +811,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Uint8:
-		backing := make([]uint8, 0)
+		var backing []uint8
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -834,7 +834,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Uint16:
-		backing := make([]uint16, 0)
+		var backing []uint16
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -857,7 +857,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Uint32:
-		backing := make([]uint32, 0)
+		var backing []uint32
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -880,7 +880,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Uint64:
-		backing := make([]uint64, 0)
+		var backing []uint64
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -903,7 +903,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Float32:
-		backing := make([]float32, 0)
+		var backing []float32
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -926,7 +926,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.Float64:
-		backing := make([]float64, 0)
+		var backing []float64
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
@@ -949,7 +949,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		t.AP.SetShape(rows, cols)
 		return nil
 	case reflect.String:
-		backing := make([]string, 0)
+		var backing []string
 		for {
 			record, err = cr.Read()
 			if err == io.EOF {
