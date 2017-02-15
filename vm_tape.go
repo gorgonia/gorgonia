@@ -532,15 +532,12 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	}
 	m.leaveLoggingContext()
 
-	_, iscd := instr.op.(CUDADoer)
-	log.Printf("instr.op %v | %t", instr.op, iscd)
 	// Execute
 	var v Value
 	switch {
 	case instr.useGPU:
 		switch cd := instr.op.(type) {
 		case CUDADoer:
-			log.Println("CUDA DOER")
 			fromDevs := make([]Device, len(instr.readFrom))
 			for i, r := range instr.readFrom {
 				fromDevs[i] = r.device
