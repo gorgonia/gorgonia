@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"runtime"
 	"strings"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -16,6 +17,8 @@ type tapeMachine struct {
 	storage []Value
 	locMap  map[*Node]register
 	b       batchedBLAS
+	m       modules
+	c       contexts
 
 	// state stuff, to allow continuation
 	pc int
@@ -51,6 +54,8 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 
 	m.doAlloc()
 
+	m.init()                                     // initializes CUDA stuff(if using CUDA build)
+	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
 }
 
@@ -85,6 +90,18 @@ func (m *tapeMachine) dontTrace()  { m.runFlags &= (^(byte(1) << spare2)) }
 func (m *tapeMachine) bindDV() bool { return m.runFlags>>spare3&byte(1) == 1 }
 func (m *tapeMachine) doBindDV()    { m.runFlags |= byte(1) << spare3 }
 func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
+
+// HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
+//
+// Note that BLAS names will always return false, even if using a BLAS that requires cgo calls (like Intel MKL)
+func (m *tapeMachine) HasFunc(name string) bool { return m.m.HasFunc(name) }
+
+// Function returns the function with the given name if the execution is external (cgo/cuda/openCL) and the external device contains the function with the given name.
+//
+// CUDA specific notes: this method, while named "Function", returns a cu.Module.
+//
+// Note that BLAS names will always return false, even if using a BLAS that requires cgo calls (like Intel MKL)
+func (m *tapeMachine) Function(name string) (interface{}, error) { return m.m.Function(name) }
 
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
 func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
@@ -475,6 +492,7 @@ type execOp struct {
 
 	preAllocated bool
 	useUnsafe    bool
+	useGPU       bool
 }
 
 func (instr execOp) ID() int           { return instr.id }
@@ -487,11 +505,14 @@ func newExecOp(n *Node) execOp {
 		inputTypes = append(inputTypes, child.t)
 	}
 
+	_, useGPU := n.op.(CUDADoer)
+
 	return execOp{
 		op:         n.op,
 		id:         n.ID(),
 		inputTypes: inputTypes,
 		outputType: n.t,
+		useGPU:     useGPU,
 	}
 }
 
@@ -511,9 +532,31 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	}
 	m.leaveLoggingContext()
 
+	_, iscd := instr.op.(CUDADoer)
+	log.Printf("instr.op %v | %t", instr.op, iscd)
 	// Execute
 	var v Value
 	switch {
+	case instr.useGPU:
+		switch cd := instr.op.(type) {
+		case CUDADoer:
+			log.Println("CUDA DOER")
+			fromDevs := make([]Device, len(instr.readFrom))
+			for i, r := range instr.readFrom {
+				fromDevs[i] = r.device
+			}
+			toDev := instr.writeTo.device
+
+			if v, err = cd.CUDADo(m, fromDevs, toDev, !instr.useUnsafe, inputs...); err != nil {
+				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
+			}
+		case CLDoer:
+		default:
+			// TODO: maybe warn?
+			if v, err = instr.op.Do(inputs...); err != nil {
+				return errors.Wrap(err, opDoFail)
+			}
+		}
 	case instr.preAllocated:
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p := m.storage[instr.writeTo.id]

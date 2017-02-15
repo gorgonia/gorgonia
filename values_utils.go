@@ -65,8 +65,6 @@ func DtypeOf(v Value) tensor.Dtype {
 		return tensor.Byte
 	case B:
 		return tensor.Bool
-	case *tensor.Dense:
-		return vt.Dtype()
 	case Dtyper:
 		return vt.Dtype()
 	default:

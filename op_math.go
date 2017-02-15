@@ -460,8 +460,6 @@ func (op elemUnaryOp) OverwritesInput() int {
 	return -1
 }
 
-func (op elemUnaryOp) CallsExtern() bool { return false }
-
 func (op elemUnaryOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, op.unaryOpType()); err != nil {
 		panic(err)

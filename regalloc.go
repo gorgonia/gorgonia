@@ -307,16 +307,28 @@ func (ra *regalloc) alloc(sorted Nodes, df *dataflow) {
 					if len(letStmts) == 1 || !overwrittenIsLive {
 						writeTo = reads[overwrites].result
 					} else {
-						writeTo = ra.newReg(CPU)
+						if _, ok := node.op.(CUDADoer); ok {
+							writeTo = ra.newReg(Device(0))
+						} else {
+							writeTo = ra.newReg(CPU)
+						}
 					}
 				} else {
 					compileLogf("New register")
-					writeTo = ra.newReg(CPU)
+					if _, ok := node.op.(CUDADoer); ok {
+						writeTo = ra.newReg(Device(0))
+					} else {
+						writeTo = ra.newReg(CPU)
+					}
 				}
 				leaveLoggingContext()
 			} else {
 				compileLogf("NodeID: %x does not returns pointer", node.ID())
-				writeTo = ra.newReg(CPU)
+				if _, ok := node.op.(CUDADoer); ok {
+					writeTo = ra.newReg(Device(0))
+				} else {
+					writeTo = ra.newReg(CPU)
+				}
 			}
 
 			for _, r := range reads {
