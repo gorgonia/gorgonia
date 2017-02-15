@@ -12,7 +12,7 @@ import (
 
 func (op elemUnaryOp) CallsExtern() bool { return true }
 
-func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, safe bool, inputs ...Value) (retVal Value, err error) {
+func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -42,21 +42,17 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, s
 		return op.Do(inputs...)
 	}
 
+	size := a.Shape().TotalSize()
+
+	if retVal, err = Copy(prealloc, a); err != nil {
+		return op.Do(inputs...)
+	}
+
 	// var maxThreads int
 	// d := cu.Device(dev)
 	// if maxThreads, err = d.Attribute(cu.MaxThreadsPerBlock); err != nil {
 	// 	return op.Do(inputs...) // resort to using slow methods if there was an error
 	// }
-
-	size := a.Shape().TotalSize()
-
-	if safe {
-		if retVal, err = CloneValue(a); err != nil {
-			return
-		}
-	} else {
-		retVal = a
-	}
 
 	var mem cu.DevicePtr
 	if mem, err = valToDevicePointer(retVal); err != nil {

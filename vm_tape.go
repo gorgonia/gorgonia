@@ -538,13 +538,15 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	case instr.useGPU:
 		switch cd := instr.op.(type) {
 		case CUDADoer:
+			cudaLogf("CUDA Doer")
 			fromDevs := make([]Device, len(instr.readFrom))
 			for i, r := range instr.readFrom {
 				fromDevs[i] = r.device
 			}
 			toDev := instr.writeTo.device
+			p := m.storage[instr.writeTo.id]
 
-			if v, err = cd.CUDADo(m, fromDevs, toDev, !instr.useUnsafe, inputs...); err != nil {
+			if v, err = cd.CUDADo(m, fromDevs, toDev, p, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
 		case CLDoer:

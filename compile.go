@@ -41,7 +41,7 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	ra := new(regalloc)
 	ra.alloc(sortedNodes, df)
 
-	compileLogf("Intervals: %+#v", FmtNodeMap(df.intervals))
+	compileLogf("Intervals: %+v", FmtNodeMap(df.intervals))
 	logCompileState(g.name, g, df)
 
 	cg := newCodeGenerator(inputs, sortedNodes, df)
@@ -203,9 +203,10 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 	}
 }
 
-func (cg *codegenerator) addNode(node, replacement *Node, interv *interval) {
+func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i int) {
 	compileLogf("Expr")
-	compileLogf("Node: %x", node.ID())
+	compileLogf("Node: %x %v", node.ID(), node.op)
+	compileLogf("interval %v", interv)
 	writeTo := interv.result
 	var reads []register
 	for _, child := range node.children {
@@ -222,7 +223,13 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval) {
 		// if the instruction calls an extern (cBLAS or cuBlas), then we should preallocate the vector
 		if node.op.CallsExtern() {
 			compileLogf("calls extern")
-			instr := newAlloc(node, writeTo)
+			var instr alloc
+			// if i == 0 {
+			// 	// if the instruction is the last instruction, we STILL want to  allocate to a new register
+			// 	// if this clause is not here, the last instruction will allocate to an existing register, and overwrites any val
+			// 	writeTo = register{device: writeTo.device, id: writeTo.id + 1}
+			// }
+			instr = newAlloc(node, writeTo)
 			cg.instructions = append(cg.instructions, instr)
 
 			cg.addInstr(node, instr)
@@ -281,6 +288,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval) {
 
 	// otherwise, the replacement has already been written
 	if node == replacement {
+		compileLogf("New Exec Op")
 		instr := newExecOp(node)
 		instr.readFrom = reads
 		instr.writeTo = writeTo
@@ -307,7 +315,7 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 		case node.isStmt:
 			cg.addStmt(node, nInterv)
 		default:
-			cg.addNode(node, replacement, nInterv)
+			cg.addNode(node, replacement, nInterv, i)
 		}
 	}
 	return &program{

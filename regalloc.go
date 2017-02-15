@@ -265,7 +265,7 @@ func (ra *regalloc) alloc(sorted Nodes, df *dataflow) {
 			// nInterv.merge(df.intervals[node])
 			df.intervals[node].merge(nInterv)
 		}
-		compileLogf("Working on %x. InstructionID: %d", node.ID(), instructionID)
+		compileLogf("Working on %v(%x). InstructionID: %d", node, node.ID(), instructionID)
 		enterLoggingContext()
 		if node.isArg() {
 			nInterv.result = ra.newReg(CPU)
@@ -300,11 +300,14 @@ func (ra *regalloc) alloc(sorted Nodes, df *dataflow) {
 				overwrites := node.op.OverwritesInput()
 				if overwrites >= 0 {
 					overwrittenIsLive := reads[overwrites].liveAt(instructionID)
+
 					compileLogf("Overwrites : %v ", overwrites)
 					compileLogf("Overwritten (%v) is live at %d? %t", reads[overwrites], instructionID, overwrittenIsLive)
-
 					compileLogf("Let Statements: %d | %v", len(letStmts), reads[overwrites])
-					if len(letStmts) == 1 || !overwrittenIsLive {
+
+					// If the overwritten is not live, and the node does not call external processes (obiviating the need to prealloc)
+					// then we can directly overwrite the register.
+					if len(letStmts) == 1 || (!overwrittenIsLive && !node.op.CallsExtern()) {
 						writeTo = reads[overwrites].result
 					} else {
 						if _, ok := node.op.(CUDADoer); ok {

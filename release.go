@@ -12,6 +12,7 @@ const (
 	autodiffDev       = false
 	machineDev        = false
 	stabilizationDev  = false
+	cudaDev           = true
 )
 
 var READMEMSTATS = true
@@ -31,6 +32,7 @@ func autodiffLogf(format string, attrs ...interface{})        {}
 func machineLogf(format string, attrs ...interface{})         {}
 func stabLogf(format string, attrs ...interface{})            {}
 func solverLogf(format string, attrs ...interface{})          {}
+func cudaLogf(format string, attrs ...interface{})            {}
 func recoverFrom(format string, attrs ...interface{})         {}
 func logCompileState(name string, g *ExprGraph, df *dataflow) {}
 
