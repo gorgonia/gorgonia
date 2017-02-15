@@ -35,6 +35,20 @@ func finalizeTapeMachine(m *tapeMachine) {
 }
 
 func (m *tapeMachine) init() {
+	var initCUDA bool
+	for _, instr := range m.p.instructions {
+		if eo, ok := instr.(execOp); ok {
+			if _, ok := eo.op.(CUDADoer); ok {
+				initCUDA = true
+				break
+			}
+		}
+	}
+	if !initCUDA {
+		// don't bother initializing contexts if no instructions were CUDA based
+		return
+	}
+
 	devices, _ := cu.NumDevices()
 	m.c = make(contexts, devices)
 	for i := range m.c {
