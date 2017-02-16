@@ -175,7 +175,7 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 	return
 }
 
-// diffWRT gives info on whether or not the operation is actually differentiable
+// DiffWRT gives info on whether or not the operation is actually differentiable
 // For example, this is differentiable:
 //		c = a ** b
 // The result of the differentiation wrt to a and b would be:

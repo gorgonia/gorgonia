@@ -3,6 +3,8 @@
 package gorgonia
 
 import (
+	"log"
+
 	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
 )
@@ -61,6 +63,7 @@ func (m *tapeMachine) init() {
 	}
 
 	m.m = make(modules)
+	m.loadStdLib()
 }
 
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
@@ -101,4 +104,14 @@ func (m *tapeMachine) Modules() map[string][]cu.Module {
 }
 
 // loads the standardlib
-func (m *tapeMachine) loadStdLib() {}
+func (m *tapeMachine) loadStdLib() {
+	if cudaStdLib == nil {
+		return
+	}
+
+	for name, data := range cudaStdLib {
+		if err := m.LoadCUDAFunc(name, data); err != nil {
+			log.Printf("err %v", err)
+		}
+	}
+}
