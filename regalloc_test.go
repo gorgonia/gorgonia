@@ -131,8 +131,8 @@ func TestRegAlloc(t *testing.T) {
 	df := analyze(g, sorted)
 
 	df.intervals = is
-	ra := new(regalloc)
-	ra.alloc(sorted, df)
+	ra := newRegalloc(df)
+	ra.alloc(sorted)
 
 	if is[x].result.id >= is[z].result.id {
 		t.Error("x is an input, and would have a lifetime of the entire program")

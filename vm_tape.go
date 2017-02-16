@@ -193,20 +193,6 @@ func (m *tapeMachine) RunAll() (err error) {
 			}
 		}
 	}
-
-	// re-bind the values to the nodes
-	// machineLogf("Binding values based on final output")
-	// enterLoggingContext()
-	// for n, r := range m.locMap {
-	// 	if n.isInput() {
-	// 		continue
-	// 	}
-
-	// 	if err = n.bind(m.storage[r.id]); err != nil {
-	// 		return
-	// 	}
-	// }
-	// leaveLoggingContext()
 	return
 }
 
@@ -271,7 +257,7 @@ func (m *tapeMachine) logf(format string, attrs ...interface{}) {
 }
 
 func (m *tapeMachine) enterLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		enterLoggingContext()
 	}
 	m.tabcount++
@@ -285,7 +271,7 @@ func (m *tapeMachine) enterLoggingContext() {
 }
 
 func (m *tapeMachine) leaveLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		leaveLoggingContext()
 	}
 	m.tabcount--
@@ -538,7 +524,6 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	case instr.useGPU:
 		switch cd := instr.op.(type) {
 		case CUDADoer:
-			cudaLogf("CUDA Doer")
 			fromDevs := make([]Device, len(instr.readFrom))
 			for i, r := range instr.readFrom {
 				fromDevs[i] = r.device

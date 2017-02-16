@@ -43,11 +43,11 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	// typecheck  before creating
 	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
 	enterLoggingContext()
+	defer leaveLoggingContext()
 	var retType hm.Type
 	if retType, err = inferNodeType(op, children...); err != nil {
 		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
 	}
-	leaveLoggingContext()
 	// retType = pruneCompletely(retType)
 	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
 

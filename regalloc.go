@@ -239,7 +239,15 @@ func buildIntervals(sorted Nodes) map[*Node]*interval {
 }
 
 type regalloc struct {
-	count int
+	count         int
+	instructionID int
+	df            *dataflow
+}
+
+func newRegalloc(df *dataflow) *regalloc {
+	return &regalloc{
+		df: df,
+	}
 }
 
 func (ra *regalloc) newReg(device Device) register {
@@ -248,99 +256,119 @@ func (ra *regalloc) newReg(device Device) register {
 	return out
 }
 
-func (ra *regalloc) alloc(sorted Nodes, df *dataflow) {
+func (ra *regalloc) allocArg(nInterv *interval) {
+	nInterv.result = ra.newReg(CPU)
+}
+
+func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
+	// create new write to if overwriteInput and the used register is stil live
+	compileLogf("NodeID: %x returns pointer", node.ID())
+	compileLogf("Op: %v", node.op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
+	var writeTo register
+	var reads []*interval
+	for _, child := range node.children {
+		cReplace := ra.df.replacements[child]
+		repInterv := ra.df.intervals[cReplace]
+		reads = append(reads, repInterv)
+	}
+
+	var letStmts Nodes
+	for _, parent := range node.g.To(node) {
+		n := parent.(*Node)
+		compileLogf("Parent: %v | %T", n, n.op)
+		if n.isStmt {
+			// compileLogf("isStmt")
+			if _, ok := n.op.(letOp); ok {
+				letStmts = append(letStmts, n)
+			}
+		}
+	}
+
+	overwrites := node.op.OverwritesInput()
+	if overwrites >= 0 {
+		overwrittenIsLive := reads[overwrites].liveAt(ra.instructionID)
+
+		compileLogf("Overwrites : %v ", overwrites)
+		compileLogf("Overwritten (%v) is live at %d? %t", reads[overwrites], ra.instructionID, overwrittenIsLive)
+		compileLogf("Let Statements: %d | %v", len(letStmts), reads[overwrites])
+
+		// If the overwritten is not live, and the node does not call external processes (obiviating the need to prealloc)
+		// then we can directly overwrite the register.
+		if len(letStmts) == 1 || (!overwrittenIsLive && !node.op.CallsExtern()) {
+			writeTo = reads[overwrites].result
+		} else {
+			if _, ok := node.op.(CUDADoer); ok {
+				writeTo = ra.newReg(Device(0))
+			} else {
+				writeTo = ra.newReg(CPU)
+			}
+		}
+	} else {
+		compileLogf("New register")
+		if _, ok := node.op.(CUDADoer); ok {
+			writeTo = ra.newReg(Device(0))
+		} else {
+			writeTo = ra.newReg(CPU)
+		}
+	}
+
+	for _, r := range reads {
+		nInterv.reads = append(nInterv.reads, r.result)
+	}
+	nInterv.result = writeTo
+}
+
+func (ra *regalloc) allocImmutableOp(node *Node, nInterv *interval) {
+	var writeTo register
+	var reads []*interval
+	for _, child := range node.children {
+		cReplace := ra.df.replacements[child]
+		repInterv := ra.df.intervals[cReplace]
+		reads = append(reads, repInterv)
+	}
+
+	compileLogf("NodeID: %x does not returns pointer", node.ID())
+	if _, ok := node.op.(CUDADoer); ok {
+		writeTo = ra.newReg(Device(0))
+	} else {
+		writeTo = ra.newReg(CPU)
+	}
+
+	for _, r := range reads {
+		nInterv.reads = append(nInterv.reads, r.result)
+	}
+	nInterv.result = writeTo
+}
+
+func (ra *regalloc) alloc(sorted Nodes) {
 	compileLogf("Allocating registers")
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	var instructionID int
 	for i := len(sorted) - 1; i >= 0; i-- {
 		node := sorted[i]
 
-		replacement := df.replacements[node]
-		nInterv := df.intervals[replacement]
+		replacement := ra.df.replacements[node]
+		nInterv := ra.df.intervals[replacement]
 
 		if node != replacement {
 			compileLogf("Merging")
-			// nInterv.merge(df.intervals[node])
-			df.intervals[node].merge(nInterv)
+			ra.df.intervals[node].merge(nInterv)
 		}
-		compileLogf("Working on %v(%x). InstructionID: %d", node, node.ID(), instructionID)
-		enterLoggingContext()
-		if node.isArg() {
-			nInterv.result = ra.newReg(CPU)
-		} else {
-			compileLogf("not arg...")
-			var reads []*interval
-			for _, child := range node.children {
-				cReplace := df.replacements[child]
-				repInterv := df.intervals[cReplace]
-				reads = append(reads, repInterv)
-			}
+		compileLogf("Working on %v(%x). InstructionID: %d", node, node.ID(), ra.instructionID)
 
-			var writeTo register
-			if node.op.ReturnsPtr() {
-				// create new write to if overwriteInput and the used register is stil live
-				compileLogf("NodeID: %x returns pointer", node.ID())
-				compileLogf("Op: %v", node.op)
-				enterLoggingContext()
-
-				var letStmts Nodes
-				for _, parent := range node.g.To(node) {
-					n := parent.(*Node)
-					compileLogf("Parent: %v | %T", n, n.op)
-					if n.isStmt {
-						// compileLogf("isStmt")
-						if _, ok := n.op.(letOp); ok {
-							letStmts = append(letStmts, n)
-						}
-					}
-				}
-
-				overwrites := node.op.OverwritesInput()
-				if overwrites >= 0 {
-					overwrittenIsLive := reads[overwrites].liveAt(instructionID)
-
-					compileLogf("Overwrites : %v ", overwrites)
-					compileLogf("Overwritten (%v) is live at %d? %t", reads[overwrites], instructionID, overwrittenIsLive)
-					compileLogf("Let Statements: %d | %v", len(letStmts), reads[overwrites])
-
-					// If the overwritten is not live, and the node does not call external processes (obiviating the need to prealloc)
-					// then we can directly overwrite the register.
-					if len(letStmts) == 1 || (!overwrittenIsLive && !node.op.CallsExtern()) {
-						writeTo = reads[overwrites].result
-					} else {
-						if _, ok := node.op.(CUDADoer); ok {
-							writeTo = ra.newReg(Device(0))
-						} else {
-							writeTo = ra.newReg(CPU)
-						}
-					}
-				} else {
-					compileLogf("New register")
-					if _, ok := node.op.(CUDADoer); ok {
-						writeTo = ra.newReg(Device(0))
-					} else {
-						writeTo = ra.newReg(CPU)
-					}
-				}
-				leaveLoggingContext()
-			} else {
-				compileLogf("NodeID: %x does not returns pointer", node.ID())
-				if _, ok := node.op.(CUDADoer); ok {
-					writeTo = ra.newReg(Device(0))
-				} else {
-					writeTo = ra.newReg(CPU)
-				}
-			}
-
-			for _, r := range reads {
-				nInterv.reads = append(nInterv.reads, r.result)
-			}
-			nInterv.result = writeTo
+		switch {
+		case node.isArg():
+			ra.allocArg(nInterv)
+		case node.op.ReturnsPtr():
+			ra.allocMutableOp(node, nInterv)
+		default:
+			ra.allocImmutableOp(node, nInterv)
 		}
-		leaveLoggingContext()
 		compileLogf("n: %x; result: %v; reads: %v", node.ID(), nInterv.result, nInterv.reads)
-		instructionID++
+		ra.instructionID++
 	}
 }
