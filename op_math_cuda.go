@@ -85,7 +85,10 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	}
 
 	if !op.retSame {
-		return op.UsePreallocDo(prealloc, inputs...)
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+		return op.Do(inputs...)
 	}
 
 	a := inputs[0]
@@ -96,7 +99,10 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 
 	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(DtypeOf(a).Size())*8)
 	if !extern.HasFunc(name) {
-		return op.UsePreallocDo(prealloc, inputs...)
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+		return op.Do(inputs...)
 	}
 
 	// TODO: maybe check arity of fromDevs?
@@ -106,19 +112,28 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	ctxes := machine.Contexts()
 	mods := machine.Modules()
 	if len(ctxes) == 0 {
-		return op.UsePreallocDo(prealloc, inputs...)
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+		return op.Do(inputs...)
 	}
 	mod := mods[name][int(dev)]
 	var fn cu.Function
 	if fn, err = mod.Function(name); err != nil {
-		return op.UsePreallocDo(prealloc, inputs...)
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+		return op.Do(inputs...)
 	}
 
 	size := a.Shape().TotalSize()
 
 	if retVal, err = Copy(prealloc, a); err != nil {
 		// TODO: maybe warn?
-		return op.UsePreallocDo(prealloc, inputs...)
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+		return op.Do(inputs...)
 	}
 
 	// TODO: optimize kernel to maximize parallelization
