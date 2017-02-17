@@ -12,7 +12,7 @@ const (
 	autodiffDev       = false
 	machineDev        = false
 	stabilizationDev  = false
-	cudaDev           = true
+	cudaDev           = false
 )
 
 var READMEMSTATS = true

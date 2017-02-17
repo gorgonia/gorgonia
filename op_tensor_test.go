@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -252,6 +253,8 @@ func TestTransposeOp(t *testing.T) {
 }
 
 func TestConcatOp(t *testing.T) {
+	defer runtime.GC()
+
 	assert := assert.New(t)
 	g := NewGraph()
 	x := NewVector(g, Float64, WithShape(2))

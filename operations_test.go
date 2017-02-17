@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -52,6 +53,8 @@ var mulTests = []struct {
 }
 
 func TestMul(t *testing.T) {
+	defer runtime.GC()
+
 	assert := assert.New(t)
 
 	t.Logf("Testing Mul with TapeMachine")
@@ -342,6 +345,7 @@ func TestGt(t *testing.T) {
 }
 
 func TestSoftMax(t *testing.T) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	g := NewGraph()
 	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
@@ -423,6 +427,7 @@ var sliceTests = []struct {
 }
 
 func TestSlice(t *testing.T) {
+	defer runtime.GC()
 	for _, sts := range sliceTests {
 		g := NewGraph()
 		x := NewTensor(g, Float64, len(sts.shape), WithShape(sts.shape...), WithInit(RangedFrom(0)))
@@ -564,6 +569,7 @@ var sumTests = []struct {
 }
 
 func TestSum(t *testing.T) {
+	defer runtime.GC()
 	for _, sts := range sumTests {
 		g := NewGraph()
 		x := NewTensor(g, Float64, len(sts.shape), WithShape(sts.shape...), WithInit(RangedFrom(0)))

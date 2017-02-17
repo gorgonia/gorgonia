@@ -25,7 +25,7 @@ func main() {
 	var err error
 
 	if devices, err = cu.NumDevices(); err != nil {
-		log.Fatalf("error while finding number of devices: %v", err)
+		log.Fatalf("error while finding number of devices: %+v", err)
 	}
 
 	if devices == 0 {
@@ -36,10 +36,12 @@ func main() {
 	major := int(^uint(0) >> 1)
 	minor := int(^uint(0) >> 1)
 	for d := 0; d < devices; d++ {
-		dev, _ := cu.GetDevice(d)
-		maj, _ := dev.Attribute(cu.ComputeCapabilityMajor)
-		min, _ := dev.Attribute(cu.ComputeCapabilityMinor)
+		var dev cu.Device
+		if dev, err = cu.GetDevice(d); err != nil {
+			log.Fatalf("Unable to get GPU%d - %+v", err)
+		}
 
+		maj, min, err := dev.ComputeCapability()
 		if maj > 0 && maj < major {
 			major = maj
 			minor = min

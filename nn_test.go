@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -30,6 +31,7 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 
 	prog, locMap, err := Compile(g)
 	m := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
+	defer runtime.GC()
 	if err := m.RunAll(); err != nil {
 		// t.Errorf("%+v", err)
 		return err

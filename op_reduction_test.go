@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,7 @@ func TestSumOp(t *testing.T) {
 }
 
 func TestSumOpDiff(t *testing.T) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	var g, g2 *ExprGraph
 	var x, y, z, a, b, c *Node

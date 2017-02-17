@@ -3,6 +3,7 @@
 package gorgonia
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/alecthomas/assert"
@@ -10,6 +11,8 @@ import (
 )
 
 func TestCUDACube(t *testing.T) {
+	defer runtime.GC()
+
 	assert := assert.New(t)
 	xT := tensor.New(tensor.Of(tensor.Float32), tensor.WithBacking(tensor.Range(Float32, 0, 32)), tensor.WithShape(8, 4))
 
@@ -37,6 +40,7 @@ func TestCUDACube(t *testing.T) {
 }
 
 func TestCUDAUnary(t *testing.T) {
+	defer runtime.GC()
 	g := NewGraph(WithGraphName("CUDATEST"))
 	x := NewVector(g, tensor.Float32, WithName("x"), WithShape(5))
 	y := NewVector(g, tensor.Float32, WithName("y"), WithShape(5))

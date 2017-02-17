@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"log"
+	"runtime"
 
 	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
@@ -26,6 +27,7 @@ func (m modules) Function(name string) (interface{}, error) {
 }
 
 func finalizeTapeMachine(m *tapeMachine) {
+	cudaLogf("Finalizing tape machine %p", m)
 	for i, c := range m.c {
 		cu.SetCurrent(c)
 		for _, v := range m.m {
@@ -34,6 +36,7 @@ func finalizeTapeMachine(m *tapeMachine) {
 		}
 		cu.DestroyContext(&c)
 	}
+	m.cleanup()
 }
 
 func (m *tapeMachine) init() {
@@ -54,16 +57,47 @@ func (m *tapeMachine) init() {
 	devices, _ := cu.NumDevices()
 	m.c = make(contexts, devices)
 	for i := range m.c {
-		dev, _ := cu.GetDevice(i)
-		ctx, _ := dev.MakeContext(cu.SchedAuto)
+		dev, err := cu.GetDevice(i)
+		if err != nil {
+			log.Printf("Failed to get device %d: %v", i, err)
+			m.cleanup()
+			return
+		}
+		ctx, err := dev.MakeContext(cu.SchedAuto)
+		if err != nil {
+			if err == cu.OutOfMemory {
+				var free, total int64
+				if free, total, err = cu.MemInfo(); err != nil {
+					log.Printf("Error while getting mem info: %v", err)
+				}
+				log.Printf("Out of memory. Free: %v, total %v", free, total)
+				m.cleanup()
+				return
+			}
+			log.Printf("Failed to make context for device %d. Error: %v", i, err)
+			m.cleanup()
+			return
+		}
+
 		m.c[i] = ctx
 	}
 	if len(m.c) > 0 {
 		cu.SetCurrent(m.c[0])
 	}
-
 	m.m = make(modules)
 	m.loadStdLib()
+
+	var free, total int64
+	var err error
+	if free, total, err = cu.MemInfo(); err != nil {
+		log.Printf("Error while getting mem info: %v", err)
+	}
+	cudaLogf("Machine %p initialized. CUDA Memory: %v/%v", m, free, total)
+}
+
+func (m *tapeMachine) cleanup() {
+	m.c = nil
+	m.m = nil
 }
 
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
@@ -105,13 +139,16 @@ func (m *tapeMachine) Modules() map[string][]cu.Module {
 
 // loads the standardlib
 func (m *tapeMachine) loadStdLib() {
+	pc, _, _, _ := runtime.Caller(4)
+
 	if cudaStdLib == nil {
 		return
 	}
 
 	for name, data := range cudaStdLib {
 		if err := m.LoadCUDAFunc(name, data); err != nil {
-			log.Printf("err %v", err)
+			fn := runtime.FuncForPC(pc)
+			log.Printf("err %v | called From %v", err, fn.Name())
 		}
 	}
 }

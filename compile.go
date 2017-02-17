@@ -38,8 +38,8 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	df := analyze(g, sortedNodes)
 
 	df.intervals = buildIntervals(sortedNodes)
-	ra := new(regalloc)
-	ra.alloc(sortedNodes, df)
+	ra := newRegalloc(df)
+	ra.alloc(sortedNodes)
 
 	compileLogf("Intervals: %+v", FmtNodeMap(df.intervals))
 	logCompileState(g.name, g, df)
@@ -80,8 +80,8 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	df := analyze(subgraph, sortedNodes)
 	df.intervals = buildIntervals(sortedNodes)
 
-	ra := new(regalloc)
-	ra.alloc(sortedNodes, df)
+	ra := newRegalloc(df)
+	ra.alloc(sortedNodes)
 
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
@@ -215,6 +215,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		reads = append(reads, cInterv.result)
 	}
 	enterLoggingContext()
+	defer leaveLoggingContext()
 
 	var prealloc bool
 	var useUnsafe bool
@@ -299,7 +300,6 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		cg.addInstr(node, instr)
 		cg.updateLastWrites(writeTo.id)
 	}
-	leaveLoggingContext()
 }
 
 func (cg *codegenerator) gen() (*program, map[*Node]register) {
