@@ -174,6 +174,23 @@ func (t *Dense) Clone() interface{} {
 	return retVal
 }
 
+// Uintptr returns the pointer of the first value of the slab
+func (t *Dense) Uintptr() uintptr {
+	return uintptr(t.data)
+}
+
+// MemSize returns how big the slice is in bytes
+func (t *Dense) MemSize() uintptr {
+	return uintptr(t.hdr.Len) * t.t.Size()
+}
+
+// Pointer returns the pointer of the first value of the slab, as an unsafe.Pointer
+func (t *Dense) Pointer() unsafe.Pointer {
+	return t.data
+}
+
+// Private methods
+
 func (t *Dense) cap() int { return t.hdr.Cap }
 func (t *Dense) len() int { return t.hdr.Len } // exactly the same as DataSize
 

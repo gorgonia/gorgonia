@@ -42,18 +42,18 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 	for i, v := range values {
 		var intV int
 		switch sv := v.(type) {
-		case F64:
-			intV = int(float64(sv))
-		case F32:
-			intV = int(float32(sv))
-		case I:
-			intV = int(sv)
-		case I32:
-			intV = int(int32(sv))
-		case I64:
-			intV = int(int64(sv))
-		case U8:
-			intV = int(byte(sv))
+		case *F64:
+			intV = int(float64(*sv))
+		case *F32:
+			intV = int(float32(*sv))
+		case *I:
+			intV = int(*sv)
+		case *I32:
+			intV = int(int32(*sv))
+		case *I64:
+			intV = int(int64(*sv))
+		case *U8:
+			intV = int(byte(*sv))
 		case Scalar:
 			return nil, errors.Errorf(nyiTypeFail, "valueToInts", v)
 		default:
@@ -111,10 +111,10 @@ func ones(dt tensor.Dtype, sizes ...int) (retVal Value) {
 
 func hasInf(v Value) bool {
 	switch vt := v.(type) {
-	case F64:
-		return math.IsInf(float64(vt), 0)
-	case F32:
-		return math32.IsInf(float32(vt), 0)
+	case *F64:
+		return math.IsInf(float64(*vt), 0)
+	case *F32:
+		return math32.IsInf(float32(*vt), 0)
 	case *tensor.Dense:
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
@@ -147,10 +147,10 @@ func hasInf(v Value) bool {
 
 func hasNaN(v Value) bool {
 	switch vt := v.(type) {
-	case F64:
-		return math.IsNaN(float64(vt))
-	case F32:
-		return math32.IsNaN(float32(vt))
+	case *F64:
+		return math.IsNaN(float64(*vt))
+	case *F32:
+		return math32.IsNaN(float32(*vt))
 	case *tensor.Dense:
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {

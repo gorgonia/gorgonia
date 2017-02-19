@@ -26,13 +26,13 @@ func xy(dt tensor.Dtype) (x tensor.Tensor, y tensor.Tensor) {
 	return
 }
 
-func random(dt tensor.Dtype) Value {
+func random(dt tensor.Dtype) interface{} {
 	rand.Seed(13370)
 	switch dt {
 	case tensor.Float32:
-		return F32(rand.Float32())
+		return rand.Float32()
 	case tensor.Float64:
-		return F64(rand.Float64())
+		return rand.Float64()
 	default:
 		panic("Unhandled dtype")
 	}
@@ -62,7 +62,7 @@ func linearRegression(Float tensor.Dtype) {
 
 	for i := 0; i < 10000; i++ {
 		if err = machine.RunAll(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("iteration: %v %v", i, err)
 		}
 
 		if err = solver.Step(model); err != nil {

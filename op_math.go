@@ -514,11 +514,13 @@ func (op elemUnaryOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		vt := DtypeOf(v)
 		switch vt {
 		case tensor.Float32:
-			f := float32(v.(F32))
+			vs := v.(*F32)
+			f := float32(*vs)
 			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
 			retVal, _ = anyToScalar((*opFn)(f))
 		case tensor.Float64:
-			f := float64(v.(F64))
+			vs := v.(*F64)
+			f := float64(*vs)
 			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
 			retVal, _ = anyToScalar((*opFn)(f))
 		default:

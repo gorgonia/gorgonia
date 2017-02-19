@@ -93,7 +93,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 
 	a := inputs[0]
 	b := inputs[1]
-	if a.Shape().IsScalar() || b.Shape().IsScalar() {
+	if a.Shape().IsScalar() || b.Shape().IsScalar() || prealloc.Shape().IsScalar() {
 		return op.Do(inputs...)
 	}
 

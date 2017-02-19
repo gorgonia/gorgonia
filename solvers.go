@@ -272,40 +272,40 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 			// zero all
 			gt.Zero()
 
-		case F32:
+		case *F32:
 			decay := float32(s.decay)
 			omdecay := float32(1.0 - s.decay)
 			stepSize := float32(s.eta)
 			eps := float32(s.eps)
 			l2reg := float32(s.l2reg)
 
-			gs := float32(grad.(F32))
-			c := float32(cw)
+			gs := grad.(*F32).Any()
+			c := cw.Any()
 			c = c*decay + omdecay*gs*gs
 
 			cached.Value, _ = anyToScalar(c)
 
-			w := float32(weights.(F32))
+			w := weights.(*F32).Any()
 			upd := -stepSize*gs/math32.Sqrt(c+eps) - l2reg*w
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
 			dv.Value, _ = anyToScalar(w)
 			dv.d = zero(Float32)
-		case F64:
+		case *F64:
 			decay := s.decay
 			omdecay := 1.0 - s.decay
 			stepSize := s.eta
 			eps := s.eps
 			l2reg := s.l2reg
 
-			gs := float64(grad.(F64))
-			c := float64(cw)
+			gs := grad.(*F64).Any()
+			c := cw.Any()
 			c = c*decay + omdecay*gs*gs
 
 			cached.Value, _ = anyToScalar(c)
 
-			w := float64(weights.(F64))
+			w := weights.(*F64).Any()
 			upd := -stepSize*gs/math.Sqrt(c+eps) - l2reg*w
 			w += upd
 
@@ -542,11 +542,11 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 
 			g.Zero()
 
-		case F32:
-			g := float32(grad.(F32))
-			w := float32(weights.(F32))
-			v := float32(cvv.(F32))
-			mm := float32(m)
+		case *F32:
+			g := grad.(*F32).Any()
+			w := weights.(*F32).Any()
+			v := cvv.(*F32).Any()
+			mm := m.Any()
 
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
@@ -595,11 +595,11 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 
 			dv.Value, _ = anyToScalar(w)
 			dv.d = zero(Float32)
-		case F64:
-			g := float64(grad.(F64))
-			w := float64(weights.(F64))
-			v := float64(cvv.(F64))
-			mm := float64(m)
+		case *F64:
+			g := grad.(*F64).Any()
+			w := weights.(*F64).Any()
+			v := cvv.(*F64).Any()
+			mm := m.Any()
 
 			l1reg := s.l1reg
 			l2reg := s.l2reg
@@ -765,24 +765,25 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 
 			g.Zero()
 
-		case F32:
-			g := grad.(F32)
+		case *F32:
+			g := grad.(*F32).Any()
+			wv := w.Any()
 
-			l1reg := F32(s.l1reg)
-			l2reg := F32(s.l2reg)
-			batch := F32(s.batch)
-			clip := F32(s.clip)
-			eta := F32(s.eta)
+			l1reg := float32(s.l1reg)
+			l2reg := float32(s.l2reg)
+			batch := float32(s.batch)
+			clip := float32(s.clip)
+			eta := float32(s.eta)
 
 			if s.useL1Reg {
-				if w < 0 {
+				if wv < 0 {
 					l1reg = -l1reg
 				}
 				g += l1reg
 			}
 
 			if s.useL2Reg {
-				l2reg *= w
+				l2reg *= wv
 				g += l2reg
 			}
 
@@ -799,28 +800,29 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			}
 
 			upd := -eta * g
-			w += upd
+			wv += upd
 
-			dv.Value, _ = anyToScalar(w)
+			dv.Value, _ = anyToScalar(wv)
 			dv.d = zero(Float32)
-		case F64:
-			g := F64(grad.(F64))
+		case *F64:
+			g := grad.(*F64).Any()
+			wv := w.Any()
 
-			l1reg := F64(s.l1reg)
-			l2reg := F64(s.l2reg)
-			batch := F64(s.batch)
-			clip := F64(s.clip)
-			eta := F64(s.eta)
+			l1reg := s.l1reg
+			l2reg := s.l2reg
+			batch := s.batch
+			clip := s.clip
+			eta := s.eta
 
 			if s.useL1Reg {
-				if w < 0 {
+				if wv < 0 {
 					l1reg = -l1reg
 				}
 				g += l1reg
 			}
 
 			if s.useL2Reg {
-				l2reg *= w
+				l2reg *= wv
 				g += l2reg
 			}
 
@@ -837,9 +839,9 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			}
 
 			upd := -eta * g
-			w += upd
+			wv += upd
 
-			dv.Value, _ = anyToScalar(w)
+			dv.Value, _ = anyToScalar(wv)
 			dv.d = zero(Float64)
 		default:
 			return errors.Errorf(nyiFail, "VanillaSolver.step", w)
@@ -973,7 +975,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			// zero all
 			g.Zero()
 
-		case F32:
+		case *F32:
 			var w, g, c float32
 
 			l2reg := float32(s.l2reg)
@@ -981,8 +983,8 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			eps := float32(s.eps)
 			eta := float32(s.eta)
 
-			c = float32(cw)
-			g = float32(grad.(F32))
+			c = cw.Any()
+			g = grad.(*F32).Any()
 
 			c += g * g
 
@@ -994,7 +996,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 				}
 			}
 
-			w = float32(weights.(F32))
+			w = weights.(*F32).Any()
 
 			upd := -eta * g / math32.Sqrt(c+eps)
 
@@ -1007,7 +1009,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
 			dv.Value, _ = anyToScalar(w)
 			dv.d = zero(Float32)
-		case F64:
+		case *F64:
 			var w, g, c float64
 
 			l2reg := s.l2reg
@@ -1015,8 +1017,8 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			eps := s.eps
 			eta := s.eta
 
-			c = float64(cw)
-			g = float64(grad.(F64))
+			c = cw.Any()
+			g = grad.(*F64).Any()
 
 			c += g * g
 
@@ -1028,7 +1030,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 				}
 			}
 
-			w = float64(weights.(F64))
+			w = weights.(*F64).Any()
 			upd := -eta * g / math.Sqrt(c+eps)
 			if s.useL2Reg {
 				upd -= w * l2reg
