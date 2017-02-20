@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 
-__global__ void tanh64(float* A, int size)
+__global__ void tanh64(double* A, int size)
 {
 	int idx = threadIdx.x;
 	if (idx >= size) {

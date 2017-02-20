@@ -3,13 +3,13 @@ extern "C" {
 #endif
 
 
-__global__ void add64(double* A, double* B, int size)
+__global__ void mul64(double* A, double* B, int size)
 {
 	int idx = threadIdx.x;
 	if (idx >= size) {
 		return;
 	}
-	A[idx] = A[idx] + B[idx]; 
+	A[idx] = A[idx] * B[idx]; 
 }
 	
 #ifdef __cplusplus
