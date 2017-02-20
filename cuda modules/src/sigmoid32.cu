@@ -11,7 +11,7 @@ __global__ void sigmoid32(float* A, int size)
 	if (idx >= size) {
 		return;
 	}
-	A[idx] = 1 / (1 + pow((float)(M_E), (-1 * A[idx])));
+	A[idx] = 1 / (1 + powf((float)(M_E), (-1 * A[idx])));
 }
 	
 #ifdef __cplusplus

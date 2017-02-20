@@ -62,7 +62,8 @@ func linearRegression(Float tensor.Dtype) {
 
 	for i := 0; i < 10000; i++ {
 		if err = machine.RunAll(); err != nil {
-			log.Fatalf("iteration: %v %v", i, err)
+			fmt.Printf("Error during iteration: %v: %v\n", i, err)
+			break
 		}
 
 		if err = solver.Step(model); err != nil {

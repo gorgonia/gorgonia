@@ -28,6 +28,7 @@ func (m modules) Function(name string) (interface{}, error) {
 
 func finalizeTapeMachine(m *tapeMachine) {
 	cudaLogf("Finalizing tape machine %p", m)
+	log.Printf("Finalizing tape machine")
 	for i, c := range m.c {
 		cu.SetCurrent(c)
 		for _, v := range m.m {
@@ -40,6 +41,7 @@ func finalizeTapeMachine(m *tapeMachine) {
 }
 
 func (m *tapeMachine) init() {
+	log.Printf("Init")
 	var initCUDA bool
 	for _, instr := range m.p.instructions {
 		if eo, ok := instr.(execOp); ok {
@@ -56,6 +58,7 @@ func (m *tapeMachine) init() {
 
 	devices, _ := cu.NumDevices()
 	m.c = make(contexts, devices)
+	m.d = make([]Device, devices)
 	for i := range m.c {
 		dev, err := cu.GetDevice(i)
 		if err != nil {
@@ -63,6 +66,7 @@ func (m *tapeMachine) init() {
 			m.cleanup()
 			return
 		}
+		m.d[i] = Device(dev)
 		ctx, err := dev.MakeContext(cu.SchedAuto)
 		if err != nil {
 			if err == cu.OutOfMemory {
@@ -146,9 +150,21 @@ func (m *tapeMachine) loadStdLib() {
 	}
 
 	for name, data := range cudaStdLib {
+		log.Printf("Loading %q", name)
 		if err := m.LoadCUDAFunc(name, data); err != nil {
 			fn := runtime.FuncForPC(pc)
 			log.Printf("err %v | called From %v", err, fn.Name())
 		}
+	}
+}
+
+func (m *tapeMachine) setContexts() {
+	ctx, err := cu.Device(m.d[0]).RetainPrimaryCtx()
+	log.Printf("ctx :%x retain err %v", ctx, err)
+	ctx, err = cu.CurrentContext()
+	log.Printf("%x %v", ctx, err)
+	if err != nil {
+		log.Printf("reset ctx")
+		cu.SetCurrent(m.c[0])
 	}
 }

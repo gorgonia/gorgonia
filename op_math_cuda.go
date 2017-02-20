@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 	"unsafe"
 
 	"github.com/chewxy/cu"
@@ -60,18 +61,26 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 		err = errors.Wrapf(err, opDoFail)
 		return
 	}
-	defer cu.MemFree(mem) // no leaks plz
+
+	// no leaks plz
+	defer func(mem cu.DevicePtr) {
+		if err := cu.MemFree(mem); err != nil {
+			log.Printf("memfree err %v", err)
+		}
+	}(mem)
 
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&size),
 	}
+	log.Printf("CUDO %v", name)
 
 	if err = fn.LaunchAndSync(1, 1, 1, size, 1, 1, 0, cu.Stream(0), args); err != nil {
 		return
 	}
 
 	err = devPtrToValue(retVal, mem)
+	log.Printf("final err unary: %v", err)
 	return
 }
 
@@ -157,8 +166,16 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	}
 
 	// we don't want no leaks
-	defer cu.MemFree(memB)
-	defer cu.MemFree(memA)
+	defer func(memA, memB cu.DevicePtr) {
+		if err := cu.MemFree(memA); err != nil {
+			log.Printf("memfree(A): %v", err)
+		}
+		if err := cu.MemFree(memB); err != nil {
+			log.Printf("memfree(B): %v", err)
+		}
+	}(memA, memB)
+
+	log.Printf("CUDO %v", name)
 
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&memA),
@@ -171,6 +188,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	}
 
 	err = devPtrToValue(retVal, memA)
+	log.Printf("final err binary: %v", err)
 	return
 
 }

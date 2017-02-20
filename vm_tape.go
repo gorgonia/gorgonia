@@ -16,9 +16,12 @@ type tapeMachine struct {
 	p       *program
 	storage []Value
 	locMap  map[*Node]register
-	b       batchedBLAS
-	m       modules
-	c       contexts
+
+	// execution devices
+	b batchedBLAS
+	d []Device
+	m modules
+	c contexts
 
 	// state stuff, to allow continuation
 	pc int
@@ -163,6 +166,7 @@ func (m *tapeMachine) RunAll() (err error) {
 	}()
 
 	for ; m.pc < len(m.p.instructions); m.pc++ {
+		m.setContexts()
 		instr := m.p.instructions[m.pc]
 		if err = instr.exec(m); err != nil {
 			return errors.Wrap(err, "Failed to carry exec()")
