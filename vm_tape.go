@@ -22,6 +22,7 @@ type tapeMachine struct {
 	d []Device
 	m modules
 	c contexts
+	f functions
 
 	// state stuff, to allow continuation
 	pc int

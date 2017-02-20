@@ -15,4 +15,5 @@ type CUDAMachine interface {
 	External
 	Contexts() []cu.Context
 	Modules() map[string][]cu.Module
+	Functions() map[string][]cu.Function
 }

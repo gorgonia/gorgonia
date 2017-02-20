@@ -8,6 +8,7 @@ import (
 )
 
 type modules map[string][]cu.Module // ths size of the slice has to be the same as the slice of contexts
+type functions map[string][]cu.Function
 type contexts []cu.Context
 
 func (m modules) HasFunc(name string) bool {
@@ -84,14 +85,15 @@ func (m *tapeMachine) init() {
 		cu.SetCurrent(m.c[0])
 	}
 	m.m = make(modules)
+	m.f = make(functions)
 	m.loadStdLib()
 
-	var free, total int64
-	var err error
-	if free, total, err = cu.MemInfo(); err != nil {
-		cudaLogf("Error while getting mem info: %v", err)
-	}
-	cudaLogf("Machine %p initialized. CUDA Memory: %v/%v", m, free, total)
+	// var free, total int64
+	// var err error
+	// if free, total, err = cu.MemInfo(); err != nil {
+	// 	cudaLogf("Error while getting mem info: %v", err)
+	// }
+	// cudaLogf("Machine %p initialized. CUDA Memory: %v/%v", m, free, total)
 }
 
 func (m *tapeMachine) cleanup() {
@@ -108,23 +110,38 @@ func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
 	}
 
 	mods := make([]cu.Module, len(m.c))
+	fns := make([]cu.Function, len(m.c))
 	for i, c := range m.c {
 		if err = cu.SetCurrent(c); err != nil {
 			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", name, i)
 			return
 		}
+
 		var mod cu.Module
 		if mod, err = cu.LoadData(data); err != nil {
-			err = errors.Wrapf(err, "Failed to load module %q data for context %d", name, i)
+			err = errors.Wrapf(err, "Failed to load module %q data for %dth context %x", name, i, c)
+			return
+		}
+
+		var fn cu.Function
+		if fn, err = mod.Function(name); err != nil {
+			err = errors.Wrapf(err, "Unable to get function %q in %dth context %x", name, i, c)
 			return
 		}
 		mods[i] = mod
+		fns[i] = fn
 	}
+
 	// set the first to current
 	if len(m.c) > 0 {
-		cu.SetCurrent(m.c[0])
+		if err = cu.SetCurrent(m.c[0]); err != nil {
+			err = errors.Wrapf(err, "Unable to set current")
+			return
+		}
 	}
+
 	m.m[name] = mods
+	m.f[name] = fns
 	return nil
 }
 
@@ -134,6 +151,10 @@ func (m *tapeMachine) Contexts() []cu.Context {
 
 func (m *tapeMachine) Modules() map[string][]cu.Module {
 	return map[string][]cu.Module(m.m)
+}
+
+func (m *tapeMachine) Functions() map[string][]cu.Function {
+	return map[string][]cu.Function(m.f)
 }
 
 // loads the standardlib

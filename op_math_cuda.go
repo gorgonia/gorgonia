@@ -32,23 +32,16 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 	dev := toDev
 
 	machine := extern.(CUDAMachine)
-	ctxes := machine.Contexts()
-	mods := machine.Modules()
-	if len(ctxes) == 0 {
+	fns := machine.Functions()
+	if len(machine.Contexts()) == 0 {
 		return op.Do(inputs...) // resort to using slow methods if no devices were found
 	}
-	mod := mods[name][int(dev)]
-	var fn cu.Function
-	if fn, err = mod.Function(name); err != nil {
-		return op.Do(inputs...)
-	}
-
-	size := a.Shape().TotalSize()
 
 	if retVal, err = Copy(prealloc, a); err != nil {
 		return op.Do(inputs...)
 	}
 
+	fn := fns[name][int(dev)]
 	// TODO: optimize kernel to maximize parallelization
 	// var maxThreads int
 	// d := cu.Device(dev)
@@ -69,6 +62,7 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 		}
 	}(mem)
 
+	size := a.Shape().TotalSize()
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&size),
@@ -118,24 +112,14 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	dev := toDev
 
 	machine := extern.(CUDAMachine)
-	ctxes := machine.Contexts()
-	mods := machine.Modules()
-	if len(ctxes) == 0 {
-		if prealloc != nil {
-			return op.UsePreallocDo(prealloc, inputs...)
-		}
-		return op.Do(inputs...)
-	}
-	mod := mods[name][int(dev)]
-	var fn cu.Function
-	if fn, err = mod.Function(name); err != nil {
-		if prealloc != nil {
-			return op.UsePreallocDo(prealloc, inputs...)
-		}
-		return op.Do(inputs...)
-	}
+	fns := machine.Functions()
 
-	size := a.Shape().TotalSize()
+	if len(machine.Contexts()) == 0 {
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+		return op.Do(inputs...)
+	}
 
 	if retVal, err = Copy(prealloc, a); err != nil {
 		// TODO: maybe warn?
@@ -145,6 +129,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 		return op.Do(inputs...)
 	}
 
+	fn := fns[name][int(dev)]
 	// TODO: optimize kernel to maximize parallelization
 	// var maxThreads int
 	// d := cu.Device(dev)
@@ -173,6 +158,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 		}
 	}(memA, memB)
 
+	size := a.Shape().TotalSize()
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&memA),
 		unsafe.Pointer(&memB),
