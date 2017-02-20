@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"runtime"
 
 	. "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
@@ -60,6 +61,10 @@ func linearRegression(Float tensor.Dtype) {
 	model := Nodes{m, c}
 	solver := NewVanillaSolver(WithLearnRate(0.001), WithClip(5)) // good idea to clip
 
+	if CUDA {
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+	}
 	for i := 0; i < 10000; i++ {
 		if err = machine.RunAll(); err != nil {
 			fmt.Printf("Error during iteration: %v: %v\n", i, err)

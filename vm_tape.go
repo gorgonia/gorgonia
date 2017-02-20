@@ -158,6 +158,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 	leaveLoggingContext()
 	return
 }
+
 func (m *tapeMachine) RunAll() (err error) {
 	defer func() {
 		if err == nil {
@@ -166,7 +167,6 @@ func (m *tapeMachine) RunAll() (err error) {
 	}()
 
 	for ; m.pc < len(m.p.instructions); m.pc++ {
-		m.setContexts()
 		instr := m.p.instructions[m.pc]
 		if err = instr.exec(m); err != nil {
 			return errors.Wrap(err, "Failed to carry exec()")

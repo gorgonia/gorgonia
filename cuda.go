@@ -4,6 +4,8 @@ package gorgonia
 
 import "github.com/chewxy/cu"
 
+const CUDA = true
+
 var cudaStdLib map[string]string
 
 //go:generate cudagen

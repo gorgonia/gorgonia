@@ -3,9 +3,6 @@
 package gorgonia
 
 import (
-	"log"
-	"runtime"
-
 	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
 )
@@ -28,7 +25,6 @@ func (m modules) Function(name string) (interface{}, error) {
 
 func finalizeTapeMachine(m *tapeMachine) {
 	cudaLogf("Finalizing tape machine %p", m)
-	log.Printf("Finalizing tape machine")
 	for i, c := range m.c {
 		cu.SetCurrent(c)
 		for _, v := range m.m {
@@ -41,7 +37,6 @@ func finalizeTapeMachine(m *tapeMachine) {
 }
 
 func (m *tapeMachine) init() {
-	log.Printf("Init")
 	var initCUDA bool
 	for _, instr := range m.p.instructions {
 		if eo, ok := instr.(execOp); ok {
@@ -62,7 +57,7 @@ func (m *tapeMachine) init() {
 	for i := range m.c {
 		dev, err := cu.GetDevice(i)
 		if err != nil {
-			log.Printf("Failed to get device %d: %v", i, err)
+			cudaLogf("Failed to get device %d: %v", i, err)
 			m.cleanup()
 			return
 		}
@@ -72,13 +67,13 @@ func (m *tapeMachine) init() {
 			if err == cu.OutOfMemory {
 				var free, total int64
 				if free, total, err = cu.MemInfo(); err != nil {
-					log.Printf("Error while getting mem info: %v", err)
+					cudaLogf("Error while getting mem info: %v", err)
 				}
-				log.Printf("Out of memory. Free: %v, total %v", free, total)
+				cudaLogf("Out of memory. Free: %v, total %v", free, total)
 				m.cleanup()
 				return
 			}
-			log.Printf("Failed to make context for device %d. Error: %v", i, err)
+			cudaLogf("Failed to make context for device %d. Error: %v", i, err)
 			m.cleanup()
 			return
 		}
@@ -94,7 +89,7 @@ func (m *tapeMachine) init() {
 	var free, total int64
 	var err error
 	if free, total, err = cu.MemInfo(); err != nil {
-		log.Printf("Error while getting mem info: %v", err)
+		cudaLogf("Error while getting mem info: %v", err)
 	}
 	cudaLogf("Machine %p initialized. CUDA Memory: %v/%v", m, free, total)
 }
@@ -143,28 +138,13 @@ func (m *tapeMachine) Modules() map[string][]cu.Module {
 
 // loads the standardlib
 func (m *tapeMachine) loadStdLib() {
-	pc, _, _, _ := runtime.Caller(4)
-
 	if cudaStdLib == nil {
 		return
 	}
 
 	for name, data := range cudaStdLib {
-		log.Printf("Loading %q", name)
 		if err := m.LoadCUDAFunc(name, data); err != nil {
-			fn := runtime.FuncForPC(pc)
-			log.Printf("err %v | called From %v", err, fn.Name())
+			cudaLogf("Unable to load %q.: %v", name, err)
 		}
-	}
-}
-
-func (m *tapeMachine) setContexts() {
-	ctx, err := cu.Device(m.d[0]).RetainPrimaryCtx()
-	log.Printf("ctx :%x retain err %v", ctx, err)
-	ctx, err = cu.CurrentContext()
-	log.Printf("%x %v", ctx, err)
-	if err != nil {
-		log.Printf("reset ctx")
-		cu.SetCurrent(m.c[0])
 	}
 }

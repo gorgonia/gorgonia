@@ -73,14 +73,12 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&size),
 	}
-	log.Printf("CUDO %v", name)
 
 	if err = fn.LaunchAndSync(1, 1, 1, size, 1, 1, 0, cu.Stream(0), args); err != nil {
 		return
 	}
 
 	err = devPtrToValue(retVal, mem)
-	log.Printf("final err unary: %v", err)
 	return
 }
 
@@ -175,8 +173,6 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 		}
 	}(memA, memB)
 
-	log.Printf("CUDO %v", name)
-
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&memA),
 		unsafe.Pointer(&memB),
@@ -188,7 +184,6 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	}
 
 	err = devPtrToValue(retVal, memA)
-	log.Printf("final err binary: %v", err)
 	return
 
 }
