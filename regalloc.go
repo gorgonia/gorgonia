@@ -229,6 +229,15 @@ func buildIntervals(sorted Nodes) map[*Node]*interval {
 			iv.addUsePositions(instrNum)
 			// iv.setTo(instrNum)
 		}
+		// assume all derivations will be used at the end
+		if len(n.derivOf) > 0 {
+			for _, d := range n.derivOf {
+				if d.isInput() {
+					nInter.addUsePositions(instructions)
+					break
+				}
+			}
+		}
 	}
 
 	for _, iv := range intervals {

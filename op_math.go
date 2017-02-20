@@ -277,7 +277,6 @@ func (op elemBinOp) ReturnsPtr() bool {
 	return false
 }
 
-func (op elemBinOp) CallsExtern() bool { return false } // for now
 func (op elemBinOp) OverwritesInput() int {
 	if _, ok := op.arg0.(TensorType); ok {
 		return 0

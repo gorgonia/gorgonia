@@ -121,7 +121,7 @@ func HadamardProd(a, b *Node) (retVal *Node, err error) {
 
 // Mul is the general handler for multiplication of nodes. It is extremely overloaded. Only use if you know what you're doing
 //
-// If any of the nodes are ScalarType, then it'll be redirected to HadamardMul() instead
+// If any of the nodes are ScalarType, then it'll be redirected to HadamardProd() instead
 // If the nodes are both vectors (that is, have a shape of (x, 1) or (1, x)), then the operator used will be a vectorDot
 // If only one of the nodes is a vector, then the operator used will be a matrix-vector multiplication will be used, and most importantly,
 // a transpose will be used (when necessary)

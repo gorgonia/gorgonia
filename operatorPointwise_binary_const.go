@@ -68,6 +68,25 @@ var ʘBinOpStrs = [maxʘBinaryOpType]string{
 	"!=",
 }
 
+// ʘBinOpNames is the string representation for a binOpType
+// It should be held constant.
+var ʘBinOpNames = [maxʘBinaryOpType]string{
+	// arith ops
+	"add",
+	"sub",
+	"mul",
+	"div",
+	"pow",
+
+	// cmp ops
+	"lt",
+	"gt",
+	"lte",
+	"gte",
+	"eq",
+	"ne",
+}
+
 // ʘBinOpCommutative is the array that stores whether a binary operator is commutative
 // It should be held constant.
 var ʘBinOpCommutative = [maxʘBinaryOpType]bool{

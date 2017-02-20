@@ -79,12 +79,14 @@ func (op elemUnaryOp) CUDAFuncName() string {
 	return op.String()
 }
 
+func (op elemBinOp) CallsExtern() bool { return true }
+
 func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
-	if !op.retSame {
+	if !op.isArith() {
 		if prealloc != nil && !prealloc.Shape().IsScalar() {
 			return op.UsePreallocDo(prealloc, inputs...)
 		}
@@ -174,5 +176,5 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 }
 
 func (op elemBinOp) CUDAFuncName() string {
-	return op.ʘBinaryOperator.String()
+	return ʘBinOpNames[op.binOpType()]
 }
