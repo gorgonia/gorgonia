@@ -42,6 +42,9 @@ func main() {
 		}
 
 		maj, min, err := dev.ComputeCapability()
+		if err != nil {
+			log.Fatalf("Unable to get compute compatibility of GPU%d - %v", d, err)
+		}
 		if maj > 0 && maj < major {
 			major = maj
 			minor = min
