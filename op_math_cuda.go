@@ -85,7 +85,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	}
 
 	if !op.retSame {
-		if prealloc != nil {
+		if prealloc != nil && !prealloc.Shape().IsScalar() {
 			return op.UsePreallocDo(prealloc, inputs...)
 		}
 		return op.Do(inputs...)
@@ -93,7 +93,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 
 	a := inputs[0]
 	b := inputs[1]
-	if a.Shape().IsScalar() || b.Shape().IsScalar() || prealloc.Shape().IsScalar() {
+	if a.Shape().IsScalar() || b.Shape().IsScalar() || prealloc == nil || prealloc.Shape().IsScalar() {
 		return op.Do(inputs...)
 	}
 
