@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -18,6 +19,25 @@ func stripExt(fullpath string) string {
 	ext := path.Ext(filename)
 	name := strings.TrimRight(filename, ext)
 	return name
+}
+
+func compileCUDA(src, targetLoc string, maj, min int) {
+	name := stripExt(src)
+	arch := fmt.Sprintf("-arch=compute_%d%d", maj, min)
+	output := fmt.Sprintf("-o=%v", path.Join(targetLoc, name+".ptx"))
+
+	var stderr bytes.Buffer
+
+	slow := exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "-allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+	slow.Stderr = &stderr
+	if err := slow.Run(); err != nil {
+		log.Fatalf("Failed to compile with nvcc: %v.", stderr.String())
+	}
+
+	// fast := exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "-allow-expensive-optimizations", "-fmad=false", "-use_fast_math", src)
+	// if err := fast.Run(); err != nil {
+	// 	log.Fatal(err)
+	// }
 }
 
 func main() {
@@ -61,20 +81,27 @@ func main() {
 	cuLoc := path.Join(gorgoniaLoc, "cuda modules/src")
 	ptxLoc := path.Join(gorgoniaLoc, "cuda modules/target")
 
-	ptxname := "%v_cc%d%d.ptx"
+	ptxname := "%v.ptx"
 
 	matches, err := filepath.Glob(fmt.Sprintf("%v/*.cu", cuLoc))
-
-	m := make(map[string][]byte)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for _, match := range matches {
+		compileCUDA(match, ptxLoc, major, minor)
+	}
+
+	m := make(map[string][]byte)
+	for _, match := range matches {
 		name := stripExt(match)
-		ptxfile := path.Join(ptxLoc, fmt.Sprintf(ptxname, name, major, minor))
+		ptxfile := path.Join(ptxLoc, fmt.Sprintf(ptxname, name))
 		data, _ := ioutil.ReadFile(ptxfile)
 		m[name] = data
 	}
 
-	f, err := os.OpenFile(gorgoniaLoc+"/cudamodules.go", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	cudamodules := path.Join(gorgoniaLoc, "cudamodules.go")
+	f, err := os.OpenFile(cudamodules, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	defer f.Close()
 
 	f.Write([]byte("// +build cuda\n\npackage gorgonia\n"))
