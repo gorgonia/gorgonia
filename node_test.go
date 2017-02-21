@@ -87,14 +87,14 @@ func TestNodeBasics(t *testing.T) {
 	if !n.t.Eq(Float64) {
 		t.Error("Expected a *Node to be constructed WithValue to get its type from the value if none exists")
 	}
-	if !ValueEq(n.boundTo, F64(3.14)) {
+	if !ValueEq(n.boundTo, newF64(3.14)) {
 		t.Error("Expected *Node to be bound to the correct value. Something has gone really wrong here")
 	}
 	returnNode(n)
 
 	// WithValue but with existing type that is the same
 	n = newNode(In(g), WithType(Float64), WithValue(F64(3.14)))
-	if !ValueEq(n.boundTo, F64(3.14)) {
+	if !ValueEq(n.boundTo, newF64(3.14)) {
 		t.Error("Expected *Node to be bound to the correct value. Something has gone really wrong here")
 	}
 	returnNode(n)

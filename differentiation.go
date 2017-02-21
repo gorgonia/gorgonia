@@ -95,6 +95,7 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 				continue
 			} else if len(n.children) == 0 {
 				symdiffLogf("Leaf nodes have no children")
+				leaveLoggingContext()
 				continue
 			}
 			g := n.g
@@ -103,10 +104,12 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 
 				symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
 				if len(parents) == 1 && len(child.children) > 0 {
+					leaveLoggingContext()
 					return nil, errors.Errorf("Being unable to differentiate %v would leave a portion of the graph unreachable. Unable to continue", n)
 				}
 			}
 			symdiffLogf("SKIPPING... Non differentiable!")
+			leaveLoggingContext()
 			continue
 		}
 
@@ -164,7 +167,6 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 			symdiffLogf("removed %v(%p); %x; %s", n, n, n.ID(), n.Name())
 		}
 	}
-
 	leaveLoggingContext()
 
 	var sortedNodes Nodes
@@ -237,6 +239,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 
 		// Check if there is any grads coming into this node
 		if len(nodeGradMap[node]) < 1 {
+			leaveLoggingContext()
 			return nil, errors.Errorf("No gradient node found for Node ID %x - %v", node.ID(), node)
 		}
 
@@ -248,6 +251,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 			var n *Node
 			symdiffLogf("reduce adding")
 			if n, err = ReduceAdd(nodeGradMap[node], WithGroupName(gradClust)); err != nil {
+				leaveLoggingContext()
 				return nil, errors.Wrap(err, "ReduceAdd failed during differentiation")
 			}
 			symdiffLogf("reduced to... %x", n.ID())
@@ -277,6 +281,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 
 			symdiffLogf("op: %v || optype: %v ||  node: %v || Children: %#Y || Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
 			if childrenGrads, err = op.SymDiff(node.children, node, gradNode); err != nil {
+				leaveLoggingContext()
 				return nil, errors.Wrapf(err, "SymDiff for %v. OpType: %v. Node Type: %v. Children: %#v. Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
 			}
 

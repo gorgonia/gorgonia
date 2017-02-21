@@ -43,11 +43,11 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 	// typecheck  before creating
 	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
 	enterLoggingContext()
+	defer leaveLoggingContext()
 	var retType hm.Type
 	if retType, err = inferNodeType(op, children...); err != nil {
 		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
 	}
-	leaveLoggingContext()
 	// retType = pruneCompletely(retType)
 	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
 
@@ -121,7 +121,7 @@ func HadamardProd(a, b *Node) (retVal *Node, err error) {
 
 // Mul is the general handler for multiplication of nodes. It is extremely overloaded. Only use if you know what you're doing
 //
-// If any of the nodes are ScalarType, then it'll be redirected to HadamardMul() instead
+// If any of the nodes are ScalarType, then it'll be redirected to HadamardProd() instead
 // If the nodes are both vectors (that is, have a shape of (x, 1) or (1, x)), then the operator used will be a vectorDot
 // If only one of the nodes is a vector, then the operator used will be a matrix-vector multiplication will be used, and most importantly,
 // a transpose will be used (when necessary)

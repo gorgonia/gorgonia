@@ -63,8 +63,8 @@ func extractF64s(v Value) []float64 {
 
 func extractF64(v Value) float64 {
 	switch vt := v.(type) {
-	case F64:
-		return float64(vt)
+	case *F64:
+		return float64(*vt)
 	case tensor.Tensor:
 		if !vt.IsScalar() {
 			panic("Got a non scalar result!")
@@ -82,8 +82,8 @@ func extractF32s(v Value) []float32 {
 
 func extractF32(v Value) float32 {
 	switch vt := v.(type) {
-	case F32:
-		return float32(vt)
+	case *F32:
+		return float32(*vt)
 	case tensor.Tensor:
 		if !vt.IsScalar() {
 			panic("Got a non scalar result!")

@@ -426,7 +426,7 @@ func (m *lispMachine) logf(format string, attrs ...interface{}) {
 }
 
 func (m *lispMachine) enterLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		enterLoggingContext()
 	}
 	m.tabcount++
@@ -440,7 +440,7 @@ func (m *lispMachine) enterLoggingContext() {
 }
 
 func (m *lispMachine) leaveLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		leaveLoggingContext()
 	}
 	m.tabcount--

@@ -35,6 +35,11 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 	return retVal, nil
 }
 
+// External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
+type External interface {
+	HasFunc(string) bool
+}
+
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
@@ -145,7 +150,8 @@ type UnsafeDoer interface {
 
 // CUDADoer uses CUDA to perform the Op.
 type CUDADoer interface {
-	CUDADo(inputs ...Value) (Value, error)
+	CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (Value, error)
+	CUDAFuncName() string
 }
 
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL

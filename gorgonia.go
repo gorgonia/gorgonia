@@ -87,21 +87,17 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var val Value
 
 	name = fmt.Sprintf("%v", v)
-	switch a := v.(type) {
+	val, t, _, err := anyToValue(v)
+	if err != nil {
+		panic(err)
+	}
+	switch vt := val.(type) {
 	case Scalar:
-		op = constantScalar{a}
-		val = a
-		t = TypeOf(a)
+		op = constantScalar{vt}
 		s = scalarShape
-	case int, int64, float64, float32, byte, bool:
-		val, t = anyToScalar(v)
-		s = scalarShape
-		op = constantScalar{val.(Scalar)}
 	case tensor.Tensor:
-		op = constantTensor{a}
-		val = a
-		s = a.Shape()
-		t = TypeOf(a)
+		op = constantTensor{vt}
+		s = vt.Shape()
 	}
 
 	if op == nil || t == nil {

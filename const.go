@@ -74,6 +74,7 @@ const (
 	execFail            = "Failed to execute %v in node %v"
 	autodiffFail        = "Failed to differentiate %v"
 	undefinedOnShape    = "%v undefined on shape %v"
+	unsupportedDtype    = "dtype %v is not yet supported"
 )
 
 var empty struct{}
