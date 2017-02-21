@@ -1,7 +1,5 @@
 package gorgonia
 
-import "reflect"
-
 func scalarEq(a, b Scalar) bool {
 	switch at := a.(type) {
 	case *F64:
@@ -86,7 +84,7 @@ func constEq(a, b constant) (ok bool) {
 		if bt, ok = b.(constantTensor); !ok {
 			return
 		}
-		return reflect.DeepEqual(at, bt)
+		return at.v.Eq(bt.v)
 	default:
 		panic("Not yet implemented")
 	}

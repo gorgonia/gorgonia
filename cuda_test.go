@@ -10,6 +10,11 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 )
 
+func TestExternMetadata_ElemGridSize(t *testing.T) {
+	var m ExternMetadata
+	m.init()
+}
+
 func BenchmarkOneMilCUDA(b *testing.B) {
 	xT := tensor.New(tensor.WithShape(1000000), tensor.WithBacking(tensor.Random(tensor.Float32, 1000000)))
 	g := NewGraph()

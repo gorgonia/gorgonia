@@ -376,43 +376,41 @@ As of now, only the very basic simple ops support CUDA:
 
 Elementwise unary operations:
 
-* abs
-* sin
-* cos
-* exp
-* ln
-* log2
-* neg
-* square
-* sqrt
-* inverse
-* cube
-* tanh
-* sigmoid
-* log1p
-* expm1
-* softplus
+* `abs`
+* `sin`
+* `cos`
+* `exp`
+* `ln`
+* `log2`
+* `neg`
+* `square`
+* `sqrt`
+* `inv` (reciprocal of a number)
+* `cube`
+* `tanh`
+* `sigmoid`
+* `log1p`
+* `expm1`
+* `softplus`
 
 Elementwise binary operations - only arithmetic operations support CUDA:
 
-* add
-* sub
-* mul
-* div
-* pow
+* `add`
+* `sub`
+* `mul`
+* `div`
+* `pow`
 
 From a lot of profiling of this author's personal projects, the ones that really matter are `tanh`, `sigmoid`, `expm1`, `exp` and `cube` - basically the activation functions. The other operations do work fine with MKL+AVX and aren't the major cause of slowness in a neural network
 
 ###CUDA improvements ###
 
-In a trivial benchmark, careful use of CUDA shows impressive improvements over non-CUDA code (bearing in mind the CUDA kernel is extremely naive and not optimized):
+In a trivial benchmark, careful use of CUDA (in this case, used to call `sigmoid`) shows impressive improvements over non-CUDA code (bearing in mind the CUDA kernel is extremely naive and not optimized):
 
 ```
 BenchmarkOneMilCUDA-8   	     300	   3348711 ns/op
 BenchmarkOneMil-8       	      50	  33169036 ns/op
 ```
-
-
 
 
 #API Stability#
@@ -424,14 +422,14 @@ Gorgonia's API is as of right now, not considered stable. It will be stable from
 
 Here are the goals for Gorgonia, sorted by importance 
 
-- [ ] 90+% test coverage. Current coverage is 50% for Gorgonia and 75% for the Tensor packages.
+- [ ] 80+% test coverage. Current coverage is 50% for Gorgonia and 80% for the `tensor`.
 - [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
 - [x] TravisCI for this package.
 - [x] Coveralls for this package.
 - [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely. Use table driven tests where possible.
 - [x] Improve performance especially re: allocation, minimize impact of type system.
 - [x] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
-- [ ] Refactor the CuBLAS package as well as the Blase package.
+- [ ] Refactor the CuBLAS package as well as the Blase package to follow in vein of the CUDA implementation.
 - [ ] Distributed computing. The ability to spread jobs out across multiple machines and communicating with each other has been attempted at least 3 times, but failed each time.
 - [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in general.
 - [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
