@@ -9,6 +9,7 @@ go:
   - 1.5.4
   - 1.6.3
   - 1.7.3
+  - 1.8
   - tip
 
 env:
@@ -16,6 +17,7 @@ env:
     - GOARCH=amd64
     - BLAS_LIB=OpenBLAS
     - TRAVISTEST=true
+    - CUDA=8.0.61-1
 
 # Cache used to persist the compiled BLAS library between CI calls.
 cache:
@@ -23,6 +25,7 @@ cache:
   - .travis/OpenBLAS.cache
 
 before_install:
+  - source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/install_cuda.sh
   - go get github.com/mattn/goveralls
 
 # Install the appropriate blas library (if any) and associated gonum software.
