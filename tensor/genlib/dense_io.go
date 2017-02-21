@@ -371,7 +371,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		{{if isNumber . -}}
 		{{if isOrd . -}}
 	case reflect.{{reflectKind .}}:
-		backing := make([]{{asType .}}, 0)
+		var backing []{{asType .}}
 		for {
 			record, err = cr.Read()
 			if err == io.EOF{
@@ -397,7 +397,7 @@ func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
 		{{end -}}
 		{{end -}}
 	case reflect.String:
-		backing := make([]string, 0)
+		var backing []string
 		for {
 			record, err = cr.Read()
 			if err == io.EOF{

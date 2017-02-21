@@ -96,6 +96,10 @@ func reductionFnType(x interface{}, expectedType reflect.Type) (v reflect.Value,
 	return
 }
 
+// Reduce recursively applies a function f on the data along the provided axis. A default value has to be provided.
+// The provided function must have this signature:
+// 		func(T, T) T
+// where T is the same as the Dtype of *Dense
 func (t *Dense) Reduce(f interface{}, defaultValue interface{}, axis int) (retVal *Dense, err error) {
 	if axis >= t.Dims() {
 		err = errors.Errorf(dimMismatch, axis, t.Dims())

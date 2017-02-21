@@ -136,7 +136,7 @@ func (t *Dense) reshape(dims ...int) error {
 // 	// t.data.Zero()
 // }
 
-// ScalarValue() returns the scalar value of a *Tensor,
+// ScalarValue returns the scalar value of a *Tensor,
 // IF and ONLY IF it's a Tensor representation of a scalar value.
 // This is required because operations like a (vec · vec) would return a scalar value.
 // I didn't want to return interface{} for all the API methods, so the next best solution is to
@@ -173,6 +173,23 @@ func (t *Dense) Clone() interface{} {
 	retVal.lock()
 	return retVal
 }
+
+// Uintptr returns the pointer of the first value of the slab
+func (t *Dense) Uintptr() uintptr {
+	return uintptr(t.data)
+}
+
+// MemSize returns how big the slice is in bytes
+func (t *Dense) MemSize() uintptr {
+	return uintptr(t.hdr.Len) * t.t.Size()
+}
+
+// Pointer returns the pointer of the first value of the slab, as an unsafe.Pointer
+func (t *Dense) Pointer() unsafe.Pointer {
+	return t.data
+}
+
+// Private methods
 
 func (t *Dense) cap() int { return t.hdr.Cap }
 func (t *Dense) len() int { return t.hdr.Len } // exactly the same as DataSize

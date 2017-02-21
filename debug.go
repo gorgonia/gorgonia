@@ -23,6 +23,7 @@ var (
 	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
+	cudaDev           = true
 )
 
 var READMEMSTATS = true
@@ -113,6 +114,12 @@ func stabLogf(format string, attrs ...interface{}) {
 
 func solverLogf(format string, attrs ...interface{}) {
 	if solverDev {
+		logf(format, attrs...)
+	}
+}
+
+func cudaLogf(format string, attrs ...interface{}) {
+	if cudaDev {
 		logf(format, attrs...)
 	}
 }

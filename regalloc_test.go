@@ -131,8 +131,8 @@ func TestRegAlloc(t *testing.T) {
 	df := analyze(g, sorted)
 
 	df.intervals = is
-	ra := new(regalloc)
-	ra.alloc(sorted, df)
+	ra := newRegalloc(df)
+	ra.alloc(sorted)
 
 	if is[x].result.id >= is[z].result.id {
 		t.Error("x is an input, and would have a lifetime of the entire program")
@@ -142,8 +142,14 @@ func TestRegAlloc(t *testing.T) {
 		t.Error("y is an input, and would have a lifetime of the entire program")
 	}
 
-	if is[z].result.id != is[z2].result.id {
-		t.Error("z2 should reuse the register of z")
+	if z2.op.CallsExtern() {
+		if is[z].result.id == is[z2].result.id {
+			t.Error("z2 should NOT reuse the register of z")
+		}
+	} else {
+		if is[z].result.id != is[z2].result.id {
+			t.Error("z2 should reuse the register of z")
+		}
 	}
 
 }

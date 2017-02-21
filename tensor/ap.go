@@ -119,12 +119,12 @@ func (ap *AP) Clone() (retVal *AP) {
 	return
 }
 
-// C() returns true if the access pattern is C-contiguous array
+// C returns true if the access pattern is C-contiguous array
 func (ap *AP) C() bool {
 	return ap.strides[len(ap.strides)-1] == 1
 }
 
-// F() returns true if the access pattern is Fortran contiguous array
+// F returns true if the access pattern is Fortran contiguous array
 func (ap *AP) F() bool {
 	return ap.strides[0] == 1
 }
@@ -295,7 +295,9 @@ func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) in
 	return TransposeIndex(i, oldShape, newPattern, oldStrides, newStrides)
 }
 
-// Broadcasting related stuff
+// BroadcastStrides handles broadcasting from different shapes.
+//
+// Deprecated: this function will be unexported
 func BroadcastStrides(destShape, srcShape Shape, destStrides, srcStrides []int) (retVal []int, err error) {
 	dims := len(destShape)
 	start := dims - len(srcShape)

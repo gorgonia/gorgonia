@@ -9579,6 +9579,8 @@ func (t *Dense) pow(other *Dense, it, ot *FlatIterator) (err error) {
 
 /* Trans */
 
+// Trans performs addition on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) Trans(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
@@ -9829,6 +9831,8 @@ func (t *Dense) trans(other interface{}) (err error) {
 
 /* TransInv */
 
+// TransInv performs subtraction on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) TransInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
@@ -10079,6 +10083,8 @@ func (t *Dense) transinv(other interface{}) (err error) {
 
 /* TransInvR */
 
+// TransInvR performs subtraction on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) TransInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
@@ -10329,6 +10335,8 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 
 /* Scale */
 
+// Scale performs multiplication on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) Scale(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
@@ -10579,6 +10587,8 @@ func (t *Dense) scale(other interface{}) (err error) {
 
 /* ScaleInv */
 
+// ScaleInv performs division on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) ScaleInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
@@ -10955,6 +10965,8 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 
 /* ScaleInvR */
 
+// ScaleInvR performs division on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) ScaleInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
@@ -11331,6 +11343,8 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 
 /* PowOf */
 
+// PowOf performs exponentiation on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) PowOf(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {
@@ -11581,6 +11595,8 @@ func (t *Dense) powof(other interface{}) (err error) {
 
 /* PowOfR */
 
+// PowOfR performs exponentiation on a *Dense and a scalar value. The scalar value has to be of the same
+// type as defined in the *Dense, otherwise an error will be returned.
 func (t *Dense) PowOfR(other interface{}, opts ...FuncOpt) (retVal *Dense, err error) {
 	reuse, safe, toReuse, incr, err := prepUnaryDense(t, opts...)
 	if err != nil {

@@ -510,7 +510,11 @@ func denseCmpTests(f io.Writer, generic *ManyKinds) {
 	for _, bo := range cmpBinOps {
 		fmt.Fprintf(f, "/* %s */\n\n\n", bo.OpName)
 		mk := &ManyKinds{filter(generic.Kinds, bo.is)}
-		op := BinOps{mk, bo.OpName, bo.OpSymb, false}
+		op := BinOps{
+			ManyKinds: mk,
+			OpName:    bo.OpName,
+			OpSymb:    bo.OpSymb,
+		}
 		if bo.OpName == "Ne" {
 			testDDCmpOpSymmetry.Execute(f, op)
 			fmt.Fprintln(f, "\n")

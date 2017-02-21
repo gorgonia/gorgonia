@@ -1,13 +1,15 @@
 package gorgonia
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"reflect"
 )
 
+var ()
+
 type mapFmt struct {
-	m interface{} // map
+	m reflect.Value // map
 }
 
 // FmtNodeMap is a convenience function to print map[*Node]<T>
@@ -40,36 +42,30 @@ func FmtNodeMap(m interface{}) mapFmt {
 		panic("Only expected map[*Node]<T>")
 	}
 
-	return mapFmt{m}
+	return mapFmt{
+		m: refVal,
+	}
 }
 
 func (mf mapFmt) defaultFmt(s fmt.State, c rune) {
-	str := "%"
+	var buf bytes.Buffer
+	buf.WriteRune('%')
 	for i := 0; i < 128; i++ {
 		if s.Flag(i) {
-			str += string(i)
+			buf.WriteByte(byte(i))
 		}
 	}
 	if w, ok := s.Width(); ok {
-		str += fmt.Sprintf("%d", w)
+		fmt.Fprintf(&buf, "%d", w)
 	}
 	if p, ok := s.Precision(); ok {
-		str += fmt.Sprintf(".%d", p)
+		fmt.Fprintf(&buf, ".%d", p)
 	}
-	str += string(c)
-	fmt.Fprintf(s, str, mf.m)
+	buf.WriteRune(c)
+	fmt.Fprintf(s, buf.String(), mf.m)
 }
 
-func (mf mapFmt) Format(s fmt.State, c rune) {
-	w := s.(io.Writer)
-	refVal := reflect.ValueOf(mf.m)
-	var n *Node
-	t := refVal.Type()
-	keyType := t.Key()
-	if keyType != reflect.TypeOf(n) {
-		panic("Only map[*Node]<T> is expected")
-	}
-
+func (mf mapFmt) format(s fmt.State, c rune) string {
 	var tmpl string
 	switch {
 	case c == 'v':
@@ -93,13 +89,26 @@ func (mf mapFmt) Format(s fmt.State, c rune) {
 	default:
 		tmpl = "\t%s: %s\n"
 	}
+	return tmpl
+}
+
+func (mf mapFmt) Format(s fmt.State, c rune) {
+	refVal := mf.m
+	var n *Node
+	t := refVal.Type()
+	keyType := t.Key()
+	if keyType != reflect.TypeOf(n) {
+		panic("Only map[*Node]<T> is expected")
+	}
+
+	tmpl := mf.format(s, c)
 
 	keys := refVal.MapKeys()
 	if s.Flag('-') {
 		if s.Flag('#') {
 			// then key, will try its best to be a number
 
-			fmt.Fprintf(w, "map[Node.ID]%s {\n", t.Elem())
+			fmt.Fprintf(s, "map[Node.ID]%s {\n", t.Elem())
 			for i := 0; i < refVal.Len(); i++ {
 				key := keys[i]
 				val := refVal.MapIndex(key)
@@ -113,32 +122,32 @@ func (mf mapFmt) Format(s fmt.State, c rune) {
 					case 'd':
 						valMeth := val.MethodByName("ID")
 						valID := valMeth.Call(nil)[0]
-						fmt.Fprintf(w, tmpl, id, valID)
+						fmt.Fprintf(s, tmpl, id, valID)
 					default:
 						strMeth := val.MethodByName("String")
 						str := strMeth.Call(nil)[0]
-						fmt.Fprintf(w, tmpl, id, str)
+						fmt.Fprintf(s, tmpl, id, str)
 
 					}
 				} else {
 					if _, ok := valType.MethodByName("Format"); ok {
-						fmt.Fprintf(w, "\t%x: ", id)
+						fmt.Fprintf(s, "\t%x: ", id)
 						fmtMeth := val.MethodByName("Format")
 						fmtMeth.Call([]reflect.Value{reflect.ValueOf(s), reflect.ValueOf(c)})
-						fmt.Fprintf(w, "\n")
+						fmt.Fprintf(s, "\n")
 					} else if _, ok := valType.MethodByName("String"); ok {
 						strMeth := val.MethodByName("String")
 						str := strMeth.Call(nil)[0]
-						fmt.Fprintf(w, tmpl, id, str)
+						fmt.Fprintf(s, tmpl, id, str)
 					} else {
-						fmt.Fprintf(w, tmpl, id, val)
+						fmt.Fprintf(s, tmpl, id, val)
 					}
 				}
 			}
-			w.Write([]byte("}"))
+			s.Write([]byte("}"))
 
 		} else {
-			fmt.Fprintf(w, "map[Node.Name]%s {\n", t.Elem())
+			fmt.Fprintf(s, "map[Node.Name]%s {\n", t.Elem())
 			for i := 0; i < refVal.Len(); i++ {
 				key := keys[i]
 				val := refVal.MapIndex(key)
@@ -152,29 +161,29 @@ func (mf mapFmt) Format(s fmt.State, c rune) {
 					case 'd':
 						valMeth := val.MethodByName("ID")
 						valID := valMeth.Call(nil)[0]
-						fmt.Fprintf(w, tmpl, id, valID)
+						fmt.Fprintf(s, tmpl, id, valID)
 					default:
 						strMeth := val.MethodByName("String")
 						str := strMeth.Call(nil)[0]
-						fmt.Fprintf(w, tmpl, id, str)
+						fmt.Fprintf(s, tmpl, id, str)
 
 					}
 				} else {
 					if _, ok := valType.MethodByName("Format"); ok {
-						fmt.Fprintf(w, "\t%s: ", id)
+						fmt.Fprintf(s, "\t%s: ", id)
 						fmtMeth := val.MethodByName("Format")
 						fmtMeth.Call([]reflect.Value{reflect.ValueOf(s), reflect.ValueOf(c)})
-						fmt.Fprintf(w, "\n")
+						fmt.Fprintf(s, "\n")
 					} else if _, ok := valType.MethodByName("String"); ok {
 						strMeth := val.MethodByName("String")
 						str := strMeth.Call(nil)[0]
-						fmt.Fprintf(w, tmpl, id, str)
+						fmt.Fprintf(s, tmpl, id, str)
 					} else {
-						fmt.Fprintf(w, tmpl, id, val)
+						fmt.Fprintf(s, tmpl, id, val)
 					}
 				}
 			}
-			w.Write([]byte("}"))
+			s.Write([]byte("}"))
 		}
 		return
 	}

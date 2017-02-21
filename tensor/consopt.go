@@ -5,7 +5,7 @@ import (
 	"unsafe"
 )
 
-// a ConsOpt is a tensor construction option
+// ConsOpt is a tensor construction option.
 type ConsOpt func(Tensor)
 
 // Of is a construction option for a Tensor.

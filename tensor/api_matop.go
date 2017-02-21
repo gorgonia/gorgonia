@@ -33,11 +33,11 @@ func Concat(axis int, t Tensor, others ...Tensor) (retVal Tensor, err error) {
 	case *Dense:
 		ts := make([]*Dense, len(others))
 		for i, o := range others {
-			if ot, ok := o.(*Dense); !ok {
-				return nil, errors.Errorf("Expected all Tensors to be *Dense")
-			} else {
+			if ot, ok := o.(*Dense); ok {
 				ts[i] = ot
+				continue
 			}
+			return nil, errors.Errorf("Expected all Tensors to be *Dense")
 		}
 		return T.Concat(axis, ts...)
 	}

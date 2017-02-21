@@ -38,7 +38,7 @@ func TestDVBindVar(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.Equal(t, 1.0, retVal.d.(Scalar).Any())
+	assert.Equal(t, 1.0, retVal.d.Data())
 
 	x = tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4}))
 	x = tensor.New(tensor.WithBacking([]float64{4, 3, 2, 1}))

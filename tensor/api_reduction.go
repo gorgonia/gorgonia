@@ -9,7 +9,7 @@ func Sum(t Tensor, along ...int) (retVal Tensor, err error) {
 	panic("Unreachable")
 }
 
-// Argmin finds the index of the max value along the axis provided
+// Argmax finds the index of the max value along the axis provided
 func Argmax(t Tensor, axis int) (retVal Tensor, err error) {
 	switch T := t.(type) {
 	case *Dense:

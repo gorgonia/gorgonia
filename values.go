@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"unsafe"
 
 	"github.com/chewxy/gorgonia/tensor"
 )
@@ -13,6 +14,13 @@ type Value interface {
 	Data() interface{}
 
 	fmt.Formatter
+}
+
+// Memory is a representation of memory of the value
+type Memory interface {
+	Uintptr() uintptr
+	MemSize() uintptr
+	Pointer() unsafe.Pointer
 }
 
 type Valuer interface {
