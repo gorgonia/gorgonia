@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"runtime"
 
 	. "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
@@ -26,13 +27,13 @@ func xy(dt tensor.Dtype) (x tensor.Tensor, y tensor.Tensor) {
 	return
 }
 
-func random(dt tensor.Dtype) Value {
+func random(dt tensor.Dtype) interface{} {
 	rand.Seed(13370)
 	switch dt {
 	case tensor.Float32:
-		return F32(rand.Float32())
+		return rand.Float32()
 	case tensor.Float64:
-		return F64(rand.Float64())
+		return rand.Float64()
 	default:
 		panic("Unhandled dtype")
 	}
@@ -60,9 +61,14 @@ func linearRegression(Float tensor.Dtype) {
 	model := Nodes{m, c}
 	solver := NewVanillaSolver(WithLearnRate(0.001), WithClip(5)) // good idea to clip
 
+	if CUDA {
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+	}
 	for i := 0; i < 10000; i++ {
 		if err = machine.RunAll(); err != nil {
-			log.Fatal(err)
+			fmt.Printf("Error during iteration: %v: %v\n", i, err)
+			break
 		}
 
 		if err = solver.Step(model); err != nil {

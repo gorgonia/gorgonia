@@ -114,7 +114,7 @@ func (u ʘUnaryOperatorType) String() string {
 var ʘUnaryOpStrs = [maxʘUnaryOperator]string{
 	"abs", "sign", "ceil", "floor",
 	"sin", "cos", "exp",
-	"ln", "log2", "neg", "sq", "sqrt",
+	"ln", "log2", "neg", "square", "sqrt",
 	"inv", "cube", "tanh", "sigmoid",
 
 	"log1p", "expm1", "softplus",

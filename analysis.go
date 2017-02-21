@@ -85,3 +85,15 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	*/
 	return df
 }
+
+func analyzeMem(g *ExprGraph, sorted Nodes) {
+
+	for _, node := range sorted {
+		switch {
+		case node.isArg():
+		case node.op.OverwritesInput() >= 0:
+		case node.op.ReturnsPtr():
+
+		}
+	}
+}

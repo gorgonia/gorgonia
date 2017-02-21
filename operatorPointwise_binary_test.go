@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -62,6 +63,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	}
 
 	m2 := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
+	defer runtime.GC()
 
 	Let(x, randX)
 	Let(y, randY)
@@ -167,7 +169,9 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		return err
 	}
 
+	// lg := log.New(os.Stderr, "", 0)
 	m2 := NewTapeMachine(prog, locMap, TraceExec())
+	defer runtime.GC()
 	// m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
 
 	Let(x, xV)
@@ -221,7 +225,9 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 
 func TestBinOps(t *testing.T) {
 	for op := addOpType; op < maxʘBinaryOpType; op++ {
-		err := ssBinOpTest(t, op, Float64)
+		// for op := subOpType; op < mulOpType; op++ {
+		var err error
+		err = ssBinOpTest(t, op, Float64)
 		if err != nil {
 			t.Errorf("Float64 version err: %v", err)
 		}
@@ -231,7 +237,7 @@ func TestBinOps(t *testing.T) {
 			t.Errorf("Float32 version err: %v", err)
 		}
 
-		t.Logf("Float64 T-T test")
+		t.Logf("Float64 T-T test for %v", op)
 		err = ttBinOpTest(t, op, Float64)
 		if err != nil {
 			t.Errorf("ttBinOp Float64 version err %v", err)

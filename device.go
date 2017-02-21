@@ -1,9 +1,12 @@
+// +build !cuda
+
 package gorgonia
 
-//go:generate stringer -type=Device
-type Device byte
+type Device int
 
 const (
-	CPU Device = iota
-	GPU
+	CPU Device = -1
 )
+
+func (d Device) String() string { return "CPU" }
+func (d Device) IsGPU() bool    { return false }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"runtime"
 	"strings"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -12,10 +13,14 @@ import (
 )
 
 type tapeMachine struct {
+	ExternMetadata
+
 	p       *program
 	storage []Value
 	locMap  map[*Node]register
-	b       batchedBLAS
+
+	// execution devices
+	b batchedBLAS
 
 	// state stuff, to allow continuation
 	pc int
@@ -51,6 +56,7 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 
 	m.doAlloc()
 
+	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
 }
 
@@ -138,6 +144,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 	leaveLoggingContext()
 	return
 }
+
 func (m *tapeMachine) RunAll() (err error) {
 	defer func() {
 		if err == nil {
@@ -176,20 +183,6 @@ func (m *tapeMachine) RunAll() (err error) {
 			}
 		}
 	}
-
-	// re-bind the values to the nodes
-	// machineLogf("Binding values based on final output")
-	// enterLoggingContext()
-	// for n, r := range m.locMap {
-	// 	if n.isInput() {
-	// 		continue
-	// 	}
-
-	// 	if err = n.bind(m.storage[r.id]); err != nil {
-	// 		return
-	// 	}
-	// }
-	// leaveLoggingContext()
 	return
 }
 
@@ -254,7 +247,7 @@ func (m *tapeMachine) logf(format string, attrs ...interface{}) {
 }
 
 func (m *tapeMachine) enterLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		enterLoggingContext()
 	}
 	m.tabcount++
@@ -268,7 +261,7 @@ func (m *tapeMachine) enterLoggingContext() {
 }
 
 func (m *tapeMachine) leaveLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		leaveLoggingContext()
 	}
 	m.tabcount--
@@ -475,6 +468,7 @@ type execOp struct {
 
 	preAllocated bool
 	useUnsafe    bool
+	useGPU       bool
 }
 
 func (instr execOp) ID() int           { return instr.id }
@@ -487,11 +481,14 @@ func newExecOp(n *Node) execOp {
 		inputTypes = append(inputTypes, child.t)
 	}
 
+	_, useGPU := n.op.(CUDADoer)
+
 	return execOp{
 		op:         n.op,
 		id:         n.ID(),
 		inputTypes: inputTypes,
 		outputType: n.t,
+		useGPU:     useGPU,
 	}
 }
 
@@ -514,6 +511,26 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	// Execute
 	var v Value
 	switch {
+	case instr.useGPU:
+		switch cd := instr.op.(type) {
+		case CUDADoer:
+			fromDevs := make([]Device, len(instr.readFrom))
+			for i, r := range instr.readFrom {
+				fromDevs[i] = r.device
+			}
+			toDev := instr.writeTo.device
+			p := m.storage[instr.writeTo.id]
+
+			if v, err = cd.CUDADo(m, fromDevs, toDev, p, inputs...); err != nil {
+				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
+			}
+		case CLDoer:
+		default:
+			// TODO: maybe warn?
+			if v, err = instr.op.Do(inputs...); err != nil {
+				return errors.Wrap(err, opDoFail)
+			}
+		}
 	case instr.preAllocated:
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p := m.storage[instr.writeTo.id]
