@@ -10,7 +10,7 @@ Gorgonia:
 * Can perform numerical stabilization
 * Provides a number of convenience functions to help create neural networks
 * Is fairly quick (comparable to Theano and Tensorflow's speed)
-* Will support GPU/CUDA
+* Supports CUDA/GPGPU computation (OpenCL not yet supported, send a pull request)
 * Will support distributed computing
 
 #Why Use Gorgonia?#
@@ -33,6 +33,7 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |-------|--------|--------|-----|-------|
 |[gonum/graph](http://github.com/gonum/graph)| Sorting `*ExprGraph`| Vital. Removal means Gorgonia will not work | Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[gonum/blas](http://github.com/gonum/blas)|Tensor subpackage linear algebra operations|Vital. Removal means Gorgonial will not work|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
+|[cu](https://github.com/chewxy/cu)| CUDA drivers | Needed for CUDA operations | Same maintainer as Gorgonia | MIT/BSD-like|
 |[math32](https://github.com/chewxy/math32)|`float32` operations|Can be replaced by `float32(math.XXX(float64(x)))`|Same maintainer as Gorgonia, same API as the built in `math` package|MIT/BSD-like|
 |[hm](https://github.com/chewxy/hm)|Type system for Gorgonia|Gorgonia's graphs are pretty tightly coupled with the type system | Same maintainer as Gorgonia | MIT/BSD-like|
 |[vecf64](https://github.com/chewxy/vecf64)| optimized `[]float64` operations | Can be generated in the `tensor/genlib` package. However, plenty of optimizations have been made/will be made | Same maintainer as Gorgonia | MIT/BSD-like|
@@ -285,6 +286,132 @@ A Node is rendered thusly:
 
 * If it's an input node, then the Op row will not show up.
 * If there are no Values bound to the node, it will show up as NIL. However, when there are values and gradients, it will try to as best as possible display the values bound to the node.
+
+
+##Using CUDA ##
+
+Gorgonia comes with CUDA support out of the box. However, usage is specialized. To use CUDA, you must build your application with the build tag `cuda`, like so:
+
+``` 
+go build -tags='cuda' .
+```
+
+Furthermore, there are some additional requirements:
+
+1. [CUDA toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is required. Installing this installs the `nvcc` compiler which is required to run your code with CUDA
+2. `go install github.com/chewxy/gorgonia/cmd/cudagen`. This installs the `cudagen` program. Running `cudagen` will generate the relevant CUDA related code for Gorgonia.
+3. The CUDA ops must be manually enabled in your code with the `UseCudaFor` option.
+4. `runtime.LockOSThread()` must be called in the main function where the VM is running. CUDA requires thread affinity, and therefore the OS thread must be locked.
+
+
+###Example ###
+
+So how do we use CUDA? Say we've got a file, `main.go`:
+
+```go
+import (
+	"fmt"
+	"log"
+	"runtime"
+
+	T "github.com/chewxy/gorgonia"
+	"github.com/chewxy/gorgonia/tensor"
+)
+
+func main() {
+	g := T.NewGraph()
+	x := T.NewMatrix(g, T.Float32, T.WithName("x"), T.WithShape(100, 100))
+	y := T.NewMatrix(g, T.Float32, T.WithName("y"), T.WithShape(100, 100))
+	xpy := T.Must(T.Add(x, y))
+	xpy2 := T.Must(T.Tanh(xpy))
+
+	prog, locMap, _ := T.Compile(g)
+	m := T.NewTapeMachine(prog, locMap, T.UseCudaFor("tanh"))
+
+	T.Let(x, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
+	T.Let(y, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
+
+	runtime.LockOSThread()
+	for i := 0; i < 1000; i++ {
+		if err := m.RunAll(); err != nil {
+			log.Fatalf("iteration: %d. Err: %v", i, err)
+		}
+	}
+	runtime.UnlockOSThread()
+
+	fmt.Printf("%1.1f", xpy2.Value())
+}
+
+```
+
+If this is run normally:
+
+```
+go run main.go
+```
+
+CUDA will not be used.
+
+If the program is to be run using CUDA, then this must be invoked:
+
+```
+go run -tags='cuda'
+```
+
+And even so, only the `tanh` function uses CUDA. 
+
+###Rationale ###
+
+The main reasons for having such complicated requirements for using CUDA is quite simply performance related. As Dave Cheney famously wrote, [cgo is not Go](https://dave.cheney.net/2016/01/18/cgo-is-not-go). To use CUDA, cgo is unfortunately required. And to use cgo, plenty of tradeoffs need to be made.
+
+Therefore the solution was to nestle the CUDA related code in a build tag, `cuda`. That way by default no cgo is used (well, kind-of - you could still use `cblas` or `blase`). 
+
+The reason for requiring [CUDA toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is because there are many CUDA [Compute Capabilities](http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities), and generating code for them all would yield a huge binary for no real good reason. Rather, users are encouraged to compile for their specific Compute Capabilities.
+
+Lastly, the reason for requiring an explicit specification to use CUDA for which ops is due to the cost of cgo calls. Additional work is being done currently to implement batched cgo calls,  but until that is done, the solution is keyhole "upgrade" of certain ops
+
+###`Op`s supported by CUDA###
+
+As of now, only the very basic simple ops support CUDA: 
+
+Elementwise unary operations:
+
+* abs
+* sin
+* cos
+* exp
+* ln
+* log2
+* neg
+* square
+* sqrt
+* inverse
+* cube
+* tanh
+* sigmoid
+* log1p
+* expm1
+* softplus
+
+Elementwise binary operations - only arithmetic operations support CUDA:
+
+* add
+* sub
+* mul
+* div
+* pow
+
+From a lot of profiling of this author's personal projects, the ones that really matter are `tanh`, `sigmoid`, `expm1`, `exp` and `cube` - basically the activation functions. The other operations do work fine with MKL+AVX and aren't the major cause of slowness in a neural network
+
+###CUDA improvements ###
+
+In a trivial benchmark, careful use of CUDA shows impressive improvements over non-CUDA code (bearing in mind the CUDA kernel is extremely naive and not optimized):
+
+```
+BenchmarkOneMilCUDA-8   	     300	   3348711 ns/op
+BenchmarkOneMil-8       	      50	  33169036 ns/op
+```
+
 
 
 
