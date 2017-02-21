@@ -5,9 +5,10 @@ extern "C" {
 #endif
 
 
-__global__ void sigmoid32(double* A, int size)
+__global__ void sigmoid64(double* A, int size)
 {
-	int idx = threadIdx.x;
+	int blockId = blockIdx.x + blockIdx.y * gridDim.x + gridDim.x * gridDim.y * blockIdx.z;
+	int idx = blockId * (blockDim.x * blockDim.y * blockDim.z) + (threadIdx.z * (blockDim.x * blockDim.y)) + (threadIdx.y * blockDim.x) + threadIdx.x;
 	if (idx >= size) {
 		return;
 	}

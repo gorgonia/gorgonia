@@ -3,9 +3,10 @@ extern "C" {
 #endif
 
 
-__global__ void sub32(double* A, double* B, int size)
+__global__ void sub64(double* A, double* B, int size)
 {
-	int idx = threadIdx.x;
+	int blockId = blockIdx.x + blockIdx.y * gridDim.x + gridDim.x * gridDim.y * blockIdx.z;
+	int idx = blockId * (blockDim.x * blockDim.y * blockDim.z) + (threadIdx.z * (blockDim.x * blockDim.y)) + (threadIdx.y * blockDim.x) + threadIdx.x;
 	if (idx >= size) {
 		return;
 	}
