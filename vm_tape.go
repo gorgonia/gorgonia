@@ -13,16 +13,14 @@ import (
 )
 
 type tapeMachine struct {
+	ExternMetadata
+
 	p       *program
 	storage []Value
 	locMap  map[*Node]register
 
 	// execution devices
 	b batchedBLAS
-	d []Device
-	m modules
-	c contexts
-	f functions
 
 	// state stuff, to allow continuation
 	pc int
@@ -58,7 +56,6 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 
 	m.doAlloc()
 
-	m.init()                                     // initializes CUDA stuff(if using CUDA build)
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
 }
@@ -94,18 +91,6 @@ func (m *tapeMachine) dontTrace()  { m.runFlags &= (^(byte(1) << spare2)) }
 func (m *tapeMachine) bindDV() bool { return m.runFlags>>spare3&byte(1) == 1 }
 func (m *tapeMachine) doBindDV()    { m.runFlags |= byte(1) << spare3 }
 func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
-
-// HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
-//
-// Note that BLAS names will always return false, even if using a BLAS that requires cgo calls (like Intel MKL)
-func (m *tapeMachine) HasFunc(name string) bool { return m.m.HasFunc(name) }
-
-// Function returns the function with the given name if the execution is external (cgo/cuda/openCL) and the external device contains the function with the given name.
-//
-// CUDA specific notes: this method, while named "Function", returns a cu.Module.
-//
-// Note that BLAS names will always return false, even if using a BLAS that requires cgo calls (like Intel MKL)
-func (m *tapeMachine) Function(name string) (interface{}, error) { return m.m.Function(name) }
 
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
 func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {

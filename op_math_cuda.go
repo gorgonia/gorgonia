@@ -25,6 +25,7 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 
 	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(DtypeOf(a).Size())*8)
 	if !extern.HasFunc(name) {
+		cudaLogf("extern does not have func %q", name)
 		return op.Do(inputs...)
 	}
 
@@ -42,12 +43,6 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 	}
 
 	fn := fns[name][int(dev)]
-	// TODO: optimize kernel to maximize parallelization
-	// var maxThreads int
-	// d := cu.Device(dev)
-	// if maxThreads, err = d.Attribute(cu.MaxThreadsPerBlock); err != nil {
-	// 	return op.Do(inputs...) // resort to using slow methods if there was an error
-	// }
 
 	var mem cu.DevicePtr
 	if mem, err = valToDevicePointer(retVal); err != nil {
@@ -58,17 +53,21 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 	// no leaks plz
 	defer func(mem cu.DevicePtr) {
 		if err := cu.MemFree(mem); err != nil {
-			log.Printf("memfree err %v", err)
+			cudaLogf("memfree err %v", err)
 		}
 	}(mem)
 
 	size := a.Shape().TotalSize()
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(size, int(dev))
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn.LaunchAndSync(1, 1, 1, size, 1, 1, 0, cu.Stream(0), args); err != nil {
+	cudaLogf("CUDADO %q, size %v", name, size)
+	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	if err = fn.LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args); err != nil {
+		cudaLogf("err %v", err)
 		return
 	}
 
@@ -159,13 +158,16 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	}(memA, memB)
 
 	size := a.Shape().TotalSize()
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(size, int(dev))
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&memA),
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn.LaunchAndSync(1, 1, 1, size, 1, 1, 0, cu.Stream(0), args); err != nil {
+	cudaLogf("CUDADO %q, size %v", name, size)
+	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	if err = fn.LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args); err != nil {
 		return
 	}
 

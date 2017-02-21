@@ -3,6 +3,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"runtime"
 	"testing"
 
@@ -25,7 +26,7 @@ func TestCUDACube(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := NewTapeMachine(prog, locMap)
+	m := NewTapeMachine(prog, locMap, UseCudaFor())
 	if err = m.LoadCUDAFunc("cube32", cube32PTX); err != nil {
 		t.Fatal(err)
 	}
@@ -39,18 +40,56 @@ func TestCUDACube(t *testing.T) {
 	assert.Equal(correct, x.Value().Data())
 }
 
-func TestCUDAUnary(t *testing.T) {
-	defer runtime.GC()
-	g := NewGraph(WithGraphName("CUDATEST"))
-	x := NewVector(g, tensor.Float32, WithName("x"), WithShape(5))
-	y := NewVector(g, tensor.Float32, WithName("y"), WithShape(5))
-	x2 := Must(Square(x))
-	x2py := Must(Add(x2, y))
-	negx2py := Must(Neg(x2py))
-	WithName("negx2py")(negx2py)
-	// Must(Add(x2py, negx2py))
+func TestCUDABasicArithmetic(t *testing.T) {
+	assert := assert.New(t)
+	for i, bot := range binOpTests {
+		g := NewGraph()
+		xV, _ := CloneValue(bot.a)
+		yV, _ := CloneValue(bot.b)
+		x := NodeFromAny(g, xV, WithName("x"))
+		y := NodeFromAny(g, yV, WithName("y"))
 
-	prog, _, _ := Compile(g)
-	t.Logf("%v", prog)
+		var ret *Node
+		var err error
+		if ret, err = bot.binOp(x, y); err != nil {
+			t.Errorf("Test %d: %v", i, err)
+			runtime.GC()
+			continue
+		}
 
+		cost := Must(Sum(ret))
+		var grads Nodes
+		if grads, err = Grad(cost, x, y); err != nil {
+			t.Errorf("Test %d: error while symbolic op: %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		prog, locMap, err := Compile(g)
+		// t.Log(prog)
+		// t.Log(locMap)
+		if err != nil {
+			t.Errorf("Test %d: error while compiling: %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		// logger := log.New(os.Stderr, "", 0)
+		// m1 := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist())
+		m1 := NewTapeMachine(prog, locMap, TraceExec(), UseCudaFor())
+		if err = m1.RunAll(); err != nil {
+			t.Errorf("Test %d: error while running %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		ioutil.WriteFile("add.dot", []byte(g.ToDot()), 0644)
+
+		assert.Equal(bot.correct.Data(), ret.Value().Data())
+		assert.True(bot.correctShape.Eq(ret.Shape()))
+		assert.Equal(2, len(grads))
+		assert.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v", i)
+		assert.Equal(bot.correctDerivB.Data(), grads[1].Value().Data())
+		runtime.GC()
+	}
 }
