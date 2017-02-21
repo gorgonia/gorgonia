@@ -1,4 +1,4 @@
-travis_retry sudo add-apt-repository ppa:graphics-drivers/ppa
+travis_retry sudo add-apt-repository -y ppa:graphics-drivers/ppa
 travis_retry sudo apt-get update -qq
 travis_retry sudo apt-get install -f -y nvidia-375 nvidia-375-dev libcuda1-375 nvidia-settings nvidia-opencl-icd-375
 travis_retry sudo apt-get install -f
