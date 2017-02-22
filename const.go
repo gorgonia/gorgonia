@@ -48,7 +48,7 @@ const (
 	binOpDoFail         = "Failed to carry binOp.Do()"
 	binOpNodeFail       = "Failed to carry binary operation %T"
 	applyFail           = "Failed to carry Apply()"
-	binOpFail           = "Binary operator recieved %d arguments"
+	binOpFail           = "Binary operator received %d arguments"
 	hadamardProdFail    = "Failed to carry hadamardProd()"
 	hadamardDivFail     = "Failed to carry hadamardDiv()"
 	negFail             = "Failed to carry Neg()"

@@ -45,14 +45,14 @@ type Node struct {
 	hashed        bool
 	inferredShape bool // is shape inferred?
 	unchanged     bool // has this node been modified
-	isStmt        bool // is this a statment node
+	isStmt        bool // is this a statement node
 	ofInterest    bool // is this node of particular interest? (for debugging)
 }
 
 // NodeConsOpt is a function that provides construction options for any Node.
 type NodeConsOpt func(*Node)
 
-// WithType is a node construcion option to set a node to the specified type.
+// WithType is a node construction option to set a node to the specified type.
 // Types in *Node are immutable once set. If the type has already been specified in the node,
 // a check will be made to see if the both types are the same. If it isn't, it will panic.
 func WithType(t hm.Type) NodeConsOpt {

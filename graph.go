@@ -189,7 +189,7 @@ func (g *ExprGraph) String() string {
 
 // ToDot generates the graph in graphviz format. The use of this is to generate for the entire graph
 // which may have multiple trees with different roots
-// TODO: This is getting unwieldly. Perhaps refactor out into a ToDot(...Opt)?
+// TODO: This is getting unwieldy. Perhaps refactor out into a ToDot(...Opt)?
 func (g *ExprGraph) ToDot() string {
 	gv := gographviz.NewEscape()
 	gv.SetName(fullGraphName)
