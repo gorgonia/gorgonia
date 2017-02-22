@@ -134,7 +134,7 @@ func genericCmp(f io.Writer, generic *ManyKinds) {
 					genericVecScalarCmpSame.Execute(f, op)
 				}
 			}
-			fmt.Fprintln(f, "\n")
+			fmt.Fprint(f, "\n")
 		}
 	}
 	for _, k := range filter(generic.Kinds, isOrd) {

@@ -80,7 +80,7 @@ func genericArgmethods(f io.Writer, generic *ManyKinds) {
 			fmt.Fprintf(f, "/* %s */\n\n", k)
 			argmin.Execute(f, k)
 			argmax.Execute(f, k)
-			fmt.Fprintln(f, "\n")
+			fmt.Fprint(f, "\n")
 		}
 	}
 }

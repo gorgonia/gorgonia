@@ -205,6 +205,6 @@ func init() {
 
 func generateUnaryAPIFuncs(f io.Writer, generic *ManyKinds) {
 	clamp.Execute(f, generic)
-	fmt.Fprintln(f, "\n")
+	fmt.Fprint(f, "\n")
 	sign.Execute(f, generic)
 }
