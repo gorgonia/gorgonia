@@ -516,7 +516,7 @@ func (t *Dense) transposeIndex(i int, transposePat, strides []int) int {
 	return index
 }
 
-// at returns the index at which the coordinate is refering to.
+// at returns the index at which the coordinate is referring to.
 // This function encapsulates the addressing of elements in a contiguous block.
 // For a 2D ndarray, ndarray.at(i,j) is
 //		at = ndarray.strides[0]*i + ndarray.strides[1]*j

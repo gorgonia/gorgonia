@@ -2,6 +2,7 @@
 
 package gorgonia
 
+// DEBUG indicates if this build is in debug mode. It is not.
 const DEBUG = false
 
 const (
@@ -14,10 +15,6 @@ const (
 	stabilizationDev  = false
 	cudaDev           = false
 )
-
-var READMEMSTATS = true
-
-var TABCOUNT uint32 = 0
 
 func tabcount() int { return 0 }
 
@@ -39,5 +36,3 @@ func logCompileState(name string, g *ExprGraph, df *dataflow) {}
 func incrCC() {}
 func incrEC() {}
 func incrNN() {}
-
-func GraphCollisionStats() (int, int, int) { return -1, -1, -1 }

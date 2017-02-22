@@ -7,7 +7,7 @@ func TestStupid(t *testing.T) {
 	n := newNode(WithType(Float64), In(g))
 	op := newElemUnaryOp(negOpType, n)
 
-	t.Logf("%p %d %s", op, op.unaryOpType(), op.ʘUnaryOperator)
+	t.Logf("%v %d %s", op, op.unaryOpType(), op.ʘUnaryOperator)
 
 	v := newF64(3.1415)
 	rv, err := op.Do(v)

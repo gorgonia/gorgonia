@@ -6,6 +6,17 @@ import (
 	"os"
 )
 
+// VM represents a structure that can execute a graph or program. There are two VMs (both unexported):
+//		- *tapeMachine
+//		- *lispMachine
+//
+// The *tapeMachine pre-compiles a graph into a list of instructions, then executes the instructions linearly and sequentially.
+// The main tradeoff is dynamism. Graphs cannot be dynamically created on the fly as a re-compilation process is required
+// (and compilation is relatively expensive). However, graphs executed with the *tapeMachine run much faster as plenty of optimizations
+// has been done in the code generation stage.
+//
+// The *lispMachine allows for graphs to be dynamically built and executed upon. The tradeoff is that executing a graph on *lispMachine
+// is generally slower than on *tapeMachine, given the same static "image" of a graph.
 type VM interface {
 	RunAll() error
 	Reset()
@@ -60,7 +71,7 @@ func WithValueFmt(format string) VMOpt {
 	return f
 }
 
-// WithWatchList creates a VM with a watchlist. When the execution touches the things in the watchlist, the VM's logger will the log it.
+// WithWatchlist creates a VM with a watchlist. When the execution touches the things in the watchlist, the VM's logger will the log it.
 // This allows for watching and finetuning of the algorithm. When nothing is passed in, then the VM will default to watching and logging every single
 // execution object.
 //

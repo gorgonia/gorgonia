@@ -45,6 +45,9 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |[gonum/matrix](http://github.com/gonum/matrix)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[testify/assert](https://github.com/stretchr/testify)|Testing|Can do without but will be a massive pain in the ass to test||[testify licence](https://github.com/stretchr/testify/blob/master/LICENSE) (MIT/BSD-like)|
 
+#Keeping Updated#
+
+Gorgonia's project has a [mailing list](https://groups.google.com/forum/#!forum/gorgonia), as well as a [Twitter account](https://twitter.com/gorgoniaML). Official updates and announcements will be posted to those two sites.
 
 #Usage#
 

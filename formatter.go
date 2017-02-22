@@ -6,8 +6,6 @@ import (
 	"reflect"
 )
 
-var ()
-
 type mapFmt struct {
 	m reflect.Value // map
 }

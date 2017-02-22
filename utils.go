@@ -68,11 +68,11 @@ func valuesToInts(values []Value) (retVal []int, err error) {
 func valuesToTensors(values []Value) (retVal []tensor.Tensor, err error) {
 	retVal = make([]tensor.Tensor, len(values))
 	for i, v := range values {
-		if vt, ok := v.(tensor.Tensor); !ok {
-			return nil, errors.Errorf("Expected values to all be tensor.Tensor. Got %v of %T in %dth index of the slice", v, v, i)
-		} else {
+		if vt, ok := v.(tensor.Tensor); ok {
 			retVal[i] = vt
+			continue
 		}
+		return nil, errors.Errorf("Expected values to all be tensor.Tensor. Got %v of %T in %dth index of the slice", v, v, i)
 	}
 	return
 }
@@ -179,7 +179,6 @@ func hasNaN(v Value) bool {
 		err := nyi("hasNaN", vt)
 		panic(err)
 	}
-	panic("Unreachable")
 }
 
 func setZero(val Value) (retVal Value) {
@@ -188,11 +187,10 @@ func setZero(val Value) (retVal Value) {
 		v.Zero()
 		return v
 	case Scalar:
-		return zero(DtypeOf(v))
+		return zero(v.Dtype())
 	default:
 		panic(fmt.Sprintf("setZero not implemented yet for %T", v))
 	}
-	panic("unreachable")
 }
 
 type arityer interface {

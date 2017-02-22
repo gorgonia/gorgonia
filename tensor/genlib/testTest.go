@@ -232,7 +232,6 @@ func anyToFloat64s(x interface{}) (retVal []float64) {
 	{{if isNumber . -}}
 	case []{{asType .}}:
 		{{if eq .String "float64" -}}
-			return xt
 		{{else if eq .String "float32" -}}
 			retVal = make([]float64, len(xt))
 			for i, v := range xt {
@@ -277,7 +276,7 @@ func anyToFloat64s(x interface{}) (retVal []float64) {
 				retVal[i]=  float64(v)
 			}
 		{{end -}}
-		return
+		return {{if eq .String "float64"}}xt{{end}}
 	{{end -}}
 	{{end -}}
 	}

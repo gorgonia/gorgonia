@@ -62,9 +62,8 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 	if bot == subOpType {
 		if retVal, err = Neg(x); err == nil {
 			return Log1p(retVal)
-		} else {
-			return nil, errors.Wrap(err, negFail)
 		}
+		return nil, errors.Wrap(err, negFail)
 	}
 	return Log1p(x)
 }
@@ -106,9 +105,8 @@ func oneMinusSigmoidStabilization(a, b *Node) (retVal *Node, err error) {
 	x := b.children[0]
 	if retVal, err = Neg(x); err == nil {
 		return Sigmoid(retVal)
-	} else {
-		return nil, errors.Wrap(err, negFail)
 	}
+	return nil, errors.Wrap(err, negFail)
 }
 
 // logSigmoidStabilization stabilizes log(sigmoid(x)) by replacing it with -softplus(-x)
@@ -130,15 +128,12 @@ func logSigmoidStabilization(a *Node) (retVal *Node, err error) {
 			retVal, err = Neg(retVal)
 			if err != nil {
 				return nil, errors.Wrap(err, negFail)
-			} else {
-				return retVal, nil
 			}
-		} else {
-			return nil, errors.Wrap(err, softplusFail)
+			return retVal, nil
 		}
-	} else {
-		return nil, errors.Wrap(err, negFail)
+		return nil, errors.Wrap(err, softplusFail)
 	}
+	return nil, errors.Wrap(err, negFail)
 }
 
 // log1pExpStabilization stabilizes log1p(exp(x)) by substituting it with softplus(x)
@@ -181,12 +176,10 @@ func log1pNegSigmoidStabilization(a *Node) (retVal *Node, err error) {
 		retVal, err = Neg(retVal)
 		if err != nil {
 			return nil, errors.Wrap(err, negFail)
-		} else {
-			return retVal, nil
 		}
-	} else {
-		return nil, errors.Wrap(err, softplusFail)
+		return retVal, nil
 	}
+	return nil, errors.Wrap(err, softplusFail)
 }
 
 /* Graph Optimizations */

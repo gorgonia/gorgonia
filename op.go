@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DimSizer is any type (typically a tensor.Shape) that allows querying for a dimension size given an input dimension.
 type DimSizer interface {
 	DimSize(int) (int, error)
 }
@@ -126,7 +127,7 @@ type SDOp interface {
 	SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error)
 }
 
-// a ReductionOp changes the shape of the node
+// ReductionOp changes the shape of the node
 type ReductionOp interface {
 	Op
 

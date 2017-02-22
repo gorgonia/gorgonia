@@ -510,7 +510,7 @@ func (op elemUnaryOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		}
 		retVal = t
 	case Scalar:
-		vt := DtypeOf(v)
+		vt := v.Dtype()
 		switch vt {
 		case tensor.Float32:
 			vs := v.(*F32)

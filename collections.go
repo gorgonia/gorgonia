@@ -22,6 +22,7 @@ func (ns Nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
 
 // uses xtgo/set stuff
 
+// Set returns a uniquifies slice. It mutates the slice.
 func (ns Nodes) Set() Nodes {
 	sort.Sort(ns)
 	size := set.Uniq(ns)
@@ -40,6 +41,7 @@ func (ns Nodes) Add(n *Node) Nodes {
 	return ns
 }
 
+// Contains checks if the wanted node is in the set
 func (ns Nodes) Contains(want *Node) bool {
 	for _, n := range ns {
 		if n == want {
@@ -112,6 +114,7 @@ func (ns Nodes) Difference(other Nodes) Nodes {
 	return s[:count]
 }
 
+// Intersect performs an intersection with other Nodes
 func (ns Nodes) Intersect(other Nodes) Nodes {
 	sort.Sort(ns)
 	sort.Sort(other)
@@ -120,6 +123,7 @@ func (ns Nodes) Intersect(other Nodes) Nodes {
 	return s[:count]
 }
 
+// AllSameGraph returns true if all the nodes in the slice belong to the same graph. Note that constants do not have to belong to the same graph.
 func (ns Nodes) AllSameGraph() bool {
 	if len(ns) == 0 {
 		return false
@@ -141,6 +145,7 @@ func (ns Nodes) AllSameGraph() bool {
 	return true
 }
 
+// Equals returns true if two Nodes are the same
 func (ns Nodes) Equals(other Nodes) bool {
 	if len(ns) != len(other) {
 		return false

@@ -22,7 +22,7 @@ func TestIntervalMethods(t *testing.T) {
 	iv.addRange(2, 8)
 	iv.addUsePositions(6)
 	assert.Equal([]int{6}, iv.usePositions)
-	assert.Equal([]intervalRange{intervalRange{2, 8}}, iv.ranges)
+	assert.Equal([]intervalRange{{2, 8}}, iv.ranges)
 
 	// now comes a new player... it essentially uses the same data in the same register as iv
 	// but was defined a few instructions down the road.

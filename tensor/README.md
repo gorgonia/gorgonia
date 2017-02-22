@@ -132,6 +132,7 @@ fmt.Printf("b:\n%v", b)
 There is a whole laundry list of methods and functions available at the [godoc](https://godoc.org/github.com/chewxy/gorgonia/tensor) page
 
 
+
 ## Design of `*Dense` ##
 
 The design of the `*Dense` tensor is quite simple in concept. However, let's start with something more familiar. This is a visual representation of a slice in Go (taken from rsc's excellent blog post on [Go data structures](https://research.swtch.com/godata)):

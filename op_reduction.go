@@ -39,11 +39,9 @@ func (op maxOp) Type() hm.Type {
 	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
 		// then it redueces down
-		retType = a
 		return hm.NewFnType(t, a)
-	} else {
-		retType = newTensorType(op.d-1, a)
 	}
+	retType = newTensorType(op.d-1, a)
 	return hm.NewFnType(t, retType)
 }
 
@@ -86,7 +84,7 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 		return
 	}
 
-	return nil, errors.Errorf(nyiFail, "maxOp.Do")
+	return nil, errors.Errorf(nyiFail, "maxOp.Do", "maxOp")
 }
 
 func (op maxOp) ReturnsPtr() bool     { return true }
@@ -242,7 +240,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	var T tensor.Tensor
 	switch ydvd := ydv.d.(type) {
 	case Scalar:
-		dt := DtypeOf(ydvd)
+		dt := ydvd.Dtype()
 		T = tensor.New(tensor.Of(dt), tensor.WithShape(xdv.d.Shape().Clone()...))
 		T.Memset(ydvd.Data())
 	case tensor.Tensor:
@@ -258,6 +256,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		T = ydvd
 	default:
 		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.d)
+		return
 	}
 
 	var val Value

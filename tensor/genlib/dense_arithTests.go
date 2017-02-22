@@ -308,7 +308,7 @@ const testDDBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 			return true
 		}
 		if err := quick.Check(incr{{short .}}, nil); err != nil {
-			t.Error("Incr function test for {{.}} failed %v", err)
+			t.Errorf("Incr function test for {{.}} failed %v", err)
 		}
 	{{end -}}
 }
@@ -568,7 +568,7 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 			return true
 		}
 		if err := quick.Check(incr{{short .}}, nil); err != nil {
-			t.Error("Incr function test for {{.}} failed %v", err)
+			t.Errorf("Incr function test for {{.}} failed %v", err)
 		}
 	{{end -}}
 }

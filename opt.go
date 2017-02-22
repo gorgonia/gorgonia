@@ -17,12 +17,12 @@ func UseNonStable() {
 	stabilization = false
 }
 
-// DebugDerivs turns on the derivation debug option when printing a graph
+// DebugDerives turns on the derivation debug option when printing a graph
 func DebugDerives() {
 	debugDerives = true
 }
 
-// DontDebugDerives() turns off derivation debug option when printing a graph.
+// DontDebugDerives turns off derivation debug option when printing a graph.
 // It is off by default
 func DontDebugDerives() {
 	debugDerives = false

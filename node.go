@@ -45,14 +45,14 @@ type Node struct {
 	hashed        bool
 	inferredShape bool // is shape inferred?
 	unchanged     bool // has this node been modified
-	isStmt        bool // is this a statment node
+	isStmt        bool // is this a statement node
 	ofInterest    bool // is this node of particular interest? (for debugging)
 }
 
 // NodeConsOpt is a function that provides construction options for any Node.
 type NodeConsOpt func(*Node)
 
-// WithType is a node construcion option to set a node to the specified type.
+// WithType is a node construction option to set a node to the specified type.
 // Types in *Node are immutable once set. If the type has already been specified in the node,
 // a check will be made to see if the both types are the same. If it isn't, it will panic.
 func WithType(t hm.Type) NodeConsOpt {
@@ -364,6 +364,7 @@ func (n *Node) Name() string {
 	return buf.String()
 }
 
+// WriteHash writes the hash to the provided Hash32.
 func (n *Node) WriteHash(h hash.Hash32) {
 	fmt.Fprintf(h, "%v%v", n.t, n.shape)
 
@@ -385,7 +386,7 @@ func (n *Node) WriteHash(h hash.Hash32) {
 
 }
 
-// Hashcode() provides the hash for the tree, assuming that the node is the root of the tree.
+// Hashcode provides the hash for the tree, assuming that the node is the root of the tree.
 // Original implementation was here by Vatine (who's apparently 80 years old and using SO!?!):
 //		http://stackoverflow.com/questions/1988665/hashing-a-tree-structure
 func (n *Node) Hashcode() uint32 {
@@ -545,7 +546,7 @@ func (n *Node) bindCopy(v Value) (err error) {
 	if copied, err = Copy(n.boundTo, v); err != nil {
 		return errors.Wrapf(err, "Failed to copy while binding to node")
 	}
-	n.boundTo = v // in case it's a scalar
+	n.boundTo = copied // in case it's a scalar
 	return nil
 }
 

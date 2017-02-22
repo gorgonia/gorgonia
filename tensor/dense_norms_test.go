@@ -100,7 +100,7 @@ func TestTensor_Norm(t *testing.T) {
 
 	// 3x3 mat
 	// this test is added because the 2x2 example happens to have equal nuclear norm and induced 1-norm.
-	// the 1/10 scaling factor accomodates the absolute tolerance used.
+	// the 1/10 scaling factor accommodates the absolute tolerance used.
 	backing = []float64{0.1, 0.2, 0.3, 0.6, 0, 0.5, 0.3, 0.2, 0.1}
 	corrects = map[NormOrder]float64{
 		FrobeniusNorm(): (1.0 / 10.0) * math.Pow(89, 0.5),
