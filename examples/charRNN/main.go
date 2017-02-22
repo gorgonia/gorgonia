@@ -57,10 +57,10 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	doneChan := make(chan bool, 1)
-	defer func() {
-		nn, cc, ec := T.GraphCollisionStats()
-		log.Printf("COLLISION COUNT: %d/%d. Expected : %d", cc, nn, ec)
-	}()
+	// defer func() {
+	// 	nn, cc, ec := T.GraphCollisionStats()
+	// 	log.Printf("COLLISION COUNT: %d/%d. Expected : %d", cc, nn, ec)
+	// }()
 
 	var profiling bool
 	if *cpuprofile != "" {
