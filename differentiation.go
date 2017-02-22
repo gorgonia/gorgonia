@@ -142,6 +142,16 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 	return diffSet, nil
 }
 
+// Backpropagate backpropagates errors by performing revers-emode symbolic differentiation, starting from the outputs, and working its way towads the inputs.
+//
+// This is the rough algorithm:
+//		1. Filter out nodes that are unreachable
+//		2. Forwards analysis, where a list of nodes affecting the output is added to consideration
+//		3. Backwards analysis, where a list of nodes affected by differentiating the output are added to the consideration
+//		4. If there is a difference in both sets, it will cause an error (both sets should be the same)
+//		5. Traverse the graph from output towards input. On each visit, perform the symbolic differentiation
+//
+// For most cases, Grad() should be used instead of Backpropagate(), as Grad() performs several checks which would be the general use case, before calling Backpropagate()
 func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	symdiffLogf("BACKPROP START")
 	symdiffLogf("Outputs: %d", outputs)

@@ -41,9 +41,8 @@ func (op maxOp) Type() hm.Type {
 		// then it redueces down
 		retType = a
 		return hm.NewFnType(t, a)
-	} else {
-		retType = newTensorType(op.d-1, a)
 	}
+	retType = newTensorType(op.d-1, a)
 	return hm.NewFnType(t, retType)
 }
 
@@ -242,7 +241,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	var T tensor.Tensor
 	switch ydvd := ydv.d.(type) {
 	case Scalar:
-		dt := DtypeOf(ydvd)
+		dt := ydvd.Dtype()
 		T = tensor.New(tensor.Of(dt), tensor.WithShape(xdv.d.Shape().Clone()...))
 		T.Memset(ydvd.Data())
 	case tensor.Tensor:

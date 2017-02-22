@@ -23,7 +23,7 @@ func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, p
 		return op.do(inputs)
 	}
 
-	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(DtypeOf(a).Size())*8)
+	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(a.Dtype().Size())*8)
 	if !extern.HasFunc(name) {
 		cudaLogf("extern does not have func %q", name)
 		return op.Do(inputs...)
@@ -99,7 +99,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 		return op.Do(inputs...)
 	}
 
-	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(DtypeOf(a).Size())*8)
+	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(a.Dtype().Size())*8)
 	if !extern.HasFunc(name) {
 		if prealloc != nil {
 			return op.UsePreallocDo(prealloc, inputs...)

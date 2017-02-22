@@ -101,19 +101,19 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 	return applyOp(op, a, b)
 }
 
-// Add: pointwise a + b
+// Add performs pointwise a + b
 func Add(a, b *Node) (retVal *Node, err error) {
 	op := newElemBinOp(addOpType, a, b)
 	return binOpNode(op, a, b)
 }
 
-// Sub: pointwise a - b
+// Sub performs pointwise a - b
 func Sub(a, b *Node) (retVal *Node, err error) {
 	op := newElemBinOp(subOpType, a, b)
 	return binOpNode(op, a, b)
 }
 
-// HadamardProd: pointwise a * b
+// HadamardProd performs pointwise a * b
 func HadamardProd(a, b *Node) (retVal *Node, err error) {
 	op := newElemBinOp(mulOpType, a, b)
 	return binOpNode(op, a, b)
@@ -152,6 +152,7 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 
 }
 
+// OuterProd returns a Node representing the outer product of two vectors. This function will return an error if both input nodes are not vectors
 func OuterProd(a, b *Node) (retVal *Node, err error) {
 	if !a.IsVector() || !b.IsVector() {
 		return nil, errors.New("Expected only vectors to be able to do OuterProd") //for now
@@ -162,12 +163,13 @@ func OuterProd(a, b *Node) (retVal *Node, err error) {
 	return binOpNode(op, a, b)
 }
 
-// HadamardDiv: pointwise a / b
+// HadamardDiv performs pointwise a / b
 func HadamardDiv(a, b *Node) (retVal *Node, err error) {
 	op := newElemBinOp(divOpType, a, b)
 	return binOpNode(op, a, b)
 }
 
+// Div is a shortcut function for HadamardDiv for scalar values. For matrix/tensor values, the matrix division operation is not yet handled, and will panic.
 func Div(a, b *Node) (retVal *Node, err error) {
 	if a.IsScalar() || b.IsScalar() {
 		return HadamardDiv(a, b)
@@ -177,19 +179,20 @@ func Div(a, b *Node) (retVal *Node, err error) {
 	panic("Unhandled")
 }
 
+// Pow performs pointwise exponentiation
 func Pow(a, b *Node) (retVal *Node, err error) {
 	op := newElemBinOp(powOpType, a, b)
 	return binOpNode(op, a, b)
 }
 
-// Gt: pointwise a > b. retSame indicates if the return value should be the same type as the input values
+// Gt performs a pointwise comparison a > b. retSame indicates if the return value should be the same type as the input values
 func Gt(a, b *Node, retSame bool) (retVal *Node, err error) {
 	op := newElemBinOp(gtOpType, a, b)
 	op.retSame = retSame
 	return binOpNode(op, a, b)
 }
 
-// Gte: pointwise a >= b. retSame indicates if the return value should be the same type as the input values
+// Gte performs pointwise comparison a >= b. retSame indicates if the return value should be the same type as the input values
 func Gte(a, b *Node, retSame bool) (retVal *Node, err error) {
 	op := newElemBinOp(gteOpType, a, b)
 	op.retSame = retSame
@@ -219,10 +222,9 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 				stabLogf("Actual error")
 				leaveLoggingContext()
 				return
-			} else {
-				stabLogf("No stabilization found")
-				err = nil // reset err
 			}
+			stabLogf("No stabilization found")
+			err = nil // reset err
 		}
 		leaveLoggingContext()
 		stabLogf("No stabilizations - retVal: %v", retVal)
@@ -231,88 +233,103 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 	return applyOp(op, a)
 }
 
-// Abs: |a|
+// Abs performs pointwise |a|
 func Abs(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(absOpType, a)
 	return unaryOpNode(op, a)
 }
 
-// Sign: pointwise sign function. -1 for a negative, +1 for positive
+// Sign performs pointwise sign() on the input. Returns -1 for a negative, +1 for positive
 func Sign(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(signOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Ceil performs pointwise ceil() on the input.
 func Ceil(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(ceilOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Floor performs pointwise floor() on the input.
 func Floor(a *Node) (retval *Node, err error) {
 	op := newElemUnaryOp(floorOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Sin performs pointwise sin() on the input.
 func Sin(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(sinOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Cos performs pointwise cos() on the input.
 func Cos(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(cosOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Exp performs pointwise exp() on the input.
 func Exp(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(expOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Log performs pointwise log() on the input. Note that this is the natural logarithm.
 func Log(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(lnOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Log2 performs pointwise log2() on the input.
 func Log2(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(log2OpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Neg performs pointwise neg() on the input.
 func Neg(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(negOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Square performs pointwise ^2 on the input.
 func Square(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(squareOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Sqrt performs pointwise sqrt on the input.
 func Sqrt(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(sqrtOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Inverse performs pointwise inverse() on the input. Note this means the reciprocal.
 func Inverse(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(inverseOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Cube performs pointwise ^3 on the input.
 func Cube(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(cubeOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Sigmoid performs pointwise sigmoid() on the input.
 func Sigmoid(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(sigmoidOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Tanh performs pointwise tanh() on the input.
 func Tanh(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(tanhOpType, a)
 	return unaryOpNode(op, a)
 }
 
+// Log1p performs pointwise log1p() on the input.
 func Log1p(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(log1pOpType, a)
 	return unaryOpNode(op, a)
@@ -320,6 +337,9 @@ func Log1p(a *Node) (retVal *Node, err error) {
 
 // more complex unaries
 
+// SoftMax performs softmax on the input. Specifically this is used:
+//		e^(a[i]) / sum((e^(a[i])))
+// For a more numerically stable SoftMax, use StableSoftMax.
 func SoftMax(a *Node) (retVal *Node, err error) {
 	var exp, sum *Node
 	if exp, err = Exp(a); err == nil {
@@ -333,15 +353,14 @@ func SoftMax(a *Node) (retVal *Node, err error) {
 				return HadamardDiv(exp, sum)
 			}
 			return Broadcast(divOpType, exp, sum, NewBroadcastPattern(nil, []byte{1}))
-		} else {
-			return nil, errors.Wrap(err, operationError)
 		}
-	} else {
 		return nil, errors.Wrap(err, operationError)
 	}
-	return
+	return nil, errors.Wrap(err, operationError)
 }
 
+// StableSoftMax performs a numerically stable softmax on the input. Specifically this is the formula used:
+//		e^(a - max(a)) / sum(e^(a - max(a)))
 func StableSoftMax(a *Node) (retVal *Node, err error) {
 	var max, exp, sum *Node
 	if max, err = Max(a); err != nil {
@@ -351,18 +370,15 @@ func StableSoftMax(a *Node) (retVal *Node, err error) {
 		if exp, err = Exp(retVal); err == nil {
 			if sum, err = Sum(exp, 1); err == nil {
 				return HadamardDiv(exp, sum)
-			} else {
-				return nil, errors.Wrap(err, operationError)
 			}
-		} else {
 			return nil, errors.Wrap(err, operationError)
 		}
-	} else {
 		return nil, errors.Wrap(err, operationError)
 	}
-	return
+	return nil, errors.Wrap(err, operationError)
 }
 
+// Softplus performs a softplus on the input.
 func Softplus(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(softplusOpType, a)
 	return unaryOpNode(op, a)
@@ -370,6 +386,8 @@ func Softplus(a *Node) (retVal *Node, err error) {
 
 /* Aggregate Functions */
 
+// At is a symbolic operation for getting a value at the provided coordinates.
+// If the input is a scalar, all the coordinates MUST be 0, or else an error will be returned.
 func At(a *Node, coords ...int) (retVal *Node, err error) {
 	if a.IsScalar() {
 		for _, c := range coords {
@@ -389,6 +407,7 @@ func At(a *Node, coords ...int) (retVal *Node, err error) {
 	return applyOp(op, a)
 }
 
+// Max performs a max() on the input and the provided axes.
 func Max(a *Node, along ...int) (retVal *Node, err error) {
 	if a.IsScalar() {
 		// can't max a scalar. Should return error
@@ -405,6 +424,7 @@ func Max(a *Node, along ...int) (retVal *Node, err error) {
 	return applyOp(op, a)
 }
 
+// Mean performs a mean() on the input and the provided axes.
 func Mean(a *Node, along ...int) (retVal *Node, err error) {
 	if a.IsScalar() {
 		// can't mean a scalar... return error
@@ -431,13 +451,12 @@ func Mean(a *Node, along ...int) (retVal *Node, err error) {
 
 	var counts *Node
 	if counts, err = ReduceMul(sizes); err == nil {
-		retVal, err = HadamardDiv(s, counts)
-	} else {
-		return nil, errors.Wrap(err, operationError)
+		return HadamardDiv(s, counts)
 	}
-	return
+	return nil, errors.Wrap(err, operationError)
 }
 
+// Sum performs a sum() on the input and the provided axes.
 func Sum(a *Node, along ...int) (retVal *Node, err error) {
 	if a.IsScalar() {
 		retVal = a // or error?
@@ -633,6 +652,7 @@ func Slice(n *Node, slices ...tensor.Slice) (retVal *Node, err error) {
 	return
 }
 
+// Transpose performs a transpose on the input and provided permutation axes.
 func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 	// prep axes
 	if len(axes) > 0 && len(axes) != n.Dims() {
@@ -659,6 +679,7 @@ func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 	return applyOp(op, n)
 }
 
+// Concat performs a concatenate on the provided axis and inputs.
 func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 	// check that all the nodes have the same number of dimensions
 	var d int

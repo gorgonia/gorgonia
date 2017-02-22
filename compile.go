@@ -11,7 +11,7 @@ import (
 // This file deals with the compilation from a expression graph into a program
 // that is executed by an interpreter
 
-// Compile takes a graph and outputs a program suitable for *TapeMachine to run
+// Compile takes a graph and outputs a program suitable for *tapeMachine to run
 func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("Compiling")
 	enterLoggingContext()
@@ -23,21 +23,11 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 		return nil, nil, errors.Wrap(err, sortFail)
 	}
 
-	var inputs Nodes
-	for _, n := range g.leaves {
-		if n.isInput() {
-			inputs = append(inputs, n)
-		}
-	}
-
-	var outputs Nodes
-	for _, root := range g.Roots() {
-		outputs = append(outputs, root)
-	}
+	inputs := g.Inputs()
 
 	df := analyze(g, sortedNodes)
-
 	df.intervals = buildIntervals(sortedNodes)
+
 	ra := newRegalloc(df)
 	ra.alloc(sortedNodes)
 
@@ -55,6 +45,8 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	return
 }
 
+// CompileFunction takes a graph, subsets it based on the input and output nodes provided and outputs a program suitable for *tapeMachine to run.
+// It is analogous to theano.Function().
 func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("CompileFunctionNEW. Inputs: %d; outputs: %d", inputs, outputs)
 	enterLoggingContext()

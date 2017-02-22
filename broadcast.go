@@ -21,7 +21,7 @@ const (
 // Do note that the current limitation of the BroadcastPattern allows only up to 4 dimensions per operand.
 type BroadcastPattern byte
 
-// helper function to create broadcast patterns
+// NewBroadcastPattern is a helper function to create broadcast patterns
 func NewBroadcastPattern(leftAxes, rightAxes []byte) BroadcastPattern {
 	var start byte
 	for _, a := range leftAxes {

@@ -118,7 +118,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	switch t := inputs[0].(type) {
 	case Scalar:
-		retVal = one(DtypeOf(t))
+		retVal = one(t.Dtype())
 
 		// bools are special
 		if _, ok := t.(*B); ok {
@@ -132,7 +132,7 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		size := sh[op.axis]
 
 		// cast as ... types
-		switch DtypeOf(t) {
+		switch t.Dtype() {
 		case tensor.Float64:
 			retVal = newF64(float64(size))
 		case tensor.Float32:
@@ -398,7 +398,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	var t tensor.Tensor
 	switch iv := inputs[0].(type) {
 	case *F64:
-		s := iv.Any()
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -407,7 +407,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		}
 		t = tensor.New(tensor.FromScalar(s))
 	case *F32:
-		s := iv.Any()
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -416,7 +416,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		}
 		t = tensor.New(tensor.FromScalar(s))
 	case *I:
-		s := iv.Any()
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Int), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -425,7 +425,7 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 		}
 		t = tensor.New(tensor.FromScalar(s))
 	case *B:
-		s := iv.Any()
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Bool), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -770,9 +770,9 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 		}
 		switch i := incr.(type) {
 		case *F64:
-			tensor.Add(v, i.Any(), tensor.UseUnsafe())
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
 		case *F32:
-			tensor.Add(v, i.Any(), tensor.UseUnsafe())
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
 		case *tensor.Dense:
 			tensor.Add(v, i, tensor.UseUnsafe())
 		}

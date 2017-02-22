@@ -18,6 +18,7 @@ import (
 // It's typically used in closures
 type InitWFn func(dt tensor.Dtype, s ...int) interface{}
 
+// Zeroes creates an InitWfn that populates a Value with... zeroes. I don't know what you expected.
 func Zeroes() InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
@@ -37,6 +38,7 @@ func Zeroes() InitWFn {
 	return f
 }
 
+// RangedFrom creates an InitWFn that populates a Value starting with the provided start, increamenting the number for each element in the value by 1
 func RangedFrom(start int) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		size := tensor.Shape(s).TotalSize()
@@ -85,6 +87,7 @@ func Uniform(low, high float64) InitWFn {
 	return f
 }
 
+// GlorotN creates a InitWFn that populates a Value with weights normally sampled using Glorot et al.'s algorithm
 func GlorotN(gain float64) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
@@ -101,6 +104,7 @@ func GlorotN(gain float64) InitWFn {
 	return f
 }
 
+// GlorotU creates a InitWFn that populates a Value with weights uniformly sampled using Glorot et al.'s algorithm
 func GlorotU(gain float64) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {
 		switch dt {
@@ -117,7 +121,7 @@ func GlorotU(gain float64) InitWFn {
 	return f
 }
 
-// Gausian64 returns a []float64 drawn from a gaussian distribution as defined by the mean and stdev
+// Gaussian64 returns a []float64 drawn from a gaussian distribution as defined by the mean and stdev
 func Gaussian64(mean, stdev float64, s ...int) []float64 {
 	size := tensor.Shape(s).TotalSize()
 
@@ -129,7 +133,7 @@ func Gaussian64(mean, stdev float64, s ...int) []float64 {
 	return retVal
 }
 
-// Gausian32 returns a []float32 drawn from a gaussian distribution as defined by the mean and stdev
+// Gaussian32 returns a []float32 drawn from a gaussian distribution as defined by the mean and stdev
 func Gaussian32(mean, stdev float64, s ...int) []float32 {
 	size := tensor.Shape(s).TotalSize()
 
@@ -167,6 +171,7 @@ func Uniform32(low, high float64, s ...int) []float32 {
 	return retVal
 }
 
+// Binomial64 returns a []float64 drawn from a binomial distribution given the trial and probability parameters.
 func Binomial64(trials, prob float64, s ...int) []float64 {
 	size := tensor.Shape(s).TotalSize()
 	t := int64(trials)
@@ -179,6 +184,7 @@ func Binomial64(trials, prob float64, s ...int) []float64 {
 	return retVal
 }
 
+// Binomial32 returns a []float32 drawn from a binomial distribution given the trial and probability parameters.
 func Binomial32(trials, prob float64, s ...int) []float32 {
 	size := tensor.Shape(s).TotalSize()
 	t := int64(trials)
@@ -193,7 +199,8 @@ func Binomial32(trials, prob float64, s ...int) []float32 {
 
 /* SOPHISTICATED INITIALIZATION STRATEGIES */
 
-// Glorot et. al weight sampled from the normal distro.
+// GlorotEtAlN64 returns float64 weights sampled from a normal distribution
+// using the methods specified in Glorot et. al (2010).
 // See also: http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
 func GlorotEtAlN64(gain float64, s ...int) []float64 {
 	if len(s) < 2 {
@@ -219,6 +226,9 @@ func GlorotEtAlN64(gain float64, s ...int) []float64 {
 	return retVal
 }
 
+// GlorotEtAlN32 returns float32 weights sampled from a normal distribution
+// using the methods specified in Glorot et. al (2010).
+// See also: http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
 func GlorotEtAlN32(gain float64, s ...int) []float32 {
 	f64 := GlorotEtAlN64(gain, s...)
 	retVal := make([]float32, len(f64))
@@ -228,7 +238,8 @@ func GlorotEtAlN32(gain float64, s ...int) []float32 {
 	return retVal
 }
 
-// Glorot et. al weight sampled from a uniform distro.
+// GlorotEtAlU64 returns float64 weights sampled from a uniform distribution
+// using the methods specified in Glorot et. al (2010).
 // See also: http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
 //
 // For best results, use:
@@ -261,6 +272,14 @@ func GlorotEtAlU64(gain float64, s ...int) []float64 {
 	return retVal
 }
 
+// GlorotEtAlU32 returns float32 weights sampled from a uniform distribution
+// using the methods specified in Glorot et. al (2010).
+// See also: http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
+//
+// For best results, use:
+// 		1.0 for gain for weights that will be used in linear and/or sigmoid units
+//		math.Sqrt(2.0) for gain for weights that will be used in ReLU units
+//		math.Sqrt(2.0 / (1+alpha*alpha)) for ReLU that are leaky with alpha
 func GlorotEtAlU32(gain float64, s ...int) []float32 {
 	f64 := GlorotEtAlN64(gain, s...)
 	retVal := make([]float32, len(f64))
@@ -270,7 +289,9 @@ func GlorotEtAlU32(gain float64, s ...int) []float32 {
 	return retVal
 }
 
-// He. et al weights sampled from a normal distro. The formula is: randn(n) * sqrt(2/n)
+// HeEtAlN64 returns float64 weights sampled from a normal distro, using the methods
+// described in He et al (2015). The formula is:
+//		randn(n) * sqrt(2/n)
 // See also https://arxiv.org/abs/1502.01852
 //
 // For best results, use:
@@ -303,7 +324,9 @@ func HeEtAlN64(gain float64, s ...int) []float64 {
 	return retVal
 }
 
-// He. et al weights sampled from a uniform distro. The formula is: randn(n) * sqrt(2/n)
+// HeEtAlU64 returns float64 weights sampled from a uniform distro, using the methods
+// described in He et al (2015). The formula is:
+//		randn(n) * sqrt(2/n)
 // See also https://arxiv.org/abs/1502.01852
 //
 // For best results, use:

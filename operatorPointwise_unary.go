@@ -865,9 +865,8 @@ func expm1DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	if retVal, err = Exp(x); err == nil {
 		WithGroupName(gradClust)(retVal)
 		return HadamardProd(gradY, retVal)
-	} else {
-		return nil, errors.Wrap(err, "Failled to carry Exp()")
 	}
+	return nil, errors.Wrap(err, "Failled to carry Exp()")
 }
 
 func expm1Diff(x, y *Node) (err error) {
@@ -898,9 +897,8 @@ func softplusDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	if retVal, err = Sigmoid(x); err == nil {
 		WithGroupName(gradClust)(retVal)
 		return HadamardProd(retVal, gradY)
-	} else {
-		return nil, errors.Wrap(err, "Failed to carry Sigmoid()")
 	}
+	return nil, errors.Wrap(err, "Failed to carry Sigmoid()")
 }
 
 func softplusDiff(x, y *Node) (err error) {
