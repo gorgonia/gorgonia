@@ -33,7 +33,6 @@ func Zeroes() InitWFn {
 			err := errors.Errorf(nyiTypeFail, "Zeroes", dt)
 			panic(err)
 		}
-		panic("unreachable")
 	}
 	return f
 }
@@ -62,7 +61,6 @@ func Gaussian(mean, stdev float64) InitWFn {
 			err := errors.Errorf(nyiTypeFail, "Gaussian init", dt)
 			panic(err)
 		}
-		panic("unreachable")
 	}
 	return f
 }
@@ -82,7 +80,6 @@ func Uniform(low, high float64) InitWFn {
 			err := errors.Errorf(nyiTypeFail, "Uniform init", dt)
 			panic(err)
 		}
-		panic("unreachable")
 	}
 	return f
 }
@@ -99,7 +96,6 @@ func GlorotN(gain float64) InitWFn {
 			err := errors.Errorf(nyiTypeFail, "GlorotN", dt)
 			panic(err)
 		}
-		panic("unreachable")
 	}
 	return f
 }
@@ -116,7 +112,6 @@ func GlorotU(gain float64) InitWFn {
 			err := errors.Errorf(nyiTypeFail, "GlorotU", dt)
 			panic(err)
 		}
-		panic("unreachable")
 	}
 	return f
 }

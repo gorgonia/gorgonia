@@ -137,7 +137,6 @@ func (op ʘBinaryOperatorType) isArith() bool {
 	default:
 		return false
 	}
-	return false
 }
 
 var binOps = [maxʘBinaryOpType]*denseBinOp{

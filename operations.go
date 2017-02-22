@@ -147,7 +147,6 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 	default:
 		return nil, errors.Errorf(nyiFail, "Mul", fmt.Sprintf("a %v b %v", a.shape, b.shape))
 	}
-	panic("unreachable")
 
 }
 
@@ -572,7 +571,6 @@ func ReduceMul(nodes Nodes, opts ...NodeConsOpt) (retVal *Node, err error) {
 	switch len(nodes) {
 	case 0:
 		return nil, nil // or error?
-		return
 	case 1:
 		return nodes[0], nil
 	case 2:

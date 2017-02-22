@@ -179,7 +179,6 @@ func hasNaN(v Value) bool {
 		err := nyi("hasNaN", vt)
 		panic(err)
 	}
-	panic("Unreachable")
 }
 
 func setZero(val Value) (retVal Value) {
@@ -192,7 +191,6 @@ func setZero(val Value) (retVal Value) {
 	default:
 		panic(fmt.Sprintf("setZero not implemented yet for %T", v))
 	}
-	panic("unreachable")
 }
 
 type arityer interface {

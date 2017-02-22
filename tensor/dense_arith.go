@@ -7223,7 +7223,7 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			}
 		}
 		if errs != nil {
-			err = err
+			err = errs
 		}
 	case toReuse:
 		if t.IsMaterializable() {
@@ -7812,7 +7812,7 @@ func (t *Dense) div(other *Dense, it, ot *FlatIterator) (err error) {
 	}
 
 	if errs != nil {
-		err = err
+		err = errs
 	}
 	return
 }

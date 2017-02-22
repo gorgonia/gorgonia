@@ -84,7 +84,7 @@ func (op maxOp) Do(inputs ...Value) (retVal Value, err error) {
 		return
 	}
 
-	return nil, errors.Errorf(nyiFail, "maxOp.Do")
+	return nil, errors.Errorf(nyiFail, "maxOp.Do", "maxOp")
 }
 
 func (op maxOp) ReturnsPtr() bool     { return true }

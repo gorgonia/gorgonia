@@ -127,7 +127,6 @@ func (op randomOp) Do(...Value) (retVal Value, err error) {
 	default:
 		return nil, errors.Errorf(nyiFail, "randomOp.do() for non-scalar", op.dt)
 	}
-	panic("Unreachable")
 }
 
 func (op randomOp) ReturnsPtr() bool     { return false }

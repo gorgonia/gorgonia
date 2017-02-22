@@ -453,7 +453,7 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 		}
 		{{if or $scaleInv $div -}}
 		if errs != nil {
-			err = err
+			err = errs
 		}
 		{{end -}}
 		
@@ -594,7 +594,7 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 		}
 
 		if errs != nil {
-			err = err
+			err = errs
 		}
 	{{end -}}
 	return
