@@ -724,7 +724,7 @@ func arith(f io.Writer, generic *ManyKinds) {
 		}
 		ddArith.Execute(f, op)
 		ddArithTable.Execute(f, op)
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 	for _, bo := range vecscalarOps {
 		fmt.Fprintf(f, "/* %s */\n\n", bo.OpName)
@@ -737,6 +737,6 @@ func arith(f io.Writer, generic *ManyKinds) {
 		}
 		dsArith.Execute(f, op)
 		dsArithTable.Execute(f, op)
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 }
