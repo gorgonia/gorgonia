@@ -39,7 +39,6 @@ func (op maxOp) Type() hm.Type {
 	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
 		// then it redueces down
-		retType = a
 		return hm.NewFnType(t, a)
 	}
 	retType = newTensorType(op.d-1, a)
@@ -257,6 +256,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		T = ydvd
 	default:
 		err = errors.Errorf(nyiTypeFail, "sumOp.DoDiff()", ydv.d)
+		return
 	}
 
 	var val Value

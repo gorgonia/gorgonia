@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/chewxy/math32"
+	"github.com/stretchr/testify/assert"
 )
 
 /*

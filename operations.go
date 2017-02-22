@@ -90,7 +90,6 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 					leaveLoggingContext()
 					return
 				}
-				err = nil // reset err
 			}
 			leaveLoggingContext()
 		}
@@ -224,7 +223,6 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 				return
 			}
 			stabLogf("No stabilization found")
-			err = nil // reset err
 		}
 		leaveLoggingContext()
 		stabLogf("No stabilizations - retVal: %v", retVal)

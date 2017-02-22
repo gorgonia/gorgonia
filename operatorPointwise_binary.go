@@ -515,7 +515,6 @@ func subDiff(x, y, z *Node) (err error) {
 
 func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
-	dzdx, err = HadamardProd(y, gradZ)
 	if dzdx, err = HadamardProd(y, gradZ); err == nil {
 		dzdy, err = HadamardProd(x, gradZ)
 		if err != nil {
@@ -662,6 +661,7 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 		one = onef64
 	default:
 		err = errors.Errorf(nyiTypeFail, "Hadamard Power Diff", y.t)
+		return
 	}
 
 	var ym1, pow *Node

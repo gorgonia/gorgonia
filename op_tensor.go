@@ -49,6 +49,7 @@ func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
 		var r interface{}
 		if r, err = tt.At(op.coordinates...); err != nil {
 			err = errors.Wrapf(err, opDoFail, "atOp.Do()")
+			return
 		}
 
 		retVal, _, _, err = anyToValue(r)
