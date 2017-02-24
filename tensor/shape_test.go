@@ -201,7 +201,7 @@ func TestShape_Slice(t *testing.T) {
 		}
 
 		if !ssts.expected.Eq(newShape) {
-			t.Errorf("Test %q: Expeced shape %v. Got %v instead", ssts.name, ssts.expected, newShape)
+			t.Errorf("Test %q: Expected shape %v. Got %v instead", ssts.name, ssts.expected, newShape)
 		}
 	}
 }

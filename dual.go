@@ -45,7 +45,7 @@ func (dv *dualValue) Clone() (retVal Value, err error) {
 }
 
 func (dv *dualValue) Type() hm.Type       { return TypeOf(dv.Value) }
-func (dv *dualValue) Dtype() tensor.Dtype { return DtypeOf(dv.Value) }
+func (dv *dualValue) Dtype() tensor.Dtype { return dv.Value.Dtype() }
 
 func (dv *dualValue) String() string {
 	return fmt.Sprintf("%#+v", dv.Value)
@@ -116,10 +116,10 @@ func variableDV(val Value) *dualValue {
 
 	switch v := val.(type) {
 	case Scalar:
-		retVal.d = one(DtypeOf(v))
+		retVal.d = one(v.Dtype())
 	case tensor.Tensor:
 		shp := v.Shape()
-		dt := DtypeOf(v)
+		dt := v.Dtype()
 		retVal.d = tensor.Ones(dt, shp...)
 	default:
 		panic(fmt.Sprintf("%v(%T) not handled yet", v, v))
@@ -177,9 +177,8 @@ func dvBind(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	var ret Value
 	if ret, err = op.Do(vals...); err == nil {
 		return dvUnit(ret), nil
-	} else {
-		return nil, errors.Wrap(err, opDoFail)
 	}
+	return nil, errors.Wrap(err, opDoFail)
 }
 
 // dvBindVar returns a dvUnitVar instead of dvUnit (which zeroes the derivative).
@@ -190,9 +189,8 @@ func dvBindVar(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	var ret Value
 	if ret, err = op.Do(vals...); err == nil {
 		return dvUnitVar(ret), nil
-	} else {
-		return nil, errors.Wrap(err, opDoFail)
 	}
+	return nil, errors.Wrap(err, opDoFail)
 }
 
 //TODO test vecvecdot divBind0
@@ -250,7 +248,7 @@ func dvBindVar0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 
 	switch v := retVal.d.(type) {
 	case Scalar:
-		retVal.d = one(DtypeOf(v))
+		retVal.d = one(v.Dtype())
 	case tensor.Tensor:
 		switch v.Dtype() {
 		case tensor.Float64:

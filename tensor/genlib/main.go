@@ -108,4 +108,9 @@ func pipeline(filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds
 	if err = cmd.Run(); err != nil {
 		log.Fatalf("sed failed with %v for %q", err, filename)
 	}
+
+	cmd = exec.Command("gofmt", "-s", "-w", filename)
+	if err = cmd.Run(); err != nil {
+		log.Fatalf("Gofmt failed for %q", filename)
+	}
 }

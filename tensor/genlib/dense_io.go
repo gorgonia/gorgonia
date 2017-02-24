@@ -441,9 +441,9 @@ func generateDenseIO(f io.Writer, generic *ManyKinds) {
 
 	// writes
 	fmt.Fprintln(f, writeNpyRaw)
-	fmt.Fprintln(f, "\n")
+	fmt.Fprint(f, "\n")
 	fmt.Fprintln(f, writeCSVRaw)
-	fmt.Fprintln(f, "\n")
+	fmt.Fprint(f, "\n")
 	gobEncode.Execute(f, mk)
 
 	// reads

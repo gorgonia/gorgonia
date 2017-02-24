@@ -166,10 +166,10 @@ func genericArith(f io.Writer, generic *ManyKinds) {
 				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
 				incrOp := IncrOp{op, false}
 				genericVecVecArith.Execute(f, incrOp)
-				fmt.Fprintln(f, "\n")
+				fmt.Fprint(f, "\n")
 			}
 		}
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 
 	for _, bo := range binOps {
@@ -179,10 +179,10 @@ func genericArith(f io.Writer, generic *ManyKinds) {
 				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
 				incrOp := IncrOp{op, true}
 				genericVecVecArith.Execute(f, incrOp)
-				fmt.Fprintln(f, "\n")
+				fmt.Fprint(f, "\n")
 			}
 		}
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 
 	for _, bo := range vecscalarOps {
@@ -192,10 +192,10 @@ func genericArith(f io.Writer, generic *ManyKinds) {
 				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
 				incrOp := IncrOp{op, false}
 				genericVecScalarArith.Execute(f, incrOp)
-				fmt.Fprintln(f, "\n")
+				fmt.Fprint(f, "\n")
 			}
 		}
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 
 	for _, bo := range vecscalarOps {
@@ -205,10 +205,10 @@ func genericArith(f io.Writer, generic *ManyKinds) {
 				op := ArithBinOp{k, bo.OpName, bo.OpSymb, bo.IsFunc}
 				incrOp := IncrOp{op, true}
 				genericVecScalarArith.Execute(f, incrOp)
-				fmt.Fprintln(f, "\n")
+				fmt.Fprint(f, "\n")
 			}
 		}
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 
 	// generic scalar-scalar

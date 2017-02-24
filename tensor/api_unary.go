@@ -53,7 +53,6 @@ func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	default:
 		panic("NYI - not yet implemented")
 	}
-	return
 }
 
 // Sqrt calculates the square root of each elements of the Tensor.

@@ -35,7 +35,7 @@ func WithL2Reg(l2reg float64) SolverOpt {
 	return f
 }
 
-// WithL2Reg adds a L1 regularization parameter to the solver. By default, the solvers do not use any regularization param
+// WithL1Reg adds a L1 regularization parameter to the solver. By default, the solvers do not use any regularization param
 func WithL1Reg(l1reg float64) SolverOpt {
 	f := func(s Solver) {
 		switch st := s.(type) {
@@ -120,7 +120,7 @@ func WithBeta1(beta1 float64) SolverOpt {
 	return f
 }
 
-// WithBeta1 sets the beta1 param of the solver. Only works with Adam
+// WithBeta2 sets the beta1 param of the solver. Only works with Adam
 func WithBeta2(beta2 float64) SolverOpt {
 	f := func(s Solver) {
 		switch st := s.(type) {
@@ -142,6 +142,7 @@ func WithRho(rho float64) SolverOpt {
 	return f
 }
 
+// RMSPropSolver is a solver that implements Geoffrey Hinton's RMSProp gradient descent optimization algorithm.
 // http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
 type RMSPropSolver struct {
 	decay float64 // decay rate/rho
@@ -173,6 +174,9 @@ func NewRMSPropSolver(opts ...SolverOpt) *RMSPropSolver {
 	return s
 }
 
+// Step steps through each node in the model and applies the RMSProp gradient descent algorithm on the value.
+//
+// This function will error out if the nodes do not have an associated Grad value.
 func (s *RMSPropSolver) Step(model Nodes) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
@@ -279,13 +283,13 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 			eps := float32(s.eps)
 			l2reg := float32(s.l2reg)
 
-			gs := grad.(*F32).Any()
-			c := cw.Any()
+			gs := grad.(*F32).any()
+			c := cw.any()
 			c = c*decay + omdecay*gs*gs
 
 			cached.Value, _ = anyToScalar(c)
 
-			w := weights.(*F32).Any()
+			w := weights.(*F32).any()
 			upd := -stepSize*gs/math32.Sqrt(c+eps) - l2reg*w
 			w += upd
 
@@ -299,13 +303,13 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 			eps := s.eps
 			l2reg := s.l2reg
 
-			gs := grad.(*F64).Any()
-			c := cw.Any()
+			gs := grad.(*F64).any()
+			c := cw.any()
 			c = c*decay + omdecay*gs*gs
 
 			cached.Value, _ = anyToScalar(c)
 
-			w := weights.(*F64).Any()
+			w := weights.(*F64).any()
 			upd := -stepSize*gs/math.Sqrt(c+eps) - l2reg*w
 			w += upd
 
@@ -362,6 +366,9 @@ func NewAdamSolver(opts ...SolverOpt) *AdamSolver {
 	return s
 }
 
+// Step steps through each node in the model and applies the Adaptive Moment Estimation gradient descent algorithm on the value.
+//
+// This function will error out if the nodes do not have an associated Grad value.
 func (s *AdamSolver) Step(model Nodes) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
@@ -543,10 +550,10 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			g.Zero()
 
 		case *F32:
-			g := grad.(*F32).Any()
-			w := weights.(*F32).Any()
-			v := cvv.(*F32).Any()
-			mm := m.Any()
+			g := grad.(*F32).any()
+			w := weights.(*F32).any()
+			v := cvv.(*F32).any()
+			mm := m.any()
 
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
@@ -596,10 +603,10 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			dv.Value, _ = anyToScalar(w)
 			dv.d = zero(Float32)
 		case *F64:
-			g := grad.(*F64).Any()
-			w := weights.(*F64).Any()
-			v := cvv.(*F64).Any()
-			mm := m.Any()
+			g := grad.(*F64).any()
+			w := weights.(*F64).any()
+			v := cvv.(*F64).any()
+			mm := m.any()
 
 			l1reg := s.l1reg
 			l2reg := s.l2reg
@@ -681,6 +688,9 @@ func NewVanillaSolver(opts ...SolverOpt) *VanillaSolver {
 	return s
 }
 
+// Step steps through each node in the model and applies the most basic gradient descent algorithm on the value.
+//
+// This function will error out if the nodes do not have an associated Grad value.
 func (s *VanillaSolver) Step(model Nodes) (err error) {
 	for _, n := range model {
 		dv, ok := n.boundTo.(*dualValue)
@@ -766,8 +776,8 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			g.Zero()
 
 		case *F32:
-			g := grad.(*F32).Any()
-			wv := w.Any()
+			g := grad.(*F32).any()
+			wv := w.any()
 
 			l1reg := float32(s.l1reg)
 			l2reg := float32(s.l2reg)
@@ -805,8 +815,8 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			dv.Value, _ = anyToScalar(wv)
 			dv.d = zero(Float32)
 		case *F64:
-			g := grad.(*F64).Any()
-			wv := w.Any()
+			g := grad.(*F64).any()
+			wv := w.any()
 
 			l1reg := s.l1reg
 			l2reg := s.l2reg
@@ -876,6 +886,9 @@ func NewAdaGradSolver(opts ...SolverOpt) *AdaGradSolver {
 	return s
 }
 
+// Step steps through each node in the model and applies the Adaptive Gradient gradient descent algorithm on the value.
+//
+// This function will error out if the nodes do not have an associated Grad value.
 func (s *AdaGradSolver) Step(model Nodes) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
@@ -983,8 +996,8 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			eps := float32(s.eps)
 			eta := float32(s.eta)
 
-			c = cw.Any()
-			g = grad.(*F32).Any()
+			c = cw.any()
+			g = grad.(*F32).any()
 
 			c += g * g
 
@@ -996,7 +1009,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 				}
 			}
 
-			w = weights.(*F32).Any()
+			w = weights.(*F32).any()
 
 			upd := -eta * g / math32.Sqrt(c+eps)
 
@@ -1017,8 +1030,8 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			eps := s.eps
 			eta := s.eta
 
-			c = cw.Any()
-			g = grad.(*F64).Any()
+			c = cw.any()
+			g = grad.(*F64).any()
 
 			c += g * g
 
@@ -1030,7 +1043,7 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 				}
 			}
 
-			w = weights.(*F64).Any()
+			w = weights.(*F64).any()
 			upd := -eta * g / math.Sqrt(c+eps)
 			if s.useL2Reg {
 				upd -= w * l2reg

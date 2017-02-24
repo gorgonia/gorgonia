@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// WalkGraph walks a graph. It returns a channel of *Nodes, so be sure to consume the channel or there may be a deadlock
 func WalkGraph(start *Node) <-chan *Node {
 	ch := make(chan *Node)
 	walked := NewNodeSet()
@@ -33,6 +34,7 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 
 }
 
+// Sort topologically sorts a ExprGraph
 func Sort(g *ExprGraph) (sorted Nodes, err error) {
 	var sortedNodes []graph.Node
 	if sortedNodes, err = topo.Sort(g); err != nil {

@@ -88,7 +88,6 @@ func constEq(a, b constant) (ok bool) {
 	default:
 		panic("Not yet implemented")
 	}
-	panic("unreachable")
 }
 
 // fastest comparisons to least fastest

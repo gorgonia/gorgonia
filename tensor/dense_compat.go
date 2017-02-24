@@ -175,7 +175,6 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 	default:
 		panic("Unsupported Dtype")
 	}
-	panic("Unreachable")
 }
 
 func convToFloat64s(t *Dense) (retVal []float64) {
@@ -275,7 +274,6 @@ func convToFloat64s(t *Dense) (retVal []float64) {
 	default:
 		panic(fmt.Sprintf("Cannot convert *Dense of %v to []float64", t.t))
 	}
-	panic("Unreachable")
 }
 
 func convToFloat64(x interface{}) float64 {
@@ -311,7 +309,6 @@ func convToFloat64(x interface{}) float64 {
 	default:
 		panic("Cannot convert to float64")
 	}
-	panic("Unreachable")
 }
 
 // FromMat64 converts a *"gonum/matrix/mat64".Dense into a *tensorf64.Tensor.

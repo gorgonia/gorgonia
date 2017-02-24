@@ -1,4 +1,4 @@
-#Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) #
+#Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/chewxy/gorgonia)](https://goreportcard.com/report/github.com/chewxy/gorgonia) #
 
 Gorgonia is a library that helps facilitate machine learning in Go. Write and evaluate mathematical equations involving multidimensional arrays easily. If this sounds like [Theano](http://deeplearning.net/software/theano/) or [TensorFlow](https://www.tensorflow.org/), it's because the idea is quite similar. Specifically, the library is pretty low-level, like Theano, but has higher goals like Tensorflow.
 
@@ -45,6 +45,9 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |[gonum/matrix](http://github.com/gonum/matrix)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[testify/assert](https://github.com/stretchr/testify)|Testing|Can do without but will be a massive pain in the ass to test||[testify licence](https://github.com/stretchr/testify/blob/master/LICENSE) (MIT/BSD-like)|
 
+#Keeping Updated#
+
+Gorgonia's project has a [mailing list](https://groups.google.com/forum/#!forum/gorgonia), as well as a [Twitter account](https://twitter.com/gorgoniaML). Official updates and announcements will be posted to those two sites.
 
 #Usage#
 

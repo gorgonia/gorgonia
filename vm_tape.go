@@ -38,6 +38,7 @@ type tapeMachine struct {
 	runFlags byte //  spare2: trace(copy values and put into nodes)
 }
 
+// NewTapeMachine creates a VM that executes a pre-compiled graph.
 func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
 		p:        prog,

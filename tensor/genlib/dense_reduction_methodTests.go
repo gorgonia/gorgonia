@@ -148,8 +148,8 @@ func init() {
 
 func generateDenseReductionMethodsTests(f io.Writer, generic *ManyKinds) {
 	testDenseSum.Execute(f, generic)
-	fmt.Fprintln(f, "\n")
+	fmt.Fprint(f, "\n")
 	testDenseMax.Execute(f, generic)
-	fmt.Fprintln(f, "\n")
+	fmt.Fprint(f, "\n")
 	testDenseMin.Execute(f, generic)
 }

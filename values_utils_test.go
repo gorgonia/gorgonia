@@ -28,7 +28,7 @@ func TestCloneValue(t *testing.T) {
 		}
 
 		if v == cvts {
-			t.Error("Expected values to have different pointers. Got %p == %p", v, cvts)
+			t.Errorf("Expected values to have different pointers. Got %p == %p", v, cvts)
 		}
 
 		if !ValueEq(cvts, v) {

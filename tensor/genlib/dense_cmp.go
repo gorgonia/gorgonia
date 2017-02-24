@@ -380,7 +380,7 @@ func denseCmp(f io.Writer, generic *ManyKinds) {
 			OpSymb:    bo.OpSymb,
 		}
 		ddElEqOrd.Execute(f, op)
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 
 	for _, bo := range cmpBinOps {
@@ -391,7 +391,7 @@ func denseCmp(f io.Writer, generic *ManyKinds) {
 			OpSymb:    bo.OpSymb,
 		}
 		dsElEqOrd.Execute(f, op)
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 
 }

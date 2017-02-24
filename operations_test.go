@@ -594,7 +594,7 @@ func TestSum(t *testing.T) {
 		}
 
 		if !sts.expectedShape.Eq(s.shape) {
-			t.Errorf("Test %q has wrong shape. Want %v, got %v instead", sts.expectedShape, s.shape)
+			t.Errorf("Test %q has wrong shape. Want %v, got %v instead", sts.name, sts.expectedShape, s.shape)
 			continue
 		}
 
@@ -616,7 +616,7 @@ func TestSum(t *testing.T) {
 
 		m := NewTapeMachine(prog, locMap)
 		if err = m.RunAll(); err != nil {
-			t.Errorf("Test %q - Runtime error", sts.name, err)
+			t.Errorf("Test %q - Runtime error: %v", sts.name, err)
 			continue
 		}
 

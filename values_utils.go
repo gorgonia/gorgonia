@@ -8,30 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Dtyper interface {
-	Dtype() tensor.Dtype
-}
-
-type Typer interface {
-	Type() hm.Type
-}
-
-type ValueEqualer interface {
-	ValueEq(Value) bool
-}
-
-type Cloner interface {
-	Clone() interface{}
-}
-
-type CopierTo interface {
-	CopyTo(dest interface{}) error
-}
-
-type CopierFrom interface {
-	CopyFrom(src interface{}) error
-}
-
 // TypeOf returns the Type of the value
 func TypeOf(v Value) hm.Type {
 	switch t := v.(type) {
@@ -39,22 +15,12 @@ func TypeOf(v Value) hm.Type {
 		dt, dim := tensorInfo(t)
 		return newTensorType(dim, dt)
 	case Scalar:
-		return DtypeOf(t)
+		return t.Dtype()
 	case Typer:
 		return t.Type()
 
 	default:
 		panic(fmt.Sprintf("TypeOf Not yet implemented for %v %T", v, v))
-	}
-}
-
-// DtypeOf returns the Dtype of a Value
-func DtypeOf(v Value) tensor.Dtype {
-	switch vt := v.(type) {
-	case Dtyper:
-		return vt.Dtype()
-	default:
-		panic(fmt.Sprintf(nyiTypeFail, "DtypeOf", v))
 	}
 }
 

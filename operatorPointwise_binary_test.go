@@ -23,7 +23,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		randX = float32(rand.ExpFloat64())
 		randY = float32(rand.ExpFloat64())
 	default:
-		return errors.Errorf("op Test not yet implemented for %v ", op, dt)
+		return errors.Errorf("op %v Test not yet implemented for %v ", op, dt)
 	}
 
 	binOp := newEBOByType(op, dt, dt)

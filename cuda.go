@@ -72,7 +72,7 @@ func (md ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ,
 	case blocks >= maxGridX*maxGridY:
 		gridDimX = maxGridX
 		gridDimY = maxGridY
-		gridDimY = calcBlocks(blocks%(maxGridX*maxGridY), maxGridZ)
+		gridDimZ = calcBlocks(blocks%(maxGridX*maxGridY), maxGridZ)
 		blockDimX = maxThreads
 	case blocks >= maxGridX:
 		gridDimX = maxGridX
