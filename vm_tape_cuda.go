@@ -28,6 +28,8 @@ func UseCudaFor(ops ...string) VMOpt {
 				op64 := op + "64"
 				op32 := op + "32"
 
+				cudaLogf("Trying to load %q and %q. m.c = %v", op64, op32, v.c)
+
 				if data, ok := cudaStdLib[op64]; ok {
 					if err := v.LoadCUDAFunc(op64, data); err != nil {
 						log.Printf("Unable to load %q: %v", op64, err)
@@ -48,12 +50,12 @@ func UseCudaFor(ops ...string) VMOpt {
 func finalizeTapeMachine(m *tapeMachine) {
 	cudaLogf("Finalizing tape machine %p", m)
 	for i, c := range m.c {
-		cu.SetCurrent(c)
+		cu.SetCurrent(c.Context)
 		for _, v := range m.m {
 			mod := v[i]
 			cu.Unload(mod)
 		}
-		cu.DestroyContext(&c)
+		cu.DestroyContext(&c.Context)
 	}
 	m.cleanup()
 }
@@ -71,9 +73,11 @@ func (m *tapeMachine) init() {
 
 	// don't bother initializing contexts if no instructions were CUDA based
 	if !initCUDA {
+		cudaLogf("No CUDA ops")
 		return
 	}
 	m.ExternMetadata.init()
+	cudaLogf("m.c = %v", m.c)
 }
 
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
@@ -81,13 +85,14 @@ func (m *tapeMachine) init() {
 // The convention is to have one function per module, sharing the same name.
 func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
 	if len(m.c) == 0 {
+		log.Printf("m.c %v", m.c)
 		return nil
 	}
 
 	mods := make([]cu.Module, len(m.c))
 	fns := make([]cu.Function, len(m.c))
 	for i, c := range m.c {
-		if err = cu.SetCurrent(c); err != nil {
+		if err = cu.SetCurrent(c.Context); err != nil {
 			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", name, i)
 			return
 		}
@@ -109,7 +114,7 @@ func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
 
 	// set the first to current
 	if len(m.c) > 0 {
-		if err = cu.SetCurrent(m.c[0]); err != nil {
+		if err = cu.SetCurrent(m.c[0].Context); err != nil {
 			err = errors.Wrapf(err, "Unable to set current")
 			return
 		}
@@ -117,6 +122,7 @@ func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
 
 	m.m[name] = mods
 	m.f[name] = fns
+	cudaLogf("Loaded %q", name)
 	return nil
 }
 

@@ -4,7 +4,6 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/chewxy/cu"
@@ -101,6 +100,7 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 
 	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(a.Dtype().Size())*8)
 	if !extern.HasFunc(name) {
+		cudaLogf("extern %T has no function %q", extern, name)
 		if prealloc != nil {
 			return op.UsePreallocDo(prealloc, inputs...)
 		}
@@ -150,10 +150,10 @@ func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, pre
 	// we don't want no leaks
 	defer func(memA, memB cu.DevicePtr) {
 		if err := cu.MemFree(memA); err != nil {
-			log.Printf("memfree(A): %v", err)
+			cudaLogf("memfree(A): %v", err)
 		}
 		if err := cu.MemFree(memB); err != nil {
-			log.Printf("memfree(B): %v", err)
+			cudaLogf("memfree(B): %v", err)
 		}
 	}(memA, memB)
 

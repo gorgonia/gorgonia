@@ -19,7 +19,7 @@ var cudaStdLib map[string]string
 // CUDAMachine is a representation of CUDA capable VMs.
 type CUDAMachine interface {
 	External
-	Contexts() []cu.Context
+	Contexts() []*cu.BatchedContext
 	Modules() map[string][]cu.Module
 	Functions() map[string][]cu.Function
 
@@ -38,15 +38,18 @@ type ExternMetadata struct {
 	mbdy []int // MaxBlockDimY
 	mbdz []int // MaxBlockDimZ
 
-	c []cu.Context
-	d []cu.Device
+	c []*cu.BatchedContext
+	// c []cu.Context
+	// d []cu.Device
 
 	m map[string][]cu.Module
 	f map[string][]cu.Function
+
+	initialzed bool
 }
 
 // elemGridSize calculates the gridsize for elementwise operations
-func (md ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
+func (md *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
 	if dev > len(md.warp) {
 		// error
 	}
@@ -89,21 +92,25 @@ func (md ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ,
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
 //
 // Note that BLAS names will always return false, even if using a BLAS that requires cgo calls (like Intel MKL)
-func (m ExternMetadata) HasFunc(name string) bool {
+func (m *ExternMetadata) HasFunc(name string) bool {
 	_, ok := m.f[name]
 	return ok
 }
 
 // Contexts return a slice of contexts that is being used by this CUDAMachine
-func (m ExternMetadata) Contexts() []cu.Context { return m.c }
+func (m *ExternMetadata) Contexts() []*cu.BatchedContext { return m.c }
 
 // Modules returns a list of modules loaded (and referable by name) in this CUDAMachine
-func (m ExternMetadata) Modules() map[string][]cu.Module { return m.m }
+func (m *ExternMetadata) Modules() map[string][]cu.Module { return m.m }
 
 // Functions returns a list of functions loaded (and refereable by name) in this CUDAMachine
-func (m ExternMetadata) Functions() map[string][]cu.Function { return m.f }
+func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
 
-func (m ExternMetadata) init() {
+func (m *ExternMetadata) init() {
+	if m.initialzed {
+		return
+	}
+
 	devices, err := cu.NumDevices()
 	if err != nil {
 		cudaLogf("Failed to get number of devices: %v", err)
@@ -111,11 +118,11 @@ func (m ExternMetadata) init() {
 	}
 
 	if devices == 0 {
+		cudaLogf("No devices found")
 		return
 	}
 
-	m.c = make([]cu.Context, devices)
-	m.d = make([]cu.Device, devices)
+	m.c = make([]*cu.BatchedContext, devices)
 	m.warp = make([]int, devices)
 	m.mtpb = make([]int, devices)
 	m.mgdx = make([]int, devices)
@@ -163,21 +170,21 @@ func (m ExternMetadata) init() {
 		m.mbdy[i] = attrs[6]
 		m.mbdz[i] = attrs[7]
 
-		m.c[i] = ctx
-		m.d[i] = dev
+		m.c[i] = cu.NewBatchedContext(ctx, dev)
 	}
 	if len(m.c) > 0 {
-		cu.SetCurrent(m.c[0])
+		cu.SetCurrent(m.c[0].Context)
 	}
 	m.m = make(map[string][]cu.Module)
 	m.f = make(map[string][]cu.Function)
+	m.initialzed = true
+	cudaLogf("CUDA initialized. Contexts: %v", m.c)
 }
 
-func (m ExternMetadata) cleanup() {
+func (m *ExternMetadata) cleanup() {
 	m.c = nil
 	m.m = nil
 	m.f = nil
-	m.d = nil
 }
 
 func init() {

@@ -13,7 +13,7 @@ import (
 )
 
 type tapeMachine struct {
-	ExternMetadata
+	*ExternMetadata
 
 	p       *program
 	storage []Value
@@ -41,10 +41,11 @@ type tapeMachine struct {
 // NewTapeMachine creates a VM that executes a pre-compiled graph.
 func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
-		p:        prog,
-		locMap:   locMap,
-		storage:  make([]Value, prog.locs),
-		valueFmt: "%3.3f",
+		ExternMetadata: new(ExternMetadata),
+		p:              prog,
+		locMap:         locMap,
+		storage:        make([]Value, prog.locs),
+		valueFmt:       "%3.3f",
 	}
 
 	if b, ok := whichblas.(batchedBLAS); ok {
