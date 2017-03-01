@@ -38,14 +38,16 @@ type ExternMetadata struct {
 	mbdy []int // MaxBlockDimY
 	mbdz []int // MaxBlockDimZ
 
-	c []*cu.BatchedContext
-	// c []cu.Context
-	// d []cu.Device
+	b             batchedBLAS
+	c             []*cu.BatchedContext
+	hasWork       []bool
+	workAvailable chan struct{}
 
 	m map[string][]cu.Module
 	f map[string][]cu.Function
 
-	initialzed bool
+	blasHasWork bool
+	initialzed  bool
 }
 
 // elemGridSize calculates the gridsize for elementwise operations
@@ -89,6 +91,23 @@ func (md *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ
 	return
 }
 
+func (m *ExternMetadata) WorkAvailable() <-chan struct{} { return m.workAvailable }
+
+func (m *ExternMetadata) DoWork() {
+	for i, hw := range m.hasWork {
+		if hw {
+			m.c[i].Synchronize()
+			m.c[i].DoWork()
+		}
+		m.hasWork[i] = false
+	}
+
+	if m.blasHasWork {
+		m.b.DoWork()
+		m.blasHasWork = false
+	}
+}
+
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
 //
 // Note that BLAS names will always return false, even if using a BLAS that requires cgo calls (like Intel MKL)
@@ -123,6 +142,7 @@ func (m *ExternMetadata) init() {
 	}
 
 	m.c = make([]*cu.BatchedContext, devices)
+	m.hasWork = make([]bool, devices)
 	m.warp = make([]int, devices)
 	m.mtpb = make([]int, devices)
 	m.mgdx = make([]int, devices)
@@ -171,12 +191,15 @@ func (m *ExternMetadata) init() {
 		m.mbdz[i] = attrs[7]
 
 		m.c[i] = cu.NewBatchedContext(ctx, dev)
+		go m.collectWork(i, m.c[i].WorkAvailable())
 	}
 	if len(m.c) > 0 {
 		cu.SetCurrent(m.c[0].Context)
 	}
 	m.m = make(map[string][]cu.Module)
 	m.f = make(map[string][]cu.Function)
+	go m.collectBLASWork()
+
 	m.initialzed = true
 	cudaLogf("CUDA initialized. Contexts: %v", m.c)
 }
@@ -187,6 +210,22 @@ func (m *ExternMetadata) cleanup() {
 	m.f = nil
 }
 
+func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
+	for range workAvailable {
+		m.hasWork[devID] = true
+		m.workAvailable <- struct{}{}
+	}
+}
+
+func (m *ExternMetadata) collectBLASWork() {
+	if m.b != nil {
+		for range m.b.WorkAvailable() {
+			m.blasHasWork = true
+			m.workAvailable <- struct{}{}
+		}
+	}
+}
+
 func init() {
 	log.Println("Using CUDA build")
 }
@@ -194,4 +233,10 @@ func init() {
 // it's just a generic ceiling function. Added here to avoid mixing with any potential ceilInt operation
 func calcBlocks(n, maxThreads int) int {
 	return (n + maxThreads - 1) / maxThreads
+}
+
+// AddToStdLib allows for custom ops to be included into the "stdlib" of CUDA functions, so that when the VMs are created, they're loaded automatically
+// without having to specify extra loading.
+func AddToStdLib(name, data string) {
+	cudaStdLib[name] = data
 }

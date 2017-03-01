@@ -18,6 +18,7 @@ type Value interface {
 	Data() interface{}   // Data returns the original representation of the Value
 	Dtype() tensor.Dtype // Dtype returns the Dtype of the value
 
+	Memory
 	fmt.Formatter
 }
 

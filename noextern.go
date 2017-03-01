@@ -7,7 +7,17 @@ const CUDA = false
 
 // ExternMetadata is used to hold metadata about external execution devices.
 // In this build, it's an empty struct because the default build doesn't use external devices to execute the graph on
-type ExternMetadata struct{}
+type ExternMetadata struct {
+	b batchedBLAS
+}
 
 // HasFunc will always return false in this build
 func (m ExternMetadata) HasFunc(name string) bool { return false }
+func (m *ExternMetadata) WorkAvailable() <-chan struct{} {
+	if m.b != nil {
+		return m.b.WorkAvailable()
+	}
+
+	return nil
+}
+func (m *ExternMetadata) DoWork() { m.b.DoWork() }

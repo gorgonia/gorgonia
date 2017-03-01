@@ -23,7 +23,7 @@ type BLAS interface {
 // only blastoise.Implementation() and cubone.Implementation() are batchedBLAS -
 // they both batch cgo calls (and cubone batches cuda calls)
 type batchedBLAS interface {
-	WorkAvailable() int
+	WorkAvailable() <-chan struct{}
 	DoWork()
 	BLAS
 }

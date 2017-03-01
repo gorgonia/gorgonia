@@ -151,7 +151,7 @@ type UnsafeDoer interface {
 
 // CUDADoer uses CUDA to perform the Op.
 type CUDADoer interface {
-	CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (Value, error)
+	CUDADo(extern External, dev Device, inputTypes hm.Types, prealloc Memory, inputs ...Memory) (retVal Memory, err error)
 	CUDAFuncName() string
 }
 

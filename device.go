@@ -14,3 +14,8 @@ func (d Device) String() string { return "CPU" }
 
 // IsGPU will always return false in this build
 func (d Device) IsGPU() bool { return false }
+
+// Alloc allocates memory on the device. This is currently a NO-OP in this build
+func (d Device) Alloc(extern External, size int64) (Memory, error) { return nil, nil }
+
+func (d Device) Free(extern External, mem Memory) error { return nil }

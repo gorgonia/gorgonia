@@ -27,6 +27,8 @@ uintptr_t process(struct fnargs* fa, int count) {
 */
 import "C"
 import (
+	"unsafe"
+
 	"github.com/gonum/blas"
 	"github.com/gonum/blas/cgo"
 )
@@ -90,6 +92,9 @@ type call struct {
 type context struct {
 	cgo.Implementation
 
+	workAvailable chan struct{}
+	work          chan call
+
 	fns   []C.struct_fnargs
 	queue []call
 }
@@ -102,29 +107,71 @@ func newContext() *context {
 }
 
 func (ctx *context) enqueue(c call) {
-	if len(ctx.queue) == workbufLen-1 || c.blocking {
-		ctx.queue = append(ctx.queue, c)
-		ctx.DoWork()
-		return
+	ctx.work <- c
+	select {
+	case ctx.workAvailable <- struct{}{}:
+	default:
 	}
-	ctx.queue = append(ctx.queue, c)
-	return
+	if c.blocking {
+		// do something
+	}
 }
+
+func (ctx *context) DoWork() {
+	for {
+		select {
+		case w := <-ctx.work:
+			ctx.queue = append(ctx.queue, w)
+		default:
+			return
+		}
+	}
+	blocking := ctx.queue[len(ctx.queue)-1].blocking
+enqueue:
+	for len(ctx.queue) < cap(ctx.queue) && !blocking {
+		select {
+		case w := <-ctx.work:
+			ctx.queue = append(ctx.queue, w)
+			blocking = ctx.queue[len(ctx.queue)-1].blocking
+		default:
+			break enqueue
+
+		}
+
+		for i, c := range ctx.queue {
+			ctx.fns[i] = *(*C.fnargs_t)(unsafe.Pointer(c.fnargs))
+		}
+		C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue)))
+
+		// clear queue
+		ctx.queue = ctx.queue[:0]
+	}
+}
+
+// func (ctx *context) enqueue(c call) {
+// 	if len(ctx.queue) == workbufLen-1 || c.blocking {
+// 		ctx.queue = append(ctx.queue, c)
+// 		ctx.DoWork()
+// 		return
+// 	}
+// 	ctx.queue = append(ctx.queue, c)
+// 	return
+// }
 
 // DoWork basically drops everything and just performs the work
-func (ctx *context) DoWork() {
-	// runtime.LockOSThread()
-	// defer runtime.UnlockOSThread()
-	for i, c := range ctx.queue {
-		fn := c.args.toCStruct()
-		ctx.fns[i] = fn
-	}
-	C.process(&ctx.fns[0], C.int(len(ctx.queue)))
+// func (ctx *context) DoWork() {
+// 	// runtime.LockOSThread()
+// 	// defer runtime.UnlockOSThread()
+// 	for i, c := range ctx.queue {
+// 		fn := c.args.toCStruct()
+// 		ctx.fns[i] = fn
+// 	}
+// 	C.process(&ctx.fns[0], C.int(len(ctx.queue)))
 
-	// cleanup - clear queue
-	ctx.queue = ctx.queue[:0]
-}
+// 	// cleanup - clear queue
+// 	ctx.queue = ctx.queue[:0]
+// }
 
-func (ctx *context) WorkAvailable() int { return len(ctx.queue) }
+func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
 func (ctxt *context) String() string { return "Blase" }

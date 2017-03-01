@@ -115,7 +115,7 @@ func hasInf(v Value) bool {
 		return math.IsInf(float64(*vt), 0)
 	case *F32:
 		return math32.IsInf(float32(*vt), 0)
-	case *tensor.Dense:
+	case tensor.Tensor:
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
 			return false
@@ -151,7 +151,7 @@ func hasNaN(v Value) bool {
 		return math.IsNaN(float64(*vt))
 	case *F32:
 		return math32.IsNaN(float32(*vt))
-	case *tensor.Dense:
+	case tensor.Tensor:
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
 			return false

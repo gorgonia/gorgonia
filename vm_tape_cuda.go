@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/chewxy/cu"
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 )
 
@@ -137,4 +138,213 @@ func (m *tapeMachine) loadStdLib() {
 			cudaLogf("Unable to load %q.: %v", name, err)
 		}
 	}
+}
+
+func (instr execOp) exec(m *tapeMachine) (err error) {
+	m.logf("Executing %v. Node is: %x", instr, instr.id)
+	m.enterLoggingContext()
+	defer m.leaveLoggingContext()
+
+	if instr.useGPU {
+		if len(m.Contexts()) == 0 {
+			goto usecpu
+		}
+
+		// Read
+		m.watchedLogf("Inputs:")
+		m.enterLoggingContext()
+		inputs := make([]Memory, len(instr.readFrom))
+		fromDevs := make([]Device, len(instr.readFrom))
+		for i, reg := range instr.readFrom {
+			inputs[i] = m.getMemory(reg)
+			fromDevs[i] = reg.device
+			m.watchedLogf("0x%x", inputs[i])
+		}
+		m.leaveLoggingContext()
+
+		toDev := instr.writeTo.device
+
+		// Execute
+		var mem Memory
+		switch cd := instr.op.(type) {
+		case CUDADoer:
+			prealloc := m.getMemory(instr.writeTo)
+			if mem, err = cd.CUDADo(m, toDev, instr.inputTypes, prealloc, inputs...); err != nil {
+				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
+			}
+		case CLDoer:
+			goto usecpu
+		default:
+			goto usecpu
+		}
+
+		// Write
+		dest := instr.writeTo.id
+		node := m.p.g.Node(instr.id).(*Node)
+		cuMem := mem.(cu.DevicePtr)
+		ctx := m.c[int(toDev)]
+
+		v := node.Value()
+		if v == nil {
+			// create v
+			switch t := instr.outputType.(type) {
+			case TensorType:
+				var dt tensor.Dtype
+				if dt, err = dtypeOf(t); err != nil {
+					err = errors.Wrapf(err, "execOp cannot get dtype out of %v", t)
+					return // very unlikely to happen
+				}
+
+				v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.outputShape...))
+
+				if err = devPtrToValue(ctx, v, cuMem); err != nil {
+					err = errors.Wrap(err, "execOp cannot copy mem to value")
+					return
+				}
+			case Scalar:
+				// wtf?
+			}
+		} else {
+			// copy
+			if err = devPtrToValue(ctx, v, cuMem); err != nil {
+				return
+			}
+		}
+
+		switch instr.writeTo.device {
+		case CPU:
+			m.cpumem[dest] = v
+		default:
+			m.gpumem[dest] = mem
+		}
+
+		if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
+			if err = node.bindCopy(v); err != nil {
+				return errors.Wrapf(err, "TraceExec failed to bind copy")
+			}
+		} else {
+			node.bind(v)
+		}
+
+		// this is a gradient node then, we should also bind the value to the node's dualValue
+		if m.bindDV() && node.derivOf != nil {
+			for _, src := range node.derivOf {
+				if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {
+					continue
+				}
+
+				if src.boundTo != nil {
+					dv := dvUnit(src.boundTo)
+
+					add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
+
+					if d, err := add.UnsafeDo(dv.d, v); err == nil {
+						dv.SetDeriv(d)
+						src.bind(dv)
+					} else {
+						return err
+					}
+				}
+			}
+
+		}
+		m.watchedLogf("Written To: %v", instr.writeTo)
+		m.enterLoggingContext()
+		m.watchedLogf(m.valueFmt, v)
+		m.leaveLoggingContext()
+		return nil
+	}
+
+usecpu:
+
+	// Read
+	m.watchedLogf("Inputs:")
+	m.enterLoggingContext()
+	var inputs []Value
+	for _, reg := range instr.readFrom {
+		v := m.cpumem[reg.id]
+		inputs = append(inputs, v)
+		m.watchedLogf(m.valueFmt, v)
+	}
+	m.leaveLoggingContext()
+
+	// Execute
+	var v Value
+	switch {
+	case instr.preAllocated:
+		if pd, ok := instr.op.(UsePreallocDoer); ok {
+			p := m.cpumem[instr.writeTo.id]
+			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
+				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
+			}
+		} else {
+			// TODO: maybe warn?
+			if v, err = instr.op.Do(inputs...); err != nil {
+				return errors.Wrap(err, opDoFail)
+			}
+		}
+	case instr.useUnsafe:
+		if ud, ok := instr.op.(UnsafeDoer); ok {
+			if v, err = ud.UnsafeDo(inputs...); err != nil {
+				return errors.Wrap(err, "Failed to carry UnsafeDo()")
+			}
+		} else {
+			// TODO: warn?
+			if v, err = instr.op.Do(inputs...); err != nil {
+				return errors.Wrap(err, opDoFail)
+			}
+		}
+	default:
+		if v, err = instr.op.Do(inputs...); err != nil {
+			return errors.Wrap(err, opDoFail)
+		}
+	}
+
+	m.watchedLogf("Result:")
+	m.enterLoggingContext()
+	m.watchedLogf(m.valueFmt, v)
+	m.leaveLoggingContext()
+	// TODO: type and shape checks
+
+	// Write
+	dest := instr.writeTo.id
+	m.cpumem[dest] = v
+	node := m.p.g.Node(instr.id).(*Node)
+
+	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
+		if err = node.bindCopy(v); err != nil {
+			return errors.Wrapf(err, "TraceExec failed to bind copy")
+		}
+	} else {
+		node.bind(v)
+	}
+
+	// this is a gradient node then, we should also bind the value to the node's dualValue
+	if m.bindDV() && node.derivOf != nil {
+		for _, src := range node.derivOf {
+			if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {
+				continue
+			}
+
+			if src.boundTo != nil {
+				dv := dvUnit(src.boundTo)
+
+				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
+
+				if d, err := add.UnsafeDo(dv.d, v); err == nil {
+					dv.SetDeriv(d)
+					src.bind(dv)
+				} else {
+					return err
+				}
+			}
+		}
+
+	}
+
+	m.watchedLogf("Written To: %v", instr.writeTo)
+	m.enterLoggingContext()
+	m.watchedLogf(m.valueFmt, v)
+	m.leaveLoggingContext()
+	return nil
 }

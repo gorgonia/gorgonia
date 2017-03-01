@@ -443,7 +443,12 @@ func (op elemUnaryOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	return ʘUnaryOpDiffFns[u](inputs[0], output)
 }
 
-func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
+func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	return op.do(inputs[0])
+}
 
 func (op elemUnaryOp) ReturnsPtr() bool {
 	if op.argTensor {
@@ -479,7 +484,10 @@ func (op elemUnaryOp) Hashcode() uint32 {
 
 // fulfils UnsafeDoer interface
 func (op elemUnaryOp) UnsafeDo(inputs ...Value) (Value, error) {
-	return op.do(inputs, tensor.UseUnsafe())
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+	return op.do(inputs[0], tensor.UseUnsafe())
 }
 
 // fulfils UnaryOp interface
@@ -488,12 +496,7 @@ func (op elemUnaryOp) isUnary() bool { return true }
 
 // misc private methods
 
-func (op elemUnaryOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
-		return
-	}
-
-	a := inputs[0]
+func (op elemUnaryOp) do(a Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
 	switch v := a.(type) {
 	case tensor.Tensor:
 		var t tensor.Tensor

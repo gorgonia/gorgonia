@@ -37,7 +37,7 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
 	// prog, locMap = codegen(inputs, sortedNodes, df)
-	prog.locs = ra.count
+	prog.cpulocs = ra.cpucount
 	prog.df = df
 	prog.g = g
 	prog.sorted = sortedNodes
@@ -78,7 +78,7 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
 	// prog, locMap = codegen(inputs, sortedNodes, df)
-	prog.locs = ra.count
+	prog.cpulocs = ra.cpucount
 	prog.df = df
 	prog.g = g
 	prog.sorted = sortedNodes
@@ -94,6 +94,8 @@ type codegenerator struct {
 	instrMap   map[*Node]fragment
 	queue      []int // queue to flus
 
+	lastReads map[register]int
+
 	g              *ExprGraph
 	inputs, sorted Nodes
 	df             *dataflow
@@ -106,6 +108,7 @@ func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 		lastWrites: make(map[int]int),
 		flushed:    make(map[int]struct{}),
 		instrMap:   make(map[*Node]fragment),
+		lastReads:  make(map[register]int),
 
 		g:      inputs[0].g,
 		inputs: inputs,
@@ -217,11 +220,6 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		if node.op.CallsExtern() {
 			compileLogf("calls extern")
 			var instr alloc
-			// if i == 0 {
-			// 	// if the instruction is the last instruction, we STILL want to  allocate to a new register
-			// 	// if this clause is not here, the last instruction will allocate to an existing register, and overwrites any val
-			// 	writeTo = register{device: writeTo.device, id: writeTo.id + 1}
-			// }
 			instr = newAlloc(node, writeTo)
 			cg.instructions = append(cg.instructions, instr)
 
@@ -275,6 +273,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 				useUnsafe = true
 			}
 		}
+
 	}
 
 	cg.locMap[node] = writeTo
@@ -291,6 +290,24 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		cg.instructions = append(cg.instructions, instr)
 		cg.addInstr(node, instr)
 		cg.updateLastWrites(writeTo.id)
+	}
+
+	// check if anything needs to be freed
+	for _, read := range reads {
+		var readNode *Node
+		for n, reg := range cg.locMap {
+			if reg == read {
+				readNode = n
+				break
+			}
+		}
+		interv := cg.df.intervals[readNode]
+		compileLogf("INTERV: %v LastUse:%v instrid: %v", interv, interv.lastUse(), len(cg.sorted)-i-1)
+		if interv.lastUse() <= len(cg.sorted)-i-1 && read.device != CPU {
+			compileLogf("Adding Free")
+			cg.instructions = append(cg.instructions, free{read})
+			cg.addInstr(node, free{read})
+		}
 	}
 }
 

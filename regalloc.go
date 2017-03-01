@@ -129,11 +129,22 @@ func (i *interval) noUsePositions() bool {
 
 // inclusive of start, but exclusive of end
 func (i *interval) liveAt(id int) bool {
-	compileLogf("%v live at %d", i, id)
+	// compileLogf("%v live at %d", i, id)
 	if i.start <= id && id < i.end {
 		return true
 	}
 	return false
+}
+
+func (i *interval) lastUse() int {
+	if len(i.usePositions) == 0 {
+		return -1
+	}
+
+	// if !sort.IntsAreSorted(i.usePositions) {
+	// 	sort.Ints(i.usePositions)
+	// }
+	return i.usePositions[len(i.usePositions)-1]
 }
 
 func (i *interval) merge(other *interval) {
@@ -248,7 +259,8 @@ func buildIntervals(sorted Nodes) map[*Node]*interval {
 }
 
 type regalloc struct {
-	count         int
+	cpucount      int
+	gpucount      int
 	instructionID int
 	df            *dataflow
 }
@@ -260,8 +272,16 @@ func newRegalloc(df *dataflow) *regalloc {
 }
 
 func (ra *regalloc) newReg(device Device) register {
-	out := register{ra.count, device}
-	ra.count++
+	var out register
+	switch device {
+	case CPU:
+		out = register{ra.cpucount, device}
+		ra.cpucount++
+	default:
+		out = register{ra.gpucount, device}
+		ra.gpucount++
+
+	}
 	return out
 }
 
@@ -328,6 +348,7 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 		nInterv.reads = append(nInterv.reads, r.result)
 	}
 	nInterv.result = writeTo
+	compileLogf("%v: %v", node.op, nInterv)
 }
 
 func (ra *regalloc) allocImmutableOp(node *Node, nInterv *interval) {
