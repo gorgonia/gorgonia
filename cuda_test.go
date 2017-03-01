@@ -17,23 +17,27 @@ func TestExternMetadata_ElemGridSize(t *testing.T) {
 
 func TestDevCUDA(t *testing.T) {
 	g := NewGraph()
-	x := NewMatrix(g, Float64, WithShape(100, 200), WithName("x"))
-	y := NewMatrix(g, Float64, WithShape(100, 200), WithName("y"))
+	x := NewMatrix(g, Float64, WithShape(100, 200), WithName("x"), WithInit(RangedFrom(0)))
+	y := NewMatrix(g, Float64, WithShape(100, 200), WithName("y"), WithInit(RangedFrom(0)))
 	xpy := Must(Add(x, y))
 	xmy := Must(Sub(x, y))
 	xpy2 := Must(Square(xpy))
+	WithName("xpy2")(xpy2)
 	xmy2 := Must(Square(xmy))
 	xpy2s := Must(Slice(xpy2, S(0)))
 
 	prog, locMap, _ := Compile(g)
-	// m := NewTapeMachine(prog, locMap, UseCudaFor("add"))
+	m := NewTapeMachine(prog, locMap, UseCudaFor("square"))
 
 	t.Logf("prog:\n%v\n", prog)
-	t.Logf("locMap %v", locMap)
-	// if err := m.RunAll(); err != nil {
-	// 	t.Error(err)
-	// }
-	t.Logf("xpy2 %v", xpy2s.Value())
+	t.Logf("locMap %-v", FmtNodeMap(locMap))
+	if err := m.RunAll(); err != nil {
+		t.Errorf("%+v", err)
+	}
+	t.Logf("x: %v", x.Value())
+	t.Logf("y: %v", y.Value())
+	t.Logf("xpy %v", xpy.Value())
+	t.Logf("xpy2s %v", xpy2s.Value())
 	t.Logf("xmy2 %v", xmy2.Value())
 }
 

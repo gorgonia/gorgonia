@@ -107,6 +107,12 @@ func (m *ExternMetadata) DoWork() {
 		m.blasHasWork = false
 	}
 }
+func (m *ExternMetadata) DoAllWork() {
+	for _, c := range m.c {
+		c.DoWork()
+	}
+	m.b.DoWork()
+}
 
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
 //
@@ -205,6 +211,7 @@ func (m *ExternMetadata) init() {
 }
 
 func (m *ExternMetadata) cleanup() {
+	cudaLogf("Cleanup")
 	m.c = nil
 	m.m = nil
 	m.f = nil

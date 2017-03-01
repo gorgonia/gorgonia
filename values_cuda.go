@@ -34,6 +34,7 @@ func devPtrToValue(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) (err err
 	size := int64(val.MemSize())
 	ptr := val.Pointer()
 	if ctx != nil {
+		cudaLogf("CpyDtoH")
 		ctx.MemcpyDtoH(ptr, mem, size)
 		return nil
 	}

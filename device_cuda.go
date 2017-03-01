@@ -2,10 +2,7 @@
 
 package gorgonia
 
-import (
-	"github.com/chewxy/cu"
-	"github.com/pkg/errors"
-)
+import "github.com/chewxy/cu"
 
 // Device represents the device where the code will be executed on. It can either be a GPU or CPU
 type Device cu.Device
@@ -35,8 +32,7 @@ func (d Device) Free(extern External, mem Memory) (err error) {
 	var devptr cu.DevicePtr
 	var ok bool
 	if devptr, ok = mem.(cu.DevicePtr); !ok {
-		// error
-		return errors.Errorf("Expected memory to be a DevicePtr. Got %T instead", mem)
+		return nil
 	}
 
 	machine := extern.(CUDAMachine)

@@ -18,8 +18,12 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+	cudaLogf("CUDADoint %v", op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 
 	// check
+	cudaLogf("checking if input is scalar")
 	a := inputs[0]
 	if v, ok := a.(Value); ok && v.Shape().IsScalar() {
 		return op.do(v)
@@ -45,6 +49,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	ctx := machine.Contexts()[int(dev)]
 
 	// allocate if necessary
+	cudaLogf("allocating if necessary")
 	var mem cu.DevicePtr
 	switch pre := prealloc.(type) {
 	case Value:
@@ -65,6 +70,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	}
 
 	// copy
+	cudaLogf("copying")
 	var size int64
 	switch at := a.(type) {
 	case Value:

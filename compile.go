@@ -36,8 +36,8 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
-	// prog, locMap = codegen(inputs, sortedNodes, df)
 	prog.cpulocs = ra.cpucount
+	prog.gpulocs = ra.gpucount
 	prog.df = df
 	prog.g = g
 	prog.sorted = sortedNodes
@@ -77,8 +77,8 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
-	// prog, locMap = codegen(inputs, sortedNodes, df)
 	prog.cpulocs = ra.cpucount
+	prog.gpulocs = ra.gpucount
 	prog.df = df
 	prog.g = g
 	prog.sorted = sortedNodes
@@ -236,7 +236,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		for _, read := range reads {
 			if instrID, ok := cg.lastWrites[read.id]; ok {
 				viaticum := cg.instructions[instrID] // ;) - it IS on the way
-				if instr, ok := viaticum.(execOp); ok {
+				if instr, ok := viaticum.(*execOp); ok {
 					if instr.op.CallsExtern() && !node.op.CallsExtern() {
 						// the && bit is to make sure that if we have sequential cBLAS/cuBLAS calls,
 						// we just add it to the batch.

@@ -63,8 +63,9 @@ func finalizeTapeMachine(m *tapeMachine) {
 
 func (m *tapeMachine) init() {
 	var initCUDA bool
+	cudaLogf("instructions %v", len(m.p.instructions))
 	for _, instr := range m.p.instructions {
-		if eo, ok := instr.(execOp); ok {
+		if eo, ok := instr.(*execOp); ok {
 			if _, ok := eo.op.(CUDADoer); ok {
 				initCUDA = true
 				break
@@ -172,6 +173,8 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 			if mem, err = cd.CUDADo(m, toDev, instr.inputTypes, prealloc, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
+
+			cudaLogf("mem: %v", mem)
 		case CLDoer:
 			goto usecpu
 		default:
@@ -179,42 +182,50 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		}
 
 		// Write
+		var v Value
 		dest := instr.writeTo.id
 		node := m.p.g.Node(instr.id).(*Node)
-		cuMem := mem.(cu.DevicePtr)
 		ctx := m.c[int(toDev)]
+		switch mt := mem.(type) {
+		case Value:
+			v = mt
+		case cu.DevicePtr:
+			v = node.Value()
+			if v == nil {
+				cudaLogf("Creating... %v with shape %v", instr.outputType, instr.outputShape)
+				// create v
+				switch t := instr.outputType.(type) {
+				case TensorType:
+					var dt tensor.Dtype
+					if dt, err = dtypeOf(t); err != nil {
+						err = errors.Wrapf(err, "execOp cannot get dtype out of %v", t)
+						return // very unlikely to happen
+					}
 
-		v := node.Value()
-		if v == nil {
-			// create v
-			switch t := instr.outputType.(type) {
-			case TensorType:
-				var dt tensor.Dtype
-				if dt, err = dtypeOf(t); err != nil {
-					err = errors.Wrapf(err, "execOp cannot get dtype out of %v", t)
-					return // very unlikely to happen
+					v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.outputShape...))
+
+					if err = devPtrToValue(ctx, v, mt); err != nil {
+						err = errors.Wrap(err, "execOp cannot copy mem to value")
+						return
+					}
+				case Scalar:
+					// wtf?
 				}
-
-				v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.outputShape...))
-
-				if err = devPtrToValue(ctx, v, cuMem); err != nil {
-					err = errors.Wrap(err, "execOp cannot copy mem to value")
+			} else {
+				// copy
+				if err = devPtrToValue(ctx, v, mt); err != nil {
 					return
 				}
-			case Scalar:
-				// wtf?
-			}
-		} else {
-			// copy
-			if err = devPtrToValue(ctx, v, cuMem); err != nil {
-				return
 			}
 		}
 
+		cudaLogf("V: %v", v)
 		switch instr.writeTo.device {
 		case CPU:
+			cudaLogf("write to cpu register")
 			m.cpumem[dest] = v
 		default:
+			cudaLogf("write to GPU register")
 			m.gpumem[dest] = mem
 		}
 
@@ -223,6 +234,8 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 				return errors.Wrapf(err, "TraceExec failed to bind copy")
 			}
 		} else {
+			cudaLogf("bind v to node %v", node.Name())
+			cudaLogf("v %p", v)
 			node.bind(v)
 		}
 
@@ -256,13 +269,42 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 	}
 
 usecpu:
+	cudaLogf("Using CPU for %v", instr.op)
 
 	// Read
 	m.watchedLogf("Inputs:")
 	m.enterLoggingContext()
 	var inputs []Value
 	for _, reg := range instr.readFrom {
-		v := m.cpumem[reg.id]
+		v, mem := m.getValue(reg)
+		cudaLogf("mem %v", mem)
+		if v == nil && mem != nil {
+			dev := reg.device
+			ctx := m.Contexts()[int(dev)]
+
+			// walk the instructions backwards
+			var prev tapeInstr
+			for i := m.pc - 1; i >= 0; i-- {
+				prev = m.p.instructions[i]
+				if prev.writes() == reg {
+					break
+				}
+			}
+			var n *Node
+			var f fragment
+			for n, f = range m.p.m {
+				if f.has(prev) {
+					break
+				}
+			}
+			v := n.Value()
+			devPtrToValue(ctx, v, mem.(cu.DevicePtr))
+
+			cudaLogf("using n.Value: \n%v", n.Value())
+			inputs = append(inputs, n.Value())
+			continue
+		}
+
 		inputs = append(inputs, v)
 		m.watchedLogf(m.valueFmt, v)
 	}
@@ -316,6 +358,7 @@ usecpu:
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}
 	} else {
+		cudaLogf("binding@222 to node %v", node.Name())
 		node.bind(v)
 	}
 

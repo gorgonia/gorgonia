@@ -157,12 +157,12 @@ func (m *tapeMachine) RunAll() (err error) {
 		}
 	}()
 
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("m.ExternMetadata %v", m.ExternMetadata)
-			panic(r)
-		}
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		log.Printf("m.ExternMetadata %v", m.ExternMetadata)
+	// 		panic(r)
+	// 	}
+	// }()
 	workAvailable := m.ExternMetadata.WorkAvailable()
 
 	for {
@@ -174,11 +174,12 @@ func (m *tapeMachine) RunAll() (err error) {
 				return
 			}
 			if err = m.runone(); err != nil {
-				return err
+				return errors.Wrapf(err, "PC: %d", m.pc)
 			}
 			m.pc++
 		}
 	}
+	m.DoAllWork()
 
 	return
 }
@@ -384,6 +385,15 @@ func (f fragment) String() string {
 	return buf.String()
 }
 
+func (f fragment) has(want tapeInstr) bool {
+	for _, instr := range f {
+		if instr == want {
+			return true
+		}
+	}
+	return false
+}
+
 type alloc struct {
 	id int // node ID
 	t  hm.Type
@@ -587,7 +597,7 @@ func (instr execOp) ID() int           { return instr.id }
 func (instr execOp) reads() []register { return instr.readFrom }
 func (instr execOp) writes() register  { return instr.writeTo }
 
-func newExecOp(n *Node) execOp {
+func newExecOp(n *Node) *execOp {
 	var inputTypes hm.Types
 	for _, child := range n.children {
 		inputTypes = append(inputTypes, child.t)
@@ -595,12 +605,13 @@ func newExecOp(n *Node) execOp {
 
 	_, useGPU := n.op.(CUDADoer)
 
-	return execOp{
-		op:         n.op,
-		id:         n.ID(),
-		inputTypes: inputTypes,
-		outputType: n.t,
-		useGPU:     useGPU,
+	return &execOp{
+		op:          n.op,
+		id:          n.ID(),
+		inputTypes:  inputTypes,
+		outputType:  n.t,
+		outputShape: n.shape,
+		useGPU:      useGPU,
 	}
 }
 
