@@ -94,9 +94,12 @@ func (md *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ
 func (m *ExternMetadata) WorkAvailable() <-chan struct{} { return m.workAvailable }
 
 func (m *ExternMetadata) DoWork() {
+	cudaLogf("DoWork() called")
 	for i, hw := range m.hasWork {
+		cudaLogf("Checking if %d has work %v", i, hw)
 		if hw {
 			m.c[i].Synchronize()
+			cudaLogf("INTROSPECT: %v", m.c[i].Introspect())
 			m.c[i].DoWork()
 		}
 		m.hasWork[i] = false
@@ -108,6 +111,7 @@ func (m *ExternMetadata) DoWork() {
 	}
 }
 func (m *ExternMetadata) DoAllWork() {
+	cudaLogf("DoAllWork")
 	for _, c := range m.c {
 		c.DoWork()
 	}
@@ -164,7 +168,8 @@ func (m *ExternMetadata) init() {
 			m.cleanup()
 			return
 		}
-		ctx, err := dev.MakeContext(cu.SchedAuto)
+		// ctx, err := dev.MakeContext(cu.SchedAuto)
+		ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
 		if err != nil {
 			if err == cu.OutOfMemory {
 				var free, total int64
@@ -219,6 +224,7 @@ func (m *ExternMetadata) cleanup() {
 
 func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
 	for range workAvailable {
+		cudaLogf("Device %d has work ", devID)
 		m.hasWork[devID] = true
 		m.workAvailable <- struct{}{}
 	}

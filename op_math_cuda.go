@@ -74,7 +74,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	var size int64
 	switch at := a.(type) {
 	case Value:
-		size := int64(at.MemSize())
+		size = int64(at.MemSize())
 		ctx.MemcpyHtoD(mem, at.Pointer(), size)
 	case cu.DevicePtr:
 		size = int64(at.MemSize())
@@ -87,9 +87,8 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 		unsafe.Pointer(&size),
 	}
 
-	cudaLogf("CUDADO %q, size %v", name, size)
+	cudaLogf("CUDADO %q, size %v, args %v", name, size, args)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
-
 	return mem, nil
 }
 

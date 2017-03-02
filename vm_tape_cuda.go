@@ -174,7 +174,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
 
-			cudaLogf("mem: %v", mem)
+			cudaLogf("mem: 0x%x", mem)
 		case CLDoer:
 			goto usecpu
 		default:

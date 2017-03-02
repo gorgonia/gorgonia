@@ -31,12 +31,15 @@ func TestDevCUDA(t *testing.T) {
 
 	t.Logf("prog:\n%v\n", prog)
 	t.Logf("locMap %-v", FmtNodeMap(locMap))
+	runtime.LockOSThread()
 	if err := m.RunAll(); err != nil {
 		t.Errorf("%+v", err)
 	}
+	runtime.UnlockOSThread()
 	t.Logf("x: %v", x.Value())
 	t.Logf("y: %v", y.Value())
 	t.Logf("xpy %v", xpy.Value())
+	t.Logf("xpy2: %v", xpy2.Value())
 	t.Logf("xpy2s %v", xpy2s.Value())
 	t.Logf("xmy2 %v", xmy2.Value())
 }

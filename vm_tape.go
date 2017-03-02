@@ -623,9 +623,6 @@ func (instr execOp) String() string {
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
-	if m.b == nil {
-		return nil
-	}
 	m.ExternMetadata.DoWork()
 	return nil
 }
