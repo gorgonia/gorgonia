@@ -159,6 +159,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		for i, reg := range instr.readFrom {
 			inputs[i] = m.getMemory(reg)
 			fromDevs[i] = reg.device
+			cudaLogf("inputs[%d] :%T", i, inputs[i])
 			m.watchedLogf("0x%x", inputs[i])
 		}
 		m.leaveLoggingContext()
@@ -192,7 +193,6 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		case cu.DevicePtr:
 			v = node.Value()
 			if v == nil {
-				cudaLogf("Creating... %v with shape %v", instr.outputType, instr.outputShape)
 				// create v
 				switch t := instr.outputType.(type) {
 				case TensorType:
@@ -219,7 +219,6 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 			}
 		}
 
-		cudaLogf("V: %v", v)
 		switch instr.writeTo.device {
 		case CPU:
 			cudaLogf("write to cpu register")
@@ -277,7 +276,6 @@ usecpu:
 	var inputs []Value
 	for _, reg := range instr.readFrom {
 		v, mem := m.getValue(reg)
-		cudaLogf("mem %v", mem)
 		if v == nil && mem != nil {
 			dev := reg.device
 			ctx := m.Contexts()[int(dev)]
@@ -358,7 +356,6 @@ usecpu:
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}
 	} else {
-		cudaLogf("binding@222 to node %v", node.Name())
 		node.bind(v)
 	}
 

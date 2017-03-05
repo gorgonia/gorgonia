@@ -157,6 +157,9 @@ func (m *tapeMachine) RunAll() (err error) {
 		}
 	}()
 
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	// defer func() {
 	// 	if r := recover(); r != nil {
 	// 		log.Printf("m.ExternMetadata %v", m.ExternMetadata)
@@ -164,19 +167,19 @@ func (m *tapeMachine) RunAll() (err error) {
 	// 	}
 	// }()
 	workAvailable := m.ExternMetadata.WorkAvailable()
-
+	errChan := make(chan error)
+	doneChan := make(chan struct{})
+	go m.runall(errChan, doneChan)
 	for {
 		select {
 		case <-workAvailable:
 			m.ExternMetadata.DoWork()
+		case err := <-errChan:
+			return errors.Wrapf(err, "PC: %d", m.pc)
+		case <-doneChan:
+			m.ExternMetadata.DoWork()
+			return nil
 		default:
-			if m.pc >= len(m.p.instructions) {
-				return
-			}
-			if err = m.runone(); err != nil {
-				return errors.Wrapf(err, "PC: %d", m.pc)
-			}
-			m.pc++
 		}
 	}
 	m.DoAllWork()
@@ -184,37 +187,46 @@ func (m *tapeMachine) RunAll() (err error) {
 	return
 }
 
-func (m *tapeMachine) runone() (err error) {
-	instr := m.p.instructions[m.pc]
-	if err = instr.exec(m); err != nil {
-		return errors.Wrap(err, "Failed to carry exec()")
-	}
+func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
+	for ; m.pc < len(m.p.instructions); m.pc++ {
+		instr := m.p.instructions[m.pc]
+		if err := instr.exec(m); err != nil {
+			err = errors.Wrap(err, "Failed to carry exec()")
+			errChan <- err
+			return
+		}
 
-	if m.watchNaN() {
-		writeTo := instr.writes().id
-		id := instr.ID()
-		if writeTo > 0 && id > 0 {
-			v := m.cpumem[writeTo]
-			n := m.p.g.Node(id).(*Node)
+		if m.watchNaN() {
+			writeTo := instr.writes().id
+			id := instr.ID()
+			if writeTo > 0 && id > 0 {
+				v := m.cpumem[writeTo]
+				n := m.p.g.Node(id).(*Node)
 
-			if hasNaN(v) {
-				return errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
+				if hasNaN(v) {
+					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
+					errChan <- err
+					return
+				}
+			}
+		}
+
+		if m.watchInf() {
+			writeTo := instr.writes().id
+			id := instr.ID()
+			if writeTo > 0 && id > 0 {
+				v := m.cpumem[writeTo]
+				n := m.p.g.Node(id).(*Node)
+				if hasInf(v) {
+					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
+					errChan <- err
+					return
+				}
 			}
 		}
 	}
 
-	if m.watchInf() {
-		writeTo := instr.writes().id
-		id := instr.ID()
-		if writeTo > 0 && id > 0 {
-			v := m.cpumem[writeTo]
-			n := m.p.g.Node(id).(*Node)
-			if hasInf(v) {
-				return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
-			}
-		}
-	}
-	return nil
+	doneChan <- struct{}{}
 }
 
 func (m *tapeMachine) getValue(r register) (Value, Memory) {

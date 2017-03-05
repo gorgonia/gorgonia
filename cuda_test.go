@@ -3,6 +3,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"log"
 	"runtime"
 	"testing"
@@ -17,8 +18,8 @@ func TestExternMetadata_ElemGridSize(t *testing.T) {
 
 func TestDevCUDA(t *testing.T) {
 	g := NewGraph()
-	x := NewMatrix(g, Float64, WithShape(100, 200), WithName("x"), WithInit(RangedFrom(0)))
-	y := NewMatrix(g, Float64, WithShape(100, 200), WithName("y"), WithInit(RangedFrom(0)))
+	x := NewMatrix(g, Float64, WithShape(1024, 100), WithName("x"), WithInit(ValuesOf(2.0)))
+	y := NewMatrix(g, Float64, WithShape(1024, 100), WithName("y"), WithInit(ValuesOf(2.0)))
 	xpy := Must(Add(x, y))
 	xmy := Must(Sub(x, y))
 	xpy2 := Must(Square(xpy))
@@ -31,17 +32,18 @@ func TestDevCUDA(t *testing.T) {
 
 	t.Logf("prog:\n%v\n", prog)
 	t.Logf("locMap %-v", FmtNodeMap(locMap))
-	runtime.LockOSThread()
+	// runtime.LockOSThread()
 	if err := m.RunAll(); err != nil {
 		t.Errorf("%+v", err)
 	}
-	runtime.UnlockOSThread()
+	// runtime.UnlockOSThread()
+	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 	t.Logf("x: %v", x.Value())
 	t.Logf("y: %v", y.Value())
 	t.Logf("xpy %v", xpy.Value())
-	t.Logf("xpy2: %v", xpy2.Value())
-	t.Logf("xpy2s %v", xpy2s.Value())
-	t.Logf("xmy2 %v", xmy2.Value())
+	t.Logf("xpy2: \n%+#v", xpy2.Value())
+	t.Logf("xpy2s \n%v", xpy2s.Value())
+	t.Logf("xmy2 \n%v", xmy2.Value())
 }
 
 func BenchmarkOneMilCUDA(b *testing.B) {

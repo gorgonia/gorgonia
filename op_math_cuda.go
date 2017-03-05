@@ -18,7 +18,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-	cudaLogf("CUDADoint %v", op)
+	cudaLogf("CUDADoing %v", op)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
@@ -54,7 +54,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	switch pre := prealloc.(type) {
 	case Value:
 		memsize := int64(pre.MemSize())
-		if mem, err = cu.MemAlloc(memsize); err != nil {
+		if mem, err = ctx.MemAlloc(memsize); err != nil {
 			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
 			return
 		}
@@ -74,21 +74,29 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	var size int64
 	switch at := a.(type) {
 	case Value:
-		size = int64(at.MemSize())
-		ctx.MemcpyHtoD(mem, at.Pointer(), size)
+		cudaLogf("a is val")
+		cudaLogf("a %v", at.Data().([]float64)[0:3])
+		memsize := int64(at.MemSize())
+		size = int64(at.Shape().TotalSize())
+		ctx.MemcpyHtoD(mem, at.Pointer(), memsize)
 	case cu.DevicePtr:
-		size = int64(at.MemSize())
-		ctx.Memcpy(mem, at, size)
+		cudaLogf("a is Dev")
+		memsize := int64(at.MemSize())
+		size = memsize / int64(dt.Size())
+		ctx.Memcpy(mem, at, memsize)
 	}
 
+	// blocks, threads := machine.(*tapeMachine).blockThread(int(size), int(dev))
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&size),
 	}
-
-	cudaLogf("CUDADO %q, size %v, args %v", name, size, args)
+	// cudaLogf("threads: %d, blocks %d", threads, blocks)
+	cudaLogf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	cudaLogf("CUDADO %q, Mem: 0x%x size %v, args %v", name, mem, size, args)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
+	// ctx.LaunchAndSync(fn, blocks, 1, 1, threads, 1, 1, 0, cu.Stream(0), args)
 	return mem, nil
 }
 
@@ -98,101 +106,132 @@ func (op elemUnaryOp) CUDAFuncName() string {
 
 func (op elemBinOp) CallsExtern() bool { return true }
 
-// func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Memory, inputs ...Memory) (retVal Value, err error) {
-// 	if err = checkArity(op, len(inputs)); err != nil {
-// 		return
-// 	}
+func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, prealloc Memory, inputs ...Memory) (retVal Memory, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
 
-// 	if !op.isArith() {
-// 		if prealloc != nil && !prealloc.Shape().IsScalar() {
-// 			return op.UsePreallocDo(prealloc, inputs...)
-// 		}
-// 		return op.Do(inputs...)
-// 	}
+	cudaLogf("CUDADoing %v", op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 
-// 	a := inputs[0]
-// 	b := inputs[1]
-// 	if a.Shape().IsScalar() || b.Shape().IsScalar() || prealloc == nil || prealloc.Shape().IsScalar() {
-// 		return op.Do(inputs...)
-// 	}
+	// check
+	cudaLogf("checking if op is arith")
+	if !op.isArith() {
 
-// 	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(a.Dtype().Size())*8)
-// 	if !extern.HasFunc(name) {
-// 		cudaLogf("extern %T has no function %q", extern, name)
-// 		if prealloc != nil {
-// 			return op.UsePreallocDo(prealloc, inputs...)
-// 		}
-// 		return op.Do(inputs...)
-// 	}
+	}
 
-// 	// TODO: maybe check arity of fromDevs?
-// 	dev := toDev
+	a := inputs[0]
+	b := inputs[1]
+	var av, bv, pv Value
+	var aok, bok, pok bool
+	av, aok = a.(Value)
+	bv, bok = b.(Value)
+	pv, pok = prealloc.(Value)
 
-// 	machine := extern.(CUDAMachine)
-// 	fns := machine.Functions()
+	switch {
+	case aok && bok:
+		if av.Shape().IsScalar() || bv.Shape().IsScalar() {
+			if pok {
+				return op.UsePreallocDo(pv, av, bv)
+			}
+			return op.Do(av, bv)
+		}
+	case aok:
+		// error
+		err = errors.Errorf("Cannot perform op on CPU when `b` is non-value memory")
+		return
+	case bok:
+		// error
+		err = errors.Errorf("Cannot perform op on CPU when `a` is non-value memory")
+		return
+	}
 
-// 	if len(machine.Contexts()) == 0 {
-// 		if prealloc != nil {
-// 			return op.UsePreallocDo(prealloc, inputs...)
-// 		}
-// 		return op.Do(inputs...)
-// 	}
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(inputTypes[0]); err != nil {
+		return
+	}
 
-// 	if retVal, err = Copy(prealloc, a); err != nil {
-// 		// TODO: maybe warn?
-// 		if prealloc != nil {
-// 			return op.UsePreallocDo(prealloc, inputs...)
-// 		}
-// 		return op.Do(inputs...)
-// 	}
+	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
+	if !extern.HasFunc(name) {
+		cudaLogf("extern %T has no function %q", extern, name)
 
-// 	fn := fns[name][int(dev)]
-// 	// TODO: optimize kernel to maximize parallelization
-// 	// var maxThreads int
-// 	// d := cu.Device(dev)
-// 	// if maxThreads, err = d.Attribute(cu.MaxThreadsPerBlock); err != nil {
-// 	// 	return op.Do(inputs...) // resort to using slow methods if there was an error
-// 	// }
+		if pok {
+			return op.UsePreallocDo(pv, av, bv)
+		}
+		return op.Do(av, bv)
+	}
 
-// 	var memA, memB cu.DevicePtr
-// 	if memA, err = valToDevicePointer(retVal); err != nil {
-// 		err = errors.Wrapf(err, opDoFail)
-// 		return
-// 	}
+	machine := extern.(CUDAMachine)
+	fn := machine.Functions()[name][int(dev)]
+	ctx := machine.Contexts()[int(dev)]
 
-// 	if memB, err = valToDevicePointer(b); err != nil {
-// 		err = errors.Wrapf(err, opDoFail)
-// 		return
-// 	}
+	// allocate if necessary
+	cudaLogf("allocate if necessary")
+	var mem cu.DevicePtr
+	switch pre := prealloc.(type) {
+	case Value:
+		memsize := int64(pre.MemSize())
+		if mem, err = ctx.MemAlloc(memsize); err != nil {
+			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
+			return
+		}
 
-// 	// we don't want no leaks
-// 	defer func(memA, memB cu.DevicePtr) {
-// 		if err := cu.MemFree(memA); err != nil {
-// 			cudaLogf("memfree(A): %v", err)
-// 		}
-// 		if err := cu.MemFree(memB); err != nil {
-// 			cudaLogf("memfree(B): %v", err)
-// 		}
-// 	}(memA, memB)
+		// if the prealloc is a Value we want to copy the value back and then free
+		defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
+			err = devPtrToValue(ctx, val, mem)
+			ctx.MemFree(mem)
+		}(ctx, pre, mem)
+	case cu.DevicePtr:
+		mem = pre
+	}
 
-// 	size := a.Shape().TotalSize()
-// 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(size, int(dev))
-// 	args := []unsafe.Pointer{
-// 		unsafe.Pointer(&memA),
-// 		unsafe.Pointer(&memB),
-// 		unsafe.Pointer(&size),
-// 	}
+	// copy
+	cudaLogf("copying a")
+	var size int64
+	switch at := a.(type) {
+	case Value:
+		cudaLogf("a is val")
+		memsize := int64(at.MemSize())
+		size = int64(at.Shape().TotalSize())
+		ctx.MemcpyHtoD(mem, at.Pointer(), memsize)
+	case cu.DevicePtr:
+		cudaLogf("a is Dev")
+		memsize := int64(at.MemSize())
+		size = memsize / int64(dt.Size())
+		ctx.Memcpy(mem, at, memsize)
+	}
 
-// 	cudaLogf("CUDADO %q, size %v", name, size)
-// 	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-// 	if err = fn.LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args); err != nil {
-// 		return
-// 	}
+	var memB cu.DevicePtr
+	switch bt := b.(type) {
+	case Value:
+		cudaLogf("b is val")
+		memsize := int64(b.MemSize())
+		if memB, err = ctx.MemAlloc(memsize); err != nil {
+			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
+			return
+		}
 
-// 	err = devPtrToValue(retVal, memA)
-// 	return
+		defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
+			err = devPtrToValue(ctx, val, mem)
+			ctx.MemFree(mem)
+		}(ctx, bt, memB)
+	case cu.DevicePtr:
+		memB = bt
+	}
 
-// }
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
+	args := []unsafe.Pointer{
+		unsafe.Pointer(&mem),
+		unsafe.Pointer(&memB),
+		unsafe.Pointer(&size),
+	}
+
+	cudaLogf("CUDADO %q, size %v", name, size)
+	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
+	return mem, nil
+}
 
 func (op elemBinOp) CUDAFuncName() string {
 	return ʘBinOpNames[op.binOpType()]

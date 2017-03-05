@@ -21,11 +21,13 @@ func (d Device) Alloc(extern External, size int64) (Memory, error) {
 
 	machine := extern.(CUDAMachine)
 	ctx := machine.Contexts()[int(d)]
+	ctx.SetCurrent()
+	return ctx.MemAlloc(size)
 	// TODO in the future push and pop contexts instead
-	if err := cu.SetCurrent(ctx.Context); err != nil {
-		return nil, err
-	}
-	return cu.MemAlloc(size)
+	// if err := cu.SetCurrent(ctx.Context); err != nil {
+	// 	return nil, err
+	// }
+	// return cu.MemAlloc(size)
 }
 
 func (d Device) Free(extern External, mem Memory) (err error) {
@@ -37,7 +39,6 @@ func (d Device) Free(extern External, mem Memory) (err error) {
 
 	machine := extern.(CUDAMachine)
 	ctx := machine.Contexts()[int(d)]
-
 	ctx.MemFree(devptr)
 	return nil
 }

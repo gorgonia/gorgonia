@@ -91,6 +91,30 @@ func (md *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ
 	return
 }
 
+// blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging
+func (md *ExternMetadata) blockThread(n, dev int) (blocks, threads int) {
+	switch {
+	case n <= 32:
+		threads = 32
+	case n <= 64:
+		threads = 64
+	case n <= 128:
+		threads = 128
+	case n <= 256:
+		threads = 256
+	case n <= 512:
+		threads = 512
+	default:
+		threads = 1024
+	}
+
+	blocks = (n + threads - 1) / threads
+	if blocks < 0 || blocks > 128 {
+		blocks = 128
+	}
+	return
+}
+
 func (m *ExternMetadata) WorkAvailable() <-chan struct{} { return m.workAvailable }
 
 func (m *ExternMetadata) DoWork() {
@@ -99,7 +123,7 @@ func (m *ExternMetadata) DoWork() {
 		cudaLogf("Checking if %d has work %v", i, hw)
 		if hw {
 			m.c[i].Synchronize()
-			cudaLogf("INTROSPECT: %v", m.c[i].Introspect())
+			// cudaLogf("INTROSPECT: %v", m.c[i].Introspect())
 			m.c[i].DoWork()
 		}
 		m.hasWork[i] = false
@@ -205,7 +229,7 @@ func (m *ExternMetadata) init() {
 		go m.collectWork(i, m.c[i].WorkAvailable())
 	}
 	if len(m.c) > 0 {
-		cu.SetCurrent(m.c[0].Context)
+		m.c[0].SetCurrent()
 	}
 	m.m = make(map[string][]cu.Module)
 	m.f = make(map[string][]cu.Function)
