@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/chewxy/cu"
 )
+
+var debug = flag.Bool("debug", false, "compile with debug mode (-linelinfo is added to nvcc call)")
 
 func stripExt(fullpath string) string {
 	_, filename := filepath.Split(fullpath)
@@ -28,7 +31,13 @@ func compileCUDA(src, targetLoc string, maj, min int) {
 
 	var stderr bytes.Buffer
 
-	slow := exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "-allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+	var slow *exec.Cmd
+	if *debug {
+		slow = exec.Command("nvcc", output, arch, "-lineinfo", "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+	} else {
+		slow = exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+	}
+
 	slow.Stderr = &stderr
 	if err := slow.Run(); err != nil {
 		log.Fatalf("Failed to compile with nvcc: %v.", stderr.String())
@@ -41,6 +50,7 @@ func compileCUDA(src, targetLoc string, maj, min int) {
 }
 
 func main() {
+	flag.Parse()
 	var devices int
 	var err error
 
