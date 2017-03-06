@@ -89,7 +89,7 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 // codgenerator holds the state for the code generation process
 type codegenerator struct {
 	locMap     map[*Node]register
-	lastWrites map[int]int
+	lastWrites map[register]*Node
 	flushed    map[int]struct{}
 	instrMap   map[*Node]fragment
 	queue      []int // queue to flus
@@ -105,7 +105,7 @@ type codegenerator struct {
 func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 	return &codegenerator{
 		locMap:     make(map[*Node]register),
-		lastWrites: make(map[int]int),
+		lastWrites: make(map[register]*Node),
 		flushed:    make(map[int]struct{}),
 		instrMap:   make(map[*Node]fragment),
 		lastReads:  make(map[register]int),
@@ -129,8 +129,8 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 // every time an instruction is added to the list of instructions,
 // also add the instructionID and the register the instruction writes to.
 // This helps with determining if a flushInstruction needs to be issued.
-func (cg *codegenerator) updateLastWrites(id int) {
-	cg.lastWrites[id] = len(cg.instructions) - 1
+func (cg *codegenerator) updateLastWrites(reg register, n *Node) {
+	cg.lastWrites[reg] = n
 }
 
 func (cg *codegenerator) flush() {
@@ -153,7 +153,7 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 	cg.instructions = append(cg.instructions, instr)
 
 	cg.addInstr(node, instr)
-	cg.updateLastWrites(writeTo.id)
+	cg.updateLastWrites(writeTo, node)
 }
 
 func (cg *codegenerator) addStmt(node *Node, interv *interval) {
@@ -178,7 +178,7 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 		cg.instructions = append(cg.instructions, instr)
 
 		cg.addInstr(node, instr)
-		cg.updateLastWrites(writeTo.id)
+		cg.updateLastWrites(writeTo, node)
 	case readOp:
 		// there should be only 1 child
 		if len(node.children) != 1 {
@@ -194,7 +194,7 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 		cg.instructions = append(cg.instructions, instr)
 
 		cg.addInstr(node, instr)
-		cg.updateLastWrites(writeTo.id)
+		cg.updateLastWrites(writeTo, node)
 	}
 }
 
@@ -224,40 +224,47 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 			cg.instructions = append(cg.instructions, instr)
 
 			cg.addInstr(node, instr)
-			cg.updateLastWrites(writeTo.id)
+			cg.updateLastWrites(writeTo, node)
 
 			prealloc = true
 
-			cg.queue = append(cg.queue, len(cg.instructions)) // no -1.
+			cg.queue = append(cg.queue, i)
+			// cg.queue = append(cg.queue, len(cg.instructions)) // no -1.
 		}
 
 		// check if any previously buffered cBLAS or cuBLAS calls need to be flushed
 		// it doesn't matter if the machine isn't using a batchedBLAS. flushInstr would just be a no-op at runtime
 		for _, read := range reads {
-			if instrID, ok := cg.lastWrites[read.id]; ok {
-				viaticum := cg.instructions[instrID] // ;) - it IS on the way
-				if instr, ok := viaticum.(*execOp); ok {
-					if instr.op.CallsExtern() && !node.op.CallsExtern() {
-						// the && bit is to make sure that if we have sequential cBLAS/cuBLAS calls,
-						// we just add it to the batch.
-						// sequential in this can mean several instructions apart. For example:
-						//		4 	A × B 	; read %2	; write to %3
-						//		 	⋮	(doesn't use %3 or %10)
-						//			⋮
-						//		10  Aᵀ × B	; read %3	; write to %10
-						//			⋮	(doesn't use %3, or %10)
-						//			⋮
-						//		12 	+		; read %10	; write to %12
-						//
-						// It is before instruction 12 that the flush will be added. 5 and 10 are considered sequential
-						if _, ok := cg.flushed[instrID]; !ok {
-							cg.instructions = append(cg.instructions, flushInstr{})
-							cg.addInstr(node, flushInstr{})
-							cg.updateLastWrites(-1) // flush doesn't write to any register
-							cg.flush()
-						}
+			if lastWriteNode, ok := cg.lastWrites[read]; ok {
+				var op Op
+				switch {
+				case lastWriteNode.isArg(), lastWriteNode.isStmt:
+					continue
+				default:
+					op = lastWriteNode.op
+				}
+				// viaticum := cg.instructions[instrID] // ;) - it IS on the way
+				// if instr, ok := viaticum.(*execOp); ok {
+				if op.CallsExtern() && !node.op.CallsExtern() {
+					// the && bit is to make sure that if we have sequential cBLAS/cuBLAS calls,
+					// we just add it to the batch.
+					// sequential in this can mean several instructions apart. For example:
+					//		4 	A × B 	; read %2	; write to %3
+					//		 	⋮	(doesn't use %3 or %10)
+					//			⋮
+					//		10  Aᵀ × B	; read %3	; write to %10
+					//			⋮	(doesn't use %3, or %10)
+					//			⋮
+					//		12 	+		; read %10	; write to %12
+					//
+					// It is before instruction 12 that the flush will be added. 5 and 10 are considered sequential
+					if _, ok := cg.flushed[i]; !ok {
+						cg.instructions = append(cg.instructions, flushInstr{})
+						cg.addInstr(node, flushInstr{})
+						cg.flush()
 					}
 				}
+				// }
 			}
 		}
 
@@ -289,7 +296,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 
 		cg.instructions = append(cg.instructions, instr)
 		cg.addInstr(node, instr)
-		cg.updateLastWrites(writeTo.id)
+		cg.updateLastWrites(writeTo, node)
 	}
 
 	// check if anything needs to be freed
@@ -301,10 +308,11 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 				break
 			}
 		}
-		interv := cg.df.intervals[readNode]
-		compileLogf("INTERV: %v LastUse:%v instrid: %v", interv, interv.lastUse(), len(cg.sorted)-i-1)
-		if interv.lastUse() <= len(cg.sorted)-i-1 && read.device != CPU {
-			compileLogf("Adding Free %v %d %d", read, i, len(cg.sorted)-i-1)
+		readRepl := cg.df.replacements[readNode]
+		interv := cg.df.intervals[readRepl]
+		compileLogf("INTERV: %p LastUse:%v instrid: %v", interv, interv.lastUse(), len(cg.sorted)-i-1)
+		if interv.lastUse() < len(cg.sorted)-i-1 && read.device != CPU {
+			compileLogf("Adding Free %v i: %d lastUse %d, instrlen %d", read, i, interv.lastUse(), len(cg.sorted)-i-1)
 			cg.instructions = append(cg.instructions, free{read})
 			cg.addInstr(node, free{read})
 		}
@@ -327,6 +335,12 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 			cg.addNode(node, replacement, nInterv, i)
 		}
 	}
+
+	// for i := len(cg.sorted) - 1; i >= 0; i-- {
+	// 	node := cg.sorted[i]
+	// 	instrs := cg.instrMap[node]
+	// 	cg.instructions = append(cg.instructions, instrs...)
+	// }
 	return &program{
 		instructions: cg.instructions,
 		args:         len(cg.inputs),

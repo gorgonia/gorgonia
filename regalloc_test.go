@@ -134,11 +134,11 @@ func TestRegAlloc(t *testing.T) {
 	ra := newRegalloc(df)
 	ra.alloc(sorted)
 
-	if is[x].result.id >= is[z].result.id {
+	if is[x].result.id >= len(is) {
 		t.Error("x is an input, and would have a lifetime of the entire program")
 	}
 
-	if is[y].result.id >= is[z].result.id {
+	if is[y].result.id >= len(is) {
 		t.Error("y is an input, and would have a lifetime of the entire program")
 	}
 

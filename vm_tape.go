@@ -392,16 +392,26 @@ func (p *program) String() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | Memories: %d\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs)
 
-	for k, v := range p.m {
-		fmt.Fprintf(&buf, "\t%x:", k.ID())
-		for i, instr := range v {
+	for id := len(p.sorted) - 1; id >= 0; id-- {
+		// for _, n := range p.sorted {
+		n := p.sorted[id]
+		fmt.Fprintf(&buf, "\t%x:", n.ID())
+		frag := p.m[n]
+		for i, instr := range frag {
 			if i == 0 {
 				fmt.Fprintf(&buf, "\t%v\n", instr)
 			} else {
 				fmt.Fprintf(&buf, "\t\t%v\n", instr)
 			}
 		}
+
 	}
+
+	// for k, v := range p.m {
+	// 	for i, instr := range v {
+	// if i == 0 {
+	// 	}
+	// }
 	return buf.String()
 }
 

@@ -20,4 +20,9 @@ func (m *ExternMetadata) WorkAvailable() <-chan struct{} {
 
 	return nil
 }
-func (m *ExternMetadata) DoWork() { m.b.DoWork() }
+func (m *ExternMetadata) DoWork() {
+	if m.b != nil {
+		m.b.DoWork()
+	}
+}
+func (m *ExternMetadata) DoAllWork() { m.DoWork() }
