@@ -141,7 +141,7 @@ func (m *tapeMachine) loadStdLib() {
 	}
 }
 
-func (instr execOp) exec(m *tapeMachine) (err error) {
+func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v. Node is: %x", instr, instr.id)
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
@@ -175,7 +175,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
 
-			cudaLogf("mem: 0x%x", mem)
+			cudaLogf("prealloc mem: 0x%x", mem)
 		case CLDoer:
 			goto usecpu
 		default:
@@ -193,6 +193,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 		case cu.DevicePtr:
 			v = node.Value()
 			if v == nil {
+				cudaLogf("allocating v")
 				// create v
 				switch t := instr.outputType.(type) {
 				case TensorType:
@@ -212,6 +213,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 					// wtf?
 				}
 			} else {
+				cudaLogf("copying v")
 				// copy
 				if err = devPtrToValue(ctx, v, mt); err != nil {
 					return
@@ -224,7 +226,7 @@ func (instr execOp) exec(m *tapeMachine) (err error) {
 			cudaLogf("write to cpu register")
 			m.cpumem[dest] = v
 		default:
-			cudaLogf("write to GPU register")
+			cudaLogf("write 0x%x to GPU register", mem)
 			m.gpumem[dest] = mem
 		}
 
@@ -276,7 +278,8 @@ usecpu:
 	var inputs []Value
 	for _, reg := range instr.readFrom {
 		v, mem := m.getValue(reg)
-		if v == nil && mem != nil {
+		switch {
+		case v == nil && mem != nil:
 			dev := reg.device
 			ctx := m.Contexts()[int(dev)]
 
@@ -301,9 +304,14 @@ usecpu:
 			cudaLogf("using n.Value: \n%v", n.Value())
 			inputs = append(inputs, n.Value())
 			continue
+
+		case v != nil:
+			inputs = append(inputs, v)
+		case v == nil && m == nil:
+			err = errors.Errorf("Cannot extract from nil memory")
+			return
 		}
 
-		inputs = append(inputs, v)
 		m.watchedLogf(m.valueFmt, v)
 	}
 	m.leaveLoggingContext()
@@ -312,11 +320,21 @@ usecpu:
 	var v Value
 	switch {
 	case instr.preAllocated:
+		cudaLogf("preallocated. instr.writeTo %v", instr.writeTo)
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
-			p := m.cpumem[instr.writeTo.id]
-			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
-				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
+			p, _ := m.getValue(instr.writeTo)
+			if p == nil {
+				if v, err = instr.op.Do(inputs...); err != nil {
+					return errors.Wrapf(err, opDoFail)
+				}
+			} else {
+				cudaLogf("WTF??! %v %v", p, p == nil)
+
+				if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
+					return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo)
+				}
 			}
+
 		} else {
 			// TODO: maybe warn?
 			if v, err = instr.op.Do(inputs...); err != nil {
@@ -347,8 +365,7 @@ usecpu:
 	// TODO: type and shape checks
 
 	// Write
-	dest := instr.writeTo.id
-	m.cpumem[dest] = v
+	m.writeValue(instr.writeTo, v)
 	node := m.p.g.Node(instr.id).(*Node)
 
 	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {

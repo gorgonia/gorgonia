@@ -114,12 +114,19 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 		return errors.Errorf("Node %v does not exist in this graph", b)
 	}
 
-	// get the registry location
-	// areg := m.locMap[a]
-	breg := m.locMap[b]
-	v := m.cpumem[breg.id]
-	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
+	if b.Value() != nil {
+		return a.bind(b.Value())
+	}
 
+	// get the registry location
+	breg := m.locMap[b]
+	v, _ := m.getValue(breg)
+	if v == nil {
+		err = errors.Errorf(nyiFail, "handling of Memory -> Value")
+		return
+	}
+
+	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
 	return a.bind(v)
 }
 
@@ -142,6 +149,12 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 			continue
 		}
 
+		v, _ := m.getValue(r)
+		if v == nil {
+			err = errors.Errorf(nyiFail, "converting Memory to Value")
+			return
+		}
+
 		if err = n.bind(m.cpumem[r.id]); err != nil {
 			return errors.Wrap(err, bindFail)
 		}
@@ -151,6 +164,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 }
 
 func (m *tapeMachine) RunAll() (err error) {
+	log.Println("m.RunAll")
 	defer func() {
 		if err == nil {
 			m.dontAlloc()
@@ -169,6 +183,7 @@ func (m *tapeMachine) RunAll() (err error) {
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
+	log.Printf("startrunall")
 	go m.runall(errChan, doneChan)
 	for {
 		select {
@@ -188,6 +203,7 @@ func (m *tapeMachine) RunAll() (err error) {
 }
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
+	log.Printf("start runall")
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		if err := instr.exec(m); err != nil {
@@ -200,10 +216,15 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			writeTo := instr.writes().id
 			id := instr.ID()
 			if writeTo > 0 && id > 0 {
-				v := m.cpumem[writeTo]
-				n := m.p.g.Node(id).(*Node)
+				v, _ := m.getValue(instr.writes())
+				if v == nil {
+					err := errors.Errorf(nyiFail, "converting Memory to Value")
+					errChan <- err
+					return
+				}
 
 				if hasNaN(v) {
+					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
 					return
@@ -215,9 +236,15 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			writeTo := instr.writes().id
 			id := instr.ID()
 			if writeTo > 0 && id > 0 {
-				v := m.cpumem[writeTo]
-				n := m.p.g.Node(id).(*Node)
+				v, _ := m.getValue(instr.writes())
+				if v == nil {
+					err := errors.Errorf(nyiFail, "converting Memory to Value")
+					errChan <- err
+					return
+				}
+
 				if hasInf(v) {
+					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
 					return
@@ -226,6 +253,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 		}
 	}
 
+	log.Printf("donerunall")
 	doneChan <- struct{}{}
 }
 
@@ -248,6 +276,15 @@ func (m *tapeMachine) getMemory(r register) Memory {
 		return m.cpumem[r.id].(Memory)
 	default:
 		return m.gpumem[r.id]
+	}
+}
+
+func (m *tapeMachine) writeValue(r register, v Value) {
+	switch r.device {
+	case CPU:
+		m.cpumem[r.id] = v
+	default:
+		m.gpumem[r.id] = v
 	}
 }
 
@@ -467,7 +504,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 			}
 		}
 
-		machineLogf("Have to allocate %v in register %v", instr.t, instr.writeTo)
+		machineLogf("Have to allocate %v %v in register %v", instr.t, instr.s, instr.writeTo)
 		var tt TensorType
 		var ok bool
 		if tt, ok = instr.t.(TensorType); !ok {
@@ -501,7 +538,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 				}
 			}
 		}
-		machineLogf("Have to allocate %v in register %v")
+		machineLogf("Have to allocate %v %v in register %v", instr.t, instr.s, instr.writeTo)
 		var tt TensorType
 		var ok bool
 		if tt, ok = instr.t.(TensorType); !ok {
@@ -527,7 +564,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 }
 
 func (instr alloc) String() string {
-	return fmt.Sprintf("Alloc %v\t\t%v", instr.t, instr.writeTo)
+	return fmt.Sprintf("Alloc %v%v\t\t%v", instr.t, instr.s, instr.writeTo)
 }
 
 type free struct {
@@ -579,9 +616,9 @@ func (instr loadArg) exec(m *tapeMachine) error {
 		v = node.boundTo
 	}
 
-	m.cpumem[instr.writeTo.id] = v
-	m.watchedLogf("Write To: %v", instr.writeTo)
-	m.watchedLogf(m.valueFmt, m.cpumem[instr.writeTo.id])
+	m.writeValue(instr.writeTo, v)
+	// m.watchedLogf("Write To: %v", instr.writeTo)
+	// m.watchedLogf(m.valueFmt, m.cpumem[instr.writeTo.id])
 	return nil
 }
 
@@ -603,11 +640,12 @@ type execOp struct {
 	preAllocated bool
 	useUnsafe    bool
 	useGPU       bool
+	storeAsMem   bool
 }
 
-func (instr execOp) ID() int           { return instr.id }
-func (instr execOp) reads() []register { return instr.readFrom }
-func (instr execOp) writes() register  { return instr.writeTo }
+func (instr *execOp) ID() int           { return instr.id }
+func (instr *execOp) reads() []register { return instr.readFrom }
+func (instr *execOp) writes() register  { return instr.writeTo }
 
 func newExecOp(n *Node) *execOp {
 	var inputTypes hm.Types
@@ -627,7 +665,7 @@ func newExecOp(n *Node) *execOp {
 	}
 }
 
-func (instr execOp) String() string {
+func (instr *execOp) String() string {
 	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.inputTypes, instr.op.CallsExtern(), instr.useUnsafe, instr.preAllocated)
 }
 
@@ -667,7 +705,11 @@ func (instr readInstr) ID() int           { return -1 }
 func (instr readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr readInstr) writes() register  { return register{-1, CPU} }
 func (instr readInstr) exec(m *tapeMachine) error {
-	v := m.cpumem[instr.readFrom.id]
+	v, _ := m.getValue(instr.readFrom)
+	if v == nil {
+		return errors.Errorf(nyiFail, "converting Memory to Value")
+	}
+
 	v2, err := CloneValue(v)
 	if err != nil {
 		return errors.Wrap(err, cloneFail)

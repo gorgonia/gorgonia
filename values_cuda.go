@@ -35,6 +35,7 @@ func devPtrToValue(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) (err err
 	ptr := val.Pointer()
 	if ctx != nil {
 		ctx.MemcpyDtoH(ptr, mem, size)
+		ctx.DoWork()
 		return nil
 	}
 	return cu.MemcpyDtoH(ptr, mem, size)

@@ -22,7 +22,7 @@ func TestCUDACube(t *testing.T) {
 	x3 := Must(Cube(x))
 
 	prog, locMap, err := Compile(g)
-	t.Logf("Prog: \n%v", prog)
+	// t.Logf("Prog: \n%v", prog)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestCUDABasicArithmetic(t *testing.T) {
 		}
 
 		// logger := log.New(os.Stderr, "", 0)
-		// m1 := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist())
+		// m1 := NewTapeMachine(prog, locMap, TraceExec(), UseCudaFor(), WithLogger(logger), WithWatchlist())
 		m1 := NewTapeMachine(prog, locMap, TraceExec(), UseCudaFor())
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %d: error while running %v", i, err)
@@ -85,7 +85,7 @@ func TestCUDABasicArithmetic(t *testing.T) {
 
 		ioutil.WriteFile("add.dot", []byte(g.ToDot()), 0644)
 
-		assert.Equal(bot.correct.Data(), ret.Value().Data())
+		assert.Equal(bot.correct.Data(), ret.Value().Data(), "i %d | %v | %v", i, bot.correct.Data(), ret.Value())
 		assert.True(bot.correctShape.Eq(ret.Shape()))
 		assert.Equal(2, len(grads))
 		assert.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v", i)

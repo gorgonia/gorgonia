@@ -11,7 +11,7 @@ func UseCudaFor(ops ...string) VMOpt {
 	return func(m VM) {}
 }
 
-func (instr execOp) exec(m *tapeMachine) (err error) {
+func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v. Node is: %x", instr, instr.id)
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()

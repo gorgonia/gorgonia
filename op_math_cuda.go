@@ -75,7 +75,6 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	switch at := a.(type) {
 	case Value:
 		cudaLogf("a is val")
-		cudaLogf("a %v", at.Data().([]float64)[0:3])
 		memsize := int64(at.MemSize())
 		size = int64(at.Shape().TotalSize())
 		ctx.MemcpyHtoD(mem, at.Pointer(), memsize)
@@ -116,10 +115,12 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 	defer leaveLoggingContext()
 
 	// check
-	cudaLogf("checking if op is arith")
-	if !op.isArith() {
-
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(inputTypes[0]); err != nil {
+		return
 	}
+	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
+	hasFn := extern.HasFunc(name)
 
 	a := inputs[0]
 	b := inputs[1]
@@ -131,7 +132,15 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 
 	switch {
 	case aok && bok:
-		if av.Shape().IsScalar() || bv.Shape().IsScalar() {
+		if av.Shape().IsScalar() || bv.Shape().IsScalar() || !op.isArith() {
+			if pok {
+				return op.UsePreallocDo(pv, av, bv)
+			}
+			return op.Do(av, bv)
+		}
+		if !hasFn {
+			cudaLogf("extern %T has no function %q", extern, name)
+
 			if pok {
 				return op.UsePreallocDo(pv, av, bv)
 			}
@@ -139,27 +148,16 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 		}
 	case aok:
 		// error
-		err = errors.Errorf("Cannot perform op on CPU when `b` is non-value memory")
-		return
+		if !hasFn {
+			err = errors.Errorf("Cannot perform op on CPU when `b` is non-value memory")
+			return
+		}
 	case bok:
 		// error
-		err = errors.Errorf("Cannot perform op on CPU when `a` is non-value memory")
-		return
-	}
-
-	var dt tensor.Dtype
-	if dt, err = dtypeOf(inputTypes[0]); err != nil {
-		return
-	}
-
-	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
-	if !extern.HasFunc(name) {
-		cudaLogf("extern %T has no function %q", extern, name)
-
-		if pok {
-			return op.UsePreallocDo(pv, av, bv)
+		if !hasFn {
+			err = errors.Errorf("Cannot perform op on CPU when `a` is non-value memory")
+			return
 		}
-		return op.Do(av, bv)
 	}
 
 	machine := extern.(CUDAMachine)
@@ -172,7 +170,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 	switch pre := prealloc.(type) {
 	case Value:
 		memsize := int64(pre.MemSize())
-		if mem, err = ctx.MemAlloc(memsize); err != nil {
+		if mem, err = ctx.AllocAndCopy(pre.Pointer(), memsize); err != nil {
 			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
 			return
 		}
@@ -207,7 +205,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 	case Value:
 		cudaLogf("b is val")
 		memsize := int64(b.MemSize())
-		if memB, err = ctx.MemAlloc(memsize); err != nil {
+		if memB, err = ctx.AllocAndCopy(bt.Pointer(), memsize); err != nil {
 			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
 			return
 		}
@@ -220,6 +218,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 		memB = bt
 	}
 
+	cudaLogf("%v mem 0x%x, memB 0x%x", op, mem, memB)
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&mem),

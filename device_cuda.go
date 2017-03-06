@@ -16,11 +16,17 @@ func (d Device) String() string { return cu.Device(d).String() }
 // Alloc allocates memory on the device. If the device is CPU, the allocations is a NO-OP because Go handles all the allocations in the CPU
 func (d Device) Alloc(extern External, size int64) (Memory, error) {
 	if d == CPU {
+		cudaLogf("device is CPU")
 		return nil, nil // well there should be an error because this wouldn't be called
 	}
 
 	machine := extern.(CUDAMachine)
-	ctx := machine.Contexts()[int(d)]
+	ctxes := machine.Contexts()
+	if len(ctxes) == 0 {
+		cudaLogf("allocate nothing")
+		return nil, nil // TODO
+	}
+	ctx := ctxes[int(d)]
 	ctx.SetCurrent()
 	return ctx.MemAlloc(size)
 	// TODO in the future push and pop contexts instead

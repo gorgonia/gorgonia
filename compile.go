@@ -304,7 +304,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		interv := cg.df.intervals[readNode]
 		compileLogf("INTERV: %v LastUse:%v instrid: %v", interv, interv.lastUse(), len(cg.sorted)-i-1)
 		if interv.lastUse() <= len(cg.sorted)-i-1 && read.device != CPU {
-			compileLogf("Adding Free")
+			compileLogf("Adding Free %v %d %d", read, i, len(cg.sorted)-i-1)
 			cg.instructions = append(cg.instructions, free{read})
 			cg.addInstr(node, free{read})
 		}

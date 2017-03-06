@@ -29,7 +29,10 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 		return err
 	}
 
+	// logger := log.New(os.Stderr, "", 0)
 	prog, locMap, err := Compile(g)
+	// log.Printf("%v", prog)
+	// m := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues(), WithLogger(logger), WithWatchlist())
 	m := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
 	defer runtime.GC()
 	if err := m.RunAll(); err != nil {

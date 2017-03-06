@@ -41,7 +41,7 @@ func TestDevCUDA(t *testing.T) {
 	t.Logf("x: %v", x.Value())
 	t.Logf("y: %v", y.Value())
 	t.Logf("xpy %v", xpy.Value())
-	t.Logf("xpy2: \n%+#v", xpy2.Value())
+	t.Logf("xpy2: \n%v", xpy2.Value())
 	t.Logf("xpy2s \n%v", xpy2s.Value())
 	t.Logf("xmy2 \n%v", xmy2.Value())
 }

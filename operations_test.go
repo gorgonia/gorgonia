@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
@@ -361,6 +362,8 @@ func TestSoftMax(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	log.Printf("%v", prog)
+	t.Log(prog)
 
 	m := NewTapeMachine(prog, locMap)
 	err = m.RunAll()
