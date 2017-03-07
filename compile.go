@@ -29,10 +29,12 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	df := analyze(g, sortedNodes)
 	df.intervals = buildIntervals(sortedNodes)
 
+	df.debugIntervals(sortedNodes)
+
 	ra := newRegalloc(df)
 	ra.alloc(sortedNodes)
 
-	compileLogf("Intervals: %+v", FmtNodeMap(df.intervals))
+	// compileLogf("Intervals: %+v", FmtNodeMap(df.intervals))
 	logCompileState(g.name, g, df)
 
 	cg := newCodeGenerator(inputs, sortedNodes, df)

@@ -214,11 +214,11 @@ func buildIntervals(sorted Nodes) map[*Node]*interval {
 
 		intervals[n] = newInterval()
 	}
+
 	instructions := len(sorted)
-	// for i, n := range sorted {
 	for i := len(sorted) - 1; i >= 0; i-- {
 		n := sorted[i]
-		instrNum := instructions - 1 - i
+		instrNum := i
 		nInter := intervals[n]
 
 		// inputs will be live the entire program
@@ -319,40 +319,45 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	}
 
 	overwrites := node.op.OverwritesInput()
-	if overwrites >= 0 {
-		overwrittenIsLive := reads[overwrites].liveAt(ra.instructionID)
+	var onDev bool
+	switch node.op.(type) {
+	case CUDADoer:
+		onDev = true
+	case CLDoer:
+		onDev = true
+	default:
+	}
 
+	if overwrites >= 0 {
+		overwriteReg := reads[overwrites].result
+		overwriteDev := overwriteReg.device
+		overwrittenIsLive := reads[overwrites].liveAt(ra.instructionID)
 		compileLogf("Overwrites : %v ", overwrites)
 		compileLogf("Overwritten (%v) is live at %d? %t", reads[overwrites], ra.instructionID, overwrittenIsLive)
 		compileLogf("Let Statements: %d | %v", len(letStmts), reads[overwrites])
 
-		_, onDev := node.op.(CUDADoer)
-		overwriteReg := reads[overwrites].result
-		overwriteDev := overwriteReg.device
 		// If the overwritten is not live, and the node does not call external processes (obiviating the need to prealloc)
 		// then we can directly overwrite the register.
 		if len(letStmts) == 1 || !overwrittenIsLive {
-			if !node.op.CallsExtern() {
-				switch {
-				case onDev && overwriteDev == Device(0):
-					writeTo = overwriteReg
-				case !onDev && overwriteDev == CPU:
-					writeTo = overwriteReg
-				case onDev:
-					writeTo = ra.newReg(Device(0))
-				case !onDev:
-					writeTo = ra.newReg(CPU)
-				}
-			} else {
-				switch {
-				case onDev && overwriteDev == Device(0):
-					writeTo = overwriteReg
-				case onDev:
-					writeTo = ra.newReg(Device(0))
-				case !onDev:
-					writeTo = ra.newReg(CPU)
-				}
+
+			switch {
+			case onDev && overwriteDev != CPU:
+				// if overwritten reg is on external device and op will execute on external device
+				// then safe to overwrite
+				writeTo = overwriteReg
+			case !node.op.CallsExtern() && overwriteDev == CPU:
+				// original case:
+				// if the op doesn't call an extern, and is executed on CPU
+				// safe to overwrite
+				writeTo = overwriteReg
+			case onDev:
+				// new register otherwise
+				writeTo = ra.newReg(Device(0))
+			case !onDev:
+				// new register otherwise
+				writeTo = ra.newReg(CPU)
 			}
+
 		} else {
 			if onDev {
 				writeTo = ra.newReg(Device(0))
@@ -362,7 +367,7 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 		}
 	} else {
 		compileLogf("New register")
-		if _, ok := node.op.(CUDADoer); ok {
+		if onDev {
 			writeTo = ra.newReg(Device(0))
 		} else {
 			writeTo = ra.newReg(CPU)
