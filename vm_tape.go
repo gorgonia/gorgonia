@@ -170,9 +170,6 @@ func (m *tapeMachine) RunAll() (err error) {
 		}
 	}()
 
-	log.Printf("m.logger == nil %v", m.logger == nil)
-	m.logf("RunAll")
-
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -218,7 +215,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v, _ := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting Memory to Value")
+					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchNaN")
 					errChan <- err
 					return
 				}
@@ -238,7 +235,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v, _ := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting Memory to Value")
+					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchInf")
 					errChan <- err
 					return
 				}

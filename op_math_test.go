@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -17,6 +16,7 @@ var binOpTests = []struct {
 	correctDerivB Value
 	correctShape  tensor.Shape
 }{
+
 	{Add,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
@@ -350,11 +350,13 @@ func TestBasicArithmetic(t *testing.T) {
 		y := NodeFromAny(g, yV, WithName("y"))
 
 		var ret *Node
+		var retVal Value
 		var err error
 		if ret, err = bot.binOp(x, y); err != nil {
 			t.Errorf("Test %d: %v", i, err)
 			continue
 		}
+		Read(ret, &retVal)
 
 		cost := Must(Sum(ret))
 		var grads Nodes
@@ -373,18 +375,16 @@ func TestBasicArithmetic(t *testing.T) {
 
 		// logger := log.New(os.Stderr, "", 0)
 		// m1 := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist())
-		m1 := NewTapeMachine(prog, locMap, TraceExec())
+		m1 := NewTapeMachine(prog, locMap)
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %d: error while running %v", i, err)
 			continue
 		}
 
-		ioutil.WriteFile("add.dot", []byte(g.ToDot()), 0644)
-
-		assert.Equal(bot.correct.Data(), ret.Value().Data())
+		assert.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
 		assert.True(bot.correctShape.Eq(ret.Shape()))
 		assert.Equal(2, len(grads))
-		assert.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v", i)
-		assert.Equal(bot.correctDerivB.Data(), grads[1].Value().Data())
+		assert.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+		assert.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad", i)
 	}
 }

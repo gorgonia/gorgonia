@@ -29,12 +29,11 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	df := analyze(g, sortedNodes)
 	df.intervals = buildIntervals(sortedNodes)
 
-	df.debugIntervals(sortedNodes)
-
 	ra := newRegalloc(df)
 	ra.alloc(sortedNodes)
 
-	// compileLogf("Intervals: %+v", FmtNodeMap(df.intervals))
+	// debug related stuff
+	df.debugIntervals(sortedNodes)
 	logCompileState(g.name, g, df)
 
 	cg := newCodeGenerator(inputs, sortedNodes, df)
@@ -193,6 +192,7 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 		}
 		compileLogf("node.children %d. [0]: %v", node.ID(), node.children[0])
 		compileLogf("node isInput %v", node.isInput())
+		compileLogf("node.children[0] Type %v, shape %v", node.children[0].t, node.children[0].shape)
 		from := cg.df.intervals[node.children[0]].result
 		instr := readInstr{
 			into:     op.into,

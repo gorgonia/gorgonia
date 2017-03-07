@@ -6,6 +6,7 @@ import (
 
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
+	"github.com/pkg/errors"
 )
 
 // Value represents a value that Gorgonia accepts. At this point it is implemented by:
@@ -80,3 +81,39 @@ type CopierFrom interface {
 // type Setter interface {
 // 	SetAll(interface{}) error
 // }
+
+// MakeValue creates a value given a type and shape. The default value is the zero value of the type.
+func MakeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(t); err != nil {
+		return
+	}
+
+	if s.IsScalar() {
+		switch dt {
+		case tensor.Float64:
+			return newF64(0), nil
+		case tensor.Float32:
+			return newF32(0), nil
+		case tensor.Int:
+			return newI(0), nil
+		case tensor.Int64:
+			return newI64(0), nil
+		case tensor.Int32:
+			return newI32(0), nil
+		case tensor.Byte:
+			return newU8(0), nil
+		case tensor.Bool:
+			return newB(false), nil
+		}
+	}
+
+	switch tt := t.(type) {
+	case TensorType:
+		return tensor.New(dt, s...), nil
+	default:
+		err = errors.Errorf(nyiTypeFail, "MakeValue", t)
+		return
+	}
+	panic("Unreachable")
+}
