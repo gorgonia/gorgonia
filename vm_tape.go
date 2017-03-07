@@ -164,7 +164,6 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 }
 
 func (m *tapeMachine) RunAll() (err error) {
-	log.Println("m.RunAll")
 	defer func() {
 		if err == nil {
 			m.dontAlloc()
@@ -183,7 +182,6 @@ func (m *tapeMachine) RunAll() (err error) {
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
-	log.Printf("startrunall")
 	go m.runall(errChan, doneChan)
 	for {
 		select {
@@ -203,7 +201,6 @@ func (m *tapeMachine) RunAll() (err error) {
 }
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
-	log.Printf("start runall")
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		if err := instr.exec(m); err != nil {
@@ -253,7 +250,6 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 		}
 	}
 
-	log.Printf("donerunall")
 	doneChan <- struct{}{}
 }
 
@@ -392,13 +388,14 @@ func (p *program) String() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | Memories: %d\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs)
 
-	for id := len(p.sorted) - 1; id >= 0; id-- {
-		// for _, n := range p.sorted {
-		n := p.sorted[id]
-		fmt.Fprintf(&buf, "\t%x:", n.ID())
+	// for i := len(p.sorted) - 1; i >= 0; i-- {
+	// instrID := len(p.sorted) - i - 1
+	for i, n := range p.sorted {
+		// n := p.sorted[i]
+		fmt.Fprintf(&buf, "\t%d\t%x:", i, n.ID())
 		frag := p.m[n]
-		for i, instr := range frag {
-			if i == 0 {
+		for j, instr := range frag {
+			if j == 0 {
 				fmt.Fprintf(&buf, "\t%v\n", instr)
 			} else {
 				fmt.Fprintf(&buf, "\t\t%v\n", instr)

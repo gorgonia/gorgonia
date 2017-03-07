@@ -123,7 +123,6 @@ func (m *ExternMetadata) DoWork() {
 		cudaLogf("Checking if %d has work %v", i, hw)
 		if hw {
 			m.c[i].Synchronize()
-			// cudaLogf("INTROSPECT: %v", m.c[i].Introspect())
 			m.c[i].DoWork()
 		}
 		m.hasWork[i] = false

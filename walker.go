@@ -34,7 +34,7 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 
 }
 
-// Sort topologically sorts a ExprGraph
+// Sort topologically sorts a ExprGraph: root of graph will be first
 func Sort(g *ExprGraph) (sorted Nodes, err error) {
 	var sortedNodes []graph.Node
 	if sortedNodes, err = topo.Sort(g); err != nil {
@@ -43,4 +43,11 @@ func Sort(g *ExprGraph) (sorted Nodes, err error) {
 
 	sorted = graphNodeToNode(sortedNodes)
 	return
+}
+
+func reverseNodes(sorted Nodes) {
+	for i := len(sorted)/2 - 1; i >= 0; i-- {
+		j := len(sorted) - i - 1
+		sorted[i], sorted[j] = sorted[j], sorted[i]
+	}
 }

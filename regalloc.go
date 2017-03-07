@@ -215,7 +215,9 @@ func buildIntervals(sorted Nodes) map[*Node]*interval {
 		intervals[n] = newInterval()
 	}
 	instructions := len(sorted)
-	for i, n := range sorted {
+	// for i, n := range sorted {
+	for i := len(sorted) - 1; i >= 0; i-- {
+		n := sorted[i]
 		instrNum := instructions - 1 - i
 		nInter := intervals[n]
 
@@ -324,12 +326,35 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 		compileLogf("Overwritten (%v) is live at %d? %t", reads[overwrites], ra.instructionID, overwrittenIsLive)
 		compileLogf("Let Statements: %d | %v", len(letStmts), reads[overwrites])
 
+		_, onDev := node.op.(CUDADoer)
+		overwriteReg := reads[overwrites].result
+		overwriteDev := overwriteReg.device
 		// If the overwritten is not live, and the node does not call external processes (obiviating the need to prealloc)
 		// then we can directly overwrite the register.
-		if len(letStmts) == 1 || (!overwrittenIsLive && !node.op.CallsExtern()) {
-			writeTo = reads[overwrites].result
+		if len(letStmts) == 1 || !overwrittenIsLive {
+			if !node.op.CallsExtern() {
+				switch {
+				case onDev && overwriteDev == Device(0):
+					writeTo = overwriteReg
+				case !onDev && overwriteDev == CPU:
+					writeTo = overwriteReg
+				case onDev:
+					writeTo = ra.newReg(Device(0))
+				case !onDev:
+					writeTo = ra.newReg(CPU)
+				}
+			} else {
+				switch {
+				case onDev && overwriteDev == Device(0):
+					writeTo = overwriteReg
+				case onDev:
+					writeTo = ra.newReg(Device(0))
+				case !onDev:
+					writeTo = ra.newReg(CPU)
+				}
+			}
 		} else {
-			if _, ok := node.op.(CUDADoer); ok {
+			if onDev {
 				writeTo = ra.newReg(Device(0))
 			} else {
 				writeTo = ra.newReg(CPU)
@@ -378,8 +403,12 @@ func (ra *regalloc) alloc(sorted Nodes) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	for i := len(sorted) - 1; i >= 0; i-- {
-		node := sorted[i]
+	// for i := len(sorted) - 1; i >= 0; i-- {
+	// node := sorted[i]
+
+	for i, node := range sorted {
+		// ra.instructionID = len(sorted) - i - 1
+		ra.instructionID = i
 
 		replacement := ra.df.replacements[node]
 		nInterv := ra.df.intervals[replacement]
@@ -399,6 +428,6 @@ func (ra *regalloc) alloc(sorted Nodes) {
 			ra.allocImmutableOp(node, nInterv)
 		}
 		compileLogf("n: %x; result: %v; reads: %v", node.ID(), nInterv.result, nInterv.reads)
-		ra.instructionID++
+		// ra.instructionID++
 	}
 }

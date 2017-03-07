@@ -22,6 +22,7 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	if sortedNodes, err = Sort(g); err != nil {
 		return nil, nil, errors.Wrap(err, sortFail)
 	}
+	reverseNodes(sortedNodes)
 
 	inputs := g.Inputs()
 
@@ -91,6 +92,8 @@ type codegenerator struct {
 	locMap     map[*Node]register
 	lastWrites map[register]*Node
 	flushed    map[int]struct{}
+	allocated  map[register]struct{}
+	freed      map[register]struct{}
 	instrMap   map[*Node]fragment
 	queue      []int // queue to flus
 
@@ -107,6 +110,8 @@ func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 		locMap:     make(map[*Node]register),
 		lastWrites: make(map[register]*Node),
 		flushed:    make(map[int]struct{}),
+		allocated:  make(map[register]struct{}),
+		freed:      make(map[register]struct{}),
 		instrMap:   make(map[*Node]fragment),
 		lastReads:  make(map[register]int),
 
@@ -150,7 +155,7 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 		index:   node.ID(),
 		writeTo: writeTo,
 	}
-	cg.instructions = append(cg.instructions, instr)
+	// cg.instructions = append(cg.instructions, instr)
 
 	cg.addInstr(node, instr)
 	cg.updateLastWrites(writeTo, node)
@@ -175,7 +180,7 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 			readFrom: from,
 			writeTo:  to,
 		}
-		cg.instructions = append(cg.instructions, instr)
+		// cg.instructions = append(cg.instructions, instr)
 
 		cg.addInstr(node, instr)
 		cg.updateLastWrites(writeTo, node)
@@ -191,7 +196,7 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 			into:     op.into,
 			readFrom: from,
 		}
-		cg.instructions = append(cg.instructions, instr)
+		// cg.instructions = append(cg.instructions, instr)
 
 		cg.addInstr(node, instr)
 		cg.updateLastWrites(writeTo, node)
@@ -202,6 +207,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 	compileLogf("Expr")
 	compileLogf("Node: %x %v", node.ID(), node.op)
 	compileLogf("interval %v", interv)
+
 	writeTo := interv.result
 	var reads []register
 	for _, child := range node.children {
@@ -219,17 +225,20 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		// if the instruction calls an extern (cBLAS or cuBlas), then we should preallocate the vector
 		if node.op.CallsExtern() {
 			compileLogf("calls extern")
-			var instr alloc
-			instr = newAlloc(node, writeTo)
-			cg.instructions = append(cg.instructions, instr)
+			if _, ok := cg.allocated[writeTo]; !ok {
+				var instr alloc
+				instr = newAlloc(node, writeTo)
+				// cg.instructions = append(cg.instructions, instr)
 
-			cg.addInstr(node, instr)
-			cg.updateLastWrites(writeTo, node)
+				cg.addInstr(node, instr)
+				cg.updateLastWrites(writeTo, node)
 
-			prealloc = true
+				prealloc = true
 
-			cg.queue = append(cg.queue, i)
-			// cg.queue = append(cg.queue, len(cg.instructions)) // no -1.
+				cg.queue = append(cg.queue, i)
+				// cg.queue = append(cg.queue, len(cg.instructions)) // no -1.
+				cg.allocated[writeTo] = struct{}{}
+			}
 		}
 
 		// check if any previously buffered cBLAS or cuBLAS calls need to be flushed
@@ -259,7 +268,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 					//
 					// It is before instruction 12 that the flush will be added. 5 and 10 are considered sequential
 					if _, ok := cg.flushed[i]; !ok {
-						cg.instructions = append(cg.instructions, flushInstr{})
+						// cg.instructions = append(cg.instructions, flushInstr{})
 						cg.addInstr(node, flushInstr{})
 						cg.flush()
 					}
@@ -287,16 +296,33 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 
 	// otherwise, the replacement has already been written
 	if node == replacement {
-		compileLogf("New Exec Op")
+		compileLogf("New Exec Op: %v", node.op)
 		instr := newExecOp(node)
 		instr.readFrom = reads
 		instr.writeTo = writeTo
 		instr.preAllocated = prealloc
 		instr.useUnsafe = useUnsafe
 
-		cg.instructions = append(cg.instructions, instr)
+		// cg.instructions = append(cg.instructions, instr)
 		cg.addInstr(node, instr)
 		cg.updateLastWrites(writeTo, node)
+	}
+}
+
+func (cg *codegenerator) insertFlush(instrID int, node *Node) {
+
+}
+
+func (cg *codegenerator) insertFree(instrID int, node *Node) {
+	compileLogf("Inserting Free for instrID %d | instr: %v | op: %v", instrID, node, node.op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
+	var reads []register
+	for _, child := range node.children {
+		cReplacement := cg.df.replacements[child]
+		cInterv := cg.df.intervals[cReplacement]
+		reads = append(reads, cInterv.result)
 	}
 
 	// check if anything needs to be freed
@@ -308,20 +334,25 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 				break
 			}
 		}
-		readRepl := cg.df.replacements[readNode]
-		interv := cg.df.intervals[readRepl]
-		compileLogf("INTERV: %p LastUse:%v instrid: %v", interv, interv.lastUse(), len(cg.sorted)-i-1)
-		if interv.lastUse() < len(cg.sorted)-i-1 && read.device != CPU {
-			compileLogf("Adding Free %v i: %d lastUse %d, instrlen %d", read, i, interv.lastUse(), len(cg.sorted)-i-1)
-			cg.instructions = append(cg.instructions, free{read})
-			cg.addInstr(node, free{read})
+		// readRepl := cg.df.replacements[readNode]
+		// interv := cg.df.intervals[readRepl]
+		interv := cg.df.intervals[readNode]
+		compileLogf("Interval: %p; read: %v; Read Node %p; Op %v; LastUse %v; Instrid: %v", interv, read, readNode, readNode.op, interv.lastUse(), instrID)
+		if interv.lastUse() <= instrID && read.device != CPU {
+			if _, ok := cg.freed[read]; !ok {
+				compileLogf("Adding Free %v. LastUse %d", read, interv.lastUse())
+				// cg.instructions = append(cg.instructions, free{read})
+				cg.addInstr(node, free{read})
+				cg.freed[read] = struct{}{}
+			}
 		}
 	}
 }
 
 func (cg *codegenerator) gen() (*program, map[*Node]register) {
-	for i := len(cg.sorted) - 1; i >= 0; i-- {
-		node := cg.sorted[i]
+	for i, node := range cg.sorted {
+		// for i := len(cg.sorted) - 1; i >= 0; i-- {
+		// node := cg.sorted[i]
 		replacement := cg.df.replacements[node]
 		compileLogf("Working on %x. Replacement: %x", node.ID(), replacement.ID())
 
@@ -336,11 +367,20 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 		}
 	}
 
-	// for i := len(cg.sorted) - 1; i >= 0; i-- {
-	// 	node := cg.sorted[i]
-	// 	instrs := cg.instrMap[node]
-	// 	cg.instructions = append(cg.instructions, instrs...)
-	// }
+	var instructionCount int
+	for i := len(cg.sorted) - 1; i >= 0; i-- {
+		node := cg.sorted[i]
+		cg.insertFree(i, node)
+
+		instructionCount += len(cg.instrMap[node])
+	}
+
+	cg.instructions = make(fragment, 0, instructionCount)
+	for _, node := range cg.sorted {
+		instrs := cg.instrMap[node]
+		cg.instructions = append(cg.instructions, instrs...)
+	}
+
 	return &program{
 		instructions: cg.instructions,
 		args:         len(cg.inputs),

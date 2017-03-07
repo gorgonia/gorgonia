@@ -23,7 +23,7 @@ var (
 	machineDev        = true
 	stabilizationDev  = false
 	solverDev         = false
-	cudaDev           = true
+	cudaDev           = false
 )
 
 var READMEMSTATS = true
