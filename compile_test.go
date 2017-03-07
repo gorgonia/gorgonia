@@ -25,9 +25,11 @@ func TestCompile_medium(t *testing.T) {
 
 	// check flushes
 	var frag fragment
+	var onDev bool
 	frag = prog.m[xpys]
 	switch xpy.op.(type) {
 	case CUDADoer:
+		onDev = true
 		if _, ok := frag[0].(flushInstr); !ok {
 			t.Error("Expected the first instruction to be a flush instr")
 		}
@@ -72,9 +74,10 @@ func TestCompile_medium(t *testing.T) {
 	}
 
 	switch {
-	case readFree2L && readFreeL:
-	case setFree2L && setFreeL:
-	case setFreeL && readFreeL:
+	case !onDev:
+	case onDev && readFree2L && readFreeL:
+	case onDev && setFree2L && setFreeL:
+	case onDev && setFreeL && readFreeL:
 	default:
 		t.Errorf("Expected free to be in either `set` or `read`. readFree2L: %t, readFreeL %t, setFree2L: %t, setFreeL: %t", readFree2L, readFreeL, setFree2L, setFreeL)
 	}

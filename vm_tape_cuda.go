@@ -160,7 +160,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			inputs[i] = m.getMemory(reg)
 			fromDevs[i] = reg.device
 			cudaLogf("inputs[%d] :%T", i, inputs[i])
-			m.watchedLogf("0x%x", inputs[i])
+			m.watchedLogf(m.valueFmt, inputs[i])
 		}
 		m.leaveLoggingContext()
 
@@ -184,6 +184,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 		// Write
 		var v Value
+		var convertedFromMem bool
 		dest := instr.writeTo.id
 		node := m.p.g.Node(instr.id).(*Node)
 		ctx := m.c[int(toDev)]
@@ -219,6 +220,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 					return
 				}
 			}
+			convertedFromMem = true
 		}
 
 		switch instr.writeTo.device {
@@ -262,7 +264,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			}
 
 		}
-		m.watchedLogf("Written To: %v", instr.writeTo)
+		m.watchedLogf("Written To: %v | Converted from Memory %t", instr.writeTo, convertedFromMem)
 		m.enterLoggingContext()
 		m.watchedLogf(m.valueFmt, v)
 		m.leaveLoggingContext()

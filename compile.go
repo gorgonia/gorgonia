@@ -246,33 +246,71 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		for _, read := range reads {
 			if lastWriteNode, ok := cg.lastWrites[read]; ok {
 				var op Op
+				var onDev, nodeOnDev Device
+
 				switch {
 				case lastWriteNode.isArg(), lastWriteNode.isStmt:
 					continue
 				default:
 					op = lastWriteNode.op
 				}
-				// viaticum := cg.instructions[instrID] // ;) - it IS on the way
-				// if instr, ok := viaticum.(*execOp); ok {
-				if op.CallsExtern() && !node.op.CallsExtern() {
-					// the && bit is to make sure that if we have sequential cBLAS/cuBLAS calls,
-					// we just add it to the batch.
-					// sequential in this can mean several instructions apart. For example:
-					//		4 	A × B 	; read %2	; write to %3
-					//		 	⋮	(doesn't use %3 or %10)
-					//			⋮
-					//		10  Aᵀ × B	; read %3	; write to %10
-					//			⋮	(doesn't use %3, or %10)
-					//			⋮
-					//		12 	+		; read %10	; write to %12
-					//
-					// It is before instruction 12 that the flush will be added. 5 and 10 are considered sequential
+				switch op.(type) {
+				case CUDADoer:
+					onDev = Device(0)
+				case CLDoer:
+					onDev = Device(0)
+				default:
+					onDev = CPU
+				}
+
+				switch node.op.(type) {
+				case CUDADoer:
+					nodeOnDev = Device(0)
+				case CLDoer:
+					nodeOnDev = Device(0)
+				default:
+					nodeOnDev = CPU
+				}
+
+				// if we have sequential Extern calls,  we just add it to the batch.
+				// sequential in this can mean several instructions apart. For example:
+				//		4 	A × B 	; read %2	; write to %3
+				//		 	⋮	(doesn't use %3 or %10)
+				//			⋮
+				//		10  Aᵀ × B	; read %3	; write to %10
+				//			⋮	(doesn't use %3, or %10)
+				//			⋮
+				//		12 	+		; read %10	; write to %12
+				//
+				// It is before instruction 12 that the flush will be added. 4 and 10 are considered sequential
+				//
+				// It is not sequential when both are not the same devices
+				switch {
+				case !op.CallsExtern():
+					// op doesn't call extern... don't bother flushing
+				case op.CallsExtern() && node.op.CallsExtern() && onDev == nodeOnDev:
+					// same device, both calls extern
+					// no flush needed
+				case op.CallsExtern() && node.op.CallsExtern() && onDev != nodeOnDev:
+					// different devices, both calls extern
+					// flush needed
+					fallthrough
+				case op.CallsExtern() && !node.op.CallsExtern():
+					// node is gonna use the value immediately
+					// flush needed
+					fallthrough
+				default:
 					if _, ok := cg.flushed[i]; !ok {
 						// cg.instructions = append(cg.instructions, flushInstr{})
 						cg.addInstr(node, flushInstr{})
 						cg.flush()
 					}
 				}
+
+				// viaticum := cg.instructions[instrID] // ;) - it IS on the way
+				// if instr, ok := viaticum.(*execOp); ok {
+				// if op.CallsExtern() && !node.op.CallsExtern() {
+				// }
 				// }
 			}
 		}
@@ -334,11 +372,12 @@ func (cg *codegenerator) insertFree(instrID int, node *Node) {
 				break
 			}
 		}
-		// readRepl := cg.df.replacements[readNode]
-		// interv := cg.df.intervals[readRepl]
-		interv := cg.df.intervals[readNode]
-		compileLogf("Interval: %p; read: %v; Read Node %p; Op %v; LastUse %v; Instrid: %v", interv, read, readNode, readNode.op, interv.lastUse(), instrID)
-		if interv.lastUse() <= instrID && read.device != CPU {
+		// interv := cg.df.intervals[readNode]
+		readRepl := cg.df.replacements[readNode]
+		interv := cg.df.intervals[readRepl]
+		lastUse := interv.lastUse()
+		compileLogf("Interval: %p; read: %v; Read Node %p; Op %v; LastUse %v; Instrid: %v", interv, read, readNode, readNode.op, lastUse, instrID)
+		if lastUse >= 0 && lastUse <= instrID && read.device != CPU {
 			if _, ok := cg.freed[read]; !ok {
 				compileLogf("Adding Free %v. LastUse %d", read, interv.lastUse())
 				// cg.instructions = append(cg.instructions, free{read})

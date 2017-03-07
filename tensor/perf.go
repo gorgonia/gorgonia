@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"reflect"
 	"sync"
 )
@@ -86,7 +85,7 @@ func borrowDense(dt Dtype, size int) *Dense {
 
 end:
 	retVal := pool.Get().(*Dense)
-	log.Printf("borrowing %p", retVal)
+	// log.Printf("borrowing %p", retVal)
 	return retVal
 }
 
@@ -97,7 +96,7 @@ func ReturnTensor(t Tensor) {
 	}
 	switch tt := t.(type) {
 	case *Dense:
-		log.Printf("returning %p", tt)
+		// log.Printf("returning %p", tt)
 		dt := tt.t.Kind()
 		if _, ok := densePool[dt]; !ok {
 			return

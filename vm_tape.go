@@ -44,7 +44,7 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 		locMap:         locMap,
 		cpumem:         make([]Value, prog.cpulocs),
 		gpumem:         make([]Memory, prog.gpulocs),
-		valueFmt:       "%3.3f",
+		valueFmt:       "%3.3g",
 	}
 
 	if b, ok := whichblas.(batchedBLAS); ok {
@@ -169,6 +169,9 @@ func (m *tapeMachine) RunAll() (err error) {
 			m.dontAlloc()
 		}
 	}()
+
+	log.Printf("m.logger == nil %v", m.logger == nil)
+	m.logf("RunAll")
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
