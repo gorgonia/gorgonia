@@ -139,9 +139,9 @@ enqueue:
 		}
 
 		for i, c := range ctx.queue {
-			ctx.fns[i] = *(*C.fnargs_t)(unsafe.Pointer(c.fnargs))
+			ctx.fns[i] = *(*C.struct_fnargs)(unsafe.Pointer(c.args))
 		}
-		C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue)))
+		C.process(&ctx.fns[0], C.int(len(ctx.queue)))
 
 		// clear queue
 		ctx.queue = ctx.queue[:0]
@@ -172,6 +172,6 @@ enqueue:
 // 	ctx.queue = ctx.queue[:0]
 // }
 
-func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
+func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
 func (ctxt *context) String() string { return "Blase" }
