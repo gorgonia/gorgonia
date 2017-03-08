@@ -45,7 +45,7 @@ func TestCUDACube(t *testing.T) {
 func TestCUDABasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		log.Printf("DOING TEST %d NOW", i)
+		// log.Printf("DOING TEST %d NOW", i)
 		// if i != 13 {
 		// 	continue
 		// }

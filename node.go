@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"unsafe"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/gorgonia/tensor"
@@ -40,6 +39,7 @@ type Node struct {
 	deriv   *Node
 
 	// for hashing nodes
+	id   int // id is the ID at which the node is added to the graph
 	hash uint32
 
 	hashed        bool
@@ -214,7 +214,7 @@ func NewUniqueNode(opts ...NodeConsOpt) *Node {
 }
 
 // ID returns the ID of the node. This satisfies the gonum/graph.Node interface
-func (n *Node) ID() int { return int(uintptr(unsafe.Pointer(n))) }
+func (n *Node) ID() int { return n.id }
 
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }

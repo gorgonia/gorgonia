@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
-	"unsafe"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/gonum/graph"
@@ -96,6 +95,8 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 
 	g.addToAll(n)
 	g.byHash[hash] = n
+	n.id = int(g.counter)
+	g.counter++
 	return n
 }
 
@@ -365,9 +366,11 @@ func (g *ExprGraph) removeAllEdgesFrom(n *Node) {
 
 // Node returns the node in the graph with the given ID.
 func (g *ExprGraph) Node(id int) graph.Node {
-	n := (*Node)(unsafe.Pointer(uintptr(id)))
-	if _, ok := g.to[n]; ok {
-		return n
+	// n := (*Node)(unsafe.Pointer(uintptr(id)))
+	for _, n := range g.all {
+		if n.id == id {
+			return n
+		}
 	}
 	return nil
 }

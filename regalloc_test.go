@@ -55,7 +55,12 @@ func TestBuildIntervals(t *testing.T) {
 		if sorted, err = Sort(g); err != nil {
 			t.Fatal(err)
 		}
+		reverseNodes(sorted)
 		intervals = buildIntervals(sorted)
+
+		df := newdataflow()
+		df.intervals = intervals
+		df.debugIntervals(sorted)
 
 		// inputs are live until the last instruction
 		assert.Equal(len(intervals), intervals[x].end, "%v", len(sorted))
@@ -142,11 +147,20 @@ func TestRegAlloc(t *testing.T) {
 		t.Error("y is an input, and would have a lifetime of the entire program")
 	}
 
-	if z2.op.CallsExtern() {
+	var onDev bool
+	switch z2.op.(type) {
+	case CUDADoer:
+		onDev = true
+	case CLDoer:
+		onDev = true
+	}
+
+	switch {
+	case z2.op.CallsExtern() && !onDev:
 		if is[z].result.id == is[z2].result.id {
 			t.Error("z2 should NOT reuse the register of z")
 		}
-	} else {
+	default:
 		if is[z].result.id != is[z2].result.id {
 			t.Error("z2 should reuse the register of z")
 		}
