@@ -101,8 +101,11 @@ type context struct {
 
 func newContext() *context {
 	return &context{
-		fns:   make([]C.struct_fnargs, workbufLen+1, workbufLen+1),
-		queue: make([]call, 0, workbufLen+1), // the extra 1 is for cases where the queue is full, and a blocking call comes in
+		workAvailable: make(chan struct{}, 1),
+		work:          make(chan call, workbufLen),
+
+		fns:   make([]C.struct_fnargs, workbufLen, workbufLen),
+		queue: make([]call, 0, workbufLen),
 	}
 }
 
@@ -114,6 +117,7 @@ func (ctx *context) enqueue(c call) {
 	}
 	if c.blocking {
 		// do something
+		ctx.DoWork()
 	}
 }
 
@@ -125,26 +129,27 @@ func (ctx *context) DoWork() {
 		default:
 			return
 		}
-	}
-	blocking := ctx.queue[len(ctx.queue)-1].blocking
-enqueue:
-	for len(ctx.queue) < cap(ctx.queue) && !blocking {
-		select {
-		case w := <-ctx.work:
-			ctx.queue = append(ctx.queue, w)
-			blocking = ctx.queue[len(ctx.queue)-1].blocking
-		default:
-			break enqueue
 
+		blocking := ctx.queue[len(ctx.queue)-1].blocking
+	enqueue:
+		for len(ctx.queue) < cap(ctx.queue) && !blocking {
+			select {
+			case w := <-ctx.work:
+				ctx.queue = append(ctx.queue, w)
+				blocking = ctx.queue[len(ctx.queue)-1].blocking
+			default:
+				break enqueue
+
+			}
+
+			for i, c := range ctx.queue {
+				ctx.fns[i] = *(*C.struct_fnargs)(unsafe.Pointer(c.args))
+			}
+			C.process(&ctx.fns[0], C.int(len(ctx.queue)))
+
+			// clear queue
+			ctx.queue = ctx.queue[:0]
 		}
-
-		for i, c := range ctx.queue {
-			ctx.fns[i] = *(*C.struct_fnargs)(unsafe.Pointer(c.args))
-		}
-		C.process(&ctx.fns[0], C.int(len(ctx.queue)))
-
-		// clear queue
-		ctx.queue = ctx.queue[:0]
 	}
 }
 
