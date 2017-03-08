@@ -23,6 +23,7 @@ type ExprGraph struct {
 	leaves    Nodes
 	constants Nodes
 	roots     Nodes
+	counter   uint
 }
 
 type graphconopt func(g *ExprGraph)

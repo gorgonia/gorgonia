@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// errNoStabilization is an error used internally for when there is no stabilization mechanism is found.
 type errNoStabilization interface {
 	error
 	noStabilization() bool
@@ -26,6 +27,7 @@ type noIncrErr struct {
 func (noIncrErr) Error() string  { return "increment couldn't be done. Safe op was performed instead" }
 func (e noIncrErr) Value() Value { return e.v }
 
+// valueErr is an error used internally for when an error is itself a Valuer
 type valueErr struct {
 	Valuer
 

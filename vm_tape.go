@@ -15,10 +15,11 @@ import (
 type tapeMachine struct {
 	*ExternMetadata
 
-	p      *program
-	cpumem []Value
-	gpumem []Memory
-	locMap map[*Node]register
+	p       *program
+	cpumem  []Value  // Value - knows its own type and shape
+	gpumem  []Memory // memory slabs on GPU (or Value)
+	gpumeta []int    // element sizes
+	locMap  map[*Node]register
 
 	// state stuff, to allow continuation
 	pc int
@@ -190,13 +191,12 @@ func (m *tapeMachine) RunAll() (err error) {
 		case err := <-errChan:
 			return errors.Wrapf(err, "PC: %d", m.pc)
 		case <-doneChan:
-			m.ExternMetadata.DoWork()
+			cudaLogf("doAllWork")
+			m.ExternMetadata.DoAllWork()
 			return nil
 		default:
 		}
 	}
-	m.DoAllWork()
-
 	return
 }
 
@@ -582,6 +582,7 @@ func (instr free) ID() int           { return -1 }
 func (instr free) reads() []register { return []register{instr.readsFrom} }
 func (instr free) writes() register  { return register{-1, CPU} }
 func (instr free) exec(m *tapeMachine) error {
+	m.logf("Executing Free %v", instr.readsFrom)
 	switch instr.readsFrom.device {
 	case CPU:
 		return nil
@@ -680,6 +681,7 @@ func (instr *execOp) String() string {
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
+	m.logf("Executing DoWork")
 	m.ExternMetadata.DoWork()
 	return nil
 }
@@ -706,15 +708,31 @@ func (instr letInstr) String() string {
 type readInstr struct {
 	readFrom register
 	into     *Value
+
+	// required to convert Memory to Value
+	t hm.Type
+	s tensor.Shape
 }
 
-func (instr readInstr) ID() int           { return -1 }
-func (instr readInstr) reads() []register { return []register{instr.readFrom} }
-func (instr readInstr) writes() register  { return register{-1, CPU} }
-func (instr readInstr) exec(m *tapeMachine) error {
-	v, _ := m.getValue(instr.readFrom)
+func (instr *readInstr) ID() int           { return -1 }
+func (instr *readInstr) reads() []register { return []register{instr.readFrom} }
+func (instr *readInstr) writes() register  { return register{-1, CPU} }
+func (instr *readInstr) exec(m *tapeMachine) (err error) {
+	m.logf("Executing READ")
+	v, mem := m.getValue(instr.readFrom)
 	if v == nil {
-		return errors.Errorf(nyiFail, "converting Memory to Value")
+		if v, err = makeValue(instr.t, instr.s); err != nil {
+
+		}
+
+		if err = convM2V(m, instr.readFrom.device, mem, &v); err != nil {
+
+		}
+
+		*instr.into = v
+		return nil
+
+		// return errors.Errorf(nyiFail, "converting Memory to Value")
 	}
 
 	v2, err := CloneValue(v)
@@ -726,7 +744,7 @@ func (instr readInstr) exec(m *tapeMachine) error {
 	return nil
 }
 
-func (instr readInstr) String() string {
+func (instr *readInstr) String() string {
 	return fmt.Sprintf("Read %v into %p", instr.readFrom, instr.into)
 }
 

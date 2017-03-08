@@ -1,6 +1,9 @@
 package gorgonia
 
-import "testing"
+import (
+	"io/ioutil"
+	"testing"
+)
 
 func TestCompile_medium(t *testing.T) {
 	g := NewGraph()
@@ -22,6 +25,7 @@ func TestCompile_medium(t *testing.T) {
 	}
 
 	t.Log(prog)
+	ioutil.WriteFile("compile_medium.dot", []byte(g.ToDot()), 0644)
 
 	// check flushes
 	var frag fragment
@@ -53,8 +57,10 @@ func TestCompile_medium(t *testing.T) {
 		if _, ok := frag[len(frag)-1].(free); ok {
 			readFreeL = true
 		}
-		if _, ok := frag[len(frag)-2].(free); ok {
-			readFree2L = true
+		if len(frag) > 2 {
+			if _, ok := frag[len(frag)-2].(free); ok {
+				readFree2L = true
+			}
 		}
 	case CLDoer:
 	default:
@@ -66,8 +72,10 @@ func TestCompile_medium(t *testing.T) {
 		if _, ok := frag[len(frag)-1].(free); ok {
 			setFreeL = true
 		}
-		if _, ok := frag[len(frag)-2].(free); ok {
-			setFree2L = true
+		if len(frag) > 2 {
+			if _, ok := frag[len(frag)-2].(free); ok {
+				setFree2L = true
+			}
 		}
 	case CLDoer:
 	default:

@@ -121,10 +121,8 @@ func (m *ExternMetadata) DoWork() {
 	cudaLogf("DoWork() called")
 	for i, hw := range m.hasWork {
 		cudaLogf("Checking if %d has work %v", i, hw)
-		if hw {
-			m.c[i].Synchronize()
-			m.c[i].DoWork()
-		}
+		m.c[i].Synchronize()
+		m.c[i].DoWork()
 		m.hasWork[i] = false
 	}
 
@@ -138,7 +136,9 @@ func (m *ExternMetadata) DoAllWork() {
 	for _, c := range m.c {
 		c.DoWork()
 	}
-	m.b.DoWork()
+	if m.b != nil {
+		m.b.DoWork()
+	}
 }
 
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name

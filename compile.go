@@ -194,9 +194,12 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 		compileLogf("node isInput %v", node.isInput())
 		compileLogf("node.children[0] Type %v, shape %v", node.children[0].t, node.children[0].shape)
 		from := cg.df.intervals[node.children[0]].result
-		instr := readInstr{
+		instr := &readInstr{
 			into:     op.into,
 			readFrom: from,
+
+			t: node.children[0].t,
+			s: node.children[0].shape,
 		}
 		// cg.instructions = append(cg.instructions, instr)
 

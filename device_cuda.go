@@ -45,6 +45,7 @@ func (d Device) Free(extern External, mem Memory) (err error) {
 
 	machine := extern.(CUDAMachine)
 	ctx := machine.Contexts()[int(d)]
+	cudaLogf("MemFree %v", devptr)
 	ctx.MemFree(devptr)
 	return nil
 }

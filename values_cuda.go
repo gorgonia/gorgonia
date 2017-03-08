@@ -7,6 +7,25 @@ import (
 	"github.com/pkg/errors"
 )
 
+//  convM2V converts Memory to Value
+func convM2V(m External, dev Device, mem Memory, val *Value) (err error) {
+	switch mt := mem.(type) {
+	case Value:
+		*val = mt
+	case cu.DevicePtr:
+		machine := m.(CUDAMachine)
+		ctxes := machine.Contexts()
+		if len(ctxes) == 0 || len(ctxes) <= int(dev) {
+			return errors.Errorf("Cannot convert Memory to Value when there are no CUDA contexts")
+		}
+		ctx := ctxes[int(dev)]
+		if err = devPtrToValue(ctx, *val, mt); err != nil {
+			return
+		}
+	}
+	return nil
+}
+
 func valToDevicePointer(ctx *cu.BatchedContext, val Value) (mem cu.DevicePtr, err error) {
 	// alloc:
 	size := int64(val.MemSize())
@@ -35,7 +54,7 @@ func devPtrToValue(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) (err err
 	ptr := val.Pointer()
 	if ctx != nil {
 		ctx.MemcpyDtoH(ptr, mem, size)
-		ctx.DoWork()
+		// ctx.DoWork()
 		return nil
 	}
 	return cu.MemcpyDtoH(ptr, mem, size)

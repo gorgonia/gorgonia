@@ -8,6 +8,7 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 type errorStacker interface {
@@ -152,4 +153,25 @@ func (t malformed) Eq(hm.Type) bool                { return false }
 func (t malformed) Types() hm.Types                { return nil }
 func (t malformed) Normalize(a, b hm.TypeVarSet) (hm.Type, error) {
 	return nil, errors.Errorf("cannot normalize malformed")
+}
+
+type assertState struct {
+	*assert.Assertions
+	cont bool
+}
+
+func newAssertState(a *assert.Assertions) *assertState { return &assertState{a, true} }
+
+func (a *assertState) Equal(expected interface{}, actual interface{}, msgAndArgs ...interface{}) {
+	if !a.cont {
+		return
+	}
+	a.cont = a.Assertions.Equal(expected, actual, msgAndArgs...)
+}
+
+func (a *assertState) True(value bool, msgAndArgs ...interface{}) {
+	if !a.cont {
+		return
+	}
+	a.cont = a.Assertions.True(value, msgAndArgs...)
 }

@@ -60,10 +60,11 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 		}
 
 		// if the prealloc is a Value we want to copy the value back and then free
-		defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
-			err = devPtrToValue(ctx, val, mem)
-			ctx.MemFree(mem)
-		}(ctx, pre, mem)
+		// defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
+		// 	cudaLogf("Will Free %v #1", mem)
+		// 	err = devPtrToValue(ctx, val, mem)
+		// 	ctx.MemFree(mem)
+		// }(ctx, pre, mem)
 
 	case cu.DevicePtr:
 		mem = pre
@@ -93,7 +94,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	}
 	// cudaLogf("threads: %d, blocks %d", threads, blocks)
 	cudaLogf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	cudaLogf("CUDADO %q, Mem: 0x%x size %v, args %v", name, mem, size, args)
+	cudaLogf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
 	// ctx.LaunchAndSync(fn, blocks, 1, 1, threads, 1, 1, 0, cu.Stream(0), args)
 	return mem, nil
@@ -176,10 +177,11 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 		}
 
 		// if the prealloc is a Value we want to copy the value back and then free
-		defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
-			err = devPtrToValue(ctx, val, mem)
-			ctx.MemFree(mem)
-		}(ctx, pre, mem)
+		// defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
+		// 	cudaLogf("Will Free %v #2", mem)
+		// 	err = devPtrToValue(ctx, val, mem)
+		// 	ctx.MemFree(mem)
+		// }(ctx, pre, mem)
 	case cu.DevicePtr:
 		mem = pre
 	}
@@ -211,6 +213,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 		}
 
 		defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
+			cudaLogf("Will Free %v #3", mem)
 			err = devPtrToValue(ctx, val, mem)
 			ctx.MemFree(mem)
 		}(ctx, bt, memB)
@@ -218,7 +221,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 		memB = bt
 	}
 
-	cudaLogf("%v mem 0x%x, memB 0x%x", op, mem, memB)
+	cudaLogf("%v mem %v, memB %v", op, mem, memB)
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&mem),

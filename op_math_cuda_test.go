@@ -3,11 +3,14 @@
 package gorgonia
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"runtime"
 	"testing"
 
-	"github.com/alecthomas/assert"
 	"github.com/chewxy/gorgonia/tensor"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCUDACube(t *testing.T) {
@@ -42,9 +45,10 @@ func TestCUDACube(t *testing.T) {
 func TestCUDABasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		if i > 0 {
-			break
-		}
+		log.Printf("DOING TEST %d NOW", i)
+		// if i != 13 {
+		// 	continue
+		// }
 		g := NewGraph()
 		xV, _ := CloneValue(bot.a)
 		yV, _ := CloneValue(bot.b)
@@ -69,29 +73,38 @@ func TestCUDABasicArithmetic(t *testing.T) {
 			continue
 		}
 
+		// ioutil.WriteFile("binop.dot", []byte(g.ToDot()), 0644)
+
 		prog, locMap, err := Compile(g)
-		t.Log(prog)
+		// t.Log(prog)
 		// t.Log(locMap)
 		if err != nil {
 			t.Errorf("Test %d: error while compiling: %v", i, err)
 			runtime.GC()
 			continue
 		}
+		f, _ := os.OpenFile(fmt.Sprintf("testresults/TESTCUDABINOP_%d", i), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		defer f.Close()
+		logger := log.New(f, "", 0)
+		logger.Printf("%v\n=======\n", prog)
 
-		// logger := log.New(os.Stderr, "", 0)
-		// m1 := NewTapeMachine(prog, locMap, TraceExec(), UseCudaFor(), WithLogger(logger), WithWatchlist())
-		m1 := NewTapeMachine(prog, locMap, TraceExec(), UseCudaFor())
+		m1 := NewTapeMachine(prog, locMap, UseCudaFor(), WithLogger(logger), WithWatchlist())
+		// m1 := NewTapeMachine(prog, locMap, UseCudaFor())
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %d: error while running %v", i, err)
 			runtime.GC()
 			continue
 		}
 
-		assert.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
-		assert.True(bot.correctShape.Eq(ret.Shape()))
-		assert.Equal(2, len(grads))
-		assert.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
-		assert.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad", i)
+		as := newAssertState(assert)
+		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+		as.True(bot.correctShape.Eq(ret.Shape()))
+		as.Equal(2, len(grads))
+		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
+		if !as.cont {
+			t.Logf("Test %d failed. Prog: %v", i, prog)
+		}
 		runtime.GC()
 	}
 }

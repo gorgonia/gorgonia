@@ -13,6 +13,12 @@ import (
 //		- all scalar value types (F64, F32... etc)
 // 		- *tensor.Dense
 // 		- *dualValue
+//
+// A Value is essentially any thing that knows its own type and shape.
+// Most importantly though, a Value is a pointer - and can be converted into a Memory.
+// This is done for the sake of interoperability with external devices like cgo or CUDA or OpenCL.
+// This also means for the most part most Values will be allocated on the heap.
+// There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
 type Value interface {
 	Shape() tensor.Shape // Shape  returns the shape of the Value. Scalar values return ScalarShape()
 	Size() int           // Size represents the number of elements in the Value. Note that in cases such as a *tensor.Dense, the underlying slice MAY have more elements than the Size() reports. This is correct.
@@ -23,7 +29,12 @@ type Value interface {
 	fmt.Formatter
 }
 
-// Memory is a representation of memory of the value
+// Memory is a representation of memory of the value.
+//
+// The main reason for requiring both Uintptr() and Pointer() methods is because while Go currently does not have a compacting
+// garbage collector, from the docs of `unsafe`:
+//		Even if a uintptr holds the address of some object, the garbage collector, will not update that uintptr's value if the object moves,
+//		nor will that uintptr keep the object from being reclaimed.
 type Memory interface {
 	Uintptr() uintptr
 	MemSize() uintptr
@@ -82,8 +93,8 @@ type CopierFrom interface {
 // 	SetAll(interface{}) error
 // }
 
-// MakeValue creates a value given a type and shape. The default value is the zero value of the type.
-func MakeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
+// makeValue creates a value given a type and shape. The default value is the zero value of the type.
+func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(t); err != nil {
 		return
@@ -110,9 +121,9 @@ func MakeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 
 	switch tt := t.(type) {
 	case TensorType:
-		return tensor.New(dt, s...), nil
+		return tensor.New(tensor.Of(dt), tensor.WithShape(s...)), nil
 	default:
-		err = errors.Errorf(nyiTypeFail, "MakeValue", t)
+		err = errors.Errorf(nyiTypeFail, "MakeValue", tt)
 		return
 	}
 	panic("Unreachable")

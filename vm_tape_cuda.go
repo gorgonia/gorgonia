@@ -175,7 +175,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
 
-			cudaLogf("prealloc mem: 0x%x", mem)
+			cudaLogf("prealloc mem: %v", mem)
 		case CLDoer:
 			goto usecpu
 		default:
@@ -228,7 +228,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			cudaLogf("write to cpu register")
 			m.cpumem[dest] = v
 		default:
-			cudaLogf("write 0x%x to GPU register", mem)
+			cudaLogf("write %v to GPU register", mem)
 			m.gpumem[dest] = mem
 		}
 
@@ -238,7 +238,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			}
 		} else {
 			cudaLogf("bind v to node %v", node.Name())
-			cudaLogf("v %p", v)
+			cudaLogf("v %p %v", v, v.Pointer())
 			node.bind(v)
 		}
 
@@ -264,7 +264,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			}
 
 		}
-		m.watchedLogf("Written To: %v | Converted from Memory %t", instr.writeTo, convertedFromMem)
+		m.watchedLogf("Written To: %v | Converted from Memory %t | v: %v", instr.writeTo, convertedFromMem, v.Pointer())
 		m.enterLoggingContext()
 		m.watchedLogf(m.valueFmt, v)
 		m.leaveLoggingContext()

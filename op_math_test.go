@@ -381,10 +381,14 @@ func TestBasicArithmetic(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
-		assert.True(bot.correctShape.Eq(ret.Shape()))
-		assert.Equal(2, len(grads))
-		assert.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
-		assert.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad", i)
+		as := newAssertState(assert)
+		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+		as.True(bot.correctShape.Eq(ret.Shape()))
+		as.Equal(2, len(grads))
+		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
+		if !as.cont {
+			t.Logf("Test %d failed. Prog: %v", i, prog)
+		}
 	}
 }
