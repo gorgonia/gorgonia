@@ -648,6 +648,7 @@ func newExecOp(n *Node) *execOp {
 	}
 
 	_, useGPU := n.op.(CUDADoer)
+	compileLogf("op %v uses GPU %v", n.op, useGPU)
 
 	return &execOp{
 		op:          n.op,
