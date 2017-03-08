@@ -57,8 +57,6 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	replacements := make(map[*Node]*Node)
 	var buf bytes.Buffer
 	for _, n := range sorted {
-		// for i := len(sorted) - 1; i >= 0; i-- {
-		// 	n := sorted[i]
 		fmt.Fprintf(&buf, "%d, ", n.ID())
 		r, _ := df.vn(n)
 		replacements[n] = r

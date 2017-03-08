@@ -131,11 +131,12 @@ func TestRegAlloc(t *testing.T) {
 	if sorted, err = Sort(g); err != nil {
 		t.Fatal(err)
 	}
+	reverseNodes(sorted)
 
 	is := buildIntervals(sorted)
 	df := analyze(g, sorted)
-
 	df.intervals = is
+
 	ra := newRegalloc(df)
 	ra.alloc(sorted)
 

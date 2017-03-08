@@ -58,14 +58,6 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
 			return
 		}
-
-		// if the prealloc is a Value we want to copy the value back and then free
-		// defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
-		// 	cudaLogf("Will Free %v #1", mem)
-		// 	err = devPtrToValue(ctx, val, mem)
-		// 	ctx.MemFree(mem)
-		// }(ctx, pre, mem)
-
 	case cu.DevicePtr:
 		mem = pre
 	}
@@ -170,18 +162,11 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 	var mem cu.DevicePtr
 	switch pre := prealloc.(type) {
 	case Value:
-		memsize := int64(pre.MemSize())
-		if mem, err = ctx.AllocAndCopy(pre.Pointer(), memsize); err != nil {
-			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
+		if mem, err = valToDevicePointer(ctx, pre); err != nil {
+			err = errors.Wrapf(err, "Failed to allocate %v bytes", pre.MemSize())
 			return
-		}
 
-		// if the prealloc is a Value we want to copy the value back and then free
-		// defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
-		// 	cudaLogf("Will Free %v #2", mem)
-		// 	err = devPtrToValue(ctx, val, mem)
-		// 	ctx.MemFree(mem)
-		// }(ctx, pre, mem)
+		}
 	case cu.DevicePtr:
 		mem = pre
 	}

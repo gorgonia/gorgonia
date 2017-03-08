@@ -116,13 +116,6 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 	inner:
 		for j, child := range n.children {
 			d := diffs[j]
-
-			// if _, ok := diffSet[child]; ok && d {
-			// 	autodiffLogf("Adding %d to differentiable set", child.ID())
-			// 	diffSet[n] = empty
-			// 	break inner
-			// }
-
 			if diffSet.Contains(child) && d {
 				symdiffLogf("Adding %x to differentiable set", child.ID())
 				// diffSet = append(diffSet, n)
@@ -133,12 +126,6 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 		leaveLoggingContext()
 	}
 	leaveLoggingContext()
-	// retVal = diffSet.Set()
-	// for n := range diffSet {
-	// 	retVal = append(retVal, n)
-	// }
-	// sort.Sort(retVal)
-	// autodiffLogf("RetVal: %d", retVal)
 	return diffSet, nil
 }
 

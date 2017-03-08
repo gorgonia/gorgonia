@@ -174,12 +174,6 @@ func (m *tapeMachine) RunAll() (err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		log.Printf("m.ExternMetadata %v", m.ExternMetadata)
-	// 		panic(r)
-	// 	}
-	// }()
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
@@ -388,10 +382,7 @@ func (p *program) String() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | Memories: %d\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs)
 
-	// for i := len(p.sorted) - 1; i >= 0; i-- {
-	// instrID := len(p.sorted) - i - 1
 	for i, n := range p.sorted {
-		// n := p.sorted[i]
 		fmt.Fprintf(&buf, "\t%d\t%x:", i, n.ID())
 		frag := p.m[n]
 		for j, instr := range frag {
@@ -404,11 +395,6 @@ func (p *program) String() string {
 
 	}
 
-	// for k, v := range p.m {
-	// 	for i, instr := range v {
-	// if i == 0 {
-	// 	}
-	// }
 	return buf.String()
 }
 

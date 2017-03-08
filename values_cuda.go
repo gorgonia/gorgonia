@@ -29,19 +29,16 @@ func convM2V(m External, dev Device, mem Memory, val *Value) (err error) {
 func valToDevicePointer(ctx *cu.BatchedContext, val Value) (mem cu.DevicePtr, err error) {
 	// alloc:
 	size := int64(val.MemSize())
+	if ctx != nil {
+		return ctx.AllocAndCopy(val.Pointer(), size)
+	}
+
+	// otherwise do blocking copy
 	if mem, err = cu.MemAlloc(size); err != nil {
 		err = errors.Wrapf(err, "Cannot get mem device pointer")
 		return
-
 	}
 
-	// batched copy
-	if ctx != nil {
-		ctx.MemcpyHtoD(mem, val.Pointer(), size)
-		return
-	}
-
-	// blocking copy
 	if err = cu.MemcpyHtoD(mem, val.Pointer(), size); err != nil {
 		err = errors.Wrapf(err, "Memcpy failed")
 		return

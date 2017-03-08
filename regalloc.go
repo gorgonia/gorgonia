@@ -25,15 +25,6 @@ func newInterval() *interval {
 		start: -1,
 		end:   -1,
 	}
-
-	// switch vr.(type) {
-	// case *ssa.StaticSingleAssignment:
-	// 	retVal.isDestination = true
-	// case *ssa.Phi:
-	// case *ssa.Pop:
-	// 	retVal.isDestination = true
-	// default:
-	// }
 	return retVal
 }
 
@@ -106,17 +97,6 @@ func (i *interval) addRange(from, to int) {
 
 // added so only unique usePositions are added
 func (i *interval) addUsePositions(up int) {
-	// for _, u := range i.usePositions {
-	// 	if u == up {
-	// 		return
-	// 	}
-	// }
-
-	// i.usePositions = append(i.usePositions, up)
-	// if i.end < up {
-	// 	i.setTo(up)
-	// }
-
 	i.usePositions = append(i.usePositions, up)
 }
 
@@ -227,8 +207,6 @@ func buildIntervals(sorted Nodes) map[*Node]*interval {
 			continue
 		}
 		nInter.addRange(instrNum, instrNum)
-		// nInter.setFrom(instrNum)
-		// nInter.setTo(instrNum)
 
 		for _, child := range n.children {
 			iv, ok := intervals[child]
@@ -408,11 +386,7 @@ func (ra *regalloc) alloc(sorted Nodes) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	// for i := len(sorted) - 1; i >= 0; i-- {
-	// node := sorted[i]
-
 	for i, node := range sorted {
-		// ra.instructionID = len(sorted) - i - 1
 		ra.instructionID = i
 
 		replacement := ra.df.replacements[node]
