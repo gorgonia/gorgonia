@@ -3,9 +3,6 @@
 package gorgonia
 
 import (
-	"fmt"
-	"log"
-	"os"
 	"runtime"
 	"testing"
 
@@ -45,10 +42,14 @@ func TestCUDACube(t *testing.T) {
 func TestCUDABasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		// log.Printf("DOING TEST %d NOW", i)
-		// if i != 13 {
-		// 	continue
+		// f, _ := os.OpenFile(fmt.Sprintf("testresults/TESTCUDABINOP_%d", i), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		// defer f.Close()
+		// logger := log.New(f, "", 0)
+		// if spare == nil {
+		// 	spare = _logger_
 		// }
+		// _logger_ = logger
+
 		g := NewGraph()
 		xV, _ := CloneValue(bot.a)
 		yV, _ := CloneValue(bot.b)
@@ -83,13 +84,10 @@ func TestCUDABasicArithmetic(t *testing.T) {
 			runtime.GC()
 			continue
 		}
-		f, _ := os.OpenFile(fmt.Sprintf("testresults/TESTCUDABINOP_%d", i), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-		defer f.Close()
-		logger := log.New(f, "", 0)
-		logger.Printf("%v\n=======\n", prog)
+		// logger.Printf("%v\n=======\n", prog)
 
-		m1 := NewTapeMachine(prog, locMap, UseCudaFor(), WithLogger(logger), WithWatchlist())
-		// m1 := NewTapeMachine(prog, locMap, UseCudaFor())
+		// m1 := NewTapeMachine(prog, locMap, UseCudaFor(), WithLogger(logger), WithWatchlist())
+		m1 := NewTapeMachine(prog, locMap, UseCudaFor())
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %d: error while running %v", i, err)
 			runtime.GC()
@@ -107,4 +105,6 @@ func TestCUDABasicArithmetic(t *testing.T) {
 		}
 		runtime.GC()
 	}
+
+	// _logger_ = spare
 }

@@ -24,8 +24,6 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	}
 	reverseNodes(sortedNodes)
 
-	inputs := g.Inputs()
-
 	df := analyze(g, sortedNodes)
 	df.intervals = buildIntervals(sortedNodes)
 
@@ -36,6 +34,7 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	df.debugIntervals(sortedNodes)
 	logCompileState(g.name, g, df)
 
+	inputs := g.Inputs()
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
 	prog.cpulocs = ra.cpucount
@@ -373,15 +372,20 @@ func (cg *codegenerator) insertFree(instrID int, node *Node) {
 		var readNode *Node
 		for n, reg := range cg.locMap {
 			if reg == read {
-				readNode = n
-				break
+				if readNode == nil {
+					readNode = n
+					continue
+				}
+				if readNode.id < n.id {
+					readNode = n
+				}
 			}
 		}
 		// interv := cg.df.intervals[readNode]
 		readRepl := cg.df.replacements[readNode]
 		interv := cg.df.intervals[readRepl]
 		lastUse := interv.lastUse()
-		compileLogf("Interval: %p; read: %v; Read Node %p; Op %v; LastUse %v; Instrid: %v", interv, read, readNode, readNode.op, lastUse, instrID)
+		compileLogf("Interval: %v; read: %v; Read Node %v; Op %v; LastUse %v; Instrid: %v", interv, read, readNode, readNode.op, lastUse, instrID)
 		if lastUse >= 0 && lastUse <= instrID && read.device != CPU {
 			if _, ok := cg.freed[read]; !ok {
 				compileLogf("Adding Free %v. LastUse %d", read, interv.lastUse())

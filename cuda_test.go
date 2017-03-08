@@ -17,6 +17,8 @@ func TestExternMetadata_ElemGridSize(t *testing.T) {
 }
 
 func TestDevCUDA(t *testing.T) {
+	t.SkipNow()
+
 	g := NewGraph()
 	x := NewMatrix(g, Float64, WithShape(1024, 100), WithName("x"), WithInit(ValuesOf(2.0)))
 	y := NewMatrix(g, Float64, WithShape(1024, 100), WithName("y"), WithInit(ValuesOf(2.0)))
