@@ -87,7 +87,6 @@ func (m *tapeMachine) init() {
 // The convention is to have one function per module, sharing the same name.
 func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
 	if len(m.c) == 0 {
-		log.Printf("m.c %v", m.c)
 		return nil
 	}
 
@@ -171,7 +170,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		switch cd := instr.op.(type) {
 		case CUDADoer:
 			prealloc := m.getMemory(instr.writeTo)
-			if mem, err = cd.CUDADo(m, toDev, instr.inputTypes, prealloc, inputs...); err != nil {
+			if mem, err = cd.CUDADo(m, toDev, instr.ExecutionMetadata, prealloc, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
 
@@ -196,7 +195,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			if v == nil {
 				cudaLogf("allocating v")
 				// create v
-				switch t := instr.outputType.(type) {
+				switch t := instr.OutputType.(type) {
 				case TensorType:
 					var dt tensor.Dtype
 					if dt, err = dtypeOf(t); err != nil {
@@ -204,8 +203,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 						return // very unlikely to happen
 					}
 
-					v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.outputShape...))
-
+					v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.OutputShape...))
 					if err = devPtrToValue(ctx, v, mt); err != nil {
 						err = errors.Wrap(err, "execOp cannot copy mem to value")
 						return

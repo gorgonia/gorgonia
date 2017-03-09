@@ -1,9 +1,6 @@
 package gorgonia
 
-import (
-	"io/ioutil"
-	"testing"
-)
+import "testing"
 
 func TestCompile_medium(t *testing.T) {
 	g := NewGraph()
@@ -23,9 +20,7 @@ func TestCompile_medium(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error while compiling: %v", err)
 	}
-
 	t.Log(prog)
-	ioutil.WriteFile("compile_medium.dot", []byte(g.ToDot()), 0644)
 
 	// check flushes
 	var frag fragment
@@ -49,52 +44,35 @@ func TestCompile_medium(t *testing.T) {
 		}
 	}
 
-	// free could be attached to either `read` or `set`
-	var readFreeL, readFree2L, setFreeL, setFree2L bool
-	frag = prog.m[read]
-	switch xpy.op.(type) {
-	case CUDADoer:
-		if _, ok := frag[len(frag)-1].(free); ok {
-			readFreeL = true
+	// leakage test
+	if onDev {
+		reg0 := register{device: Device(0), id: 0}
+		reg1 := register{device: Device(0), id: 1}
+		reg2 := register{device: Device(0), id: 2}
+
+		if !prog.instructions.has(free{reg0}) {
+			t.Error("Expected GPU(0)0 to be freed")
 		}
-		if len(frag) > 2 {
-			if _, ok := frag[len(frag)-2].(free); ok {
-				readFree2L = true
-			}
+
+		if !prog.instructions.has(free{reg1}) {
+			t.Error("Expected GPU(0)1 to be freed")
 		}
-	case CLDoer:
-	default:
+
+		if !prog.instructions.has(free{reg2}) {
+			t.Error("Expected GPU(0)2 to be freed")
+		}
 	}
 
-	frag = prog.m[set]
-	switch xpy.op.(type) {
-	case CUDADoer:
-		if _, ok := frag[len(frag)-1].(free); ok {
-			setFreeL = true
+	// position tests
+	if onDev {
+		frag = prog.m[set]
+		if _, ok := frag[len(frag)-1].(free); !ok {
+			t.Error("Expected a `free` instruction after LET")
 		}
-		if len(frag) > 2 {
-			if _, ok := frag[len(frag)-2].(free); ok {
-				setFree2L = true
-			}
+
+		frag = prog.m[read]
+		if _, ok := frag[len(frag)-2].(free); !ok {
+			t.Error("Expected a `free` instruction after READ")
 		}
-	case CLDoer:
-	default:
 	}
-
-	switch {
-	case !onDev:
-	case onDev && readFree2L && readFreeL:
-	case onDev && setFree2L && setFreeL:
-	case onDev && setFreeL && readFreeL:
-	default:
-		t.Errorf("Expected free to be in either `set` or `read`. readFree2L: %t, readFreeL %t, setFree2L: %t, setFreeL: %t", readFree2L, readFreeL, setFree2L, setFreeL)
-	}
-
-	// t.Log(prog)
-	// t.Log(prog.m[xpys])
-	// t.Log(prog.m[xpys2])
-	// t.Log(prog.m[xmy2])
-	// t.Log(locMap)
-	// t.Log(locMap[xpys2])
-	// t.Log(locMap[xmy2])
 }

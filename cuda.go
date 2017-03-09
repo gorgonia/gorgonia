@@ -121,7 +121,6 @@ func (m *ExternMetadata) DoWork() {
 	cudaLogf("DoWork() called")
 	for i, hw := range m.hasWork {
 		cudaLogf("Checking if %d has work %v", i, hw)
-		m.c[i].Synchronize()
 		m.c[i].DoWork()
 		m.hasWork[i] = false
 	}

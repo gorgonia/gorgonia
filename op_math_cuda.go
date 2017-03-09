@@ -8,14 +8,16 @@ import (
 
 	"github.com/chewxy/cu"
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 )
 
 func (op elemUnaryOp) CallsExtern() bool { return true }
 
-func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, prealloc Memory, inputs ...Memory) (retVal Memory, err error) {
+func (op elemUnaryOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, prealloc Memory, inputs ...Memory) (retVal Memory, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	if err = meta.checkArity(op); err != nil {
 		return
 	}
 	cudaLogf("CUDADoing %v", op)
@@ -30,7 +32,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 	}
 
 	var dt tensor.Dtype
-	if dt, err = dtypeOf(inputTypes[0]); err != nil {
+	if dt, err = dtypeOf(meta.InputTypes[0]); err != nil {
 		return
 	}
 
@@ -73,8 +75,8 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, inputTypes hm.Types, p
 		ctx.MemcpyHtoD(mem, at.Pointer(), memsize)
 	case cu.DevicePtr:
 		cudaLogf("a is Dev")
-		memsize := int64(at.MemSize())
-		size = memsize / int64(dt.Size())
+		size = int64(meta.InputShapes[0].TotalSize())
+		memsize := int64(dt.Size()) * size
 		ctx.Memcpy(mem, at, memsize)
 	}
 
@@ -98,8 +100,11 @@ func (op elemUnaryOp) CUDAFuncName() string {
 
 func (op elemBinOp) CallsExtern() bool { return true }
 
-func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, prealloc Memory, inputs ...Memory) (retVal Memory, err error) {
+func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, prealloc Memory, inputs ...Memory) (retVal Memory, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	if err = meta.checkArity(op); err != nil {
 		return
 	}
 
@@ -109,7 +114,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 
 	// check
 	var dt tensor.Dtype
-	if dt, err = dtypeOf(inputTypes[0]); err != nil {
+	if dt, err = dtypeOf(meta.InputTypes[0]); err != nil {
 		return
 	}
 	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
@@ -182,8 +187,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, inputTypes hm.Types, pre
 		ctx.MemcpyHtoD(mem, at.Pointer(), memsize)
 	case cu.DevicePtr:
 		cudaLogf("a is Dev")
-		memsize := int64(at.MemSize())
-		size = memsize / int64(dt.Size())
+		size = int64(meta.InputShapes[0].TotalSize())
+		memsize := int64(dt.Size()) * size
 		ctx.Memcpy(mem, at, memsize)
 	}
 

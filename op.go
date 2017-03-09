@@ -151,13 +151,33 @@ type UnsafeDoer interface {
 
 // CUDADoer uses CUDA to perform the Op.
 type CUDADoer interface {
-	CUDADo(extern External, dev Device, inputTypes hm.Types, prealloc Memory, inputs ...Memory) (retVal Memory, err error)
+	CUDADo(extern External, dev Device, meta ExecutionMetadata, prealloc Memory, inputs ...Memory) (retVal Memory, err error)
 	CUDAFuncName() string
 }
 
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
 type CLDoer interface {
 	CLDo(inputs ...Value) (Value, error)
+}
+
+// ExecutionMetadata is a data structure that holds the Op execution metadata
+type ExecutionMetadata struct {
+	InputTypes  hm.Types
+	InputShapes []tensor.Shape
+	OutputType  hm.Type
+	OutputShape tensor.Shape
+}
+
+func (meta ExecutionMetadata) checkArity(op Op) error {
+	var err error
+	if err = checkArity(op, len(meta.InputTypes)); err != nil {
+		return errors.Wrap(err, "Failed Arity Check on InputTypes")
+	}
+	if err = checkArity(op, len(meta.InputShapes)); err != nil {
+		return errors.Wrap(err, "Failed Arity Check on InputShapes")
+	}
+
+	return nil
 }
 
 // a constant is an unchanging value. I think everyone would know what a constant is

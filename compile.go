@@ -94,6 +94,7 @@ type codegenerator struct {
 	flushed    map[int]struct{}
 	allocated  map[register]struct{}
 	freed      map[register]struct{}
+	deferFree  map[register]struct{}
 	instrMap   map[*Node]fragment
 	queue      []int // queue to flus
 
@@ -112,6 +113,7 @@ func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 		flushed:    make(map[int]struct{}),
 		allocated:  make(map[register]struct{}),
 		freed:      make(map[register]struct{}),
+		deferFree:  make(map[register]struct{}),
 		instrMap:   make(map[*Node]fragment),
 		lastReads:  make(map[register]int),
 
@@ -395,6 +397,38 @@ func (cg *codegenerator) insertFree(instrID int, node *Node) {
 			}
 		}
 	}
+
+	write := cg.locMap[node]
+	repl := cg.df.replacements[node]
+	interv := cg.df.intervals[repl]
+	compileLogf("Node %v | write  %v | Last Use %v | %v", node, write, interv.lastUse(), node.isRoot())
+	if interv.lastUse() == -1 || interv.lastUse() >= len(cg.sorted) {
+		// if node.isRoot() {
+		cg.deferFree[write] = struct{}{}
+		// return
+		// }
+
+		// otherwise, it's essentially a NOOP, so we free the memory immediately after the Op is executed
+		// TODO: do NO-OP optimizations
+		// if _, ok := cg.freed[write]; !ok {
+		// 	compileLogf("Adding Free %v. Last Use %d", write, interv.lastUse())
+		// 	cg.addInstr(node, free{write})
+		// 	cg.freed[write] = struct{}{}
+		// }
+	}
+}
+
+func (cg *codegenerator) insertLastFrees() int {
+	node := cg.sorted[len(cg.sorted)-1]
+	var instructionsAdded int
+	for reg := range cg.deferFree {
+		if _, ok := cg.freed[reg]; !ok {
+			compileLogf("Adding Free %v to the final instruction", reg)
+			cg.addInstr(node, free{reg})
+			instructionsAdded++
+		}
+	}
+	return instructionsAdded
 }
 
 func (cg *codegenerator) gen() (*program, map[*Node]register) {
@@ -422,6 +456,8 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 
 		instructionCount += len(cg.instrMap[node])
 	}
+
+	instructionCount += cg.insertLastFrees()
 
 	cg.instructions = make(fragment, 0, instructionCount)
 	for _, node := range cg.sorted {

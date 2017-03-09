@@ -573,6 +573,7 @@ func (instr free) exec(m *tapeMachine) error {
 	case CPU:
 		return nil
 	default:
+		m.logf("instr.read from not CPU - %v %v %d", instr.readsFrom, instr.readsFrom.device == CPU, instr.readsFrom.device)
 		mem := m.gpumem[instr.readsFrom.id]
 		if err := instr.readsFrom.device.Free(m, mem); err != nil {
 			return err
@@ -621,10 +622,8 @@ func (instr loadArg) String() string {
 }
 
 type execOp struct {
-	op          Op
-	inputTypes  hm.Types
-	outputType  hm.Type
-	outputShape tensor.Shape
+	op Op
+	ExecutionMetadata
 
 	id int
 
@@ -643,25 +642,30 @@ func (instr *execOp) writes() register  { return instr.writeTo }
 
 func newExecOp(n *Node) *execOp {
 	var inputTypes hm.Types
+	var inputShapes []tensor.Shape
 	for _, child := range n.children {
 		inputTypes = append(inputTypes, child.t)
+		inputShapes = append(inputShapes, child.shape)
 	}
 
 	_, useGPU := n.op.(CUDADoer)
 	compileLogf("op %v uses GPU %v", n.op, useGPU)
 
 	return &execOp{
-		op:          n.op,
-		id:          n.ID(),
-		inputTypes:  inputTypes,
-		outputType:  n.t,
-		outputShape: n.shape,
-		useGPU:      useGPU,
+		op: n.op,
+		ExecutionMetadata: ExecutionMetadata{
+			InputTypes:  inputTypes,
+			InputShapes: inputShapes,
+			OutputType:  n.t,
+			OutputShape: n.shape,
+		},
+		id:     n.ID(),
+		useGPU: useGPU,
 	}
 }
 
 func (instr *execOp) String() string {
-	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.inputTypes, instr.op.CallsExtern(), instr.useUnsafe, instr.preAllocated)
+	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.InputTypes, instr.op.CallsExtern(), instr.useUnsafe, instr.preAllocated)
 }
 
 // flushInstr is for blastoise and cubone

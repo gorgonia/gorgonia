@@ -6,7 +6,7 @@ package gorgonia
 type Device int
 
 const (
-	CPU Device = -1 // CPU the only device the graph will be executed on
+	CPU Device = 0 // CPU the only device the graph will be executed on
 )
 
 // String implements fmt.Stringer and runtime.Stringer
