@@ -56,9 +56,18 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, meta ExecutionMetadata
 	switch pre := prealloc.(type) {
 	case Value:
 		memsize := int64(pre.MemSize())
-		if mem, err = ctx.MemAlloc(memsize); err != nil {
-			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
-			return
+		var m Memory
+		if m, err = machine.Get(uint(memsize)); err != nil {
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+
+			if mem, err = ctx.MemAlloc(memsize); err != nil {
+				err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
+				return
+			}
+		} else {
+			mem = m.(cu.DevicePtr)
 		}
 	case cu.DevicePtr:
 		mem = pre
@@ -197,16 +206,33 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 	case Value:
 		cudaLogf("b is val")
 		memsize := int64(b.MemSize())
-		if memB, err = ctx.AllocAndCopy(bt.Pointer(), memsize); err != nil {
-			err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
-			return
+
+		var m Memory
+		if m, err = machine.Get(uint(memsize)); err != nil {
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+
+			if memB, err = ctx.AllocAndCopy(bt.Pointer(), memsize); err != nil {
+				err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
+				return
+			}
+		} else {
+			memB = m.(cu.DevicePtr)
+			// log.Println("COPY H TO D")
+			ctx.MemcpyHtoD(memB, bt.Pointer(), memsize)
+			// log.Printf("INTROSPECT %v", ctx.Introspect())
+			ctx.DoWork()
 		}
 
-		defer func(ctx *cu.BatchedContext, val Value, mem cu.DevicePtr) {
-			cudaLogf("Will Free %v #3", mem)
-			err = devPtrToValue(ctx, val, mem)
-			ctx.MemFree(mem)
-		}(ctx, bt, memB)
+		// the reason why there are so many params to this defer is to prevent leaking of stuff into the heap.
+		// FUTURE: come back when `go build -m` no longer indicates so.
+		defer func(machine CUDAMachine, ctx *cu.BatchedContext, val Value, mem cu.DevicePtr, memsize int64) {
+			if err = devPtrToValue(ctx, val, mem); err != nil {
+				return
+			}
+			machine.Put(mem, uint(memsize))
+		}(machine, ctx, bt, memB, memsize)
 	case cu.DevicePtr:
 		memB = bt
 	}

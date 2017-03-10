@@ -15,11 +15,17 @@ import (
 type tapeMachine struct {
 	*ExternMetadata
 
-	p       *program
+	p      *program
+	locMap map[*Node]register
+
+	// "register" banks
 	cpumem  []Value  // Value - knows its own type and shape
 	gpumem  []Memory // memory slabs on GPU (or Value)
 	gpumeta []int    // element sizes
-	locMap  map[*Node]register
+
+	// "heap"
+	// TODO: maybe add a LRU cache for freeing memory? Come back here when you run into OutOfMemory errors from CUDA.
+	arena map[uint]*memoryQueue // key is the size of the memory in bytes. Only CUDA memory plz
 
 	// state stuff, to allow continuation
 	pc int
@@ -45,6 +51,7 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 		locMap:         locMap,
 		cpumem:         make([]Value, prog.cpulocs),
 		gpumem:         make([]Memory, prog.gpulocs),
+		arena:          make(map[uint]*memoryQueue),
 		valueFmt:       "%3.3g",
 	}
 
@@ -131,6 +138,25 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 	return a.bind(v)
 }
 
+// Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
+// it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
+func (m *tapeMachine) Get(size uint) (Memory, error) {
+	if pool, ok := m.arena[size]; ok {
+		return pool.get()
+	}
+	return nil, noopError{}
+}
+
+func (m *tapeMachine) Put(mem Memory, size uint) {
+	pool, ok := m.arena[size]
+	if !ok {
+		pool = newMemoryQueue(size)
+		m.arena[size] = pool
+	}
+	pool.add(mem)
+}
+
+// Run runs a fragment (a subset of a program).
 func (m *tapeMachine) Run(frag fragment) (err error) {
 	defer func() {
 		if err == nil {
@@ -197,6 +223,7 @@ func (m *tapeMachine) RunAll() (err error) {
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
+		m.logf("PC %d", m.pc)
 		if err := instr.exec(m); err != nil {
 			err = errors.Wrap(err, "Failed to carry exec()")
 			errChan <- err

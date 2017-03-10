@@ -251,6 +251,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		// it doesn't matter if the machine isn't using a batchedBLAS. flushInstr would just be a no-op at runtime
 		for _, read := range reads {
 			if lastWriteNode, ok := cg.lastWrites[read]; ok {
+				instrID := cg.sorted.index(lastWriteNode)
 				var op Op
 				var onDev, nodeOnDev Device
 
@@ -306,7 +307,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 					// flush needed
 					fallthrough
 				default:
-					if _, ok := cg.flushed[i]; !ok {
+					if _, ok := cg.flushed[instrID]; !ok {
 						// cg.instructions = append(cg.instructions, flushInstr{})
 						cg.addInstr(node, flushInstr{})
 						cg.flush()

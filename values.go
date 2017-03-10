@@ -41,6 +41,12 @@ type Memory interface {
 	Pointer() unsafe.Pointer
 }
 
+// Arena is a representation of a pool of Memory
+type Arena interface {
+	Get(size uint) (Memory, error) // Get returns a NoOpError when it cannot get a memory. Please allocate
+	Put(mem Memory, size uint)     // puts the memory back into the arena
+}
+
 // Valuer is any type that can return a Value
 type Valuer interface {
 	Value() Value
@@ -92,6 +98,58 @@ type CopierFrom interface {
 // type Setter interface {
 // 	SetAll(interface{}) error
 // }
+
+// memoryQueue is a queue of last used memories. It's adapted from Rodrigo Moraes' implementation
+// which has slightly more book keeping than a simple FIFO queue. There are some simple optimization points
+// that can be easily won - the calculation of head and tail uses a modulo for example - it can easily
+// be eliminated with extra fields in the struct. But I'll leave that to future work when it really becomes
+// a bottleneck.
+//
+// https://gist.github.com/moraes/2141121
+type memoryQueue struct {
+	data    []Memory
+	memsize uint
+
+	size  int
+	head  int
+	tail  int
+	count int
+}
+
+func newMemoryQueue(memsize uint) *memoryQueue {
+	return &memoryQueue{
+		data:    make([]Memory, 32),
+		memsize: memsize,
+
+		size: 32,
+	}
+}
+
+func (q *memoryQueue) add(mem Memory) {
+	// resize if need be
+	if q.head == q.tail && q.count > 0 {
+		mems := make([]Memory, len(q.data)+q.size)
+		copy(mems, q.data[q.head:])
+		copy(mems[len(q.data)-q.head:], q.data[:q.head])
+		q.head = 0
+		q.tail = len(q.data)
+		q.data = mems
+	}
+	q.data[q.tail] = mem
+	q.tail = (q.tail + 1) % len(q.data)
+	q.count++
+}
+
+func (q *memoryQueue) get() (Memory, error) {
+	if q.count == 0 {
+		return nil, noopError{}
+	}
+
+	mem := q.data[q.head]
+	q.head = (q.head + 1) % len(q.data)
+	q.count--
+	return mem, nil
+}
 
 // makeValue creates a value given a type and shape. The default value is the zero value of the type.
 func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {

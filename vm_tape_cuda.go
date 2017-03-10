@@ -211,6 +211,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				case Scalar:
 					// wtf?
 				}
+				cudaLogf("Done allocating v")
 			} else {
 				cudaLogf("copying v")
 				// copy

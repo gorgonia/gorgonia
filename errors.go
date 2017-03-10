@@ -7,6 +7,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+// NoOpError is an error returned when an operation does nothing.
+type NoOpError interface {
+	NoOp() bool
+}
+
+type noopError struct{}
+
+func (e noopError) NoOp() bool    { return true }
+func (e noopError) Error() string { return "NoOp" }
+
 // errNoStabilization is an error used internally for when there is no stabilization mechanism is found.
 type errNoStabilization interface {
 	error

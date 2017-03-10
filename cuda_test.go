@@ -5,7 +5,6 @@ package gorgonia
 import (
 	"io/ioutil"
 	"log"
-	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -57,7 +56,7 @@ func BenchmarkOneMilCUDA(b *testing.B) {
 	prog, locMap, _ := Compile(g)
 	m := NewTapeMachine(prog, locMap, UseCudaFor())
 
-	runtime.LockOSThread()
+	// runtime.LockOSThread()
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
 			log.Printf("Failed at n: %d. Error: %v", n, err)
@@ -65,7 +64,7 @@ func BenchmarkOneMilCUDA(b *testing.B) {
 		}
 		m.Reset()
 	}
-	runtime.UnlockOSThread()
+	// runtime.UnlockOSThread()
 }
 
 func BenchmarkOneMil(b *testing.B) {
@@ -77,7 +76,7 @@ func BenchmarkOneMil(b *testing.B) {
 	prog, locMap, _ := Compile(g)
 	m := NewTapeMachine(prog, locMap)
 
-	runtime.LockOSThread()
+	// runtime.LockOSThread()
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
 			log.Printf("Failed at n: %d. Error: %v", n, err)
@@ -85,5 +84,5 @@ func BenchmarkOneMil(b *testing.B) {
 		}
 		m.Reset()
 	}
-	runtime.UnlockOSThread()
+	// runtime.UnlockOSThread()
 }

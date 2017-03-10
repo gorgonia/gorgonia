@@ -19,6 +19,7 @@ var cudaStdLib map[string]string
 // CUDAMachine is a representation of CUDA capable VMs.
 type CUDAMachine interface {
 	External
+	Arena
 	Contexts() []*cu.BatchedContext
 	Modules() map[string][]cu.Module
 	Functions() map[string][]cu.Function
