@@ -715,8 +715,9 @@ func (instr *execOp) String() string {
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
-	m.logf("Executing DoWork")
-	m.ExternMetadata.DoWork()
+	// m.logf("Executing DoWork")
+	// m.ExternMetadata.DoWork()
+	m.ExternMetadata.signal()
 	return nil
 }
 

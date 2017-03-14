@@ -174,14 +174,23 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 	ctx := machine.Contexts()[int(dev)]
 
 	// allocate if necessary
-	cudaLogf("allocate if necessary")
+	cudaLogf("allocating if necessary")
 	var mem cu.DevicePtr
 	switch pre := prealloc.(type) {
 	case Value:
-		if mem, err = valToDevicePointer(ctx, pre); err != nil {
-			err = errors.Wrapf(err, "Failed to allocate %v bytes", pre.MemSize())
-			return
+		memsize := int64(pre.MemSize())
+		var m Memory
+		if m, err = machine.Get(uint(memsize)); err != nil {
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
 
+			if mem, err = ctx.MemAlloc(memsize); err != nil {
+				err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
+				return
+			}
+		} else {
+			mem = m.(cu.DevicePtr)
 		}
 	case cu.DevicePtr:
 		mem = pre
@@ -236,6 +245,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 			if err = devPtrToValue(ctx, val, mem); err != nil {
 				return
 			}
+			cudaLogf("Putting %v with size %v back", mem, memsize)
 			machine.Put(mem, uint(memsize))
 		}(machine, ctx, bt, memB, memsize)
 	case cu.DevicePtr:

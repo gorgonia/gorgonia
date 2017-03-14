@@ -272,6 +272,8 @@ func (m *ExternMetadata) collectBLASWork() {
 	}
 }
 
+func (m *ExternMetadata) signal() { m.workAvailable <- struct{}{} }
+
 func init() {
 	log.Println("Using CUDA build")
 }

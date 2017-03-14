@@ -27,3 +27,5 @@ func (m *ExternMetadata) DoWork() error {
 	return nil
 }
 func (m *ExternMetadata) DoAllWork() { m.DoWork() }
+
+func (m *ExternMetadata) signal() {}
