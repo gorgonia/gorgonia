@@ -78,15 +78,17 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, meta ExecutionMetadata
 	var size int64
 	switch at := a.(type) {
 	case Value:
-		cudaLogf("a is val")
+		cudaLogf("a is val: %v", at.Pointer())
 		memsize := int64(at.MemSize())
 		size = int64(at.Shape().TotalSize())
 		ctx.MemcpyHtoD(mem, at.Pointer(), memsize)
 	case cu.DevicePtr:
-		cudaLogf("a is Dev")
+		cudaLogf("a is Dev: %v mem %v", at, mem)
 		size = int64(meta.InputShapes[0].TotalSize())
-		memsize := int64(dt.Size()) * size
-		ctx.Memcpy(mem, at, memsize)
+		if at != mem {
+			memsize := int64(dt.Size()) * size
+			ctx.Memcpy(mem, at, memsize)
+		}
 	}
 
 	// blocks, threads := machine.(*tapeMachine).blockThread(int(size), int(dev))
@@ -95,9 +97,9 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, meta ExecutionMetadata
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&size),
 	}
-	// cudaLogf("threads: %d, blocks %d", threads, blocks)
 	cudaLogf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 	cudaLogf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	cudaLogf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
 	// ctx.LaunchAndSync(fn, blocks, 1, 1, threads, 1, 1, 0, cu.Stream(0), args)
 	return mem, nil
@@ -190,25 +192,29 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 	var size int64
 	switch at := a.(type) {
 	case Value:
-		cudaLogf("a is val")
+		cudaLogf("a is val: %v", at.Pointer())
 		memsize := int64(at.MemSize())
 		size = int64(at.Shape().TotalSize())
 		ctx.MemcpyHtoD(mem, at.Pointer(), memsize)
 	case cu.DevicePtr:
-		cudaLogf("a is Dev")
+		cudaLogf("a is Dev: %v mem %v", at, mem)
 		size = int64(meta.InputShapes[0].TotalSize())
-		memsize := int64(dt.Size()) * size
-		ctx.Memcpy(mem, at, memsize)
+		if at != mem {
+			memsize := int64(dt.Size()) * size
+			ctx.Memcpy(mem, at, memsize)
+		}
 	}
 
 	var memB cu.DevicePtr
 	switch bt := b.(type) {
 	case Value:
-		cudaLogf("b is val")
+		cudaLogf("b is val: %v", bt.Pointer())
 		memsize := int64(b.MemSize())
 
+		cudaLogf("Attempting to get memory of %v out of pool", memsize)
 		var m Memory
 		if m, err = machine.Get(uint(memsize)); err != nil {
+			cudaLogf("No memory found. Trying to alloc and copy")
 			if _, ok := err.(NoOpError); !ok {
 				return
 			}
@@ -218,11 +224,10 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 				return
 			}
 		} else {
+			cudaLogf("Found. Copying")
 			memB = m.(cu.DevicePtr)
-			// log.Println("COPY H TO D")
 			ctx.MemcpyHtoD(memB, bt.Pointer(), memsize)
-			// log.Printf("INTROSPECT %v", ctx.Introspect())
-			ctx.DoWork()
+			// ctx.DoWork()
 		}
 
 		// the reason why there are so many params to this defer is to prevent leaking of stuff into the heap.
@@ -246,6 +251,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 	}
 
 	cudaLogf("CUDADO %q, size %v", name, size)
+	cudaLogf("LaunchKernel params. mem: %v memB: %v size: %v", mem, memB, size)
 	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
 	return mem, nil

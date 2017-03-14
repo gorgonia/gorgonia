@@ -204,10 +204,15 @@ func (m *tapeMachine) RunAll() (err error) {
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
 	go m.runall(errChan, doneChan)
+	cudaLogf("WORK AVAILBLE %v", workAvailable)
 	for {
 		select {
 		case <-workAvailable:
-			m.ExternMetadata.DoWork()
+			cudaLogf("Work Available!!")
+			err := m.ExternMetadata.DoWork()
+			if err != nil {
+				return err
+			}
 		case err := <-errChan:
 			return errors.Wrapf(err, "PC: %d", m.pc)
 		case <-doneChan:
@@ -224,8 +229,9 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
+		cudaLogf("PC %d", m.pc)
 		if err := instr.exec(m); err != nil {
-			err = errors.Wrap(err, "Failed to carry exec()")
+			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
 			errChan <- err
 			return
 		}
@@ -292,7 +298,9 @@ func (m *tapeMachine) getMemory(r register) Memory {
 	case CPU:
 		return m.cpumem[r.id].(Memory)
 	default:
-		return m.gpumem[r.id]
+		retVal := m.gpumem[r.id]
+		logf("getMemory: %v | %d = %v", r, r.id, retVal)
+		return retVal
 	}
 }
 
@@ -574,11 +582,18 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 
 		size := int(dt.Size()) * instr.s.TotalSize()
 		var mem Memory
-		if mem, err = device.Alloc(m, int64(size)); err != nil {
-			return errors.Wrapf(err, "Failed to allocate %d bytes on %v", size, device)
+		if mem, err = m.Get(uint(size)); err != nil {
+			if _, ok := err.(NoOpError); !ok {
+				return
+			}
+			if mem, err = device.Alloc(m, int64(size)); err != nil {
+				log.Println("err", err)
+				return errors.Wrapf(err, "Failed to allocate %d bytes on %v", size, device)
+			}
 		}
 
 		m.gpumem[dest] = mem
+		cudaLogf("Allocated %v bytes and put into %v|%d. Addr: %v", size, instr.writeTo, dest, m.gpumem[dest])
 		return nil
 	}
 }
@@ -605,6 +620,7 @@ func (instr free) exec(m *tapeMachine) error {
 		if err := instr.readsFrom.device.Free(m, mem); err != nil {
 			return err
 		}
+		logf("free from %v", instr.readsFrom)
 		m.gpumem[instr.readsFrom.id] = nil
 		return nil
 	}

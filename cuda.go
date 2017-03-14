@@ -118,11 +118,14 @@ func (md *ExternMetadata) blockThread(n, dev int) (blocks, threads int) {
 
 func (m *ExternMetadata) WorkAvailable() <-chan struct{} { return m.workAvailable }
 
-func (m *ExternMetadata) DoWork() {
+func (m *ExternMetadata) DoWork() error {
 	cudaLogf("DoWork() called")
 	for i, hw := range m.hasWork {
 		cudaLogf("Checking if %d has work %v", i, hw)
 		m.c[i].DoWork()
+		if err := m.c[i].Errors(); err != nil {
+			return err
+		}
 		m.hasWork[i] = false
 	}
 
@@ -130,6 +133,7 @@ func (m *ExternMetadata) DoWork() {
 		m.b.DoWork()
 		m.blasHasWork = false
 	}
+	return nil
 }
 func (m *ExternMetadata) DoAllWork() {
 	cudaLogf("DoAllWork")
@@ -174,6 +178,7 @@ func (m *ExternMetadata) init() {
 		return
 	}
 
+	m.workAvailable = make(chan struct{})
 	m.c = make([]*cu.BatchedContext, devices)
 	m.hasWork = make([]bool, devices)
 	m.warp = make([]int, devices)
@@ -243,6 +248,11 @@ func (m *ExternMetadata) cleanup() {
 	m.c = nil
 	m.m = nil
 	m.f = nil
+
+	if m.workAvailable != nil {
+		close(m.workAvailable)
+	}
+	m.workAvailable = nil
 }
 
 func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {

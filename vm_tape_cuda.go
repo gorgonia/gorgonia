@@ -170,11 +170,11 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		switch cd := instr.op.(type) {
 		case CUDADoer:
 			prealloc := m.getMemory(instr.writeTo)
+			cudaLogf("prealloc mem in instr.writeTo (%v) : %v", instr.writeTo, prealloc)
 			if mem, err = cd.CUDADo(m, toDev, instr.ExecutionMetadata, prealloc, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
 
-			cudaLogf("prealloc mem: %v", mem)
 		case CLDoer:
 			goto usecpu
 		default:
@@ -321,7 +321,6 @@ usecpu:
 	var v Value
 	switch {
 	case instr.preAllocated:
-		cudaLogf("preallocated. instr.writeTo %v", instr.writeTo)
 		if pd, ok := instr.op.(UsePreallocDoer); ok {
 			p, _ := m.getValue(instr.writeTo)
 			if p == nil {
@@ -329,8 +328,6 @@ usecpu:
 					return errors.Wrapf(err, opDoFail)
 				}
 			} else {
-				cudaLogf("WTF??! %v %v", p, p == nil)
-
 				if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
 					return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo)
 				}

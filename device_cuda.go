@@ -24,10 +24,11 @@ func (d Device) Alloc(extern External, size int64) (Memory, error) {
 	ctxes := machine.Contexts()
 	if len(ctxes) == 0 {
 		cudaLogf("allocate nothing")
-		return nil, nil // TODO
+		return nil, nil
 	}
 	ctx := ctxes[int(d)]
-	ctx.SetCurrent()
+	// ctx.SetCurrent()
+	cudaLogf("calling ctx.MemAlloc(%d)", size)
 	return ctx.MemAlloc(size)
 	// TODO in the future push and pop contexts instead
 	// if err := cu.SetCurrent(ctx.Context); err != nil {
