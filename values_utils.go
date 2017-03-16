@@ -8,30 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Dtyper interface {
-	Dtype() tensor.Dtype
-}
-
-type Typer interface {
-	Type() hm.Type
-}
-
-type ValueEqualer interface {
-	ValueEq(Value) bool
-}
-
-type Cloner interface {
-	Clone() interface{}
-}
-
-type CopierTo interface {
-	CopyTo(dest interface{}) error
-}
-
-type CopierFrom interface {
-	CopyFrom(src interface{}) error
-}
-
 // TypeOf returns the Type of the value
 func TypeOf(v Value) hm.Type {
 	switch t := v.(type) {
@@ -39,38 +15,12 @@ func TypeOf(v Value) hm.Type {
 		dt, dim := tensorInfo(t)
 		return newTensorType(dim, dt)
 	case Scalar:
-		return DtypeOf(t)
+		return t.Dtype()
 	case Typer:
 		return t.Type()
 
 	default:
 		panic(fmt.Sprintf("TypeOf Not yet implemented for %v %T", v, v))
-	}
-}
-
-// DtypeOf returns the Dtype of a Value
-func DtypeOf(v Value) tensor.Dtype {
-	switch vt := v.(type) {
-	case F64:
-		return tensor.Float64
-	case F32:
-		return tensor.Float32
-	case I:
-		return tensor.Int
-	case I32:
-		return tensor.Int32
-	case I64:
-		return tensor.Int64
-	case U8:
-		return tensor.Byte
-	case B:
-		return tensor.Bool
-	case *tensor.Dense:
-		return vt.Dtype()
-	case Dtyper:
-		return vt.Dtype()
-	default:
-		panic(fmt.Sprintf(nyiTypeFail, "DtypeOf", v))
 	}
 }
 
@@ -97,20 +47,27 @@ func ValueEq(a, b Value) bool {
 // CloneValue clones a value. For scalars, since Go copies scalars, it returns itself
 func CloneValue(v Value) (Value, error) {
 	switch vt := v.(type) {
-	case F64:
-		return vt, nil
-	case F32:
-		return vt, nil
-	case I:
-		return vt, nil
-	case I32:
-		return vt, nil
-	case I64:
-		return vt, nil
-	case U8:
-		return vt, nil
-	case B:
-		return vt, nil
+	case *F64:
+		retVal := *vt
+		return &retVal, nil
+	case *F32:
+		retVal := *vt
+		return &retVal, nil
+	case *I:
+		retVal := *vt
+		return &retVal, nil
+	case *I32:
+		retVal := *vt
+		return &retVal, nil
+	case *I64:
+		retVal := *vt
+		return &retVal, nil
+	case *U8:
+		retVal := *vt
+		return &retVal, nil
+	case *B:
+		retVal := *vt
+		return &retVal, nil
 	case tensor.Tensor:
 		return vt.Clone().(tensor.Tensor), nil
 	case Cloner:
@@ -124,20 +81,27 @@ func CloneValue(v Value) (Value, error) {
 // ZeroValue returns the zero value of a type
 func ZeroValue(v Value) Value {
 	switch vt := v.(type) {
-	case F64:
-		return F64(0)
-	case F32:
-		return F32(0)
-	case I:
-		return I(0)
-	case I32:
-		return I32(0)
-	case I64:
-		return I64(0)
-	case U8:
-		return U8(0)
-	case B:
-		return B(false)
+	case *F64:
+		*vt = 0
+		return vt
+	case *F32:
+		*vt = 0
+		return vt
+	case *I:
+		*vt = 0
+		return vt
+	case *I32:
+		*vt = 0
+		return vt
+	case *I64:
+		*vt = 0
+		return vt
+	case *U8:
+		*vt = 0
+		return vt
+	case *B:
+		*vt = false
+		return vt
 	case tensor.Tensor:
 		vt.Zero()
 		return vt
@@ -152,8 +116,55 @@ func ZeroValue(v Value) Value {
 func Copy(dest, src Value) (Value, error) {
 	var ok bool
 	switch srcT := src.(type) {
-	case Scalar:
-		return src, nil
+	case *F64:
+		var destS *F64
+		if destS, ok = dest.(*F64); !ok {
+			return nil, errors.Errorf("Expected dest to be *F64. Got %T instead", dest)
+		}
+		*destS = *srcT
+		return destS, nil
+	case *F32:
+		var destS *F32
+		if destS, ok = dest.(*F32); !ok {
+			return nil, errors.Errorf("Expected dest to be *F32. Got %T instead", dest)
+		}
+		*destS = *srcT
+		return destS, nil
+	case *I:
+		var destS *I
+		if destS, ok = dest.(*I); !ok {
+			return nil, errors.Errorf("Expected dest to be *I) . Got %T instead", dest)
+		}
+		*destS = *srcT
+		return destS, nil
+	case *I64:
+		var destS *I64
+		if destS, ok = dest.(*I64); !ok {
+			return nil, errors.Errorf("Expected dest to be *I64. Got %T instead", dest)
+		}
+		*destS = *srcT
+		return destS, nil
+	case *I32:
+		var destS *I32
+		if destS, ok = dest.(*I32); !ok {
+			return nil, errors.Errorf("Expected dest to be *I32. Got %T instead", dest)
+		}
+		*destS = *srcT
+		return destS, nil
+	case *U8:
+		var destS *U8
+		if destS, ok = dest.(*U8); !ok {
+			return nil, errors.Errorf("Expected dest to be *U8). Got %T instead", dest)
+		}
+		*destS = *srcT
+		return destS, nil
+	case *B:
+		var destS *B
+		if destS, ok = dest.(*B); !ok {
+			return nil, errors.Errorf("Expected dest to be *B) . Got %T instead", dest)
+		}
+		*destS = *srcT
+		return destS, nil
 	case tensor.Tensor:
 		var destT tensor.Tensor
 		if destT, ok = dest.(tensor.Tensor); !ok {

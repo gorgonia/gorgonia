@@ -90,36 +90,36 @@ func TestShapeCalcStride(t *testing.T) {
 
 	// scalar shape
 	s = Shape{}
-	assert.Nil(s.CalcStrides())
+	assert.Nil(s.calcStrides())
 
 	s = Shape{1}
-	assert.Nil(s.CalcStrides())
+	assert.Nil(s.calcStrides())
 
 	// vector shape
 	s = Shape{2, 1}
-	assert.Equal([]int{1}, s.CalcStrides())
+	assert.Equal([]int{1}, s.calcStrides())
 
 	s = Shape{1, 2}
-	assert.Equal([]int{1}, s.CalcStrides())
+	assert.Equal([]int{1}, s.calcStrides())
 
 	s = Shape{2}
-	assert.Equal([]int{1}, s.CalcStrides())
+	assert.Equal([]int{1}, s.calcStrides())
 
 	// matrix strides
 	s = Shape{2, 2}
-	assert.Equal([]int{2, 1}, s.CalcStrides())
+	assert.Equal([]int{2, 1}, s.calcStrides())
 
 	s = Shape{5, 2}
-	assert.Equal([]int{2, 1}, s.CalcStrides())
+	assert.Equal([]int{2, 1}, s.calcStrides())
 
 	// 3D strides
 	s = Shape{2, 3, 4}
-	assert.Equal([]int{12, 4, 1}, s.CalcStrides())
+	assert.Equal([]int{12, 4, 1}, s.calcStrides())
 
 	// stupid shape
 	s = Shape{-2, 1, 2}
 	fail := func() {
-		s.CalcStrides()
+		s.calcStrides()
 	}
 	assert.Panics(fail)
 }
@@ -201,7 +201,7 @@ func TestShape_Slice(t *testing.T) {
 		}
 
 		if !ssts.expected.Eq(newShape) {
-			t.Errorf("Test %q: Expeced shape %v. Got %v instead", ssts.name, ssts.expected, newShape)
+			t.Errorf("Test %q: Expected shape %v. Got %v instead", ssts.name, ssts.expected, newShape)
 		}
 	}
 }

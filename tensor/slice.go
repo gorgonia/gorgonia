@@ -1,5 +1,6 @@
 package tensor
 
+// A Slice represents a slicing operation for a Tensor.
 type Slice interface {
 	Start() int
 	End() int

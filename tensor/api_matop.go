@@ -33,17 +33,18 @@ func Concat(axis int, t Tensor, others ...Tensor) (retVal Tensor, err error) {
 	case *Dense:
 		ts := make([]*Dense, len(others))
 		for i, o := range others {
-			if ot, ok := o.(*Dense); !ok {
-				return nil, errors.Errorf("Expected all Tensors to be *Dense")
-			} else {
+			if ot, ok := o.(*Dense); ok {
 				ts[i] = ot
+				continue
 			}
+			return nil, errors.Errorf("Expected all Tensors to be *Dense")
 		}
 		return T.Concat(axis, ts...)
 	}
 	panic("Unreachable")
 }
 
+// Copy copies a tensor to another. For *Dense views, only the relevant slots are copied.
 func Copy(dst, src Tensor) error {
 	switch st := src.(type) {
 	case *Dense:

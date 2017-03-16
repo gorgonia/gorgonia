@@ -1,42 +1,40 @@
 package gorgonia
 
-import "reflect"
-
 func scalarEq(a, b Scalar) bool {
 	switch at := a.(type) {
-	case F64:
-		if bt, ok := b.(F64); ok {
-			return at == bt
+	case *F64:
+		if bt, ok := b.(*F64); ok {
+			return *at == *bt
 		}
 		return false
-	case F32:
-		if bt, ok := b.(F32); ok {
-			return at == bt
+	case *F32:
+		if bt, ok := b.(*F32); ok {
+			return *at == *bt
 		}
 		return false
-	case I:
-		if bt, ok := b.(I); ok {
-			return at == bt
+	case *I:
+		if bt, ok := b.(*I); ok {
+			return *at == *bt
 		}
 		return false
-	case I32:
-		if bt, ok := b.(I32); ok {
-			return at == bt
+	case *I32:
+		if bt, ok := b.(*I32); ok {
+			return *at == *bt
 		}
 		return false
-	case I64:
-		if bt, ok := b.(I64); ok {
-			return at == bt
+	case *I64:
+		if bt, ok := b.(*I64); ok {
+			return *at == *bt
 		}
 		return false
-	case U8:
-		if bt, ok := b.(U8); ok {
-			return at == bt
+	case *U8:
+		if bt, ok := b.(*U8); ok {
+			return *at == *bt
 		}
 		return false
-	case B:
-		if bt, ok := b.(B); ok {
-			return at == bt
+	case *B:
+		if bt, ok := b.(*B); ok {
+			return *at == *bt
 		}
 		return false
 	}
@@ -86,11 +84,10 @@ func constEq(a, b constant) (ok bool) {
 		if bt, ok = b.(constantTensor); !ok {
 			return
 		}
-		return reflect.DeepEqual(at, bt)
+		return at.v.Eq(bt.v)
 	default:
 		panic("Not yet implemented")
 	}
-	panic("unreachable")
 }
 
 // fastest comparisons to least fastest

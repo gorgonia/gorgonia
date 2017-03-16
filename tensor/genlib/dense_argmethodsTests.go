@@ -139,7 +139,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	// test with NaN
 	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}NaN(), 4}))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
-		t.Errorf("Failed test with NaN", err)
+		t.Errorf("Failed test with NaN: %v", err)
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
 	assert.Equal(2, {{.ArgMethod}}.ScalarValue(), "NaN test")
@@ -147,7 +147,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(1),4}))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
-		t.Errorf("Failed test with +Inf", err)
+		t.Errorf("Failed test with +Inf: %v", err)
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
 	assert.Equal({{if eq .ArgMethod "argmax"}}2{{else}}0{{end}}, {{.ArgMethod}}.ScalarValue(), "+Inf test")
@@ -155,7 +155,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(-1),4 }))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
-		t.Errorf("Failed test with -Inf", err)
+		t.Errorf("Failed test with -Inf: %v", err)
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
 	assert.Equal({{if eq .ArgMethod "argmin"}}2{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "-Inf test")

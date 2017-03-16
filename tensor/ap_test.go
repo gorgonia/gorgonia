@@ -91,12 +91,12 @@ func TestAccessPatternBasics(t *testing.T) {
 	assert.Equal([]int{6, 2, 1}, ap.Strides())
 	assert.Equal(12, ap.Size())
 
-	ap.Lock()
+	ap.lock()
 	ap.SetShape(1, 2, 3)
 	assert.Equal(Shape{2, 3, 2}, ap.shape)
 	assert.Equal([]int{6, 2, 1}, ap.strides)
 
-	ap.Unlock()
+	ap.unlock()
 	ap.SetShape(1, 2)
 	assert.Equal(Shape{1, 2}, ap.Shape())
 	assert.Equal([]int{1}, ap.Strides())
@@ -223,7 +223,7 @@ func TestAccessPatternS(t *testing.T) {
 	var err error
 
 	for _, sts := range sliceTests {
-		ap = NewAP(sts.shape, sts.shape.CalcStrides())
+		ap = NewAP(sts.shape, sts.shape.calcStrides())
 		if apS, ndStart, ndEnd, err = ap.S(sts.shape.TotalSize(), sts.slices...); err != nil {
 			t.Errorf("%v errored: %v", sts.name, err)
 			continue

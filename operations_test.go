@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -52,6 +53,8 @@ var mulTests = []struct {
 }
 
 func TestMul(t *testing.T) {
+	defer runtime.GC()
+
 	assert := assert.New(t)
 
 	t.Logf("Testing Mul with TapeMachine")
@@ -166,21 +169,21 @@ var gtTests = []struct {
 	err      bool
 }{
 	// s-s
-	{F64(1), F64(0), true, F64(1), false},
-	{F64(0), F64(1), true, F64(0), false},
-	{F64(1), F64(0), false, B(true), false},
-	{F32(0), F32(1), false, B(false), false},
+	{newF64(float64(1)), newF64(float64(0)), true, newF64(1.0), false},
+	{newF64(float64(0)), newF64(float64(1)), true, newF64(0.0), false},
+	{newF64(float64(1)), newF64(float64(0)), false, newB(true), false},
+	{newF32(float32(0)), newF32(float32(1)), false, newB(false), false},
 
 	// s-t
 	{
-		F64(1), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
+		newF64(float64(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})),
 		true,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{1, 0})),
 		false,
 	},
 
 	{
-		F32(1), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
+		newF32(float32(1)), tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})),
 		false,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{true, false})),
 		false,
@@ -188,14 +191,14 @@ var gtTests = []struct {
 
 	// t-s
 	{
-		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), F64(1),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 2})), newF64(float64(1)),
 		true,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{0, 1})),
 		false,
 	},
 
 	{
-		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), F32(1),
+		tensor.New(tensor.WithShape(2), tensor.WithBacking([]float32{0, 2})), newF32(float32(1)),
 		false,
 		tensor.New(tensor.WithShape(2), tensor.WithBacking([]bool{false, true})),
 		false,
@@ -342,6 +345,7 @@ func TestGt(t *testing.T) {
 }
 
 func TestSoftMax(t *testing.T) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	g := NewGraph()
 	xT := tensor.New(tensor.WithBacking([]float64{0.1, 0.2, -0.3, 0.4, 0.5}))
@@ -423,6 +427,7 @@ var sliceTests = []struct {
 }
 
 func TestSlice(t *testing.T) {
+	defer runtime.GC()
 	for _, sts := range sliceTests {
 		g := NewGraph()
 		x := NewTensor(g, Float64, len(sts.shape), WithShape(sts.shape...), WithInit(RangedFrom(0)))
@@ -547,9 +552,9 @@ var sumTests = []struct {
 	expectedGrad  Value
 	err           bool
 }{
-	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, F64(1), F64(1), false},
-	{"Sum(vec, 0)", tensor.Shape{2}, []int{0}, scalarShape, F64(1), F64(1), false},
-	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, F64(15), tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
+	{"Sum(vec)", tensor.Shape{2}, nil, scalarShape, newF64(1.0), newF64(1.0), false},
+	{"Sum(vec, 0)", tensor.Shape{2}, []int{0}, scalarShape, newF64(1), newF64(1.0), false},
+	{"Sum(Mat)", tensor.Shape{2, 3}, nil, scalarShape, newF64(15.0), tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false},
 	{"Sum(Mat, 0)", tensor.Shape{2, 3}, []int{0}, tensor.Shape{3},
 		tensor.New(tensor.WithShape(3), tensor.WithBacking([]float64{3, 5, 7})),
 		tensor.New(tensor.WithShape(2, 3), tensor.WithBacking([]float64{1, 1, 1, 1, 1, 1})), false,
@@ -564,6 +569,7 @@ var sumTests = []struct {
 }
 
 func TestSum(t *testing.T) {
+	defer runtime.GC()
 	for _, sts := range sumTests {
 		g := NewGraph()
 		x := NewTensor(g, Float64, len(sts.shape), WithShape(sts.shape...), WithInit(RangedFrom(0)))
@@ -588,7 +594,7 @@ func TestSum(t *testing.T) {
 		}
 
 		if !sts.expectedShape.Eq(s.shape) {
-			t.Errorf("Test %q has wrong shape. Want %v, got %v instead", sts.expectedShape, s.shape)
+			t.Errorf("Test %q has wrong shape. Want %v, got %v instead", sts.name, sts.expectedShape, s.shape)
 			continue
 		}
 
@@ -610,7 +616,7 @@ func TestSum(t *testing.T) {
 
 		m := NewTapeMachine(prog, locMap)
 		if err = m.RunAll(); err != nil {
-			t.Errorf("Test %q - Runtime error", sts.name, err)
+			t.Errorf("Test %q - Runtime error: %v", sts.name, err)
 			continue
 		}
 

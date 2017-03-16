@@ -19,7 +19,7 @@ func vecAddI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -33,7 +33,7 @@ func vecAddI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -47,7 +47,7 @@ func vecAddI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -61,7 +61,7 @@ func vecAddI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -75,7 +75,7 @@ func vecAddI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -89,7 +89,7 @@ func vecAddU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -103,7 +103,7 @@ func vecAddU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -117,7 +117,7 @@ func vecAddU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -131,7 +131,7 @@ func vecAddU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -145,7 +145,7 @@ func vecAddU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -159,7 +159,7 @@ func vecAddF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf32.Add(a, b)
@@ -170,7 +170,7 @@ func vecAddF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf64.Add(a, b)
@@ -181,7 +181,7 @@ func vecAddC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -194,7 +194,7 @@ func vecAddC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -209,7 +209,7 @@ func vecSubI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -223,7 +223,7 @@ func vecSubI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -237,7 +237,7 @@ func vecSubI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -251,7 +251,7 @@ func vecSubI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -265,7 +265,7 @@ func vecSubI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -279,7 +279,7 @@ func vecSubU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -293,7 +293,7 @@ func vecSubU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -307,7 +307,7 @@ func vecSubU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -321,7 +321,7 @@ func vecSubU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -335,7 +335,7 @@ func vecSubU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -349,7 +349,7 @@ func vecSubF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf32.Sub(a, b)
@@ -360,7 +360,7 @@ func vecSubF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf64.Sub(a, b)
@@ -371,7 +371,7 @@ func vecSubC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -384,7 +384,7 @@ func vecSubC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -399,7 +399,7 @@ func vecMulI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -413,7 +413,7 @@ func vecMulI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -427,7 +427,7 @@ func vecMulI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -441,7 +441,7 @@ func vecMulI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -455,7 +455,7 @@ func vecMulI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -469,7 +469,7 @@ func vecMulU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -483,7 +483,7 @@ func vecMulU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -497,7 +497,7 @@ func vecMulU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -511,7 +511,7 @@ func vecMulU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -525,7 +525,7 @@ func vecMulU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -539,7 +539,7 @@ func vecMulF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf32.Mul(a, b)
@@ -550,7 +550,7 @@ func vecMulF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf64.Mul(a, b)
@@ -561,7 +561,7 @@ func vecMulC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -574,7 +574,7 @@ func vecMulC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -589,7 +589,7 @@ func vecDivI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -612,7 +612,7 @@ func vecDivI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -635,7 +635,7 @@ func vecDivI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -658,7 +658,7 @@ func vecDivI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -681,7 +681,7 @@ func vecDivI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -704,7 +704,7 @@ func vecDivU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -727,7 +727,7 @@ func vecDivU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -750,7 +750,7 @@ func vecDivU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -773,7 +773,7 @@ func vecDivU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -796,7 +796,7 @@ func vecDivU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	var errs errorIndices
@@ -819,7 +819,7 @@ func vecDivF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf32.Div(a, b)
@@ -830,7 +830,7 @@ func vecDivF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf64.Div(a, b)
@@ -841,7 +841,7 @@ func vecDivC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -854,7 +854,7 @@ func vecDivC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -869,7 +869,7 @@ func vecPowI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -883,7 +883,7 @@ func vecPowI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -897,7 +897,7 @@ func vecPowI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -911,7 +911,7 @@ func vecPowI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -925,7 +925,7 @@ func vecPowI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -939,7 +939,7 @@ func vecPowU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -953,7 +953,7 @@ func vecPowU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -967,7 +967,7 @@ func vecPowU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -981,7 +981,7 @@ func vecPowU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -995,7 +995,7 @@ func vecPowU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -1009,7 +1009,7 @@ func vecPowF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf32.Pow(a, b)
@@ -1020,7 +1020,7 @@ func vecPowF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	vecf64.Pow(a, b)
@@ -1031,7 +1031,7 @@ func vecPowC64(a, b []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
@@ -1044,11 +1044,11 @@ func vecPowC128(a, b []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	for i, v := range b {
-		a[i] = complex128(cmplx.Pow(complex128(a[i]), complex128(v)))
+		a[i] = cmplx.Pow(a[i], v)
 	}
 	return nil
 }
@@ -1059,7 +1059,7 @@ func incrVecAddI(a, b, incr []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1077,7 +1077,7 @@ func incrVecAddI8(a, b, incr []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1095,7 +1095,7 @@ func incrVecAddI16(a, b, incr []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1113,7 +1113,7 @@ func incrVecAddI32(a, b, incr []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1131,7 +1131,7 @@ func incrVecAddI64(a, b, incr []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1149,7 +1149,7 @@ func incrVecAddU(a, b, incr []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1167,7 +1167,7 @@ func incrVecAddU8(a, b, incr []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1185,7 +1185,7 @@ func incrVecAddU16(a, b, incr []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1203,7 +1203,7 @@ func incrVecAddU32(a, b, incr []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1221,7 +1221,7 @@ func incrVecAddU64(a, b, incr []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1239,7 +1239,7 @@ func incrVecAddF32(a, b, incr []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1254,7 +1254,7 @@ func incrVecAddF64(a, b, incr []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1269,7 +1269,7 @@ func incrVecAddC64(a, b, incr []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1286,7 +1286,7 @@ func incrVecAddC128(a, b, incr []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1305,7 +1305,7 @@ func incrVecSubI(a, b, incr []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1323,7 +1323,7 @@ func incrVecSubI8(a, b, incr []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1341,7 +1341,7 @@ func incrVecSubI16(a, b, incr []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1359,7 +1359,7 @@ func incrVecSubI32(a, b, incr []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1377,7 +1377,7 @@ func incrVecSubI64(a, b, incr []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1395,7 +1395,7 @@ func incrVecSubU(a, b, incr []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1413,7 +1413,7 @@ func incrVecSubU8(a, b, incr []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1431,7 +1431,7 @@ func incrVecSubU16(a, b, incr []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1449,7 +1449,7 @@ func incrVecSubU32(a, b, incr []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1467,7 +1467,7 @@ func incrVecSubU64(a, b, incr []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1485,7 +1485,7 @@ func incrVecSubF32(a, b, incr []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1500,7 +1500,7 @@ func incrVecSubF64(a, b, incr []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1515,7 +1515,7 @@ func incrVecSubC64(a, b, incr []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1532,7 +1532,7 @@ func incrVecSubC128(a, b, incr []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1551,7 +1551,7 @@ func incrVecMulI(a, b, incr []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1569,7 +1569,7 @@ func incrVecMulI8(a, b, incr []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1587,7 +1587,7 @@ func incrVecMulI16(a, b, incr []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1605,7 +1605,7 @@ func incrVecMulI32(a, b, incr []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1623,7 +1623,7 @@ func incrVecMulI64(a, b, incr []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1641,7 +1641,7 @@ func incrVecMulU(a, b, incr []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1659,7 +1659,7 @@ func incrVecMulU8(a, b, incr []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1677,7 +1677,7 @@ func incrVecMulU16(a, b, incr []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1695,7 +1695,7 @@ func incrVecMulU32(a, b, incr []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1713,7 +1713,7 @@ func incrVecMulU64(a, b, incr []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1731,7 +1731,7 @@ func incrVecMulF32(a, b, incr []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1746,7 +1746,7 @@ func incrVecMulF64(a, b, incr []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1761,7 +1761,7 @@ func incrVecMulC64(a, b, incr []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1778,7 +1778,7 @@ func incrVecMulC128(a, b, incr []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1797,7 +1797,7 @@ func incrVecDivI(a, b, incr []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1824,7 +1824,7 @@ func incrVecDivI8(a, b, incr []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1851,7 +1851,7 @@ func incrVecDivI16(a, b, incr []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1878,7 +1878,7 @@ func incrVecDivI32(a, b, incr []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1905,7 +1905,7 @@ func incrVecDivI64(a, b, incr []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1932,7 +1932,7 @@ func incrVecDivU(a, b, incr []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1959,7 +1959,7 @@ func incrVecDivU8(a, b, incr []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -1986,7 +1986,7 @@ func incrVecDivU16(a, b, incr []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2013,7 +2013,7 @@ func incrVecDivU32(a, b, incr []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2040,7 +2040,7 @@ func incrVecDivU64(a, b, incr []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2067,7 +2067,7 @@ func incrVecDivF32(a, b, incr []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2082,7 +2082,7 @@ func incrVecDivF64(a, b, incr []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2097,7 +2097,7 @@ func incrVecDivC64(a, b, incr []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2114,7 +2114,7 @@ func incrVecDivC128(a, b, incr []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2133,7 +2133,7 @@ func incrVecPowI(a, b, incr []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2151,7 +2151,7 @@ func incrVecPowI8(a, b, incr []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2169,7 +2169,7 @@ func incrVecPowI16(a, b, incr []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2187,7 +2187,7 @@ func incrVecPowI32(a, b, incr []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2205,7 +2205,7 @@ func incrVecPowI64(a, b, incr []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2223,7 +2223,7 @@ func incrVecPowU(a, b, incr []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2241,7 +2241,7 @@ func incrVecPowU8(a, b, incr []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2259,7 +2259,7 @@ func incrVecPowU16(a, b, incr []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2277,7 +2277,7 @@ func incrVecPowU32(a, b, incr []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2295,7 +2295,7 @@ func incrVecPowU64(a, b, incr []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2313,7 +2313,7 @@ func incrVecPowF32(a, b, incr []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2328,7 +2328,7 @@ func incrVecPowF64(a, b, incr []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2343,7 +2343,7 @@ func incrVecPowC64(a, b, incr []complex64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2360,7 +2360,7 @@ func incrVecPowC128(a, b, incr []complex128) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)] // these two lines are to eliminate any in-loop bounds checks
 
 	if len(incr) != len(a) {
@@ -2368,7 +2368,7 @@ func incrVecPowC128(a, b, incr []complex128) error {
 	}
 	incr = incr[:len(a)]
 	for i, v := range b {
-		incr[i] += complex128(cmplx.Pow(complex128(a[i]), complex128(v)))
+		incr[i] += cmplx.Pow(a[i], v)
 	}
 	return nil
 }

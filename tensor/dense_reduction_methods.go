@@ -70,6 +70,7 @@ func (t *Dense) Sum(along ...int) (retVal *Dense, err error) {
 	}
 	return
 }
+
 func (t *Dense) sum(axis int) (retVal *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:
@@ -160,6 +161,7 @@ func (t *Dense) Max(along ...int) (retVal *Dense, err error) {
 	}
 	return
 }
+
 func (t *Dense) max(axis int) (retVal *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:
@@ -246,6 +248,7 @@ func (t *Dense) Min(along ...int) (retVal *Dense, err error) {
 	}
 	return
 }
+
 func (t *Dense) min(axis int) (retVal *Dense) {
 	switch t.t.Kind() {
 	case reflect.Int:

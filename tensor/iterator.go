@@ -144,7 +144,7 @@ func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 	return
 }
 
-// Resets the iterator
+// Reset resets the iterator state.
 func (it *FlatIterator) Reset() {
 	it.done = false
 	it.lastIndex = 0

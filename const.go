@@ -48,7 +48,7 @@ const (
 	binOpDoFail         = "Failed to carry binOp.Do()"
 	binOpNodeFail       = "Failed to carry binary operation %T"
 	applyFail           = "Failed to carry Apply()"
-	binOpFail           = "Binary operator recieved %d arguments"
+	binOpFail           = "Binary operator received %d arguments"
 	hadamardProdFail    = "Failed to carry hadamardProd()"
 	hadamardDivFail     = "Failed to carry hadamardDiv()"
 	negFail             = "Failed to carry Neg()"
@@ -74,6 +74,7 @@ const (
 	execFail            = "Failed to execute %v in node %v"
 	autodiffFail        = "Failed to differentiate %v"
 	undefinedOnShape    = "%v undefined on shape %v"
+	unsupportedDtype    = "dtype %v is not yet supported"
 )
 
 var empty struct{}

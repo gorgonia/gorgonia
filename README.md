@@ -1,4 +1,6 @@
-#Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) #
+#Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/chewxy/gorgonia)](https://goreportcard.com/report/github.com/chewxy/gorgonia) #
+
+<img src="https://raw.githubusercontent.com/chewxy/gorgonia/master/media/mascot_small.jpg" align="right" />
 
 Gorgonia is a library that helps facilitate machine learning in Go. Write and evaluate mathematical equations involving multidimensional arrays easily. If this sounds like [Theano](http://deeplearning.net/software/theano/) or [TensorFlow](https://www.tensorflow.org/), it's because the idea is quite similar. Specifically, the library is pretty low-level, like Theano, but has higher goals like Tensorflow.
 
@@ -10,7 +12,7 @@ Gorgonia:
 * Can perform numerical stabilization
 * Provides a number of convenience functions to help create neural networks
 * Is fairly quick (comparable to Theano and Tensorflow's speed)
-* Will support GPU/CUDA
+* Supports CUDA/GPGPU computation (OpenCL not yet supported, send a pull request)
 * Will support distributed computing
 
 #Why Use Gorgonia?#
@@ -33,6 +35,7 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |-------|--------|--------|-----|-------|
 |[gonum/graph](http://github.com/gonum/graph)| Sorting `*ExprGraph`| Vital. Removal means Gorgonia will not work | Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[gonum/blas](http://github.com/gonum/blas)|Tensor subpackage linear algebra operations|Vital. Removal means Gorgonial will not work|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
+|[cu](https://github.com/chewxy/cu)| CUDA drivers | Needed for CUDA operations | Same maintainer as Gorgonia | MIT/BSD-like|
 |[math32](https://github.com/chewxy/math32)|`float32` operations|Can be replaced by `float32(math.XXX(float64(x)))`|Same maintainer as Gorgonia, same API as the built in `math` package|MIT/BSD-like|
 |[hm](https://github.com/chewxy/hm)|Type system for Gorgonia|Gorgonia's graphs are pretty tightly coupled with the type system | Same maintainer as Gorgonia | MIT/BSD-like|
 |[vecf64](https://github.com/chewxy/vecf64)| optimized `[]float64` operations | Can be generated in the `tensor/genlib` package. However, plenty of optimizations have been made/will be made | Same maintainer as Gorgonia | MIT/BSD-like|
@@ -44,6 +47,9 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |[gonum/matrix](http://github.com/gonum/matrix)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[testify/assert](https://github.com/stretchr/testify)|Testing|Can do without but will be a massive pain in the ass to test||[testify licence](https://github.com/stretchr/testify/blob/master/LICENSE) (MIT/BSD-like)|
 
+#Keeping Updated#
+
+Gorgonia's project has a [mailing list](https://groups.google.com/forum/#!forum/gorgonia), as well as a [Twitter account](https://twitter.com/gorgoniaML). Official updates and announcements will be posted to those two sites.
 
 #Usage#
 
@@ -287,6 +293,130 @@ A Node is rendered thusly:
 * If there are no Values bound to the node, it will show up as NIL. However, when there are values and gradients, it will try to as best as possible display the values bound to the node.
 
 
+##Using CUDA ##
+
+Gorgonia comes with CUDA support out of the box. However, usage is specialized. To use CUDA, you must build your application with the build tag `cuda`, like so:
+
+``` 
+go build -tags='cuda' .
+```
+
+Furthermore, there are some additional requirements:
+
+1. [CUDA toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is required. Installing this installs the `nvcc` compiler which is required to run your code with CUDA
+2. `go install github.com/chewxy/gorgonia/cmd/cudagen`. This installs the `cudagen` program. Running `cudagen` will generate the relevant CUDA related code for Gorgonia.
+3. The CUDA ops must be manually enabled in your code with the `UseCudaFor` option.
+4. `runtime.LockOSThread()` must be called in the main function where the VM is running. CUDA requires thread affinity, and therefore the OS thread must be locked.
+
+
+###Example ###
+
+So how do we use CUDA? Say we've got a file, `main.go`:
+
+```go
+import (
+	"fmt"
+	"log"
+	"runtime"
+
+	T "github.com/chewxy/gorgonia"
+	"github.com/chewxy/gorgonia/tensor"
+)
+
+func main() {
+	g := T.NewGraph()
+	x := T.NewMatrix(g, T.Float32, T.WithName("x"), T.WithShape(100, 100))
+	y := T.NewMatrix(g, T.Float32, T.WithName("y"), T.WithShape(100, 100))
+	xpy := T.Must(T.Add(x, y))
+	xpy2 := T.Must(T.Tanh(xpy))
+
+	prog, locMap, _ := T.Compile(g)
+	m := T.NewTapeMachine(prog, locMap, T.UseCudaFor("tanh"))
+
+	T.Let(x, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
+	T.Let(y, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
+
+	runtime.LockOSThread()
+	for i := 0; i < 1000; i++ {
+		if err := m.RunAll(); err != nil {
+			log.Fatalf("iteration: %d. Err: %v", i, err)
+		}
+	}
+	runtime.UnlockOSThread()
+
+	fmt.Printf("%1.1f", xpy2.Value())
+}
+
+```
+
+If this is run normally:
+
+```
+go run main.go
+```
+
+CUDA will not be used.
+
+If the program is to be run using CUDA, then this must be invoked:
+
+```
+go run -tags='cuda'
+```
+
+And even so, only the `tanh` function uses CUDA. 
+
+###Rationale ###
+
+The main reasons for having such complicated requirements for using CUDA is quite simply performance related. As Dave Cheney famously wrote, [cgo is not Go](https://dave.cheney.net/2016/01/18/cgo-is-not-go). To use CUDA, cgo is unfortunately required. And to use cgo, plenty of tradeoffs need to be made.
+
+Therefore the solution was to nestle the CUDA related code in a build tag, `cuda`. That way by default no cgo is used (well, kind-of - you could still use `cblas` or `blase`). 
+
+The reason for requiring [CUDA toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is because there are many CUDA [Compute Capabilities](http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities), and generating code for them all would yield a huge binary for no real good reason. Rather, users are encouraged to compile for their specific Compute Capabilities.
+
+Lastly, the reason for requiring an explicit specification to use CUDA for which ops is due to the cost of cgo calls. Additional work is being done currently to implement batched cgo calls,  but until that is done, the solution is keyhole "upgrade" of certain ops
+
+###`Op`s supported by CUDA###
+
+As of now, only the very basic simple ops support CUDA: 
+
+Elementwise unary operations:
+
+* `abs`
+* `sin`
+* `cos`
+* `exp`
+* `ln`
+* `log2`
+* `neg`
+* `square`
+* `sqrt`
+* `inv` (reciprocal of a number)
+* `cube`
+* `tanh`
+* `sigmoid`
+* `log1p`
+* `expm1`
+* `softplus`
+
+Elementwise binary operations - only arithmetic operations support CUDA:
+
+* `add`
+* `sub`
+* `mul`
+* `div`
+* `pow`
+
+From a lot of profiling of this author's personal projects, the ones that really matter are `tanh`, `sigmoid`, `expm1`, `exp` and `cube` - basically the activation functions. The other operations do work fine with MKL+AVX and aren't the major cause of slowness in a neural network
+
+###CUDA improvements ###
+
+In a trivial benchmark, careful use of CUDA (in this case, used to call `sigmoid`) shows impressive improvements over non-CUDA code (bearing in mind the CUDA kernel is extremely naive and not optimized):
+
+```
+BenchmarkOneMilCUDA-8   	     300	   3348711 ns/op
+BenchmarkOneMil-8       	      50	  33169036 ns/op
+```
+
 
 #API Stability#
 Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
@@ -297,14 +427,14 @@ Gorgonia's API is as of right now, not considered stable. It will be stable from
 
 Here are the goals for Gorgonia, sorted by importance 
 
-- [ ] 90+% test coverage. Current coverage is 50% for Gorgonia and 75% for the Tensor packages.
+- [ ] 80+% test coverage. Current coverage is 50% for Gorgonia and 80% for the `tensor`.
 - [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
 - [x] TravisCI for this package.
 - [x] Coveralls for this package.
 - [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely. Use table driven tests where possible.
 - [x] Improve performance especially re: allocation, minimize impact of type system.
 - [x] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
-- [ ] Refactor the CuBLAS package as well as the Blase package.
+- [ ] Refactor the CuBLAS package as well as the Blase package to follow in vein of the CUDA implementation.
 - [ ] Distributed computing. The ability to spread jobs out across multiple machines and communicating with each other has been attempted at least 3 times, but failed each time.
 - [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in general.
 - [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
@@ -338,6 +468,18 @@ Significant Contributors list will be updated once a month (if anyone even uses 
 
 #How To Get Support#
 The best way of support right now is to open a ticket on Github.
+
+#Frequently Asked Questions#
+
+###Why are there seemingly random `runtime.GC()` calls in the tests?###
+
+The answer to this is simple - the design of the package uses CUDA in a particular way: specifically, a CUDA device and context is tied to a `VM`, instead of at the package level. This means for every `VM` created, a different CUDA context is created per device per `VM`. This way all the operations will play nicely with other applications that may be using CUDA (this needs to be stress-tested, however). 
+
+The CUDA contexts are only destroyed when the `VM` gets garbage collected (with the help of a finalizer function). In the tests, about 100 `VM`s get created, and garbage collection for the most part can be considered random. This leads to cases where the GPU runs out of memory as there are too many contexts being used. 
+
+Therefore at the end of any tests that may use GPU, a `runtime.GC()` call is made to force garbage collection, freeing GPU memories.
+
+In production, one is unlikely to start that many `VM`s, therefore it's not really a problem. If there is, open a ticket on Github, and we'll look into adding a `Finish()` method for the `VM`s.
 
 
 #Licence#

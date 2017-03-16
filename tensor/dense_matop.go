@@ -169,7 +169,7 @@ func (t *Dense) Transpose() {
 	}()
 
 	expShape := t.Shape()
-	expStrides := expShape.CalcStrides() // important! because the strides would have changed once the underlying data changed
+	expStrides := expShape.calcStrides() // important! because the strides would have changed once the underlying data changed
 	defer ReturnInts(expStrides)
 	defer func() {
 		t.setShape(expShape...)
@@ -196,6 +196,20 @@ func (t *Dense) At(coords ...int) (interface{}, error) {
 	}
 
 	return t.Get(at), nil
+}
+
+// SetAt sets the value at the given coordinate
+func (t *Dense) SetAt(v interface{}, coords ...int) error {
+	if len(coords) != t.Dims() {
+		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
+	}
+
+	at, err := t.at(coords...)
+	if err != nil {
+		return errors.Wrap(err, "SetAt()")
+	}
+	t.Set(at, v)
+	return nil
 }
 
 // Repeat is like Numpy's repeat. It repeats the elements of an array.
@@ -381,11 +395,14 @@ func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 		slices := make([]Slice, axis+1)
 		slices[axis] = makeRS(start, end)
 
-		var sliced Tensor
-		if sliced, err = retVal.Slice(slices...); err != nil {
+		var v *Dense
+		if v, err = sliceDense(retVal, slices...); err != nil {
 			return
 		}
-		v := sliced.(*Dense)
+		if v.IsVector() && T.IsMatrix() && axis == 0 {
+			v.reshape(v.shape[0], 1)
+		}
+
 		if err = assignArray(v, T); err != nil {
 			return
 		}
@@ -393,6 +410,40 @@ func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 	}
 
 	return
+}
+
+// Hstack stacks other tensors columnwise (horizontal stacking)
+func (t *Dense) Hstack(others ...*Dense) (*Dense, error) {
+	// check that everything is at least 1D
+	if t.Dims() == 0 {
+		return nil, errors.Errorf(atleastDims, 1)
+	}
+
+	for _, d := range others {
+		if d.Dims() < 1 {
+			return nil, errors.Errorf(atleastDims, 1)
+		}
+	}
+
+	if t.Dims() == 1 {
+		return t.Concat(0, others...)
+	}
+	return t.Concat(1, others...)
+}
+
+// Vstack stacks other tensors rowwise (vertical stacking). Vertical stacking requires all involved Tensors to have at least 2 dimensions
+func (t *Dense) Vstack(others ...*Dense) (*Dense, error) {
+	// check that everything is at least 2D
+	if t.Dims() < 2 {
+		return nil, errors.Errorf(atleastDims, 2)
+	}
+
+	for _, d := range others {
+		if d.Dims() < 2 {
+			return nil, errors.Errorf(atleastDims, 2)
+		}
+	}
+	return t.Concat(0, others...)
 }
 
 // Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
@@ -415,7 +466,7 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 		cur++
 	}
 
-	newStrides := newShape.CalcStrides()
+	newStrides := newShape.calcStrides()
 	ap := NewAP(newShape, newStrides)
 
 	allNoMat := !t.IsMaterializable()
@@ -465,7 +516,7 @@ func (t *Dense) transposeIndex(i int, transposePat, strides []int) int {
 	return index
 }
 
-// at returns the index at which the coordinate is refering to.
+// at returns the index at which the coordinate is referring to.
 // This function encapsulates the addressing of elements in a contiguous block.
 // For a 2D ndarray, ndarray.at(i,j) is
 //		at = ndarray.strides[0]*i + ndarray.strides[1]*j

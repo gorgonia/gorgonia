@@ -182,6 +182,7 @@ func (t *Dense) makeArray(size int) {
 	}
 }
 
+// Set sets the value of the underlying array at the index i.
 func (t *Dense) Set(i int, x interface{}) {
 	switch t.t.Kind() {
 	case reflect.Bool:
@@ -248,6 +249,7 @@ func (t *Dense) Set(i int, x interface{}) {
 	}
 }
 
+// Get returns the ith element of the underlying array of the *Dense tensor.
 func (t *Dense) Get(i int) interface{} {
 	switch t.t.Kind() {
 	case reflect.Bool:
@@ -294,6 +296,7 @@ func (t *Dense) Get(i int) interface{} {
 	}
 }
 
+// Memset sets all values in the *Dense tensor to x.
 func (t *Dense) Memset(x interface{}) error {
 	if t.IsMaterializable() {
 		return t.memsetIter(x)
@@ -669,9 +672,10 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 
+// Zero zeroes out the underlying array of the *Dense tensor
 func (t *Dense) Zero() {
 	if t.IsMaterializable() {
 		if err := t.zeroIter(); err != nil {
@@ -908,7 +912,7 @@ func (t *Dense) zeroIter() (err error) {
 		}
 		err = handleNoOp(err)
 	}
-	return nil
+	return
 }
 
 func copyDense(dest, src *Dense) int {

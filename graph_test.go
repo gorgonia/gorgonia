@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"testing"
 
 	"github.com/gonum/graph"
@@ -109,7 +108,7 @@ func TestGraphCollisions(t *testing.T) {
 	g.byHash[0xdeadbeef] = xy
 	xy.hash = 0xdeadbeef
 	xy.name = "original"
-	log.Printf("original: %p, hash %x", xy, xy.Hashcode())
+	t.Logf("original: %p, hash %x", xy, xy.Hashcode())
 
 	col := new(Node)
 	col.name = "COLIN THE COLLISION"

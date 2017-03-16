@@ -49,6 +49,7 @@ func (op atOp) Do(inputs ...Value) (retVal Value, err error) {
 		var r interface{}
 		if r, err = tt.At(op.coordinates...); err != nil {
 			err = errors.Wrapf(err, opDoFail, "atOp.Do()")
+			return
 		}
 
 		retVal, _, _, err = anyToValue(r)
@@ -118,11 +119,11 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	switch t := inputs[0].(type) {
 	case Scalar:
-		retVal = one(DtypeOf(t))
+		retVal = one(t.Dtype())
 
 		// bools are special
-		if _, ok := t.(B); ok {
-			retVal = I(1)
+		if _, ok := t.(*B); ok {
+			retVal = newI(1)
 		}
 	case tensor.Tensor:
 		sh := t.Shape()
@@ -132,13 +133,13 @@ func (op sizeOp) Do(inputs ...Value) (retVal Value, err error) {
 		size := sh[op.axis]
 
 		// cast as ... types
-		switch DtypeOf(t) {
+		switch t.Dtype() {
 		case tensor.Float64:
-			retVal = F64(size)
+			retVal = newF64(float64(size))
 		case tensor.Float32:
-			retVal = F32(size)
+			retVal = newF32(float32(size))
 		case tensor.Int:
-			retVal = I(size)
+			retVal = newI(size)
 		default:
 			return nil, errors.Errorf(nyiFail, "sizeOf.Do()", t.Dtype())
 		}
@@ -397,8 +398,8 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	// process inputs[0]
 	var t tensor.Tensor
 	switch iv := inputs[0].(type) {
-	case F64:
-		s := float64(iv)
+	case *F64:
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float64), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -406,8 +407,8 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case F32:
-		s := float32(iv)
+	case *F32:
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Float32), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -415,8 +416,8 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case I:
-		s := int(iv)
+	case *I:
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Int), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -424,8 +425,8 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 			return
 		}
 		t = tensor.New(tensor.FromScalar(s))
-	case B:
-		s := bool(iv)
+	case *B:
+		s := iv.any()
 		if monotonic && incr {
 			ret := tensor.New(tensor.Of(tensor.Bool), tensor.WithShape(reps...))
 			ret.Memset(s)
@@ -769,10 +770,10 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 			return nil, errors.Wrapf(err, sliceFail, slices)
 		}
 		switch i := incr.(type) {
-		case F64:
-			tensor.Add(v, float64(i), tensor.UseUnsafe())
-		case F32:
-			tensor.Add(v, float32(i), tensor.UseUnsafe())
+		case *F64:
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
+		case *F32:
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
 		case *tensor.Dense:
 			tensor.Add(v, i, tensor.UseUnsafe())
 		}

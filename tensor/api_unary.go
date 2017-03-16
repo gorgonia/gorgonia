@@ -12,7 +12,7 @@ import (
 
 // Square squares the elements of the Tensor. This function used to be called PointwiseSquare instead of Square.
 // If you want to achieve a Matrix Square as defined:
-// 		A^2 = A · A,
+// 		A^2 = A · A
 // You should call this function instead:
 //		A.MatMul(A)
 //
@@ -37,6 +37,7 @@ func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			var ret *Dense
 			if ret, err = at.Mul(at); err != nil {
 				err = errors.Wrapf(err, opFail, "Mul")
+				return
 			}
 			return reuse.Add(ret, UseUnsafe())
 		case toReuse:
@@ -52,7 +53,6 @@ func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	default:
 		panic("NYI - not yet implemented")
 	}
-	return
 }
 
 // Sqrt calculates the square root of each elements of the Tensor.
@@ -129,7 +129,7 @@ func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	return
 }
 
-// InvSqrt calculates 1/sqrt(v) of each element in the *Tensor. Does not support incr option yet
+// InvSqrt calculates 1/sqrt(v) of each element in the Tensor.
 func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch t := a.(type) {
 	case *Dense:

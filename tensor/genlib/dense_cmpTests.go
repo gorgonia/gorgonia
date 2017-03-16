@@ -510,16 +510,20 @@ func denseCmpTests(f io.Writer, generic *ManyKinds) {
 	for _, bo := range cmpBinOps {
 		fmt.Fprintf(f, "/* %s */\n\n\n", bo.OpName)
 		mk := &ManyKinds{filter(generic.Kinds, bo.is)}
-		op := BinOps{mk, bo.OpName, bo.OpSymb, false}
+		op := BinOps{
+			ManyKinds: mk,
+			OpName:    bo.OpName,
+			OpSymb:    bo.OpSymb,
+		}
 		if bo.OpName == "Ne" {
 			testDDCmpOpSymmetry.Execute(f, op)
-			fmt.Fprintln(f, "\n")
+			fmt.Fprint(f, "\n")
 			continue // `!=` is not transitive
 		}
 		testDDCmpOpTransitivity.Execute(f, op)
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 		testDDCmpOpFuncOpts.Execute(f, op)
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 	}
 
 	for _, bo := range cmpBinOps {
@@ -538,7 +542,7 @@ func denseCmpTests(f io.Writer, generic *ManyKinds) {
 			Inverse: bo.Inverse,
 		}
 		testDSCmpOpTransitivity.Execute(f, op)
-		fmt.Fprintln(f, "\n")
+		fmt.Fprint(f, "\n")
 
 	}
 }

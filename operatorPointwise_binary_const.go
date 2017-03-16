@@ -68,6 +68,25 @@ var ʘBinOpStrs = [maxʘBinaryOpType]string{
 	"!=",
 }
 
+// ʘBinOpNames is the string representation for a binOpType
+// It should be held constant.
+var ʘBinOpNames = [maxʘBinaryOpType]string{
+	// arith ops
+	"add",
+	"sub",
+	"mul",
+	"div",
+	"pow",
+
+	// cmp ops
+	"lt",
+	"gt",
+	"lte",
+	"gte",
+	"eq",
+	"ne",
+}
+
 // ʘBinOpCommutative is the array that stores whether a binary operator is commutative
 // It should be held constant.
 var ʘBinOpCommutative = [maxʘBinaryOpType]bool{
@@ -92,33 +111,32 @@ var ʘBinOpDiffFns = [maxʘBinaryOpType]func(x, y, z *Node) error{
 // 		a - b != b - a
 // While a-b *may* be equal to b-a, it is not guaranteed. Therefore subtraction
 // is not commutative
-func (b ʘBinaryOperatorType) isCommutative() bool {
-	if b >= maxʘBinaryOpType {
+func (op ʘBinaryOperatorType) isCommutative() bool {
+	if op >= maxʘBinaryOpType {
 		panic("isCommutative() for unsupported BinOp undefined")
 	}
-	return ʘBinOpCommutative[b]
+	return ʘBinOpCommutative[op]
 }
 
-func (b ʘBinaryOperatorType) diffWRT(inputs int) []bool {
+func (op ʘBinaryOperatorType) diffWRT(inputs int) []bool {
 	if inputs != 2 {
 		panic("binary operator only supports 2 inputs")
 	}
 
-	if b.isArith() {
+	if op.isArith() {
 		return []bool{true, true}
 	}
 	return []bool{false, false}
 }
 
 // isArith indicates if the binary operator is an arithmetic type
-func (b ʘBinaryOperatorType) isArith() bool {
-	switch b {
+func (op ʘBinaryOperatorType) isArith() bool {
+	switch op {
 	case addOpType, subOpType, mulOpType, divOpType, powOpType:
 		return true
 	default:
 		return false
 	}
-	return false
 }
 
 var binOps = [maxʘBinaryOpType]*denseBinOp{

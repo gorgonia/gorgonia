@@ -1664,22 +1664,6 @@ func gtDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 	return retVal
 }
 
-func gtDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b[i]
-	}
-	return retVal
-}
-
-func gtDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v > b
-	}
-	return retVal
-}
-
 func gtDDBoolsF32(a, b []float32) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -2174,22 +2158,6 @@ func gteDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 		} else {
 			retVal[i] = 0
 		}
-	}
-	return retVal
-}
-
-func gteDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b[i]
-	}
-	return retVal
-}
-
-func gteDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v >= b
 	}
 	return retVal
 }
@@ -2692,22 +2660,6 @@ func ltDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 	return retVal
 }
 
-func ltDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b[i]
-	}
-	return retVal
-}
-
-func ltDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v < b
-	}
-	return retVal
-}
-
 func ltDDBoolsF32(a, b []float32) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -3206,22 +3158,6 @@ func lteDSSameU64(a []uint64, b uint64) (retVal []uint64) {
 	return retVal
 }
 
-func lteDDBoolsUintptr(a, b []uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b[i]
-	}
-	return retVal
-}
-
-func lteDSBoolsUintptr(a []uintptr, b uintptr) (retVal []bool) {
-	retVal = make([]bool, len(a))
-	for i, v := range a {
-		retVal[i] = v <= b
-	}
-	return retVal
-}
-
 func lteDDBoolsF32(a, b []float32) (retVal []bool) {
 	retVal = make([]bool, len(a))
 	for i, v := range a {
@@ -3322,7 +3258,7 @@ func vecMinI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3336,7 +3272,7 @@ func vecMaxI(a, b []int) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3350,7 +3286,7 @@ func vecMinI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3364,7 +3300,7 @@ func vecMaxI8(a, b []int8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3378,7 +3314,7 @@ func vecMinI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3392,7 +3328,7 @@ func vecMaxI16(a, b []int16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3406,7 +3342,7 @@ func vecMinI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3420,7 +3356,7 @@ func vecMaxI32(a, b []int32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3434,7 +3370,7 @@ func vecMinI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3448,7 +3384,7 @@ func vecMaxI64(a, b []int64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3462,7 +3398,7 @@ func vecMinU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3476,7 +3412,7 @@ func vecMaxU(a, b []uint) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3490,7 +3426,7 @@ func vecMinU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3504,7 +3440,7 @@ func vecMaxU8(a, b []uint8) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3518,7 +3454,7 @@ func vecMinU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3532,7 +3468,7 @@ func vecMaxU16(a, b []uint16) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3546,7 +3482,7 @@ func vecMinU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3560,7 +3496,7 @@ func vecMaxU32(a, b []uint32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3574,7 +3510,7 @@ func vecMinU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3588,35 +3524,7 @@ func vecMaxU64(a, b []uint64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
-	b = b[:len(a)]
-	for i, v := range a {
-		bv := b[i]
-		if bv > v {
-			a[i] = bv
-		}
-	}
-	return nil
-}
-func vecMinUintptr(a, b []uintptr) error {
-	if len(a) != len(b) {
-		return errors.Errorf(lenMismatch, len(a), len(b))
-	}
-	a = a[:len(a)]
-	b = b[:len(a)]
-	for i, v := range a {
-		bv := b[i]
-		if bv < v {
-			a[i] = bv
-		}
-	}
-	return nil
-}
-func vecMaxUintptr(a, b []uintptr) error {
-	if len(a) != len(b) {
-		return errors.Errorf(lenMismatch, len(a), len(b))
-	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3630,7 +3538,7 @@ func vecMinF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3644,7 +3552,7 @@ func vecMaxF32(a, b []float32) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3658,7 +3566,7 @@ func vecMinF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3672,7 +3580,7 @@ func vecMaxF64(a, b []float64) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3686,7 +3594,7 @@ func vecMinStr(a, b []string) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3700,7 +3608,7 @@ func vecMaxStr(a, b []string) error {
 	if len(a) != len(b) {
 		return errors.Errorf(lenMismatch, len(a), len(b))
 	}
-	a = a[:len(a)]
+	a = a[:]
 	b = b[:len(a)]
 	for i, v := range a {
 		bv := b[i]
@@ -3835,19 +3743,6 @@ func minU64(a, b uint64) (c uint64) {
 }
 
 func maxU64(a, b uint64) (c uint64) {
-	if a > b {
-		return a
-	}
-	return b
-}
-func minUintptr(a, b uintptr) (c uintptr) {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func maxUintptr(a, b uintptr) (c uintptr) {
 	if a > b {
 		return a
 	}

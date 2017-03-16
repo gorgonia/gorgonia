@@ -9,10 +9,8 @@ import (
 	"github.com/gonum/graph"
 )
 
-// a dag is just a holding structure for a directed acyclic graph (of expressions). It's based on the
-// reference implementation of gonum's simple example.
-//
-// The main difference is that the dag is add-only, and there is no removal of nodes
+// ExprGraph is a data structure for a directed acyclic graph (of expressions). This structure is the main entry point
+// for Gorgonia.
 type ExprGraph struct {
 	name string
 
@@ -191,7 +189,7 @@ func (g *ExprGraph) String() string {
 
 // ToDot generates the graph in graphviz format. The use of this is to generate for the entire graph
 // which may have multiple trees with different roots
-// TODO: This is getting unwieldly. Perhaps refactor out into a ToDot(...Opt)?
+// TODO: This is getting unwieldy. Perhaps refactor out into a ToDot(...Opt)?
 func (g *ExprGraph) ToDot() string {
 	gv := gographviz.NewEscape()
 	gv.SetName(fullGraphName)
@@ -498,7 +496,7 @@ func (g *ExprGraph) subgraph(ns Nodes, opts ...Nodes) *ExprGraph {
 	return retVal
 }
 
-// Subgraph is a function with overloaded meanings. If only one node is passed in, it assumes that the one node is the root,
+// Subgraph subsets a graph. This function has overloaded meanings - If only one node is passed in, it assumes that the one node is the root,
 // otherwise, it treats ns as the subset of nodes to be included in the subgraph
 func (g *ExprGraph) Subgraph(ns ...*Node) *ExprGraph {
 	if len(ns) == 1 {
@@ -507,6 +505,7 @@ func (g *ExprGraph) Subgraph(ns ...*Node) *ExprGraph {
 	return g.subgraph(ns)
 }
 
+// SubgraphRoots creates a subgraph, assuming the provided nodes are roots to the new subgraph.
 func (g *ExprGraph) SubgraphRoots(ns ...*Node) *ExprGraph {
 	sub := make(Nodes, len(ns))
 	copy(sub, ns)

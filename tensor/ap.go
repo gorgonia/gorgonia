@@ -60,19 +60,30 @@ func (ap *AP) SetShape(s ...int) {
 			ap.strides = nil
 		}
 		ap.shape = Shape(s).Clone()
-		ap.strides = ap.shape.CalcStrides()
+		ap.strides = ap.shape.calcStrides()
 	}
 }
 
-func (ap *AP) Lock()   { ap.fin = true }
-func (ap *AP) Unlock() { ap.fin = false }
+// locking and unlocking is used to ensure that the shape and stride doesn't change (it's not really safe though, as a direct mutation of the strides/shape would still mutate it, but at least the dimensions cannot change)
+func (ap *AP) lock()   { ap.fin = true }
+func (ap *AP) unlock() { ap.fin = false }
 
-func (ap *AP) Shape() Shape   { return ap.shape }
+// Shape returns the shape of the AP
+func (ap *AP) Shape() Shape { return ap.shape }
+
+// Strides returns the strides of the AP
 func (ap *AP) Strides() []int { return ap.strides }
-func (ap *AP) Dims() int      { return ap.shape.Dims() }
-func (ap *AP) Size() int      { return ap.shape.TotalSize() }
 
+// Dims returns the dimensions of the shape in the AP
+func (ap *AP) Dims() int { return ap.shape.Dims() }
+
+// Size returns the expected array size of the shape
+func (ap *AP) Size() int { return ap.shape.TotalSize() }
+
+// String implements fmt.Stringer and runtime.Stringer
 func (ap *AP) String() string { return fmt.Sprintf("%v", ap) }
+
+// Format implements fmt.Formatter
 func (ap *AP) Format(state fmt.State, c rune) {
 	fmt.Fprintf(state, "Shape: %v, Stride: %v, Lock: %t", ap.shape, ap.strides, ap.fin)
 }
@@ -108,12 +119,12 @@ func (ap *AP) Clone() (retVal *AP) {
 	return
 }
 
-// C() returns true if the access pattern is C-contiguous array
+// C returns true if the access pattern is C-contiguous array
 func (ap *AP) C() bool {
 	return ap.strides[len(ap.strides)-1] == 1
 }
 
-// F() returns true if the access pattern is Fortran contiguous array
+// F returns true if the access pattern is Fortran contiguous array
 func (ap *AP) F() bool {
 	return ap.strides[0] == 1
 }
@@ -174,7 +185,7 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		// scalars are a special case
 		newAP = new(AP)
 		newAP.SetShape() // make it a Scalar
-		newAP.Lock()
+		newAP.lock()
 	} else {
 
 		// drop any dimension with size 1, except the last dimension
@@ -275,6 +286,7 @@ func TransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) int 
 	return index
 }
 
+// UntransposeIndex returns the old index given the new index
 func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) int {
 	newPattern := make([]int, len(pattern))
 	for i, p := range pattern {
@@ -283,10 +295,16 @@ func UntransposeIndex(i int, oldShape, pattern, oldStrides, newStrides []int) in
 	return TransposeIndex(i, oldShape, newPattern, oldStrides, newStrides)
 }
 
-// Broadcasting related stuff
+// BroadcastStrides handles broadcasting from different shapes.
+//
+// Deprecated: this function will be unexported
 func BroadcastStrides(destShape, srcShape Shape, destStrides, srcStrides []int) (retVal []int, err error) {
 	dims := len(destShape)
 	start := dims - len(srcShape)
+
+	if destShape.IsVector() && srcShape.IsVector() {
+		return []int{srcStrides[0]}, nil
+	}
 
 	if start < 0 {
 		//error
@@ -302,11 +320,13 @@ func BroadcastStrides(destShape, srcShape Shape, destStrides, srcStrides []int) 
 			retVal[i] = 0
 		case s != destShape[i]:
 			// error
+			err = errors.Errorf("Cannot broadcast from %v to %v", srcShape, destShape)
+			return
 		default:
 			retVal[i] = srcStrides[i-start]
 		}
 	}
-	for i := 0; i > start; i++ {
+	for i := 0; i < start; i++ {
 		retVal[i] = 0
 	}
 	return

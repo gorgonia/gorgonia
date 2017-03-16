@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,7 @@ func TestSumOp(t *testing.T) {
 }
 
 func TestSumOpDiff(t *testing.T) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	var g, g2 *ExprGraph
 	var x, y, z, a, b, c *Node
@@ -57,7 +59,7 @@ func TestSumOpDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	ioutil.WriteFile("SumOp.dot", []byte(g.ToDot()), 0644)
+	// ioutil.WriteFile("SumOp.dot", []byte(g.ToDot()), 0644)
 
 	m = NewTapeMachine(prog, locMap)
 	err = m.RunAll()
@@ -152,7 +154,7 @@ func TestSumOpDiff(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	ioutil.WriteFile("Blah.dot", []byte(g.ToDot()), 0644)
+	// ioutil.WriteFile("Blah.dot", []byte(g.ToDot()), 0644)
 
 	m = NewTapeMachine(prog, locMap)
 	err = m.RunAll()

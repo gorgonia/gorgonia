@@ -175,7 +175,7 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 	return
 }
 
-// diffWRT gives info on whether or not the operation is actually differentiable
+// DiffWRT gives info on whether or not the operation is actually differentiable
 // For example, this is differentiable:
 //		c = a ** b
 // The result of the differentiation wrt to a and b would be:
@@ -277,7 +277,6 @@ func (op elemBinOp) ReturnsPtr() bool {
 	return false
 }
 
-func (op elemBinOp) CallsExtern() bool { return false } // for now
 func (op elemBinOp) OverwritesInput() int {
 	if _, ok := op.arg0.(TensorType); ok {
 		return 0
@@ -460,8 +459,6 @@ func (op elemUnaryOp) OverwritesInput() int {
 	return -1
 }
 
-func (op elemUnaryOp) CallsExtern() bool { return false }
-
 func (op elemUnaryOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, op.unaryOpType()); err != nil {
 		panic(err)
@@ -513,14 +510,16 @@ func (op elemUnaryOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		}
 		retVal = t
 	case Scalar:
-		vt := DtypeOf(v)
+		vt := v.Dtype()
 		switch vt {
 		case tensor.Float32:
-			f := float32(v.(F32))
+			vs := v.(*F32)
+			f := float32(*vs)
 			opFn := op.ʘUnaryOperator.(*sf32UnaryOperator)
 			retVal, _ = anyToScalar((*opFn)(f))
 		case tensor.Float64:
-			f := float64(v.(F64))
+			vs := v.(*F64)
+			f := float64(*vs)
 			opFn := op.ʘUnaryOperator.(*sf64UnaryOperator)
 			retVal, _ = anyToScalar((*opFn)(f))
 		default:

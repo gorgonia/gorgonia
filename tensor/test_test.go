@@ -315,7 +315,6 @@ func anyToFloat64s(x interface{}) (retVal []float64) {
 		return
 	case []float64:
 		return xt
-		return
 	case []complex64:
 		retVal = make([]float64, len(xt))
 		for i, v := range xt {

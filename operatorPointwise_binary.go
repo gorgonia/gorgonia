@@ -51,233 +51,233 @@ func (o scalarBinOp) Do(same bool, vals ...Value) (retVal Value, err error) {
 
 	var r interface{} // float or bool only plz
 	switch a := vals[0].(type) {
-	case F64:
-		b := vals[1].(F64)
+	case *F64:
+		b := vals[1].(*F64)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = a + b
+			r = newF64(a.any() + b.any())
 		case subOpType:
-			r = a - b
+			r = newF64(a.any() - b.any())
 		case mulOpType:
-			r = a * b
+			r = newF64(a.any() * b.any())
 		case divOpType:
-			r = a / b
+			r = newF64(a.any() / b.any())
 		case powOpType:
-			r = F64(math.Pow(float64(a), float64(b)))
+			r = newF64(math.Pow(a.any(), b.any()))
 		case ltOpType:
-			r = a < b
+			r = newB(a.any() < b.any())
 		case gtOpType:
-			r = a > b
+			r = newB(a.any() > b.any())
 		case lteOpType:
-			r = a <= b
+			r = newB(a.any() <= b.any())
 		case gteOpType:
-			r = a >= b
+			r = newB(a.any() >= b.any())
 		case eqOpType:
-			r = a == b
+			r = newB(a.any() == b.any())
 		case neOpType:
-			r = a != b
+			r = newB(a.any() != b.any())
 		default:
 			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if r.(bool) {
-				r = F64(1)
+			if *(r.(*B)) {
+				r = newF64(1.0)
 			} else {
-				r = F64(0)
+				r = newF64(0.0)
 			}
 		}
 
-	case F32:
-		b := vals[1].(F32)
+	case *F32:
+		b := vals[1].(*F32)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = a + b
+			r = newF32(a.any() + b.any())
 		case subOpType:
-			r = a - b
+			r = newF32(a.any() - b.any())
 		case mulOpType:
-			r = a * b
+			r = newF32(a.any() * b.any())
 		case divOpType:
-			r = a / b
+			r = newF32(a.any() / b.any())
 		case powOpType:
-			r = F32(math32.Pow(float32(a), float32(b)))
+			r = newF32(math32.Pow(float32(a.any()), float32(b.any())))
 		case ltOpType:
-			r = a < b
+			r = newB(a.any() < b.any())
 		case gtOpType:
-			r = a > b
+			r = newB(a.any() > b.any())
 		case lteOpType:
-			r = a <= b
+			r = newB(a.any() <= b.any())
 		case gteOpType:
-			r = a >= b
+			r = newB(a.any() >= b.any())
 		case eqOpType:
-			r = a == b
+			r = newB(a.any() == b.any())
 		case neOpType:
-			r = a != b
+			r = newB(a.any() != b.any())
 		default:
-			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float32", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if r.(bool) {
+			if *(r.(*B)) {
 				r = F32(1)
 			} else {
 				r = F32(0)
 			}
 		}
 
-	case I:
-		b := vals[1].(I)
+	case *I:
+		b := vals[1].(*I)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = a + b
+			r = newI(a.any() + b.any())
 		case subOpType:
-			r = a - b
+			r = newI(a.any() - b.any())
 		case mulOpType:
-			r = a * b
+			r = newI(a.any() * b.any())
 		case divOpType:
-			r = a / b
+			r = newI(a.any() / b.any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = a < b
+			r = newB(a.any() < b.any())
 		case gtOpType:
-			r = a > b
+			r = newB(a.any() > b.any())
 		case lteOpType:
-			r = a <= b
+			r = newB(a.any() <= b.any())
 		case gteOpType:
-			r = a >= b
+			r = newB(a.any() >= b.any())
 		case eqOpType:
-			r = a == b
+			r = newB(a.any() == b.any())
 		case neOpType:
-			r = a != b
+			r = newB(a.any() != b.any())
 		default:
-			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Int", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if r.(bool) {
+			if *(r.(*B)) {
 				r = I(1)
 			} else {
 				r = I(0)
 			}
 		}
-	case I32:
-		b := vals[1].(I32)
+	case *I32:
+		b := vals[1].(*I32)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = a + b
+			r = newI32(a.any() + b.any())
 		case subOpType:
-			r = a - b
+			r = newI32(a.any() - b.any())
 		case mulOpType:
-			r = a * b
+			r = newI32(a.any() * b.any())
 		case divOpType:
-			r = a / b
+			r = newI32(a.any() / b.any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = a < b
+			r = newB(a.any() < b.any())
 		case gtOpType:
-			r = a > b
+			r = newB(a.any() > b.any())
 		case lteOpType:
-			r = a <= b
+			r = newB(a.any() <= b.any())
 		case gteOpType:
-			r = a >= b
+			r = newB(a.any() >= b.any())
 		case eqOpType:
-			r = a == b
+			r = newB(a.any() == b.any())
 		case neOpType:
-			r = a != b
+			r = newB(a.any() != b.any())
 		default:
-			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Int32", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if r.(bool) {
+			if *(r.(*B)) {
 				r = I32(1)
 			} else {
 				r = I32(0)
 			}
 		}
-	case I64:
-		b := vals[1].(I64)
+	case *I64:
+		b := vals[1].(*I64)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = a + b
+			r = newI64(a.any() + b.any())
 		case subOpType:
-			r = a - b
+			r = newI64(a.any() - b.any())
 		case mulOpType:
-			r = a * b
+			r = newI64(a.any() * b.any())
 		case divOpType:
-			r = a / b
+			r = newI64(a.any() / b.any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = a < b
+			r = newB(a.any() < b.any())
 		case gtOpType:
-			r = a > b
+			r = newB(a.any() > b.any())
 		case lteOpType:
-			r = a <= b
+			r = newB(a.any() <= b.any())
 		case gteOpType:
-			r = a >= b
+			r = newB(a.any() >= b.any())
 		case eqOpType:
-			r = a == b
+			r = newB(a.any() == b.any())
 		case neOpType:
-			r = a != b
+			r = newB(a.any() != b.any())
 		default:
-			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Int64", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if r.(bool) {
+			if *(r.(*B)) {
 				r = I64(1)
 			} else {
 				r = I64(0)
 			}
 		}
-	case U8:
-		b := vals[1].(U8)
+	case *U8:
+		b := vals[1].(*U8)
 		switch o.ʘBinaryOperatorType {
 		case addOpType:
-			r = a + b
+			r = newU8(a.any() + b.any())
 		case subOpType:
-			r = a - b
+			r = newU8(a.any() - b.any())
 		case mulOpType:
-			r = a * b
+			r = newU8(a.any() * b.any())
 		case divOpType:
-			r = a / b
+			r = newU8(a.any() / b.any())
 		// case powOpType:
 		// 	r = math.Pow(a, b)
 		case ltOpType:
-			r = a < b
+			r = newB(a.any() < b.any())
 		case gtOpType:
-			r = a > b
+			r = newB(a.any() > b.any())
 		case lteOpType:
-			r = a <= b
+			r = newB(a.any() <= b.any())
 		case gteOpType:
-			r = a >= b
+			r = newB(a.any() >= b.any())
 		case eqOpType:
-			r = a == b
+			r = newB(a.any() == b.any())
 		case neOpType:
-			r = a != b
+			r = newB(a.any() != b.any())
 		default:
-			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Byte", o.ʘBinaryOperatorType)
 		}
 
 		if same && !o.isArith() {
-			if r.(bool) {
+			if *(r.(*B)) {
 				r = U8(1)
 			} else {
 				r = U8(0)
 			}
 		}
-	case B:
-		b := vals[1].(B)
+	case *B:
+		b := vals[1].(*B)
 		switch o.ʘBinaryOperatorType {
 		case eqOpType:
-			r = a == b
+			r = newB(a.any() == b.any())
 		case neOpType:
-			r = a != b
+			r = newB(a.any() != b.any())
 		default:
-			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Float64", o.ʘBinaryOperatorType)
+			err = errors.Errorf(nyiFail, "scalarBinOp.Do() - Bool", o.ʘBinaryOperatorType)
 		}
 
 	default:
@@ -362,8 +362,8 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 	}
 
 	// typecheck the operands
-	d0 := DtypeOf(vals[0])
-	d1 := DtypeOf(vals[1])
+	d0 := vals[0].Dtype()
+	d1 := vals[1].Dtype()
 
 	if d0 != d1 {
 		return nil, errors.Errorf("Dtype mismatch for bin op: %v and %v", d0, d1)
@@ -379,10 +379,10 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 		a = t.Materialize()
 
 		switch other := vals[1].(type) {
-		case F64:
-			b = float64(other)
-		case F32:
-			b = float32(other)
+		case *F64:
+			b = other.any()
+		case *F32:
+			b = other.any()
 		case tensor.Tensor:
 			b = other.Materialize()
 		default:
@@ -396,10 +396,10 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 		b = t.Materialize()
 
 		switch other := vals[0].(type) {
-		case F64:
-			a = float64(other)
-		case F32:
-			a = float32(other)
+		case *F64:
+			a = other.any()
+		case *F32:
+			a = other.any()
 		case tensor.Tensor:
 			a = other.Materialize()
 		default:
@@ -515,7 +515,6 @@ func subDiff(x, y, z *Node) (err error) {
 
 func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	var dzdx, dzdy *Node
-	dzdx, err = HadamardProd(y, gradZ)
 	if dzdx, err = HadamardProd(y, gradZ); err == nil {
 		dzdy, err = HadamardProd(x, gradZ)
 		if err != nil {
@@ -525,9 +524,8 @@ func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 		WithGroupName(gradClust)(dzdy)
 		retVal = Nodes{dzdx, dzdy}
 		return
-	} else {
-		return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 	}
+	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
 func hadamardProdDiff(x, y, z *Node) (err error) {
@@ -588,19 +586,14 @@ func hadamardDivDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 					WithGroupName(gradClust)(dzdy)
 					retVal = Nodes{dzdx, dzdy}
 					return
-				} else {
-					return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 				}
-			} else {
-				return nil, errors.Wrap(err, "Failed to carry Neg()")
+				return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 			}
-
-		} else {
-			return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
+			return nil, errors.Wrap(err, "Failed to carry Neg()")
 		}
-	} else {
 		return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 	}
+	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
 func hadamardDivDiff(x, y, z *Node) (err error) {
@@ -668,6 +661,7 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 		one = onef64
 	default:
 		err = errors.Errorf(nyiTypeFail, "Hadamard Power Diff", y.t)
+		return
 	}
 
 	var ym1, pow *Node
@@ -712,10 +706,10 @@ func hadamardPowDiff(x, y, z *Node) (err error) {
 
 	var ym1 Value
 	switch ydvt := ydv.Value.(type) {
-	case F64:
-		ym1 = ydvt - F64(1)
-	case F32:
-		ym1 = ydvt - F32(1)
+	case *F64:
+		ym1 = newF64(ydvt.any() - float64(1))
+	case *F32:
+		ym1 = newF32(ydvt.any() - float32(1))
 	case *tensor.Dense:
 		var one interface{}
 		switch ydvt.Dtype() {

@@ -32,6 +32,8 @@ type lispMachine struct {
 	checkedRoots bool // supposed to go into state stuff.
 }
 
+// NewLispMachine creates a VM that executes the graph as it is traversed. Depending on the VMOpts passed in
+// this VM is also capable of performing automatic differentiation.
 func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	runFlags := (byte(0) | (byte(1) << fwdOnly)) | (1 << bwdOnly) // run fwd and backwards
 	m := &lispMachine{
@@ -426,7 +428,7 @@ func (m *lispMachine) logf(format string, attrs ...interface{}) {
 }
 
 func (m *lispMachine) enterLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		enterLoggingContext()
 	}
 	m.tabcount++
@@ -440,7 +442,7 @@ func (m *lispMachine) enterLoggingContext() {
 }
 
 func (m *lispMachine) leaveLoggingContext() {
-	if DEBUG {
+	if DEBUG && machineDev {
 		leaveLoggingContext()
 	}
 	m.tabcount--

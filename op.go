@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DimSizer is any type (typically a tensor.Shape) that allows querying for a dimension size given an input dimension.
 type DimSizer interface {
 	DimSize(int) (int, error)
 }
@@ -33,6 +34,11 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 		}
 	}
 	return retVal, nil
+}
+
+// External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
+type External interface {
+	HasFunc(string) bool
 }
 
 // An Op is a symbolic representation of an operation
@@ -121,7 +127,7 @@ type SDOp interface {
 	SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error)
 }
 
-// a ReductionOp changes the shape of the node
+// ReductionOp changes the shape of the node
 type ReductionOp interface {
 	Op
 
@@ -145,7 +151,8 @@ type UnsafeDoer interface {
 
 // CUDADoer uses CUDA to perform the Op.
 type CUDADoer interface {
-	CUDADo(inputs ...Value) (Value, error)
+	CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (Value, error)
+	CUDAFuncName() string
 }
 
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL

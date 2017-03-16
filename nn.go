@@ -59,7 +59,7 @@ func BinaryXent(output, target *Node) (retVal *Node, err error) {
 }
 
 // Dropout is a convenience function to implement dropout.
-// It uses randomly zeroes out a *Tensor with a probabilty drawn from
+// It uses randomly zeroes out a *Tensor with a probability drawn from
 // a uniform distribution
 func Dropout(x *Node, prob float64) (retVal *Node, err error) {
 	if prob == 0.0 {

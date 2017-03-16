@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -75,7 +76,7 @@ var repeatOpTests = []struct {
 
 	{
 		"repeat scalar", 2, []int{0},
-		F64(3.14), tensor.New(tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
+		newF64(3.14), tensor.New(tensor.WithBacking([]float64{3.14, 3.14}), tensor.WithShape(2)),
 		tensor.Shape{2}, false,
 	},
 }
@@ -89,7 +90,7 @@ func TestRepeatOp(t *testing.T) {
 		var err error
 		var repeat *repeatOp
 
-		rep := I(rots.rep)
+		rep := newI(rots.rep)
 		repN := NodeFromAny(g, rep)
 		n := NodeFromAny(g, rots.val)
 
@@ -252,6 +253,8 @@ func TestTransposeOp(t *testing.T) {
 }
 
 func TestConcatOp(t *testing.T) {
+	defer runtime.GC()
+
 	assert := assert.New(t)
 	g := NewGraph()
 	x := NewVector(g, Float64, WithShape(2))

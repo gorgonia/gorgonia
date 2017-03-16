@@ -124,6 +124,7 @@ func (t *Dense) inner(other Tensor) (retVal *Dense, err error) {
 	return
 }
 
+// MatVecMul performs a matrix-vector multiplication.
 func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) {
 	// check that it's a matrix x vector
 	if t.Dims() != 2 || !other.Shape().IsVector() {
@@ -342,6 +343,7 @@ func (t *Dense) matMul(other, retVal *Dense) (err error) {
 	return
 }
 
+// Outer finds the outer product of two vectors
 func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) {
 	// check both are vectors
 	if !t.Shape().IsVector() || !other.Shape().IsVector() {

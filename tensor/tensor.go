@@ -1,3 +1,5 @@
+// Package tensor is a package that provides efficient, generic n-dimensional arrays in Go.
+// Also in this package are functions and methods that are used commonly in arithmetic, comparison and linear algebra operations.
 package tensor
 
 import (
@@ -9,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Tensor represents a variety of n-dimensional arrays. The most commonly used tensor is the Dense tensor.
+// It can be used to represent a vector, matrix, 3D matrix and n-dimensional tensors.
 type Tensor interface {
 	// info about the ndarray
 	Info() *AP
@@ -21,6 +25,7 @@ type Tensor interface {
 
 	// ops
 	At(...int) (interface{}, error)
+	SetAt(v interface{}, coord ...int) error
 	Reshape(...int) error
 	T(axes ...int) error
 	UT()

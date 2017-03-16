@@ -48,7 +48,7 @@ func Use(b BLAS) {
 	// float32
 }
 
-// WhichBLAS() returns the BLAS that gorgonia uses.
+// WhichBLAS returns the BLAS that gorgonia uses.
 func WhichBLAS() BLAS { return whichblas }
 
 func init() {
