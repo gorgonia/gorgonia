@@ -18,4 +18,5 @@ func (d Device) IsGPU() bool { return false }
 // Alloc allocates memory on the device. This is currently a NO-OP in this build
 func (d Device) Alloc(extern External, size int64) (Memory, error) { return nil, nil }
 
-func (d Device) Free(extern External, mem Memory) error { return nil }
+// Free frees the memory on the device. This is currently a NO-OP in this build
+func (d Device) Free(extern External, mem Memory, sie uint) error { return nil }

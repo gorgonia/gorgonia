@@ -27,17 +27,12 @@ func (d Device) Alloc(extern External, size int64) (Memory, error) {
 		return nil, nil
 	}
 	ctx := ctxes[int(d)]
-	// ctx.SetCurrent()
+
 	cudaLogf("calling ctx.MemAlloc(%d)", size)
 	return ctx.MemAlloc(size)
-	// TODO in the future push and pop contexts instead
-	// if err := cu.SetCurrent(ctx.Context); err != nil {
-	// 	return nil, err
-	// }
-	// return cu.MemAlloc(size)
 }
 
-func (d Device) Free(extern External, mem Memory) (err error) {
+func (d Device) Free(extern External, mem Memory, size uint) (err error) {
 	var devptr cu.DevicePtr
 	var ok bool
 	if devptr, ok = mem.(cu.DevicePtr); !ok {
@@ -45,8 +40,12 @@ func (d Device) Free(extern External, mem Memory) (err error) {
 	}
 
 	machine := extern.(CUDAMachine)
-	ctx := machine.Contexts()[int(d)]
-	cudaLogf("MemFree %v", devptr)
-	ctx.MemFree(devptr)
+	machine.Put(d, devptr, size)
+
+	// FUTURE: actually free memory if there ain't enough to go round
+
+	// ctx := machine.Contexts()[int(d)]
+	// cudaLogf("MemFree %v", devptr)
+	// ctx.MemFree(devptr)
 	return nil
 }

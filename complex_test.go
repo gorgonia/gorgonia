@@ -136,31 +136,21 @@ func TestWeirdNetwork(t *testing.T) {
 
 	prog, locMap, err := Compile(g)
 	m := NewTapeMachine(prog, locMap, BindDualValues(model...), UseCudaFor())
-
-	// ff, _ := os.OpenFile("err.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	// logger := log.New(ff, "", 0)
-	// cu.SetLogger(logger)
-	// SetLogger(logger)
-
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		used, free, _ := cu.MemInfo()
-	// 		log.Printf("Memory: %v/%v", used, free)
-	// 		panic(r)
-	// 	}
-	// }()
+	log.Println(prog)
 
 	// for i := 0; i < 104729; i++ {
-	for i := 0; i < 104729; i++ {
-		log.Printf("run iter %d", i)
-		// ff.Sync()
-		// ff.Seek(0, os.SEEK_SET)
-		// ff.Truncate(0)
-		// fmt.Fprintf(ff, "run iter %d\n", i)
+	for i := 0; i < 2; i++ {
+		log.Printf("run iter %d\n==========\n", i)
 		if err = m.RunAll(); err != nil {
 			t.Errorf("%d %v", i, err)
 			break
 		}
+
+		log.Printf("\tCGO calls %v", len(cu.QueueLengths()))
+		log.Printf("\tcu average queue %v", cu.AverageQueueLength())
+		log.Printf("\tBlocking Calls: %v", cu.BlockingCallers())
+		log.Printf("\tcu queues %v", cu.QueueLengths())
+
 		m.Reset()
 	}
 

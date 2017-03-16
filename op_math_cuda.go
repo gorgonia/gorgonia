@@ -57,11 +57,11 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, meta ExecutionMetadata
 	case Value:
 		memsize := int64(pre.MemSize())
 		var m Memory
-		if m, err = machine.Get(uint(memsize)); err != nil {
+		if m, err = machine.Get(dev, uint(memsize)); err != nil {
 			if _, ok := err.(NoOpError); !ok {
 				return
 			}
-
+			cudaLogf("necessary to allocate %v", memsize)
 			if mem, err = ctx.MemAlloc(memsize); err != nil {
 				err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
 				return
@@ -180,11 +180,12 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 	case Value:
 		memsize := int64(pre.MemSize())
 		var m Memory
-		if m, err = machine.Get(uint(memsize)); err != nil {
+		if m, err = machine.Get(dev, uint(memsize)); err != nil {
 			if _, ok := err.(NoOpError); !ok {
 				return
 			}
 
+			cudaLogf("necessary to allocate %v", memsize)
 			if mem, err = ctx.MemAlloc(memsize); err != nil {
 				err = errors.Wrapf(err, "Failed to allocate %v bytes", memsize)
 				return
@@ -220,9 +221,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 		cudaLogf("b is val: %v", bt.Pointer())
 		memsize := int64(b.MemSize())
 
-		cudaLogf("Attempting to get memory of %v out of pool", memsize)
 		var m Memory
-		if m, err = machine.Get(uint(memsize)); err != nil {
+		if m, err = machine.Get(dev, uint(memsize)); err != nil {
 			cudaLogf("No memory found. Trying to alloc and copy")
 			if _, ok := err.(NoOpError); !ok {
 				return
@@ -236,7 +236,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 			cudaLogf("Found. Copying")
 			memB = m.(cu.DevicePtr)
 			ctx.MemcpyHtoD(memB, bt.Pointer(), memsize)
-			// ctx.DoWork()
 		}
 
 		// the reason why there are so many params to this defer is to prevent leaking of stuff into the heap.
@@ -246,7 +245,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 				return
 			}
 			cudaLogf("Putting %v with size %v back", mem, memsize)
-			machine.Put(mem, uint(memsize))
+			machine.Put(dev, mem, uint(memsize))
 		}(machine, ctx, bt, memB, memsize)
 	case cu.DevicePtr:
 		memB = bt

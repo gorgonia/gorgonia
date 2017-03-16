@@ -43,8 +43,8 @@ type Memory interface {
 
 // Arena is a representation of a pool of Memory
 type Arena interface {
-	Get(size uint) (Memory, error) // Get returns a NoOpError when it cannot get a memory. Please allocate
-	Put(mem Memory, size uint)     // puts the memory back into the arena
+	Get(dev Device, size uint) (Memory, error) // Get returns a NoOpError when it cannot get a memory. Please allocate
+	Put(dev Device, mem Memory, size uint)     // puts the memory back into the arena
 }
 
 // Valuer is any type that can return a Value

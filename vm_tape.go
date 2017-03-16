@@ -21,11 +21,7 @@ type tapeMachine struct {
 	// "register" banks
 	cpumem  []Value  // Value - knows its own type and shape
 	gpumem  []Memory // memory slabs on GPU (or Value)
-	gpumeta []int    // element sizes
-
-	// "heap"
-	// TODO: maybe add a LRU cache for freeing memory? Come back here when you run into OutOfMemory errors from CUDA.
-	arena map[uint]*memoryQueue // key is the size of the memory in bytes. Only CUDA memory plz
+	gpumeta []int64  // memory sizes
 
 	// state stuff, to allow continuation
 	pc int
@@ -51,7 +47,7 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 		locMap:         locMap,
 		cpumem:         make([]Value, prog.cpulocs),
 		gpumem:         make([]Memory, prog.gpulocs),
-		arena:          make(map[uint]*memoryQueue),
+		gpumeta:        make([]int64, prog.gpulocs),
 		valueFmt:       "%3.3g",
 	}
 
@@ -138,24 +134,6 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 	return a.bind(v)
 }
 
-// Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
-// it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
-func (m *tapeMachine) Get(size uint) (Memory, error) {
-	if pool, ok := m.arena[size]; ok {
-		return pool.get()
-	}
-	return nil, noopError{}
-}
-
-func (m *tapeMachine) Put(mem Memory, size uint) {
-	pool, ok := m.arena[size]
-	if !ok {
-		pool = newMemoryQueue(size)
-		m.arena[size] = pool
-	}
-	pool.add(mem)
-}
-
 // Run runs a fragment (a subset of a program).
 func (m *tapeMachine) Run(frag fragment) (err error) {
 	defer func() {
@@ -195,6 +173,8 @@ func (m *tapeMachine) RunAll() (err error) {
 		if err == nil {
 			m.dontAlloc()
 		}
+
+		m.Cleanup()
 	}()
 
 	runtime.LockOSThread()
@@ -203,12 +183,11 @@ func (m *tapeMachine) RunAll() (err error) {
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
+
 	go m.runall(errChan, doneChan)
-	cudaLogf("WORK AVAILBLE %v", workAvailable)
 	for {
 		select {
 		case <-workAvailable:
-			cudaLogf("Work Available!!")
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
 				return err
@@ -216,8 +195,10 @@ func (m *tapeMachine) RunAll() (err error) {
 		case err := <-errChan:
 			return errors.Wrapf(err, "PC: %d", m.pc)
 		case <-doneChan:
-			cudaLogf("doAllWork")
-			m.ExternMetadata.DoAllWork()
+			err := m.ExternMetadata.DoWork()
+			if err != nil {
+				return err
+			}
 			return nil
 		default:
 		}
@@ -496,17 +477,17 @@ func (instr alloc) writes() register  { return instr.writeTo }
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
 
-	dest := instr.writeTo.id
-	device := instr.writeTo.device
+	dst := instr.writeTo.id
+	dev := instr.writeTo.device
 
 	// check
-	switch device {
+	switch dev {
 	case CPU:
 		var have, want hm.Type
-		if m.cpumem[dest] == nil {
+		if m.cpumem[dst] == nil {
 			goto mustalloc
 		}
-		have = TypeOf(m.cpumem[dest])
+		have = TypeOf(m.cpumem[dst])
 		want = instr.t
 
 		if !m.alloc() && have == want {
@@ -520,11 +501,11 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 		if node.boundTo != nil {
 			switch v := node.boundTo.(type) {
 			case tensor.Tensor:
-				m.cpumem[dest] = v
+				m.cpumem[dst] = v
 				return nil
 			case *dualValue:
 				if tv, ok := v.Value.(tensor.Tensor); ok {
-					m.cpumem[dest] = tv
+					m.cpumem[dst] = tv
 					return nil
 				}
 			case Scalar:
@@ -548,10 +529,10 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 
 		//TODO: runtime shape check
 		t := tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...))
-		m.cpumem[dest] = t
+		m.cpumem[dst] = t
 		return
 	default:
-		if m.gpumem[dest] != nil {
+		if m.gpumem[dst] != nil {
 			// check mem info
 			// return if already as expected
 		}
@@ -582,18 +563,19 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 
 		size := int(dt.Size()) * instr.s.TotalSize()
 		var mem Memory
-		if mem, err = m.Get(uint(size)); err != nil {
+		if mem, err = m.Get(dev, uint(size)); err != nil {
 			if _, ok := err.(NoOpError); !ok {
 				return
 			}
-			if mem, err = device.Alloc(m, int64(size)); err != nil {
+			if mem, err = dev.Alloc(m, int64(size)); err != nil {
 				log.Println("err", err)
-				return errors.Wrapf(err, "Failed to allocate %d bytes on %v", size, device)
+				return errors.Wrapf(err, "Failed to allocate %d bytes on %v", size, dev)
 			}
 		}
 
-		m.gpumem[dest] = mem
-		cudaLogf("Allocated %v bytes and put into %v|%d. Addr: %v", size, instr.writeTo, dest, m.gpumem[dest])
+		m.gpumem[dst] = mem
+		m.gpumeta[dst] = int64(size)
+		cudaLogf("Allocated %v bytes and put into %v|%d. Addr: %v", size, instr.writeTo, dst, m.gpumem[dst])
 		return nil
 	}
 }
@@ -617,7 +599,9 @@ func (instr free) exec(m *tapeMachine) error {
 	default:
 		m.logf("instr.read from not CPU - %v %v %d", instr.readsFrom, instr.readsFrom.device == CPU, instr.readsFrom.device)
 		mem := m.gpumem[instr.readsFrom.id]
-		if err := instr.readsFrom.device.Free(m, mem); err != nil {
+		size := m.gpumeta[instr.readsFrom.id]
+
+		if err := instr.readsFrom.device.Free(m, mem, uint(size)); err != nil {
 			return err
 		}
 		logf("free from %v", instr.readsFrom)

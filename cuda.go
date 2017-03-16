@@ -39,6 +39,13 @@ type ExternMetadata struct {
 	mbdy []int // MaxBlockDimY
 	mbdz []int // MaxBlockDimZ
 
+	freeMem  []int64 // free memory available in this context
+	totalMem []int64 // total memory available in this context
+
+	// "heap"
+	// TODO: maybe add a LRU cache for freeing memory? Come back here when you run into OutOfMemory errors from CUDA.
+	arena []map[uint]*memoryQueue // key is the size of the memory in bytes. Only CUDA memory plz
+
 	b             batchedBLAS
 	c             []*cu.BatchedContext
 	hasWork       []bool
@@ -116,17 +123,19 @@ func (md *ExternMetadata) blockThread(n, dev int) (blocks, threads int) {
 	return
 }
 
+// WorkAvailable returns a channel of empty struct, which is used to signal to the VM when there is work available. The VM will then call the DoWork method
 func (m *ExternMetadata) WorkAvailable() <-chan struct{} { return m.workAvailable }
 
+// DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
-	cudaLogf("DoWork() called")
 	for i, hw := range m.hasWork {
-		cudaLogf("Checking if %d has work %v", i, hw)
-		m.c[i].DoWork()
-		if err := m.c[i].Errors(); err != nil {
-			return err
+		if hw {
+			m.c[i].DoWork()
+			if err := m.c[i].Errors(); err != nil {
+				return err
+			}
+			m.hasWork[i] = false
 		}
-		m.hasWork[i] = false
 	}
 
 	if m.blasHasWork {
@@ -134,15 +143,6 @@ func (m *ExternMetadata) DoWork() error {
 		m.blasHasWork = false
 	}
 	return nil
-}
-func (m *ExternMetadata) DoAllWork() {
-	cudaLogf("DoAllWork")
-	for _, c := range m.c {
-		c.DoWork()
-	}
-	if m.b != nil {
-		m.b.DoWork()
-	}
 }
 
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
@@ -161,6 +161,41 @@ func (m *ExternMetadata) Modules() map[string][]cu.Module { return m.m }
 
 // Functions returns a list of functions loaded (and refereable by name) in this CUDAMachine
 func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
+
+// Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
+// it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
+func (m *ExternMetadata) Get(dev Device, size uint) (Memory, error) {
+	d := int(dev)
+	if d >= len(m.arena) {
+		return nil, noopError{} // this should not be a noopError
+	}
+	if pool, ok := m.arena[d][size]; ok {
+		return pool.get()
+	}
+	return nil, noopError{}
+}
+
+// Put puts a previously allocated memory slab of the provided size back into the pool
+func (m *ExternMetadata) Put(dev Device, mem Memory, size uint) {
+	d := int(dev)
+	if d >= len(m.arena) {
+		return // wat??
+	}
+
+	pool, ok := m.arena[d][size]
+	if !ok {
+		pool = newMemoryQueue(size)
+		m.arena[d][size] = pool
+	}
+	pool.add(mem)
+}
+
+// Cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
+func (m *ExternMetadata) Cleanup() {
+	for _, c := range m.c {
+		c.Cleanup()
+	}
+}
 
 func (m *ExternMetadata) init() {
 	if m.initialzed {
@@ -189,11 +224,16 @@ func (m *ExternMetadata) init() {
 	m.mbdx = make([]int, devices)
 	m.mbdy = make([]int, devices)
 	m.mbdz = make([]int, devices)
+
+	m.freeMem = make([]int64, devices)
+	m.totalMem = make([]int64, devices)
+	m.arena = make([]map[uint]*memoryQueue, devices)
+
 	for i := range m.c {
 		dev, err := cu.GetDevice(i)
 		if err != nil {
 			cudaLogf("Failed to get device %d: %v", i, err)
-			m.cleanup()
+			m.initFail()
 			return
 		}
 		// ctx, err := dev.MakeContext(cu.SchedAuto)
@@ -205,18 +245,18 @@ func (m *ExternMetadata) init() {
 					cudaLogf("Error while getting mem info: %v", err)
 				}
 				cudaLogf("Out of memory. Free: %v, total %v", free, total)
-				m.cleanup()
+				m.initFail()
 				return
 			}
 			cudaLogf("Failed to make context for device %d. Error: %v", i, err)
-			m.cleanup()
+			m.initFail()
 			return
 		}
 
 		var attrs []int
 		if attrs, err = dev.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
 			cudaLogf("Failed to get attributes for device %d. Error: %v", i, err)
-			m.cleanup()
+			m.initFail()
 			return
 		}
 
@@ -228,6 +268,17 @@ func (m *ExternMetadata) init() {
 		m.mbdx[i] = attrs[5]
 		m.mbdy[i] = attrs[6]
 		m.mbdz[i] = attrs[7]
+
+		free, total, err := cu.MemInfo()
+		if err != nil {
+			cudaLogf("Failed to get free and total mem for device %d", i)
+			m.initFail()
+			return
+		}
+		m.freeMem[i] = free
+		m.totalMem[i] = total
+
+		m.arena[i] = make(map[uint]*memoryQueue)
 
 		m.c[i] = cu.NewBatchedContext(ctx, dev)
 		go m.collectWork(i, m.c[i].WorkAvailable())
@@ -243,7 +294,7 @@ func (m *ExternMetadata) init() {
 	cudaLogf("CUDA initialized. Contexts: %v", m.c)
 }
 
-func (m *ExternMetadata) cleanup() {
+func (m *ExternMetadata) initFail() {
 	cudaLogf("Cleanup")
 	m.c = nil
 	m.m = nil
@@ -255,14 +306,15 @@ func (m *ExternMetadata) cleanup() {
 	m.workAvailable = nil
 }
 
+// collectWork is a muxer for all the channels for the different devices
 func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
 	for range workAvailable {
-		cudaLogf("Device %d has work ", devID)
 		m.hasWork[devID] = true
 		m.workAvailable <- struct{}{}
 	}
 }
 
+// collectBLASWork is a muxer for CBLAS/CuBLAS (if any) and the devices
 func (m *ExternMetadata) collectBLASWork() {
 	if m.b != nil {
 		for range m.b.WorkAvailable() {
@@ -272,6 +324,7 @@ func (m *ExternMetadata) collectBLASWork() {
 	}
 }
 
+// signal sends a signal down the workavailable channel, telling the VM to call the DoWork method
 func (m *ExternMetadata) signal() { m.workAvailable <- struct{}{} }
 
 func init() {

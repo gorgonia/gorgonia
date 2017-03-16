@@ -145,6 +145,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
 
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	if instr.useGPU {
 		if len(m.Contexts()) == 0 {
 			goto usecpu
@@ -171,9 +174,12 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		case CUDADoer:
 			prealloc := m.getMemory(instr.writeTo)
 			cudaLogf("prealloc mem in instr.writeTo (%v) : %v", instr.writeTo, prealloc)
+			enterLoggingContext()
 			if mem, err = cd.CUDADo(m, toDev, instr.ExecutionMetadata, prealloc, inputs...); err != nil {
+				leaveLoggingContext()
 				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 			}
+			leaveLoggingContext()
 
 		case CLDoer:
 			goto usecpu
