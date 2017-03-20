@@ -22,7 +22,9 @@ func (s Shape) TotalSize() int {
 	return ProdInts([]int(s))
 }
 
-func (s Shape) calcStrides() []int {
+// calcStrides has an additional optional argument, maks. It is used to mask out given dimensions
+// during calculation of stride
+func (s Shape) calcStrides(mask ...[]bool) []int {
 	// retVal := make([]int, len(s))
 	retVal := BorrowInts(len(s))
 
@@ -36,14 +38,41 @@ func (s Shape) calcStrides() []int {
 		return retVal
 	}
 
-	acc := 1
-	for i := len(s) - 1; i >= 0; i-- {
-		retVal[i] = acc
-		d := s[i]
-		if d < 0 {
-			panic("negative dimension size does not make sense")
+	var useMask = false
+	if len(mask) > 0 {
+		if len(mask[0]) != s.Dims() {
+			panic("mask length must be equal to number of shape dimensions")
 		}
-		acc *= d
+		useMask = true
+	}
+
+	if !useMask {
+		acc := 1
+		for i := len(s) - 1; i >= 0; i-- {
+			retVal[i] = acc
+			d := s[i]
+			if d < 0 {
+				panic("negative dimension size does not make sense")
+			}
+			acc *= d
+		}
+	} else {
+		acc := 1
+		for i := len(s) - 1; i >= 0; i-- {
+			if mask[0][i] {
+				retVal[i] = acc
+			} else {
+				retVal[i] = 0
+			}
+			d := s[i]
+			if d < 0 {
+				panic("negative dimension size does not make sense")
+			}
+			if mask[0][i] {
+				acc *= d
+			}
+
+		}
 	}
 	return retVal
 }

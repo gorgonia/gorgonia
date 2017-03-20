@@ -1,9 +1,8 @@
 package tensor
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 var flatIterTests1 = []struct {
@@ -58,6 +57,60 @@ func TestFlatIterator(t *testing.T) {
 			t.Error(err)
 		}
 		assert.Equal(fit.correct, nexts, "Test %d", i)
+	}
+}
+
+func TestMultIterator(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap []*AP
+	var it *MultIterator
+	var err error
+	var nexts [][]int
+
+	ap = make([]*AP, 6)
+	nexts = make([][]int, 6)
+
+	// Repeat flat tests
+	for i, fit := range flatIterTests1 {
+		nexts[0] = nexts[0][:0]
+		err = nil
+		ap[0] = NewAP(fit.shape, fit.strides)
+		it = NewMultIterator(ap[0])
+		for err := it.Next(); err == nil; err = it.Next() {
+			nexts[0] = append(nexts[0], it.LastIndex(0))
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			t.Error(err)
+		}
+		assert.Equal(fit.correct, nexts[0], "Repeating flat test %d", i)
+	}
+	// Test multiple iterators simultaneously
+	var choices = []int{0, 0, 9, 9, 0, 9}
+	for j := 0; j < 6; j++ {
+		fit := flatIterTests1[choices[j]]
+		nexts[j] = nexts[j][:0]
+		err = nil
+		ap[j] = NewAP(fit.shape, fit.strides)
+	}
+	it = NewMultIterator(ap...)
+	for err := it.Next(); err == nil; err = it.Next() {
+		for j := 0; j < 6; j++ {
+			nexts[j] = append(nexts[j], it.LastIndex(j))
+		}
+
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			t.Error(err)
+		}
+	}
+
+	for j := 0; j < 6; j++ {
+		fit := flatIterTests1[choices[j]]
+		if ap[j].IsScalar() {
+			assert.Equal(fit.correct, nexts[j][:1], "Test multiple iterators %d", j)
+		} else {
+			assert.Equal(fit.correct, nexts[j], "Test multiple iterators %d", j)
+		}
 	}
 }
 
@@ -169,7 +222,7 @@ func TestFlatIterator_Reset(t *testing.T) {
 	it.Next()
 	it.Next()
 	it.Reset()
-	assert.Equal(0, it.lastIndex)
+	assert.Equal(0, it.nextIndex)
 	assert.Equal(false, it.done)
 	assert.Equal([]int{0, 0, 0}, it.track)
 
@@ -177,7 +230,7 @@ func TestFlatIterator_Reset(t *testing.T) {
 	}
 
 	it.Reset()
-	assert.Equal(0, it.lastIndex)
+	assert.Equal(0, it.nextIndex)
 	assert.Equal(false, it.done)
 	assert.Equal([]int{0, 0, 0}, it.track)
 }
@@ -280,6 +333,60 @@ func BenchmarkFlatIterator(b *testing.B) {
 			b.Error(err)
 		}
 
+		it.Reset()
+	}
+}
+
+func BenchmarkFlatIteratorParallel(b *testing.B) {
+	var err error
+
+	// as if T = NewTensor(WithShape(30, 1000, 1000))
+	// then T[:, 0:900:15, 250:750:50]
+	ap := make([]*AP, 6)
+	it := make([]*FlatIterator, 6)
+
+	for j := 0; j < 6; j++ {
+		ap[j] = NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
+		it[j] = NewFlatIterator(ap[j])
+	}
+
+	for n := 0; n < b.N; n++ {
+		for _, err := it[0].Next(); err == nil; _, err = it[0].Next() {
+			for j := 1; j < 6; j++ {
+				it[j].Next()
+			}
+
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			b.Error(err)
+		}
+		for j := 0; j < 6; j++ {
+			it[j].Reset()
+		}
+	}
+
+}
+
+func BenchmarkFlatIteratorMulti(b *testing.B) {
+	var err error
+
+	// as if T = NewTensor(WithShape(30, 1000, 1000))
+	// then T[:, 0:900:15, 250:750:50]
+	ap := make([]*AP, 6)
+
+	for j := 0; j < 6; j++ {
+		ap[j] = NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
+	}
+
+	it := NewMultIterator(ap...)
+
+	for n := 0; n < b.N; n++ {
+		for err := it.Next(); err == nil; err = it.Next() {
+
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			b.Error(err)
+		}
 		it.Reset()
 	}
 }

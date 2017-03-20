@@ -8,6 +8,7 @@ type FlatIterator struct {
 	*AP
 
 	//state
+	nextIndex int
 	lastIndex int
 	strides0  int
 	size      int
@@ -15,7 +16,7 @@ type FlatIterator struct {
 	done      bool
 }
 
-// NewFlatIterator creates a new FlatIterator
+// NewFlatIterator creates a new FlatIterator.
 func NewFlatIterator(ap *AP) *FlatIterator {
 	var strides0 int
 	if ap.IsVector() {
@@ -48,9 +49,9 @@ func (it *FlatIterator) Next() (int, error) {
 }
 
 func (it *FlatIterator) singleNext() (int, error) {
-	retVal := it.lastIndex
+	it.lastIndex = it.nextIndex
 	// it.lastIndex += it.strides[0]
-	it.lastIndex += it.strides0
+	it.nextIndex += it.strides0
 
 	var tracked int
 	switch {
@@ -68,11 +69,11 @@ func (it *FlatIterator) singleNext() (int, error) {
 		it.done = true
 	}
 
-	return retVal, nil
+	return it.lastIndex, nil
 }
 
 func (it *FlatIterator) ndNext() (int, error) {
-	retVal := it.lastIndex
+	it.lastIndex = it.nextIndex
 	for i := len(it.shape) - 1; i >= 0; i-- {
 		it.track[i]++
 		if it.track[i] == it.shape[i] {
@@ -80,13 +81,13 @@ func (it *FlatIterator) ndNext() (int, error) {
 				it.done = true
 			}
 			it.track[i] = 0
-			it.lastIndex -= (it.shape[i] - 1) * it.strides[i]
+			it.nextIndex -= (it.shape[i] - 1) * it.strides[i]
 			continue
 		}
-		it.lastIndex += it.strides[i]
+		it.nextIndex += it.strides[i]
 		break
 	}
-	return retVal, nil
+	return it.lastIndex, nil
 }
 
 // Coord returns the next coordinate.
@@ -147,7 +148,7 @@ func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 // Reset resets the iterator state.
 func (it *FlatIterator) Reset() {
 	it.done = false
-	it.lastIndex = 0
+	it.nextIndex = 0
 
 	if it.done {
 		return

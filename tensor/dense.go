@@ -23,6 +23,9 @@ type Dense struct {
 
 	// if viewOf != nil, then this *Dense is a view.
 	viewOf *Dense
+
+	mask []bool // mask slice can be used to identify missing or invalid values. len(mask)<=len(v)
+
 }
 
 // NewDense creates a new *Dense. It tries its best to get from the tensor pool.
@@ -57,7 +60,7 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 	return
 }
 
-func newDense(dt Dtype, size int) *Dense {
+func newDense(dt Dtype, size int, maskSize ...int) *Dense {
 	d := new(Dense)
 	d.t = dt
 	d.AP = new(AP)
@@ -69,11 +72,12 @@ func newDense(dt Dtype, size int) *Dense {
 	return d
 }
 
-func (t *Dense) fromSlice(x interface{}) {
+func (t *Dense) fromSlice(x interface{}, argMask ...[]bool) {
 	xt := reflect.TypeOf(x)
 	if xt.Kind() != reflect.Slice {
 		panic("Not a slice")
 	}
+
 	xt = xt.Elem()
 
 	xv := reflect.ValueOf(x)
@@ -89,6 +93,10 @@ func (t *Dense) fromSlice(x interface{}) {
 	t.v = x
 	t.t = Dtype{xt}
 	t.hdr = hdr
+
+	if len(argMask) > 0 {
+		t.mask = argMask[0]
+	}
 }
 
 // Info returns the accesspattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
@@ -267,3 +275,30 @@ func (t *Dense) shallowClone() *Dense {
 	}
 	return retVal
 }
+
+/* ------ Mask operations */
+/*
+// reshapes mask to new shape. If mask is compressed, expands it first
+func (t *Dense) reshapeMask(s ...int) {
+	if !t.IsMasked() {
+		return
+	}
+}
+
+// expands mask if compressed.
+func (t *Dense) expandMask() {
+	if !t.IsMasked() {
+		return
+	}
+	if len(t.mask) >= t.Size() {
+		return
+	}
+	// TODO: decide on borrow versus make
+	newMask := BorrowBools(t.Size())
+	ap := t.AP.Clone()
+	a_ap2 := NewAP(Shape{3, 2, 2}, []int{2, 1, 0})
+	if i, err = ait2.Next(); err != nil {
+		err = handleNoOp(err)
+		break
+	}
+}*/

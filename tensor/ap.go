@@ -17,22 +17,66 @@ import (
 //			- (x)
 //		Matrix has Dims() of 2. This is the most basic form. The len(shape) has to be equal to 2 as well
 //		ndarray has Dims() of n.
+// The AP also supports masked array interation through slice maskedStrides. It's length should be the
+// same as strides (corresponding to data), in fact they can refer to the same underlying int array.
+// Having it as separate from strides however allows for more flexibililty,such as masking entire dimensions
+// with one value.
 type AP struct {
-	shape   Shape // len(shape) is the operational definition of the dimensions
-	strides []int // strides is usually calculated from shape
-	fin     bool  // is this struct change-proof?
+	shape       Shape // len(shape) is the operational definition of the dimensions
+	strides     []int // strides is usually calculated from shape
+	fin         bool  // is this struct change-proof?
+	maskStrides []int //strides of mask. Should be same length as strides.
 
 	// future stuff
 	// triangle byte // up = 0xf0;  down = 0x0f; symmetric = 0xff; not a triangle = 0x00
 }
 
-// NewAP creates a new AP, given the shape and strides
-func NewAP(shape Shape, strides []int) *AP {
-	return &AP{
-		shape:   shape,
-		strides: strides,
-		fin:     true,
+// NewAP creates a new AP, given the shape and strides. An optional argument, maskStrides, applies
+// to  masked arrays. maskStrides can be either []bool, or []int, but must be the same length as
+// shape. If bool, it indicates which dimensions of shape can be masked. For example, given shape
+// [2,2,2] and maskStrides [true,true,false], the AP calculates mask strides internally as [2,1,0].
+// If argument maskStrides is []int, then it is directly used as the AP's maskStrides value.
+// If argument maskStrides are all true, then maskStrides==strides
+func NewAP(shape Shape, strides []int, argStrides ...interface{}) *AP {
+	var maskStrides []int
+	if len(argStrides) > 0 {
+		switch m := argStrides[0].(type) {
+		case []int:
+			if len(m) == len(shape) {
+				maskStrides = m
+			} else {
+				panic("maskStrides slice differs in length from shape")
+			}
+		case []bool:
+			if len(m) == len(shape) {
+				var fullMask bool
+				if len(strides) == len(shape) {
+					fullMask = true
+					for i := 0; i < len(m); i++ {
+						fullMask = fullMask && m[i]
+					}
+				}
+				if fullMask {
+					maskStrides = strides
+				} else {
+					maskStrides = shape.calcStrides(m)
+				}
+			} else {
+				panic("maskStrides slice differs in length from shape")
+			}
+		default:
+			panic("maskStrides only supports []int and []bool types")
+		}
 	}
+
+	return &AP{
+		shape:       shape,
+		strides:     strides,
+		fin:         true,
+		maskStrides: maskStrides,
+	}
+	//To do: decide whether to keep length equality restriction, as well as panic.
+
 }
 
 // SetShape is for very specific times when modifying the AP is necessary, such as reshaping and doing I/O related stuff
@@ -48,6 +92,7 @@ func (ap *AP) SetShape(s ...int) {
 		if len(s) == 0 {
 			ap.shape = ap.shape[:0]
 			ap.strides = ap.strides[:0]
+			ap.maskStrides = ap.maskStrides[:0]
 			return
 		}
 
@@ -61,6 +106,17 @@ func (ap *AP) SetShape(s ...int) {
 		}
 		ap.shape = Shape(s).Clone()
 		ap.strides = ap.shape.calcStrides()
+
+		if ap.IsMasked() {
+			b := BorrowBools(len(s))
+			for i := 0; i < len(s); i++ {
+				if ap.maskStrides[i] > 0 {
+					b[i] = true
+				}
+			}
+			ap.maskStrides = ap.shape.calcStrides(b)
+			ReturnBools(b)
+		}
 	}
 }
 
@@ -74,6 +130,9 @@ func (ap *AP) Shape() Shape { return ap.shape }
 // Strides returns the strides of the AP
 func (ap *AP) Strides() []int { return ap.strides }
 
+// MaskStrides returns the mask strides of the AP
+func (ap *AP) MaskStrides() []int { return ap.maskStrides }
+
 // Dims returns the dimensions of the shape in the AP
 func (ap *AP) Dims() int { return ap.shape.Dims() }
 
@@ -85,7 +144,11 @@ func (ap *AP) String() string { return fmt.Sprintf("%v", ap) }
 
 // Format implements fmt.Formatter
 func (ap *AP) Format(state fmt.State, c rune) {
-	fmt.Fprintf(state, "Shape: %v, Stride: %v, Lock: %t", ap.shape, ap.strides, ap.fin)
+	if ap.IsMasked() {
+		fmt.Fprintf(state, "Shape: %v, Stride: %v, MaskStride: %v, Lock: %t", ap.shape, ap.strides, ap.maskStrides, ap.fin)
+	} else {
+		fmt.Fprintf(state, "Shape: %v, Stride: %v, Lock: %t", ap.shape, ap.strides, ap.fin)
+	}
 }
 
 // IsVector returns whether the access pattern falls into one of three possible definitions of vectors:
@@ -103,6 +166,14 @@ func (ap *AP) IsRowVec() bool { return ap.shape.IsRowVec() }
 // IsScalar returns true if the access pattern indicates it's a scalar value
 func (ap *AP) IsScalar() bool { return ap.shape.IsScalar() }
 
+// IsMasked returns true if the access pattern indicates it is a masked value
+func (ap *AP) IsMasked() bool {
+	if ap.IsColVec() || ap.IsRowVec() {
+		return len(ap.maskStrides) == 1
+	}
+	return len(ap.maskStrides) > 0 && (len(ap.shape) == len(ap.maskStrides))
+}
+
 // IsMatrix returns true if it's a matrix. This is mostly a convenience method. RowVec and ColVecs are also considered matrices
 func (ap *AP) IsMatrix() bool { return len(ap.shape) == 2 }
 
@@ -111,10 +182,12 @@ func (ap *AP) Clone() (retVal *AP) {
 	retVal = BorrowAP(len(ap.shape))
 	copy(retVal.shape, ap.shape)
 	copy(retVal.strides, ap.strides)
+	copy(retVal.maskStrides, ap.maskStrides)
 
 	// handle vectors
 	retVal.shape = retVal.shape[:len(ap.shape)]
 	retVal.strides = retVal.strides[:len(ap.strides)]
+	retVal.maskStrides = retVal.strides[:len(ap.maskStrides)]
 	retVal.fin = ap.fin
 	return
 }

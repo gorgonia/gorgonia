@@ -148,6 +148,7 @@ func BorrowAP(dims int) *AP {
 		ap := new(AP)
 		ap.shape = make(Shape, dims)
 		ap.strides = make([]int, dims)
+		ap.maskStrides = make([]int, dims)
 		return ap
 	}
 
@@ -155,6 +156,7 @@ func BorrowAP(dims int) *AP {
 
 	// restore strides and shape to whatever that may have been truncated
 	ap.strides = ap.strides[:cap(ap.strides)]
+	ap.maskStrides = ap.maskStrides[:cap(ap.maskStrides)]
 	return ap
 }
 
@@ -170,10 +172,19 @@ func ReturnAP(ap *AP) {
 
 var intsPool [8]sync.Pool
 
+/* BOOLS POOL */
+
+var boolsPool [8]sync.Pool
+
 func init() {
 	for i := range intsPool {
 		size := i
 		intsPool[i].New = func() interface{} { return make([]int, size) }
+	}
+
+	for i := range boolsPool {
+		size := i
+		boolsPool[i].New = func() interface{} { return make([]bool, size) }
 	}
 
 	for i := range apPool {
@@ -181,6 +192,7 @@ func init() {
 		apPool[i].New = func() interface{} {
 			ap := new(AP)
 			ap.strides = make([]int, l)
+			ap.maskStrides = make([]int, l)
 			ap.shape = make(Shape, l)
 			return ap
 		}
@@ -215,4 +227,34 @@ func ReturnInts(is []int) {
 	}
 
 	intsPool[size].Put(is)
+}
+
+// BorrowBools borrows a slice of bools from the pool. USE WITH CAUTION.
+func BorrowBools(size int) []bool {
+	if size >= 8 {
+		return make([]bool, size)
+	}
+
+	retVal := boolsPool[size].Get()
+	if retVal == nil {
+		return make([]bool, size)
+	}
+	return retVal.([]bool)
+}
+
+// ReturnBools returns a slice from the pool. USE WITH CAUTION.
+func ReturnBools(is []bool) {
+	if is == nil {
+		return
+	}
+	size := cap(is)
+	if size >= 8 {
+		return
+	}
+	is = is[:cap(is)]
+	for i := range is {
+		is[i] = false
+	}
+
+	boolsPool[size].Put(is)
 }

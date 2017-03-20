@@ -50,6 +50,25 @@ func ProdInts(a []int) (retVal int) {
 	return
 }
 
+// EqInts returns true if slices have same value
+func EqInts(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	if (a == nil) != (b == nil) {
+		return false
+	}
+
+	b = b[:len(a)]
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1
 func IsMonotonicInts(a []int) (monotonic bool, incr1 bool) {
 	var prev int

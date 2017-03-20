@@ -26,14 +26,19 @@ func Of(a Dtype) ConsOpt {
 //		backing := []float64{1,2,3,4}
 // 		t := New(WithBacking(backing))
 // It can be used with other construction options like WithShape
-func WithBacking(x interface{}) ConsOpt {
+// It can also support creation of masked arrays via optional argument argMask
+func WithBacking(x interface{}, argMask ...[]bool) ConsOpt {
+	var mask []bool
+	if len(argMask) > 0 {
+		mask = argMask[0]
+	}
 	f := func(t Tensor) {
 		if x == nil {
 			return
 		}
 		switch tt := t.(type) {
 		case *Dense:
-			tt.fromSlice(x)
+			tt.fromSlice(x, mask)
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -59,8 +64,11 @@ func WithShape(dims ...int) ConsOpt {
 }
 
 // FromScalar is a construction option for representing a scalar value as a Tensor
-func FromScalar(x interface{}) ConsOpt {
-
+func FromScalar(x interface{}, argMask ...[]bool) ConsOpt {
+	var mask []bool
+	if len(argMask) > 0 {
+		mask = argMask[0]
+	}
 	f := func(t Tensor) {
 		switch tt := t.(type) {
 		case *Dense:
@@ -79,6 +87,8 @@ func FromScalar(x interface{}) ConsOpt {
 			tt.v = x
 			tt.t = Dtype{xt}
 			tt.hdr = hdr
+			tt.mask = mask
+
 		default:
 			panic("Unsupported Tensor Type")
 		}
