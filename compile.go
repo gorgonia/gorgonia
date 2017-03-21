@@ -66,7 +66,7 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	}
 
 	var sortedNodes Nodes
-	if sortedNodes, err = Sort(g); err != nil {
+	if sortedNodes, err = Sort(subgraph); err != nil {
 		return nil, nil, errors.Wrap(err, sortFail)
 	}
 
@@ -81,7 +81,7 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	prog.cpulocs = ra.cpucount
 	prog.gpulocs = ra.gpucount
 	prog.df = df
-	prog.g = g
+	prog.g = subgraph
 	prog.sorted = sortedNodes
 
 	return

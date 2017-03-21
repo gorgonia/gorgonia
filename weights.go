@@ -232,14 +232,20 @@ func Binomial32(trials, prob float64, s ...int) []float32 {
 // using the methods specified in Glorot et. al (2010).
 // See also: http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf
 func GlorotEtAlN64(gain float64, s ...int) []float64 {
-	if len(s) < 2 {
-		panic("Glorot Uniform only works with Tensors of dimensions >= 2")
-	}
-	n1, n2 := s[0], s[1]
-
+	var n1, n2 int
 	fieldSize := 1
-	for _, v := range s[2:] {
-		fieldSize *= v
+	switch len(s) {
+	case 0:
+		panic("Glorot Uniform only works with Tensors of dimensions >= 1")
+	case 1:
+		// treat it as a col vec
+		n1 = 1
+		n2 = s[0]
+	default:
+		n1, n2 = s[0], s[1]
+		for _, v := range s[2:] {
+			fieldSize *= v
+		}
 	}
 
 	size := tensor.Shape(s).TotalSize()
@@ -276,14 +282,20 @@ func GlorotEtAlN32(gain float64, s ...int) []float32 {
 //		math.Sqrt(2.0) for gain for weights that will be used in ReLU units
 //		math.Sqrt(2.0 / (1+alpha*alpha)) for ReLU that are leaky with alpha
 func GlorotEtAlU64(gain float64, s ...int) []float64 {
-	if len(s) < 2 {
-		panic("Glorot Uniform only works with Tensors of dimensions >= 2")
-	}
-	n1, n2 := s[0], s[1]
-
+	var n1, n2 int
 	fieldSize := 1
-	for _, v := range s[2:] {
-		fieldSize *= v
+	switch len(s) {
+	case 0:
+		panic("Glorot Uniform only works with Tensors of dimensions >= 1")
+	case 1:
+		// treat it as a col vec
+		n1 = 1
+		n2 = s[0]
+	default:
+		n1, n2 = s[0], s[1]
+		for _, v := range s[2:] {
+			fieldSize *= v
+		}
 	}
 
 	size := tensor.Shape(s).TotalSize()
