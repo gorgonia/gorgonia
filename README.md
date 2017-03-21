@@ -1,4 +1,4 @@
-#Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/chewxy/gorgonia)](https://goreportcard.com/report/github.com/chewxy/gorgonia) #
+# Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/chewxy/gorgonia)](https://goreportcard.com/report/github.com/chewxy/gorgonia) #
 
 <img src="https://raw.githubusercontent.com/chewxy/gorgonia/master/media/mascot_small.jpg" align="right" />
 
@@ -15,7 +15,7 @@ Gorgonia:
 * Supports CUDA/GPGPU computation (OpenCL not yet supported, send a pull request)
 * Will support distributed computing
 
-#Why Use Gorgonia?#
+# Why Use Gorgonia?#
 
 The main reason to use Gorgonia is developer comfort. If you're using a Go stack extensively, now you have access to the ability to create production-ready machine learning systems in an environment that you are already familiar and comfortable with. 
 
@@ -25,7 +25,7 @@ Typically the two phases have different tools: Python/Lua (using [Theano](http:/
 
 Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently fairly performant - its speeds are comparable to Theano's and Tensorflow's (official benchmarks haven't yet been done because of an existing CUDA bug in Gorgonia; and also the implementations may differ slightly so an exact like-for-like model is hard to compare).
 
-#Installation #
+# Installation #
 
 The package is go-gettable: `go get -u github.com/chewxy/gorgonia`. 
 
@@ -47,11 +47,11 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |[gonum/matrix](http://github.com/gonum/matrix)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[testify/assert](https://github.com/stretchr/testify)|Testing|Can do without but will be a massive pain in the ass to test||[testify licence](https://github.com/stretchr/testify/blob/master/LICENSE) (MIT/BSD-like)|
 
-#Keeping Updated#
+# Keeping Updated #
 
 Gorgonia's project has a [mailing list](https://groups.google.com/forum/#!forum/gorgonia), as well as a [Twitter account](https://twitter.com/gorgoniaML). Official updates and announcements will be posted to those two sites.
 
-#Usage#
+# Usage #
 
 Gorgonia works by creating a computation graph, and then executing it. Think of it as a programming language, but is limited to mathematical functions. In fact this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree). 
 
@@ -110,7 +110,7 @@ You might note that it's a little more verbose than other packages of similar na
 
 The author would like to contend that this is a Good Thing - to shift one's thinking to a machine-based thinking. It helps a lot in figuring out where things might go wrong.
 
-###VMs###
+### VMs ###
 
 There are two VMs in the current version of Gorgonia:
 
@@ -123,7 +123,7 @@ The `LispMachine` on the other hand was designed to take a graph as an input, an
 
 Prior to release of Gorgonia, there was a third VM - a stack based VM that is similar to `TapeMachine` but deals with artificial gradients better. It may see light of day again, once this author has managed to fix all the kinks.
 
-##Differentiation##
+## Differentiation ##
 
 Gorgonia performs both symbolic and automatic differentiation. There are subtle differences between the two processes. The author has found that it's best to think of it this way - Automatic differentiation is differentiation that happens at runtime, concurrently with the execution of the graph, while symbolic differentiation is differentiation that happens during the compilation phase. 
 
@@ -259,7 +259,7 @@ func main() {
 
 Currently Gorgonia only performs backwards mode automatic differentiation (aka backpropagation), although one may observe the vestiges of an older version which supported forwards mode differentiation in the existence of `*dualValue`. It may return in the future.
 
-##Graph##
+## Graph ##
 
 A lot has been said about a computation graph or an expression graph. But what is it exactly? Think of it as an AST for the math expression that you want. Here's the graph for the examples (but with a vector and a scalar addition instead) above:
 
@@ -275,7 +275,7 @@ Red-outlined nodes indicate that it's a root node. Green outlined nodes indicate
 
 Concretely, it says that `c42011e840` (`dy/dx`) is the gradient node of the input `c42011e000` (which is `x`).
 
-###Node Rendering###
+### Node Rendering ###
 
 A Node is rendered thusly:
 
@@ -287,13 +287,13 @@ A Node is rendered thusly:
 <tr><td>Value†</td><td>Gradient</td></tr>
 </table>
 
-###Additional Notes###
+### Additional Notes ###
 
 * If it's an input node, then the Op row will not show up.
 * If there are no Values bound to the node, it will show up as NIL. However, when there are values and gradients, it will try to as best as possible display the values bound to the node.
 
 
-##Using CUDA ##
+## Using CUDA ##
 
 Gorgonia comes with CUDA support out of the box. However, usage is specialized. To use CUDA, you must build your application with the build tag `cuda`, like so:
 
@@ -309,7 +309,7 @@ Furthermore, there are some additional requirements:
 4. `runtime.LockOSThread()` must be called in the main function where the VM is running. CUDA requires thread affinity, and therefore the OS thread must be locked.
 
 
-###Example ###
+### Example ###
 
 So how do we use CUDA? Say we've got a file, `main.go`:
 
@@ -365,7 +365,7 @@ go run -tags='cuda'
 
 And even so, only the `tanh` function uses CUDA. 
 
-###Rationale ###
+### Rationale ###
 
 The main reasons for having such complicated requirements for using CUDA is quite simply performance related. As Dave Cheney famously wrote, [cgo is not Go](https://dave.cheney.net/2016/01/18/cgo-is-not-go). To use CUDA, cgo is unfortunately required. And to use cgo, plenty of tradeoffs need to be made.
 
@@ -375,7 +375,7 @@ The reason for requiring [CUDA toolkit 8.0](https://developer.nvidia.com/cuda-to
 
 Lastly, the reason for requiring an explicit specification to use CUDA for which ops is due to the cost of cgo calls. Additional work is being done currently to implement batched cgo calls,  but until that is done, the solution is keyhole "upgrade" of certain ops
 
-###`Op`s supported by CUDA###
+### `Op`s supported by CUDA ###
 
 As of now, only the very basic simple ops support CUDA: 
 
@@ -408,7 +408,7 @@ Elementwise binary operations - only arithmetic operations support CUDA:
 
 From a lot of profiling of this author's personal projects, the ones that really matter are `tanh`, `sigmoid`, `expm1`, `exp` and `cube` - basically the activation functions. The other operations do work fine with MKL+AVX and aren't the major cause of slowness in a neural network
 
-###CUDA improvements ###
+### CUDA improvements ###
 
 In a trivial benchmark, careful use of CUDA (in this case, used to call `sigmoid`) shows impressive improvements over non-CUDA code (bearing in mind the CUDA kernel is extremely naive and not optimized):
 
@@ -418,12 +418,12 @@ BenchmarkOneMil-8       	      50	  33169036 ns/op
 ```
 
 
-#API Stability#
+# API Stability #
 Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
 
 1.0 is defined by when the test coverage hits 90%, and the relevant `Tensor` methods have been completed.
 
-#Roadmap#
+# Roadmap #
 
 Here are the goals for Gorgonia, sorted by importance 
 
@@ -440,20 +440,20 @@ Here are the goals for Gorgonia, sorted by importance
 - [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
 - [ ] Derivative-free optimization algorithms
 
-#Goals#
+# Goals #
 The primary goal for Gorgonia is to be a *highly performant* machine learning/graph computation-based library that can scale across multiple machines. It should bring the appeal of Go (simple compilation and deployment process) to the ML world. It's a long way from there currently, however, the baby steps are already there.
 
 The secondary goal for Gorgonia is to provide a platform for exploration for non-standard deep-learning and neural network related things. This includes things like neo-hebbian learning, corner-cutting algorithms, evolutionary algorithms and the like. 
 
 
-#Contributing#
+# Contributing #
 
 Obviously since you are most probably reading this on Github, Github will form the major part of the workflow for contributing to this package.
 
 See also: CONTRIBUTING.md
 
 
-##Contributors and Significant Contributors##
+## Contributors and Significant Contributors ##
 All contributions are welcome. However, there is a new class of contributor, called Significant Contributors. 
 
 A Significant Contributor is one who has shown *deep understanding* of how the library works and/or its environs.  Here are examples of what constitutes a Significant Contribution:
@@ -466,12 +466,12 @@ A Significant Contributor is one who has shown *deep understanding* of how the l
 
 Significant Contributors list will be updated once a month (if anyone even uses Gorgonia that is).
 
-#How To Get Support#
+# How To Get Support #
 The best way of support right now is to open a ticket on Github.
 
-#Frequently Asked Questions#
+# Frequently Asked Questions #
 
-###Why are there seemingly random `runtime.GC()` calls in the tests?###
+### Why are there seemingly random `runtime.GC()` calls in the tests? ###
 
 The answer to this is simple - the design of the package uses CUDA in a particular way: specifically, a CUDA device and context is tied to a `VM`, instead of at the package level. This means for every `VM` created, a different CUDA context is created per device per `VM`. This way all the operations will play nicely with other applications that may be using CUDA (this needs to be stress-tested, however). 
 
@@ -482,13 +482,13 @@ Therefore at the end of any tests that may use GPU, a `runtime.GC()` call is mad
 In production, one is unlikely to start that many `VM`s, therefore it's not really a problem. If there is, open a ticket on Github, and we'll look into adding a `Finish()` method for the `VM`s.
 
 
-#Licence#
+# Licence #
 
 Gorgonia is licenced under a variant of Apache 2.0. It's for all intents and purposes the same as the Apache 2.0 Licence, with the exception of not being able to commercially profit directly from the package unless you're a Significant Contributor (for example, providing commercial support for the package). It's perfectly fine to profit directly from a derivative of Gorgonia (for example, if you use Gorgonia as a library in your product)
 
 Everyone is still allowed to use Gorgonia for commercial purposes (example: using it in a software for your business).
 
-##Various Other Copyright Notices##
+## Various Other Copyright Notices ##
 
 These are the packages and libraries which inspired and were adapted from in the process of writing Gorgonia (the Go packages that were used were already declared above):
 
