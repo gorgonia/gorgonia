@@ -41,7 +41,7 @@ func WithBacking(x interface{}) ConsOpt {
 	return f
 }
 
-// WithShape is a construction option for a Tensor. It creates the ndarray in the required shape
+// WithShape is a construction option for a Tensor. It creates the ndarray in the required shape.
 func WithShape(dims ...int) ConsOpt {
 	f := func(t Tensor) {
 		switch tt := t.(type) {
@@ -58,7 +58,7 @@ func WithShape(dims ...int) ConsOpt {
 	return f
 }
 
-// FromScalar is a construction option for representing a scalar value as a Tensor
+// FromScalar is a construction option for representing a scalar value as a Tensor.
 func FromScalar(x interface{}) ConsOpt {
 
 	f := func(t Tensor) {
@@ -81,6 +81,42 @@ func FromScalar(x interface{}) ConsOpt {
 			tt.hdr = hdr
 		default:
 			panic("Unsupported Tensor Type")
+		}
+	}
+	return f
+}
+
+// FromMemory is a construction option for creating a *Dense (for now) from memory location. This is a useful
+// option for super large tensors that don't fit into memory - the user may need to `mmap` a file the tensor.
+//
+// Bear in mind that at the current stage of the ConsOpt design, the order of the ConsOpt is important.
+// FromMemory  requires the *Dense's Dtype be set already.
+// This would fail (and panic):
+//		New(FromMemory(ptr, size), Of(Float64))
+// This would not:
+//		New(Of(Float64), FromMemory(ptr, size))
+// This behaviour  of  requiring the ConsOpts to be in order might be changed in the future.
+//
+// Memory must be manually managed by the caller.
+// Tensors called with this construction option will not be returned to any pool - rather, all references to the pointers will be null'd.
+// Use with caution.
+func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
+	f := func(t Tensor) {
+		switch tt := t.(type) {
+		case *Dense:
+			tt.v = nil // if there were any underlying slices it should be GC'd
+			if tt.hdr == nil {
+				tt.hdr = &reflect.SliceHeader{}
+			}
+
+			tt.data = unsafe.Pointer(ptr)
+			tt.hdr.Data = ptr
+			tt.hdr.Len = int(memsize / tt.t.Size())
+			tt.hdr.Cap = int(memsize / tt.t.Size())
+
+			tt.flag |= unmanagedMem
+		default:
+			panic("Unsupported Tensor type")
 		}
 	}
 	return f

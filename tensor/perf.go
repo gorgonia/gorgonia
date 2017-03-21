@@ -97,6 +97,12 @@ func ReturnTensor(t Tensor) {
 	switch tt := t.(type) {
 	case *Dense:
 		// log.Printf("returning %p", tt)
+		if tt.unmanagedMem() {
+			tt.data = nil
+			tt.hdr.Data = 0
+			return
+		}
+
 		dt := tt.t.Kind()
 		if _, ok := densePool[dt]; !ok {
 			return

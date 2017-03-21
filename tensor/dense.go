@@ -8,9 +8,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+type denseFlag byte
+
+const (
+	unmanagedMem denseFlag = 1 << iota
+)
+
 // Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
 type Dense struct {
 	*AP
+
+	flag denseFlag
 
 	data unsafe.Pointer       // Unsafe.Pointer is required to keep the pointer of the first element of the slice, to prevent the slice from being GC'd
 	hdr  *reflect.SliceHeader // we keep a separate SliceHeader because it'd be easier to cast into a slice when doing get ops
@@ -191,8 +199,9 @@ func (t *Dense) Pointer() unsafe.Pointer {
 
 // Private methods
 
-func (t *Dense) cap() int { return t.hdr.Cap }
-func (t *Dense) len() int { return t.hdr.Len } // exactly the same as DataSize
+func (t *Dense) unmanagedMem() bool { return (t.flag>>unmanagedMem)&denseFlag(1) == 1 }
+func (t *Dense) cap() int           { return t.hdr.Cap }
+func (t *Dense) len() int           { return t.hdr.Len } // exactly the same as DataSize
 
 func (t *Dense) setShape(s ...int) {
 	t.unlock()
