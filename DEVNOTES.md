@@ -1,4 +1,4 @@
-#Cgo#
+# Cgo #
 
 Cgo is used pretty heavily in Gorgonia. Here are some Cgo guidelines that I've come up with and used over the years:
 

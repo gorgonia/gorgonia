@@ -1,4 +1,4 @@
-#Significant Contributors
+# Significant Contributors #
 
 * Xuanyi Chew @chewxy - initial package
 * Naseer Dari @ndari - errors and error handling
