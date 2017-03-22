@@ -168,6 +168,9 @@ func ReturnAP(ap *AP) {
 	apPool[ap.Dims()].Put(ap)
 }
 
+/* ----------------------------------------------------------------
+------------------ Create Pools
+------------------------------------------------------------------*/
 /* INTS POOL */
 
 var intsPool [8]sync.Pool
@@ -176,6 +179,15 @@ var intsPool [8]sync.Pool
 
 var boolsPool [8]sync.Pool
 
+/* APLIST POOL */
+
+var apListPool [maxAPDims]sync.Pool
+
+/* MASKLIST POOL */
+
+var maskListPool [maxAPDims]sync.Pool
+
+// Init function
 func init() {
 	for i := range intsPool {
 		size := i
@@ -185,6 +197,16 @@ func init() {
 	for i := range boolsPool {
 		size := i
 		boolsPool[i].New = func() interface{} { return make([]bool, size) }
+	}
+
+	for i := range apListPool {
+		size := i
+		apListPool[i].New = func() interface{} { return make([]*AP, size) }
+	}
+
+	for i := range maskListPool {
+		size := i
+		maskListPool[i].New = func() interface{} { return make([][]bool, size) }
 	}
 
 	for i := range apPool {
@@ -257,4 +279,64 @@ func ReturnBools(is []bool) {
 	}
 
 	boolsPool[size].Put(is)
+}
+
+// BorrowAPList gets an APList from the pool. USE WITH CAUTION.
+func BorrowAPList(size int) []*AP {
+	if size >= 8 {
+		return make([]*AP, size)
+	}
+
+	retVal := apListPool[size].Get()
+	if retVal == nil {
+		return make([]*AP, size)
+	}
+	return retVal.([]*AP)
+}
+
+// ReturnAPList returns the APList to the pool. USE WITH CAUTION.
+func ReturnAPList(aps []*AP) {
+	if aps == nil {
+		return
+	}
+	size := cap(aps)
+	if size >= 8 {
+		return
+	}
+	aps = aps[:cap(aps)]
+	for i := range aps {
+		aps[i] = nil
+	}
+
+	apListPool[size].Put(aps)
+}
+
+// BorrowMaskList gets a [][]bool from the pool. USE WITH CAUTION.
+func BorrowMaskList(size int) [][]bool {
+	if size >= 8 {
+		return make([][]bool, size)
+	}
+
+	retVal := maskListPool[size].Get()
+	if retVal == nil {
+		return make([][]bool, size)
+	}
+	return retVal.([][]bool)
+}
+
+// ReturnMaskList returns the [][]bool to the pool. USE WITH CAUTION.
+func ReturnMaskList(masks [][]bool) {
+	if masks == nil {
+		return
+	}
+	size := cap(masks)
+	if size >= 8 {
+		return
+	}
+	masks = masks[:cap(masks)]
+	for i := range masks {
+		masks[i] = nil
+	}
+
+	maskListPool[size].Put(masks)
 }

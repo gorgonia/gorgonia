@@ -26,7 +26,6 @@ func Of(a Dtype) ConsOpt {
 //		backing := []float64{1,2,3,4}
 // 		t := New(WithBacking(backing))
 // It can be used with other construction options like WithShape
-// It can also support creation of masked arrays via optional argument argMask
 func WithBacking(x interface{}, argMask ...[]bool) ConsOpt {
 	var mask []bool
 	if len(argMask) > 0 {
@@ -46,6 +45,22 @@ func WithBacking(x interface{}, argMask ...[]bool) ConsOpt {
 	return f
 }
 
+// WithMaskStrides is a construction option for a Tensor
+func WithMaskStrides(x interface{}) ConsOpt {
+	f := func(t Tensor) {
+		if x == nil {
+			return
+		}
+		switch tt := t.(type) {
+		case *Dense:
+			tt.SetMaskStrides(x)
+		default:
+			panic("Unsupported Tensor type")
+		}
+	}
+	return f
+}
+
 // WithShape is a construction option for a Tensor. It creates the ndarray in the required shape
 func WithShape(dims ...int) ConsOpt {
 	f := func(t Tensor) {
@@ -57,9 +72,7 @@ func WithShape(dims ...int) ConsOpt {
 		default:
 			panic("Unsupported Tensor type")
 		}
-
 	}
-
 	return f
 }
 

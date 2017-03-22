@@ -198,6 +198,21 @@ func (t *Dense) At(coords ...int) (interface{}, error) {
 	return t.Get(at), nil
 }
 
+// MaskAt returns the value of the mask at a given coordinate
+// returns false (valid) if not tensor is not masked
+func (t *Dense) MaskAt(coords ...int) (bool, error) {
+	if len(coords) != t.Dims() {
+		return true, errors.Errorf(dimMismatch, t.Dims(), len(coords))
+	}
+
+	at, err := t.maskAt(coords...)
+	if err != nil {
+		return true, errors.Wrap(err, "MaskAt()")
+	}
+
+	return t.mask[at], nil
+}
+
 // SetAt sets the value at the given coordinate
 func (t *Dense) SetAt(v interface{}, coords ...int) error {
 	if len(coords) != t.Dims() {
@@ -209,6 +224,20 @@ func (t *Dense) SetAt(v interface{}, coords ...int) error {
 		return errors.Wrap(err, "SetAt()")
 	}
 	t.Set(at, v)
+	return nil
+}
+
+// SetMaskAt sets the mask value at the given coordinate
+func (t *Dense) SetMaskAt(v bool, coords ...int) error {
+	if len(coords) != t.Dims() {
+		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
+	}
+
+	at, err := t.maskAt(coords...)
+	if err != nil {
+		return errors.Wrap(err, "SetAt()")
+	}
+	t.mask[at] = v
 	return nil
 }
 
@@ -523,6 +552,12 @@ func (t *Dense) transposeIndex(i int, transposePat, strides []int) int {
 // This is of course, extensible to any number of dimensions.
 func (t *Dense) at(coords ...int) (at int, err error) {
 	return Ltoi(t.Shape(), t.Strides(), coords...)
+}
+
+// maskat returns the mask index at which the coordinate is referring to.
+func (t *Dense) maskAt(coords ...int) (at int, err error) {
+	//TODO: Add check for non-masked tensor
+	return Ltoi(t.Shape(), t.MaskStrides(), coords...)
 }
 
 // simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides

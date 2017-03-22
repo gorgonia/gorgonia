@@ -213,7 +213,6 @@ func (t *Dense) fix() {
 	if t.AP == nil {
 		return
 	}
-
 	switch {
 	case t.IsScalar() && t.data == nil:
 		t.makeArray(1)
@@ -228,7 +227,31 @@ func (t *Dense) fix() {
 		size := t.Shape().TotalSize()
 		t.makeArray(size)
 	}
+	if t.IsMasked() {
+		var size int
+		for i, s := range t.maskStrides {
+			if s > 0 {
+				size = t.shape[i] * s
+				break
+			}
+		}
+		t.makeMask(size)
+	}
 	t.lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
+}
+
+// make mask adds a mask slice to tensor if required
+func (t *Dense) makeMask(size int) {
+	if size < 1 || len(t.mask) == size {
+		return
+	}
+	if cap(t.mask) < size {
+		t.mask = make([]bool, size)
+	}
+	t.mask = t.mask[:size]
+	for i := 0; i < size; i++ {
+		t.mask[i] = false // Unnecessary
+	}
 }
 
 // sanity is a function that sanity checks that a tensor is correct.

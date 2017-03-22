@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	//"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -77,13 +78,14 @@ func TestMultIterator(t *testing.T) {
 		err = nil
 		ap[0] = NewAP(fit.shape, fit.strides)
 		it = NewMultIterator(ap[0])
-		for err := it.Next(); err == nil; err = it.Next() {
-			nexts[0] = append(nexts[0], it.LastIndex(0))
+		for next, err := it.Next(); err == nil; next, err = it.Next() {
+			nexts[0] = append(nexts[0], next)
 		}
 		if _, ok := err.(NoOpError); err != nil && !ok {
 			t.Error(err)
 		}
 		assert.Equal(fit.correct, nexts[0], "Repeating flat test %d", i)
+		DestroyMultIterator(it)
 	}
 	// Test multiple iterators simultaneously
 	var choices = []int{0, 0, 9, 9, 0, 9}
@@ -94,7 +96,7 @@ func TestMultIterator(t *testing.T) {
 		ap[j] = NewAP(fit.shape, fit.strides)
 	}
 	it = NewMultIterator(ap...)
-	for err := it.Next(); err == nil; err = it.Next() {
+	for _, err := it.Next(); err == nil; _, err = it.Next() {
 		for j := 0; j < 6; j++ {
 			nexts[j] = append(nexts[j], it.LastIndex(j))
 		}
@@ -112,6 +114,28 @@ func TestMultIterator(t *testing.T) {
 			assert.Equal(fit.correct, nexts[j], "Test multiple iterators %d", j)
 		}
 	}
+	DestroyMultIterator(it)
+
+}
+
+// NOT COMPLETE !!!
+func TestMultIteratorFromDense(t *testing.T) {
+	//assert := assert.New(t)
+
+	T1 := New(Of(Float64), WithShape(3, 20), WithMaskStrides([]bool{true, true}))
+	data1 := T1.Data().([]float64)
+
+	T2 := New(Of(Float64), WithShape(3, 20), WithMaskStrides([]bool{true, false}))
+	data2 := T2.Data().([]float64)
+
+	T3 := New(Of(Float64), FromScalar(7))
+
+	for i := 0; i < 60; i++ {
+		data1[i] = float64(i)
+		data2[i] = -float64(i)
+	}
+	it := MultIteratorFromDense(T1, T2, T3)
+	DestroyMultIterator(it)
 }
 
 func TestFlatIterator_Chan(t *testing.T) {
@@ -337,7 +361,7 @@ func BenchmarkFlatIterator(b *testing.B) {
 	}
 }
 
-func BenchmarkFlatIteratorParallel(b *testing.B) {
+func BenchmarkFlatIteratorParallel6(b *testing.B) {
 	var err error
 
 	// as if T = NewTensor(WithShape(30, 1000, 1000))
@@ -367,7 +391,28 @@ func BenchmarkFlatIteratorParallel(b *testing.B) {
 
 }
 
-func BenchmarkFlatIteratorMulti(b *testing.B) {
+func BenchmarkFlatIteratorMulti1(b *testing.B) {
+	var err error
+
+	// as if T = NewTensor(WithShape(30, 1000, 1000))
+	// then T[:, 0:900:15, 250:750:50]
+	ap := NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
+
+	it := NewMultIterator(ap)
+
+	for n := 0; n < b.N; n++ {
+		for _, err := it.Next(); err == nil; _, err = it.Next() {
+
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			b.Error(err)
+		}
+		it.Reset()
+	}
+	DestroyMultIterator(it)
+}
+
+func BenchmarkFlatIteratorMulti6(b *testing.B) {
 	var err error
 
 	// as if T = NewTensor(WithShape(30, 1000, 1000))
@@ -381,7 +426,7 @@ func BenchmarkFlatIteratorMulti(b *testing.B) {
 	it := NewMultIterator(ap...)
 
 	for n := 0; n < b.N; n++ {
-		for err := it.Next(); err == nil; err = it.Next() {
+		for _, err := it.Next(); err == nil; _, err = it.Next() {
 
 		}
 		if _, ok := err.(NoOpError); err != nil && !ok {
@@ -389,4 +434,5 @@ func BenchmarkFlatIteratorMulti(b *testing.B) {
 		}
 		it.Reset()
 	}
+	DestroyMultIterator(it)
 }

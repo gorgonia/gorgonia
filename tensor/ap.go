@@ -38,45 +38,16 @@ type AP struct {
 // If argument maskStrides is []int, then it is directly used as the AP's maskStrides value.
 // If argument maskStrides are all true, then maskStrides==strides
 func NewAP(shape Shape, strides []int, argStrides ...interface{}) *AP {
-	var maskStrides []int
+	ap := &AP{
+		shape:   shape,
+		strides: strides,
+		fin:     true,
+	}
+
 	if len(argStrides) > 0 {
-		switch m := argStrides[0].(type) {
-		case []int:
-			if len(m) == len(shape) {
-				maskStrides = m
-			} else {
-				panic("maskStrides slice differs in length from shape")
-			}
-		case []bool:
-			if len(m) == len(shape) {
-				var fullMask bool
-				if len(strides) == len(shape) {
-					fullMask = true
-					for i := 0; i < len(m); i++ {
-						fullMask = fullMask && m[i]
-					}
-				}
-				if fullMask {
-					maskStrides = strides
-				} else {
-					maskStrides = shape.calcStrides(m)
-				}
-			} else {
-				panic("maskStrides slice differs in length from shape")
-			}
-		default:
-			panic("maskStrides only supports []int and []bool types")
-		}
+		ap.SetMaskStrides(argStrides[0])
 	}
-
-	return &AP{
-		shape:       shape,
-		strides:     strides,
-		fin:         true,
-		maskStrides: maskStrides,
-	}
-	//To do: decide whether to keep length equality restriction, as well as panic.
-
+	return ap
 }
 
 // SetShape is for very specific times when modifying the AP is necessary, such as reshaping and doing I/O related stuff
@@ -118,6 +89,46 @@ func (ap *AP) SetShape(s ...int) {
 			ReturnBools(b)
 		}
 	}
+}
+
+// SetMaskStride is for setting mask stride
+func (ap *AP) SetMaskStrides(s interface{}) {
+	var maskStrides []int
+	switch m := s.(type) {
+	case []int:
+		if len(m) == len(ap.shape) {
+			maskStrides = m
+		} else {
+			panic("maskStrides slice differs in length from shape")
+		}
+	case []bool:
+		if len(m) == len(ap.shape) {
+			var fullMask bool
+			if len(ap.strides) == len(ap.shape) {
+				fullMask = true
+				for i := 0; i < len(m); i++ {
+					fullMask = fullMask && m[i]
+				}
+			}
+			if fullMask {
+				maskStrides = ap.strides
+			} else {
+				maskStrides = ap.shape.calcStrides(m)
+			}
+		} else {
+			panic("maskStrides slice differs in length from shape")
+		}
+	default:
+		panic("maskStrides only supports []int and []bool types")
+	}
+	if cap(ap.maskStrides) >= len(maskStrides) {
+		copy(ap.maskStrides, maskStrides)
+		ReturnInts(maskStrides)
+		ap.maskStrides = ap.maskStrides[:len(ap.shape)]
+	} else {
+		ap.maskStrides = maskStrides
+	}
+	//To do: decide whether to keep length equality restriction, as well as panic.
 }
 
 // locking and unlocking is used to ensure that the shape and stride doesn't change (it's not really safe though, as a direct mutation of the strides/shape would still mutate it, but at least the dimensions cannot change)
