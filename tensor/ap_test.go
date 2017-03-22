@@ -446,8 +446,7 @@ func TestUntransposeIndex(t *testing.T) {
 }
 
 // TODO: This test fails, why?
-/*func TestBroadcastStrides(t *testing.T) {
-	fmt.Printf("Why does this test fail?")
+func TestBroadcastStrides(t *testing.T) {
 	ds := Shape{4, 4}
 	ss := Shape{4}
 	dst := []int{4, 1}
@@ -458,4 +457,4 @@ func TestUntransposeIndex(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(st)
-}*/
+}
