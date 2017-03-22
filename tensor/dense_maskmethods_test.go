@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	//"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -10,11 +9,13 @@ func TestMaskedComparison(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4))
 	assert.True(len(T.mask) < 1)
+	assert.False(T.IsMasked())
 	dataF64 := T.Data().([]float64)
 	for i := range dataF64 {
 		dataF64[i] = float64(i)
 	}
 	T.MaskedEqual(0.0)
+	assert.True(T.IsMasked())
 	T.MaskedEqual(1.0)
 	assert.True(T.mask[0] && T.mask[1])
 	T.MaskedNotEqual(2.0)
@@ -53,14 +54,12 @@ func TestMaskedIteration(t *testing.T) {
 	}
 	it.Reset()
 	assert.True(j == 120)
-
 	j = 0
 	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.True(j == 115)
-
 	j = 0
 	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
 		j++

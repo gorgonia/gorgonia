@@ -157,8 +157,8 @@ func (it *MultIterator) NextValid() (int, error) {
 	if len(it.masks) < 1 {
 		return -1, noopError{} // Need to find right error code
 	}
-	var invalid = false
-	for ; !invalid; invalid = false {
+	var invalid = true
+	for invalid {
 		if it.Done() {
 			return -1, noopError{}
 		}
@@ -167,7 +167,7 @@ func (it *MultIterator) NextValid() (int, error) {
 		}
 		for i, idp := range it.lastIndex {
 			if i%2 == 1 {
-				invalid = invalid || it.masks[i>>1][*idp]
+				invalid = invalid && it.masks[i>>1][*idp]
 			}
 		}
 	}
@@ -179,8 +179,8 @@ func (it *MultIterator) NextInvalid() (int, error) {
 	if len(it.masks) < 1 {
 		return -1, noopError{} // Need to find right error code
 	}
-	var invalid = false
-	for ; invalid; invalid = false {
+	var invalid = true
+	for invalid {
 		if it.Done() {
 			return -1, noopError{}
 		}
@@ -189,7 +189,7 @@ func (it *MultIterator) NextInvalid() (int, error) {
 		}
 		for i, idp := range it.lastIndex {
 			if i%2 == 1 {
-				invalid = invalid || it.masks[i>>1][*idp]
+				invalid = invalid && !it.masks[i>>1][*idp]
 			}
 		}
 	}
