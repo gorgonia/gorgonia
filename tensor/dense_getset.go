@@ -682,6 +682,9 @@ func (t *Dense) Zero() {
 			panic(err)
 		}
 	}
+	if t.IsMasked() {
+		t.ResetMask()
+	}
 	switch t.t.Kind() {
 	case reflect.Bool:
 		data := t.bools()
@@ -919,6 +922,13 @@ func copyDense(dest, src *Dense) int {
 	if dest.t != src.t {
 		err := errors.Errorf(dtypeMismatch, src.t, dest.t)
 		panic(err.Error())
+	}
+	if src.IsMasked() {
+		if cap(dest.mask) < len(src.mask) {
+			dest.mask = make([]bool, len(src.mask))
+		}
+		copy(dest.mask, src.mask)
+		dest.mask = dest.mask[:len(src.mask)]
 	}
 	switch dest.t.Kind() {
 	case reflect.Bool:

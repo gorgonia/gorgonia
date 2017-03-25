@@ -200,6 +200,9 @@ func (t *Dense) At(coords ...int) (interface{}, error) {
 // MaskAt returns the value of the mask at a given coordinate
 // returns false (valid) if not tensor is not masked
 func (t *Dense) MaskAt(coords ...int) (bool, error) {
+	if !t.IsMasked() {
+		return false, nil
+	}
 	if len(coords) != t.Dims() {
 		return true, errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -228,6 +231,9 @@ func (t *Dense) SetAt(v interface{}, coords ...int) error {
 
 // SetMaskAt sets the mask value at the given coordinate
 func (t *Dense) SetMaskAt(v bool, coords ...int) error {
+	if !t.IsMasked() {
+		return nil
+	}
 	if len(coords) != t.Dims() {
 		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}

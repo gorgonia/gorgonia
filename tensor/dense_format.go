@@ -32,6 +32,8 @@ var (
 	ufVec    = []byte("Vector")
 	ufMat    = []byte("Matrix")
 	ufTensor = []byte("Tensor-")
+
+	hInvalid = []byte("--")
 )
 
 type fmtState struct {
@@ -273,7 +275,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 				}
 			}
 		case t.viewOf != nil:
-			it := NewFlatIterator(t.AP)
+			it := NewMultIterator(t.AP)
 			var c, i int
 			var err error
 			for i, err = it.Next(); err == nil; i, err = it.Next() {
@@ -306,8 +308,9 @@ func (t *Dense) Format(s fmt.State, c rune) {
 	}
 
 	// standard stuff
-	it := NewFlatIterator(t.AP)
-	coord := it.Coord()
+	it := NewMultIterator(t.AP)
+	coord := it.Coord(0)
+
 	firstRow := true
 	firstVal := true
 	var lastRow, lastCol int
@@ -354,7 +357,17 @@ func (t *Dense) Format(s fmt.State, c rune) {
 
 		// actual printing of the value
 		if f.cols <= f.pc || (col < f.pc/2 || (col >= f.cols-f.pc/2)) {
-			w, _ := fmt.Fprintf(f.buf, format, t.Get(next))
+			var w int
+			if t.IsMasked() {
+				invalid, _ := t.MaskAt(coord...)
+				if invalid {
+					w, _ = fmt.Fprintf(f.buf, "%s", hInvalid)
+				} else {
+					w, _ = fmt.Fprintf(f.buf, format, t.Get(next))
+				}
+			} else {
+				w, _ = fmt.Fprintf(f.buf, format, t.Get(next))
+			}
 			f.Write(f.pad[:f.w-w]) // prepad
 			f.Write(f.buf.Bytes()) // write
 

@@ -32,11 +32,6 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 
 	it := new(MultIterator)
 
-	if nit == 1 && !aps[0].IsMasked() {
-		it.fit0 = NewFlatIterator(&AP{shape: aps[0].shape, strides: aps[0].strides})
-		return it
-	}
-
 	for i := 1; i < len(aps); i++ {
 		if aps[i] != nil {
 			if !(aps[i].IsScalar()) {
@@ -60,6 +55,14 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 	it.trackIdx = BorrowInts(2 * nit)
 	it.termInt = -1
 
+	if nit == 1 && !aps[0].IsMasked() {
+		it.fit0 = NewFlatIterator(&AP{shape: aps[0].shape, strides: aps[0].strides})
+		it.fitArr[0] = it.fit0
+		it.lastIndex[0] = &(it.fit0.lastIndex)
+		it.trackIdx[0] = 0
+		return it
+	}
+
 	m := make(map[int]*FlatIterator)
 
 	for i, ap := range aps {
@@ -81,12 +84,12 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 	i := 0
 	for key, f := range m {
 		it.fitArr[i] = f
-		i++
 		for j := range it.trackIdx {
 			if it.trackIdx[j] == key {
 				it.trackIdx[j] = i
 			}
 		}
+		i++
 	}
 	it.fitArr = it.fitArr[:i]
 	return it
