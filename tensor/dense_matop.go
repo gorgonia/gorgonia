@@ -1,9 +1,8 @@
 package tensor
 
 import (
-	"reflect"
-
 	"github.com/pkg/errors"
+	"reflect"
 )
 
 // Apply applies a function to all the values in the ndarray
@@ -336,8 +335,9 @@ func (t *Dense) CopyTo(other *Dense) error {
 //
 // The method treats <nil> as equivalent to a colon slice. T.Slice(nil) is equivalent to T[:] in Numpy syntax
 func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
-	var newAP *AP
+	var newAP, maskAP *AP
 	var ndStart, ndEnd int
+
 	if newAP, ndStart, ndEnd, err = t.AP.S(t.len(), slices...); err != nil {
 		return
 	}
@@ -352,6 +352,23 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 	view.hdr.Len = t.hdr.Len
 	view.hdr.Cap = t.hdr.Cap
 	view.slice(ndStart, ndEnd)
+
+	if t.IsMasked() {
+		tempAP := t.AP.Clone()
+		copy(tempAP.strides, tempAP.maskStrides)
+		tempAP.maskStrides = tempAP.maskStrides[:0]
+		maskAP, ndStart, ndEnd, err = tempAP.S(len(t.mask), slices...)
+		if cap(newAP.maskStrides) < len(newAP.strides) {
+			//ugly hack that works for mask dimensions with zero stride
+			// it uses len(newAP) and not len(maskAP) to accoutn for cases where
+			// a single dimension is returned that has mask stride 0
+			newAP.maskStrides = make([]int, len(newAP.strides))
+		}
+		copy(newAP.maskStrides[:len(maskAP.strides)], maskAP.strides)
+		//ugly hack that works for mask dimensions with zero stride
+
+		view.mask = t.mask[ndStart:ndEnd]
+	}
 	return view, err
 }
 

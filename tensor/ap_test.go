@@ -144,12 +144,10 @@ func TestMaskedAccessPatternBasics(t *testing.T) {
 	assert := assert.New(t)
 	ap := NewAP(Shape{2, 3, 4}, nil, []bool{true, true, true})
 	assert.Equal([]int{12, 4, 1}, ap.MaskStrides())
-	ap = NewAP(Shape{2, 3, 4}, []int{12, 14, 3}, []bool{true, true, true})
-	assert.Equal([]int{12, 14, 3}, ap.MaskStrides())
 	ap = NewAP(Shape{2, 3, 4}, nil, []bool{true, false, true})
 	assert.Equal([]int{4, 0, 1}, ap.MaskStrides())
 	ap = NewAP(Shape{2, 3, 4}, nil, []bool{false, false, false})
-	assert.Equal([]int{0, 0, 0}, ap.MaskStrides())
+	assert.Equal(0, len(ap.MaskStrides()))
 }
 
 func TestAccessPatternIsX(t *testing.T) {
@@ -445,7 +443,6 @@ func TestUntransposeIndex(t *testing.T) {
 	}
 }
 
-// TODO: This test fails, why?
 func TestBroadcastStrides(t *testing.T) {
 	ds := Shape{4, 4}
 	ss := Shape{4}

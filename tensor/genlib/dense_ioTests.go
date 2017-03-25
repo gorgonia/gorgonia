@@ -19,7 +19,7 @@ const testLoadSaveNumpyRaw = `func TestSaveLoadNumpy(t *testing.T){
 
 	script := "import numpy as np\nx = np.load('test.npy')\nprint(x)"
 
-	cmd := exec.Command("python")
+	cmd := exec.Command("python2")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		t.Error(err)
@@ -98,6 +98,12 @@ const testWriteCSVRaw = `func TestSaveLoadCSV(t *testing.T) {
 	f, _ := os.OpenFile("test.csv", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	T.WriteCSV(f)
 	f.Close()
+
+	// cleanup
+	err := os.Remove("test.csv")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 `

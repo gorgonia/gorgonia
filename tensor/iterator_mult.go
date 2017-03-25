@@ -4,7 +4,6 @@ package tensor
 //  It utilizes the *AP of a Tensor to determine what the next index is.
 // This data structure is similar to Numpy's flatiter, with some standard Go based restrictions of course
 // (such as, not allowing negative indices)
-
 type MultIterator struct {
 	fit0      *FlatIterator
 	trackIdx  []int
@@ -113,8 +112,8 @@ func MultIteratorFromDense(tts ...*Dense) *MultIterator {
 	return it
 }
 
-// DestroyMultIterator creates a new MultIterator from a list of dense tensors
-func DestroyMultIterator(it *MultIterator) {
+// destroyMultIterator creates a new MultIterator from a list of dense tensors
+func destroyMultIterator(it *MultIterator) {
 	if cap(it.masks) > 0 {
 		ReturnMaskList(it.masks)
 		it.masks = nil

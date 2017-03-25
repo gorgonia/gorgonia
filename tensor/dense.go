@@ -228,15 +228,10 @@ func (t *Dense) fix() {
 		t.makeArray(size)
 	}
 	if t.IsMasked() {
-		var size int
-		for i, s := range t.maskStrides {
-			if s > 0 {
-				size = t.shape[i] * s
-				break
-			}
-		}
+		size := t.MaskSize()
 		t.makeMask(size)
 	}
+
 	t.lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
 }
 
@@ -300,6 +295,24 @@ func (t *Dense) shallowClone() *Dense {
 }
 
 /* ------ Mask operations */
+
+//ResetMask fills the mask with either false, or the provided boolean value
+func (t *Dense) ResetMask(val ...bool) error {
+	if !t.IsMasked() {
+		t.SetMaskStrides(t.strides)
+		t.fix()
+	}
+	var fillValue = false
+	if len(val) > 0 {
+		fillValue = val[0]
+	}
+
+	for i := range t.mask {
+		t.mask[i] = fillValue
+	}
+	return nil
+}
+
 /*
 // reshapes mask to new shape. If mask is compressed, expands it first
 func (t *Dense) reshapeMask(s ...int) {

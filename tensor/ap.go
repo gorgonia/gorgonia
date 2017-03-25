@@ -36,7 +36,6 @@ type AP struct {
 // shape. If bool, it indicates which dimensions of shape can be masked. For example, given shape
 // [2,2,2] and maskStrides [true,true,false], the AP calculates mask strides internally as [2,1,0].
 // If argument maskStrides is []int, then it is directly used as the AP's maskStrides value.
-// If argument maskStrides are all true, then maskStrides==strides
 func NewAP(shape Shape, strides []int, argStrides ...interface{}) *AP {
 	ap := &AP{
 		shape:   shape,
@@ -85,36 +84,32 @@ func (ap *AP) SetShape(s ...int) {
 					b[i] = true
 				}
 			}
-			ap.maskStrides = ap.shape.calcStrides(b)
+			ap.maskStrides = ap.shape.calcStridesWithMask(b)
 			ReturnBools(b)
 		}
 	}
 }
 
-// SetMaskStride is for setting mask stride
+//SetMaskStrides is for setting mask stride
 func (ap *AP) SetMaskStrides(s interface{}) {
 	var maskStrides []int
 	switch m := s.(type) {
 	case []int:
-		if len(m) == len(ap.shape) {
+		if len(m) == len(ap.shape) || ap.IsColVec() || ap.IsRowVec() {
 			maskStrides = m
 		} else {
 			panic("maskStrides slice differs in length from shape")
 		}
 	case []bool:
-		if len(m) == len(ap.shape) {
-			var fullMask bool
-			if len(ap.strides) == len(ap.shape) {
-				fullMask = true
-				for i := 0; i < len(m); i++ {
-					fullMask = fullMask && m[i]
-				}
-			}
-			if fullMask {
-				maskStrides = ap.strides
-			} else {
-				maskStrides = ap.shape.calcStrides(m)
-			}
+		var useMask = false
+		for i := range m {
+			useMask = useMask || m[i]
+		}
+		if !useMask {
+			return
+		}
+		if len(m) == len(ap.shape) || ap.IsColVec() || ap.IsRowVec() {
+			maskStrides = ap.shape.calcStridesWithMask(m)
 		} else {
 			panic("maskStrides slice differs in length from shape")
 		}
@@ -149,6 +144,37 @@ func (ap *AP) Dims() int { return ap.shape.Dims() }
 
 // Size returns the expected array size of the shape
 func (ap *AP) Size() int { return ap.shape.TotalSize() }
+
+// LogicalSize returns the expected array size of the shape
+func (ap *AP) LogicalSize() int {
+	if ap.IsRowVec() {
+		return ap.shape[1] * ap.strides[0]
+	}
+	if ap.IsColVec() {
+		return ap.shape[0] * ap.strides[0]
+	}
+	if ap.IsVector() {
+		return ap.shape[0] * ap.strides[0]
+	}
+	for i := range ap.shape {
+		if ap.strides[i] > 0 {
+			return ap.strides[i] * ap.shape[i]
+		}
+	}
+	return 0
+}
+
+// MaskSize returns the expected array size of the mask. This may be less than data size
+func (ap *AP) MaskSize() int {
+	if len(ap.maskStrides) < 1 {
+		return 0
+	}
+	if ap.IsScalar() {
+		return 1 //Unlikely that this line can be reached, look into.
+	}
+	var tap = AP{shape: ap.shape, strides: ap.maskStrides}
+	return tap.LogicalSize()
+}
 
 // String implements fmt.Stringer and runtime.Stringer
 func (ap *AP) String() string { return fmt.Sprintf("%v", ap) }
@@ -193,12 +219,15 @@ func (ap *AP) Clone() (retVal *AP) {
 	retVal = BorrowAP(len(ap.shape))
 	copy(retVal.shape, ap.shape)
 	copy(retVal.strides, ap.strides)
-	copy(retVal.maskStrides, ap.maskStrides)
+	if cap(retVal.maskStrides) < len(ap.maskStrides) {
+		retVal.maskStrides = make([]int, len(ap.maskStrides))
+	}
+	copy(retVal.maskStrides[:len(ap.maskStrides)], ap.maskStrides)
 
 	// handle vectors
 	retVal.shape = retVal.shape[:len(ap.shape)]
 	retVal.strides = retVal.strides[:len(ap.strides)]
-	retVal.maskStrides = retVal.strides[:len(ap.maskStrides)]
+	retVal.maskStrides = retVal.maskStrides[:len(ap.maskStrides)]
 	retVal.fin = ap.fin
 	return
 }
@@ -220,7 +249,6 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		err = errors.Errorf(dimMismatch, len(ap.shape), len(slices))
 		return
 	}
-
 	ndEnd = size
 
 	newShape := ap.shape.Clone()    // the new shape
@@ -294,6 +322,16 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 
 // T returns the transposed metadata based on the given input
 func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
+	if ap.IsMasked() {
+		retVal, a, err = ap.maskedT(axes...)
+	} else {
+		retVal, a, err = ap.plainT(axes...)
+	}
+	return
+}
+
+// plainT is the underlying T implementation
+func (ap *AP) plainT(axes ...int) (retVal *AP, a []int, err error) {
 	// prep axes
 	if len(axes) > 0 && len(axes) != ap.Dims() {
 		err = errors.Errorf(dimMismatch, ap.Dims(), len(axes))
@@ -346,6 +384,20 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 		retVal.strides = retVal.strides[:1]
 	}
 
+	return
+}
+
+// maskedT returns the transposed metadata based on the given input for a masked tensor
+func (ap *AP) maskedT(axes ...int) (retVal *AP, a []int, err error) {
+	var maskAP *AP
+	tempAP := ap.Clone()
+	retVal, a, err = tempAP.plainT(axes...)
+	tempAP.strides = tempAP.maskStrides
+	maskAP, _, _ = tempAP.plainT(axes...)
+	if cap(retVal.maskStrides) < len(maskAP.strides) {
+		retVal.maskStrides = make([]int, len(maskAP.strides))
+	}
+	copy(retVal.maskStrides[:len(maskAP.strides)], maskAP.strides)
 	return
 }
 

@@ -16,21 +16,21 @@ func TestDense_shallowClone(t *testing.T) {
 }
 
 func TestDenseMasked(t *testing.T) {
+
 	T := New(Of(Float64), WithShape(3, 2), WithMaskStrides([]bool{true, true}))
-	assert.Equal(t, T.mask, []bool{false, false, false, false, false, false})
-	assert.Equal(t, T.maskStrides, []int{2, 1})
+	assert.Equal(t, []bool{false, false, false, false, false, false}, T.mask)
+	assert.Equal(t, []int{2, 1}, T.maskStrides)
 
 	T = New(Of(Float64), WithShape(3, 2), WithMaskStrides([]bool{true, false}))
-	assert.Equal(t, T.mask, []bool{false, false, false})
-	assert.Equal(t, T.maskStrides, []int{1, 0})
+	assert.Equal(t, []bool{false, false, false}, T.mask)
+	assert.Equal(t, []int{1, 0}, T.maskStrides)
 
 	T = New(Of(Float64), WithShape(3, 2), WithMaskStrides([]bool{false, true}))
-	assert.Equal(t, T.mask, []bool{false, false})
-	assert.Equal(t, T.maskStrides, []int{0, 1})
+	assert.Equal(t, []bool{false, false}, T.mask)
+	assert.Equal(t, []int{0, 1}, T.maskStrides)
 
 	T = New(Of(Float64), WithShape(3, 2), WithMaskStrides([]bool{false, false}))
-	assert.Equal(t, len(T.mask), 0)
-	assert.Equal(t, T.maskStrides, []int{0, 0})
+	assert.Equal(t, 0, len(T.mask))
 
 }
 

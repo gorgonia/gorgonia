@@ -156,7 +156,7 @@ func BorrowAP(dims int) *AP {
 
 	// restore strides and shape to whatever that may have been truncated
 	ap.strides = ap.strides[:cap(ap.strides)]
-	ap.maskStrides = ap.maskStrides[:cap(ap.maskStrides)]
+	ap.maskStrides = ap.maskStrides[:0] //Need to be to 0 otherwise might be falsely interpreted as masked
 	return ap
 }
 

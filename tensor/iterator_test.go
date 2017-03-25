@@ -1,8 +1,8 @@
 package tensor
 
 import (
-	//"fmt"
 	"github.com/stretchr/testify/assert"
+	"runtime"
 	"testing"
 )
 
@@ -85,7 +85,6 @@ func TestMultIterator(t *testing.T) {
 			t.Error(err)
 		}
 		assert.Equal(fit.correct, nexts[0], "Repeating flat test %d", i)
-		DestroyMultIterator(it)
 	}
 	// Test multiple iterators simultaneously
 	var choices = []int{0, 0, 9, 9, 0, 9}
@@ -114,28 +113,32 @@ func TestMultIterator(t *testing.T) {
 			assert.Equal(fit.correct, nexts[j], "Test multiple iterators %d", j)
 		}
 	}
-	DestroyMultIterator(it)
 
 }
 
-// NOT COMPLETE !!!
 func TestMultIteratorFromDense(t *testing.T) {
-	//assert := assert.New(t)
+	assert := assert.New(t)
 
-	T1 := New(Of(Float64), WithShape(3, 20), WithMaskStrides([]bool{true, true}))
-	data1 := T1.Data().([]float64)
-
-	T2 := New(Of(Float64), WithShape(3, 20), WithMaskStrides([]bool{true, false}))
-	data2 := T2.Data().([]float64)
-
-	T3 := New(Of(Float64), FromScalar(7))
+	T1 := New(Of(Int), WithShape(3, 20))
+	data1 := T1.Data().([]int)
+	T2 := New(Of(Int), WithShape(3, 20))
+	data2 := T2.Data().([]int)
+	T3 := New(Of(Int), FromScalar(7))
+	data3 := T3.Data().(int)
 
 	for i := 0; i < 60; i++ {
-		data1[i] = float64(i)
-		data2[i] = -float64(i)
+		data1[i] = i
+		data2[i] = 7 * i
 	}
 	it := MultIteratorFromDense(T1, T2, T3)
-	DestroyMultIterator(it)
+	runtime.SetFinalizer(it, destroyMultIterator)
+
+	for _, err := it.Next(); err == nil; _, err = it.Next() {
+		x := data1[it.LastIndex(0)]
+		y := data2[it.LastIndex(1)]
+		z := data3
+		assert.True(y == x*z)
+	}
 }
 
 func TestFlatIterator_Chan(t *testing.T) {
@@ -145,7 +148,7 @@ func TestFlatIterator_Chan(t *testing.T) {
 	var it *FlatIterator
 	var nexts []int
 
-	// basic shit
+	// basic stuff
 	for i, fit := range flatIterTests1 {
 		nexts = nexts[:0]
 		ap = NewAP(fit.shape, fit.strides)
@@ -399,6 +402,7 @@ func BenchmarkFlatIteratorMulti1(b *testing.B) {
 	ap := NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
 
 	it := NewMultIterator(ap)
+	runtime.SetFinalizer(it, destroyMultIterator)
 
 	for n := 0; n < b.N; n++ {
 		for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -409,7 +413,7 @@ func BenchmarkFlatIteratorMulti1(b *testing.B) {
 		}
 		it.Reset()
 	}
-	DestroyMultIterator(it)
+
 }
 
 func BenchmarkFlatIteratorMulti6(b *testing.B) {
@@ -424,6 +428,7 @@ func BenchmarkFlatIteratorMulti6(b *testing.B) {
 	}
 
 	it := NewMultIterator(ap...)
+	runtime.SetFinalizer(it, destroyMultIterator)
 
 	for n := 0; n < b.N; n++ {
 		for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -434,5 +439,4 @@ func BenchmarkFlatIteratorMulti6(b *testing.B) {
 		}
 		it.Reset()
 	}
-	DestroyMultIterator(it)
 }
