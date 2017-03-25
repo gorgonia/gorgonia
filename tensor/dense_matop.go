@@ -360,12 +360,11 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 		maskAP, ndStart, ndEnd, err = tempAP.S(len(t.mask), slices...)
 		if cap(newAP.maskStrides) < len(newAP.strides) {
 			//ugly hack that works for mask dimensions with zero stride
-			// it uses len(newAP) and not len(maskAP) to accoutn for cases where
+			// it uses len(newAP) and not len(maskAP) to account for cases where
 			// a single dimension is returned that has mask stride 0
 			newAP.maskStrides = make([]int, len(newAP.strides))
 		}
 		copy(newAP.maskStrides[:len(maskAP.strides)], maskAP.strides)
-		//ugly hack that works for mask dimensions with zero stride
 
 		view.mask = t.mask[ndStart:ndEnd]
 	}
