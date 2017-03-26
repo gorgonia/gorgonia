@@ -216,11 +216,10 @@ func (t *Dense) FlatNotMaskedContiguous() []Slice {
 	return sliceList
 }
 
-/*
-// FlatNotMaskedEdges is used to find the indices of the first and last unmasked values
+// FlatMaskedContiguous is used to find contiguous masked data in a masked array.
 // Applies to a flattened version of the array.
-// Returns: A pair of ints. -1 if all values are masked.
-func (t *Dense) FlatNotMaskedEdges() []Slice {
+// Returns:A sorted sequence of slices (start index, end index).
+func (t *Dense) FlatMaskedContiguous() []Slice {
 	sliceList := make([]Slice, 0, 4)
 
 	it := MultIteratorFromDense(t)
@@ -229,8 +228,8 @@ func (t *Dense) FlatNotMaskedEdges() []Slice {
 	var start, end int
 	var errV, errI error
 	for errV == nil && errI == nil {
-		start, errV = it.NextValid()
-		end, errI = it.NextInvalid()
+		start, errV = it.NextInvalid()
+		end, errI = it.NextValid()
 		if (start < 0) && (end < 0) {
 			break
 		}
@@ -241,4 +240,56 @@ func (t *Dense) FlatNotMaskedEdges() []Slice {
 
 	}
 	return sliceList
-}*/
+}
+
+// FlatNotMaskedEdges is used to find the indices of the first and last unmasked values
+// Applies to a flattened version of the array.
+// Returns: A pair of ints. -1 if all values are masked.
+func (t *Dense) FlatNotMaskedEdges() (int, int) {
+	if !t.IsMasked() {
+		return 0, t.Size() - 1
+	}
+	itF := MultIteratorFromDense(t)
+	runtime.SetFinalizer(itF, destroyMultIterator)
+	itB := MultIteratorFromDense(t)
+	runtime.SetFinalizer(itB, destroyMultIterator)
+
+	itB.SetReverse() // set it to run backward
+
+	start, _ := itF.NextValid()
+	end, _ := itB.NextValid()
+
+	return start, end
+}
+
+// FlatMaskedEdges is used to find the indices of the first and last masked values
+// Applies to a flattened version of the array.
+// Returns: A pair of ints. -1 if all values are masked.
+func (t *Dense) FlatMaskedEdges() (int, int) {
+	if !t.IsMasked() {
+		return 0, t.Size() - 1
+	}
+	itF := MultIteratorFromDense(t)
+	runtime.SetFinalizer(itF, destroyMultIterator)
+	itB := MultIteratorFromDense(t)
+	runtime.SetFinalizer(itB, destroyMultIterator)
+
+	itB.SetReverse() // set it to run backward
+
+	start, _ := itF.NextInvalid()
+	end, _ := itB.NextInvalid()
+
+	return start, end
+}
+
+// ClumpMasked returns a list of slices corresponding to the masked clumps of a 1-D array
+// Added to match numpy function names
+func (t *Dense) ClumpMasked() []Slice {
+	return t.FlatMaskedContiguous()
+}
+
+// ClumpUnmasked returns a list of slices corresponding to the unmasked clumps of a 1-D array
+// Added to match numpy function names
+func (t *Dense) ClumpUnmasked() []Slice {
+	return t.FlatNotMaskedContiguous()
+}

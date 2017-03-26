@@ -3,7 +3,6 @@ package tensor
 import (
 	"github.com/stretchr/testify/assert"
 	//"runtime"
-	"fmt"
 	"testing"
 )
 
@@ -393,10 +392,10 @@ func TestMaskedFindContiguous(t *testing.T) {
 	T := NewDense(Int, []int{1, 100})
 	T.ResetMask(false)
 	retSL := T.FlatNotMaskedContiguous()
-	fmt.Println(retSL)
 	assert.Equal(1, len(retSL))
 	assert.Equal(rs{0, 100, 1}, retSL[0].(rs))
 
+	// test ability to find unmasked regions
 	sliceList := make([]Slice, 0, 4)
 	sliceList = append(sliceList, makeRS(3, 9), makeRS(14, 27), makeRS(51, 72), makeRS(93, 100))
 	T.ResetMask(true)
@@ -407,4 +406,50 @@ func TestMaskedFindContiguous(t *testing.T) {
 	}
 	retSL = T.FlatNotMaskedContiguous()
 	assert.Equal(sliceList, retSL)
+
+	retSL = T.ClumpUnmasked()
+	assert.Equal(sliceList, retSL)
+
+	// test ability to find masked regions
+	T.ResetMask(false)
+	for i := range sliceList {
+		tt, _ := T.Slice(nil, sliceList[i])
+		ts := tt.(*Dense)
+		ts.ResetMask(true)
+	}
+	retSL = T.FlatMaskedContiguous()
+	assert.Equal(sliceList, retSL)
+
+	retSL = T.ClumpMasked()
+	assert.Equal(sliceList, retSL)
+}
+
+func TestMaskedFindEdges(t *testing.T) {
+	assert := assert.New(t)
+	T := NewDense(Int, []int{1, 100})
+
+	sliceList := make([]Slice, 0, 4)
+	sliceList = append(sliceList, makeRS(0, 9), makeRS(14, 27), makeRS(51, 72), makeRS(93, 100))
+
+	// test ability to find unmasked edges
+	T.ResetMask(false)
+	for i := range sliceList {
+		tt, _ := T.Slice(nil, sliceList[i])
+		ts := tt.(*Dense)
+		ts.ResetMask(true)
+	}
+	start, end := T.FlatNotMaskedEdges()
+	assert.Equal(9, start)
+	assert.Equal(92, end)
+
+	// test ability to find masked edges
+	T.ResetMask(true)
+	for i := range sliceList {
+		tt, _ := T.Slice(nil, sliceList[i])
+		ts := tt.(*Dense)
+		ts.ResetMask(false)
+	}
+	start, end = T.FlatMaskedEdges()
+	assert.Equal(9, start)
+	assert.Equal(92, end)
 }
