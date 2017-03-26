@@ -102,7 +102,7 @@ func pipeline(filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds
 	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
 	fn(f, generic)
 
-	// gofmt and goimports this shit
+	// gofmt and goimports this stuff
 	cmd := exec.Command("goimports", "-w", filename)
 	if err = cmd.Run(); err != nil {
 		log.Fatalf("Go imports failed with %v for %q", err, filename)

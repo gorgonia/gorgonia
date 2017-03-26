@@ -127,6 +127,15 @@ func destroyMultIterator(it *MultIterator) {
 	}
 }
 
+// SetReverse initializes iterator to run backwards
+func (it *MultIterator) SetReverse() {
+	for _, f := range it.fitArr {
+		if f != nil {
+			f.SetReverse()
+		}
+	}
+}
+
 //Done checks whether iterators are done
 func (it *MultIterator) Done() bool {
 	if it.fit0 != nil {

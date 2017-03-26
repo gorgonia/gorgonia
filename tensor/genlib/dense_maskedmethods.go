@@ -68,10 +68,18 @@ func (t *Dense) {{.Name}}({{if ge .NumArgs 1 -}} val1 interface{} {{end}} {{if g
 					z := val3.({{asType .}})
 				{{end}}
 			{{end}}			
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
-				a := data[i]
-				mask[j] = mask[j] || ({{$fn}})
+			if t.softmask{
+					for i, err := it.Next(); err == nil; i, err = it.Next() {
+					j := it.LastMaskIndex(0)
+					a := data[i]
+					mask[j] = ({{$fn}})
+				}
+			} else {
+				for i, err := it.Next(); err == nil; i, err = it.Next() {
+					j := it.LastMaskIndex(0)
+					a := data[i]					
+					mask[j] = mask[j] || ({{$fn}})
+				}
 			}
 			it.Reset()
 			

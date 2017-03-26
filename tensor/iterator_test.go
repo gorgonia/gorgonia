@@ -45,7 +45,7 @@ func TestFlatIterator(t *testing.T) {
 	var err error
 	var nexts []int
 
-	// basic shit
+	// basic stuff
 	for i, fit := range flatIterTests1 {
 		nexts = nexts[:0]
 		err = nil
@@ -61,6 +61,36 @@ func TestFlatIterator(t *testing.T) {
 	}
 }
 
+func TestFlatIteratorReverse(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap *AP
+	var it *FlatIterator
+	var err error
+	var nexts []int
+
+	// basic stuff
+	for i, fit := range flatIterTests1 {
+		nexts = nexts[:0]
+		err = nil
+		ap = NewAP(fit.shape, fit.strides)
+		it = NewFlatIterator(ap)
+		it.SetReverse()
+		for next, err := it.Next(); err == nil; next, err = it.Next() {
+			nexts = append(nexts, next)
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			t.Error(err)
+		}
+		// reverse slice
+		for i, j := 0, len(nexts)-1; i < j; i, j = i+1, j-1 {
+			nexts[i], nexts[j] = nexts[j], nexts[i]
+		}
+		// and then check
+		assert.Equal(fit.correct, nexts, "Test %d", i)
+	}
+}
+
 func TestMultIterator(t *testing.T) {
 	assert := assert.New(t)
 
@@ -69,48 +99,67 @@ func TestMultIterator(t *testing.T) {
 	var err error
 	var nexts [][]int
 
-	ap = make([]*AP, 6)
-	nexts = make([][]int, 6)
+	doReverse := []bool{false, true}
+	for _, reverse := range doReverse {
+		ap = make([]*AP, 6)
+		nexts = make([][]int, 6)
 
-	// Repeat flat tests
-	for i, fit := range flatIterTests1 {
-		nexts[0] = nexts[0][:0]
-		err = nil
-		ap[0] = NewAP(fit.shape, fit.strides)
-		it = NewMultIterator(ap[0])
-		for next, err := it.Next(); err == nil; next, err = it.Next() {
-			nexts[0] = append(nexts[0], next)
+		// Repeat flat tests
+		for i, fit := range flatIterTests1 {
+			nexts[0] = nexts[0][:0]
+			err = nil
+			ap[0] = NewAP(fit.shape, fit.strides)
+			it = NewMultIterator(ap[0])
+			if reverse {
+				it.SetReverse()
+			}
+			for next, err := it.Next(); err == nil; next, err = it.Next() {
+				nexts[0] = append(nexts[0], next)
+			}
+			if _, ok := err.(NoOpError); err != nil && !ok {
+				t.Error(err)
+			}
+			if reverse {
+				for i, j := 0, len(nexts[0])-1; i < j; i, j = i+1, j-1 {
+					nexts[0][i], nexts[0][j] = nexts[0][j], nexts[0][i]
+				}
+			}
+			assert.Equal(fit.correct, nexts[0], "Repeating flat test %d", i)
 		}
-		if _, ok := err.(NoOpError); err != nil && !ok {
-			t.Error(err)
-		}
-		assert.Equal(fit.correct, nexts[0], "Repeating flat test %d", i)
-	}
-	// Test multiple iterators simultaneously
-	var choices = []int{0, 0, 9, 9, 0, 9}
-	for j := 0; j < 6; j++ {
-		fit := flatIterTests1[choices[j]]
-		nexts[j] = nexts[j][:0]
-		err = nil
-		ap[j] = NewAP(fit.shape, fit.strides)
-	}
-	it = NewMultIterator(ap...)
-	for _, err := it.Next(); err == nil; _, err = it.Next() {
+		// Test multiple iterators simultaneously
+		var choices = []int{0, 0, 9, 9, 0, 9}
 		for j := 0; j < 6; j++ {
-			nexts[j] = append(nexts[j], it.LastIndex(j))
+			fit := flatIterTests1[choices[j]]
+			nexts[j] = nexts[j][:0]
+			err = nil
+			ap[j] = NewAP(fit.shape, fit.strides)
+		}
+		it = NewMultIterator(ap...)
+		if reverse {
+			it.SetReverse()
+		}
+		for _, err := it.Next(); err == nil; _, err = it.Next() {
+			for j := 0; j < 6; j++ {
+				nexts[j] = append(nexts[j], it.LastIndex(j))
+			}
+
+			if _, ok := err.(NoOpError); err != nil && !ok {
+				t.Error(err)
+			}
 		}
 
-		if _, ok := err.(NoOpError); err != nil && !ok {
-			t.Error(err)
-		}
-	}
-
-	for j := 0; j < 6; j++ {
-		fit := flatIterTests1[choices[j]]
-		if ap[j].IsScalar() {
-			assert.Equal(fit.correct, nexts[j][:1], "Test multiple iterators %d", j)
-		} else {
-			assert.Equal(fit.correct, nexts[j], "Test multiple iterators %d", j)
+		for j := 0; j < 6; j++ {
+			fit := flatIterTests1[choices[j]]
+			if reverse {
+				for i, k := 0, len(nexts[j])-1; i < k; i, k = i+1, k-1 {
+					nexts[j][i], nexts[j][k] = nexts[j][k], nexts[j][i]
+				}
+			}
+			if ap[j].IsScalar() {
+				assert.Equal(fit.correct, nexts[j][:1], "Test multiple iterators %d", j)
+			} else {
+				assert.Equal(fit.correct, nexts[j], "Test multiple iterators %d", j)
+			}
 		}
 	}
 

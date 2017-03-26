@@ -3,7 +3,7 @@ package tensor
 import (
 	"github.com/stretchr/testify/assert"
 	//"runtime"
-	//"fmt"
+	"fmt"
 	"testing"
 )
 
@@ -388,10 +388,23 @@ func TestMaskedInspection(t *testing.T) {
 
 }
 
-func BenchmarkMaskedAll(b *testing.B) {
-	T := New(Of(Bool), WithShape(1, 100000))
+func TestMaskedFindContiguous(t *testing.T) {
+	assert := assert.New(t)
+	T := NewDense(Int, []int{1, 100})
+	T.ResetMask(false)
+	retSL := T.FlatNotMaskedContiguous()
+	fmt.Println(retSL)
+	assert.Equal(1, len(retSL))
+	assert.Equal(rs{0, 100, 1}, retSL[0].(rs))
+
+	sliceList := make([]Slice, 0, 4)
+	sliceList = append(sliceList, makeRS(3, 9), makeRS(14, 27), makeRS(51, 72), makeRS(93, 100))
 	T.ResetMask(true)
-	for n := 0; n < b.N; n++ {
-		T.MaskedAll()
+	for i := range sliceList {
+		tt, _ := T.Slice(nil, sliceList[i])
+		ts := tt.(*Dense)
+		ts.ResetMask(false)
 	}
+	retSL = T.FlatNotMaskedContiguous()
+	assert.Equal(sliceList, retSL)
 }

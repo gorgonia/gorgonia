@@ -24,8 +24,8 @@ type Dense struct {
 	// if viewOf != nil, then this *Dense is a view.
 	viewOf *Dense
 
-	mask []bool // mask slice can be used to identify missing or invalid values. len(mask)<=len(v)
-
+	mask     []bool // mask slice can be used to identify missing or invalid values. len(mask)<=len(v)
+	softmask bool
 }
 
 // NewDense creates a new *Dense. It tries its best to get from the tensor pool.
@@ -311,6 +311,18 @@ func (t *Dense) ResetMask(val ...bool) error {
 		t.mask[i] = fillValue
 	}
 	return nil
+}
+
+// HardenMask forces the mask to hard. If mask is hard, then true mask values can not be unset
+func (t *Dense) HardenMask() bool {
+	t.softmask = false
+	return t.softmask
+}
+
+// SoftenMask forces the mask to soft
+func (t *Dense) SoftenMask() bool {
+	t.softmask = true
+	return t.softmask
 }
 
 /*

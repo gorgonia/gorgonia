@@ -32,10 +32,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -44,10 +52,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -56,10 +72,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -68,10 +92,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -80,10 +112,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -92,10 +132,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -104,10 +152,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -116,10 +172,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -128,10 +192,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -140,10 +212,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -152,10 +232,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -164,10 +252,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -176,10 +272,18 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a == x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a == x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a == x)
+			}
 		}
 		it.Reset()
 
@@ -207,10 +311,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -219,10 +331,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -231,10 +351,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -243,10 +371,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -255,10 +391,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -267,10 +411,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -279,10 +431,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -291,10 +451,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -303,10 +471,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -315,10 +491,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -327,10 +511,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -339,10 +531,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -351,10 +551,18 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a != x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a != x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a != x)
+			}
 		}
 		it.Reset()
 
@@ -393,10 +601,18 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 			delta = float64(val3[0].(float32)) + float64(y)*math.Abs(float64(x))
 		}
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (math.Abs(float64(a-x)) <= delta)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (math.Abs(float64(a-x)) <= delta)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (math.Abs(float64(a-x)) <= delta)
+			}
 		}
 		it.Reset()
 
@@ -411,10 +627,18 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 			delta = float64(val3[0].(float64)) + float64(y)*math.Abs(float64(x))
 		}
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (math.Abs(float64(a-x)) <= delta)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (math.Abs(float64(a-x)) <= delta)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (math.Abs(float64(a-x)) <= delta)
+			}
 		}
 		it.Reset()
 
@@ -442,10 +666,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -454,10 +686,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -466,10 +706,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -478,10 +726,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -490,10 +746,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -502,10 +766,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -514,10 +786,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -526,10 +806,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -538,10 +826,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -550,10 +846,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -562,10 +866,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -574,10 +886,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -586,10 +906,18 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a > x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a > x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a > x)
+			}
 		}
 		it.Reset()
 
@@ -617,10 +945,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -629,10 +965,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -641,10 +985,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -653,10 +1005,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -665,10 +1025,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -677,10 +1045,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -689,10 +1065,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -701,10 +1085,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -713,10 +1105,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -725,10 +1125,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -737,10 +1145,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -749,10 +1165,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -761,10 +1185,18 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a >= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a >= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a >= x)
+			}
 		}
 		it.Reset()
 
@@ -792,10 +1224,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -804,10 +1244,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -816,10 +1264,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -828,10 +1284,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -840,10 +1304,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -852,10 +1324,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -864,10 +1344,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -876,10 +1364,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -888,10 +1384,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -900,10 +1404,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -912,10 +1424,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -924,10 +1444,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -936,10 +1464,18 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a < x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a < x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a < x)
+			}
 		}
 		it.Reset()
 
@@ -967,10 +1503,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -979,10 +1523,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -991,10 +1543,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1003,10 +1563,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1015,10 +1583,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1027,10 +1603,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1039,10 +1623,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1051,10 +1643,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1063,10 +1663,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1075,10 +1683,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1087,10 +1703,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1099,10 +1723,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1111,10 +1743,18 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || (a <= x)
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = (a <= x)
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || (a <= x)
+			}
 		}
 		it.Reset()
 
@@ -1143,10 +1783,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int)
 		y := val2.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1156,10 +1804,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int8)
 		y := val2.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1169,10 +1825,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int16)
 		y := val2.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1182,10 +1846,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int32)
 		y := val2.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1195,10 +1867,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int64)
 		y := val2.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1208,10 +1888,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint)
 		y := val2.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1221,10 +1909,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint8)
 		y := val2.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1234,10 +1930,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint16)
 		y := val2.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1247,10 +1951,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint32)
 		y := val2.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1260,10 +1972,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint64)
 		y := val2.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1273,10 +1993,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float32)
 		y := val2.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1286,10 +2014,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float64)
 		y := val2.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1299,10 +2035,18 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(string)
 		y := val2.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a >= x) && (a <= y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a >= x) && (a <= y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a >= x) && (a <= y))
+			}
 		}
 		it.Reset()
 
@@ -1331,10 +2075,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int)
 		y := val2.(int)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1344,10 +2096,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int8)
 		y := val2.(int8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1357,10 +2117,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int16)
 		y := val2.(int16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1370,10 +2138,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int32)
 		y := val2.(int32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1383,10 +2159,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int64)
 		y := val2.(int64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1396,10 +2180,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint)
 		y := val2.(uint)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1409,10 +2201,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint8)
 		y := val2.(uint8)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1422,10 +2222,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint16)
 		y := val2.(uint16)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1435,10 +2243,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint32)
 		y := val2.(uint32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1448,10 +2264,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint64)
 		y := val2.(uint64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1461,10 +2285,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float32)
 		y := val2.(float32)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1474,10 +2306,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float64)
 		y := val2.(float64)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 
@@ -1487,10 +2327,18 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(string)
 		y := val2.(string)
 
-		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			a := data[i]
-			mask[j] = mask[j] || ((a < x) || (a > y))
+		if t.softmask {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = ((a < x) || (a > y))
+			}
+		} else {
+			for i, err := it.Next(); err == nil; i, err = it.Next() {
+				j := it.LastMaskIndex(0)
+				a := data[i]
+				mask[j] = mask[j] || ((a < x) || (a > y))
+			}
 		}
 		it.Reset()
 

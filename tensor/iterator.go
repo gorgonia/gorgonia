@@ -14,6 +14,7 @@ type FlatIterator struct {
 	size      int
 	track     []int
 	done      bool
+	reverse   bool // if true, iterator starts at end of array and runs backwards
 }
 
 // NewFlatIterator creates a new FlatIterator.
@@ -31,6 +32,13 @@ func NewFlatIterator(ap *AP) *FlatIterator {
 	}
 }
 
+// SetReverse initializes iterator to run backwards
+func (it *FlatIterator) SetReverse() {
+	it.reverse = true
+	it.Reset()
+	return
+}
+
 // Next returns the index of the current coordinate.
 func (it *FlatIterator) Next() (int, error) {
 	if it.done {
@@ -42,8 +50,14 @@ func (it *FlatIterator) Next() (int, error) {
 		it.done = true
 		return 0, nil
 	case it.IsVector():
+		if it.reverse {
+			return it.singlePrevious()
+		}
 		return it.singleNext()
 	default:
+		if it.reverse {
+			return it.ndPrevious()
+		}
 		return it.ndNext()
 	}
 }
@@ -72,6 +86,30 @@ func (it *FlatIterator) singleNext() (int, error) {
 	return it.lastIndex, nil
 }
 
+func (it *FlatIterator) singlePrevious() (int, error) {
+	it.lastIndex = it.nextIndex
+	// it.lastIndex += it.strides[0]
+	it.nextIndex -= it.strides0
+
+	var tracked int
+	switch {
+	case it.IsRowVec():
+		it.track[1]--
+		tracked = it.track[1]
+	case it.IsColVec(), it.IsVector():
+		it.track[0]--
+		tracked = it.track[0]
+	default:
+		panic("This ain't supposed to happen")
+	}
+
+	if tracked < 0 {
+		it.done = true
+	}
+
+	return it.lastIndex, nil
+}
+
 func (it *FlatIterator) ndNext() (int, error) {
 	it.lastIndex = it.nextIndex
 	for i := len(it.shape) - 1; i >= 0; i-- {
@@ -85,6 +123,24 @@ func (it *FlatIterator) ndNext() (int, error) {
 			continue
 		}
 		it.nextIndex += it.strides[i]
+		break
+	}
+	return it.lastIndex, nil
+}
+
+func (it *FlatIterator) ndPrevious() (int, error) {
+	it.lastIndex = it.nextIndex
+	for i := len(it.shape) - 1; i >= 0; i-- {
+		it.track[i]--
+		if it.track[i] < 0 {
+			if i == 0 {
+				it.done = true
+			}
+			it.track[i] = it.shape[i] - 1
+			it.nextIndex += (it.shape[i] - 1) * it.strides[i]
+			continue
+		}
+		it.nextIndex -= it.strides[i]
 		break
 	}
 	return it.lastIndex, nil
@@ -148,14 +204,29 @@ func (it *FlatIterator) Slice(sli Slice) (retVal []int, err error) {
 // Reset resets the iterator state.
 func (it *FlatIterator) Reset() {
 	it.done = false
-	it.nextIndex = 0
+	if it.reverse {
+		for i := range it.track {
+			it.track[i] = it.shape[i] - 1
+		}
 
-	if it.done {
-		return
-	}
-
-	for i := range it.track {
-		it.track[i] = 0
+		switch {
+		case it.IsScalar():
+			it.nextIndex = 0
+		case it.IsRowVec():
+			it.nextIndex = (it.shape[1] - 1) * it.strides[0]
+		case it.IsColVec(), it.IsVector():
+			it.nextIndex = (it.shape[0] - 1) * it.strides[0]
+		default:
+			it.nextIndex = 0
+			for i := range it.track {
+				it.nextIndex += (it.shape[i] - 1) * it.strides[i]
+			}
+		}
+	} else {
+		it.nextIndex = 0
+		for i := range it.track {
+			it.track[i] = 0
+		}
 	}
 }
 

@@ -185,3 +185,60 @@ func doNonMaskCt(T Tensor) interface{} {
 		panic("Incompatible type")
 	}
 }
+
+/* -----------
+************ Finding masked data
+----------*/
+
+// FlatNotMaskedContiguous is used to find contiguous unmasked data in a masked array.
+// Applies to a flattened version of the array.
+// Returns:A sorted sequence of slices (start index, end index).
+func (t *Dense) FlatNotMaskedContiguous() []Slice {
+	sliceList := make([]Slice, 0, 4)
+
+	it := MultIteratorFromDense(t)
+	runtime.SetFinalizer(it, destroyMultIterator)
+
+	var start, end int
+	var errV, errI error
+	for errV == nil && errI == nil {
+		start, errV = it.NextValid()
+		end, errI = it.NextInvalid()
+		if (start < 0) && (end < 0) {
+			break
+		}
+		if end < 0 {
+			end = t.Size()
+		}
+		sliceList = append(sliceList, makeRS(start, end))
+
+	}
+	return sliceList
+}
+
+/*
+// FlatNotMaskedEdges is used to find the indices of the first and last unmasked values
+// Applies to a flattened version of the array.
+// Returns: A pair of ints. -1 if all values are masked.
+func (t *Dense) FlatNotMaskedEdges() []Slice {
+	sliceList := make([]Slice, 0, 4)
+
+	it := MultIteratorFromDense(t)
+	runtime.SetFinalizer(it, destroyMultIterator)
+
+	var start, end int
+	var errV, errI error
+	for errV == nil && errI == nil {
+		start, errV = it.NextValid()
+		end, errI = it.NextInvalid()
+		if (start < 0) && (end < 0) {
+			break
+		}
+		if end < 0 {
+			end = t.Size()
+		}
+		sliceList = append(sliceList, makeRS(start, end))
+
+	}
+	return sliceList
+}*/
