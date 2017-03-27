@@ -95,12 +95,18 @@ func (ap *AP) SetMaskStrides(s interface{}) {
 	var maskStrides []int
 	switch m := s.(type) {
 	case []int:
+		if len(m) == 0 {
+			return
+		}
 		if len(m) == len(ap.shape) || ap.IsColVec() || ap.IsRowVec() {
 			maskStrides = m
 		} else {
 			panic("maskStrides slice differs in length from shape")
 		}
 	case []bool:
+		if len(m) == 0 {
+			return
+		}
 		var useMask = false
 		for i := range m {
 			useMask = useMask || m[i]
