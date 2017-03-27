@@ -39,9 +39,16 @@ func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error
 	case t.viewOf == nil:
 		err = res.mapFn(fn, incr)
 	case t.viewOf != nil:
-		it := NewFlatIterator(t.AP)
-		if err = res.iterMap(fn, it, incr); err != nil {
-			return
+		if t.IsMasked() {
+			it := MultIteratorFromDense(t)
+			if err = res.iterMapMasked(fn, it, incr); err != nil {
+				return
+			}
+		} else {
+			it := NewFlatIterator(t.AP)
+			if err = res.iterMap(fn, it, incr); err != nil {
+				return
+			}
 		}
 
 	default:
