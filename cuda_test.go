@@ -10,13 +10,8 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 )
 
-func TestExternMetadata_ElemGridSize(t *testing.T) {
-	var m ExternMetadata
-	m.init()
-}
-
 func TestDevCUDA(t *testing.T) {
-	t.SkipNow()
+	// t.SkipNow()
 
 	g := NewGraph()
 	x := NewMatrix(g, Float64, WithShape(1024, 100), WithName("x"), WithInit(ValuesOf(2.0)))

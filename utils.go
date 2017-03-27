@@ -203,3 +203,10 @@ func checkArity(op arityer, inputs int) error {
 	}
 	return nil
 }
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}

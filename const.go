@@ -6,9 +6,6 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 )
 
-// maxInt is the maximum value of the machine-dependent int type.
-const maxInt int = int(^uint(0) >> 1)
-
 const (
 	// graphviz name for a full graph
 	fullGraphName = "fullGraph"

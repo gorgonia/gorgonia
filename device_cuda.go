@@ -32,7 +32,7 @@ func (d Device) Alloc(extern External, size int64) (Memory, error) {
 	return ctx.MemAlloc(size)
 }
 
-func (d Device) Free(extern External, mem Memory, size uint) (err error) {
+func (d Device) Free(extern External, mem Memory, size int64) (err error) {
 	var devptr cu.DevicePtr
 	var ok bool
 	if devptr, ok = mem.(cu.DevicePtr); !ok {

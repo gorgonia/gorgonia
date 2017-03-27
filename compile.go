@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 )
 
@@ -39,6 +40,8 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	prog, locMap = cg.gen()
 	prog.cpulocs = ra.cpucount
 	prog.gpulocs = ra.gpucount
+	prog.cpumem = cg.cpumem
+	prog.gpumem = cg.gpumem
 	prog.df = df
 	prog.g = g
 	prog.sorted = sortedNodes
@@ -96,9 +99,12 @@ type codegenerator struct {
 	freed      map[register]struct{}
 	deferFree  map[register]struct{}
 	instrMap   map[*Node]fragment
-	queue      []int // queue to flus
+	queue      []int // queue to flush
 
 	lastReads map[register]int
+
+	cpumem int64
+	gpumem []int64
 
 	g              *ExprGraph
 	inputs, sorted Nodes
@@ -124,12 +130,75 @@ func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 	}
 }
 
+// addInstr adds the instruction to the associated node in the instrMap.
+// when we add instructions to the node map, we also try to determine the size of the allocations required
 func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 	if instrs := cg.instrMap[node]; instrs != nil {
 		instrs = append(instrs, instr)
 		cg.instrMap[node] = instrs
 	} else {
 		cg.instrMap[node] = fragment{instr}
+	}
+
+	var dt tensor.Dtype
+	var err error
+	switch inst := instr.(type) {
+	case loadArg:
+		if dt, err = dtypeOf(node.t); err != nil {
+			panic(err)
+		}
+		d := instr.writes().device
+		if d != CPU {
+			if len(cg.gpumem) < int(d)+1 {
+				diff := int(d) + 1 - len(cg.gpumem)
+				cg.gpumem = append(cg.gpumem, make([]int64, diff)...)
+			}
+		}
+
+		switch d {
+		case CPU:
+			cg.cpumem += int64(dt.Size() * uintptr(node.Shape().TotalSize()))
+		default:
+			cg.gpumem[int(d)] += int64(dt.Size() * uintptr(node.Shape().TotalSize()))
+		}
+	case alloc:
+		if dt, err = dtypeOf(inst.t); err != nil {
+			panic(err)
+		}
+
+		d := instr.writes().device
+		if d != CPU {
+			if len(cg.gpumem) < int(d)+1 {
+				diff := int(d) + 1 - len(cg.gpumem)
+				cg.gpumem = append(cg.gpumem, make([]int64, diff)...)
+			}
+		}
+
+		switch d {
+		case CPU:
+			cg.cpumem += int64(dt.Size() * uintptr(inst.s.TotalSize()))
+		default:
+			cg.gpumem[int(d)] += int64(dt.Size() * uintptr(inst.s.TotalSize()))
+		}
+	case *execOp:
+		if !inst.op.ReturnsPtr() {
+			if dt, err = dtypeOf(inst.OutputType); err != nil {
+				panic(err)
+			}
+			d := instr.writes().device
+			if d != CPU {
+				if len(cg.gpumem) < int(d)+1 {
+					diff := int(d) + 1 - len(cg.gpumem)
+					cg.gpumem = append(cg.gpumem, make([]int64, diff)...)
+				}
+			}
+			switch d {
+			case CPU:
+				cg.cpumem += int64(dt.Size() * uintptr(inst.OutputShape.TotalSize()))
+			default:
+				cg.gpumem[int(d)] += int64(dt.Size() * uintptr(inst.OutputShape.TotalSize()))
+			}
+		}
 	}
 }
 

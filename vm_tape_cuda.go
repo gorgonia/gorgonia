@@ -58,7 +58,8 @@ func finalizeTapeMachine(m *tapeMachine) {
 		}
 		cu.DestroyContext(&c.Context)
 	}
-	m.cleanup()
+	m.Cleanup()
+	m.initFail() // not really a failure. Just call to detroy all the contexts and shit
 }
 
 func (m *tapeMachine) init() {
@@ -78,7 +79,7 @@ func (m *tapeMachine) init() {
 		cudaLogf("No CUDA ops")
 		return
 	}
-	m.ExternMetadata.init()
+	m.ExternMetadata.init(m.p.gpumem)
 	cudaLogf("m.c = %v", m.c)
 }
 

@@ -12,6 +12,14 @@ import (
 
 const CUDA = true
 
+const (
+	// Any address of a variable residing in global memory or returned by one of the
+	// memory allocation routines from the driver or runtime API is always aligned to at
+	// least 256 bytes.
+	//
+	memalign = 32
+)
+
 var cudaStdLib map[string]string
 
 //go:generate cudagen
@@ -46,8 +54,10 @@ type ExternMetadata struct {
 	// TODO: maybe add a LRU cache for freeing memory? Come back here when you run into OutOfMemory errors from CUDA.
 	arena []map[uint]*memoryQueue // key is the size of the memory in bytes. Only CUDA memory plz
 
+	a             []*bfc
 	b             batchedBLAS
 	c             []*cu.BatchedContext
+	d             []cu.Device
 	hasWork       []bool
 	workAvailable chan struct{}
 
@@ -164,30 +174,37 @@ func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
 
 // Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
-func (m *ExternMetadata) Get(dev Device, size uint) (Memory, error) {
+func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
 	d := int(dev)
 	if d >= len(m.arena) {
 		return nil, noopError{} // this should not be a noopError
 	}
-	if pool, ok := m.arena[d][size]; ok {
-		return pool.get()
-	}
-	return nil, noopError{}
+
+	ptr, err := m.a[d].alloc(size)
+	return cu.DevicePtr(ptr), err
+
+	// if pool, ok := m.arena[d][size]; ok {
+	// 	return pool.get()
+	// }
+	// return nil, noopError{}
 }
 
 // Put puts a previously allocated memory slab of the provided size back into the pool
-func (m *ExternMetadata) Put(dev Device, mem Memory, size uint) {
+func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
 	d := int(dev)
 	if d >= len(m.arena) {
 		return // wat??
 	}
 
-	pool, ok := m.arena[d][size]
-	if !ok {
-		pool = newMemoryQueue(size)
-		m.arena[d][size] = pool
-	}
-	pool.add(mem)
+	addr := uintptr(mem.(cu.DevicePtr))
+	m.a[d].free(addr)
+
+	// pool, ok := m.arena[d][size]
+	// if !ok {
+	// 	pool = newMemoryQueue(size)
+	// 	m.arena[d][size] = pool
+	// }
+	// pool.add(mem)
 }
 
 // Cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
@@ -195,9 +212,15 @@ func (m *ExternMetadata) Cleanup() {
 	for _, c := range m.c {
 		c.Cleanup()
 	}
+
+	for _, a := range m.a {
+		if a.start != 0 {
+			cu.MemFree(cu.DevicePtr(a.start))
+		}
+	}
 }
 
-func (m *ExternMetadata) init() {
+func (m *ExternMetadata) init(sizes []int64) {
 	if m.initialzed {
 		return
 	}
@@ -214,8 +237,10 @@ func (m *ExternMetadata) init() {
 	}
 
 	m.workAvailable = make(chan struct{})
+	m.a = make([]*bfc, devices)
 	m.c = make([]*cu.BatchedContext, devices)
 	m.hasWork = make([]bool, devices)
+
 	m.warp = make([]int, devices)
 	m.mtpb = make([]int, devices)
 	m.mgdx = make([]int, devices)
@@ -277,8 +302,16 @@ func (m *ExternMetadata) init() {
 		}
 		m.freeMem[i] = free
 		m.totalMem[i] = total
+		m.a[i] = newBFC(memalign)
 
-		m.arena[i] = make(map[uint]*memoryQueue)
+		var allocsize int64 = 2 * sizes[i]
+		if allocsize > free {
+			allocsize = free
+		}
+
+		ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
+		m.a[i].reserve(uintptr(ptr), allocsize)
+		// m.arena[i] = make(map[uint]*memoryQueue)
 
 		m.c[i] = cu.NewBatchedContext(ctx, dev)
 		go m.collectWork(i, m.c[i].WorkAvailable())

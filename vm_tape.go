@@ -388,6 +388,8 @@ type program struct {
 	args         int
 	cpulocs      int
 	gpulocs      int
+	cpumem       int64
+	gpumem       []int64
 	g            *ExprGraph         // original dag
 	df           *dataflow          // dataflow analysis
 	m            map[*Node]fragment // store which nodes create which instructions
@@ -396,7 +398,7 @@ type program struct {
 
 func (p *program) String() string {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | Memories: %d\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs)
+	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | CPU Memories: %d | GPU Memories: %d\nCPU Mem: %v | GPU Mem %v\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs, p.gpulocs, p.cpumem, p.gpumem)
 
 	for i, n := range p.sorted {
 		fmt.Fprintf(&buf, "\t%d\t%x:", i, n.ID())
@@ -561,9 +563,9 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 			return errors.Errorf("No dtype to allocate. Type: %T", tt.Of)
 		}
 
-		size := int(dt.Size()) * instr.s.TotalSize()
+		size := int64(int(dt.Size()) * instr.s.TotalSize())
 		var mem Memory
-		if mem, err = m.Get(dev, uint(size)); err != nil {
+		if mem, err = m.Get(dev, size); err != nil {
 			if _, ok := err.(NoOpError); !ok {
 				return
 			}
@@ -601,9 +603,11 @@ func (instr free) exec(m *tapeMachine) error {
 		mem := m.gpumem[instr.readsFrom.id]
 		size := m.gpumeta[instr.readsFrom.id]
 
-		if err := instr.readsFrom.device.Free(m, mem, uint(size)); err != nil {
-			return err
-		}
+		m.Put(instr.readsFrom.device, mem, size)
+
+		// if err := instr.readsFrom.device.Free(m, mem, uint(size)); err != nil {
+		// 	return err
+		// }
 		logf("free from %v", instr.readsFrom)
 		m.gpumem[instr.readsFrom.id] = nil
 		return nil

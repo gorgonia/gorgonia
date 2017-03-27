@@ -57,7 +57,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, meta ExecutionMetadata
 	case Value:
 		memsize := int64(pre.MemSize())
 		var m Memory
-		if m, err = machine.Get(dev, uint(memsize)); err != nil {
+		if m, err = machine.Get(dev, memsize); err != nil {
 			if _, ok := err.(NoOpError); !ok {
 				return
 			}
@@ -180,7 +180,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 	case Value:
 		memsize := int64(pre.MemSize())
 		var m Memory
-		if m, err = machine.Get(dev, uint(memsize)); err != nil {
+		if m, err = machine.Get(dev, memsize); err != nil {
 			if _, ok := err.(NoOpError); !ok {
 				return
 			}
@@ -222,7 +222,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 		memsize := int64(b.MemSize())
 
 		var m Memory
-		if m, err = machine.Get(dev, uint(memsize)); err != nil {
+		if m, err = machine.Get(dev, memsize); err != nil {
 			cudaLogf("No memory found. Trying to alloc and copy")
 			if _, ok := err.(NoOpError); !ok {
 				return
@@ -245,7 +245,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, meta ExecutionMetadata, 
 				return
 			}
 			cudaLogf("Putting %v with size %v back", mem, memsize)
-			machine.Put(dev, mem, uint(memsize))
+			machine.Put(dev, mem, memsize)
 		}(machine, ctx, bt, memB, memsize)
 	case cu.DevicePtr:
 		memB = bt
