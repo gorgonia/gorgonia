@@ -138,13 +138,20 @@ func (m *ExternMetadata) WorkAvailable() <-chan struct{} { return m.workAvailabl
 
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
-	for i, hw := range m.hasWork {
-		if hw {
-			m.c[i].DoWork()
-			if err := m.c[i].Errors(); err != nil {
-				return err
-			}
-			m.hasWork[i] = false
+	logf("DOWORK")
+	// for i, hw := range m.hasWork {
+	// if hw {
+	// m.c[i].DoWork()
+	// if err := m.c[i].Errors(); err != nil {
+	// 	return err
+	// }
+	// m.hasWork[i] = false
+	// }
+	// }
+	for _, c := range m.c {
+		c.DoWork()
+		if err := c.Errors(); err != nil {
+			return err
 		}
 	}
 

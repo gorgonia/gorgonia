@@ -68,6 +68,15 @@ func (err valueErr) Error() string {
 
 func (err valueErr) Offender() interface{} { return err.Valuer }
 
+type oomError struct {
+	res       int64
+	allocated int64
+}
+
+func (e oomError) Reserved() int64  { return e.res }
+func (e oomError) Allocated() int64 { return e.allocated }
+func (e oomError) Error() string    { return fmt.Sprintf("allocated/reserved: %v/%v", e.res, e.allocated) }
+
 // AutoDiffError is an error which should be passed if the function is not differentiable. This is useful for Op implementations
 type AutoDiffError struct{}
 

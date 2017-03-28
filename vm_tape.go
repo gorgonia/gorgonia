@@ -169,13 +169,13 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 }
 
 func (m *tapeMachine) RunAll() (err error) {
-	defer func() {
-		if err == nil {
-			m.dontAlloc()
-		}
+	// defer func() {
+	// 	if err == nil {
+	// 		m.dontAlloc()
+	// 	}
 
-		m.Cleanup()
-	}()
+	// 	m.Cleanup()
+	// }()
 
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -566,13 +566,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 		size := int64(int(dt.Size()) * instr.s.TotalSize())
 		var mem Memory
 		if mem, err = m.Get(dev, size); err != nil {
-			if _, ok := err.(NoOpError); !ok {
-				return
-			}
-			if mem, err = dev.Alloc(m, int64(size)); err != nil {
-				log.Println("err", err)
-				return errors.Wrapf(err, "Failed to allocate %d bytes on %v", size, dev)
-			}
+			return errors.Wrap(err, "Allocate Failed")
 		}
 
 		m.gpumem[dst] = mem

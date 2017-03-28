@@ -5,13 +5,14 @@ package gorgonia
 import (
 	"io/ioutil"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
 )
 
 func TestDevCUDA(t *testing.T) {
-	// t.SkipNow()
+	t.SkipNow()
 
 	g := NewGraph()
 	x := NewMatrix(g, Float64, WithShape(1024, 100), WithName("x"), WithInit(ValuesOf(2.0)))
@@ -23,8 +24,9 @@ func TestDevCUDA(t *testing.T) {
 	xmy2 := Must(Square(xmy))
 	xpy2s := Must(Slice(xpy2, S(0)))
 
+	logger := log.New(os.Stderr, "", 0)
 	prog, locMap, _ := Compile(g)
-	m := NewTapeMachine(prog, locMap, UseCudaFor("square"))
+	m := NewTapeMachine(prog, locMap, UseCudaFor(), WithLogger(logger))
 
 	t.Logf("prog:\n%v\n", prog)
 	t.Logf("locMap %-v", FmtNodeMap(locMap))

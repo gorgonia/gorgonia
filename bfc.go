@@ -69,7 +69,7 @@ func (l *freelist) Len() int           { return len(l.l) }
 func (l *freelist) Less(i, j int) bool { return l.l[i].address < l.l[j].address }
 func (l *freelist) Swap(i, j int) {
 	l.l[i].address, l.l[j].address = l.l[j].address, l.l[i].address
-	l.l[i].size, l.l[j].size = l.l[j].size, l.l[j].size
+	l.l[i].size, l.l[j].size = l.l[j].size, l.l[i].size
 }
 
 func newFreelist(size int) *freelist {
@@ -86,28 +86,43 @@ func (l *freelist) insert(block memblock) {
 			break
 		}
 	}
+	cudaLogf("Insert::: %v at %v", block, i)
+	if i < len(l.l) && l.l[i].address == block.address {
+		l.l[i].size = block.size
+		return
+	}
+
 	l.l = append(l.l, memblock{})
 	copy(l.l[i+1:], l.l[i:])
 	l.l[i] = block
 }
 
 func (l *freelist) insertAt(i int, block memblock) {
+	cudaLogf("Insert %v at %v", block, i)
+	if i < len(l.l) && l.l[i].address == block.address {
+		l.l[i].size = block.size
+		return
+	}
+
 	l.l = append(l.l, memblock{})
 	copy(l.l[i+1:], l.l[i:])
 	l.l[i] = block
 }
 
 func (l *freelist) split(i int, block memblock, aligned, size int64) {
+	cudaLogf("Split %v at %d for %v (want %d)", block, i, aligned, size)
 	newAddress := block.address + uintptr(size)
 	newSize := aligned - size
 	newBlock := memblock{newAddress, newSize}
 
+	cudaLogf("newBlock: %v | cap %v | old size %v", newBlock, newBlock.cap(), l.l[i])
 	// l.l[i] = newBlock
 	l.l[i].address = newBlock.cap()
-	l.l[i].size -= aligned
+	l.l[i].size -= size
 	if newSize != 0 {
 		l.insertAt(i, newBlock)
 	}
+	cudaLogf("split freelist %v", l)
 }
 
 func (l *freelist) remove(i int) {
@@ -125,44 +140,6 @@ func (l *freelist) bestFit(size int64) (int, memblock, error) {
 	}
 
 	return -1, memblock{}, noopError{} // well it should be OOM
-}
-
-func (l *freelist) coalesce(alignment int64) []uintptr {
-	sort.Sort(l) // shouldn't be necessary given items in the free list were inserted sorted
-
-	var addresses []uintptr
-	for i := 0; i < len(l.l); i++ {
-		if i == len(l.l)-1 {
-			break
-		}
-		block := l.l[i]
-		next := l.l[i+1]
-		nextAligned := next.address%uintptr(alignment) == 0
-		blockAligned := block.address%uintptr(alignment) == 0
-		canCoalesce := !nextAligned || blockAligned
-
-		for canCoalesce && next.address == block.cap() {
-			// coalesce happens here
-			l.l[i].size += next.size
-			block.size += next.size
-			addresses = append(addresses, next.address)
-
-			// shrink the slice
-			if i+2 < len(l.l) {
-				copy(l.l[i+1:], l.l[i+2:])
-				l.l = l.l[:len(l.l)-1]
-			} else if i+2 == len(l.l) {
-				l.l = l.l[:i+1]
-				break
-			}
-
-			next = l.l[i+1]
-			nextAligned = next.address%uintptr(alignment) == 0
-			canCoalesce = !nextAligned || blockAligned
-		}
-
-	}
-	return addresses
 }
 
 // bfc an accounting structure for memory allocation,
@@ -210,6 +187,7 @@ func (l *freelist) coalesce(alignment int64) []uintptr {
 type bfc struct {
 	start     uintptr
 	size      int64
+	allocated int64
 	blockSize int64
 
 	freelist *freelist           // replace this with a proper/better implementation of a free lis with a splay tree underlying it
@@ -236,44 +214,76 @@ func newBFC(alignment int64) *bfc {
 }
 
 func (b *bfc) reserve(start uintptr, size int64) {
+	logf("RESERVE starts: 0x%x | size: %v", start, size)
 	b.start = start
 	b.size = size - (size % b.blockSize)
 	b.freelist.insert(memblock{0, size})
+	logf("Actually reserved %v", b.size)
 }
 
 func (b *bfc) alloc(size int64) (mem uintptr, err error) {
+	cudaLogf("Allocating %v", size)
+	cudaLogf("Freelist: %v", b.freelist)
+	defer cudaLogf("Freelist After: %v", b.freelist)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 	if size <= 0 {
 		return 0, errors.Errorf("Cannot allocate memory with size 0 or less")
 	}
 
 	// try to get from quick access
-	fits := b.bestFits[size]
-	if len(fits) > 0 {
-		mem = fits[len(fits)-1]
-		fits = fits[:len(fits)-1]
-		b.bestFits[size] = fits
+	/*
+		cudaLogf("Trying from quick access")
+		fits := b.bestFits[size]
+		if len(fits) > 0 {
+			mem = fits[len(fits)-1]
+			fits = fits[:len(fits)-1]
+			b.bestFits[size] = fits
 
-		var i int
-		var blk memblock
-		for i, blk = range b.freelist.l {
-			if blk.address == mem {
-				break
+			var i int
+			var block memblock
+			var split bool
+			for i, block = range b.freelist.l {
+				if block.address == mem {
+					if block.size > size {
+						split = true
+					}
+					break
+				}
 			}
+
+			b.usedpool[mem] = size
+
+			// split or remove
+			cudaLogf("remove or split free list blocks %v", block)
+			if split {
+				aligned := b.align(size)
+				b.freelist.split(i, block, aligned, size)
+			} else {
+				b.freelist.remove(i)
+
+			}
+
+			b.allocated += size
+			mem += b.start
+			cudaLogf("%v", b.freelist)
+			return
 		}
+	*/
 
-		b.usedpool[mem] = size
-		b.freelist.remove(i)
-		return
-	}
-
+	cudaLogf("Get from free list instead")
 	aligned := b.align(size)
 	i, block, err := b.freelist.bestFit(aligned)
 	if err != nil {
-		err = errors.Errorf("OOM")
+		err = oomError{
+			res:       b.size,
+			allocated: b.allocated,
+		}
 		return
 	}
 
 	// remove block from free list or split
+	cudaLogf("remove or split free list blocks %v", block)
 	if block.size > size {
 		// split
 		b.freelist.split(i, block, aligned, size)
@@ -284,21 +294,32 @@ func (b *bfc) alloc(size int64) (mem uintptr, err error) {
 
 	b.usedpool[block.address] = size
 	b.allocs++
+	b.allocated += size
 	return block.address + b.start, nil
 }
 
 func (b *bfc) free(address uintptr) {
+	cudaLogf("Free 0x%x", address)
+	cudaLogf("%v", b.freelist)
+	defer cudaLogf("AFTER: %v", b.freelist)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 	a := address - b.start // get internal address
 
+	cudaLogf("Free internal %v", a)
 	size := b.usedpool[a]
 	delete(b.usedpool, a)
 
 	block := memblock{a, size}
+	cudaLogf("inserting block %v", block)
 	// b.freepool[a] = size
 	b.freelist.insert(block)
 	b.freepool[a] = size
-	b.bestFits[size] = append(b.bestFits[size], a)
 
+	// cudaLogf("Adding %v to best fits", size)
+	// b.bestFits[size] = append(b.bestFits[size], a)
+
+	b.allocated -= size
 	b.frees++
 	if float64(b.frees)/float64(b.allocs) >= freeAllocTresh {
 		b.coalesce()
@@ -306,24 +327,116 @@ func (b *bfc) free(address uintptr) {
 }
 
 func (b *bfc) coalesce() {
-	toRemove := b.freelist.coalesce(b.blockSize)
-	for _, ptr := range toRemove {
-		size := b.freepool[ptr]
-		delete(b.freepool, ptr)
+	cudaLogf("Coalesce: %v", b.freelist)
+	cudaLogf("Best Fits %v", b.bestFits)
+	defer cudaLogf("after Coalesce: %v", b.freelist)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+	// toRemove, sizes := b.freelist.coalesce(b.blockSize)
 
-		addrs := b.bestFits[size]
-		var del int
-	addrloop:
-		for _, a := range addrs {
-			if a == ptr {
-				continue addrloop
-			}
-			addrs[del] = a
-			del++
+	cudaLogf("Before Sort %v", b.freelist)
+	cudaLogf("IS SORTED: %v", sort.IsSorted(b.freelist))
+	sort.Sort(b.freelist) // shouldn't be necessary given items in the free list were inserted sorted
+	cudaLogf("After Sort %v", b.freelist)
+
+	l := b.freelist
+	var toRemove []memblock
+	// var coalesceds, olds []memblock
+	for i := 0; i < len(l.l); i++ {
+		if i == len(l.l)-1 {
+			break
 		}
-		addrs = addrs[:del]
-		b.bestFits[size] = addrs
+		block := l.l[i]
+		next := l.l[i+1]
+		nextAligned := next.address%uintptr(b.blockSize) == 0
+		blockAligned := block.address%uintptr(b.blockSize) == 0
+		canCoalesce := !nextAligned || blockAligned
+
+		cudaLogf("COALESCEING onto %v", block)
+		enterLoggingContext()
+		cudaLogf("next: %v | canCoalesce: %v | cap: %v, %v", next, canCoalesce, block.cap(), next.address)
+		// oldBlock := memblock{block.address, block.size}
+		// var coalesced bool
+		for canCoalesce && next.address == block.cap() {
+			cudaLogf("Next: %v", next)
+			// coalesce happens here
+			l.l[i].size += next.size
+			block.size += next.size
+			toRemove = append(toRemove, next)
+
+			// shrink the slice
+			if i+2 < len(l.l) {
+				cudaLogf("shrink")
+				copy(l.l[i+1:], l.l[i+2:])
+				l.l = l.l[:len(l.l)-1]
+			} else if i+2 == len(l.l) {
+				cudaLogf("i+2: %v - Last: %v", i+2, l.l[i+1])
+				l.l = l.l[:i+1]
+				break
+			}
+
+			next = l.l[i+1]
+			nextAligned = next.address%uintptr(b.blockSize) == 0
+			canCoalesce = !nextAligned || blockAligned
+			// coalesced = true
+		}
+		leaveLoggingContext()
+		cudaLogf("DONE COALESCING")
+
+		// if coalesced {
+		// 	coalesceds = append(coalesceds, block)
+		// 	olds = append(olds, oldBlock)
+		// }
 	}
+	/*
+		// remove the coalesced blocks from any caches
+		for _, block := range toRemove {
+			ptr := block.address
+			size := block.size
+			delete(b.freepool, ptr)
+
+			addrs := b.bestFits[size]
+			cudaLogf("Best fits for %v: %v", size, addrs)
+			var del int
+			for _, a := range addrs {
+				if a == ptr {
+					continue
+				}
+				addrs[del] = a
+				del++
+			}
+			addrs = addrs[:del]
+			b.bestFits[size] = addrs
+			cudaLogf("After removal %v", addrs)
+		}
+
+	*/
+	/*
+		// update any caches
+		logf("Updating caches")
+		for i, old := range olds {
+			logf("dealing with old %v", old)
+			enterLoggingContext()
+			// we'll delete the address from this block
+			addrs := b.bestFits[old.size]
+			logf("addrs %v", addrs)
+			var del int
+			for _, a := range addrs {
+				if a == old.address {
+					continue
+				}
+				addrs[del] = a
+				del++
+			}
+			addrs = addrs[:del]
+			b.bestFits[old.size] = addrs
+
+			// add the new addresses
+			block := coalesceds[i]
+			b.bestFits[block.size] = append(b.bestFits[block.size], block.address)
+			leaveLoggingContext()
+		}
+	*/
 }
 
 func (b *bfc) align(size int64) int64 {
