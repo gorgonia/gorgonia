@@ -124,3 +124,21 @@ func TestBFC(t *testing.T) {
 	bfc.coalesce()
 	t.Logf("post coalesce: %v", bfc.freelist)
 }
+
+func TestBFC_coalesce(t *testing.T) {
+	b := newBFC(32)
+
+	// yanked from a failing real example
+	b.freelist.l = []memblock{
+		{3280, 16},
+		{3376, 16},
+		{3392, 8},
+		{3400, 24},
+		{3424, 64},
+		{3472, 16},
+		{3488, 110808},
+	}
+
+	b.coalesce()
+	t.Logf("%v", b.freelist)
+}

@@ -86,24 +86,30 @@ func (l *freelist) insert(block memblock) {
 			break
 		}
 	}
-	cudaLogf("Insert::: %v at %v", block, i)
-	if i < len(l.l) && l.l[i].address == block.address {
-		l.l[i].size = block.size
-		return
-	}
-
-	l.l = append(l.l, memblock{})
-	copy(l.l[i+1:], l.l[i:])
-	l.l[i] = block
+	l.insertAt(i, block)
 }
 
 func (l *freelist) insertAt(i int, block memblock) {
 	cudaLogf("Insert %v at %v", block, i)
-	if i < len(l.l) && l.l[i].address == block.address {
-		l.l[i].size = block.size
-		return
+	switch {
+	case i < len(l.l)-1:
+		switch {
+		case block.cap() == l.l[i+1].address:
+			// coalesce when possible
+			l.l[i+1].address = block.address
+			l.l[i+1].size += block.size
+			return
+		case l.l[i].address == block.address:
+			l.l[i].size = block.size
+		default:
+		}
+	case i < len(l.l):
+		if l.l[i].address == block.address {
+			l.l[i].size = block.size
+			return
+		}
+	default:
 	}
-
 	l.l = append(l.l, memblock{})
 	copy(l.l[i+1:], l.l[i:])
 	l.l[i] = block
