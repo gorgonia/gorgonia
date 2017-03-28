@@ -49,3 +49,29 @@ func (bm *bitmap) Clear(i int) {
 	block, pos := divmod(i, 64)
 	bm.n[block] &= ^(uint64(1) << uint64(pos))
 }
+
+// BlocksWithZero finds the first block with zeroes in the bit. atleast specifies how many consecutive zeroes need be found
+func (bm *bitmap) BlocksWithZero(atleast int) int {
+	var retVal int = -1
+	for i, b := range bm.n {
+		if popcnt(b) != 64 {
+			// shortcut:
+			if clz(b) > atleast {
+				return i
+			}
+
+			var consecutive int
+			for j := 0; j < 64; j++ {
+				if b>>uint64(j)&uint64(1) == 0 {
+					consecutive++
+				} else {
+					consecutive = 0
+				}
+				if consecutive > atleast {
+					return i
+				}
+			}
+		}
+	}
+	return retVal
+}

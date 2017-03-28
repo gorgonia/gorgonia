@@ -99,3 +99,27 @@ func TestBitMap(t *testing.T) {
 	assert.Panics(fails)
 
 }
+
+func TestBitmap_BlocksWithZero(t *testing.T) {
+	bm := newBitmap(128)
+	for i := 0; i < 64; i++ {
+		if i%2 == 0 {
+			bm.Set(i)
+		}
+	}
+	t.Logf("%v", bm)
+
+	blockID := bm.BlocksWithZero(3)
+	if blockID != 1 {
+		t.Errorf("Expected 1 Got %d instead", blockID)
+	}
+
+	for i := 0; i < 4; i++ {
+		bm.Clear(i)
+	}
+
+	blockID = bm.BlocksWithZero(3)
+	if blockID != 0 {
+		t.Errorf("Expected 0 Got %d instead", blockID)
+	}
+}
