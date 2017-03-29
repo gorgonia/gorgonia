@@ -1,7 +1,9 @@
 package gorgonia
 
 import (
-	"sort"
+	"bytes"
+	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 )
@@ -13,16 +15,30 @@ const (
 	freeAllocTresh = 0.75
 )
 
-// memblock is a tuple of address and the size of the block - it's almost like a slice hdr, but smaller
+var nilBlock = memblock{}
+
+// memblock is a tuple of address and the size of the block - think of it as a slicehdr, where the cap is the size
 type memblock struct {
 	address uintptr
 	size    int64
+
+	next, prev *memblock
+}
+
+func newMemblock(addr uintptr, size int64) *memblock {
+	return &memblock{
+		address: addr,
+		size:    size,
+	}
 }
 
 func (a memblock) cap() uintptr { return a.address + uintptr(a.size) }
 
 // overlaps checks if two memblocks are overlapping.
-func (a memblock) overlaps(b memblock) bool {
+func (a *memblock) overlaps(b *memblock) bool {
+	if a == b {
+		return true
+	}
 	if a.address == b.address {
 		return true // it doesn't matter how many elements there are in the memory. As long as they start at the same address, they overlap
 	}
@@ -43,9 +59,21 @@ func (a memblock) overlaps(b memblock) bool {
 	return false
 }
 
+func (a *memblock) split(size int64) (b *memblock) {
+	if size >= a.size {
+		logf("block %v, size %v", a, size)
+		panic("IMPOSSIBLE")
+	}
+	newAddress := a.address + uintptr(size)
+	newSize := a.size - size
+	a.size = size
+	b = newMemblock(newAddress, newSize)
+	return b
+}
+
 // we say a memblock is less than another memblock when:
 //		a.address < b.address and they don't both overlap
-func (a memblock) lt(b memblock) bool {
+func (a *memblock) lt(b *memblock) bool {
 	if a.address == b.address {
 		return false
 	}
@@ -60,98 +88,171 @@ func (a memblock) lt(b memblock) bool {
 	return false
 }
 
-// freelist is a data structure that handles free lists. Currently it's underlying data structure is a flat slice
+func (a *memblock) String() string {
+	return fmt.Sprintf("{0x%x %d}", a.address, a.size)
+}
+
+// freelist is simply implemented as a linkedlist of memblocks
 type freelist struct {
-	l []memblock
+	first, last *memblock
+	l           int
 }
 
-func (l *freelist) Len() int           { return len(l.l) }
-func (l *freelist) Less(i, j int) bool { return l.l[i].address < l.l[j].address }
-func (l *freelist) Swap(i, j int) {
-	l.l[i].address, l.l[j].address = l.l[j].address, l.l[i].address
-	l.l[i].size, l.l[j].size = l.l[j].size, l.l[i].size
-}
+func (l *freelist) Len() int { return l.l }
 
-func newFreelist(size int) *freelist {
-	return &freelist{
-		l: make([]memblock, 0, size),
+func (l *freelist) String() string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "FIRST: %v, LAST %v | [", l.first, l.last)
+	for block := l.first; block != nil; block = block.next {
+		fmt.Fprintf(&buf, "%v, ", block)
 	}
+	fmt.Fprintf(&buf, "]")
+	return buf.String()
 }
 
-func (l *freelist) insert(block memblock) {
-	var i int
-	var b memblock
-	for i, b = range l.l {
-		if b.address >= block.cap() {
-			break
-		}
+// insert inserts a block in an ordered fashion. This helps with coaalescing.
+func (l *freelist) insert(block *memblock) {
+	logf("Inserting %v", block)
+	if l.first == nil {
+		l.first = block
+		l.last = block
+
+		l.l++
+		return
 	}
-	l.insertAt(i, block)
-}
-
-func (l *freelist) insertAt(i int, block memblock) {
-	cudaLogf("Insert %v at %v", block, i)
-	switch {
-	case i < len(l.l)-1:
+	if block.address >= l.last.address {
+		logf("greater than last")
+		overlaps := block.overlaps(l.last)
 		switch {
-		case block.cap() == l.l[i+1].address:
-			// coalesce when possible
-			l.l[i+1].address = block.address
-			l.l[i+1].size += block.size
+		case overlaps:
+			blockCap := block.cap()
+			lastCap := l.last.cap()
+			if blockCap < lastCap {
+				return
+			}
+			l.last.size += int64(blockCap - lastCap)
 			return
-		case l.l[i].address == block.address:
-			l.l[i].size = block.size
 		default:
-		}
-	case i < len(l.l):
-		if l.l[i].address == block.address {
-			l.l[i].size = block.size
+			l.last.next = block
+			block.prev = l.last
+			block.next = nil
+			l.last = block
+
+			l.l++
 			return
 		}
-	default:
 	}
-	l.l = append(l.l, memblock{})
-	copy(l.l[i+1:], l.l[i:])
-	l.l[i] = block
-}
 
-func (l *freelist) split(i int, block memblock, aligned, size int64) {
-	cudaLogf("Split %v at %d for %v (want %d)", block, i, aligned, size)
-	newAddress := block.address + uintptr(size)
-	newSize := aligned - size
-	newBlock := memblock{newAddress, newSize}
-
-	cudaLogf("newBlock: %v | cap %v | old size %v", newBlock, newBlock.cap(), l.l[i])
-	// l.l[i] = newBlock
-	l.l[i].address = newBlock.cap()
-	l.l[i].size -= size
-	if newSize != 0 {
-		l.insertAt(i, newBlock)
-	}
-	cudaLogf("split freelist %v", l)
-}
-
-func (l *freelist) remove(i int) {
-	copy(l.l[i:], l.l[i+1:])
-	l.l = l.l[:len(l.l)-1]
-}
-
-func (l *freelist) bestFit(size int64) (int, memblock, error) {
-	for i, v := range l.l {
-		if v.size >= size {
-			return i, v, nil
+	if block.address < l.first.address {
+		logf("lt first")
+		overlaps := block.overlaps(l.first)
+		if overlaps {
+			blockCap := block.cap()
+			firstCap := l.first.cap()
+			if firstCap < blockCap {
+				return
+			}
+			l.first.size += int64(blockCap - firstCap)
+			return
 		}
 
-		// otherwise, keep going until a best fit is found
+		l.first.prev = block
+		block.next = l.first
+		l.first = block
+		l.l++
+		return
 	}
 
-	return -1, memblock{}, noopError{} // well it should be OOM
+insert:
+	for b := l.first; b != nil; b = b.next {
+		overlaps := b.overlaps(block)
+		switch {
+		case b.address < block.address && overlaps:
+			// coalesce block into b
+
+			blockCap := block.cap()
+			bcap := b.cap()
+			if blockCap <= bcap {
+				return // do nothing, since block is already in b
+			}
+
+			newSize := int64(bcap - blockCap)
+			b.size += newSize
+			return
+
+		case b.address < block.address && !overlaps:
+			if b.next.address >= block.cap() {
+				bnext := b.next
+				b.next = block
+				block.next = bnext
+				block.prev = b
+				bnext.prev = block
+				l.l++
+				return
+			}
+		case b.address == block.address:
+			if b.size > block.size {
+				return
+			}
+			b.size = block.size
+			return
+		case b.address > block.address && overlaps:
+			blockCap := block.cap()
+			bcap := b.cap()
+			if bcap <= blockCap {
+				b.address = block.address
+				b.size = block.size
+				return
+			}
+			b.address = block.address
+			b.size = block.size + int64(bcap-blockCap)
+			return
+		case b.address > block.address && !overlaps:
+			// gone too far.
+			break insert
+		default:
+			log.Printf("block %v, b %v", block, b)
+			panic("WTF")
+		}
+	}
+	log.Printf("freelist %v | block %v", l, block)
+	panic("Unreachable")
+}
+
+func (l *freelist) remove(block *memblock) {
+	if l.first == block {
+		l.first = block.next
+	} else {
+		block.prev.next = block.next
+	}
+
+	if l.last == block {
+		l.last = block.prev
+	} else {
+		block.next.prev = block.prev
+	}
+
+	// cleanup
+	block.next = nil
+	block.prev = nil
+	l.l--
+}
+
+// splitOrRemove returns the block that is removed from the list
+func (l *freelist) splitOrRemove(block *memblock, aligned, size int64) {
+	if block.size > aligned {
+		split := block.split(aligned)
+		l.insert(split)
+	}
+	if block.size > size {
+		remnant := block.split(size)
+		l.insert(remnant)
+	}
+	l.remove(block)
 }
 
 // bfc an accounting structure for memory allocation,
 // directly inspired by TensorFlows' Best Fit With Coalescing memory allocator, which is a type of buddy memory allocator.
-// Where TensorFlow's is a simplified dlmalloc, this is an even more simplified version.
-// Because the bfc exists solely as an bookkeeping structure, we can make it a lot simpler than using a linked list for tracking a free list.
 //
 // Why is this needed?
 // This allocator is needed because it's been shown that:
@@ -193,15 +294,15 @@ func (l *freelist) bestFit(size int64) (int, memblock, error) {
 type bfc struct {
 	start     uintptr
 	size      int64
-	allocated int64
 	blockSize int64
 
-	freelist *freelist           // replace this with a proper/better implementation of a free lis with a splay tree underlying it
-	bestFits map[int64][]uintptr // for quicker access - for realz, this should be replaced by a splay tree
-	usedpool map[uintptr]int64
-	freepool map[uintptr]int64
+	freelist *freelist
+	used     map[uintptr]int64 // keeps track of the sizes of each block
 
-	allocs, frees int
+	// statistics
+	allocated int64
+	allocs    int
+	frees     int
 }
 
 func newBFC(alignment int64) *bfc {
@@ -209,13 +310,9 @@ func newBFC(alignment int64) *bfc {
 	b := &bfc{
 		// size:      aligned,
 		blockSize: alignment,
-		freelist:  newFreelist(256), // typical simple progs don't have more than 128 allocations. We'll double that.
-
-		usedpool: make(map[uintptr]int64),
-		freepool: make(map[uintptr]int64),
-		bestFits: make(map[int64][]uintptr),
+		freelist:  new(freelist),
+		used:      make(map[uintptr]int64),
 	}
-	// b.freelist = append(b.freelist, memblock{0, size})
 	return b
 }
 
@@ -223,226 +320,101 @@ func (b *bfc) reserve(start uintptr, size int64) {
 	logf("RESERVE starts: 0x%x | size: %v", start, size)
 	b.start = start
 	b.size = size - (size % b.blockSize)
-	b.freelist.insert(memblock{0, size})
-	logf("Actually reserved %v", b.size)
+	b.freelist.insert(newMemblock(0, size))
+	logf("Start: 0x%x | Size %v", b.start, b.size)
 }
 
 func (b *bfc) alloc(size int64) (mem uintptr, err error) {
-	cudaLogf("Allocating %v", size)
-	cudaLogf("Freelist: %v", b.freelist)
-	defer cudaLogf("Freelist After: %v", b.freelist)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	logf("BFC Allocating %v", size)
+	logf("before alloc: %v", b.freelist)
+	defer logf("after alloc: %v", b.freelist)
 	if size <= 0 {
 		return 0, errors.Errorf("Cannot allocate memory with size 0 or less")
 	}
-
-	// try to get from quick access
-	/*
-		cudaLogf("Trying from quick access")
-		fits := b.bestFits[size]
-		if len(fits) > 0 {
-			mem = fits[len(fits)-1]
-			fits = fits[:len(fits)-1]
-			b.bestFits[size] = fits
-
-			var i int
-			var block memblock
-			var split bool
-			for i, block = range b.freelist.l {
-				if block.address == mem {
-					if block.size > size {
-						split = true
-					}
-					break
-				}
-			}
-
-			b.usedpool[mem] = size
-
-			// split or remove
-			cudaLogf("remove or split free list blocks %v", block)
-			if split {
-				aligned := b.align(size)
-				b.freelist.split(i, block, aligned, size)
-			} else {
-				b.freelist.remove(i)
-
-			}
-
-			b.allocated += size
-			mem += b.start
-			cudaLogf("%v", b.freelist)
-			return
-		}
-	*/
-
-	cudaLogf("Get from free list instead")
 	aligned := b.align(size)
-	i, block, err := b.freelist.bestFit(aligned)
-	if err != nil {
-		err = oomError{
-			res:       b.size,
-			allocated: b.allocated,
+	block := b.bestFit(aligned)
+	logf("Got a block %v", block)
+	if block == nil {
+		// first try to coalesce
+		b.coalesce()
+		if block = b.bestFit(aligned); block == nil {
+			// then we're really OOM
+			log.Printf("Requesting %v OOM %v", size, b.freelist)
+			return 0, oomError{
+				res:       b.size,
+				allocated: b.allocated,
+			}
 		}
-		return
-	}
 
-	// remove block from free list or split
-	cudaLogf("remove or split free list blocks %v", block)
-	if block.size > size {
-		// split
-		b.freelist.split(i, block, aligned, size)
-	} else {
-		// remove
-		b.freelist.remove(i)
 	}
+	b.freelist.splitOrRemove(block, aligned, size)
+	b.used[block.address] = size
 
-	b.usedpool[block.address] = size
-	b.allocs++
 	b.allocated += size
+	b.allocs++
+
 	return block.address + b.start, nil
 }
 
 func (b *bfc) free(address uintptr) {
-	cudaLogf("Free 0x%x", address)
-	cudaLogf("%v", b.freelist)
-	defer cudaLogf("AFTER: %v", b.freelist)
-	enterLoggingContext()
-	defer leaveLoggingContext()
 	a := address - b.start // get internal address
-
-	cudaLogf("Free internal %v", a)
-	size := b.usedpool[a]
-	delete(b.usedpool, a)
-
-	block := memblock{a, size}
-	cudaLogf("inserting block %v", block)
-	// b.freepool[a] = size
+	size, ok := b.used[a]
+	if !ok {
+		panic("Cannot free")
+	}
+	block := newMemblock(a, size)
+	logf("FREE %v", block)
 	b.freelist.insert(block)
-	b.freepool[a] = size
-
-	// cudaLogf("Adding %v to best fits", size)
-	// b.bestFits[size] = append(b.bestFits[size], a)
+	delete(b.used, a)
 
 	b.allocated -= size
 	b.frees++
-	if float64(b.frees)/float64(b.allocs) >= freeAllocTresh {
-		b.coalesce()
-	}
+	b.coalesce()
+	// if float64(b.frees)/float64(b.allocs) >= freeAllocTresh {
+	// }
 }
 
-func (b *bfc) coalesce() {
-	cudaLogf("Coalesce: %v", b.freelist)
-	cudaLogf("Best Fits %v", b.bestFits)
-	defer cudaLogf("after Coalesce: %v", b.freelist)
-	enterLoggingContext()
-	defer leaveLoggingContext()
-	// toRemove, sizes := b.freelist.coalesce(b.blockSize)
-
-	cudaLogf("Before Sort %v", b.freelist)
-	cudaLogf("IS SORTED: %v", sort.IsSorted(b.freelist))
-	sort.Sort(b.freelist) // shouldn't be necessary given items in the free list were inserted sorted
-	cudaLogf("After Sort %v", b.freelist)
-
-	l := b.freelist
-	var toRemove []memblock
-	// var coalesceds, olds []memblock
-	for i := 0; i < len(l.l); i++ {
-		if i == len(l.l)-1 {
-			break
+func (b *bfc) bestFit(size int64) (best *memblock) {
+	for block := b.freelist.first; block != nil; block = block.next {
+		if block.size >= size {
+			return block
 		}
-		block := l.l[i]
-		next := l.l[i+1]
-		nextAligned := next.address%uintptr(b.blockSize) == 0
-		blockAligned := block.address%uintptr(b.blockSize) == 0
-		canCoalesce := !nextAligned || blockAligned
-
-		cudaLogf("COALESCEING onto %v", block)
-		enterLoggingContext()
-		cudaLogf("next: %v | canCoalesce: %v | cap: %v, %v", next, canCoalesce, block.cap(), next.address)
-		// oldBlock := memblock{block.address, block.size}
-		// var coalesced bool
-		for canCoalesce && next.address == block.cap() {
-			cudaLogf("Next: %v", next)
-			// coalesce happens here
-			l.l[i].size += next.size
-			block.size += next.size
-			toRemove = append(toRemove, next)
-
-			// shrink the slice
-			if i+2 < len(l.l) {
-				cudaLogf("shrink")
-				copy(l.l[i+1:], l.l[i+2:])
-				l.l = l.l[:len(l.l)-1]
-			} else if i+2 == len(l.l) {
-				cudaLogf("i+2: %v - Last: %v", i+2, l.l[i+1])
-				l.l = l.l[:i+1]
-				break
-			}
-
-			next = l.l[i+1]
-			nextAligned = next.address%uintptr(b.blockSize) == 0
-			canCoalesce = !nextAligned || blockAligned
-			// coalesced = true
-		}
-		leaveLoggingContext()
-		cudaLogf("DONE COALESCING")
-
-		// if coalesced {
-		// 	coalesceds = append(coalesceds, block)
-		// 	olds = append(olds, oldBlock)
-		// }
 	}
-	/*
-		// remove the coalesced blocks from any caches
-		for _, block := range toRemove {
-			ptr := block.address
-			size := block.size
-			delete(b.freepool, ptr)
+	return nil
+}
 
-			addrs := b.bestFits[size]
-			cudaLogf("Best fits for %v: %v", size, addrs)
-			var del int
-			for _, a := range addrs {
-				if a == ptr {
-					continue
-				}
-				addrs[del] = a
-				del++
-			}
-			addrs = addrs[:del]
-			b.bestFits[size] = addrs
-			cudaLogf("After removal %v", addrs)
+// coalesce coalesces the freelist using these two rules:
+//		- address must be aligned to the alignment
+//		- if two blocks next to each other share a fencepost, then they will be merged
+func (b *bfc) coalesce() {
+	logf("PreCOALESCE: %v", b.freelist)
+	defer logf("POSTCOALESCE: %v", b.freelist)
+	for block := b.freelist.first; block != nil; block = block.next {
+		if block.address%uintptr(b.blockSize) != 0 {
+			continue
 		}
+	inner:
+		for next := block.next; next != nil; next = block.next {
+			switch {
+			case block.cap() == next.address:
+				block.size += next.size
+				block.next = next.next
+				next.next = nil
+				next.prev = nil // kill i
 
-	*/
-	/*
-		// update any caches
-		logf("Updating caches")
-		for i, old := range olds {
-			logf("dealing with old %v", old)
-			enterLoggingContext()
-			// we'll delete the address from this block
-			addrs := b.bestFits[old.size]
-			logf("addrs %v", addrs)
-			var del int
-			for _, a := range addrs {
-				if a == old.address {
-					continue
+				if next == b.freelist.last {
+					b.freelist.last = block
 				}
-				addrs[del] = a
-				del++
-			}
-			addrs = addrs[:del]
-			b.bestFits[old.size] = addrs
 
-			// add the new addresses
-			block := coalesceds[i]
-			b.bestFits[block.size] = append(b.bestFits[block.size], block.address)
-			leaveLoggingContext()
+				b.freelist.l--
+			case block.overlaps(next):
+				// unhandled yet
+				panic("Unhandled: overlaping coalesceing")
+			default:
+				break inner
+			}
 		}
-	*/
+	}
 }
 
 func (b *bfc) align(size int64) int64 {

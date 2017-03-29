@@ -135,7 +135,7 @@ func TestWeirdNetwork(t *testing.T) {
 	log.Println(prog)
 
 	// for i := 0; i < 104729; i++ {
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 2; i++ {
 		log.Printf("run iter %d\n==========\n", i)
 		if err = m.RunAll(); err != nil {
 			t.Errorf("%d %v", i, err)

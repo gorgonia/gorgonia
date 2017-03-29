@@ -3,14 +3,14 @@ package gorgonia
 import "testing"
 
 var overlapsTests = []struct {
-	a, b     memblock
+	a, b     *memblock
 	overlaps bool
 }{
-	{memblock{0, 1024}, memblock{1024, 2048}, false},
-	{memblock{1024, 2048}, memblock{0, 1024}, false},
-	{memblock{0, 1024}, memblock{0, 512}, true},
-	{memblock{0, 1024}, memblock{512, 1024}, true},
-	{memblock{512, 2048}, memblock{0, 1024}, true},
+	{newMemblock(0, 1024), newMemblock(1024, 2048), false},
+	{newMemblock(1024, 2048), newMemblock(0, 1024), false},
+	{newMemblock(0, 1024), newMemblock(0, 512), true},
+	{newMemblock(0, 1024), newMemblock(512, 1024), true},
+	{newMemblock(512, 2048), newMemblock(0, 1024), true},
 }
 
 func TestMemblock_overlaps(t *testing.T) {
@@ -22,18 +22,18 @@ func TestMemblock_overlaps(t *testing.T) {
 }
 
 var memblockLTTests = []struct {
-	a, b memblock
+	a, b *memblock
 	lt   bool
 }{
-	{memblock{0, 1024}, memblock{2048, 1024}, true},
-	{memblock{2048, 1024}, memblock{0, 1024}, false},
+	{newMemblock(0, 1024), newMemblock(2048, 1024), true},
+	{newMemblock(2048, 1024), newMemblock(0, 1024), false},
 
 	// corner cases - I'm unsure of what the correct result should be for now
-	{memblock{0, 1024}, memblock{1024, 1024}, false},
-	{memblock{1024, 1024}, memblock{0, 1024}, false},
+	{newMemblock(0, 1024), newMemblock(1024, 1024), false},
+	{newMemblock(1024, 1024), newMemblock(0, 1024), false},
 
 	// overlaps
-	{memblock{0, 1024}, memblock{0, 512}, false},
+	{newMemblock(0, 1024), newMemblock(0, 512), false},
 }
 
 func TestMemblock_lt(t *testing.T) {
@@ -47,7 +47,7 @@ func TestMemblock_lt(t *testing.T) {
 func TestBFC(t *testing.T) {
 	align := int64(32)
 	bfc := newBFC(align)
-	bfc.size = 1024
+	bfc.reserve(0, 1024)
 
 	_, err := bfc.alloc(0)
 	if err == nil {
@@ -76,7 +76,7 @@ func TestBFC(t *testing.T) {
 		t.Error("Expected all memories to be well aligned")
 	}
 	if bfc.freelist.Len() != 2 {
-		t.Errorf("Expected the free list to have 2 elements")
+		t.Errorf("Expected the free list to have 2 elements. Got %v", bfc.freelist)
 	}
 
 	// larger than alignment
@@ -93,9 +93,6 @@ func TestBFC(t *testing.T) {
 
 	// free memory
 	bfc.free(addr1)
-	if len(bfc.bestFits[align]) != 1 {
-		t.Error("Expected BFC bestfits to have only one entry")
-	}
 	if bfc.freelist.Len() != 4 {
 		t.Error("Expected free list to be size of 4")
 	}
@@ -105,39 +102,47 @@ func TestBFC(t *testing.T) {
 	if addr3, err = bfc.alloc(32); err != nil {
 		t.Error(err)
 	}
+	t.Logf("addr3 %v", addr3)
 
 	if addr1 != addr3 {
 		t.Errorf("Expected addr1 to be reused")
 	}
-
-	if len(bfc.bestFits[32]) != 0 {
-		t.Error("Expected BFC Bestfits for size 32 to have 0 elemenets")
-	}
 	if bfc.freelist.Len() != 3 {
-		t.Error("Expected free list to be size of 3 after reusing a block")
+		t.Error("Expected free list to be size of 3 after reusing a block. Got %v", bfc.freelist)
 	}
 
 	// memory's getting fragmented now... let's coalesce
 	bfc.free(addr3)
 	bfc.free(addr2)
-	t.Logf("%v", bfc.freelist)
+	t.Logf("pre coalesce: %v", bfc.freelist)
 	bfc.coalesce()
 	t.Logf("post coalesce: %v", bfc.freelist)
 }
 
 func TestBFC_coalesce(t *testing.T) {
+	t.SkipNow()
 	b := newBFC(32)
+	b.reserve(0, 114080)
 
 	// yanked from a failing real example
-	b.freelist.l = []memblock{
-		{3280, 16},
-		{3376, 16},
-		{3392, 8},
-		{3400, 24},
-		{3424, 64},
-		{3472, 16},
-		{3488, 110808},
+	list := []*memblock{
+		newMemblock(3280, 16),
+		newMemblock(3376, 16),
+		newMemblock(3392, 8),
+		newMemblock(3400, 24),
+		newMemblock(3424, 64),
+		newMemblock(3472, 16),
+		newMemblock(3488, 110808),
 	}
+	for i, b := range list {
+		if i == len(list)-1 {
+			break
+		}
+		b.next = list[i+1]
+		list[i+1].prev = b
+	}
+	b.freelist.first = list[0]
+	b.freelist.last = list[len(list)-1]
 
 	b.coalesce()
 	t.Logf("%v", b.freelist)

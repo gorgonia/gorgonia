@@ -21,7 +21,7 @@ var (
 	typeSystemDev     = false
 	symdiffDev        = false
 	autodiffDev       = false
-	machineDev        = false
+	machineDev        = true
 	stabilizationDev  = false
 	solverDev         = false
 	cudaDev           = true

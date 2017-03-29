@@ -1,5 +1,9 @@
 package gorgonia
 
+const (
+	bitmapBits = 64
+)
+
 // bitmap is a very simple bitmap. It only supports Set, IsSet and Clear methods. It's mostly used for tracking which element has been set
 type bitmap struct {
 	n   []uint64
@@ -8,7 +12,7 @@ type bitmap struct {
 
 // newBitmap creates a new bitmap.
 func newBitmap(size int) *bitmap {
-	q, r := divmod(size, 64)
+	q, r := divmod(size, bitmapBits)
 
 	if r > 0 {
 		q++
@@ -26,7 +30,7 @@ func (bm *bitmap) Set(i int) {
 		panic("Index out of range")
 	}
 
-	block, pos := divmod(i, 64)
+	block, pos := divmod(i, bitmapBits)
 	bm.n[block] |= uint64(1) << uint64(pos)
 }
 
@@ -36,7 +40,7 @@ func (bm *bitmap) IsSet(i int) bool {
 		panic("Index out of range")
 	}
 
-	block, pos := divmod(i, 64)
+	block, pos := divmod(i, bitmapBits)
 	return bm.n[block]>>uint64(pos)&uint64(1) == uint64(1)
 }
 
@@ -46,7 +50,7 @@ func (bm *bitmap) Clear(i int) {
 		panic("Index out of range")
 	}
 
-	block, pos := divmod(i, 64)
+	block, pos := divmod(i, bitmapBits)
 	bm.n[block] &= ^(uint64(1) << uint64(pos))
 }
 
@@ -54,14 +58,14 @@ func (bm *bitmap) Clear(i int) {
 func (bm *bitmap) BlocksWithZero(atleast int) int {
 	var retVal int = -1
 	for i, b := range bm.n {
-		if popcnt(b) != 64 {
+		if popcnt(b) != bitmapBits {
 			// shortcut:
 			if clz(b) > atleast {
 				return i
 			}
 
 			var consecutive int
-			for j := 0; j < 64; j++ {
+			for j := 0; j < bitmapBits; j++ {
 				if b>>uint64(j)&uint64(1) == 0 {
 					consecutive++
 				} else {

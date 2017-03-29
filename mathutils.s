@@ -39,3 +39,13 @@ TEXT ·clz(SB),4,$0-16
 zero:
         MOVQ $64, ret+8(FP)
         RET
+
+// func ctz(x uint64) int
+TEXT ·ctz(SB),4,$0-16
+        BSFQ  x+0(FP), AX
+        JZ zero
+        MOVQ AX, ret+8(FP)
+        RET
+zero:
+        MOVQ $64, ret+8(FP)
+        RET
