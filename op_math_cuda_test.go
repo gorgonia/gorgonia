@@ -3,6 +3,7 @@
 package gorgonia
 
 import (
+	"log"
 	"runtime"
 	"testing"
 
@@ -19,9 +20,12 @@ func TestCUDACube(t *testing.T) {
 	g := NewGraph(WithGraphName("Test"))
 	x := NewMatrix(g, tensor.Float32, WithName("x"), WithShape(8, 4), WithValue(xT))
 	x3 := Must(Cube(x))
+	var x3Val Value
+	Read(x3, &x3Val)
 
 	prog, locMap, err := Compile(g)
-	// t.Logf("Prog: \n%v", prog)
+	t.Logf("Prog: \n%v", prog)
+	log.Printf("%v", prog)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +37,11 @@ func TestCUDACube(t *testing.T) {
 		t.Error(err)
 	}
 	correct := []float32{0, 1, 8, 27, 64, 125, 216, 343, 512, 729, 1000, 1331, 1728, 2197, 2744, 3375, 4096, 4913, 5832, 6859, 8000, 9261, 10648, 12167, 13824, 15625, 17576, 19683, 21952, 24389, 27000, 29791}
-	assert.Equal(correct, x3.Value().Data())
+	assert.Equal(correct, x3Val.Data())
+
+	t.Logf("%v", x3Val.Uintptr())
+	t.Logf("%v", m.cpumem[1])
+	t.Logf("%v", m.cpumem[1].Uintptr())
 
 	correct = tensor.Range(tensor.Float32, 0, 32).([]float32)
 	assert.Equal(correct, x.Value().Data())

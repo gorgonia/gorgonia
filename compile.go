@@ -235,23 +235,29 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 	cg.updateLastWrites(writeTo, node)
 }
 
-func (cg *codegenerator) addStmt(node *Node, interv *interval) {
+func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
 	compileLogf("Add Statement")
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
 	writeTo := interv.result
 
+	var children Nodes
+	var ok bool
+	if children, ok = cg.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
+
 	switch op := node.op.(type) {
 	case letOp:
 		// there should be only 2 chilren
-		if len(node.children) != 2 {
+		if len(children) != 2 {
 			panic("Expected only two children")
 		}
-		compileLogf("node.children %d. [1]: %v; [0]: %v", node.ID(), node.children[1], node.children[0])
+		compileLogf("node.children %d. [1]: %v; [0]: %v", node.ID(), children[1], children[0])
 		compileLogf("node isInput %v", node.isInput())
-		from := cg.df.intervals[node.children[1]].result
-		to := cg.df.intervals[node.children[0]].result
+		from := cg.df.intervals[children[1]].result
+		to := cg.df.intervals[children[0]].result
 
 		instr := letInstr{
 			readFrom: from,
@@ -263,35 +269,51 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 		cg.updateLastWrites(writeTo, node)
 	case readOp:
 		// there should be only 1 child
-		if len(node.children) != 1 {
+		if len(children) != 1 {
 			panic("Expected only one child")
 		}
-		compileLogf("node.children %d. [0]: %v", node.ID(), node.children[0])
+		compileLogf("node.children %d. [0]: %v", node.ID(), children[0])
 		compileLogf("node isInput %v", node.isInput())
-		compileLogf("node.children[0] Type %v, shape %v", node.children[0].t, node.children[0].shape)
-		from := cg.df.intervals[node.children[0]].result
+		compileLogf("node.children[0] Type %v, shape %v", children[0].t, children[0].shape)
+
+		if _, ok := cg.flushed[i]; !ok {
+			cg.addInstr(node, flushInstr{})
+			cg.flush()
+		}
+
+		from := cg.df.intervals[children[0]].result
 		instr := &readInstr{
 			into:     op.into,
 			readFrom: from,
 
-			t: node.children[0].t,
-			s: node.children[0].shape,
+			t: children[0].t,
+			s: children[0].shape,
 		}
 		// cg.instructions = append(cg.instructions, instr)
 
 		cg.addInstr(node, instr)
 		cg.updateLastWrites(writeTo, node)
 	case devTrans:
+		if _, ok := cg.allocated[writeTo]; !ok {
+			// insert new alloc
+			var instr alloc
+			instr = newAlloc(node, writeTo)
+			// cg.instructions = append(cg.instructions, instr)
+
+			cg.addInstr(node, instr)
+			cg.updateLastWrites(writeTo, node)
+			cg.queue = append(cg.queue, i)
+			cg.allocated[writeTo] = struct{}{}
+		}
+
 		compileLogf("devTrans")
-		if len(node.children) != 1 {
+		if len(children) != 1 {
 			panic("Expected only one child")
 		}
 
-		from := cg.df.intervals[node.children[0]].result
+		from := cg.df.intervals[children[0]].result
 		to := cg.df.intervals[node].result
 
-		from.device = op.from
-		to.device = op.to
 		instr := deviceTransport{
 			from: from, to: to,
 		}
@@ -330,6 +352,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		if node.op.CallsExtern() {
 			compileLogf("calls extern")
 			if _, ok := cg.allocated[writeTo]; !ok {
+				compileLogf("Inserting new alloc")
 				var instr alloc
 				instr = newAlloc(node, writeTo)
 				// cg.instructions = append(cg.instructions, instr)
@@ -554,7 +577,7 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 		case node.isArg():
 			cg.addArg(node, nInterv)
 		case node.isStmt:
-			cg.addStmt(node, nInterv)
+			cg.addStmt(node, nInterv, i)
 		default:
 			cg.addNode(node, replacement, nInterv, i)
 		}

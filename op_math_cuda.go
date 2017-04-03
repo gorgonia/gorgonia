@@ -16,7 +16,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 		return
 	}
 
-	cudaLogf("CUDADoing %v", op)
+	cudaLogf("CUDADoing %v | %v", op, inputs)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
@@ -39,11 +39,16 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	fn := machine.Functions()[name][int(dev)]
 	ctx := machine.Contexts()[int(dev)]
 
-	mem := cu.DevicePtr(prealloc.Uintptr())
-	memSize := int64(a.MemSize())
-	memA := cu.DevicePtr(a.Uintptr())
+	var mem cu.DevicePtr
+	if prealloc.Uintptr() == a.Uintptr() && a.Shape().Eq(prealloc.Shape()) {
+		mem = cu.DevicePtr(a.Uintptr())
+	} else {
+		mem = cu.DevicePtr(prealloc.Uintptr())
+		memSize := int64(a.MemSize())
+		memA := cu.DevicePtr(a.Uintptr())
+		ctx.Memcpy(mem, memA, memSize)
+	}
 	size := int64(a.Shape().TotalSize())
-	ctx.Memcpy(mem, memA, memSize)
 
 	// blocks, threads := machine.(*tapeMachine).blockThread(int(size), int(dev))
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))

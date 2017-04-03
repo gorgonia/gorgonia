@@ -203,7 +203,7 @@ func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
 		return // wat??
 	}
 
-	addr := uintptr(mem.(cu.DevicePtr))
+	addr := uintptr(mem.Uintptr())
 	m.a[d].free(addr)
 
 	// pool, ok := m.arena[d][size]

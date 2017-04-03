@@ -461,9 +461,29 @@ func (instr alloc) writes() register  { return instr.writeTo }
 
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
+	dev := instr.writeTo.device
 
-	// dst := instr.writeTo.id
-	// dev := instr.writeTo.device
+	size := instr.s.TotalSize()
+
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(instr.t); err != nil {
+		return errors.Wrapf(err, dtypeExtractionFail, instr.t)
+	}
+
+	var v Value
+	switch dev {
+	case CPU:
+		v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...))
+	default:
+		var mem Memory
+		memsize := int64(size) * int64(dt.Size())
+		if mem, err = m.ExternMetadata.Get(dev, memsize); err != nil {
+			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
+		}
+		v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize)))
+	}
+
+	m.writeValue(instr.writeTo, v)
 	return nil
 }
 
@@ -618,7 +638,7 @@ func (instr *readInstr) ID() int           { return -1 }
 func (instr *readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr *readInstr) writes() register  { return register{-1, CPU} }
 func (instr *readInstr) exec(m *tapeMachine) (err error) {
-	m.logf("Executing READ")
+	m.logf("Executing READ - read from %v", instr.readFrom)
 	v := m.getValue(instr.readFrom)
 	if v == nil {
 		return errors.Errorf(nyiFail, "Cannot read instruction")

@@ -248,6 +248,57 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	return nil
 }
 
-func (instr deviceTransport) exec(m *tapeMachine) error {
+// func (instr *readInstr) exec(m *tapeMachine) (err error) {
+// 	m.logf("Executing READ - read from %v", instr.readFrom)
+// 	v := m.getValue(instr.readFrom)
+// 	if v == nil {
+// 		m.logf("ERR1")
+// 		return errors.Errorf(nyiFail, "Cannot read instruction")
+// 	}
+
+// 	var v2 Value
+// 	if instr.readFrom.device != CPU && !instr.s.IsScalar() {
+// 		var dt tensor.Dtype
+// 		if dt, err = dtypeOf(instr.t); err != nil {
+// 			return errors.Wrapf(err, dtypeExtractionFail, instr.t)
+// 		}
+// 		vt := tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...))
+
+// 		// ctx := m.Contexts()[int(instr.readFrom.device)]
+// 		// ctx.MemcpyDtoH(vt.Pointer(), cu.DevicePtr(v.Uintptr()), int64(vt.MemSize()))
+
+// 		v2 = vt
+
+// 	} else {
+// 		if v2, err = CloneValue(v); err != nil {
+// 			m.logf("ERR2")
+// 			return errors.Wrap(err, cloneFail)
+// 		}
+
+// 	}
+
+// 	m.logf("v2 : %v %v", v2, v2.Uintptr())
+
+// 	*instr.into = v2
+// 	return nil
+// }
+
+func (instr deviceTransport) exec(m *tapeMachine) (err error) {
+	from := m.getValue(instr.from)
+	to := m.getValue(instr.to)
+
+	var ctx *cu.BatchedContext
+	switch {
+	case instr.from.device == CPU && instr.to.device != CPU:
+		memsize := int64(from.MemSize())
+		ctx = m.Contexts()[int(instr.to.device)]
+		ctx.MemcpyHtoD(cu.DevicePtr(to.Uintptr()), from.Pointer(), memsize)
+	case instr.from.device != CPU && instr.to.device == CPU:
+		dt := from.Dtype()
+		memsize := int64(from.Shape().TotalSize()) * int64(dt.Size())
+		ctx = m.Contexts()[int(instr.from.device)]
+		ctx.MemcpyDtoH(to.Pointer(), cu.DevicePtr(from.Uintptr()), memsize)
+	}
+
 	return nil
 }
