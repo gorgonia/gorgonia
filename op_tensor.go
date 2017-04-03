@@ -627,7 +627,7 @@ func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 }
 
 func (op *sliceOp) ReturnsPtr() bool     { return true }
-func (op *sliceOp) CallsExtern() bool    { return false }
+func (op *sliceOp) CallsExtern() bool    { return true }
 func (op *sliceOp) OverwritesInput() int { return -1 }
 func (op *sliceOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("slice"))
@@ -673,6 +673,12 @@ func (op sliceOp) String() string {
 	buf.WriteString("...]")
 	return buf.String()
 }
+
+// func (op sliceOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+// 	return op.Do(inputs...)
+// }
+
+// func (op sliceOp) CUDAFuncName() string { return "" }
 
 func (op sliceOp) all() bool { return op.Slice == nil || op.End() <= op.Start() }
 

@@ -107,3 +107,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.leaveLoggingContext()
 	return nil
 }
+
+func (instr deviceTransport) exec(m *tapeMachine) error {
+	return nil
+}

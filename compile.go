@@ -26,7 +26,8 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	reverseNodes(sortedNodes)
 
 	df := analyze(g, sortedNodes)
-	df.intervals = buildIntervals(sortedNodes)
+	sortedNodes = df.insertDeviceInstr(sortedNodes)
+	df.buildIntervals(sortedNodes)
 
 	ra := newRegalloc(df)
 	ra.alloc(sortedNodes)
@@ -74,7 +75,8 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	}
 
 	df := analyze(subgraph, sortedNodes)
-	df.intervals = buildIntervals(sortedNodes)
+	sortedNodes = df.insertDeviceInstr(sortedNodes)
+	df.buildIntervals(sortedNodes)
 
 	ra := newRegalloc(df)
 	ra.alloc(sortedNodes)
@@ -182,9 +184,6 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 		}
 	case *execOp:
 		if !inst.op.ReturnsPtr() {
-			if dt, err = dtypeOf(inst.OutputType); err != nil {
-				panic(err)
-			}
 			d := instr.writes().device
 			if d != CPU {
 				if len(cg.gpumem) < int(d)+1 {
@@ -194,11 +193,15 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 			}
 			switch d {
 			case CPU:
-				cg.cpumem += int64(dt.Size() * uintptr(inst.OutputShape.TotalSize()))
+				cg.cpumem += inst.size
 			default:
-				cg.gpumem[int(d)] += int64(dt.Size() * uintptr(inst.OutputShape.TotalSize()))
+				cg.gpumem[int(d)] += inst.size
 			}
 		}
+
+	default:
+		cudaLogf("addinstr: %v", instr)
+		// panic("EHLP")
 	}
 }
 
@@ -233,7 +236,10 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 }
 
 func (cg *codegenerator) addStmt(node *Node, interv *interval) {
-	compileLogf("Statement")
+	compileLogf("Add Statement")
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	writeTo := interv.result
 
 	switch op := node.op.(type) {
@@ -275,17 +281,40 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval) {
 
 		cg.addInstr(node, instr)
 		cg.updateLastWrites(writeTo, node)
+	case devTrans:
+		compileLogf("devTrans")
+		if len(node.children) != 1 {
+			panic("Expected only one child")
+		}
+
+		from := cg.df.intervals[node.children[0]].result
+		to := cg.df.intervals[node].result
+
+		from.device = op.from
+		to.device = op.to
+		instr := deviceTransport{
+			from: from, to: to,
+		}
+		cg.addInstr(node, instr)
+		cg.updateLastWrites(writeTo, node)
 	}
 }
 
 func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i int) {
-	compileLogf("Expr")
-	compileLogf("Node: %x %v", node.ID(), node.op)
+	compileLogf("AddNode: %x %v", node.ID(), node.op)
 	compileLogf("interval %v", interv)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 
 	writeTo := interv.result
+
 	var reads []register
-	for _, child := range node.children {
+	var children Nodes
+	var ok bool
+	if children, ok = cg.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
+	for _, child := range children {
 		cReplacement := cg.df.replacements[child]
 		cInterv := cg.df.intervals[cReplacement]
 		reads = append(reads, cInterv.result)
@@ -423,21 +452,23 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 	}
 }
 
-func (cg *codegenerator) insertFlush(instrID int, node *Node) {
-
-}
-
 func (cg *codegenerator) insertFree(instrID int, node *Node) {
 	compileLogf("Inserting Free for instrID %d | instr: %v | op: %v", instrID, node, node.op)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
 	var reads []register
-	for _, child := range node.children {
+	var children Nodes
+	var ok bool
+	if children, ok = cg.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
+	for _, child := range children {
 		cReplacement := cg.df.replacements[child]
 		cInterv := cg.df.intervals[cReplacement]
 		reads = append(reads, cInterv.result)
 	}
+	compileLogf("reads %v", reads)
 
 	// check if anything needs to be freed
 	for _, read := range reads {
@@ -455,7 +486,14 @@ func (cg *codegenerator) insertFree(instrID int, node *Node) {
 		}
 		// interv := cg.df.intervals[readNode]
 		readRepl := cg.df.replacements[readNode]
+		if readRepl == nil {
+			readRepl = readNode
+		}
+		if readRepl == nil {
+			continue
+		}
 		interv := cg.df.intervals[readRepl]
+		compileLogf("interv for readRepl %v: %v", readRepl, interv)
 		lastUse := interv.lastUse()
 		compileLogf("Interval: %v; read: %v; Read Node %v; Op %v; LastUse %v; Instrid: %v", interv, read, readNode, readNode.op, lastUse, instrID)
 		if lastUse >= 0 && lastUse <= instrID && read.device != CPU {
@@ -502,6 +540,9 @@ func (cg *codegenerator) insertLastFrees() int {
 }
 
 func (cg *codegenerator) gen() (*program, map[*Node]register) {
+	compileLogf("Generating from SORTED: %v", cg.sorted)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 	for i, node := range cg.sorted {
 		// for i := len(cg.sorted) - 1; i >= 0; i-- {
 		// node := cg.sorted[i]

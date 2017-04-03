@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/chewxy/cu"
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 )
 
@@ -149,220 +148,57 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
-	if instr.useGPU {
-		if len(m.Contexts()) == 0 {
-			goto usecpu
-		}
-
-		// Read
-		m.watchedLogf("Inputs:")
-		m.enterLoggingContext()
-		inputs := make([]Memory, len(instr.readFrom))
-		fromDevs := make([]Device, len(instr.readFrom))
-		for i, reg := range instr.readFrom {
-			inputs[i] = m.getMemory(reg)
-			fromDevs[i] = reg.device
-			cudaLogf("inputs[%d] :%T", i, inputs[i])
-			m.watchedLogf(m.valueFmt, inputs[i])
-		}
-		m.leaveLoggingContext()
-
-		toDev := instr.writeTo.device
-
-		// Execute
-		var mem Memory
-		switch cd := instr.op.(type) {
-		case CUDADoer:
-			prealloc := m.getMemory(instr.writeTo)
-			cudaLogf("prealloc mem in instr.writeTo (%v) : %v", instr.writeTo, prealloc)
-			enterLoggingContext()
-			if mem, err = cd.CUDADo(m, toDev, instr.ExecutionMetadata, prealloc, inputs...); err != nil {
-				leaveLoggingContext()
-				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
-			}
-			leaveLoggingContext()
-
-		case CLDoer:
-			goto usecpu
-		default:
-			goto usecpu
-		}
-
-		// Write
-		var v Value
-		var convertedFromMem bool
-		dest := instr.writeTo.id
-		node := m.p.g.Node(instr.id).(*Node)
-		ctx := m.c[int(toDev)]
-		switch mt := mem.(type) {
-		case Value:
-			v = mt
-		case cu.DevicePtr:
-			v = node.Value()
-			if v == nil {
-				cudaLogf("allocating v")
-				// create v
-				switch t := instr.OutputType.(type) {
-				case TensorType:
-					var dt tensor.Dtype
-					if dt, err = dtypeOf(t); err != nil {
-						err = errors.Wrapf(err, "execOp cannot get dtype out of %v", t)
-						return // very unlikely to happen
-					}
-
-					v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.OutputShape...))
-					if err = devPtrToValue(ctx, v, mt); err != nil {
-						err = errors.Wrap(err, "execOp cannot copy mem to value")
-						return
-					}
-				case Scalar:
-					// wtf?
-				}
-				cudaLogf("Done allocating v")
-			} else {
-				cudaLogf("copying v")
-				// copy
-				if err = devPtrToValue(ctx, v, mt); err != nil {
-					return
-				}
-			}
-			convertedFromMem = true
-		}
-
-		switch instr.writeTo.device {
-		case CPU:
-			cudaLogf("write to cpu register")
-			m.cpumem[dest] = v
-		default:
-			cudaLogf("write %v to GPU register", mem)
-			m.gpumem[dest] = mem
-		}
-
-		if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
-			if err = node.bindCopy(v); err != nil {
-				return errors.Wrapf(err, "TraceExec failed to bind copy")
-			}
-		} else {
-			cudaLogf("bind v to node %v", node.Name())
-			cudaLogf("v %p %v", v, v.Pointer())
-			node.bind(v)
-		}
-
-		// this is a gradient node then, we should also bind the value to the node's dualValue
-		if m.bindDV() && node.derivOf != nil {
-			for _, src := range node.derivOf {
-				if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {
-					continue
-				}
-
-				if src.boundTo != nil {
-					dv := dvUnit(src.boundTo)
-
-					add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
-
-					if d, err := add.UnsafeDo(dv.d, v); err == nil {
-						dv.SetDeriv(d)
-						src.bind(dv)
-					} else {
-						return err
-					}
-				}
-			}
-
-		}
-		m.watchedLogf("Written To: %v | Converted from Memory %t | v: %v", instr.writeTo, convertedFromMem, v.Pointer())
-		m.enterLoggingContext()
-		m.watchedLogf(m.valueFmt, v)
-		m.leaveLoggingContext()
-		return nil
-	}
-
-usecpu:
-	cudaLogf("Using CPU for %v", instr.op)
-
-	// Read
 	m.watchedLogf("Inputs:")
 	m.enterLoggingContext()
 	var inputs []Value
 	for _, reg := range instr.readFrom {
-		v, mem := m.getValue(reg)
-		switch {
-		case v == nil && mem != nil:
-			dev := reg.device
-			ctx := m.Contexts()[int(dev)]
-
-			// walk the instructions backwards
-			var prev tapeInstr
-			for i := m.pc - 1; i >= 0; i-- {
-				prev = m.p.instructions[i]
-				if prev.writes() == reg {
-					break
-				}
-			}
-			var n *Node
-			var f fragment
-			for n, f = range m.p.m {
-				if f.has(prev) {
-					break
-				}
-			}
-			v := n.Value()
-			devPtrToValue(ctx, v, mem.(cu.DevicePtr))
-
-			cudaLogf("using n.Value: \n%v", n.Value())
-			inputs = append(inputs, n.Value())
-			continue
-
-		case v != nil:
-			inputs = append(inputs, v)
-		case v == nil && m == nil:
-			err = errors.Errorf("Cannot extract from nil memory")
-			return
-		}
-
+		v := m.getValue(reg)
+		inputs = append(inputs, v)
 		m.watchedLogf(m.valueFmt, v)
 	}
 	m.leaveLoggingContext()
 
-	// Execute
+	toDev := instr.writeTo.device
 	var v Value
-	switch {
-	case instr.preAllocated:
-		if pd, ok := instr.op.(UsePreallocDoer); ok {
-			p, _ := m.getValue(instr.writeTo)
-			if p == nil {
-				if v, err = instr.op.Do(inputs...); err != nil {
-					return errors.Wrapf(err, opDoFail)
+	switch op := instr.op.(type) {
+	case CUDADoer:
+		prealloc := m.getValue(instr.writeTo)
+		if v, err = op.CUDADo(m, toDev, prealloc, inputs...); err != nil {
+			return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
+		}
+	case CLDoer:
+	default:
+		switch {
+		case instr.preAllocated:
+			if pd, ok := instr.op.(UsePreallocDoer); ok {
+				p := m.cpumem[instr.writeTo.id]
+				if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
+					return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
 				}
 			} else {
-				if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
-					return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo)
+				// TODO: maybe warn?
+				if v, err = instr.op.Do(inputs...); err != nil {
+					return errors.Wrap(err, opDoFail)
 				}
 			}
+		case instr.useUnsafe:
+			if ud, ok := instr.op.(UnsafeDoer); ok {
+				if v, err = ud.UnsafeDo(inputs...); err != nil {
+					return errors.Wrap(err, "Failed to carry UnsafeDo()")
+				}
+			} else {
+				// TODO: warn?
+				if v, err = instr.op.Do(inputs...); err != nil {
+					return errors.Wrap(err, opDoFail)
+				}
+			}
+		default:
+			if v, err = instr.op.Do(inputs...); err != nil {
+				return errors.Wrap(err, opDoFail)
+			}
+		}
 
-		} else {
-			// TODO: maybe warn?
-			if v, err = instr.op.Do(inputs...); err != nil {
-				return errors.Wrap(err, opDoFail)
-			}
-		}
-	case instr.useUnsafe:
-		if ud, ok := instr.op.(UnsafeDoer); ok {
-			if v, err = ud.UnsafeDo(inputs...); err != nil {
-				return errors.Wrap(err, "Failed to carry UnsafeDo()")
-			}
-		} else {
-			// TODO: warn?
-			if v, err = instr.op.Do(inputs...); err != nil {
-				return errors.Wrap(err, opDoFail)
-			}
-		}
-	default:
-		if v, err = instr.op.Do(inputs...); err != nil {
-			return errors.Wrap(err, opDoFail)
-		}
 	}
-
 	m.watchedLogf("Result:")
 	m.enterLoggingContext()
 	m.watchedLogf(m.valueFmt, v)
@@ -408,5 +244,10 @@ usecpu:
 	m.enterLoggingContext()
 	m.watchedLogf(m.valueFmt, v)
 	m.leaveLoggingContext()
+
+	return nil
+}
+
+func (instr deviceTransport) exec(m *tapeMachine) error {
 	return nil
 }

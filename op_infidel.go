@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"fmt"
 	"hash"
 	"hash/fnv"
 
@@ -66,3 +67,30 @@ func (op readOp) Hashcode() uint32 {
 }
 
 func (op readOp) isStmt() bool { return true }
+
+// devTrans is a dummy Op, used to aid in creating the program that is run in a *tapeMachine. It is inserted not into the graph, but into a slice of sorted nodes, and will not show up in thegraph.
+type devTrans struct {
+	from, to Device
+}
+
+func (op devTrans) Arity() int                                   { panic("not implemented") }
+func (op devTrans) Type() hm.Type                                { panic("not implemented") }
+func (op devTrans) InferShape(...DimSizer) (tensor.Shape, error) { panic("not implemented") }
+func (op devTrans) Do(...Value) (Value, error)                   { panic("not implemented") }
+func (op devTrans) ReturnsPtr() bool                             { return false }
+func (op devTrans) CallsExtern() bool                            { return true }
+func (op devTrans) OverwritesInput() int                         { return -1 }
+func (op devTrans) WriteHash(h hash.Hash)                        { fmt.Fprintf(h, "from:%vto%v", op.from, op.to) }
+func (op devTrans) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op devTrans) String() string { return fmt.Sprintf("[CP %v %v]", op.from, op.to) }
+func (op devTrans) isStmt() bool   { return true }
+
+func (op devTrans) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+	return nil, nil
+}
+func (op devTrans) CUDAFuncName() string { return op.String() }

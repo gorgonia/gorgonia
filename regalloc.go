@@ -2,12 +2,11 @@ package gorgonia
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/xtgo/set"
 )
 
-// this file holds all the code that relates to registrer allocation
+// this file holds all the code that relates to register allocation
 // a lot of the code is shamelessly copied from my previous HIL work, the thirteenthfloor
 // TODO: cleanup
 
@@ -51,25 +50,6 @@ func (i *interval) fix() {
 		}
 	}
 }
-
-// func (i *interval) setTo(to int) {
-// 	if to < i.start {
-// 		// invalid To
-// 		panic("to  < start")
-// 	}
-
-// 	if to < i.end {
-// 		uPs := i.usePositions
-// 		sort.Ints(i.usePositions)
-
-// 		maxUP := uPs[len(uPs)-1]
-// 		if to >= maxUP {
-// 			i.end = to
-// 		}
-// 	} else if to > i.end {
-// 		i.end = to
-// 	}
-// }
 
 func (i *interval) addRange(from, to int) {
 	if to < from {
@@ -149,95 +129,6 @@ type intervalRange struct {
 	from, to int
 }
 
-/*
-	Notes on handling the live set:
-
-	1. We load all the SSAs listed in the block's LiveIn
-	2. Then we load all the SSAs used as input in this block Phi nodes
-		- The reason for this is so that those SSAs can have intervals created
-		  that are live in this block (well, they are kinda live)
-	3. These input SSAs are temporary only, because a path-dependent liveset will be calculated below
-
-	Consider a CFG that looks like this:
-
-                           BLOCK 1           BLOCK 3
-                           +-------+        +-------+
-                     +---->| x = 1 +------->| y = 3 +----------------+
-        BLOCK 0      |     +-------+        | use x |                v  BLOCK 4
-       +-------+     |                      +-------+              +-------------+
-       |       |+----+                                             | x = ϕ(1, 2) |
-       +-------+     |     BLOCK 2                                 +-------------+
-                     |     +-------+                                 ^
-                     +---->| x = 2 +---------------------------------+
-                           +-------+
-
-	`x = 1` needs to be live in BLOCK 1, BLOCK 3 and BLOCK 4
-	`x = 2` needs to be live in BLOCK 2 and BLOCK 4.
-
-	The solution: in BLOCK 4, load `x = 1` and `x = 2` so they can be considered live in Block 4.
-
-	The interval building process comes to BLOCK 3 next. It considers the SSAs that are live in BLOCK 4.
-	If `x = 2` is live in BLOCK 4, it's Bad News with capital letters (see comment below).
-
-	The solution: remove the InputSSAs of the Phi nodes when we're leaving this block.
-*/
-// TODO: rephrase above to fit this package's function.
-// It's like the above, but without basic blocks, phi nodes, etc, making it a LOT simpler
-func buildIntervals(sorted Nodes) map[*Node]*interval {
-	intervals := make(map[*Node]*interval)
-
-	var g *ExprGraph
-	for _, n := range sorted {
-		if g == nil && n.g != nil {
-			g = n.g
-		}
-
-		intervals[n] = newInterval()
-	}
-
-	instructions := len(sorted)
-	for i := len(sorted) - 1; i >= 0; i-- {
-		n := sorted[i]
-		instrNum := i
-		nInter := intervals[n]
-
-		// inputs will be live the entire program
-		if n.isInput() {
-			nInter.addRange(instrNum, instructions)
-			continue
-		}
-		nInter.addRange(instrNum, instrNum)
-
-		for _, child := range n.children {
-			iv, ok := intervals[child]
-			if !ok {
-				parents := g.to[n]
-				for i, from := range parents {
-					ioutil.WriteFile(fmt.Sprintf("n_%d.dot", i), []byte(from.ToDot()), 0644)
-				}
-			}
-
-			iv.addUsePositions(instrNum)
-			// iv.setTo(instrNum)
-		}
-		// assume all derivations will be used at the end
-		if len(n.derivOf) > 0 {
-			for _, d := range n.derivOf {
-				if d.isInput() {
-					nInter.addUsePositions(instructions)
-					break
-				}
-			}
-		}
-	}
-
-	for _, iv := range intervals {
-		iv.fix()
-	}
-
-	return intervals
-}
-
 type regalloc struct {
 	cpucount      int
 	gpucount      int
@@ -271,18 +162,25 @@ func (ra *regalloc) allocArg(nInterv *interval) {
 
 func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	// create new write to if overwriteInput and the used register is stil live
-	compileLogf("NodeID: %x returns pointer", node.ID())
+	compileLogf("Allocating MutableOp NodeID: %x returns pointer", node.ID())
 	compileLogf("Op: %v", node.op)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
 	var writeTo register
 	var reads []*interval
-	for _, child := range node.children {
+
+	var children Nodes
+	var ok bool
+	if children, ok = ra.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
+	for _, child := range children {
 		cReplace := ra.df.replacements[child]
 		repInterv := ra.df.intervals[cReplace]
 		reads = append(reads, repInterv)
 	}
+	compileLogf("Read %v", reads)
 
 	var letStmts Nodes
 	for _, parent := range node.g.To(node) {
@@ -360,9 +258,19 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 }
 
 func (ra *regalloc) allocImmutableOp(node *Node, nInterv *interval) {
+	compileLogf("Allocating Immutable Op")
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	var writeTo register
 	var reads []*interval
-	for _, child := range node.children {
+
+	var children Nodes
+	var ok bool
+	if children, ok = ra.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
+	for _, child := range children {
 		cReplace := ra.df.replacements[child]
 		repInterv := ra.df.intervals[cReplace]
 		reads = append(reads, repInterv)
@@ -381,6 +289,15 @@ func (ra *regalloc) allocImmutableOp(node *Node, nInterv *interval) {
 	nInterv.result = writeTo
 }
 
+func (ra *regalloc) allocStatement(node *Node, nInterv *interval) {
+	var writeTo register
+	switch op := node.op.(type) {
+	case devTrans:
+		writeTo = ra.newReg(op.to)
+	}
+	nInterv.result = writeTo
+}
+
 func (ra *regalloc) alloc(sorted Nodes) {
 	compileLogf("Allocating registers")
 	enterLoggingContext()
@@ -392,6 +309,8 @@ func (ra *regalloc) alloc(sorted Nodes) {
 		replacement := ra.df.replacements[node]
 		nInterv := ra.df.intervals[replacement]
 
+		compileLogf("replacement %v, interval %v", replacement, nInterv)
+
 		if node != replacement {
 			compileLogf("Merging")
 			ra.df.intervals[node].merge(nInterv)
@@ -401,6 +320,8 @@ func (ra *regalloc) alloc(sorted Nodes) {
 		switch {
 		case node.isArg():
 			ra.allocArg(nInterv)
+		case node.isStmt:
+			ra.allocStatement(node, nInterv)
 		case node.op.ReturnsPtr():
 			ra.allocMutableOp(node, nInterv)
 		default:
