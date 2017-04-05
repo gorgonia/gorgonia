@@ -39,6 +39,8 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 // External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
 type External interface {
 	HasFunc(string) bool
+	Signal() // signals the machine to do work
+	Sync() chan struct{}
 }
 
 // An Op is a symbolic representation of an operation

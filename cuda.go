@@ -17,7 +17,8 @@ const (
 	// memory allocation routines from the driver or runtime API is always aligned to at
 	// least 256 bytes.
 	//
-	memalign = 32
+	memalign    = 32
+	scalarAlign = 8
 )
 
 var cudaStdLib map[string]string
@@ -50,16 +51,13 @@ type ExternMetadata struct {
 	freeMem  []int64 // free memory available in this context
 	totalMem []int64 // total memory available in this context
 
-	// "heap"
-	// TODO: maybe add a LRU cache for freeing memory? Come back here when you run into OutOfMemory errors from CUDA.
-	arena []map[uint]*memoryQueue // key is the size of the memory in bytes. Only CUDA memory plz
-
-	a             []*bfc
-	b             batchedBLAS
-	c             []*cu.BatchedContext
-	d             []cu.Device
+	a             []*bfc               // arena
+	b             batchedBLAS          // blas
+	c             []*cu.BatchedContext // context
+	d             []cu.Device          // device
 	hasWork       []bool
-	workAvailable chan struct{}
+	workAvailable chan bool
+	syncChan      chan struct{}
 
 	m map[string][]cu.Module
 	f map[string][]cu.Function
@@ -134,7 +132,9 @@ func (md *ExternMetadata) blockThread(n, dev int) (blocks, threads int) {
 }
 
 // WorkAvailable returns a channel of empty struct, which is used to signal to the VM when there is work available. The VM will then call the DoWork method
-func (m *ExternMetadata) WorkAvailable() <-chan struct{} { return m.workAvailable }
+func (m *ExternMetadata) WorkAvailable() <-chan bool { return m.workAvailable }
+
+func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
@@ -183,7 +183,7 @@ func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
 func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
 	d := int(dev)
-	if d >= len(m.arena) {
+	if d >= len(m.a) {
 		return nil, noopError{} // this should not be a noopError
 	}
 
@@ -199,7 +199,7 @@ func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
 // Put puts a previously allocated memory slab of the provided size back into the pool
 func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
 	d := int(dev)
-	if d >= len(m.arena) {
+	if d >= len(m.a) {
 		return // wat??
 	}
 
@@ -243,7 +243,8 @@ func (m *ExternMetadata) init(sizes []int64) {
 		return
 	}
 
-	m.workAvailable = make(chan struct{})
+	m.workAvailable = make(chan bool)
+	m.syncChan = make(chan struct{})
 	m.a = make([]*bfc, devices)
 	m.c = make([]*cu.BatchedContext, devices)
 	m.hasWork = make([]bool, devices)
@@ -259,7 +260,6 @@ func (m *ExternMetadata) init(sizes []int64) {
 
 	m.freeMem = make([]int64, devices)
 	m.totalMem = make([]int64, devices)
-	m.arena = make([]map[uint]*memoryQueue, devices)
 
 	for i := range m.c {
 		dev, err := cu.GetDevice(i)
@@ -311,14 +311,12 @@ func (m *ExternMetadata) init(sizes []int64) {
 		m.totalMem[i] = total
 		m.a[i] = newBFC(memalign)
 
-		var allocsize int64 = 2 * sizes[i]
+		var allocsize int64 = 2*sizes[i] + minAllocSize
 		if allocsize > free {
 			allocsize = free
 		}
-
 		ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
 		m.a[i].reserve(uintptr(ptr), allocsize)
-		// m.arena[i] = make(map[uint]*memoryQueue)
 
 		m.c[i] = cu.NewBatchedContext(ctx, dev)
 		go m.collectWork(i, m.c[i].WorkAvailable())
@@ -350,7 +348,7 @@ func (m *ExternMetadata) initFail() {
 func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
 	for range workAvailable {
 		m.hasWork[devID] = true
-		m.workAvailable <- struct{}{}
+		m.workAvailable <- false
 	}
 }
 
@@ -359,13 +357,13 @@ func (m *ExternMetadata) collectBLASWork() {
 	if m.b != nil {
 		for range m.b.WorkAvailable() {
 			m.blasHasWork = true
-			m.workAvailable <- struct{}{}
+			m.workAvailable <- false
 		}
 	}
 }
 
-// signal sends a signal down the workavailable channel, telling the VM to call the DoWork method
-func (m *ExternMetadata) signal() { m.workAvailable <- struct{}{} }
+// Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
+func (m *ExternMetadata) Signal() { m.workAvailable <- true }
 
 func init() {
 	log.Println("Using CUDA build")

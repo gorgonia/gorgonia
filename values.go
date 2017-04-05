@@ -99,58 +99,6 @@ type CopierFrom interface {
 // 	SetAll(interface{}) error
 // }
 
-// memoryQueue is a queue of last used memories. It's adapted from Rodrigo Moraes' implementation
-// which has slightly more book keeping than a simple FIFO queue. There are some simple optimization points
-// that can be easily won - the calculation of head and tail uses a modulo for example - it can easily
-// be eliminated with extra fields in the struct. But I'll leave that to future work when it really becomes
-// a bottleneck.
-//
-// https://gist.github.com/moraes/2141121
-type memoryQueue struct {
-	data    []Memory
-	memsize uint
-
-	size  int
-	head  int
-	tail  int
-	count int
-}
-
-func newMemoryQueue(memsize uint) *memoryQueue {
-	return &memoryQueue{
-		data:    make([]Memory, 32),
-		memsize: memsize,
-
-		size: 32,
-	}
-}
-
-func (q *memoryQueue) add(mem Memory) {
-	// resize if need be
-	if q.head == q.tail && q.count > 0 {
-		mems := make([]Memory, len(q.data)+q.size)
-		copy(mems, q.data[q.head:])
-		copy(mems[len(q.data)-q.head:], q.data[:q.head])
-		q.head = 0
-		q.tail = len(q.data)
-		q.data = mems
-	}
-	q.data[q.tail] = mem
-	q.tail = (q.tail + 1) % len(q.data)
-	q.count++
-}
-
-func (q *memoryQueue) get() (Memory, error) {
-	if q.count == 0 {
-		return nil, noopError{}
-	}
-
-	mem := q.data[q.head]
-	q.head = (q.head + 1) % len(q.data)
-	q.count--
-	return mem, nil
-}
-
 // makeValue creates a value given a type and shape. The default value is the zero value of the type.
 func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	var dt tensor.Dtype
@@ -185,4 +133,66 @@ func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 		return
 	}
 	panic("Unreachable")
+}
+
+func makeValueFromMem(t hm.Type, s tensor.Shape, mem Memory) (retVal Value, err error) {
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(t); err != nil {
+		return
+	}
+	if s.IsScalar() {
+		return makeScalarFromMem(dt, mem)
+	}
+
+	switch tt := t.(type) {
+	case TensorType:
+		memsize := calcMemSize(dt, s)
+		return tensor.New(tensor.Of(dt), tensor.WithShape(s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize))), nil
+	case tensor.Dtype:
+		return makeScalarFromMem(tt, mem)
+	default:
+		err = errors.Errorf(nyiTypeFail, "MakeValue", tt)
+		return
+	}
+	panic("Unreachable")
+}
+
+func makeScalarFromMem(dt tensor.Dtype, mem Memory) (retVal Value, err error) {
+	switch dt {
+	case tensor.Float64:
+		retVal = (*F64)(unsafe.Pointer(mem.Uintptr()))
+	case tensor.Float32:
+		retVal = (*F32)(unsafe.Pointer(mem.Uintptr()))
+	case tensor.Int:
+		retVal = (*I)(unsafe.Pointer(mem.Uintptr()))
+	case tensor.Int64:
+		retVal = (*I64)(unsafe.Pointer(mem.Uintptr()))
+	case tensor.Int32:
+		retVal = (*I32)(unsafe.Pointer(mem.Uintptr()))
+	case tensor.Byte:
+		retVal = (*U8)(unsafe.Pointer(mem.Uintptr()))
+	case tensor.Bool:
+		retVal = (*B)(unsafe.Pointer(mem.Uintptr()))
+	default:
+		err = errors.Errorf(nyiTypeFail, "makeScalarFromMem", dt)
+	}
+	return
+}
+
+func logicalSize(s tensor.Shape) int {
+	if s.IsScalar() {
+		return 1
+	}
+	return s.TotalSize()
+}
+
+func calcMemSize(dt tensor.Dtype, s tensor.Shape) int64 {
+	var elemSize int64
+	if s.IsScalar() {
+		elemSize = 1
+	} else {
+		elemSize = int64(s.TotalSize())
+	}
+	dtSize := int64(dt.Size())
+	return elemSize * dtSize
 }

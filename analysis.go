@@ -122,6 +122,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 
 		compileLogf("Working on %v. Replacement %v. Device %v", node, n, dev)
 		var incr int
+		var useReplacement bool
 		replacementChildren := make(Nodes, len(n.children))
 		enterLoggingContext()
 		for j, child := range n.children {
@@ -130,6 +131,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 
 			compileLogf("Working on child :%v. Device: %v, Parent Device %v", c, childDev, dev)
 			if childDev != dev {
+				useReplacement = true
 				if repl, ok := df.devTransRepl[c]; ok {
 					replacementChildren[j] = repl
 					continue
@@ -151,7 +153,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 		}
 		leaveLoggingContext()
 
-		if incr > 0 {
+		if useReplacement {
 			df.devTransChildren[n] = replacementChildren
 		}
 
@@ -195,7 +197,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 // TODO: rephrase above to fit this package's function.
 // It's like the above, but without basic blocks, phi nodes, etc, making it a LOT simpler
 func (df *dataflow) buildIntervals(sorted Nodes) {
-	cudaLogf("Building intervals for %v", sorted)
+	compileLogf("Building intervals for %v", sorted)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
@@ -213,7 +215,6 @@ func (df *dataflow) buildIntervals(sorted Nodes) {
 	instructions := len(sorted)
 	for i := len(sorted) - 1; i >= 0; i-- {
 		n := sorted[i]
-		logf("Working on %v", n)
 		instrNum := i
 		nInter := intervals[n]
 
@@ -232,8 +233,6 @@ func (df *dataflow) buildIntervals(sorted Nodes) {
 			children = n.children
 		}
 
-		logf("children of %v :%v", n, children)
-
 		for _, child := range children {
 			iv, ok := intervals[child]
 			if !ok {
@@ -243,7 +242,6 @@ func (df *dataflow) buildIntervals(sorted Nodes) {
 				// 	ioutil.WriteFile(fmt.Sprintf("n_%d.dot", i), []byte(from.ToDot()), 0644)
 				// }
 			}
-			logf("child %v", child)
 			iv.addUsePositions(instrNum)
 			// iv.setTo(instrNum)
 		}

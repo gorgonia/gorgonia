@@ -24,7 +24,13 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	cudaLogf("checking if input is scalar")
 	a := inputs[0]
 	if a.Shape().IsScalar() {
-		return op.do(a)
+		extern.Signal()
+		<-extern.Sync()
+
+		if retVal, err = op.do(a); err != nil {
+			return
+		}
+		return Copy(prealloc, retVal)
 	}
 
 	dt := a.Dtype()
@@ -32,6 +38,8 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
 	if !extern.HasFunc(name) {
 		cudaLogf("extern does not have func %q", name)
+		extern.Signal()
+		<-extern.Sync()
 		return op.do(a)
 	}
 
@@ -48,7 +56,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 		memA := cu.DevicePtr(a.Uintptr())
 		ctx.Memcpy(mem, memA, memSize)
 	}
-	size := int64(a.Shape().TotalSize())
+	size := logicalSize(a.Shape())
 
 	// blocks, threads := machine.(*tapeMachine).blockThread(int(size), int(dev))
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
@@ -95,24 +103,31 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	var mem, memB cu.DevicePtr
 	var size int64
 	switch {
-	case hasFn && (!op.isArith() || as.IsScalar() || bs.IsScalar()):
+	case hasFn && (op.isArith() && !as.IsScalar() && !bs.IsScalar()):
 		if prealloc == nil {
 			mem = cu.DevicePtr(a.Uintptr())
 			retVal = a
+			size = int64(logicalSize(a.Shape()))
 		} else {
 			mem = cu.DevicePtr(prealloc.Uintptr())
 			memA := cu.DevicePtr(a.Uintptr())
 			memSize := int64(a.MemSize())
 			ctx.Memcpy(mem, memA, memSize)
 
+			size = int64(logicalSize(prealloc.Shape()))
 			retVal = prealloc
 		}
 
 		memB = cu.DevicePtr(b.Uintptr())
 	default:
+		cudaLogf("HELLO: hasFn %v, op.IsArith %v | ascalar %t, bscalar %t", hasFn, op.isArith(), as.IsScalar(), bs.IsScalar())
+		extern.Signal()
+		<-extern.Sync()
 		if prealloc != nil {
+			// cudaLogf("Using Prealloc: %v  %v", prealloc, inputs)
 			return op.UsePreallocDo(prealloc, inputs...)
 		}
+		cudaLogf("Using DO")
 		return op.Do(inputs...)
 	}
 

@@ -292,9 +292,10 @@ func (l *freelist) splitOrRemove(block *memblock, aligned, size int64) {
 // https://github.com/angrave/SystemProgramming/wiki/Memory,-Part-2%3A-Implementing-a-Memory-Allocator
 // https://www.codeproject.com/Articles/14525/Heap-Manager-for-Allocating-Memory-from-a-Shared-M
 type bfc struct {
-	start     uintptr
-	size      int64
-	blockSize int64
+	start        uintptr
+	size         int64
+	blockSize    int64
+	reservedSize int64
 
 	freelist *freelist
 	used     map[uintptr]int64 // keeps track of the sizes of each block
@@ -306,9 +307,7 @@ type bfc struct {
 }
 
 func newBFC(alignment int64) *bfc {
-	// aligned := size - (size % blockSize)
 	b := &bfc{
-		// size:      aligned,
 		blockSize: alignment,
 		freelist:  new(freelist),
 		used:      make(map[uintptr]int64),
@@ -320,8 +319,18 @@ func (b *bfc) reserve(start uintptr, size int64) {
 	logf("RESERVE starts: 0x%x | size: %v", start, size)
 	b.start = start
 	b.size = size - (size % b.blockSize)
+	b.reservedSize = size
 	b.freelist.insert(newMemblock(0, size))
 	logf("Start: 0x%x | Size %v", b.start, b.size)
+}
+
+func (b *bfc) release() uintptr {
+	retVal := b.start
+	b.start = 0
+	b.size = 0
+	b.freelist = new(freelist)
+	b.used = make(map[uintptr]int64)
+	return retVal
 }
 
 func (b *bfc) alloc(size int64) (mem uintptr, err error) {
@@ -360,7 +369,11 @@ func (b *bfc) free(address uintptr) {
 	a := address - b.start // get internal address
 	size, ok := b.used[a]
 	if !ok {
-		panic("Cannot free")
+		logf("a: 0x%x | 0x%x", a, address)
+		logf("a: %v | %v %v", a, address, b.start)
+		return
+		// panic("Cannot free")
+
 	}
 	block := newMemblock(a, size)
 	logf("FREE %v", block)
@@ -369,9 +382,9 @@ func (b *bfc) free(address uintptr) {
 
 	b.allocated -= size
 	b.frees++
-	b.coalesce()
-	// if float64(b.frees)/float64(b.allocs) >= freeAllocTresh {
-	// }
+	if float64(b.frees)/float64(b.allocs) >= freeAllocTresh {
+		b.coalesce()
+	}
 }
 
 func (b *bfc) bestFit(size int64) (best *memblock) {

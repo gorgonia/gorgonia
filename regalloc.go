@@ -173,6 +173,7 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	var children Nodes
 	var ok bool
 	if children, ok = ra.df.devTransChildren[node]; !ok {
+		compileLogf("replacement children not found")
 		children = node.children
 	}
 	for _, child := range children {

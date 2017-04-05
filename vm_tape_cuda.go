@@ -226,15 +226,43 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 			if src.boundTo != nil {
 				dv := dvUnit(src.boundTo)
+				cudaLogf("dv.d 0x%x v 0x%x | writeTo: %v", dv.d.Uintptr(), v.Uintptr(), instr.writeTo)
+				dev := instr.writeTo.device
+				switch dev {
+				case CPU:
+					add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
+					if d, err := add.UnsafeDo(dv.d, v); err == nil {
+						dv.SetDeriv(d)
+						src.bind(dv)
+					} else {
+						return err
+					}
+				default:
+					// the CPU method is correct. This method is correct for MOST cases, but will not be correct under some other circumstances
+					ctx := m.Contexts()[int(dev)]
+					ctx.MemcpyDtoH(dv.d.Pointer(), cu.DevicePtr(v.Uintptr()), instr.size)
 
-				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
-
-				if d, err := add.UnsafeDo(dv.d, v); err == nil {
-					dv.SetDeriv(d)
-					src.bind(dv)
-				} else {
-					return err
 				}
+
+				// switch cd := op.(type) {
+				// case CUDADoer:
+				// 	cudaLogf("CUDADOING CD")
+				// 	if d, err := cd.CUDADo(m, 0, dv.d, dv.d, v); err == nil {
+				// 		dv.SetDeriv(d)
+				// 		src.bind(dv)
+				// 	} else {
+				// 		return err
+				// 	}
+				// case UnsafeDoer:
+				// 	if d, err := cd.UnsafeDo(dv.d, v); err == nil {
+				// 		dv.SetDeriv(d)
+				// 		src.bind(dv)
+				// 	} else {
+				// 		return err
+				// 	}
+
+				// }
+
 			}
 		}
 
@@ -248,41 +276,6 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	return nil
 }
 
-// func (instr *readInstr) exec(m *tapeMachine) (err error) {
-// 	m.logf("Executing READ - read from %v", instr.readFrom)
-// 	v := m.getValue(instr.readFrom)
-// 	if v == nil {
-// 		m.logf("ERR1")
-// 		return errors.Errorf(nyiFail, "Cannot read instruction")
-// 	}
-
-// 	var v2 Value
-// 	if instr.readFrom.device != CPU && !instr.s.IsScalar() {
-// 		var dt tensor.Dtype
-// 		if dt, err = dtypeOf(instr.t); err != nil {
-// 			return errors.Wrapf(err, dtypeExtractionFail, instr.t)
-// 		}
-// 		vt := tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...))
-
-// 		// ctx := m.Contexts()[int(instr.readFrom.device)]
-// 		// ctx.MemcpyDtoH(vt.Pointer(), cu.DevicePtr(v.Uintptr()), int64(vt.MemSize()))
-
-// 		v2 = vt
-
-// 	} else {
-// 		if v2, err = CloneValue(v); err != nil {
-// 			m.logf("ERR2")
-// 			return errors.Wrap(err, cloneFail)
-// 		}
-
-// 	}
-
-// 	m.logf("v2 : %v %v", v2, v2.Uintptr())
-
-// 	*instr.into = v2
-// 	return nil
-// }
-
 func (instr deviceTransport) exec(m *tapeMachine) (err error) {
 	from := m.getValue(instr.from)
 	to := m.getValue(instr.to)
@@ -295,9 +288,14 @@ func (instr deviceTransport) exec(m *tapeMachine) (err error) {
 		ctx.MemcpyHtoD(cu.DevicePtr(to.Uintptr()), from.Pointer(), memsize)
 	case instr.from.device != CPU && instr.to.device == CPU:
 		dt := from.Dtype()
-		memsize := int64(from.Shape().TotalSize()) * int64(dt.Size())
+		memsize := calcMemSize(dt, from.Shape())
 		ctx = m.Contexts()[int(instr.from.device)]
 		ctx.MemcpyDtoH(to.Pointer(), cu.DevicePtr(from.Uintptr()), memsize)
+
+		// when copying from device to host, it's assumed that the host will want to immediately use
+		// so signal the DoWork
+		m.Signal()
+		<-m.Sync()
 	}
 
 	return nil

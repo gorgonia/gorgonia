@@ -268,13 +268,14 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op elemBinOp) ReturnsPtr() bool {
-	if _, ok := op.arg0.(TensorType); ok {
-		return true
-	} else if _, ok := op.arg1.(TensorType); ok {
-		return true
-	}
+	// if _, ok := op.arg0.(TensorType); ok {
+	// 	return true
+	// } else if _, ok := op.arg1.(TensorType); ok {
+	// 	return true
+	// }
 
-	return false
+	// return false
+	return true
 }
 
 func (op elemBinOp) OverwritesInput() int {
@@ -312,7 +313,10 @@ func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value
 		return pd.UsePreallocDo(prealloc, op.retSame, inputs...)
 	}
 
-	return op.Do(inputs...)
+	if retVal, err = op.Do(inputs...); err != nil {
+		return
+	}
+	return Copy(prealloc, retVal)
 }
 
 // Fulfils UnsafeDoer interface
@@ -451,10 +455,11 @@ func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) {
 }
 
 func (op elemUnaryOp) ReturnsPtr() bool {
-	if op.argTensor {
-		return true
-	}
-	return false
+	// if op.argTensor {
+	// 	return true
+	// }
+	// return false
+	return true
 }
 
 func (op elemUnaryOp) OverwritesInput() int {

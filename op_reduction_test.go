@@ -159,6 +159,7 @@ func TestSumOpDiff(t *testing.T) {
 	m = NewTapeMachine(prog, locMap)
 	err = m.RunAll()
 	if err != nil {
+		t.Errorf("%v", prog)
 		t.Error(err)
 	}
 

@@ -26,6 +26,9 @@ func TypeOf(v Value) hm.Type {
 
 // ValueEq is the equality function for values
 func ValueEq(a, b Value) bool {
+	if a == nil && b == nil {
+		return true
+	}
 	switch at := a.(type) {
 	case Scalar:
 		if bt, ok := b.(Scalar); ok {

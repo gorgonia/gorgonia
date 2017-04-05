@@ -179,16 +179,21 @@ func (m *tapeMachine) RunAll() (err error) {
 	defer runtime.UnlockOSThread()
 
 	workAvailable := m.ExternMetadata.WorkAvailable()
+	syncChan := m.ExternMetadata.Sync()
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
 
 	go m.runall(errChan, doneChan)
 	for {
 		select {
-		case <-workAvailable:
+		case sychronous := <-workAvailable:
+			log.Printf("SYNCHRONOUS %v", sychronous)
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
 				return err
+			}
+			if sychronous {
+				syncChan <- struct{}{}
 			}
 		case err := <-errChan:
 			return errors.Wrapf(err, "PC: %d", m.pc)
@@ -461,26 +466,27 @@ func (instr alloc) writes() register  { return instr.writeTo }
 
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
-	dev := instr.writeTo.device
-
-	size := instr.s.TotalSize()
 
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(instr.t); err != nil {
 		return errors.Wrapf(err, dtypeExtractionFail, instr.t)
 	}
 
+	dev := instr.writeTo.device
 	var v Value
 	switch dev {
 	case CPU:
-		v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...))
+		v, err = makeValue(instr.t, instr.s)
 	default:
 		var mem Memory
-		memsize := int64(size) * int64(dt.Size())
+		memsize := calcMemSize(dt, instr.s)
 		if mem, err = m.ExternMetadata.Get(dev, memsize); err != nil {
 			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
 		}
-		v = tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...), tensor.FromMemory(mem.Uintptr(), uintptr(memsize)))
+		v, err = makeValueFromMem(instr.t, instr.s, mem)
+	}
+	if err != nil {
+		return
 	}
 
 	m.writeValue(instr.writeTo, v)
@@ -582,7 +588,7 @@ func newExecOp(n *Node) *execOp {
 	if err != nil {
 		panic(err)
 	}
-	size := int64(n.shape.TotalSize()) * int64(dt.Size())
+	size := calcMemSize(dt, n.Shape())
 
 	return &execOp{
 		op:     n.op,
@@ -602,7 +608,13 @@ type flushInstr struct{}
 func (instr flushInstr) exec(m *tapeMachine) error {
 	// m.logf("Executing DoWork")
 	// m.ExternMetadata.DoWork()
-	m.ExternMetadata.signal()
+	if m.WorkAvailable() == nil {
+		return nil
+	}
+	log.Printf("FLUSH %v %v", m.WorkAvailable(), m.Sync())
+	m.ExternMetadata.Signal()
+	log.Printf("%v", m.Sync())
+	<-m.Sync()
 	return nil
 }
 
@@ -666,11 +678,6 @@ func (instr deviceTransport) reads() []register {
 	return []register{instr.from}
 }
 func (instr deviceTransport) writes() register { return instr.to }
-
-// func (instr deviceTransport) exec(m *tapeMachine) error {
-
-// 	return nil
-// }
 
 func (instr deviceTransport) String() string {
 	return fmt.Sprintf("memcpy(%v, %v)", instr.to, instr.from)

@@ -159,9 +159,9 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 
 		switch d {
 		case CPU:
-			cg.cpumem += int64(dt.Size() * uintptr(node.Shape().TotalSize()))
+			cg.cpumem += calcMemSize(dt, node.Shape())
 		default:
-			cg.gpumem[int(d)] += int64(dt.Size() * uintptr(node.Shape().TotalSize()))
+			cg.gpumem[int(d)] += calcMemSize(dt, node.Shape())
 		}
 	case alloc:
 		if dt, err = dtypeOf(inst.t); err != nil {
@@ -178,9 +178,9 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 
 		switch d {
 		case CPU:
-			cg.cpumem += int64(dt.Size() * uintptr(inst.s.TotalSize()))
+			cg.cpumem += calcMemSize(dt, inst.s)
 		default:
-			cg.gpumem[int(d)] += int64(dt.Size() * uintptr(inst.s.TotalSize()))
+			cg.gpumem[int(d)] += calcMemSize(dt, inst.s)
 		}
 	case *execOp:
 		if !inst.op.ReturnsPtr() {
@@ -200,7 +200,6 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 		}
 
 	default:
-		cudaLogf("addinstr: %v", instr)
 		// panic("EHLP")
 	}
 }
