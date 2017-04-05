@@ -115,6 +115,15 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 			tt.hdr.Cap = int(memsize / tt.t.Size())
 
 			tt.flag |= unmanagedMem
+
+			switch tt.t {
+			case Float32:
+				tt.v = *(*[]float32)(unsafe.Pointer(tt.hdr))
+			case Float64:
+				tt.v = *(*[]float64)(unsafe.Pointer(tt.hdr))
+			default:
+				panic("Unsupported Dtype for using the FromMemory construction option")
+			}
 		default:
 			panic("Unsupported Tensor type")
 		}

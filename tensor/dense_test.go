@@ -33,6 +33,7 @@ func TestFromMemory(t *testing.T) {
 	if len(T.float32s()) != 200 {
 		t.Error("expected 200 float32s")
 	}
+	assert.Equal(t, make([]float32, 200), T.Data())
 
 	fail := func() { New(FromMemory(ptr, size), Of(Float32)) }
 	assert.Panics(t, fail, "Expected bad New() call to panic")
