@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -365,19 +366,10 @@ func TestBasicArithmetic(t *testing.T) {
 			continue
 		}
 
-		prog, locMap, err := Compile(g)
-		// t.Log(prog)
-		// t.Log(locMap)
-		if err != nil {
-			t.Errorf("Test %d: error while compiling: %v", i, err)
-			continue
-		}
-
-		// logger := log.New(os.Stderr, "", 0)
-		// m1 := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist())
-		m1 := NewTapeMachine(prog, locMap)
+		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %d: error while running %v", i, err)
+			runtime.GC()
 			continue
 		}
 
@@ -388,7 +380,10 @@ func TestBasicArithmetic(t *testing.T) {
 		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
 		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
 		if !as.cont {
+			prog := m1.Prog()
 			t.Logf("Test %d failed. Prog: %v", i, prog)
 		}
+
+		runtime.GC()
 	}
 }

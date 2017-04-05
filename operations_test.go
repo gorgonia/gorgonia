@@ -87,13 +87,7 @@ func TestMul(t *testing.T) {
 			}
 		}
 
-		prog, locMap, err := Compile(g)
-		if err != nil {
-			t.Errorf("Error while compiling %q. Err: %v", mts.name, err)
-			continue
-		}
-
-		m := NewTapeMachine(prog, locMap)
+		m := NewTapeMachine(g)
 		if err = m.RunAll(); err != nil {
 			t.Errorf("Error while executing %q. Err: %v", mts.name, err)
 			continue
@@ -239,13 +233,19 @@ var gtTests = []struct {
 }
 
 func TestGt(t *testing.T) {
+	defer runtime.GC()
 	for i, gtts := range gtTests {
+		// if i != 5 {
+		// 	continue
+		// }
 		g := NewGraph()
 		a := NodeFromAny(g, gtts.a, WithName("a"))
 		b := NodeFromAny(g, gtts.b, WithName("b"))
 
 		var ret *Node
 		var err error
+		logf("a: %v | %v", gtts.a, gtts.b)
+		logf("RETSAME %v", gtts.retSame)
 		ret, err = Gt(a, b, gtts.retSame)
 
 		switch {
@@ -264,9 +264,9 @@ func TestGt(t *testing.T) {
 			Grad(cost, a, b)
 		}
 
-		prog, locMap, err := Compile(g)
-		m1 := NewTapeMachine(prog, locMap)
+		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
+			t.Errorf("%v", m1.Prog())
 			t.Errorf("Test %d: %+v", i, err)
 			continue
 		}
@@ -312,8 +312,7 @@ func TestGt(t *testing.T) {
 	cost := Must(Sum(gt))
 	Grad(cost, T)
 
-	prog, locMap, err := Compile(g)
-	m1 := NewTapeMachine(prog, locMap)
+	m1 := NewTapeMachine(g)
 	if err = m1.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -357,19 +356,14 @@ func TestSoftMax(t *testing.T) {
 	if _, err := Grad(cost, x); err != nil {
 		t.Error(err)
 	}
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		t.Error(err)
-	}
-	// t.Log(prog)
 
-	m := NewTapeMachine(prog, locMap)
-	err = m.RunAll()
-	if err != nil {
+	m := NewTapeMachine(g)
+	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
 
 	var smg, xG Value
+	var err error
 	if smg, err = sm.Grad(); err != nil {
 		t.Error(err)
 	}
@@ -456,12 +450,8 @@ func TestSlice(t *testing.T) {
 			t.Errorf("Test %q failed to backprop: %+v", sts.name, err)
 			continue
 		}
-		prog, locMap, err := Compile(g)
-		if err != nil {
-			t.Errorf("Test %q failed to compile: %+v", sts.name, err)
-			continue
-		}
-		m1 := NewTapeMachine(prog, locMap)
+
+		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %q Runtime error %+v ", sts.name, err)
 			continue
@@ -521,13 +511,13 @@ func TestSlice(t *testing.T) {
 	sliced, _ := Slice(x, S(0))
 	cost := Must(Slice(sliced, S(0)))
 	Grad(cost, x)
-	prog, locMap, err := Compile(g)
-	m := NewTapeMachine(prog, locMap)
+
+	m := NewTapeMachine(g)
 
 	// mutate the graph before running
 	UnsafeLet(sliced, S(1))
 	UnsafeLet(cost, S(2))
-	if err = m.RunAll(); err != nil {
+	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -609,13 +599,7 @@ func TestSum(t *testing.T) {
 			continue
 		}
 
-		prog, locMap, err := Compile(g)
-		if err != nil {
-			t.Errorf("Test %q - Unable to compile. Err: %+v", sts.name, err)
-			continue
-		}
-
-		m := NewTapeMachine(prog, locMap)
+		m := NewTapeMachine(g)
 		if err = m.RunAll(); err != nil {
 			t.Errorf("Test %q - Runtime error: %v", sts.name, err)
 			continue

@@ -25,16 +25,15 @@ func TestDevCUDA(t *testing.T) {
 	xpy2s := Must(Slice(xpy2, S(0)))
 
 	logger := log.New(os.Stderr, "", 0)
-	prog, locMap, _ := Compile(g)
-	m := NewTapeMachine(prog, locMap, UseCudaFor(), WithLogger(logger))
+	m := NewTapeMachine(g, UseCudaFor(), WithLogger(logger))
 
+	prog, locMap, _ := Compile(g)
 	t.Logf("prog:\n%v\n", prog)
 	t.Logf("locMap %-v", FmtNodeMap(locMap))
-	// runtime.LockOSThread()
 	if err := m.RunAll(); err != nil {
 		t.Errorf("%+v", err)
 	}
-	// runtime.UnlockOSThread()
+
 	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 	t.Logf("x: %v", x.Value())
 	t.Logf("y: %v", y.Value())
@@ -50,8 +49,7 @@ func BenchmarkOneMilCUDA(b *testing.B) {
 	x := NewVector(g, Float32, WithShape(1000000), WithName("x"), WithValue(xT))
 	Must(Sigmoid(x))
 
-	prog, locMap, _ := Compile(g)
-	m := NewTapeMachine(prog, locMap, UseCudaFor())
+	m := NewTapeMachine(g, UseCudaFor())
 
 	// runtime.LockOSThread()
 	for n := 0; n < b.N; n++ {
@@ -70,10 +68,8 @@ func BenchmarkOneMil(b *testing.B) {
 	x := NewVector(g, Float32, WithShape(1000000), WithName("x"), WithValue(xT))
 	Must(Sigmoid(x))
 
-	prog, locMap, _ := Compile(g)
-	m := NewTapeMachine(prog, locMap)
+	m := NewTapeMachine(g)
 
-	// runtime.LockOSThread()
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
 			log.Printf("Failed at n: %d. Error: %v", n, err)
@@ -81,5 +77,4 @@ func BenchmarkOneMil(b *testing.B) {
 		}
 		m.Reset()
 	}
-	// runtime.UnlockOSThread()
 }

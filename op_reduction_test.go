@@ -39,8 +39,8 @@ func TestSumOpDiff(t *testing.T) {
 	// var x, y, a, b *Node
 	var xG, yG, aG, bG Value
 	// var xG, aG Value
-	var prog *program
-	var locMap map[*Node]register
+	// var prog *program
+	// var locMap map[*Node]register
 	var m *tapeMachine
 	var m2 *lispMachine
 	var err error
@@ -54,14 +54,9 @@ func TestSumOpDiff(t *testing.T) {
 
 	Grad(y, x)
 
-	prog, locMap, err = Compile(g)
-	if err != nil {
-		t.Error(err)
-	}
-
 	// ioutil.WriteFile("SumOp.dot", []byte(g.ToDot()), 0644)
 
-	m = NewTapeMachine(prog, locMap)
+	m = NewTapeMachine(g)
 	err = m.RunAll()
 	if err != nil {
 		t.Error(err)
@@ -104,13 +99,8 @@ func TestSumOpDiff(t *testing.T) {
 	WithName("y")(y)
 
 	Grad(y, x)
-	// var prog *program
-	prog, locMap, err = Compile(g)
-	if err != nil {
-		t.Error(err)
-	}
 
-	m = NewTapeMachine(prog, locMap)
+	m = NewTapeMachine(g)
 	err = m.RunAll()
 	if err != nil {
 		t.Error(err)
@@ -150,16 +140,10 @@ func TestSumOpDiff(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	prog, locMap, err = Compile(g)
-	if err != nil {
-		t.Error(err)
-	}
-	// ioutil.WriteFile("Blah.dot", []byte(g.ToDot()), 0644)
-
-	m = NewTapeMachine(prog, locMap)
+	m = NewTapeMachine(g)
 	err = m.RunAll()
 	if err != nil {
-		t.Errorf("%v", prog)
+		t.Errorf("%v", m.Prog())
 		t.Error(err)
 	}
 

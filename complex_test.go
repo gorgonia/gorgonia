@@ -130,9 +130,11 @@ func TestWeirdNetwork(t *testing.T) {
 
 	/* SET UP COMPLETE */
 
-	prog, locMap, err := Compile(g)
-	m := NewTapeMachine(prog, locMap, BindDualValues(model...), UseCudaFor())
-	log.Println(prog)
+	m := NewTapeMachine(g, BindDualValues(model...), UseCudaFor())
+
+	// for debug purposes
+	// prog, locMap, err := Compile(g)
+	// log.Println(prog)
 
 	// for i := 0; i < 104729; i++ {
 	for i := 0; i < 2; i++ {

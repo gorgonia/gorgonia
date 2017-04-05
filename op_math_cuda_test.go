@@ -24,17 +24,9 @@ func TestCUDACube(t *testing.T) {
 	var x3Val Value
 	Read(x3, &x3Val)
 
-	prog, locMap, err := Compile(g)
-	t.Logf("Prog: \n%v", prog)
-	log.Printf("%v", prog)
-	if err != nil {
-		t.Fatal(err)
-	}
-	m := NewTapeMachine(prog, locMap, UseCudaFor())
-	if err = m.LoadCUDAFunc("cube32", cube32PTX); err != nil {
-		t.Fatal(err)
-	}
-	if err = m.RunAll(); err != nil {
+	m := NewTapeMachine(g, UseCudaFor())
+	defer runtime.GC()
+	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
 	correct := []float32{0, 1, 8, 27, 64, 125, 216, 343, 512, 729, 1000, 1331, 1728, 2197, 2744, 3375, 4096, 4913, 5832, 6859, 8000, 9261, 10648, 12167, 13824, 15625, 17576, 19683, 21952, 24389, 27000, 29791}
@@ -82,16 +74,10 @@ func TestCUDABasicArithmetic(t *testing.T) {
 
 		// ioutil.WriteFile("binop.dot", []byte(g.ToDot()), 0644)
 
-		prog, locMap, err := Compile(g)
-		if err != nil {
-			t.Errorf("Test %d: error while compiling: %v", i, err)
-			runtime.GC()
-			continue
-		}
 		logger := log.New(os.Stderr, "", 0)
-		m1 := NewTapeMachine(prog, locMap, UseCudaFor(), WithLogger(logger), WithWatchlist())
+		m1 := NewTapeMachine(g, UseCudaFor(), WithLogger(logger), WithWatchlist())
 		if err = m1.RunAll(); err != nil {
-			t.Logf("%v", prog)
+			t.Logf("%v", m1.Prog())
 			t.Fatalf("Test %d: error while running %+v", i, err)
 			runtime.GC()
 			continue
@@ -104,6 +90,7 @@ func TestCUDABasicArithmetic(t *testing.T) {
 		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
 		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
 		if !as.cont {
+			prog := m1.Prog()
 			t.Fatalf("Test %d failed. Prog: %v", i, prog)
 		}
 		runtime.GC()

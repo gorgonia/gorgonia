@@ -306,6 +306,7 @@ func (op elemBinOp) Hashcode() uint32 {
 // Fulfils UsePreallocDoer interface
 func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
 	if !op.ReturnsPtr() {
+		logf("NOT POINTER")
 		return op.Do(inputs...)
 	}
 

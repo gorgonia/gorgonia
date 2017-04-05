@@ -21,10 +21,10 @@ var (
 	typeSystemDev     = false
 	symdiffDev        = false
 	autodiffDev       = false
-	machineDev        = true
+	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
-	cudaDev           = true
+	cudaDev           = false
 )
 
 var READMEMSTATS = true

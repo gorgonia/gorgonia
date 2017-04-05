@@ -96,6 +96,18 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
 	hasFn := extern.HasFunc(name)
 
+	if !hasFn {
+		cudaLogf("NoFn")
+		extern.Signal()
+		<-extern.Sync()
+		cudaLogf("DONE. Prealloc \n%v", prealloc)
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+		cudaLogf("Using DO")
+		return op.Do(inputs...)
+	}
+
 	machine := extern.(CUDAMachine)
 	fn := machine.Functions()[name][int(dev)]
 	ctx := machine.Contexts()[int(dev)]
@@ -103,7 +115,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	var mem, memB cu.DevicePtr
 	var size int64
 	switch {
-	case hasFn && (op.isArith() && !as.IsScalar() && !bs.IsScalar()):
+	case op.isArith() && !as.IsScalar() && !bs.IsScalar():
 		if prealloc == nil {
 			mem = cu.DevicePtr(a.Uintptr())
 			retVal = a
@@ -124,7 +136,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		extern.Signal()
 		<-extern.Sync()
 		if prealloc != nil {
-			// cudaLogf("Using Prealloc: %v  %v", prealloc, inputs)
 			return op.UsePreallocDo(prealloc, inputs...)
 		}
 		cudaLogf("Using DO")

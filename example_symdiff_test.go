@@ -28,14 +28,8 @@ func Example_symbolicDiff() {
 		log.Fatal(err)
 	}
 
-	// compile into a program
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// create a VM to run the program on
-	machine := NewTapeMachine(prog, locMap)
+	machine := NewTapeMachine(g)
 
 	// set initial values then run
 	Let(x, 2.0)

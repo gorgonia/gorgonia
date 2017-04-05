@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"io/ioutil"
-	"log"
 	"runtime"
 	"testing"
 
@@ -31,10 +30,10 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 	}
 
 	// logger := log.New(os.Stderr, "", 0)
-	prog, locMap, err := Compile(g)
-	log.Printf("%v", prog)
-	// m := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues(), WithLogger(logger), WithWatchlist())
-	m := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
+
+	// m := NewTapeMachine(g, TraceExec(), BindDualValues(), WithLogger(logger), WithWatchlist())
+	m := NewTapeMachine(g, TraceExec(), BindDualValues(), UseCudaFor())
+	cudaLogf("%v", m.Prog())
 	defer runtime.GC()
 	if err := m.RunAll(); err != nil {
 		return err

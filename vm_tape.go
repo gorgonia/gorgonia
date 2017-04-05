@@ -38,14 +38,10 @@ type tapeMachine struct {
 	runFlags byte //  spare2: trace(copy values and put into nodes)
 }
 
-// NewTapeMachine creates a VM that executes a pre-compiled graph.
-func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *tapeMachine {
+// NewTapeMachine creates a VM that compiles a graph into a prog.
+func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
 		ExternMetadata: new(ExternMetadata),
-		p:              prog,
-		locMap:         locMap,
-		cpumem:         make([]Value, prog.cpulocs),
-		gpumem:         make([]Value, prog.gpulocs),
 		valueFmt:       "%3.3g",
 	}
 
@@ -60,6 +56,18 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 	m.doAlloc()
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
+
+	prog, locMap, err := Compile(g)
+	if err != nil {
+		panic(err)
+	}
+
+	m.p = prog
+	m.locMap = locMap
+	m.cpumem = make([]Value, prog.cpulocs)
+	m.gpumem = make([]Value, prog.gpulocs)
+	m.init()
+
 	return m
 }
 
@@ -96,7 +104,16 @@ func (m *tapeMachine) doBindDV()    { m.runFlags |= byte(1) << spare3 }
 func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 
 // Reset resets the run state of the machine by changing the instruction pointer back to 0
-func (m *tapeMachine) Reset() { m.pc = 0 }
+func (m *tapeMachine) Reset() {
+	m.pc = 0
+	m.ExternMetadata.Reset()
+}
+
+// Prog returns the compiled program. This would mainly be used in debugging functions
+func (m *tapeMachine) Prog() *program { return m.p }
+
+// LocMap returns the location where the Node's execution results are stored. This would mainly be used in debugging functions.
+func (m *tapeMachine) LocMap() map[*Node]register { return m.locMap }
 
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
 func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {

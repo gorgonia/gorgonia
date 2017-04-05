@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"log"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -15,8 +16,7 @@ func BenchmarkOneMil(b *testing.B) {
 	x := NewVector(g, Float32, WithShape(1000000), WithName("x"), WithValue(xT))
 	Must(Sigmoid(x))
 
-	prog, locMap, _ := Compile(g)
-	m := NewTapeMachine(prog, locMap)
+	m := NewTapeMachine(g)
 
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
@@ -25,4 +25,5 @@ func BenchmarkOneMil(b *testing.B) {
 		}
 		m.Reset()
 	}
+	runtime.GC()
 }

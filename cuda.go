@@ -227,6 +227,25 @@ func (m *ExternMetadata) Cleanup() {
 	}
 }
 
+// Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
+func (m *ExternMetadata) Signal() { m.workAvailable <- true }
+
+// Reset frees all the memories, and coalesces the allocator
+func (m *ExternMetadata) Reset() {
+	for _, a := range m.a {
+		used := make([]uintptr, 0, len(a.used))
+		for k := range a.used {
+			used = append(used, k)
+		}
+
+		for _, ptr := range used {
+			a.free(ptr + a.start)
+		}
+
+		a.coalesce()
+	}
+}
+
 func (m *ExternMetadata) init(sizes []int64) {
 	if m.initialzed {
 		return
@@ -276,7 +295,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 				if free, total, err = cu.MemInfo(); err != nil {
 					cudaLogf("Error while getting mem info: %v", err)
 				}
-				cudaLogf("Out of memory. Free: %v, total %v", free, total)
+				cudaLogf("Out of memory. ???! Free: %v, total %v", free, total)
 				m.initFail()
 				return
 			}
@@ -361,9 +380,6 @@ func (m *ExternMetadata) collectBLASWork() {
 		}
 	}
 }
-
-// Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
-func (m *ExternMetadata) Signal() { m.workAvailable <- true }
 
 func init() {
 	log.Println("Using CUDA build")

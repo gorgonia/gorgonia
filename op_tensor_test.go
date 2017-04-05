@@ -280,14 +280,9 @@ func TestConcatOp(t *testing.T) {
 	xBack := []float64{1, 2}
 	xT := tensor.New(tensor.WithShape(2), tensor.WithBacking(xBack))
 
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	Let(a, aT)
 	Let(x, xT)
-	m1 := NewTapeMachine(prog, locMap)
+	m1 := NewTapeMachine(g)
 	m2 := NewLispMachine(g2)
 
 	if err = m1.RunAll(); err != nil {

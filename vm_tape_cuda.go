@@ -3,8 +3,6 @@
 package gorgonia
 
 import (
-	"log"
-
 	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
 )
@@ -13,36 +11,39 @@ import (
 // Do not pass in the types (for example, don't pass in "add64")
 func UseCudaFor(ops ...string) VMOpt {
 	f := func(m VM) {
-		switch v := m.(type) {
-		case *tapeMachine:
-			if v.c == nil {
-				v.init()
-			}
+		// switch v := m.(type) {
+		// case *tapeMachine:
+		// 	if v.c == nil {
+		// 		// v.init()
+		// 		v.f = make(map[string][]cu.Function)
+		// 	}
 
-			if len(ops) == 0 {
-				v.loadStdLib()
-				return
-			}
+		// 	if len(ops) == 0 {
+		// 		v.loadDummyStdLib()
+		// 		return
+		// 	}
 
-			for _, op := range ops {
-				op64 := op + "64"
-				op32 := op + "32"
+		// 	for _, op := range ops {
+		// 		op64 := op + "64"
+		// 		op32 := op + "32"
 
-				cudaLogf("Trying to load %q and %q. m.c = %v", op64, op32, v.c)
+		// 		cudaLogf("Trying to load %q and %q. m.c = %v", op64, op32, v.c)
 
-				if data, ok := cudaStdLib[op64]; ok {
-					if err := v.LoadCUDAFunc(op64, data); err != nil {
-						log.Printf("Unable to load %q: %v", op64, err)
-					}
-				}
+		// 		if _, ok := cudaStdLib[op64]; ok {
+		// 			// if err := v.LoadCUDAFunc(op64, data); err != nil {
+		// 			// 	log.Printf("Unable to load %q: %v", op64, err)
+		// 			// }
+		// 			v.loadDummyFunc(op64)
+		// 		}
 
-				if data, ok := cudaStdLib[op32]; ok {
-					if err := v.LoadCUDAFunc(op32, data); err != nil {
-						log.Printf("Unable to load %q: %v", op32, err)
-					}
-				}
-			}
-		}
+		// 		if _, ok := cudaStdLib[op32]; ok {
+		// 			// if err := v.LoadCUDAFunc(op32, data); err != nil {
+		// 			// 	log.Printf("Unable to load %q: %v", op32, err)
+		// 			// }
+		// 			v.loadDummyFunc(op32)
+		// 		}
+		// 	}
+		// }
 	}
 	return f
 }
@@ -78,8 +79,22 @@ func (m *tapeMachine) init() {
 		cudaLogf("No CUDA ops")
 		return
 	}
+	// functions to be loaded
+	cudaLogf("%v", m.f)
+	funcs := make([]string, 0, len(m.ExternMetadata.f))
+	for fn := range m.f {
+		funcs = append(funcs, fn)
+	}
+
 	m.ExternMetadata.init(m.p.gpumem)
+	m.loadStdLib()
+
+	// cudaLogf("funcs %v", funcs)
+	// for _, f := range funcs {
+	// 	m.LoadCUDAFunc(f, cudaStdLib[f])
+	// }
 	cudaLogf("m.c = %v", m.c)
+	cudaLogf("m.f = %v", m.f)
 }
 
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
@@ -127,6 +142,10 @@ func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
 	return nil
 }
 
+func (m *tapeMachine) loadDummyFunc(name string) {
+	m.f[name] = nil
+}
+
 // loads the standardlib
 func (m *tapeMachine) loadStdLib() {
 	if cudaStdLib == nil {
@@ -137,6 +156,15 @@ func (m *tapeMachine) loadStdLib() {
 		if err := m.LoadCUDAFunc(name, data); err != nil {
 			cudaLogf("Unable to load %q.: %v", name, err)
 		}
+	}
+}
+
+func (m *tapeMachine) loadDummyStdLib() {
+	if cudaStdLib == nil {
+		return
+	}
+	for name := range cudaStdLib {
+		m.loadDummyFunc(name)
 	}
 }
 
@@ -210,6 +238,8 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	node := m.p.g.Node(instr.id).(*Node)
 
 	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
+		m.Signal()
+		<-m.Sync()
 		if err = node.bindCopy(v); err != nil {
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}

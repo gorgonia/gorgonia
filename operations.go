@@ -187,7 +187,9 @@ func Pow(a, b *Node) (retVal *Node, err error) {
 func Gt(a, b *Node, retSame bool) (retVal *Node, err error) {
 	op := newElemBinOp(gtOpType, a, b)
 	op.retSame = retSame
-	return binOpNode(op, a, b)
+	retVal, err = binOpNode(op, a, b)
+	logf("retVal %v | %v", retVal, retSame)
+	return
 }
 
 // Gte performs pointwise comparison a >= b. retSame indicates if the return value should be the same type as the input values

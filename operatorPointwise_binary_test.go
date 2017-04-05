@@ -13,6 +13,7 @@ import (
 )
 
 func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err error) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	var randX, randY interface{}
 	switch dt {
@@ -57,13 +58,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		m1 = NewLispMachine(g, ExecuteFwdOnly())
 	}
 
-	prog, locMap, err := Compile(g2)
-	if err != nil {
-		return err
-	}
-
-	m2 := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
-	defer runtime.GC()
+	m2 := NewTapeMachine(g2, TraceExec(), BindDualValues())
 
 	Let(x, randX)
 	Let(y, randY)
@@ -111,6 +106,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 }
 
 func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err error) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	var x, y, z, a, b, c, cost *Node
 	var g, g2 *ExprGraph
@@ -164,14 +160,10 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		m1 = NewLispMachine(g, ExecuteFwdOnly())
 	}
 
-	prog, locMap, err := Compile(g2)
-	if err != nil {
-		return err
-	}
-
 	// lg := log.New(os.Stderr, "", 0)
-	m2 := NewTapeMachine(prog, locMap, TraceExec())
-	defer runtime.GC()
+	m2 := NewTapeMachine(g2, TraceExec())
+	logf("prog %v", m2.Prog())
+
 	// m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
 
 	Let(x, xV)
@@ -225,6 +217,12 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 
 func TestBinOps(t *testing.T) {
 	for op := addOpType; op < maxʘBinaryOpType; op++ {
+		t.Logf("OP: %v", op)
+
+		// if op != addOpType {
+		// 	continue
+		// }
+
 		// for op := subOpType; op < mulOpType; op++ {
 		var err error
 		err = ssBinOpTest(t, op, Float64)

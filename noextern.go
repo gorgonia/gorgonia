@@ -49,6 +49,8 @@ func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) { return ni
 // Put puts a previously allocated memory slab of the provided size back into the pool. Currently this is a No-op in this build.
 func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {}
 
+func (m *ExternMetadata) Reset() {}
+
 // Cleanup cleans up the ancillary allocations made during the calling of batched external device function.
 //
 // The reason for this method is due to the fact that there is currently no way to free memory while the context is still running without causing
