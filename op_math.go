@@ -333,25 +333,23 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 
 // Fulfils the IncrDoer interface
 func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
-	if !op.ReturnsPtr() {
-		var retVal Value
-		if retVal, err = op.Do(inputs...); err != nil {
-			return errors.Wrapf(err, doFail, op)
-		}
-
-		add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
-		if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, add)
-		}
-		err = noIncrErr{retVal}
-		return
-	}
-
 	if id, ok := op.ʘBinaryOperator.(incrDoerBinOp); ok {
 		return id.IncrDo(incr, op.retSame, inputs...)
 	}
 
-	panic("unreachable")
+	// if !op.ReturnsPtr() {
+	var retVal Value
+	if retVal, err = op.Do(inputs...); err != nil {
+		return errors.Wrapf(err, doFail, op)
+	}
+
+	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
+	if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
+		return errors.Wrapf(err, unsafeDoFail, add)
+	}
+	err = noIncrErr{retVal}
+	return
+	// }
 }
 
 func (op elemBinOp) String() string { return fmt.Sprintf("%v %t", op.ʘBinaryOperator, op.retSame) }
