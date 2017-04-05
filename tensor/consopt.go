@@ -117,13 +117,42 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 			tt.flag |= unmanagedMem
 
 			switch tt.t {
+			case Bool:
+				tt.v = *(*[]bool)(unsafe.Pointer(tt.hdr))
+			case Int:
+				tt.v = *(*[]int)(unsafe.Pointer(tt.hdr))
+			case Int8:
+				tt.v = *(*[]int8)(unsafe.Pointer(tt.hdr))
+			case Int16:
+				tt.v = *(*[]int16)(unsafe.Pointer(tt.hdr))
+			case Int32:
+				tt.v = *(*[]int32)(unsafe.Pointer(tt.hdr))
+			case Int64:
+				tt.v = *(*[]int64)(unsafe.Pointer(tt.hdr))
+			case Uint:
+				tt.v = *(*[]uint)(unsafe.Pointer(tt.hdr))
+			case Byte:
+				tt.v = *(*[]uint8)(unsafe.Pointer(tt.hdr))
+			case Uint16:
+				tt.v = *(*[]uint16)(unsafe.Pointer(tt.hdr))
+			case Uint32:
+				tt.v = *(*[]uint32)(unsafe.Pointer(tt.hdr))
+			case Uint64:
+				tt.v = *(*[]uint64)(unsafe.Pointer(tt.hdr))
 			case Float32:
 				tt.v = *(*[]float32)(unsafe.Pointer(tt.hdr))
 			case Float64:
 				tt.v = *(*[]float64)(unsafe.Pointer(tt.hdr))
+			case Complex64:
+				tt.v = *(*[]complex64)(unsafe.Pointer(tt.hdr))
+			case Complex128:
+				tt.v = *(*[]complex128)(unsafe.Pointer(tt.hdr))
+			case String:
+				tt.v = *(*[]string)(unsafe.Pointer(tt.hdr))
 			default:
 				panic("Unsupported Dtype for using the FromMemory construction option")
 			}
+
 		default:
 			panic("Unsupported Tensor type")
 		}
