@@ -154,7 +154,6 @@ type UnsafeDoer interface {
 // CUDADoer uses CUDA to perform the Op.
 type CUDADoer interface {
 	CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error)
-	CUDAFuncName() string
 }
 
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL

@@ -60,7 +60,7 @@ func (m *ExternMetadata) Reset() {}
 func (m *ExternMetadata) Cleanup() {}
 
 // Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
-func (m *ExternMetadata) Signal() { m.workAvailable <- true }
+func (m *ExternMetadata) Signal() { m.signal(); <-m.syncChan }
 
 // collectBLASWork is a muxer for CBLAS/CuBLAS (if any) and the devices
 func (m *ExternMetadata) collectBLASWork() {
@@ -70,3 +70,5 @@ func (m *ExternMetadata) collectBLASWork() {
 		}
 	}
 }
+
+func (m *ExternMetadata) signal() { m.workAvailable <- true }

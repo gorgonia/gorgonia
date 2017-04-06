@@ -44,7 +44,7 @@ func TestCUDABasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
 		log.Printf("TEST %d", i)
-		// if i != 8 {
+		// if i != 2 {
 		// 	continue
 		// }
 

@@ -204,7 +204,6 @@ func (m *tapeMachine) RunAll() (err error) {
 	for {
 		select {
 		case sychronous := <-workAvailable:
-			log.Printf("SYNCHRONOUS %v", sychronous)
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
 				return err
@@ -628,10 +627,7 @@ func (instr flushInstr) exec(m *tapeMachine) error {
 	if m.WorkAvailable() == nil {
 		return nil
 	}
-	log.Printf("FLUSH %v %v", m.WorkAvailable(), m.Sync())
 	m.ExternMetadata.Signal()
-	log.Printf("%v", m.Sync())
-	<-m.Sync()
 	return nil
 }
 

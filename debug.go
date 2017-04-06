@@ -24,7 +24,8 @@ var (
 	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
-	cudaDev           = false
+	cudaDev           = true
+	allocatorDev      = false
 )
 
 var READMEMSTATS = true
@@ -121,6 +122,12 @@ func solverLogf(format string, attrs ...interface{}) {
 
 func cudaLogf(format string, attrs ...interface{}) {
 	if cudaDev {
+		logf(format, attrs...)
+	}
+}
+
+func allocatorLogf(format string, attrs ...interface{}) {
+	if allocatorDev {
 		logf(format, attrs...)
 	}
 }

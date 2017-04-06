@@ -4,9 +4,16 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 	"unsafe"
 
 	"github.com/chewxy/cu"
+)
+
+// module names
+const (
+	elemBinOpMod   = "elembinop"
+	elemUnaryOpMod = "elemunaryop"
 )
 
 func (op elemUnaryOp) CallsExtern() bool { return true }
@@ -23,24 +30,22 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	// check
 	cudaLogf("checking if input is scalar")
 	a := inputs[0]
-	if a.Shape().IsScalar() {
+	dt := a.Dtype()
+
+	// build name
+	name := fmt.Sprintf("%v.%v_f%d", elemUnaryOpMod, op.unaryOpType(), int(dt.Size())*8)
+
+	if !extern.HasFunc(name) {
+		cudaLogf("extern does not have func %q", name)
 		extern.Signal()
-		<-extern.Sync()
 
 		if retVal, err = op.do(a); err != nil {
 			return
 		}
+		if prealloc == nil {
+			return
+		}
 		return Copy(prealloc, retVal)
-	}
-
-	dt := a.Dtype()
-
-	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
-	if !extern.HasFunc(name) {
-		cudaLogf("extern does not have func %q", name)
-		extern.Signal()
-		<-extern.Sync()
-		return op.do(a)
 	}
 
 	machine := extern.(CUDAMachine)
@@ -72,10 +77,6 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	return prealloc, nil
 }
 
-func (op elemUnaryOp) CUDAFuncName() string {
-	return op.String()
-}
-
 func (op elemBinOp) CallsExtern() bool { return true }
 
 func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
@@ -92,14 +93,31 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	as := a.Shape()
 	bs := b.Shape()
 
-	dt := a.Dtype()
-	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(dt.Size())*8)
-	hasFn := extern.HasFunc(name)
+	var vv, vs, sv, ss bool
 
+	dt := a.Dtype()
+	opName := ʘBinOpNames[op.binOpType()]
+	var name string
+	switch {
+	case as.IsScalar() && bs.IsScalar():
+		ss = true
+		name = fmt.Sprintf("%v.%v_ss_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	case as.IsScalar() && !bs.IsScalar():
+		sv = true
+		name = fmt.Sprintf("%v.%v_sv_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	case !as.IsScalar() && bs.IsScalar():
+		vs = true
+		name = fmt.Sprintf("%v.%v_vs_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	case !as.IsScalar() && !bs.IsScalar():
+		vv = true
+		name = fmt.Sprintf("%v.%v_vv_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	}
+
+	hasFn := extern.HasFunc(name)
 	if !hasFn {
-		cudaLogf("NoFn")
+		cudaLogf("NoFn: %q", name)
+		log.Printf("NoFn %q", name)
 		extern.Signal()
-		<-extern.Sync()
 		cudaLogf("DONE. Prealloc \n%v", prealloc)
 		if prealloc != nil {
 			return op.UsePreallocDo(prealloc, inputs...)
@@ -107,6 +125,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		cudaLogf("Using DO")
 		return op.Do(inputs...)
 	}
+	log.Printf("Executing %q", name)
 
 	machine := extern.(CUDAMachine)
 	fn := machine.Functions()[name][int(dev)]
@@ -114,8 +133,10 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 
 	var mem, memB cu.DevicePtr
 	var size int64
+
 	switch {
-	case op.isArith() && !as.IsScalar() && !bs.IsScalar():
+	case vv, vs, ss:
+		log.Printf("HERE")
 		if prealloc == nil {
 			mem = cu.DevicePtr(a.Uintptr())
 			retVal = a
@@ -129,22 +150,33 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 			size = int64(logicalSize(prealloc.Shape()))
 			retVal = prealloc
 		}
-
 		memB = cu.DevicePtr(b.Uintptr())
-	default:
-		cudaLogf("HELLO: hasFn %v, op.IsArith %v | ascalar %t, bscalar %t", hasFn, op.isArith(), as.IsScalar(), bs.IsScalar())
-		extern.Signal()
-		<-extern.Sync()
-		if prealloc != nil {
-			return op.UsePreallocDo(prealloc, inputs...)
+	case sv:
+		log.Printf("HERTHRUH")
+		if prealloc == nil {
+			mem = cu.DevicePtr(b.Uintptr())
+			retVal = b
+			size = int64(logicalSize(b.Shape()))
+			memB = cu.DevicePtr(b.Uintptr())
+		} else {
+			mem = cu.DevicePtr(a.Uintptr())
+			preallocMem := cu.DevicePtr(prealloc.Uintptr())
+
+			B := cu.DevicePtr(b.Uintptr())
+			memSize := int64(b.MemSize())
+			ctx.Memcpy(preallocMem, B, memSize)
+
+			size = int64(logicalSize(prealloc.Shape()))
+			retVal = prealloc
+			memB = preallocMem
 		}
-		cudaLogf("Using DO")
-		return op.Do(inputs...)
 	}
+
+	var args []unsafe.Pointer
 
 	cudaLogf("%v mem %v, memB %v", op, mem, memB)
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
-	args := []unsafe.Pointer{
+	args = []unsafe.Pointer{
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
@@ -155,8 +187,4 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
 	return
-}
-
-func (op elemBinOp) CUDAFuncName() string {
-	return ʘBinOpNames[op.binOpType()]
 }

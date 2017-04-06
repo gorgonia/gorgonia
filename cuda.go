@@ -22,6 +22,7 @@ const (
 )
 
 var cudaStdLib map[string]string
+var cudaStdFuncs map[string][]string
 
 //go:generate cudagen
 
@@ -228,7 +229,13 @@ func (m *ExternMetadata) Cleanup() {
 }
 
 // Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
-func (m *ExternMetadata) Signal() { m.workAvailable <- true }
+func (m *ExternMetadata) Signal() {
+	// pc, _, _, _ := runtime.Caller(1)
+
+	// log.Printf("Signalled by %v", runtime.FuncForPC(pc).Name())
+	m.signal()
+	<-m.syncChan
+}
 
 // Reset frees all the memories, and coalesces the allocator
 func (m *ExternMetadata) Reset() {
@@ -381,9 +388,7 @@ func (m *ExternMetadata) collectBLASWork() {
 	}
 }
 
-func init() {
-	log.Println("Using CUDA build")
-}
+func (m *ExternMetadata) signal() { m.workAvailable <- true }
 
 // it's just a generic ceiling function. Added here to avoid mixing with any potential ceilInt operation
 func calcBlocks(n, maxThreads int) int {
@@ -394,4 +399,8 @@ func calcBlocks(n, maxThreads int) int {
 // without having to specify extra loading.
 func AddToStdLib(name, data string) {
 	cudaStdLib[name] = data
+}
+
+func init() {
+	log.Println("Using CUDA build")
 }

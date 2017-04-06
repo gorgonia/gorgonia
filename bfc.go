@@ -61,7 +61,7 @@ func (a *memblock) overlaps(b *memblock) bool {
 
 func (a *memblock) split(size int64) (b *memblock) {
 	if size >= a.size {
-		logf("block %v, size %v", a, size)
+		allocatorLogf("block %v, size %v", a, size)
 		panic("IMPOSSIBLE")
 	}
 	newAddress := a.address + uintptr(size)
@@ -112,7 +112,7 @@ func (l *freelist) String() string {
 
 // insert inserts a block in an ordered fashion. This helps with coaalescing.
 func (l *freelist) insert(block *memblock) {
-	logf("Inserting %v", block)
+	allocatorLogf("Inserting %v", block)
 	if l.first == nil {
 		l.first = block
 		l.last = block
@@ -121,7 +121,7 @@ func (l *freelist) insert(block *memblock) {
 		return
 	}
 	if block.address >= l.last.address {
-		logf("greater than last")
+		allocatorLogf("greater than last")
 		overlaps := block.overlaps(l.last)
 		switch {
 		case overlaps:
@@ -144,7 +144,7 @@ func (l *freelist) insert(block *memblock) {
 	}
 
 	if block.address < l.first.address {
-		logf("lt first")
+		allocatorLogf("lt first")
 		overlaps := block.overlaps(l.first)
 		if overlaps {
 			blockCap := block.cap()
@@ -316,12 +316,12 @@ func newBFC(alignment int64) *bfc {
 }
 
 func (b *bfc) reserve(start uintptr, size int64) {
-	logf("RESERVE starts: 0x%x | size: %v", start, size)
+	allocatorLogf("RESERVE starts: 0x%x | size: %v", start, size)
 	b.start = start
 	b.size = size - (size % b.blockSize)
 	b.reservedSize = size
 	b.freelist.insert(newMemblock(0, size))
-	logf("Start: 0x%x | Size %v", b.start, b.size)
+	allocatorLogf("Start: 0x%x | Size %v", b.start, b.size)
 }
 
 func (b *bfc) release() uintptr {
@@ -334,15 +334,15 @@ func (b *bfc) release() uintptr {
 }
 
 func (b *bfc) alloc(size int64) (mem uintptr, err error) {
-	logf("BFC Allocating %v", size)
-	logf("before alloc: %v", b.freelist)
-	defer logf("after alloc: %v", b.freelist)
+	allocatorLogf("BFC Allocating %v", size)
+	allocatorLogf("before alloc: %v", b.freelist)
+	defer allocatorLogf("after alloc: %v", b.freelist)
 	if size <= 0 {
 		return 0, errors.Errorf("Cannot allocate memory with size 0 or less")
 	}
 	aligned := b.align(size)
 	block := b.bestFit(aligned)
-	logf("Got a block %v", block)
+	allocatorLogf("Got a block %v", block)
 	if block == nil {
 		// first try to coalesce
 		b.coalesce()
@@ -369,14 +369,14 @@ func (b *bfc) free(address uintptr) {
 	a := address - b.start // get internal address
 	size, ok := b.used[a]
 	if !ok {
-		logf("a: 0x%x | 0x%x", a, address)
-		logf("a: %v | %v %v", a, address, b.start)
+		allocatorLogf("a: 0x%x | 0x%x", a, address)
+		allocatorLogf("a: %v | %v %v", a, address, b.start)
 		return
 		// panic("Cannot free")
 
 	}
 	block := newMemblock(a, size)
-	logf("FREE %v", block)
+	allocatorLogf("FREE %v", block)
 	b.freelist.insert(block)
 	delete(b.used, a)
 
@@ -400,8 +400,8 @@ func (b *bfc) bestFit(size int64) (best *memblock) {
 //		- address must be aligned to the alignment
 //		- if two blocks next to each other share a fencepost, then they will be merged
 func (b *bfc) coalesce() {
-	logf("PreCOALESCE: %v", b.freelist)
-	defer logf("POSTCOALESCE: %v", b.freelist)
+	allocatorLogf("PreCOALESCE: %v", b.freelist)
+	defer allocatorLogf("POSTCOALESCE: %v", b.freelist)
 	for block := b.freelist.first; block != nil; block = block.next {
 		if block.address%uintptr(b.blockSize) != 0 {
 			continue

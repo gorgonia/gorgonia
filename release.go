@@ -14,6 +14,7 @@ const (
 	machineDev        = false
 	stabilizationDev  = false
 	cudaDev           = false
+	allocatorDev      = false
 )
 
 func tabcount() int { return 0 }
@@ -30,6 +31,7 @@ func machineLogf(format string, attrs ...interface{})  {}
 func stabLogf(format string, attrs ...interface{})     {}
 func solverLogf(format string, attrs ...interface{})   {}
 func cudaLogf(format string, attrs ...interface{})     {}
+func allocatorLogf(format string, attr ...interface{}) {}
 func recoverFrom(format string, attrs ...interface{})  {}
 
 /* Graph Collision related debugging code */

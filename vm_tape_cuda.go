@@ -3,6 +3,8 @@
 package gorgonia
 
 import (
+	"fmt"
+
 	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
 )
@@ -100,32 +102,42 @@ func (m *tapeMachine) init() {
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
 //
 // The convention is to have one function per module, sharing the same name.
-func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
+func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err error) {
 	if len(m.c) == 0 {
 		return nil
 	}
 
 	mods := make([]cu.Module, len(m.c))
-	fns := make([]cu.Function, len(m.c))
+	fns := make(map[string][]cu.Function)
 	for i, c := range m.c {
 		if err = cu.SetCurrent(c.Context); err != nil {
-			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", name, i)
+			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
 			return
 		}
 
 		var mod cu.Module
 		if mod, err = cu.LoadData(data); err != nil {
-			err = errors.Wrapf(err, "Failed to load module %q data for %dth context %x", name, i, c)
+			err = errors.Wrapf(err, "Failed to load module %q data for %dth context %x", moduleName, i, c)
 			return
 		}
 
-		var fn cu.Function
-		if fn, err = mod.Function(name); err != nil {
-			err = errors.Wrapf(err, "Unable to get function %q in %dth context %x", name, i, c)
-			return
+		var fs []cu.Function
+		for _, name := range funcs {
+			var ok bool
+			if fs, ok = fns[name]; !ok {
+				fs = make([]cu.Function, len(m.c))
+			}
+
+			var fn cu.Function
+			if fn, err = mod.Function(name); err != nil {
+				err = errors.Wrapf(err, "Unable to get function %q in %dth context %x", name, i, c)
+				return
+			}
+			fs[i] = fn
+			fns[name] = fs
 		}
+
 		mods[i] = mod
-		fns[i] = fn
 	}
 
 	// set the first to current
@@ -136,9 +148,13 @@ func (m *tapeMachine) LoadCUDAFunc(name, data string) (err error) {
 		}
 	}
 
-	m.m[name] = mods
-	m.f[name] = fns
-	cudaLogf("Loaded %q", name)
+	m.m[moduleName] = mods
+	for _, name := range funcs {
+		fqn := fmt.Sprintf("%v.%v", moduleName, name)
+		m.f[fqn] = fns[name]
+	}
+
+	cudaLogf("Loaded %q", moduleName)
 	return nil
 }
 
@@ -153,7 +169,12 @@ func (m *tapeMachine) loadStdLib() {
 	}
 
 	for name, data := range cudaStdLib {
-		if err := m.LoadCUDAFunc(name, data); err != nil {
+		funcs, ok := cudaStdFuncs[name]
+		if !ok {
+			cudaLogf("No funcs for module %q", name)
+			continue
+		}
+		if err := m.LoadCUDAFunc(name, data, funcs); err != nil {
 			cudaLogf("Unable to load %q.: %v", name, err)
 		}
 	}
@@ -239,7 +260,6 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
 		m.Signal()
-		<-m.Sync()
 		if err = node.bindCopy(v); err != nil {
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
 		}
@@ -271,28 +291,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 					// the CPU method is correct. This method is correct for MOST cases, but will not be correct under some other circumstances
 					ctx := m.Contexts()[int(dev)]
 					ctx.MemcpyDtoH(dv.d.Pointer(), cu.DevicePtr(v.Uintptr()), instr.size)
-
 				}
-
-				// switch cd := op.(type) {
-				// case CUDADoer:
-				// 	cudaLogf("CUDADOING CD")
-				// 	if d, err := cd.CUDADo(m, 0, dv.d, dv.d, v); err == nil {
-				// 		dv.SetDeriv(d)
-				// 		src.bind(dv)
-				// 	} else {
-				// 		return err
-				// 	}
-				// case UnsafeDoer:
-				// 	if d, err := cd.UnsafeDo(dv.d, v); err == nil {
-				// 		dv.SetDeriv(d)
-				// 		src.bind(dv)
-				// 	} else {
-				// 		return err
-				// 	}
-
-				// }
-
 			}
 		}
 
@@ -307,6 +306,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 }
 
 func (instr deviceTransport) exec(m *tapeMachine) (err error) {
+	m.logf("Executing %v", instr)
 	from := m.getValue(instr.from)
 	to := m.getValue(instr.to)
 
@@ -325,7 +325,6 @@ func (instr deviceTransport) exec(m *tapeMachine) (err error) {
 		// when copying from device to host, it's assumed that the host will want to immediately use
 		// so signal the DoWork
 		m.Signal()
-		<-m.Sync()
 	}
 
 	return nil

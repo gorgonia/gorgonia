@@ -10,12 +10,15 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/chewxy/cu"
 )
 
 var debug = flag.Bool("debug", false, "compile with debug mode (-linelinfo is added to nvcc call)")
+
+var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\n")
 
 func stripExt(fullpath string) string {
 	_, filename := filepath.Split(fullpath)
@@ -110,6 +113,17 @@ func main() {
 		m[name] = data
 	}
 
+	funcNames := make(map[string][]string)
+	for mod, data := range m {
+		// regex
+		var fns []string
+		matches := funcNameRegex.FindAllSubmatch([]byte(data), -1)
+		for _, bs := range matches {
+			fns = append(fns, string(bs[1]))
+		}
+		funcNames[mod] = fns
+	}
+
 	cudamodules := path.Join(gorgoniaLoc, "cudamodules.go")
 	f, err := os.OpenFile(cudamodules, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	defer f.Close()
@@ -128,7 +142,19 @@ func main() {
 	for name := range m {
 		fmt.Fprintf(f, "\"%v\": %vPTX,\n", name, name)
 	}
-	f.Write([]byte("}\n\t}\n"))
+	f.Write([]byte("}\n\t"))
+
+	f.Write([]byte("cudaStdFuncs = map[string][]string{\n"))
+	for name, fns := range funcNames {
+		fmt.Fprintf(f, "\"%v\": {", name)
+		for _, fnName := range fns {
+			fmt.Fprintf(f, "\"%v\", ", fnName)
+		}
+		fmt.Fprintf(f, "},\n")
+	}
+	f.Write([]byte("}"))
+
+	f.Write([]byte("}\n"))
 
 	// gofmt and goimports this shit
 	cmd := exec.Command("gofmt", "-w", gorgoniaLoc+"/cudamodules.go")
