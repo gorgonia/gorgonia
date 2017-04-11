@@ -5,8 +5,12 @@ go env
 go test -v -a -coverprofile=test.cover .
 go test -v -a -coverprofile=./tensor/test.cover ./tensor/
 
+# go test -tags='sse' -v -a  ./...
+# go test -tags='avx' -v -a  ./...
+go test -tags='avx' -v -a  ./tensor/
+go test -tags='sse' -v -a  ./tensor/
+go test -tags='avx' -v -a  .
 go test -tags='sse' -v -a  ./...
-go test -tags='avx' -v -a  ./...
 
 # because coveralls only accepts one coverage file at one time... we combine them into one gigantic one
 covers=(./test.cover ./tensor/test.cover)
