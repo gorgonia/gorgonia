@@ -1,3 +1,4 @@
+echo $TRAVIS_OS_NAME
 travis_retry sudo add-apt-repository -y ppa:graphics-drivers/ppa
 travis_retry sudo apt-get update -qq
 travis_retry sudo apt-get install -f -y nvidia-378 nvidia-378-dev libcuda1-378 nvidia-settings nvidia-opencl-icd-378
