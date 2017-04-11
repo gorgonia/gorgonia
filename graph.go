@@ -219,15 +219,13 @@ func (g *ExprGraph) ToDot() string {
 	}
 
 	for grp := range groups {
-		attrs := gographviz.NewAttrs()
-		attrs.Add("label", grp)
+		attrs := map[string]string{"label": grp}
 
 		parentGraph := fullGraphName
 		if grp == inputsClust || grp == constantsClust {
 			parentGraph = inputConsts
 			if !gv.IsSubGraph(inputConsts) {
-				groupAttrs := gographviz.NewAttrs()
-				groupAttrs.Add("rank", "max")
+				groupAttrs := map[string]string{"rank": "max"}
 				gv.AddSubGraph(fullGraphName, inputConsts, groupAttrs)
 			}
 		}
@@ -250,13 +248,14 @@ func (g *ExprGraph) ToDot() string {
 			fromID := fmt.Sprintf("Node_%p", from)
 			toID := fmt.Sprintf("Node_%p", child)
 
-			edgeAttrs := gographviz.NewAttrs()
-			edgeAttrs.Add("taillabel", fmt.Sprintf(" %d ", i))
-			edgeAttrs.Add("labelfloat", "false")
+			edgeAttrs := map[string]string{
+				"taillabel":  fmt.Sprintf(" %d ", i),
+				"labelfloat": "false",
+			}
 
 			// we invert the from and to nodes for gradients, As the expressionGraph builds upwards from bottom, the gradient builds downwards.
 			if from.group == gradClust && child.group == gradClust {
-				edgeAttrs.Add("dir", "back")
+				edgeAttrs["dir"] = "back"
 				gv.AddPortEdge(toID, toID+":anchor:s", fromID, fromID+":anchor:n", true, edgeAttrs)
 			} else {
 				gv.AddPortEdge(fromID, fromID+":anchor:s", toID, toID+":anchor:n", true, edgeAttrs)
@@ -266,10 +265,11 @@ func (g *ExprGraph) ToDot() string {
 
 	// draw deriv lines
 	if debugDerives {
-		edgeAttrs := gographviz.NewAttrs()
-		edgeAttrs.Add("style", "dashed")
-		edgeAttrs.Add("constraint", "false")
-		edgeAttrs.Add("weight", "999")
+		edgeAttrs := map[string]string{
+			"style":      "dashed",
+			"constraint": "false",
+			"weight":     "999",
+		}
 
 		for _, n := range g.byHash {
 			if n.derivOf != nil {
@@ -287,12 +287,13 @@ func (g *ExprGraph) ToDot() string {
 	}
 
 	// stupid invisible nodes to keep expressiongraph on the left
-	subGAttrs := gographviz.NewAttrs()
+	subGAttrs := make(map[string]string)
 	// subGAttrs.Add("rank", "max")
 	gv.AddSubGraph(fullGraphName, outsideSubG, subGAttrs)
 
-	attrs := gographviz.NewAttrs()
-	attrs.Add("style", "invis")
+	attrs := map[string]string{
+		"style": "invis",
+	}
 	gv.AddNode(outsideSubG, outsideRoot, attrs)
 
 	outsides := []string{outsideRoot}
@@ -333,10 +334,11 @@ func (g *ExprGraph) ToDot() string {
 		gv.AddNode("cluster_"+group, inside, attrs)
 	}
 
-	edgeAttrs := gographviz.NewAttrs()
-	edgeAttrs.Add("style", "invis")
-	edgeAttrs.Add("weight", "999")
-	edgeAttrs.Add("constraint", "false")
+	edgeAttrs := map[string]string{
+		"style":      "invis",
+		"weight":     "999",
+		"constraint": "false",
+	}
 	for i, o := range outsides {
 		// outside-inside
 		gv.AddEdge(o, insides[i], true, edgeAttrs)
