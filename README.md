@@ -15,7 +15,7 @@ Gorgonia:
 * Supports CUDA/GPGPU computation (OpenCL not yet supported, send a pull request)
 * Will support distributed computing
 
-# Why Use Gorgonia?#
+# Why Use Gorgonia? #
 
 The main reason to use Gorgonia is developer comfort. If you're using a Go stack extensively, now you have access to the ability to create production-ready machine learning systems in an environment that you are already familiar and comfortable with. 
 
@@ -41,7 +41,7 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |[vecf64](https://github.com/chewxy/vecf64)| optimized `[]float64` operations | Can be generated in the `tensor/genlib` package. However, plenty of optimizations have been made/will be made | Same maintainer as Gorgonia | MIT/BSD-like|
 |[vecf32](https://github.com/chewxy/vecf32)| optimized `[]float32` operations | Can be generated in the `tensor/genlib` package. However, plenty of optimizations have been made/will be made | Same maintainer as Gorgonia | MIT/BSD-like|
 |[set](https://github.com/xtgo/set)|Various set operations|Can be easily replaced|Stable API for the past 1 year|[set licence](https://github.com/xtgo/set/blob/master/LICENSE) (MIT/BSD-like)|
-|[gographviz](https://github.com/awalterschulze/gographviz)|Used for printing graphs|Graph printing is only vital to debugging. Gorgonia can survive without, but with a major (but arguably nonvital) feature loss|Stable API for the past 1 year|[gographviz licence](https://github.com/awalterschulze/gographviz/blob/master/LICENSE) (Apache 2.0)|
+|[gographviz](https://github.com/awalterschulze/gographviz)|Used for printing graphs|Graph printing is only vital to debugging. Gorgonia can survive without, but with a major (but arguably nonvital) feature loss|Last update 12th April 2017|[gographviz licence](https://github.com/awalterschulze/gographviz/blob/master/LICENSE) (Apache 2.0)|
 |[rng](https://github.com/leesper/go_rng)|Used to implement helper functions to generate initial weights|Can be replaced fairly easily. Gorgonia can do without the convenience functions too||[rng licence](https://github.com/leesper/go_rng/blob/master/LICENSE) (Apache 2.0)|
 |[errors](https://github.com/pkg/errors)|Error wrapping|Gorgonia won't die without it. In fact Gorgonia has also used [goerrors/errors](https://github.com/go-errors/errors) in the past.|Stable API for the past 6 months|[errors licence](https://github.com/pkg/errors/blob/master/LICENSE) (MIT/BSD-like)|
 |[gonum/matrix](http://github.com/gonum/matrix)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|

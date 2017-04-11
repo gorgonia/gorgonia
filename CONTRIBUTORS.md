@@ -6,10 +6,11 @@
 # Contributors
 
 
-* Andrew Murray @radarhere
-* Ankit Raj @aj0t
-* Yuanlin Lian @alienchow
-* David Soller @3ygun
+* Andrew Murray | @radarhere
+* Ankit Raj | @aj0t
+* Yuanlin Lian | @alienchow
+* David Soller | @3ygun
+* James Michael DuPont | @h4ck3rm1k3
 
 
 

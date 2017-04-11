@@ -1,3 +1,4 @@
+dist: trusty
 sudo: required
 
 language: go
@@ -30,7 +31,7 @@ before_install:
 
 # Install the appropriate blas library (if any) and associated gonum software.
 install:
-- source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/install.sh
+- travis_wait source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/install.sh
 
 script: 
 - source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/test.sh
