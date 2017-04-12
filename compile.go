@@ -73,6 +73,7 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	if sortedNodes, err = Sort(subgraph); err != nil {
 		return nil, nil, errors.Wrap(err, sortFail)
 	}
+	reverseNodes(sortedNodes)
 
 	df := analyze(subgraph, sortedNodes)
 	sortedNodes = df.insertDeviceInstr(sortedNodes)
