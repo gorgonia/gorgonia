@@ -57,15 +57,17 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		panic(err)
-	}
+	if m.p == nil || m.locMap == nil {
+		prog, locMap, err := Compile(g)
+		if err != nil {
+			panic(err)
+		}
 
-	m.p = prog
-	m.locMap = locMap
-	m.cpumem = make([]Value, prog.cpulocs)
-	m.gpumem = make([]Value, prog.gpulocs)
+		m.p = prog
+		m.locMap = locMap
+		m.cpumem = make([]Value, prog.cpulocs)
+		m.gpumem = make([]Value, prog.gpulocs)
+	}
 	m.init()
 
 	return m

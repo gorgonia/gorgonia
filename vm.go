@@ -248,3 +248,20 @@ func BindDualValues(nodes ...*Node) VMOpt {
 	}
 	return f
 }
+
+// WithPrecompiled is an option to pass in compiled programs.
+// This is useful for users who use the CompileFunction function
+func WithPrecompiled(prog *program, locMap map[*Node]register) VMOpt {
+	f := func(m VM) {
+		switch v := m.(type) {
+		case *tapeMachine:
+			v.p = prog
+			v.locMap = locMap
+			v.cpumem = make([]Value, prog.cpulocs)
+			v.gpumem = make([]Value, prog.gpulocs)
+		default:
+			// no op
+		}
+	}
+	return f
+}
