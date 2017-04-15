@@ -62,11 +62,10 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	bw.seq = 0
 	if t.IsMasked(){
 		fillval:=t.FillValue()
-		it := MultIteratorFromDense(t)
-    	runtime.SetFinalizer(it, destroyMultIterator)
+		it := FlatMaskedIteratorFromDense(t)
+    	runtime.SetFinalizer(it, destroyIterator)
 		for i, err := it.Next(); err == nil; i, err = it.Next() {
-			j := it.LastMaskIndex(0)
-			if t.mask[j] {
+			if t.mask[i] {
 				bw.w(fillval)
 			} else{
 				bw.w(t.Get(i))
@@ -100,9 +99,9 @@ func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	}
 
 	cw := csv.NewWriter(w)
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
-	coord := it.Coord(0)
+	it := IteratorFromDense(t)
+	runtime.SetFinalizer(it, destroyIterator)
+	coord := it.Coord()
 
 	// rows := t.Shape()[0]
 	cols := t.Shape()[1]
@@ -114,8 +113,7 @@ func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	for i, err = it.Next(); err == nil; i, err = it.Next() {
 		record = append(record, fmt.Sprintf(format, t.Get(i)))
 		if isMasked{
-			j := it.LastMaskIndex(0)
-			if t.mask[j] {
+			if t.mask[i] {
 				record[k]=fillstr
 				}
 				k++
@@ -165,10 +163,6 @@ func (t *Dense) GobEncode() (p []byte, err error){
 		return
 	}
 
-	if err = encoder.Encode(t.MaskStrides()); err != nil {
-		return
-	}
-
 	if err = encoder.Encode(t.mask); err != nil {
 		return
 	}
@@ -215,11 +209,7 @@ func (t *Dense) GobDecode(p []byte) (err error){
 		return
 	}
 
-	var maskStrides []int
-	if err = decoder.Decode(&maskStrides); err != nil {
-		return
-	}
-	t.AP = NewAP(shape, strides, maskStrides)
+	t.AP = NewAP(shape, strides)
 
 	var mask []bool
 	if err = decoder.Decode(&mask); err != nil {

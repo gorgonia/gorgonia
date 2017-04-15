@@ -303,13 +303,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.ints()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Int8:
@@ -324,13 +339,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.int8s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Int16:
@@ -345,13 +375,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.int16s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Int32:
@@ -366,13 +411,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.int32s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Int64:
@@ -387,13 +447,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.int64s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Uint:
@@ -408,13 +483,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.uints()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Uint8:
@@ -429,13 +519,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.uint8s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Uint16:
@@ -450,13 +555,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.uint16s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Uint32:
@@ -471,13 +591,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.uint32s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Uint64:
@@ -492,13 +627,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.uint64s()
-			for i, v := range data {
-				if v < min {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min {
+						data[i] = min
+						continue
+					}
+					if v > max {
+						data[i] = max
+					}
 				}
-				if v > max {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min {
+							data[i] = min
+							continue
+						}
+						if v > max {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Float32:
@@ -513,13 +663,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.float32s()
-			for i, v := range data {
-				if v < min || math32.IsInf(v, -1) {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min || math32.IsInf(v, -1) {
+						data[i] = min
+						continue
+					}
+					if v > max || math32.IsInf(v, 1) {
+						data[i] = max
+					}
 				}
-				if v > max || math32.IsInf(v, 1) {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min || math32.IsInf(v, -1) {
+							data[i] = min
+							continue
+						}
+						if v > max || math32.IsInf(v, 1) {
+							data[i] = max
+						}
+					}
 				}
 			}
 		case reflect.Float64:
@@ -534,13 +699,28 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.float64s()
-			for i, v := range data {
-				if v < min || math.IsInf(v, -1) {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < min || math.IsInf(v, -1) {
+						data[i] = min
+						continue
+					}
+					if v > max || math.IsInf(v, 1) {
+						data[i] = max
+					}
 				}
-				if v > max || math.IsInf(v, 1) {
-					data[i] = max
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < min || math.IsInf(v, -1) {
+							data[i] = min
+							continue
+						}
+						if v > max || math.IsInf(v, 1) {
+							data[i] = max
+						}
+					}
 				}
 			}
 		}
@@ -662,81 +842,186 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch t.t.Kind() {
 		case reflect.Int:
 			data := ret.ints()
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		case reflect.Int8:
 			data := ret.int8s()
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		case reflect.Int16:
 			data := ret.int16s()
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		case reflect.Int32:
 			data := ret.int32s()
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		case reflect.Int64:
 			data := ret.int64s()
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		case reflect.Float32:
 			data := ret.float32s()
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		case reflect.Float64:
 			data := ret.float64s()
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked() {
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i] {
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		}
 		retVal = ret
 		return

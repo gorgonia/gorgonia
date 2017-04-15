@@ -3,7 +3,6 @@ package tensor
 import (
 	"math"
 	"reflect"
-	"runtime"
 
 	"github.com/pkg/errors"
 )
@@ -19,11 +18,8 @@ GENERATED FILE. DO NOT EDIT
 func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -32,260 +28,221 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
 		mask := t.mask
 		x := val1.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
 		mask := t.mask
 		x := val1.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
 		mask := t.mask
 		x := val1.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
 		mask := t.mask
 		x := val1.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
 		mask := t.mask
 		x := val1.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
 		mask := t.mask
 		x := val1.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
 		mask := t.mask
 		x := val1.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
 		mask := t.mask
 		x := val1.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a == x)
+				mask[i] = (a == x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a == x)
+				mask[i] = mask[i] || (a == x)
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -298,11 +255,8 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -311,260 +265,221 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
 		mask := t.mask
 		x := val1.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
 		mask := t.mask
 		x := val1.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
 		mask := t.mask
 		x := val1.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
 		mask := t.mask
 		x := val1.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
 		mask := t.mask
 		x := val1.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
 		mask := t.mask
 		x := val1.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
 		mask := t.mask
 		x := val1.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
 		mask := t.mask
 		x := val1.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a != x)
+				mask[i] = (a != x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a != x)
+				mask[i] = mask[i] || (a != x)
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -582,11 +497,8 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 	}
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -601,20 +513,17 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 			delta = float64(val3[0].(float32)) + float64(y)*math.Abs(float64(x))
 		}
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (math.Abs(float64(a-x)) <= delta)
+				mask[i] = (math.Abs(float64(a-x)) <= delta)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (math.Abs(float64(a-x)) <= delta)
+				mask[i] = mask[i] || (math.Abs(float64(a-x)) <= delta)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
@@ -627,20 +536,17 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 			delta = float64(val3[0].(float64)) + float64(y)*math.Abs(float64(x))
 		}
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (math.Abs(float64(a-x)) <= delta)
+				mask[i] = (math.Abs(float64(a-x)) <= delta)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (math.Abs(float64(a-x)) <= delta)
+				mask[i] = mask[i] || (math.Abs(float64(a-x)) <= delta)
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -653,11 +559,8 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -666,260 +569,221 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
 		mask := t.mask
 		x := val1.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
 		mask := t.mask
 		x := val1.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
 		mask := t.mask
 		x := val1.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
 		mask := t.mask
 		x := val1.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
 		mask := t.mask
 		x := val1.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
 		mask := t.mask
 		x := val1.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
 		mask := t.mask
 		x := val1.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
 		mask := t.mask
 		x := val1.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a > x)
+				mask[i] = (a > x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a > x)
+				mask[i] = mask[i] || (a > x)
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -932,11 +796,8 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -945,260 +806,221 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
 		mask := t.mask
 		x := val1.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
 		mask := t.mask
 		x := val1.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
 		mask := t.mask
 		x := val1.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
 		mask := t.mask
 		x := val1.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
 		mask := t.mask
 		x := val1.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
 		mask := t.mask
 		x := val1.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
 		mask := t.mask
 		x := val1.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
 		mask := t.mask
 		x := val1.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a >= x)
+				mask[i] = (a >= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a >= x)
+				mask[i] = mask[i] || (a >= x)
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -1211,11 +1033,8 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -1224,260 +1043,221 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
 		mask := t.mask
 		x := val1.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
 		mask := t.mask
 		x := val1.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
 		mask := t.mask
 		x := val1.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
 		mask := t.mask
 		x := val1.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
 		mask := t.mask
 		x := val1.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
 		mask := t.mask
 		x := val1.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
 		mask := t.mask
 		x := val1.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
 		mask := t.mask
 		x := val1.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a < x)
+				mask[i] = (a < x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a < x)
+				mask[i] = mask[i] || (a < x)
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -1490,11 +1270,8 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -1503,260 +1280,221 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		mask := t.mask
 		x := val1.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
 		mask := t.mask
 		x := val1.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
 		mask := t.mask
 		x := val1.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
 		mask := t.mask
 		x := val1.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
 		mask := t.mask
 		x := val1.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
 		mask := t.mask
 		x := val1.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
 		mask := t.mask
 		x := val1.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
 		mask := t.mask
 		x := val1.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
 		mask := t.mask
 		x := val1.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = (a <= x)
+				mask[i] = (a <= x)
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || (a <= x)
+				mask[i] = mask[i] || (a <= x)
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -1769,11 +1507,8 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -1783,20 +1518,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int)
 		y := val2.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
@@ -1804,20 +1536,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int8)
 		y := val2.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
@@ -1825,20 +1554,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int16)
 		y := val2.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
@@ -1846,20 +1572,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int32)
 		y := val2.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
@@ -1867,20 +1590,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int64)
 		y := val2.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
@@ -1888,20 +1608,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint)
 		y := val2.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
@@ -1909,20 +1626,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint8)
 		y := val2.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
@@ -1930,20 +1644,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint16)
 		y := val2.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
@@ -1951,20 +1662,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint32)
 		y := val2.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
@@ -1972,20 +1680,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint64)
 		y := val2.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
@@ -1993,20 +1698,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float32)
 		y := val2.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
@@ -2014,20 +1716,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float64)
 		y := val2.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
@@ -2035,20 +1734,17 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(string)
 		y := val2.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a >= x) && (a <= y))
+				mask[i] = ((a >= x) && (a <= y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a >= x) && (a <= y))
+				mask[i] = mask[i] || ((a >= x) && (a <= y))
 			}
 		}
-		it.Reset()
 
 	}
 	return nil
@@ -2061,11 +1757,8 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()
 	}
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	switch t.t.Kind() {
 
@@ -2075,20 +1768,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int)
 		y := val2.(int)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int8:
 		data := t.int8s()
@@ -2096,20 +1786,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int8)
 		y := val2.(int8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int16:
 		data := t.int16s()
@@ -2117,20 +1804,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int16)
 		y := val2.(int16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int32:
 		data := t.int32s()
@@ -2138,20 +1822,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int32)
 		y := val2.(int32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Int64:
 		data := t.int64s()
@@ -2159,20 +1840,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(int64)
 		y := val2.(int64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint:
 		data := t.uints()
@@ -2180,20 +1858,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint)
 		y := val2.(uint)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint8:
 		data := t.uint8s()
@@ -2201,20 +1876,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint8)
 		y := val2.(uint8)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint16:
 		data := t.uint16s()
@@ -2222,20 +1894,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint16)
 		y := val2.(uint16)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint32:
 		data := t.uint32s()
@@ -2243,20 +1912,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint32)
 		y := val2.(uint32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Uint64:
 		data := t.uint64s()
@@ -2264,20 +1930,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(uint64)
 		y := val2.(uint64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Float32:
 		data := t.float32s()
@@ -2285,20 +1948,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float32)
 		y := val2.(float32)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.Float64:
 		data := t.float64s()
@@ -2306,20 +1966,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(float64)
 		y := val2.(float64)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	case reflect.String:
 		data := t.strings()
@@ -2327,20 +1984,17 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		x := val1.(string)
 		y := val2.(string)
 
-		if t.softmask {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+		if t.maskIsSoft {
+			for i := range data {
 				a := data[i]
-				mask[j] = ((a < x) || (a > y))
+				mask[i] = ((a < x) || (a > y))
 			}
 		} else {
-			for i, err := it.Next(); err == nil; i, err = it.Next() {
-				j := it.LastMaskIndex(0)
+			for i := range data {
 				a := data[i]
-				mask[j] = mask[j] || ((a < x) || (a > y))
+				mask[i] = mask[i] || ((a < x) || (a > y))
 			}
 		}
-		it.Reset()
 
 	}
 	return nil

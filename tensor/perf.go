@@ -148,7 +148,6 @@ func BorrowAP(dims int) *AP {
 		ap := new(AP)
 		ap.shape = make(Shape, dims)
 		ap.strides = make([]int, dims)
-		ap.maskStrides = make([]int, dims)
 		return ap
 	}
 
@@ -156,7 +155,6 @@ func BorrowAP(dims int) *AP {
 
 	// restore strides and shape to whatever that may have been truncated
 	ap.strides = ap.strides[:cap(ap.strides)]
-	ap.maskStrides = ap.maskStrides[:0] //Need to be to 0 otherwise might be falsely interpreted as masked
 	return ap
 }
 
@@ -183,10 +181,6 @@ var boolsPool [8]sync.Pool
 
 var apListPool [maxAPDims]sync.Pool
 
-/* MASKLIST POOL */
-
-var maskListPool [maxAPDims]sync.Pool
-
 // Init function
 func init() {
 	for i := range intsPool {
@@ -204,17 +198,11 @@ func init() {
 		apListPool[i].New = func() interface{} { return make([]*AP, size) }
 	}
 
-	for i := range maskListPool {
-		size := i
-		maskListPool[i].New = func() interface{} { return make([][]bool, size) }
-	}
-
 	for i := range apPool {
 		l := i
 		apPool[i].New = func() interface{} {
 			ap := new(AP)
 			ap.strides = make([]int, l)
-			ap.maskStrides = make([]int, l)
 			ap.shape = make(Shape, l)
 			return ap
 		}
@@ -309,34 +297,4 @@ func ReturnAPList(aps []*AP) {
 	}
 
 	apListPool[size].Put(aps)
-}
-
-// BorrowMaskList gets a [][]bool from the pool. USE WITH CAUTION.
-func BorrowMaskList(size int) [][]bool {
-	if size >= 8 {
-		return make([][]bool, size)
-	}
-
-	retVal := maskListPool[size].Get()
-	if retVal == nil {
-		return make([][]bool, size)
-	}
-	return retVal.([][]bool)
-}
-
-// ReturnMaskList returns the [][]bool to the pool. USE WITH CAUTION.
-func ReturnMaskList(masks [][]bool) {
-	if masks == nil {
-		return
-	}
-	size := cap(masks)
-	if size >= 8 {
-		return
-	}
-	masks = masks[:cap(masks)]
-	for i := range masks {
-		masks[i] = nil
-	}
-
-	maskListPool[size].Put(masks)
 }

@@ -5,22 +5,30 @@ package tensor
 // This data structure is similar to Numpy's flatiter, with some standard Go based restrictions of course
 // (such as, not allowing negative indices)
 type MultIterator struct {
-	fit0      *FlatIterator
-	trackIdx  []int
-	fitArr    []*FlatIterator
-	lastIndex []*int
-	masks     [][]bool
-	termInt   int // Should be -1
+	*AP                // Uses AP of the largest tensor in list
+	fit0 *FlatIterator //largest fit in fitArr (by AP total size)
+	mask []bool
+
+	numMasked    int
+	lastIndexArr []int
+	shape        Shape
+	whichBlock   []int
+	fitArr       []*FlatIterator
+	strides      []int
+
+	size    int
+	done    bool
+	reverse bool
 }
 
-func genIterator(m map[int]*FlatIterator, shape []int, strides []int) (*FlatIterator, int) {
-	key := hashIntArrayPair(shape, strides)
-	f := m[key]
-	if f == nil {
-		f = NewFlatIterator(&AP{shape: shape, strides: strides})
-		m[key] = f
+func genIterator(m map[int]int, strides []int, idx int) (int, bool) {
+	key := hashIntArray(strides)
+	f, ok := m[key]
+	if !ok {
+		m[key] = idx
+		return idx, ok
 	}
-	return f, key
+	return f, ok
 }
 
 // NewMultIterator creates a new MultIterator from a list of APs
@@ -29,217 +37,256 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 	if nit < 1 {
 		return nil
 	}
+	for _, ap := range aps {
+		if ap == nil {
+			panic("ap is nil") //TODO: Probably remove this panic
+		}
+	}
+
+	var maxDims int
+	var maxShape = aps[0].shape
+
+	for i := range aps {
+		if aps[i].Dims() >= maxDims {
+			maxDims = aps[i].Dims()
+			if aps[i].Size() > maxShape.TotalSize() {
+				maxShape = aps[i].shape
+			}
+		}
+
+	}
 
 	it := new(MultIterator)
 
-	for i := 1; i < len(aps); i++ {
-		if aps[i] != nil {
-			if !(aps[i].IsScalar()) {
-				for j := 0; j < len(aps); j++ {
-					if aps[j] != nil {
-						if !(aps[j].IsScalar()) {
-							if !EqInts(aps[i].shape, aps[j].shape) {
-								//panic("Can not iterate through tensors of different shape")
-								return nil
-							}
-						}
-					}
-				}
-				break
-			}
+	it.whichBlock = BorrowInts(nit)
+	it.lastIndexArr = BorrowInts(nit)
+	it.strides = BorrowInts(nit * maxDims)
+
+	shape := BorrowInts(len(maxShape))
+	copy(shape, maxShape)
+	it.shape = shape
+
+	for _, ap := range aps {
+		_, err := BroadcastStrides(shape, ap.shape, it.strides[:maxDims], ap.strides)
+		if err != nil {
+			panic("can not broadcast strides")
 		}
 	}
 
-	it.fitArr = make([]*FlatIterator, 2*nit)
-	it.lastIndex = make([]*int, 2*nit)
-	it.trackIdx = BorrowInts(2 * nit)
-	it.termInt = -1
-
-	if nit == 1 && !aps[0].IsMasked() {
-		it.fit0 = NewFlatIterator(&AP{shape: aps[0].shape, strides: aps[0].strides})
-		it.fitArr[0] = it.fit0
-		it.lastIndex[0] = &(it.fit0.lastIndex)
-		it.trackIdx[0] = 0
-		return it
+	for i := range it.strides {
+		it.strides[i] = 0
 	}
 
-	m := make(map[int]*FlatIterator)
+	it.fitArr = make([]*FlatIterator, nit)
 
+	//TODO: Convert this make to Borrow perhaps?
+	m := make(map[int]int)
+
+	nBlocks := 0
+	offset := 0
 	for i, ap := range aps {
-		it.lastIndex[2*i] = &it.termInt
-		it.lastIndex[2*i+1] = &it.termInt
-
-		if ap != nil {
-			if ap.IsMasked() {
-				f, key := genIterator(m, ap.shape, ap.maskStrides)
-				it.lastIndex[2*i+1] = &(f.lastIndex)
-				it.trackIdx[2*i+1] = key
-			}
-			f, key := genIterator(m, ap.shape, ap.strides)
-			it.lastIndex[2*i] = &(f.lastIndex)
-			it.trackIdx[2*i] = key
+		f, ok := genIterator(m, ap.strides, i)
+		if !ok {
+			offset = nBlocks * maxDims
+			apStrides, _ := BroadcastStrides(shape, ap.shape, it.strides[offset:offset+maxDims], ap.strides)
+			copy(it.strides[offset:offset+maxDims], apStrides)
+			ReturnInts(apStrides) // Borrowed in BroadcastStrides but returned here - dangerous pattern?
+			nBlocks++
 		}
+		it.whichBlock[i] = f
+		it.fitArr[nBlocks] = NewFlatIterator(NewAP(it.shape[:maxDims], it.strides[offset:offset+maxDims]))
 	}
 
-	i := 0
-	for key, f := range m {
-		it.fitArr[i] = f
-		for j := range it.trackIdx {
-			if it.trackIdx[j] == key {
-				it.trackIdx[j] = i
-			}
+	it.fitArr = it.fitArr[:nBlocks*maxDims]
+	it.strides = it.strides[:nBlocks*maxDims]
+
+	it.fit0 = it.fitArr[0]
+	for _, f := range it.fitArr {
+		if it.fit0.size < f.size {
+			it.fit0 = f
+			it.AP = f.AP
 		}
-		i++
 	}
-	it.fitArr = it.fitArr[:i]
 	return it
 }
 
 // MultIteratorFromDense creates a new MultIterator from a list of dense tensors
 func MultIteratorFromDense(tts ...*Dense) *MultIterator {
 	aps := BorrowAPList(len(tts))
+	hasMask := BorrowBools(len(tts))
+	defer ReturnBools(hasMask)
+
 	var masked = false
+	numMasked := 0
 	for i, tt := range tts {
 		aps[i] = tt.Info()
-		masked = masked || aps[i].IsMasked()
-	}
-	it := NewMultIterator(aps...)
-	if masked {
-		masks := BorrowMaskList(len(tts))
-		for i, tt := range tts {
-			masks[i] = tt.mask
+		hasMask[i] = tt.IsMasked()
+		masked = masked || hasMask[i]
+		if hasMask[i] {
+			numMasked++
 		}
-		it.masks = masks
 	}
+
+	it := NewMultIterator(aps...)
+
+	if masked {
+		// create new mask slice if more than tensor is masked
+		if numMasked > 1 {
+			it.mask = BorrowBools(it.shape.TotalSize())
+			memsetBools(it.mask, false)
+			for i, err := it.Start(); err == nil; i, err = it.Next() {
+				for j, k := range it.lastIndexArr {
+					if hasMask[j] {
+						it.mask[i] = it.mask[i] || tts[j].mask[k]
+					}
+				}
+			}
+		}
+	}
+	it.numMasked = numMasked
 	ReturnAPList(aps)
 	return it
 }
 
-// destroyMultIterator creates a new MultIterator from a list of dense tensors
+// destroyMultIterator returns any borrowed objects back to pool
 func destroyMultIterator(it *MultIterator) {
-	if cap(it.masks) > 0 {
-		ReturnMaskList(it.masks)
-		it.masks = nil
+
+	if cap(it.whichBlock) > 0 {
+		ReturnInts(it.whichBlock)
+		it.whichBlock = nil
 	}
-	if cap(it.trackIdx) > 0 {
-		ReturnInts(it.trackIdx)
-		it.trackIdx = nil
+	if cap(it.lastIndexArr) > 0 {
+		ReturnInts(it.lastIndexArr)
+		it.lastIndexArr = nil
+	}
+	if cap(it.strides) > 0 {
+		ReturnInts(it.strides)
+		it.strides = nil
+	}
+	if it.numMasked > 1 {
+		if cap(it.mask) > 0 {
+			ReturnBools(it.mask)
+			it.mask = nil
+		}
 	}
 }
 
-// SetReverse initializes iterator to run backwards
+// SetReverse initializes iterator to run backward
 func (it *MultIterator) SetReverse() {
 	for _, f := range it.fitArr {
-		if f != nil {
-			f.SetReverse()
-		}
+		f.SetReverse()
 	}
+}
+
+// SetForward initializes iterator to run forward
+func (it *MultIterator) SetForward() {
+	for _, f := range it.fitArr {
+		f.SetForward()
+	}
+}
+
+//Start begins iteration
+func (it *MultIterator) Start() (int, error) {
+	it.Reset()
+	return it.Next()
 }
 
 //Done checks whether iterators are done
 func (it *MultIterator) Done() bool {
-	if it.fit0 != nil {
-		return it.fit0.done
-	}
 	for _, f := range it.fitArr {
 		if !f.done {
+			it.done = false
 			return false
 		}
 	}
+	it.done = true
 	return true
 }
 
 // Next returns the index of the next coordinate
 func (it *MultIterator) Next() (int, error) {
-	if it.fit0 != nil {
-		return it.fit0.Next()
-	}
-	if it.Done() {
+	if it.done {
 		return -1, noopError{}
 	}
+	it.Next()
+	it.done = false
 	for _, f := range it.fitArr {
 		f.Next()
+		it.done = it.done || f.done
 	}
-	return *(it.lastIndex[0]), nil
+	for i, j := range it.whichBlock {
+		it.lastIndexArr[i] = it.fitArr[j].lastIndex
+	}
+	return it.fit0.lastIndex, nil
 }
 
 // NextValid returns the index of the next valid coordinate
-func (it *MultIterator) NextValid() (int, error) {
-	if len(it.masks) < 1 {
-		return -1, noopError{} // Need to find right error code
-	}
+func (it *MultIterator) NextValid() (int, int, error) {
 	var invalid = true
+	var count int
+	var mult = 1
+	if it.reverse {
+		mult = -1
+	}
 	for invalid {
-		if it.Done() {
-			return -1, noopError{}
+		if it.done {
+			for i, j := range it.whichBlock {
+				it.lastIndexArr[i] = it.fitArr[j].lastIndex
+			}
+			return -1, 0, noopError{}
 		}
 		for _, f := range it.fitArr {
 			f.Next()
+			it.done = it.done || f.done
 		}
-		for i, idp := range it.lastIndex {
-			if i%2 == 1 {
-				invalid = invalid && it.masks[i>>1][*idp]
-			}
-		}
+		count++
+		invalid = !it.mask[it.fit0.lastIndex]
 	}
-	return *(it.lastIndex[0]), nil
+	return it.fit0.lastIndex, mult * count, nil
 }
 
 // NextInvalid returns the index of the next invalid coordinate
-func (it *MultIterator) NextInvalid() (int, error) {
-	if len(it.masks) < 1 {
-		return -1, noopError{} // Need to find right error code
+func (it *MultIterator) NextInvalid() (int, int, error) {
+	var valid = true
+
+	var count = 0
+	var mult = 1
+	if it.reverse {
+		mult = -1
 	}
-	var invalid = true
-	for invalid {
-		if it.Done() {
-			return -1, noopError{}
+	for valid {
+		if it.done {
+			for i, j := range it.whichBlock {
+				it.lastIndexArr[i] = it.fitArr[j].lastIndex
+			}
+			return -1, 0, noopError{}
 		}
 		for _, f := range it.fitArr {
 			f.Next()
+			it.done = it.done || f.done
 		}
-		for i, idp := range it.lastIndex {
-			if i%2 == 1 {
-				invalid = invalid && !it.masks[i>>1][*idp]
-			}
-		}
+		count++
+		valid = !it.mask[it.fit0.lastIndex]
 	}
-	return *(it.lastIndex[0]), nil
-}
-
-// LastIndex returns the index of the current coordinate.
-func (it *MultIterator) LastIndex(i int) int {
-	return *(it.lastIndex[2*i])
-}
-
-// LastMaskIndex returns the index of the current coordinate.
-func (it *MultIterator) LastMaskIndex(i int) int {
-	return *(it.lastIndex[2*i+1])
+	return it.fit0.lastIndex, mult * count, nil
 }
 
 // Coord returns the next coordinate.
 // When Next() is called, the coordinates are updated AFTER the Next() returned.
 // See example for more details.
-func (it *MultIterator) Coord(i int) []int {
-	return it.fitArr[it.trackIdx[2*i]].track
-}
-
-// MaskCoord returns the next coordinate of mask.
-// When Next() is called, the coordinates are updated AFTER the Next() returned.
-// See example for more details.
-func (it *MultIterator) MaskCoord(i int) []int {
-	return it.fitArr[it.trackIdx[2*i+1]].track
+func (it *MultIterator) Coord() []int {
+	return it.fit0.track
 }
 
 // Reset resets the iterator state.
 func (it *MultIterator) Reset() {
-	if it.fit0 != nil {
-		it.fit0.Reset()
-		return
-	}
 	for _, f := range it.fitArr {
 		f.Reset()
 	}
+	for i, j := range it.whichBlock {
+		it.lastIndexArr[i] = it.fitArr[j].lastIndex
+	}
+	it.done = false
 }
 
 /*

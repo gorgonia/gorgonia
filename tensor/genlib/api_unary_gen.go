@@ -86,15 +86,30 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				return
 			}
 			data := ret.{{sliceOf .}}
-			for i, v := range data {
-				if v < min {{if eq .String "float64"}}|| math.IsInf(v, -1){{else if eq .String "float32"}}|| math32.IsInf(v, -1){{end}} {
-					data[i] = min
-					continue
+
+			if !ret.IsMasked(){
+				for i, v := range data {					
+					if v < min {{if eq .String "float64"}}|| math.IsInf(v, -1){{else if eq .String "float32"}}|| math32.IsInf(v, -1){{end}} {
+						data[i] = min
+						continue
+					}
+					if v > max {{if eq .String "float64"}}|| math.IsInf(v, 1){{else if eq .String "float32"}}|| math32.IsInf(v, 1){{end}} {
+						data[i] = max
+					}
 				}
-				if v > max {{if eq .String "float64"}}|| math.IsInf(v, 1){{else if eq .String "float32"}}|| math32.IsInf(v, 1){{end}} {
-					data[i] = max
+			}	else	{					
+				for i, v := range data {
+					if !ret.mask[i]{
+							if v < min {{if eq .String "float64"}}|| math.IsInf(v, -1){{else if eq .String "float32"}}|| math32.IsInf(v, -1){{end}} {
+								data[i] = min
+								continue
+							}
+							if v > max {{if eq .String "float64"}}|| math.IsInf(v, 1){{else if eq .String "float32"}}|| math32.IsInf(v, 1){{end}} {
+								data[i] = max
+							}
+						}
+					}
 				}
-			}
 		{{end -}}
 		{{end -}}
 		{{end -}}
@@ -172,15 +187,30 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		{{if or $isInt $isFloat -}}
 		case reflect.{{reflectKind .}}:
 			data := ret.{{sliceOf .}}
-			for i, v := range data {
-				if v < 0 {
-					data[i] = -1
-					continue
+			if !ret.IsMasked(){
+				for i, v := range data {
+					if v < 0 {
+						data[i] = -1
+						continue
+					}
+					if v > 0 {
+						data[i] = 1
+					}
 				}
-				if v > 0 {
-					data[i] = 1
+			} else {
+				for i, v := range data {
+					if !ret.mask[i]{
+						if v < 0 {
+							data[i] = -1
+							continue
+						}
+						if v > 0 {
+							data[i] = 1
+						}
+					}
 				}
 			}
+
 		{{end -}}
 		{{end -}}
 		{{end -}}

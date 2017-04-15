@@ -45,15 +45,21 @@ func WithBacking(x interface{}, argMask ...[]bool) ConsOpt {
 	return f
 }
 
-// WithMaskStrides is a construction option for a Tensor
-func WithMaskStrides(x interface{}) ConsOpt {
+// WithMask is a construction option for a Tensor
+// Use it as such:
+//		mask := []bool{true,true,false,false}
+// 		t := New(WithBacking(backing))
+// It can be used with other construction options like WithShape
+// The supplied mask can be any type. If non-boolean, then tensor mask is set to true
+// wherever non-zero value is obtained
+func WithMask(x interface{}) ConsOpt {
 	f := func(t Tensor) {
 		if x == nil {
 			return
 		}
 		switch tt := t.(type) {
 		case *Dense:
-			tt.SetMaskStrides(x)
+			tt.MaskFromSlice(x)
 		default:
 			panic("Unsupported Tensor type")
 		}

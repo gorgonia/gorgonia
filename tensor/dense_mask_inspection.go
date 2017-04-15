@@ -25,7 +25,7 @@ func MaskedReduce(t *Dense, retType Dtype, fn maskedReduceFn, axis ...int) inter
 	ts := tt.(*Dense)
 	retVal := NewDense(retType, ts.shape) //retVal is array to be returned
 
-	it := NewFlatIterator(retVal.Info())
+	it := NewIterator(retVal.Info())
 
 	// iterate through retVal
 	slices[ax] = makeRS(0, t.shape[ax])
@@ -85,55 +85,27 @@ func doMaskAll(T Tensor) interface{} {
 			return false
 		}
 		m := t.mask
-		// contiguous mask case
-		if t.MaskSize() == t.Size() {
-			for i := 0; i < t.MaskSize(); i++ {
-				if !m[i] {
-					return false
-				}
-			}
-			return true
-		}
-		//non-contiguous mask case
-		it := MultIteratorFromDense(t)
-		runtime.SetFinalizer(it, destroyMultIterator)
-
-		for _, err := it.Next(); err == nil; _, err = it.Next() {
-			i := it.LastMaskIndex(0)
-			if !m[i] {
+		for _, v := range m {
+			if !v {
 				return false
 			}
 		}
 		return true
+
 	default:
 		panic("Incompatible type")
 	}
 }
 
 func doMaskAny(T Tensor) interface{} {
-
 	switch t := T.(type) {
 	case *Dense:
 		if !t.IsMasked() {
 			return false
 		}
 		m := t.mask
-		// contiguous mask case
-		if t.MaskSize() == t.Size() {
-			for i := 0; i < t.MaskSize(); i++ {
-				if m[i] {
-					return true
-				}
-			}
-			return false
-		}
-		//non-contiguous mask case
-		it := MultIteratorFromDense(t)
-		runtime.SetFinalizer(it, destroyMultIterator)
-
-		for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
-			i := it.LastMaskIndex(0)
-			if m[i] {
+		for _, v := range m {
+			if v {
 				return true
 			}
 		}
@@ -150,25 +122,15 @@ func doMaskCt(T Tensor) interface{} {
 		if !t.IsMasked() {
 			return 0
 		}
-		// contiguous mask case
-		if t.MaskSize() == t.Size() {
-			count := 0
-			m := t.mask
-			for i := 0; i < t.MaskSize(); i++ {
-				if m[i] {
-					count++
-				}
+
+		count := 0
+		m := t.mask
+		for _, v := range m {
+			if v {
+				count++
 			}
-			return count
 		}
-		//non-contiguous mask case
-		it := MultIteratorFromDense(t)
-		runtime.SetFinalizer(it, destroyMultIterator)
-		j := 0
-		for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
-			j++
-		}
-		return j
+		return count
 	default:
 		panic("Incompatible type")
 	}
@@ -196,14 +158,14 @@ func doNonMaskCt(T Tensor) interface{} {
 func (t *Dense) FlatNotMaskedContiguous() []Slice {
 	sliceList := make([]Slice, 0, 4)
 
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(t)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	var start, end int
 	var errV, errI error
 	for errV == nil && errI == nil {
-		start, errV = it.NextValid()
-		end, errI = it.NextInvalid()
+		start, _, errV = it.NextValid()
+		end, _, errI = it.NextInvalid()
 		if (start < 0) && (end < 0) {
 			break
 		}
@@ -222,22 +184,26 @@ func (t *Dense) FlatNotMaskedContiguous() []Slice {
 func (t *Dense) FlatMaskedContiguous() []Slice {
 	sliceList := make([]Slice, 0, 4)
 
-	it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(t)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	var start, end int
-	var errV, errI error
-	for errV == nil && errI == nil {
-		start, errV = it.NextInvalid()
-		end, errI = it.NextValid()
-		if (start < 0) && (end < 0) {
-			break
+	n := t.len()
+	for start < n && end <= n {
+		for ; start < n; start++ {
+			if t.mask[start] {
+				break
+			}
 		}
-		if end < 0 {
-			end = t.Size()
+		for end = start; end < n; end++ {
+			if !t.mask[end] {
+				break
+			}
 		}
-		sliceList = append(sliceList, makeRS(start, end))
-
+		if end < start {
+			sliceList = append(sliceList, makeRS(start, end))
+		}
+		start = end
 	}
 	return sliceList
 }
@@ -249,36 +215,44 @@ func (t *Dense) FlatNotMaskedEdges() (int, int) {
 	if !t.IsMasked() {
 		return 0, t.Size() - 1
 	}
-	itF := MultIteratorFromDense(t)
-	runtime.SetFinalizer(itF, destroyMultIterator)
-	itB := MultIteratorFromDense(t)
-	runtime.SetFinalizer(itB, destroyMultIterator)
-
-	itB.SetReverse() // set it to run backward
-
-	start, _ := itF.NextValid()
-	end, _ := itB.NextValid()
-
+	var start, end int
+	for ; start < t.Size(); start++ {
+		if !t.mask[start] {
+			break
+		}
+	}
+	for end = (t.Size() - 1); end > 0; end-- {
+		if !t.mask[end] {
+			break
+		}
+	}
+	if end == 0 && t.mask[0] == true {
+		return -1, -1
+	}
 	return start, end
 }
 
 // FlatMaskedEdges is used to find the indices of the first and last masked values
 // Applies to a flattened version of the array.
-// Returns: A pair of ints. -1 if all values are masked.
+// Returns: A pair of ints. -1 if all values are unmasked.
 func (t *Dense) FlatMaskedEdges() (int, int) {
 	if !t.IsMasked() {
 		return 0, t.Size() - 1
 	}
-	itF := MultIteratorFromDense(t)
-	runtime.SetFinalizer(itF, destroyMultIterator)
-	itB := MultIteratorFromDense(t)
-	runtime.SetFinalizer(itB, destroyMultIterator)
-
-	itB.SetReverse() // set it to run backward
-
-	start, _ := itF.NextInvalid()
-	end, _ := itB.NextInvalid()
-
+	var start, end int
+	for ; start < t.Size(); start++ {
+		if t.mask[start] {
+			break
+		}
+	}
+	for end = (t.Size() - 1); end >= 0; end-- {
+		if t.mask[end] {
+			break
+		}
+	}
+	if end == 0 && t.mask[0] == false {
+		return -1, -1
+	}
 	return start, end
 }
 

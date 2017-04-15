@@ -204,7 +204,6 @@ func TestDense_GobEncodeDecode(t *testing.T) {
 
 		assert.Equal(T.Shape(), T3.Shape())
 		assert.Equal(T.Strides(), T3.Strides())
-		assert.Equal(T.MaskStrides(), T3.MaskStrides())
 		assert.Equal(T.Data(), T3.Data())
 		assert.Equal(T.mask, T3.mask)
 

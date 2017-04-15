@@ -39,16 +39,9 @@ func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error
 	case t.viewOf == nil:
 		err = res.mapFn(fn, incr)
 	case t.viewOf != nil:
-		if t.IsMasked() {
-			it := MultIteratorFromDense(t)
-			if err = res.iterMapMasked(fn, it, incr); err != nil {
-				return
-			}
-		} else {
-			it := NewFlatIterator(t.AP)
-			if err = res.iterMap(fn, it, incr); err != nil {
-				return
-			}
+		it := IteratorFromDense(t)
+		if err = res.iterMap(fn, it, incr); err != nil {
+			return
 		}
 
 	default:
@@ -236,6 +229,15 @@ func (t *Dense) SetAt(v interface{}, coords ...int) error {
 	return nil
 }
 
+// SetMaskAtDataIndex set the value of the mask at a given index
+func (t *Dense) SetMaskAtIndex(v bool, i int) error {
+	if !t.IsMasked() {
+		return nil
+	}
+	t.mask[i] = v
+	return nil
+}
+
 // SetMaskAt sets the mask value at the given coordinate
 func (t *Dense) SetMaskAt(v bool, coords ...int) error {
 	if !t.IsMasked() {
@@ -367,18 +369,6 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 	view.slice(ndStart, ndEnd)
 
 	if t.IsMasked() {
-		tempAP := t.AP.Clone()
-		copy(tempAP.strides, tempAP.maskStrides)
-		tempAP.maskStrides = tempAP.maskStrides[:0]
-		maskAP, ndStart, ndEnd, err = tempAP.S(len(t.mask), slices...)
-		if cap(newAP.maskStrides) < len(newAP.strides) {
-			//ugly hack that works for mask dimensions with zero stride
-			// it uses len(newAP) and not len(maskAP) to account for cases where
-			// a single dimension is returned that has mask stride 0
-			newAP.maskStrides = make([]int, len(newAP.strides))
-		}
-		copy(newAP.maskStrides[:len(maskAP.strides)], maskAP.strides)
-
 		view.mask = t.mask[ndStart:ndEnd]
 	}
 	return view, err
@@ -586,7 +576,7 @@ func (t *Dense) at(coords ...int) (at int, err error) {
 // maskat returns the mask index at which the coordinate is referring to.
 func (t *Dense) maskAt(coords ...int) (at int, err error) {
 	//TODO: Add check for non-masked tensor
-	return Ltoi(t.Shape(), t.MaskStrides(), coords...)
+	return t.at(coords...)
 }
 
 // simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides

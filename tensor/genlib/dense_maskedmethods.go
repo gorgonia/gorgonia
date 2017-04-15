@@ -37,12 +37,9 @@ func (t *Dense) {{.Name}}({{if ge .NumArgs 1 -}} val1 interface{} {{end}} {{if g
 	{{end}}
 	
 	if !t.IsMasked() {
-		t.SetMaskStrides(t.strides)
-		t.fix()
+		t.makeMask()		
 	}	
-    it := MultIteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyMultIterator)
-	
+    	
     {{$numargs := .NumArgs}}
 	{{$name := .Name}}
     {{$fn := .CmpFn}}	
@@ -68,21 +65,18 @@ func (t *Dense) {{.Name}}({{if ge .NumArgs 1 -}} val1 interface{} {{end}} {{if g
 					z := val3.({{asType .}})
 				{{end}}
 			{{end}}			
-			if t.softmask{
-					for i, err := it.Next(); err == nil; i, err = it.Next() {
-					j := it.LastMaskIndex(0)
+			if t.maskIsSoft{
+					for i := range data {					
 					a := data[i]
-					mask[j] = ({{$fn}})
+					mask[i] = ({{$fn}})
 				}
 			} else {
-				for i, err := it.Next(); err == nil; i, err = it.Next() {
-					j := it.LastMaskIndex(0)
+				for i := range data {					
 					a := data[i]					
-					mask[j] = mask[j] || ({{$fn}})
+					mask[i] = mask[i] || ({{$fn}})
 				}
 			}
-			it.Reset()
-			
+						
     {{end}}
     {{end}}
 	{{end}}

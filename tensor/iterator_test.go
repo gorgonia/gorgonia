@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"runtime"
 	"testing"
@@ -163,6 +164,30 @@ func TestMultIterator(t *testing.T) {
 		}
 	}
 
+}
+
+func TestIteratorInterface(t *testing.T) {
+	assert := assert.New(t)
+
+	var ap *AP
+	var it Iterator
+	var err error
+	var nexts []int
+
+	// basic stuff
+	for i, fit := range flatIterTests1 {
+		nexts = nexts[:0]
+		err = nil
+		ap = NewAP(fit.shape, fit.strides)
+		it = NewIterator(ap)
+		for next, err := it.Start(); err == nil; next, err = it.Next() {
+			nexts = append(nexts, next)
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			t.Error(err)
+		}
+		assert.Equal(fit.correct, nexts, "Test %d", i)
+	}
 }
 
 func TestMultIteratorFromDense(t *testing.T) {
@@ -373,7 +398,7 @@ func (it *oldFlatIterator) Reset() {
 	}
 }
 
-func BenchmarkOldFlatIterator(b *testing.B) {
+/*func BenchmarkOldFlatIterator(b *testing.B) {
 	var err error
 
 	// as if T = NewTensor(WithShape(30, 1000, 1000))
@@ -391,7 +416,7 @@ func BenchmarkOldFlatIterator(b *testing.B) {
 
 		it.Reset()
 	}
-}
+}*/
 
 func BenchmarkFlatIterator(b *testing.B) {
 	var err error
@@ -462,7 +487,27 @@ func BenchmarkFlatIteratorMulti1(b *testing.B) {
 		}
 		it.Reset()
 	}
+}
 
+func BenchmarkFlatIteratorGeneric1(b *testing.B) {
+	var err error
+
+	// as if T = NewTensor(WithShape(30, 1000, 1000))
+	// then T[:, 0:900:15, 250:750:50]
+	ap := NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
+
+	it := NewIterator(ap)
+	runtime.SetFinalizer(it, destroyIterator)
+
+	for n := 0; n < b.N; n++ {
+		for _, err := it.Next(); err == nil; _, err = it.Next() {
+
+		}
+		if _, ok := err.(NoOpError); err != nil && !ok {
+			b.Error(err)
+		}
+		it.Reset()
+	}
 }
 
 func BenchmarkFlatIteratorMulti6(b *testing.B) {
@@ -488,4 +533,54 @@ func BenchmarkFlatIteratorMulti6(b *testing.B) {
 		}
 		it.Reset()
 	}
+}
+
+func TestMultIteratorAdd(t *testing.T) {
+	//assert := assert.New(t)
+
+	T1 := New(Of(Int), WithShape(1, 10))
+	data1 := T1.Data().([]int)
+	T2 := New(Of(Int), WithShape(1, 10))
+	data2 := T2.Data().([]int)
+	T3 := New(Of(Int), FromScalar(7))
+	data3 := T3.Data().(int)
+
+	for i := 0; i < 10; i++ {
+		data1[i] = i
+		data2[i] = data3 * i
+	}
+	fmt.Println(T1)
+	T1.ResetMask(false)
+	T1.mask[2] = true
+	//T2.ResetMask(false)
+	//T2.mask[2] = true
+	T4, _ := T1.Add(T2)
+
+	fmt.Println(T4, T4.ints())
+	T5, _ := Clamp(T4, 0, 1)
+	fmt.Println(T5.(*Dense), T5.(*Dense).ints())
+	T6, _ := Sign(T5)
+	fmt.Println(T6.(*Dense), T6.(*Dense).ints())
+
+}
+
+func TestRando(t *testing.T) {
+	T := New(Of(Int), WithShape(1, 64))
+	T.ResetMask()
+	fmt.Println(T.mask)
+	fmt.Println(T.compMask)
+
+	T = New(Of(Int), WithShape(1, 2))
+	T.ResetMask()
+	fmt.Println(T.mask)
+	fmt.Println(T.compMask)
+
+	T = New(Of(Int), WithShape(1, 9))
+	T.ResetMask()
+	T.mask[8] = true
+	T.ResetMask()
+	T.setCompMask()
+	fmt.Println(T.mask)
+	fmt.Println(T.compMask)
+
 }

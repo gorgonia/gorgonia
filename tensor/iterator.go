@@ -1,5 +1,66 @@
 package tensor
 
+// Iterator is the generic iterator interface
+type Iterator interface {
+	Start() (int, error)
+	Next() (int, error)
+	NextValid() (int, int, error)
+	NextInvalid() (int, int, error)
+	Reset()
+	SetReverse()
+	Coord() []int
+	Done() bool
+	Shape() Shape
+}
+
+// NewIterator creates a new Iterator from an ap. The type of iterator depends on number of
+// aps passed, and whether they are masked or not
+func NewIterator(aps ...*AP) Iterator {
+	switch len(aps) {
+	case 0:
+		return nil
+	case 1:
+		return NewFlatIterator(aps[0])
+	default:
+		return NewMultIterator(aps...)
+	}
+}
+
+// IteratorFromDense creates a new Iterator from a list of dense tensors
+func IteratorFromDense(tts ...*Dense) Iterator {
+	switch len(tts) {
+	case 0:
+		return nil
+	case 1:
+		if tts[0].IsMasked() {
+			return FlatMaskedIteratorFromDense(tts[0])
+		}
+		return FlatIteratorFromDense(tts[0])
+	default:
+		return MultIteratorFromDense(tts...)
+	}
+}
+
+func destroyIterator(it Iterator) {
+	switch itt := it.(type) {
+	case *MultIterator:
+		destroyMultIterator(itt)
+	}
+}
+
+func iteratorLoadAP(it Iterator, ap *AP) {
+	switch itt := it.(type) {
+	case *FlatIterator:
+		itt.AP = ap
+	case *FlatMaskedIterator:
+		itt.AP = ap
+	case *MultIterator: // Do nothing
+
+	}
+}
+
+/* FLAT ITERATOR */
+
 // FlatIterator is an iterator that iterates over Tensors. It utilizes the *AP
 // of a Tensor to determine what the next index is.
 // This data structure is similar to Numpy's flatiter, with some standard Go based restrictions of course
@@ -32,11 +93,34 @@ func NewFlatIterator(ap *AP) *FlatIterator {
 	}
 }
 
+// FlatIteratorFromDense creates a new FlatIterator from a dense tensor
+func FlatIteratorFromDense(tt *Dense) *FlatIterator {
+	return NewFlatIterator(tt.Info())
+}
+
 // SetReverse initializes iterator to run backwards
 func (it *FlatIterator) SetReverse() {
 	it.reverse = true
 	it.Reset()
 	return
+}
+
+// SetForward initializes iterator to run forwards
+func (it *FlatIterator) SetForward() {
+	it.reverse = false
+	it.Reset()
+	return
+}
+
+//Start begins iteration
+func (it *FlatIterator) Start() (int, error) {
+	it.Reset()
+	return it.Next()
+}
+
+//Done checks whether iterators are done
+func (it *FlatIterator) Done() bool {
+	return it.done
 }
 
 // Next returns the index of the current coordinate.
@@ -60,6 +144,45 @@ func (it *FlatIterator) Next() (int, error) {
 		}
 		return it.ndNext()
 	}
+}
+
+// NextValid returns the index of the current coordinate. Identical to Next for FlatIterator
+// Also returns the number of increments to get to next element ( 1,  or -1 in reverse case). This is to maintain
+// consistency with the masked iterator, for which the step between valid elements can be more than 1
+func (it *FlatIterator) NextValid() (int, int, error) {
+	if it.done {
+		return -1, 1, noopError{}
+	}
+	switch {
+	case it.IsScalar():
+		it.done = true
+		return 0, 0, nil
+	case it.IsVector():
+		if it.reverse {
+			a, err := it.singlePrevious()
+			return a, -1, err
+		}
+		a, err := it.singleNext()
+		return a, 1, err
+	default:
+		if it.reverse {
+			a, err := it.ndPrevious()
+			return a, -1, err
+		}
+		a, err := it.ndNext()
+		return a, 1, err
+	}
+}
+
+// NextInvalid returns the index of the current coordinate. Identical to Next for FlatIterator
+// also returns the number of increments to get to next invalid element (1 or -1 in reverse case).
+// Like NextValid, this method's purpose is to maintain consistency with the masked iterator,
+// for which the step between invalid elements can be anywhere from 0 to the  tensor's length
+func (it *FlatIterator) NextInvalid() (int, int, error) {
+	if it.reverse {
+		return -1, -it.lastIndex, noopError{}
+	}
+	return -1, it.Size() - it.lastIndex, noopError{}
 }
 
 func (it *FlatIterator) singleNext() (int, error) {
@@ -242,6 +365,73 @@ func (it *FlatIterator) Chan() (retVal chan int) {
 	}()
 
 	return
+}
+
+/* FLAT MASKED ITERATOR */
+
+// FlatMaskedIterator is an iterator that iterates over simple masked Tensors.
+// It is used when the mask stride is identical to data stride with the exception of trailing zeros,
+// in which case the data index is always a perfect integer multiple of the mask index
+type FlatMaskedIterator struct {
+	*FlatIterator
+	mask []bool
+}
+
+// NewFlatMaskedIterator creates a new flat masked iterator
+func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
+	it := new(FlatMaskedIterator)
+	it.FlatIterator = NewFlatIterator(ap)
+	it.mask = mask
+	return it
+}
+
+// FlatMaskedIteratorFromDense creates a new FlatMaskedIterator from dense tensor
+func FlatMaskedIteratorFromDense(tt *Dense) *FlatMaskedIterator {
+	it := new(FlatMaskedIterator)
+	it.FlatIterator = FlatIteratorFromDense(tt)
+	it.mask = tt.mask
+	return it
+}
+
+// NextValid returns the index of the next valid element,
+// as well as the number of increments to get to next element
+func (it *FlatMaskedIterator) NextValid() (int, int, error) {
+	if it.mask == nil {
+		return it.FlatIterator.NextValid()
+	}
+	var count int
+	var mult = 1
+	if it.reverse {
+		mult = -1
+	}
+
+	for i, err := it.Next(); err == nil; i, err = it.Next() {
+		count++
+		if !(it.mask[i]) {
+			return i, mult * count, err
+		}
+	}
+	return -1, mult * count, noopError{}
+}
+
+// NextInvalid returns the index of the next invalid element
+// as well as the number of increments to get to next invalid element
+func (it *FlatMaskedIterator) NextInvalid() (int, int, error) {
+	if it.mask == nil {
+		return it.FlatIterator.NextInvalid()
+	}
+	var count int
+	var mult = 1
+	if it.reverse {
+		mult = -1
+	}
+	for i, err := it.Next(); err == nil; i, err = it.Next() {
+		count++
+		if it.mask[i] {
+			return i, mult * count, err
+		}
+	}
+	return -1, mult * count, noopError{}
 }
 
 /* TEMPORARILY REMOVED

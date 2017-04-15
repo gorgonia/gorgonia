@@ -58,7 +58,7 @@ func TestMaskedInspection(t *testing.T) {
 	for i := 0; i < 2; i += 2 {
 		for j := 0; j < 3; j += 2 {
 			for k := 0; k < 2; k += 2 {
-				a, b, c := T.maskStrides[0], T.maskStrides[1], T.maskStrides[2]
+				a, b, c := T.strides[0], T.strides[1], T.strides[2]
 				T.mask[i*a+b*j+c*k] = true
 			}
 		}
@@ -120,7 +120,7 @@ func TestMaskedInspection(t *testing.T) {
 	  #repeat print() statements
 	  -----------
 	*/
-	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskStrides([]bool{true, true, false}))
+	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskedDimensions([]bool{true, true, false}))
 	T.ResetMask(false)
 
 	for i := 0; i < 2; i += 2 {
@@ -186,7 +186,7 @@ func TestMaskedInspection(t *testing.T) {
 	#repeat print() statements
 	 -----------
 	*/
-	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskStrides([]bool{true, false, true}))
+	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskedDimensions([]bool{true, false, true}))
 	T.ResetMask(false)
 
 	for i := 0; i < 2; i += 2 {
@@ -253,7 +253,7 @@ func TestMaskedInspection(t *testing.T) {
 	  #repeat print() statements
 	  -----------
 	*/
-	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskStrides([]bool{false, true, true}))
+	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskedDimensions([]bool{false, true, true}))
 	T.ResetMask(false)
 
 	for i := 0; i < 2; i += 2 {
@@ -322,7 +322,7 @@ func TestMaskedInspection(t *testing.T) {
 	  #repeat print() statements
 	  -----------
 	*/
-	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskStrides([]bool{false, false, true}))
+	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskedDimensions([]bool{false, false, true}))
 	T.ResetMask(false)
 
 	for i := 0; i < 2; i += 2 {
@@ -378,7 +378,7 @@ func TestMaskedInspection(t *testing.T) {
 	assert.Equal([]int{1, 1, 1, 1, 1, 1}, retT.ints())
 
 	//non-contiguous mask case 5
-	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskStrides([]bool{false, false, false}))
+	T = New(Of(Bool), WithShape(2, 3, 2), WithMaskedDimensions([]bool{false, false, false}))
 	assert.Equal(0, len(T.mask))
 	assert.Equal(0, T.MaskedCount())
 	assert.Equal(12, T.NonMaskedCount())

@@ -22,8 +22,6 @@ func (s Shape) TotalSize() int {
 	return ProdInts([]int(s))
 }
 
-// calcStrides has an additional optional argument, maks. It is used to mask out given dimensions
-// during calculation of stride
 func (s Shape) calcStrides() []int {
 	// retVal := make([]int, len(s))
 	retVal := BorrowInts(len(s))

@@ -673,6 +673,14 @@ func TestDense_Argmax_F32(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(2, argmax.ScalarValue(), "NaN test")
 
+	// test with Mask and Nan
+	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.NaN(), 4}, []bool{false, false, true, false}))
+	if argmax, err = T.Argmax(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmax.IsScalar())
+	assert.Equal(3, argmax.ScalarValue(), "Masked NaN test")
+
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(1), 4}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
@@ -681,13 +689,30 @@ func TestDense_Argmax_F32(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(2, argmax.ScalarValue(), "+Inf test")
 
-	// test with +Inf
+	// test with Mask and +Inf
+	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(1), 4}, []bool{false, false, true, false}))
+	if argmax, err = T.Argmax(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmax.IsScalar())
+	assert.Equal(3, argmax.ScalarValue(), "Masked NaN test")
+
+	// test with -Inf
 	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(-1), 4}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with -Inf: %v", err)
 	}
 	assert.True(argmax.IsScalar())
-	assert.Equal(3, argmax.ScalarValue(), "-Inf test")
+	assert.Equal(3, argmax.ScalarValue(), "+Inf test")
+
+	// test with Mask and -Inf
+	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(-1), 4}, []bool{false, false, true, false}))
+	if argmax, err = T.Argmax(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmax.IsScalar())
+	assert.Equal(3, argmax.ScalarValue(), "Masked -Inf test")
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -723,6 +748,14 @@ func TestDense_Argmin_F32(t *testing.T) {
 	assert.True(argmin.IsScalar())
 	assert.Equal(2, argmin.ScalarValue(), "NaN test")
 
+	// test with Mask and Nan
+	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.NaN(), 4}, []bool{false, false, true, false}))
+	if argmin, err = T.Argmin(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmin.IsScalar())
+	assert.Equal(0, argmin.ScalarValue(), "Masked NaN test")
+
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(1), 4}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
@@ -731,13 +764,30 @@ func TestDense_Argmin_F32(t *testing.T) {
 	assert.True(argmin.IsScalar())
 	assert.Equal(0, argmin.ScalarValue(), "+Inf test")
 
-	// test with +Inf
+	// test with Mask and +Inf
+	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(1), 4}, []bool{false, false, true, false}))
+	if argmin, err = T.Argmin(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmin.IsScalar())
+	assert.Equal(0, argmin.ScalarValue(), "Masked NaN test")
+
+	// test with -Inf
 	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(-1), 4}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with -Inf: %v", err)
 	}
 	assert.True(argmin.IsScalar())
-	assert.Equal(2, argmin.ScalarValue(), "-Inf test")
+	assert.Equal(2, argmin.ScalarValue(), "+Inf test")
+
+	// test with Mask and -Inf
+	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(-1), 4}, []bool{false, false, true, false}))
+	if argmin, err = T.Argmin(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmin.IsScalar())
+	assert.Equal(0, argmin.ScalarValue(), "Masked -Inf test")
+
 	// idiotsville
 	_, err = T.Argmin(10000)
 	assert.NotNil(err)
@@ -773,6 +823,14 @@ func TestDense_Argmax_F64(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(2, argmax.ScalarValue(), "NaN test")
 
+	// test with Mask and Nan
+	T = New(WithShape(4), WithBacking([]float64{1, 2, math.NaN(), 4}, []bool{false, false, true, false}))
+	if argmax, err = T.Argmax(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmax.IsScalar())
+	assert.Equal(3, argmax.ScalarValue(), "Masked NaN test")
+
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(1), 4}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
@@ -781,13 +839,30 @@ func TestDense_Argmax_F64(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(2, argmax.ScalarValue(), "+Inf test")
 
-	// test with +Inf
+	// test with Mask and +Inf
+	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(1), 4}, []bool{false, false, true, false}))
+	if argmax, err = T.Argmax(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmax.IsScalar())
+	assert.Equal(3, argmax.ScalarValue(), "Masked NaN test")
+
+	// test with -Inf
 	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(-1), 4}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with -Inf: %v", err)
 	}
 	assert.True(argmax.IsScalar())
-	assert.Equal(3, argmax.ScalarValue(), "-Inf test")
+	assert.Equal(3, argmax.ScalarValue(), "+Inf test")
+
+	// test with Mask and -Inf
+	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(-1), 4}, []bool{false, false, true, false}))
+	if argmax, err = T.Argmax(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmax.IsScalar())
+	assert.Equal(3, argmax.ScalarValue(), "Masked -Inf test")
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -823,6 +898,14 @@ func TestDense_Argmin_F64(t *testing.T) {
 	assert.True(argmin.IsScalar())
 	assert.Equal(2, argmin.ScalarValue(), "NaN test")
 
+	// test with Mask and Nan
+	T = New(WithShape(4), WithBacking([]float64{1, 2, math.NaN(), 4}, []bool{false, false, true, false}))
+	if argmin, err = T.Argmin(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmin.IsScalar())
+	assert.Equal(0, argmin.ScalarValue(), "Masked NaN test")
+
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(1), 4}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
@@ -831,13 +914,30 @@ func TestDense_Argmin_F64(t *testing.T) {
 	assert.True(argmin.IsScalar())
 	assert.Equal(0, argmin.ScalarValue(), "+Inf test")
 
-	// test with +Inf
+	// test with Mask and +Inf
+	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(1), 4}, []bool{false, false, true, false}))
+	if argmin, err = T.Argmin(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmin.IsScalar())
+	assert.Equal(0, argmin.ScalarValue(), "Masked NaN test")
+
+	// test with -Inf
 	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(-1), 4}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with -Inf: %v", err)
 	}
 	assert.True(argmin.IsScalar())
-	assert.Equal(2, argmin.ScalarValue(), "-Inf test")
+	assert.Equal(2, argmin.ScalarValue(), "+Inf test")
+
+	// test with Mask and -Inf
+	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(-1), 4}, []bool{false, false, true, false}))
+	if argmin, err = T.Argmin(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}
+	assert.True(argmin.IsScalar())
+	assert.Equal(0, argmin.ScalarValue(), "Masked -Inf test")
+
 	// idiotsville
 	_, err = T.Argmin(10000)
 	assert.NotNil(err)

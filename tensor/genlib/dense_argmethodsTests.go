@@ -144,6 +144,14 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	assert.True({{.ArgMethod}}.IsScalar())
 	assert.Equal(2, {{.ArgMethod}}.ScalarValue(), "NaN test")
 
+	// test with Mask and Nan
+	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}NaN(), 4}, []bool{false,false,true,false}))
+	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}		
+	assert.True({{.ArgMethod}}.IsScalar())
+	assert.Equal({{if eq .ArgMethod "argmin"}}0{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "Masked NaN test")
+
 	// test with +Inf
 	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(1),4}))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
@@ -152,13 +160,30 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	assert.True({{.ArgMethod}}.IsScalar())
 	assert.Equal({{if eq .ArgMethod "argmax"}}2{{else}}0{{end}}, {{.ArgMethod}}.ScalarValue(), "+Inf test")
 
-	// test with +Inf
+   // test with Mask and +Inf
+	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(1), 4}, []bool{false,false,true,false}))
+	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}		
+	assert.True({{.ArgMethod}}.IsScalar())
+	assert.Equal({{if eq .ArgMethod "argmin"}}0{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "Masked NaN test")
+    
+	// test with -Inf
 	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(-1),4 }))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
 		t.Errorf("Failed test with -Inf: %v", err)
 	}
 	assert.True({{.ArgMethod}}.IsScalar())
-	assert.Equal({{if eq .ArgMethod "argmin"}}2{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "-Inf test")
+	assert.Equal({{if eq .ArgMethod "argmin"}}2{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "+Inf test")
+
+	// test with Mask and -Inf
+	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(-1), 4}, []bool{false,false,true,false}))
+	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
+		t.Errorf("Failed test with NaN: %v", err)
+	}		
+	assert.True({{.ArgMethod}}.IsScalar())
+	assert.Equal({{if eq .ArgMethod "argmin"}}0{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "Masked -Inf test")
+
 	{{end -}}
 
 	// idiotsville

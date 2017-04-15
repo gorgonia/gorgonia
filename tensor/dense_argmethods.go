@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"reflect"
+	"runtime"
 
 	"github.com/pkg/errors"
 )
@@ -44,14 +45,17 @@ func (t *Dense) Argmax(axis int) (retVal *Dense, err error) {
 	}
 	defer ReturnAP(newAP)
 
-	it := NewFlatIterator(newAP)
+	it := IteratorFromDense(t)
+	runtime.SetFinalizer(it, destroyIterator)
+	iteratorLoadAP(it, newAP)
 	return t.argmax(it)
 }
 
-func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
+func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	var lastSize, next int
 	var newShape Shape
 	var indices []int
+	var mask []bool
 	if it != nil {
 		lastSize = it.Shape()[len(it.Shape())-1]
 		newShape = it.Shape().Clone()
@@ -62,17 +66,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI(t.ints())))
+			retVal = New(FromScalar(argmaxI(t.ints(), mask)))
 			return
 		}
 		data := t.ints()
 		tmp := make([]int, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxI(tmp)
+				am := argmaxI(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -87,17 +95,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int8:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI8(t.int8s())))
+			retVal = New(FromScalar(argmaxI8(t.int8s(), mask)))
 			return
 		}
 		data := t.int8s()
 		tmp := make([]int8, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxI8(tmp)
+				am := argmaxI8(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -112,17 +124,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int16:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI16(t.int16s())))
+			retVal = New(FromScalar(argmaxI16(t.int16s(), mask)))
 			return
 		}
 		data := t.int16s()
 		tmp := make([]int16, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxI16(tmp)
+				am := argmaxI16(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -137,17 +153,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int32:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI32(t.int32s())))
+			retVal = New(FromScalar(argmaxI32(t.int32s(), mask)))
 			return
 		}
 		data := t.int32s()
 		tmp := make([]int32, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxI32(tmp)
+				am := argmaxI32(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -162,17 +182,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int64:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI64(t.int64s())))
+			retVal = New(FromScalar(argmaxI64(t.int64s(), mask)))
 			return
 		}
 		data := t.int64s()
 		tmp := make([]int64, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxI64(tmp)
+				am := argmaxI64(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -187,17 +211,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU(t.uints())))
+			retVal = New(FromScalar(argmaxU(t.uints(), mask)))
 			return
 		}
 		data := t.uints()
 		tmp := make([]uint, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxU(tmp)
+				am := argmaxU(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -212,17 +240,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint8:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU8(t.uint8s())))
+			retVal = New(FromScalar(argmaxU8(t.uint8s(), mask)))
 			return
 		}
 		data := t.uint8s()
 		tmp := make([]uint8, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxU8(tmp)
+				am := argmaxU8(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -237,17 +269,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint16:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU16(t.uint16s())))
+			retVal = New(FromScalar(argmaxU16(t.uint16s(), mask)))
 			return
 		}
 		data := t.uint16s()
 		tmp := make([]uint16, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxU16(tmp)
+				am := argmaxU16(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -262,17 +298,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint32:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU32(t.uint32s())))
+			retVal = New(FromScalar(argmaxU32(t.uint32s(), mask)))
 			return
 		}
 		data := t.uint32s()
 		tmp := make([]uint32, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxU32(tmp)
+				am := argmaxU32(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -287,17 +327,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint64:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU64(t.uint64s())))
+			retVal = New(FromScalar(argmaxU64(t.uint64s(), mask)))
 			return
 		}
 		data := t.uint64s()
 		tmp := make([]uint64, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxU64(tmp)
+				am := argmaxU64(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -312,17 +356,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Float32:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxF32(t.float32s())))
+			retVal = New(FromScalar(argmaxF32(t.float32s(), mask)))
 			return
 		}
 		data := t.float32s()
 		tmp := make([]float32, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxF32(tmp)
+				am := argmaxF32(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -337,17 +385,21 @@ func (t *Dense) argmax(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Float64:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxF64(t.float64s())))
+			retVal = New(FromScalar(argmaxF64(t.float64s(), mask)))
 			return
 		}
 		data := t.float64s()
 		tmp := make([]float64, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argmaxF64(tmp)
+				am := argmaxF64(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -399,14 +451,17 @@ func (t *Dense) Argmin(axis int) (retVal *Dense, err error) {
 	}
 	defer ReturnAP(newAP)
 
-	it := NewFlatIterator(newAP)
+	it := IteratorFromDense(t)
+	runtime.SetFinalizer(it, destroyIterator)
+	iteratorLoadAP(it, newAP)
 	return t.argmin(it)
 }
 
-func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
+func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	var lastSize, next int
 	var newShape Shape
 	var indices []int
+	var mask []bool
 	if it != nil {
 		lastSize = it.Shape()[len(it.Shape())-1]
 		newShape = it.Shape().Clone()
@@ -417,17 +472,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI(t.ints())))
+			retVal = New(FromScalar(argminI(t.ints(), mask)))
 			return
 		}
 		data := t.ints()
 		tmp := make([]int, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminI(tmp)
+				am := argminI(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -442,17 +501,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int8:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI8(t.int8s())))
+			retVal = New(FromScalar(argminI8(t.int8s(), mask)))
 			return
 		}
 		data := t.int8s()
 		tmp := make([]int8, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminI8(tmp)
+				am := argminI8(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -467,17 +530,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int16:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI16(t.int16s())))
+			retVal = New(FromScalar(argminI16(t.int16s(), mask)))
 			return
 		}
 		data := t.int16s()
 		tmp := make([]int16, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminI16(tmp)
+				am := argminI16(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -492,17 +559,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int32:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI32(t.int32s())))
+			retVal = New(FromScalar(argminI32(t.int32s(), mask)))
 			return
 		}
 		data := t.int32s()
 		tmp := make([]int32, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminI32(tmp)
+				am := argminI32(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -517,17 +588,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Int64:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI64(t.int64s())))
+			retVal = New(FromScalar(argminI64(t.int64s(), mask)))
 			return
 		}
 		data := t.int64s()
 		tmp := make([]int64, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminI64(tmp)
+				am := argminI64(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -542,17 +617,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU(t.uints())))
+			retVal = New(FromScalar(argminU(t.uints(), mask)))
 			return
 		}
 		data := t.uints()
 		tmp := make([]uint, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminU(tmp)
+				am := argminU(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -567,17 +646,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint8:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU8(t.uint8s())))
+			retVal = New(FromScalar(argminU8(t.uint8s(), mask)))
 			return
 		}
 		data := t.uint8s()
 		tmp := make([]uint8, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminU8(tmp)
+				am := argminU8(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -592,17 +675,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint16:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU16(t.uint16s())))
+			retVal = New(FromScalar(argminU16(t.uint16s(), mask)))
 			return
 		}
 		data := t.uint16s()
 		tmp := make([]uint16, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminU16(tmp)
+				am := argminU16(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -617,17 +704,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint32:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU32(t.uint32s())))
+			retVal = New(FromScalar(argminU32(t.uint32s(), mask)))
 			return
 		}
 		data := t.uint32s()
 		tmp := make([]uint32, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminU32(tmp)
+				am := argminU32(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -642,17 +733,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Uint64:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU64(t.uint64s())))
+			retVal = New(FromScalar(argminU64(t.uint64s(), mask)))
 			return
 		}
 		data := t.uint64s()
 		tmp := make([]uint64, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminU64(tmp)
+				am := argminU64(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -667,17 +762,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Float32:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminF32(t.float32s())))
+			retVal = New(FromScalar(argminF32(t.float32s(), mask)))
 			return
 		}
 		data := t.float32s()
 		tmp := make([]float32, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminF32(tmp)
+				am := argminF32(tmp, mask)
 				indices = append(indices, am)
 
 				// reset
@@ -692,17 +791,21 @@ func (t *Dense) argmin(it *FlatIterator) (retVal *Dense, err error) {
 		return
 
 	case reflect.Float64:
+		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminF64(t.float64s())))
+			retVal = New(FromScalar(argminF64(t.float64s(), mask)))
 			return
 		}
 		data := t.float64s()
 		tmp := make([]float64, 0, lastSize)
+		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
 			tmp = append(tmp, data[next])
-
+			if isMasked {
+				mask = append(mask, t.mask[next])
+			}
 			if len(tmp) == lastSize {
-				am := argminF64(tmp)
+				am := argminF64(tmp, mask)
 				indices = append(indices, am)
 
 				// reset

@@ -6,40 +6,79 @@ import (
 	"text/template"
 )
 
-const argmaxRaw = `func argmax{{short .}}(a []{{asType .}}) int {
+const argmaxRaw = `func argmax{{short .}}(a []{{asType .}}, maskArg ...[]bool) int {
 	var f {{asType .}}
 	var max int
 	var set bool
 
-	for i, v := range a {
-		if !set {
-			f = v
-			max = i
-			set = true
-
-			continue
+	var mask []bool
+	if len(maskArg)>0{
+		if len(maskArg[0])==len(a){
+			mask=maskArg[0]
 		}
+	}
 
-		{{if hasPrefix .String "float" -}}
-			if {{mathPkg .}}IsNaN(v) || {{mathPkg .}}IsInf(v, 1) {
+if mask == nil {
+		for i, v := range a {
+			if !set {
+				f = v
 				max = i
-				return max
+				set = true
+
+				continue
 			}
-		{{end -}}
-		if v > f {
-			max = i
-			f = v
+
+			{{if hasPrefix .String "float" -}}
+				if {{mathPkg .}}IsNaN(v) || {{mathPkg .}}IsInf(v, 1) {
+					max = i
+					return max
+				}
+			{{end -}}
+			if v > f {
+				max = i
+				f = v
+			}
 		}
+	} else{
+		for i, v := range a {
+			if !mask[i]{
+			if !set {
+				f = v
+				max = i
+				set = true
+
+				continue
+			}
+
+			{{if hasPrefix .String "float" -}}
+				if {{mathPkg .}}IsNaN(v) || {{mathPkg .}}IsInf(v, 1) {
+					max = i
+					return max
+				}
+			{{end -}}
+			if v > f {
+				max = i
+				f = v
+			}
+		}
+	}
 	}
 	return max
 }
 `
 
-const argminRaw = `func argmin{{short .}}(a []{{asType .}}) int {
+const argminRaw = ` func argmin{{short .}}(a []{{asType .}}, maskArg ...[]bool) int {
 	var f {{asType .}}
 	var min int
 	var set bool
 
+	var mask []bool
+	if len(maskArg)>0{
+		if len(maskArg[0])==len(a){
+			mask=maskArg[0]
+		}
+	}
+	if mask == nil {
 	for i, v := range a {
 		if !set {
 			f = v
@@ -58,6 +97,30 @@ const argminRaw = `func argmin{{short .}}(a []{{asType .}}) int {
 			min = i
 			f = v
 		}
+	}
+		}	else{
+		for i, v := range a {
+			if !mask[i]{
+		if !set {
+			f = v
+			min = i
+			set = true
+
+			continue
+		}
+		{{if hasPrefix .String "float" -}}
+			if {{mathPkg .}}IsNaN(v) || {{mathPkg .}}IsInf(v, -1) {
+				min = i
+				return min
+			}
+		{{end -}}
+		if v < f {
+			min = i
+			f = v
+		}
+		}
+
+	}
 	}
 	return min
 }
