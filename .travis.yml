@@ -7,11 +7,9 @@ branches:
   only:
     - master
 go:
-  - 1.5.4
   - 1.6.4
   - 1.7.5
-  - 1.8
-  - tip
+  - 1.8.1
 
 env:
   global:
