@@ -231,7 +231,6 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
-		cudaLogf("PC %d", m.pc)
 		if err := instr.exec(m); err != nil {
 			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
 			errChan <- err

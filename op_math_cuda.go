@@ -4,7 +4,6 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/chewxy/cu"
@@ -116,7 +115,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	hasFn := extern.HasFunc(name)
 	if !hasFn {
 		cudaLogf("NoFn: %q", name)
-		log.Printf("NoFn %q", name)
 		extern.Signal()
 		cudaLogf("DONE. Prealloc \n%v", prealloc)
 		if prealloc != nil {
@@ -125,7 +123,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		cudaLogf("Using DO")
 		return op.Do(inputs...)
 	}
-	log.Printf("Executing %q", name)
 
 	machine := extern.(CUDAMachine)
 	fn := machine.Functions()[name][int(dev)]
@@ -136,7 +133,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 
 	switch {
 	case vv, vs, ss:
-		log.Printf("HERE")
 		if prealloc == nil {
 			mem = cu.DevicePtr(a.Uintptr())
 			retVal = a
@@ -152,7 +148,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		}
 		memB = cu.DevicePtr(b.Uintptr())
 	case sv:
-		log.Printf("HERTHRUH")
 		if prealloc == nil {
 			mem = cu.DevicePtr(b.Uintptr())
 			retVal = b

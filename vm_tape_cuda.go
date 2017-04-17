@@ -278,9 +278,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				dv := dvUnit(src.boundTo)
 				cudaLogf("dv.d 0x%x v 0x%x | writeTo: %v", dv.d.Uintptr(), v.Uintptr(), instr.writeTo)
 				dev := instr.writeTo.device
+				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
 				switch dev {
 				case CPU:
-					add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
 					if d, err := add.UnsafeDo(dv.d, v); err == nil {
 						dv.SetDeriv(d)
 						src.bind(dv)
@@ -288,9 +288,37 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 						return err
 					}
 				default:
-					// the CPU method is correct. This method is correct for MOST cases, but will not be correct under some other circumstances
+					// temporarily allocate a valu
 					ctx := m.Contexts()[int(dev)]
-					ctx.MemcpyDtoH(dv.d.Pointer(), cu.DevicePtr(v.Uintptr()), instr.size)
+
+					dt := dv.d.Dtype()
+					shp := dv.d.Shape()
+					memsize := calcMemSize(dt, shp)
+
+					var mem Memory
+					if mem, err = m.Get(dev, memsize); err != nil {
+						return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
+					}
+
+					var d Value
+					if d, err = makeValueFromMem(dt, shp, mem); err != nil {
+						return
+					}
+
+					// copy dv.d to d
+					ctx.MemcpyHtoD(mem.(cu.DevicePtr), dv.d.Pointer(), memsize)
+
+					// perform  the op
+					if _, err = add.CUDADo(m, dev, d, d, v); err != nil {
+						return
+					}
+					// copy the value back into dv.d
+					ctx.MemcpyDtoH(dv.d.Pointer(), mem.(cu.DevicePtr), memsize)
+					m.Put(dev, mem, memsize) // then free it
+
+					src.bind(dv)
+					// the CPU method is correct. This method is correct for MOST cases, but will not be correct under some other circumstances
+					// ctx.MemcpyDtoH(dv.d.Pointer(), cu.DevicePtr(v.Uintptr()), instr.size)
 				}
 			}
 		}
