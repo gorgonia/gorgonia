@@ -386,4 +386,60 @@ func TestBasicArithmetic(t *testing.T) {
 
 		runtime.GC()
 	}
+
+	for i, bot := range binOpTests {
+
+		g := NewGraph()
+		xV, _ := CloneValue(bot.a)
+		yV, _ := CloneValue(bot.b)
+		x := NodeFromAny(g, xV, WithName("x"))
+		y := NodeFromAny(g, yV, WithName("y"))
+
+		var ret *Node
+		var retVal Value
+		var err error
+		if ret, err = bot.binOp(x, y); err != nil {
+			t.Errorf("Test %d: %v", i, err)
+			continue
+		}
+		Read(ret, &retVal)
+
+		if xV.Shape().IsScalar() && yV.Shape().IsScalar() {
+
+		} else {
+			Must(Sum(ret))
+		}
+
+		m1 := NewLispMachine(g)
+		if err = m1.RunAll(); err != nil {
+			t.Errorf("Test %d: error while running %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		as := newAssertState(assert)
+		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+		as.True(bot.correctShape.Eq(ret.Shape()))
+
+		var xG, yG Value
+		if xG, err = x.Grad(); err != nil {
+			t.Errorf("Test %d: error while getting grad of x: %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		if yG, err = y.Grad(); err != nil {
+			t.Errorf("Test %d: error while getting grad of x: %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		as.Equal(bot.correctDerivA.Data(), xG.Data(), "Test %v xgrad", i)
+		as.Equal(bot.correctDerivB.Data(), yG.Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, yG)
+		if !as.cont {
+			t.Errorf("an error occured")
+		}
+
+		runtime.GC()
+	}
 }

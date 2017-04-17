@@ -81,9 +81,18 @@ func TestSumOpDiff(t *testing.T) {
 		t.Error(err)
 	}
 
+	if bG, err = b.Grad(); err != nil {
+		t.Error(err)
+	}
+
+	if yG, err = y.Grad(); err != nil {
+		t.Error(err)
+	}
+
 	assert.True(ValueEq(x.Value(), a.Value()))
 	assert.True(ValueEq(xG, aG))
 	assert.True(ValueEq(y.Value(), b.Value()))
+	assert.True(ValueEq(yG, bG))
 
 	// long standing bug: sometimes the derivation will get executed in the machine first
 	// for example, the deriv of y is 1, and occasionally, the machine will choose to
@@ -123,10 +132,17 @@ func TestSumOpDiff(t *testing.T) {
 	if xG, err = x.Grad(); err != nil {
 		t.Error(err)
 	}
+	if bG, err = b.Grad(); err != nil {
+		t.Error(err)
+	}
 
+	if yG, err = y.Grad(); err != nil {
+		t.Error(err)
+	}
 	assert.True(ValueEq(x.Value(), a.Value()))
 	assert.True(ValueEq(xG, aG))
 	assert.True(ValueEq(y.Value(), b.Value()))
+	assert.True(ValueEq(yG, bG))
 
 	/* Sum is not the root node */
 

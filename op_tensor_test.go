@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"log"
+	"os"
 	"runtime"
 	"testing"
 
@@ -242,14 +244,52 @@ func TestTransposeOp(t *testing.T) {
 	g := NewGraph()
 	A := NewMatrix(g, Float64, WithShape(2, 3), WithInit(RangedFrom(0)))
 	AT := Must(Transpose(A))
-	Must(Sum(AT))
+	cost1 := Must(Sum(AT))
 
-	m := NewLispMachine(g)
-	if err := m.RunAll(); err != nil {
+	logger := log.New(os.Stderr, "", 0)
+	var m VM
+	var err error
+	m = NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
+	if err = m.RunAll(); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(tensor.Shape{3, 2}, AT.shape)
+
+	h := NewGraph()
+	B := NewMatrix(h, Float64, WithShape(2, 3), WithInit(RangedFrom(0)))
+	BT := Must(Transpose(B))
+	cost2 := Must(Sum(BT))
+	Grad(cost2, B)
+
+	m = NewTapeMachine(h)
+	if err = m.RunAll(); err != nil {
+		t.Error(err)
+	}
+	assert.Equal(tensor.Shape{3, 2}, BT.shape)
+
+	var ag, bg Value
+	if ag, err = A.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of A", err)
+	}
+
+	if bg, err = B.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of B", err)
+	}
+
+	var costGrad1, costGrad2 Value
+	if costGrad1, err = cost1.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of Cost1")
+	}
+
+	if costGrad2, err = cost2.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of Cost2")
+	}
+
+	t.Logf("%v %v", cost1.Value(), cost2.Value())
+	t.Logf("%v %v", costGrad1, costGrad2)
+
+	assert.True(ValueEq(ag, bg))
 }
 
 func TestConcatOp(t *testing.T) {

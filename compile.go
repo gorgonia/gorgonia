@@ -18,6 +18,11 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
+	if len(g.Nodes()) == 0 {
+		err = errors.Errorf("Cannot compile an empty graph")
+		return
+	}
+
 	compileLogf("sorting")
 	var sortedNodes Nodes
 	if sortedNodes, err = Sort(g); err != nil {

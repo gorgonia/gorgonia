@@ -144,17 +144,7 @@ func TestWeirdNetwork(t *testing.T) {
 			break
 		}
 
-		// log.Printf("\tCGO calls %v", len(cu.QueueLengths()))
-		// log.Printf("\tcu average queue %v", cu.AverageQueueLength())
-		// log.Printf("\tBlocking Calls: %v", cu.BlockingCallers())
-		// log.Printf("\tcu queues %v", cu.QueueLengths())
-
 		m.Reset()
 	}
-
-	// log.Printf("CGO calls %v", len(cu.QueueLengths()))
-	// log.Printf("cu average queue %v", cu.AverageQueueLength())
-	// log.Printf("Blocking Calls: %v", cu.BlockingCallers())
-	// log.Printf("cu queues %v", cu.QueueLengths())
 
 }

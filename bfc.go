@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 )
@@ -211,11 +210,9 @@ insert:
 			// gone too far.
 			break insert
 		default:
-			log.Printf("block %v, b %v", block, b)
 			panic("WTF")
 		}
 	}
-	log.Printf("freelist %v | block %v", l, block)
 	panic("Unreachable")
 }
 
@@ -348,7 +345,6 @@ func (b *bfc) alloc(size int64) (mem uintptr, err error) {
 		b.coalesce()
 		if block = b.bestFit(aligned); block == nil {
 			// then we're really OOM
-			log.Printf("Requesting %v OOM %v", size, b.freelist)
 			return 0, oomError{
 				res:       b.size,
 				allocated: b.allocated,

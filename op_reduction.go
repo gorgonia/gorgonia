@@ -273,7 +273,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		}
 		val = T
 	} else {
-		val = ydv.d
+		val = T
 	}
 
 	// then just add the two
@@ -283,11 +283,7 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
-	// check if xdv.d is scalar
-	if isScalarType(TypeOf(xdv.d)) {
-		return xdv.SetDeriv(d)
-	}
-	return
+	return xdv.SetDeriv(d)
 
 }
 

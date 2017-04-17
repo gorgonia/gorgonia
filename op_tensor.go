@@ -792,6 +792,10 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
+// func (op sliceIncrOp) usePreallocDoer(prealloc Value, inputs ...Value) (retVal Value, err error) {
+
+// }
+
 func (op sliceIncrOp) OverwritesInput() int { return 0 }
 
 func (op sliceIncrOp) WriteHash(h hash.Hash) {
@@ -902,6 +906,21 @@ func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
 	for i, p := range op.pattern {
 		newPattern[p] = i
 	}
+	// log.Printf("xdv %v", xdv)
+	// log.Printf("zdv: %v", zdv)
+	// log.Printf("zdv.d %v", zdv.d)
+
+	// op2 := transposeOp{pattern: newPattern, d: op.d}
+	// zdvd, err := op2.Do(zdv.d)
+	// if err != nil {
+	// 	return
+	// }
+
+	// add := newEBOByType(addOpType, inputs[0].t, TypeOf(zdvd))
+	// if _, err = add.UnsafeDo(xdv.d, zdvd); err != nil {
+	// 	err = errors.Wrapf(err, doFail, add)
+	// }
+	// return
 
 	var zdvdT tensor.Tensor
 	var ok bool

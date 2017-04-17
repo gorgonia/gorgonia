@@ -152,7 +152,15 @@ func (g *ExprGraph) Roots() (retVal Nodes) {
 		if len(tos) == 0 {
 			retVal = append(retVal, n)
 		}
+		// if the root is a statement (typically a read), and it only has one child
+		if len(n.children) == 1 && n.isStmt {
+			child := n.children[0]
+			if len(g.to[child]) == 1 {
+				retVal = append(retVal, child)
+			}
+		}
 	}
+	g.roots = retVal
 	return retVal
 }
 

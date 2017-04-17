@@ -12,6 +12,7 @@ import (
 )
 
 type lispMachine struct {
+	*ExternMetadata
 	g *ExprGraph
 	q []adInstr // a to-do list of differentiation instructions
 
@@ -37,12 +38,13 @@ type lispMachine struct {
 func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	runFlags := (byte(0) | (byte(1) << fwdOnly)) | (1 << bwdOnly) // run fwd and backwards
 	m := &lispMachine{
-		g:        g,
-		fwd:      -1,
-		bwd:      -1,
-		valueFmt: "%3.3f",
-		logFlags: 0x0,      // log nothing
-		runFlags: runFlags, // run only fwd and bwd
+		ExternMetadata: new(ExternMetadata),
+		g:              g,
+		fwd:            -1,
+		bwd:            -1,
+		valueFmt:       "%3.3f",
+		logFlags:       0x0,      // log nothing
+		runFlags:       runFlags, // run only fwd and bwd
 	}
 
 	for _, opt := range opts {
@@ -86,6 +88,7 @@ func (m *lispMachine) checkRoots() (err error) {
 	if !m.checkedRoots && m.runBwd() {
 		machineLogf("Checking if provided graph is sensible")
 		machineLogf("roots: %v", m.g.Roots())
+		m.watchedLogf("roots: %v", m.g.Roots())
 		for _, root := range m.g.Roots() {
 			if !root.IsScalar() && !root.isStmt {
 				err = errors.Errorf("Expected cost to be a scalar. Got %v with shape %v instead", root, root.Shape())
