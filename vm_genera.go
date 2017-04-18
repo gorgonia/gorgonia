@@ -55,7 +55,9 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	for _, opt := range opts {
 		opt(m)
 	}
-	m.init()
+	if err := m.init(); err != nil {
+		panic(err)
+	}
 	return m
 }
 
@@ -178,6 +180,8 @@ func (m *lispMachine) forward() (err error) {
 		if children, ok = m.df.devTransChildren[n]; !ok {
 			children = n.children
 		}
+	} else {
+		children = n.children
 	}
 
 	for i, child := range children {
