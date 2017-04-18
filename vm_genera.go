@@ -16,8 +16,13 @@ type lispMachine struct {
 	g *ExprGraph
 	q []adInstr // a to-do list of differentiation instructions
 
+	// device stuff
+	cpumem int64
+	gpumem []int64 // gpumem is indexed by gpuid
+
 	// state stuff, to allow continuation
 	sorted Nodes
+	df     *dataflow
 	fwd    int
 	bwd    int
 
@@ -50,6 +55,7 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	for _, opt := range opts {
 		opt(m)
 	}
+	m.init()
 	return m
 }
 
@@ -83,6 +89,10 @@ func (m *lispMachine) dealloc() bool { return (m.runFlags>>allocVals)&byte(1) ==
 func (m *lispMachine) doDealloc()    { m.runFlags |= byte(1) << allocVals }
 func (m *lispMachine) dontDealloc()  { m.runFlags &= (^(byte(1) << allocVals)) }
 
+func (m *lispMachine) setRootGrad() bool    { return (m.runFlags>>spare3)&byte(1) == 1 }
+func (m *lispMachine) allowSetRootGrad()    { m.runFlags |= byte(1) << spare3 }
+func (m *lispMachine) disallowSetRootGrad() { m.runFlags &= (^(byte(1) << spare3)) }
+
 // check roots only applies if you want to run a backprop as well
 func (m *lispMachine) checkRoots() (err error) {
 	if !m.checkedRoots && m.runBwd() {
@@ -90,7 +100,14 @@ func (m *lispMachine) checkRoots() (err error) {
 		machineLogf("roots: %v", m.g.Roots())
 		m.watchedLogf("roots: %v", m.g.Roots())
 		for _, root := range m.g.Roots() {
-			if !root.IsScalar() && !root.isStmt {
+			switch {
+			case m.setRootGrad() && !root.isStmt:
+				// check root's value
+				if _, ok := root.boundTo.(*dualValue); !ok {
+					err = errors.Errorf("Expected root %v to have a boundTo of a dualValue", root)
+					return
+				}
+			case !m.setRootGrad() && !root.IsScalar() && !root.isStmt:
 				err = errors.Errorf("Expected cost to be a scalar. Got %v with shape %v instead", root, root.Shape())
 				ioutil.WriteFile("err.dot", []byte(root.RestrictedToDot(2, 10)), 0644)
 				return
@@ -105,8 +122,9 @@ func (m *lispMachine) prepGraph() (err error) {
 		if m.sorted, err = Sort(m.g); err != nil {
 			return errors.Wrap(err, sortFail)
 		}
+		reverseNodes(m.sorted)
 
-		m.fwd = len(m.sorted) - 1
+		m.fwd = 0
 	}
 	return
 }
@@ -154,7 +172,15 @@ func (m *lispMachine) forward() (err error) {
 	var output *dualValue
 
 	inputs := make([]*dualValue, len(n.children))
-	for i, child := range n.children {
+	var children Nodes
+	if m.df != nil {
+		var ok bool
+		if children, ok = m.df.devTransChildren[n]; !ok {
+			children = n.children
+		}
+	}
+
+	for i, child := range children {
 		dv := child.boundTo.(*dualValue)
 		inputs[i] = dv
 	}
@@ -167,6 +193,7 @@ func (m *lispMachine) forward() (err error) {
 		machineLogf("Applying op %v to root", op)
 		if n.boundTo == nil {
 			machineLogf("dvBindVar")
+			m.watchedLogf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op, n)
 			}
@@ -175,6 +202,7 @@ func (m *lispMachine) forward() (err error) {
 			}
 		} else {
 			machineLogf("dvBindVar0")
+			m.watchedLogf("dvBindVar0")
 			dv, ok := n.boundTo.(*dualValue)
 			if !ok {
 				panic(fmt.Sprintf("n not dual value %v", n))
@@ -185,19 +213,24 @@ func (m *lispMachine) forward() (err error) {
 		}
 
 	case n.isStmt:
-		machineLogf("ReadOp: %v ", op)
 		switch ot := n.op.(type) {
 		case readOp:
+			machineLogf("ReadOp: %v ", op)
 			childVal := n.children[0].boundTo
 			if dv, ok := childVal.(*dualValue); ok {
 				*ot.into = dv.Value
 			} else {
 				*ot.into = childVal
 			}
+		case devTrans:
+			// this case is unreachable in non CUDA builds
+			if err = m.execDevTrans(ot, n, children); err != nil {
+				return errors.Errorf("Cannot perform device transfer %v", ot)
+			}
 		}
 
 	case n.boundTo == nil:
-		machineLogf("Fresh, unencountered node, so dvBind(%v)", op)
+		m.watchedLogf("Fresh, unencountered node, so dvBind(%v)", op)
 		machineLogf("Inputs")
 		enterLoggingContext()
 		for i, in := range inputs {
@@ -241,6 +274,7 @@ func (m *lispMachine) forward() (err error) {
 		}
 		m.q = append(m.q, instr)
 	}
+	m.watchedLogf("Added to Queue")
 
 	if m.watchNaN() && !n.isStmt {
 		if hasNaN(n.boundTo) {
@@ -296,10 +330,6 @@ func (m *lispMachine) backward() (err error) {
 }
 
 func (m *lispMachine) RunAll() (err error) {
-	if err = m.prepGraph(); err != nil {
-		return errors.Wrap(err, "Could not prepGraph()")
-	}
-
 	if err = m.checkRoots(); err != nil {
 		return errors.Wrap(err, "Could not checkRoots()")
 	}
@@ -308,7 +338,7 @@ func (m *lispMachine) RunAll() (err error) {
 		goto backward
 	}
 
-	for err = nil; err == nil && m.fwd >= 0; m.fwd-- {
+	for err = nil; err == nil && m.fwd < len(m.sorted); m.fwd++ {
 		err = m.forward()
 	}
 
@@ -324,6 +354,40 @@ backward:
 	if m.bwd < 0 {
 		m.bwd = len(m.q) - 1
 	}
+
+	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
+		err = m.backward()
+	}
+	return
+}
+
+func (m *lispMachine) RunForwards() (err error) {
+	if err = m.checkRoots(); err != nil {
+		return errors.Wrap(err, "Could not check roots")
+	}
+
+	if !m.runFwd() {
+		return errors.New("Cannot run forwards")
+	}
+
+	for err = nil; err == nil && m.fwd < len(m.sorted); m.fwd++ {
+		err = m.forward()
+	}
+	return
+}
+
+func (m *lispMachine) RunBackwards() (err error) {
+	if err = m.prepGraph(); err != nil {
+		return errors.Wrap(err, "Could not prep graph")
+	}
+	if err = m.checkRoots(); err != nil {
+		return errors.Wrap(err, "Could not check roots")
+	}
+
+	if !m.runBwd() || len(m.q) == 0 {
+		return errors.New("Cannot run backwards")
+	}
+	m.bwd = len(m.q) - 1
 
 	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
 		err = m.backward()
@@ -374,7 +438,7 @@ func (m *lispMachine) watchedLogf(format string, attrs ...interface{}) {
 		goto backwards
 	}
 
-	if m.fwd >= 0 {
+	if m.fwd >= 0 && m.fwd < len(m.sorted) {
 		n := m.sorted[m.fwd]
 		if m.watchlist.Contains(n) || m.watchAll() || DEBUG {
 			m.logf(format, attrs...)

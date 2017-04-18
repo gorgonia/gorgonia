@@ -62,6 +62,30 @@ func (df *dataflow) analyzeDevice(n *Node) {
 	}
 }
 
+// replaceWithSelf fills the replacement map with itself. This is the method used in the lispMachine only, as it skips value numbering
+func (df *dataflow) replaceWithSelf(sorted Nodes) {
+	df.replacements = make(map[*Node]*Node)
+	for _, n := range sorted {
+		df.replacements[n] = n
+		df.analyzeDevice(n) // Device Targeting
+	}
+}
+
+// fixIntervalDevices is used only by the lispMachine. It fixes the intervals to have the correct devices
+func (df *dataflow) fixIntervalDevices(sorted Nodes) {
+	for _, n := range sorted {
+		dev := CPU
+		switch n.op.(type) {
+		case CUDADoer:
+			dev = Device(0)
+		case CLDoer:
+			dev = Device(0)
+		default:
+		}
+		df.intervals[n].result.device = dev
+	}
+}
+
 func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	compileLogf("Performing dataflow analysis")
 	enterLoggingContext()
@@ -105,7 +129,7 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 }
 
 func newDevTransNode(read, write *Node, from, to Device) *Node {
-	op := devTrans{from, to}
+	op := devTrans{from, to, write}
 	n := borrowNode()
 	n.op = op
 	n.shape = read.shape.Clone()
@@ -222,6 +246,7 @@ func (df *dataflow) buildIntervals(sorted Nodes) {
 		n := sorted[i]
 		instrNum := i
 		nInter := intervals[n]
+		compileLogf("n %v | %v", n, nInter)
 
 		// inputs will be live the entire program
 		if n.isInput() {

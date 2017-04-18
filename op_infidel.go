@@ -71,6 +71,7 @@ func (op readOp) isStmt() bool { return true }
 // devTrans is a dummy Op, used to aid in creating the program that is run in a *tapeMachine. It is inserted not into the graph, but into a slice of sorted nodes, and will not show up in thegraph.
 type devTrans struct {
 	from, to Device
+	toNode   *Node
 }
 
 func (op devTrans) Arity() int                                   { panic("not implemented") }
