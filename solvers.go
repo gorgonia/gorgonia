@@ -8,18 +8,32 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Solver is anything that does gradient updates.
+// Steps is anything that does gradient updates.
 // The name solvers is stolen from Caffe. A much shorter name than GradientUpdaters
-type Solver interface {
+type Steps interface {
 	Step(Nodes) error
 }
 
+// Solver is a struct that lets you create a Solver with l1reg, l2reg, clip & Steps
+// To create a 'instance' of solver It's needed to do something like this:
+// Solver{
+//   Steps: &Steps,
+//   l1reg: ...,
+//   ...
+// }
+type Solver struct {
+	Steps Steps
+	l1reg float64 // l2 regularization
+	l2reg float64 // l2 regularization
+	clip  float64 // clip value
+}
+
 // SolverOpt is a function that provides construction options for a Solver
-type SolverOpt func(s Solver)
+type SolverOpt func(s Solver.Steps)
 
 // WithL2Reg adds a L2 regularization parameter to the solver. By default, the solvers do not use any regularization param
 func WithL2Reg(l2reg float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *RMSPropSolver:
 			st.l2reg = l2reg
@@ -32,12 +46,11 @@ func WithL2Reg(l2reg float64) SolverOpt {
 			st.useL2Reg = true
 		}
 	}
-	return f
 }
 
 // WithL1Reg adds a L1 regularization parameter to the solver. By default, the solvers do not use any regularization param
 func WithL1Reg(l1reg float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *AdamSolver:
 			st.l1reg = l1reg
@@ -47,12 +60,11 @@ func WithL1Reg(l1reg float64) SolverOpt {
 			st.useL1Reg = true
 		}
 	}
-	return f
 }
 
 // WithBatchSize sets the batch size for the solver. Currently only Adam and Vanilla (basic SGD) has batch size support
 func WithBatchSize(batch float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *AdamSolver:
 			st.batch = batch
@@ -60,12 +72,11 @@ func WithBatchSize(batch float64) SolverOpt {
 			st.batch = batch
 		}
 	}
-	return f
 }
 
 // WithEps sets the smoothing factor for the solver.
 func WithEps(eps float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *RMSPropSolver:
 			st.eps = eps
@@ -73,12 +84,11 @@ func WithEps(eps float64) SolverOpt {
 			st.eps = eps
 		}
 	}
-	return f
 }
 
 // WithClip clips the gradient if it gets too crazy. By default all solvers do not have any clips attached
 func WithClip(clip float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *RMSPropSolver:
 			st.clip = clip
@@ -91,12 +101,11 @@ func WithClip(clip float64) SolverOpt {
 			st.useClip = true
 		}
 	}
-	return f
 }
 
 // WithLearnRate sets the learn rate or step size for the solver.
 func WithLearnRate(eta float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *RMSPropSolver:
 			st.eta = eta
@@ -106,40 +115,36 @@ func WithLearnRate(eta float64) SolverOpt {
 			st.eta = eta
 		}
 	}
-	return f
 }
 
 // WithBeta1 sets the beta1 param of the solver. Only works with Adam
 func WithBeta1(beta1 float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *AdamSolver:
 			st.beta1 = beta1
 		}
 	}
-	return f
 }
 
 // WithBeta2 sets the beta1 param of the solver. Only works with Adam
 func WithBeta2(beta2 float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *AdamSolver:
 			st.beta2 = beta2
 		}
 	}
-	return f
 }
 
 // WithRho sets the decay parameter of the RMSProp solver
 func WithRho(rho float64) SolverOpt {
-	f := func(s Solver) {
+	return func(s Solver.Steps) {
 		switch st := s.(type) {
 		case *RMSPropSolver:
 			st.decay = rho
 		}
 	}
-	return f
 }
 
 // RMSPropSolver is a solver that implements Geoffrey Hinton's RMSProp gradient descent optimization algorithm.
@@ -1060,6 +1065,5 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 		}
 
 	}
-
 	return
 }
