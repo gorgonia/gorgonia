@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"log"
 	"os"
 
 	. "github.com/chewxy/gorgonia"
@@ -98,13 +99,14 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 			return
 		}
 
+		log.Printf("%v", sda.g.Nodes())
 		prog, locMap, err := CompileFunction(sda.g, inputs, grads)
 		if err != nil {
 			return err
 		}
 
 		var m VM
-		m = NewTapeMachine(prog, locMap)
+		m = NewTapeMachine(sda.g, WithPrecompiled(prog, locMap))
 		machines = append(machines, m)
 	}
 
