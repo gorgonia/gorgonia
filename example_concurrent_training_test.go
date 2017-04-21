@@ -10,9 +10,13 @@ import (
 )
 
 const (
-	rows      = 100000
+	// rows      = 373127
+	// cols      = 53
+
+	// We'll use a nice even sized batch size, instead of weird prime numbers
+	rows      = 700000
 	cols      = 50
-	batchSize = 1000
+	batchSize = 100
 	epochs    = 10
 )
 
@@ -130,7 +134,7 @@ func prep() (x, y Value, bs []batch) {
 }
 
 func concurrentTraining(xV, yV Value, bs []batch, es int) {
-	threads := runtime.GOMAXPROCS(-1)
+	threads := runtime.GOMAXPROCS(-1) - 1 // reserve one thread for the CPU locked thread
 
 	ts := make([]*concurrentTrainer, threads)
 	for chunk := 0; chunk < threads; chunk++ {
@@ -172,19 +176,19 @@ func Example_concurrentTraining() {
 
 	// Output:
 	// x:
-	// ⎡    2      3      4      5  ... 3e+01  3e+01  3e+01  3e+01⎤
-	// ⎢4e+01  4e+01  4e+01  4e+01  ... 6e+01  6e+01  6e+01  6e+01⎥
+	// ⎡    6      7      8      9  ... 5e+01  5e+01  5e+01  5e+01⎤
 	// ⎢7e+01  7e+01  7e+01  7e+01  ... 1e+02  1e+02  1e+02  1e+02⎥
-	// ⎢1e+02  1e+02  1e+02  1e+02  ... 1e+02  1e+02  1e+02  1e+02⎥
+	// ⎢1e+02  1e+02  1e+02  1e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
+	// ⎢2e+02  2e+02  2e+02  2e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
 	// .
 	// .
 	// .
-	// ⎢1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎥
-	// ⎢1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎥
-	// ⎢1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎥
-	// ⎣1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎦
+	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
+	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
+	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
+	// ⎣4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎦
 	// y:
-	// [-5e+01  -1e+02  -2e+02  -3e+02  ... -4e+06  -4e+06  -4e+06  -4e+06]
+	// [-1e+02  -4e+02  -7e+02  -9e+02  ... -2e+08  -2e+08  -2e+08  -2e+08]
 }
 
 func Example_nonConcurrentTraining() {
@@ -196,17 +200,17 @@ func Example_nonConcurrentTraining() {
 
 	//Output:
 	// x:
-	// ⎡    2      3      4      5  ... 3e+01  3e+01  3e+01  3e+01⎤
-	// ⎢4e+01  4e+01  4e+01  4e+01  ... 6e+01  6e+01  6e+01  6e+01⎥
+	// ⎡    6      7      8      9  ... 5e+01  5e+01  5e+01  5e+01⎤
 	// ⎢7e+01  7e+01  7e+01  7e+01  ... 1e+02  1e+02  1e+02  1e+02⎥
-	// ⎢1e+02  1e+02  1e+02  1e+02  ... 1e+02  1e+02  1e+02  1e+02⎥
+	// ⎢1e+02  1e+02  1e+02  1e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
+	// ⎢2e+02  2e+02  2e+02  2e+02  ... 2e+02  2e+02  2e+02  2e+02⎥
 	// .
 	// .
 	// .
-	// ⎢1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎥
-	// ⎢1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎥
-	// ⎢1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎥
-	// ⎣1e+06  1e+06  1e+06  1e+06  ... 1e+06  1e+06  1e+06  1e+06⎦
+	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
+	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
+	// ⎢4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎥
+	// ⎣4e+07  4e+07  4e+07  4e+07  ... 4e+07  4e+07  4e+07  4e+07⎦
 	// y:
-	// [-5e+01  -1e+02  -2e+02  -3e+02  ... -4e+06  -4e+06  -4e+06  -4e+06]
+	// [-1e+02  -4e+02  -7e+02  -9e+02  ... -2e+08  -2e+08  -2e+08  -2e+08]
 }
