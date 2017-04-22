@@ -38,6 +38,7 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 
 // External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
 type External interface {
+	Arena
 	HasFunc(string) bool
 	Signal() // signals the machine to do work
 	Sync() chan struct{}
@@ -101,6 +102,12 @@ type BinaryOp interface {
 	Op
 
 	IsBinary() bool
+}
+
+type BestDoer interface {
+	Op
+
+	BestDo(prealloc Value, vals ...Value) (Value, error)
 }
 
 // A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
@@ -230,4 +237,32 @@ func (c constantTensor) Hashcode() uint32 {
 func (c constantTensor) isconstant() bool { return true }
 func (c constantTensor) Value() Value     { return c.v }
 
-/* SHAPE RELATED OPs */
+// ExternalOp is an op that contains an external context. This allows for ops to be run without needing a VM
+type ExternalOp struct {
+	Op
+	External
+	Device
+	Prealloc Value
+}
+
+func (op *ExternalOp) Do(vals ...Value) (Value, error) {
+	switch o := op.Op.(type) {
+	case CUDADoer:
+		if op.Prealloc == nil {
+			return o.CUDADo(op.External, op.Device, vals[0], vals...)
+		}
+		return o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
+	case CLDoer:
+	case UnsafeDoer:
+		return o.UnsafeDo(vals...)
+	case UsePreallocDoer:
+		return o.UsePreallocDo(op.Prealloc, vals...)
+	default:
+		return o.Do(vals...)
+	}
+	panic("Unreachable")
+}
+
+func (op *ExternalOp) String() string {
+	return op.Op.String()
+}

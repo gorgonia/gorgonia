@@ -170,7 +170,18 @@ func (m *lispMachine) forward() (err error) {
 
 	// other wise it's time to execute the op
 	m.watchedLogf("execute Op")
-	op := n.op
+
+	dev := CPU
+	if m.df != nil { // CUDA and OpenCL  builds
+		dev = m.df.devices[n]
+	}
+	op := &ExternalOp{
+		Op:       n.op,
+		External: m,
+		Device:   dev,
+	}
+	// op := n.op
+	// m.watchedLogf("Result of execution of this node would reside in %v", dev)
 	var output *dualValue
 
 	inputs := make([]*dualValue, len(n.children))
@@ -184,10 +195,13 @@ func (m *lispMachine) forward() (err error) {
 		children = n.children
 	}
 
+	m.enterLoggingContext()
 	for i, child := range children {
 		dv := child.boundTo.(*dualValue)
 		inputs[i] = dv
+		m.watchedLogf("Input %d:\n%v", i, dv)
 	}
+	m.leaveLoggingContext()
 
 	m.watchedLogf("Before:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
@@ -268,8 +282,9 @@ func (m *lispMachine) forward() (err error) {
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
+	m.watchedLogf("Ptr: 0x%x", n.boundTo.(*dualValue).Value.Uintptr())
 
-	if aop, ok := op.(ADOp); ok && m.runBwd() {
+	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
 			ADOp: aop,
 
