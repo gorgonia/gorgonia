@@ -321,12 +321,8 @@ func (m *lispMachine) forward() (err error) {
 	if m.df != nil { // CUDA and OpenCL  builds
 		dev = m.df.devices[n]
 	}
-	op := &ExternalOp{
-		Op:       n.op,
-		External: m,
-		Device:   dev,
-	}
-	// op := n.op
+	op := NewExternalOp(n.op, ExecutionContext{m, dev}, nil)
+
 	// m.watchedLogf("Result of execution of this node would reside in %v", dev)
 	var output *dualValue
 
@@ -433,6 +429,7 @@ func (m *lispMachine) forward() (err error) {
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
 			ADOp: aop,
+			ctx:  op.ExecutionContext,
 
 			inputs: n.children,
 			output: n,
@@ -589,11 +586,12 @@ func (m *lispMachine) leaveLoggingContext() {
 // adInstr is an autodifferentiation instruction
 type adInstr struct {
 	ADOp
+	ctx ExecutionContext
 
 	inputs Nodes
 	output *Node
 }
 
 func (instr adInstr) do() error {
-	return instr.ADOp.DoDiff(instr.inputs, instr.output)
+	return instr.ADOp.DoDiff(instr.ctx, instr.inputs, instr.output)
 }

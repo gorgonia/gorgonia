@@ -159,7 +159,7 @@ func repeatOpDiff(repeatOn int, shape tensor.Shape, xV, yV interface{}) (g *Expr
 	yVal, _, _, _ := anyToValue(yV)
 	x.bind(dvUnit(xVal))
 	y.bind(dvUnitVar(yVal))
-	if err = repeat.DoDiff(Nodes{x, repN}, y); err != nil {
+	if err = repeat.DoDiff(ExecutionContext{}, Nodes{x, repN}, y); err != nil {
 		return
 	}
 	return

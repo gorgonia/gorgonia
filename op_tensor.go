@@ -294,7 +294,7 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 	return
 }
 
-func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -571,7 +571,7 @@ func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nod
 	return
 }
 
-func (op *sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -725,7 +725,7 @@ func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	return
 }
 
-func (op sliceIncrOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	xdv := inputs[0].boundTo.(*dualValue)
 	ydv := inputs[1].boundTo.(*dualValue)
 	zdv := output.boundTo.(*dualValue)
@@ -898,7 +898,7 @@ func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	return
 }
 
-func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	xdv := inputs[0].boundTo.(*dualValue)
 	zdv := output.boundTo.(*dualValue)
 
@@ -1091,7 +1091,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 	return
 }
 
-func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
+func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
 	odv := output.boundTo.(*dualValue)
 	odvd := odv.d.(tensor.Tensor)
 

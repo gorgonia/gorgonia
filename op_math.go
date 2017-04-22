@@ -233,13 +233,13 @@ func (op elemBinOp) Do(values ...Value) (Value, error) {
 	return op.ʘBinaryOperator.Do(op.retSame, values...)
 }
 
-func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op elemBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
 	b := op.ʘBinaryOperator.binOpType()
-	if err = ʘBinOpDiffFns[b](inputs[0], inputs[1], output); err != nil {
+	if err = ʘBinOpDiffFns[b](ctx, inputs[0], inputs[1], output); err != nil {
 		if _, ok := err.(AutoDiffError); !ok {
 			return errors.Wrapf(err, autodiffFail, b)
 		}
@@ -437,7 +437,7 @@ func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op elemUnaryOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op elemUnaryOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -608,13 +608,13 @@ func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op linAlgBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op linAlgBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
 	o := op.āBinaryOperator
-	return āBinOpDiffs[o](op.transA, op.transB, inputs[0], inputs[1], output)
+	return āBinOpDiffs[o](ctx, op.transA, op.transB, inputs[0], inputs[1], output)
 }
 
 func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }

@@ -36,14 +36,6 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 	return retVal, nil
 }
 
-// External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
-type External interface {
-	Arena
-	HasFunc(string) bool
-	Signal() // signals the machine to do work
-	Sync() chan struct{}
-}
-
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
@@ -121,7 +113,7 @@ type NoRetOp interface {
 type ADOp interface {
 	Op
 
-	DoDiff(inputs Nodes, output *Node) error
+	DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error
 }
 
 // A SDOp is an Op that supports symbolic differentiation
@@ -166,6 +158,11 @@ type CUDADoer interface {
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
 type CLDoer interface {
 	CLDo(inputs ...Value) (Value, error)
+}
+
+type CUDAADOp interface {
+	ADOp
+	CUDADoDiff(extern External, dev Device, inputs Nodes, output *Node) error
 }
 
 // a constant is an unchanging value. I think everyone would know what a constant is
@@ -236,33 +233,3 @@ func (c constantTensor) Hashcode() uint32 {
 
 func (c constantTensor) isconstant() bool { return true }
 func (c constantTensor) Value() Value     { return c.v }
-
-// ExternalOp is an op that contains an external context. This allows for ops to be run without needing a VM
-type ExternalOp struct {
-	Op
-	External
-	Device
-	Prealloc Value
-}
-
-func (op *ExternalOp) Do(vals ...Value) (Value, error) {
-	switch o := op.Op.(type) {
-	case CUDADoer:
-		if op.Prealloc == nil {
-			return o.CUDADo(op.External, op.Device, vals[0], vals...)
-		}
-		return o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
-	case CLDoer:
-	case UnsafeDoer:
-		return o.UnsafeDo(vals...)
-	case UsePreallocDoer:
-		return o.UsePreallocDo(op.Prealloc, vals...)
-	default:
-		return o.Do(vals...)
-	}
-	panic("Unreachable")
-}
-
-func (op *ExternalOp) String() string {
-	return op.Op.String()
-}

@@ -430,7 +430,7 @@ func addDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return Nodes{gradZ, gradZ}, nil
 }
 
-func addDiff(x, y, z *Node) (err error) {
+func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -476,7 +476,7 @@ func subDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return
 }
 
-func subDiff(x, y, z *Node) (err error) {
+func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -528,7 +528,7 @@ func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
-func hadamardProdDiff(x, y, z *Node) (err error) {
+func hadamardProdDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -596,7 +596,7 @@ func hadamardDivDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
-func hadamardDivDiff(x, y, z *Node) (err error) {
+func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -699,7 +699,7 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	// return nil, errors.New("hadamardPowDiffExpr not yet implemented")
 }
 
-func hadamardPowDiff(x, y, z *Node) (err error) {
+func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -773,6 +773,6 @@ func nondiffBinOpExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	return nil, errors.New("Nondifferentiable")
 }
 
-func nondiffBinOp(x, y, z *Node) (err error) {
+func nondiffBinOp(ctx ExecutionContext, x, y, z *Node) (err error) {
 	return AutoDiffError{}
 }

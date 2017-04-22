@@ -228,7 +228,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	return
 }
 
-func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
