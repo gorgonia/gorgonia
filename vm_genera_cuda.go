@@ -39,6 +39,19 @@ func (m *lispMachine) init() error {
 	return nil
 }
 
+func finalizeLispMachine(m *lispMachine) {
+	cudaLogf("Finalizing lispMachine %p", m)
+	for i, c := range m.c {
+		cu.SetCurrent(c.Context)
+		for _, v := range m.m {
+			mod := v[i]
+			cu.Unload(mod)
+		}
+		cu.DestroyContext(&c.Context)
+	}
+	m.Cleanup()
+}
+
 func (m *lispMachine) calcMemSize() (err error) {
 	compileLogf("calcmemsize")
 	enterLoggingContext()
@@ -139,6 +152,7 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 		if memD, err = m.Get(op.to, memsize); err != nil {
 			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, op.to)
 		}
+		m.logf("Allocated 0x%x", memD.Uintptr())
 
 		var v, d Value
 		if v, err = makeValueFromMem(child.t, child.Shape(), memV); err != nil {
@@ -147,7 +161,11 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 		if d, err = makeValueFromMem(child.t, child.Shape(), memD); err != nil {
 			return errors.Wrapf(err, "Unable to make value of %v and %v from memory", child.t, child.Shape())
 		}
-		m.watchedLogf("V: \n%v|%v", v, v.Shape())
+		m.logf("V: \n%v|%v", v, v.Shape())
+
+		cv := child.Value()
+		ctx := m.Contexts()[op.to]
+		ctx.MemcpyHtoD(cu.DevicePtr(v.Uintptr()), cv.Pointer(), memsize)
 
 		dv = new(dualValue)
 		dv.Value = v

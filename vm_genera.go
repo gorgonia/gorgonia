@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"runtime"
 	"strings"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -58,6 +59,7 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	if err := m.init(); err != nil {
 		panic(err)
 	}
+	runtime.SetFinalizer(m, finalizeLispMachine)
 	return m
 }
 
@@ -95,6 +97,114 @@ func (m *lispMachine) setRootGrad() bool    { return (m.runFlags>>spare3)&byte(1
 func (m *lispMachine) allowSetRootGrad()    { m.runFlags |= byte(1) << spare3 }
 func (m *lispMachine) disallowSetRootGrad() { m.runFlags &= (^(byte(1) << spare3)) }
 
+func (m *lispMachine) Reset() {
+	m.fwd = len(m.sorted) - 1
+	m.bwd = len(m.q) - 1
+}
+
+func (m *lispMachine) RunAll() (err error) {
+	if err = m.checkRoots(); err != nil {
+		return errors.Wrap(err, "Could not checkRoots()")
+	}
+
+	workAvailable := m.ExternMetadata.WorkAvailable()
+	syncChan := m.ExternMetadata.Sync()
+	errChan := make(chan error)
+	doneChan := make(chan struct{})
+
+	go m.runall(errChan, doneChan)
+	for {
+		select {
+		case synchronous := <-workAvailable:
+			err := m.ExternMetadata.DoWork()
+			if err != nil {
+				return err
+			}
+			if synchronous {
+				syncChan <- struct{}{}
+			}
+		case err := <-errChan:
+			return errors.Wrapf(err, "Running Node: %v", m.sorted[m.fwd])
+		case <-doneChan:
+			err := m.ExternMetadata.DoWork()
+			if err != nil {
+				return err
+			}
+			return nil
+		default:
+		}
+	}
+
+	return nil
+}
+
+func (m *lispMachine) RunForwards() (err error) {
+	if err = m.checkRoots(); err != nil {
+		return errors.Wrap(err, "Could not check roots")
+	}
+
+	if !m.runFwd() {
+		return errors.New("Cannot run forwards")
+	}
+
+	for err = nil; err == nil && m.fwd < len(m.sorted); m.fwd++ {
+		err = m.forward()
+	}
+	return
+}
+
+func (m *lispMachine) RunBackwards() (err error) {
+	if err = m.prepGraph(); err != nil {
+		return errors.Wrap(err, "Could not prep graph")
+	}
+	if err = m.checkRoots(); err != nil {
+		return errors.Wrap(err, "Could not check roots")
+	}
+
+	if !m.runBwd() || len(m.q) == 0 {
+		return errors.New("Cannot run backwards")
+	}
+	m.bwd = len(m.q) - 1
+
+	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
+		err = m.backward()
+	}
+	return
+}
+
+func (m *lispMachine) UnbindAll() {
+	if m.dealloc() {
+		for _, n := range m.sorted {
+			m.logf("dealloc n; %v %x %p", n, n.Hashcode(), n)
+			if !n.isInput() {
+				n.unbind()
+				m.logf("OK")
+			}
+		}
+	}
+}
+
+func (m *lispMachine) LastRun() (n *Node, backprop bool) {
+	if m.fwd < 0 && m.runBwd() {
+		goto backward
+	} else if !m.runBwd() {
+		n = m.sorted[0] // last to run
+		return
+	} else {
+		n = m.sorted[m.fwd]
+		return
+	}
+
+backward:
+	backprop = true
+	if m.bwd < 0 {
+		n = m.q[0].output
+		return
+	}
+	n = m.q[m.bwd].output
+	return
+}
+
 // check roots only applies if you want to run a backprop as well
 func (m *lispMachine) checkRoots() (err error) {
 	if !m.checkedRoots && m.runBwd() {
@@ -129,6 +239,42 @@ func (m *lispMachine) prepGraph() (err error) {
 		m.fwd = 0
 	}
 	return
+}
+
+func (m *lispMachine) runall(errChan chan error, doneChan chan struct{}) {
+	var err error
+	if !m.runFwd() {
+		goto backward
+	}
+
+	for err = nil; err == nil && m.fwd < len(m.sorted); m.fwd++ {
+		err = m.forward()
+	}
+
+	if err != nil {
+		errChan <- err
+	}
+
+	// send a synchronous signal, do all (if any) CUDA work before continuing with backprop
+	m.Signal()
+
+backward:
+	if !m.runBwd() {
+		doneChan <- struct{}{}
+		return
+	}
+
+	if m.bwd < 0 {
+		m.bwd = len(m.q) - 1
+	}
+
+	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
+		err = m.backward()
+	}
+	if err != nil {
+		errChan <- err
+	}
+	doneChan <- struct{}{}
 }
 
 func (m *lispMachine) forward() (err error) {
@@ -345,110 +491,6 @@ func (m *lispMachine) backward() (err error) {
 			}
 		}
 	}
-	return
-}
-
-func (m *lispMachine) RunAll() (err error) {
-	if err = m.checkRoots(); err != nil {
-		return errors.Wrap(err, "Could not checkRoots()")
-	}
-
-	if !m.runFwd() {
-		goto backward
-	}
-
-	for err = nil; err == nil && m.fwd < len(m.sorted); m.fwd++ {
-		err = m.forward()
-	}
-
-	if err != nil {
-		return
-	}
-
-backward:
-	if !m.runBwd() {
-		return nil
-	}
-
-	if m.bwd < 0 {
-		m.bwd = len(m.q) - 1
-	}
-
-	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
-		err = m.backward()
-	}
-	return
-}
-
-func (m *lispMachine) RunForwards() (err error) {
-	if err = m.checkRoots(); err != nil {
-		return errors.Wrap(err, "Could not check roots")
-	}
-
-	if !m.runFwd() {
-		return errors.New("Cannot run forwards")
-	}
-
-	for err = nil; err == nil && m.fwd < len(m.sorted); m.fwd++ {
-		err = m.forward()
-	}
-	return
-}
-
-func (m *lispMachine) RunBackwards() (err error) {
-	if err = m.prepGraph(); err != nil {
-		return errors.Wrap(err, "Could not prep graph")
-	}
-	if err = m.checkRoots(); err != nil {
-		return errors.Wrap(err, "Could not check roots")
-	}
-
-	if !m.runBwd() || len(m.q) == 0 {
-		return errors.New("Cannot run backwards")
-	}
-	m.bwd = len(m.q) - 1
-
-	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
-		err = m.backward()
-	}
-	return
-}
-
-func (m *lispMachine) Free() {
-	if m.dealloc() {
-		for _, n := range m.sorted {
-			m.logf("dealloc n; %v %x %p", n, n.Hashcode(), n)
-			if !n.isInput() {
-				n.unbind()
-				m.logf("OK")
-			}
-		}
-	}
-}
-
-func (m *lispMachine) Reset() {
-	m.fwd = len(m.sorted) - 1
-	m.bwd = len(m.q) - 1
-}
-
-func (m *lispMachine) LastRun() (n *Node, backprop bool) {
-	if m.fwd < 0 && m.runBwd() {
-		goto backward
-	} else if !m.runBwd() {
-		n = m.sorted[0] // last to run
-		return
-	} else {
-		n = m.sorted[m.fwd]
-		return
-	}
-
-backward:
-	backprop = true
-	if m.bwd < 0 {
-		n = m.q[0].output
-		return
-	}
-	n = m.q[m.bwd].output
 	return
 }
 
