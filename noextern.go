@@ -46,6 +46,8 @@ func (m *ExternMetadata) DoWork() error {
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
 func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) { return nil, noopError{} }
 
+func (m *ExternMetadata) GetAndCopy(dev Device, size int64, v Value) (Memory, error) { return v, nil }
+
 // Put puts a previously allocated memory slab of the provided size back into the pool. Currently this is a No-op in this build.
 func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {}
 

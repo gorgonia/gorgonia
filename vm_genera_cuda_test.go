@@ -39,6 +39,17 @@ func TestGeneraCUDA_init(t *testing.T) {
 		t.Errorf("Error %v", err)
 	}
 
+	var xG, yG Value
+	var err error
+	if xG, err = x.Grad(); err != nil {
+		t.Fatal(err)
+	}
+	if yG, err = y.Grad(); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%v", xG)
+	t.Logf("%v", yG)
+
 	// Compile(g)
 
 }

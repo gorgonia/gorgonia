@@ -431,33 +431,67 @@ func addDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 }
 
 func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
+	logf("x: %v y %v z %v", x, y, z)
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
+	// zdv := z.boundTo.(*dualValue)
 
 	add := newElemBinOp(addOpType, x, z)
 
 	var d Value
-	if x.IsScalar() {
-		if d, err = add.Do(xdv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, doFail, add)
-		}
-	} else {
-		if d, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, add)
-		}
+	op := NewExternalOp(add, ctx, nil)
+	op.UseUnsafe = true
+
+	// allocate if necessary
+	dev := ctx.Device
+	var xd Value
+
+	logf("Getting xd. Device: %d, x's Device", dev, x.Device())
+	if xd, err = x.GradOnDevice(dev, ctx.External); err != nil {
+		return
+	}
+
+	var zd Value
+	if zd, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return
+	}
+	logf("xd: 0x%x zd 0x%x", xd.Uintptr(), zd.Uintptr())
+	if d, err = op.Do(xd, zd); err != nil {
+		return errors.Wrapf(err, doFail, add)
 	}
 	xdv.SetDeriv(d)
 
-	add = newElemBinOp(addOpType, y, z)
-	if y.IsScalar() {
-		if d, err = add.Do(ydv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, doFail, add)
-		}
-	} else {
-		if d, err = add.UnsafeDo(ydv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, add)
-		}
+	// if x.IsScalar() {
+	// 	if d, err = add.Do(xdv.d, zdv.d); err != nil {
+	// 		return errors.Wrapf(err, doFail, add)
+	// 	}
+	// } else {
+	// 	if d, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
+	// 		return errors.Wrapf(err, unsafeDoFail, add)
+	// 	}
+	// }
+
+	// add = newElemBinOp(addOpType, y, z)
+	// if y.IsScalar() {
+	// 	if d, err = add.Do(ydv.d, zdv.d); err != nil {
+	// 		return errors.Wrapf(err, doFail, add)
+	// 	}
+	// } else {
+	// 	if d, err = add.UnsafeDo(ydv.d, zdv.d); err != nil {
+	// 		return errors.Wrapf(err, unsafeDoFail, add)
+	// 	}
+	// }
+	dev = y.Device()
+	var yd Value
+	if yd, err = y.GradOnDevice(dev, ctx.External); err != nil {
+		return
+	}
+	if zd, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return
+	}
+
+	if d, err = op.Do(yd, zd); err != nil {
+		return errors.Wrapf(err, doFail, add)
 	}
 	ydv.SetDeriv(d) // ignore errors on purpose
 

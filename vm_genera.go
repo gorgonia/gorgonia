@@ -317,10 +317,7 @@ func (m *lispMachine) forward() (err error) {
 	// other wise it's time to execute the op
 	m.watchedLogf("execute Op")
 
-	dev := CPU
-	if m.df != nil { // CUDA and OpenCL  builds
-		dev = m.df.devices[n]
-	}
+	dev := n.dataOn
 	op := NewExternalOp(n.op, ExecutionContext{m, dev}, nil)
 
 	// m.watchedLogf("Result of execution of this node would reside in %v", dev)

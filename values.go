@@ -29,24 +29,6 @@ type Value interface {
 	fmt.Formatter
 }
 
-// Memory is a representation of memory of the value.
-//
-// The main reason for requiring both Uintptr() and Pointer() methods is because while Go currently does not have a compacting
-// garbage collector, from the docs of `unsafe`:
-//		Even if a uintptr holds the address of some object, the garbage collector, will not update that uintptr's value if the object moves,
-//		nor will that uintptr keep the object from being reclaimed.
-type Memory interface {
-	Uintptr() uintptr
-	MemSize() uintptr
-	Pointer() unsafe.Pointer
-}
-
-// Arena is a representation of a pool of Memory
-type Arena interface {
-	Get(dev Device, size int64) (Memory, error) // Get returns a NoOpError when it cannot get a memory. Please allocate
-	Put(dev Device, mem Memory, size int64)     // puts the memory back into the arena
-}
-
 // Valuer is any type that can return a Value
 type Valuer interface {
 	Value() Value

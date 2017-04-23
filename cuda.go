@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/chewxy/cu"
+	"github.com/pkg/errors"
 )
 
 const CUDA = true
@@ -196,6 +197,24 @@ func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
 	// return nil, noopError{}
 }
 
+// GetAndCopy gets the memory and copies data over
+func (m *ExternMetadata) GetAndCopy(dev Device, size int64, v Value) (Memory, error) {
+	d := int(dev)
+	if d >= len(m.a) {
+		return nil, noopError{}
+	}
+
+	ptr, err := m.a[d].alloc(size)
+	if err != nil {
+		return nil, err
+	}
+
+	memsize := calcMemSize(v.Dtype(), v.Shape())
+	ctx := m.Contexts()[d]
+	ctx.MemcpyHtoD(cu.DevicePtr(ptr), v.Pointer(), memsize)
+	return cu.DevicePtr(ptr), nil
+}
+
 // Put puts a previously allocated memory slab of the provided size back into the pool
 func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
 	d := int(dev)
@@ -205,13 +224,6 @@ func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
 
 	addr := uintptr(mem.Uintptr())
 	m.a[d].free(addr)
-
-	// pool, ok := m.arena[d][size]
-	// if !ok {
-	// 	pool = newMemoryQueue(size)
-	// 	m.arena[d][size] = pool
-	// }
-	// pool.add(mem)
 }
 
 // Cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
@@ -402,4 +414,72 @@ func AddToStdLib(name, data string) {
 
 func init() {
 	log.Println("Using CUDA build")
+}
+
+func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, err error) {
+	if n.dataOn == dev {
+		return n.Value(), nil
+	}
+	v := n.Value()
+	dt := v.Dtype()
+	s := n.shape
+	memsize := calcMemSize(dt, s)
+	switch {
+	case n.Device() != CPU && dev == CPU:
+		if retVal, err = makeValue(n.t, s); err != nil {
+			err = errors.Wrapf(err, "Cannot make Value to get ValueOnDevice")
+			return
+		}
+
+		ctx := extern.(CUDAMachine).Contexts()[int(dev)]
+		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(v.Uintptr()), memsize)
+		return
+	case n.Device() == CPU && dev != CPU:
+		var mem Memory
+		if mem, err = extern.GetAndCopy(dev, memsize, v); err != nil {
+			return nil, errors.Errorf("Cannot GetAndCopy")
+		}
+		return makeValueFromMem(n.t, s, mem)
+	}
+	panic("Unreachable")
+}
+
+func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, err error) {
+	if n.dataOn == dev {
+		return n.Grad()
+	}
+
+	var d Value
+	if dv, ok := n.boundTo.(*dualValue); ok {
+		d = dv.d
+	} else if n.deriv != nil {
+		return n.deriv.ValueOnDevice(dev, extern)
+	} else {
+		return nil, errors.Errorf("No gradient node/value found for %v", n)
+	}
+
+	nDev := n.Device()
+	dt := d.Dtype()
+	s := n.shape
+	memsize := calcMemSize(dt, s)
+
+	switch {
+	case nDev != CPU && dev == CPU:
+		if retVal, err = makeValue(n.t, s); err != nil {
+			err = errors.Wrapf(err, "Cannot make Value to get ValueOnDevice")
+			return
+		}
+
+		logf("extern: %T| %v %v | nDev %v", extern, int(dev), dev, nDev)
+		ctx := extern.(CUDAMachine).Contexts()[int(nDev)]
+		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(d.Uintptr()), memsize)
+		return
+	case nDev == CPU && dev != CPU:
+		var mem Memory
+		if mem, err = extern.GetAndCopy(dev, memsize, d); err != nil {
+			return nil, errors.Errorf("Cannot GetAndCopy")
+		}
+		return makeValueFromMem(n.t, s, mem)
+	}
+	panic("Unreachable")
 }

@@ -33,6 +33,7 @@ type Node struct {
 	// value bondage
 	// inputs are bound to values directly
 	boundTo Value
+	dataOn  Device // where is the data on
 
 	// to track derivations
 	derivOf Nodes
@@ -188,6 +189,8 @@ func WithGroupName(name string) NodeConsOpt {
 
 func newNode(opts ...NodeConsOpt) *Node {
 	n := borrowNode()
+	n.dataOn = CPU
+
 	for _, opt := range opts {
 		opt(n)
 	}
@@ -339,6 +342,9 @@ func (n *Node) Dims() int {
 
 // Shape returns the shape of the node
 func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
+
+// Device returns the device the data will be on
+func (n *Node) Device() Device { return n.dataOn }
 
 // IsVec returns whether this node is a vector
 func (n *Node) IsVec() bool { return n.IsVector() }

@@ -11,7 +11,6 @@ type dataflow struct {
 	uniques map[uint32]*Node
 
 	replacements map[*Node]*Node
-	devices      map[*Node]Device
 	intervals    map[*Node]*interval
 
 	// tracks the special nodes' children and parents
@@ -22,7 +21,6 @@ type dataflow struct {
 func newdataflow() *dataflow {
 	df := new(dataflow)
 	df.uniques = make(map[uint32]*Node)
-	df.devices = make(map[*Node]Device)
 	df.devTransChildren = make(map[*Node]Nodes)
 	df.devTransRepl = make(map[*Node]*Node)
 	return df
@@ -54,11 +52,11 @@ func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
 func (df *dataflow) analyzeDevice(n *Node) {
 	switch n.op.(type) {
 	case CUDADoer:
-		df.devices[n] = Device(0)
+		n.dataOn = Device(0)
 	case CLDoer:
-		df.devices[n] = Device(0)
+		n.dataOn = Device(0)
 	default:
-		df.devices[n] = CPU
+		n.dataOn = CPU
 	}
 }
 
@@ -107,7 +105,6 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	}
 	df.replacements = replacements
 	compileLogf("replacements: %-p", FmtNodeMap(replacements))
-	compileLogf("Devices: %-v", FmtNodeMap(df.devices))
 
 	// TODO
 	// constant propagation
@@ -147,7 +144,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 	for i := 0; i < len(sorted); i++ {
 		node := sorted[i]
 		n := df.replacements[node]
-		dev := df.devices[n]
+		dev := n.dataOn
 
 		compileLogf("Working on %v. Replacement %v. Device %v", node, n, dev)
 		var incr int
@@ -156,7 +153,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 		enterLoggingContext()
 		for j, child := range n.children {
 			c := df.replacements[child]
-			childDev := df.devices[c]
+			childDev := c.dataOn
 
 			compileLogf("Working on child :%v. Device: %v, Parent Device %v", c, childDev, dev)
 			if childDev != dev {
