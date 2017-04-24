@@ -62,8 +62,7 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	bw.seq = 0
 	if t.IsMasked(){
 		fillval:=t.FillValue()
-		it := FlatMaskedIteratorFromDense(t)
-    	runtime.SetFinalizer(it, destroyIterator)
+		it := FlatMaskedIteratorFromDense(t)    	
 		for i, err := it.Next(); err == nil; i, err = it.Next() {
 			if t.mask[i] {
 				bw.w(fillval)
@@ -99,8 +98,7 @@ func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	}
 
 	cw := csv.NewWriter(w)
-	it := IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
+	it := IteratorFromDense(t)	
 	coord := it.Coord()
 
 	// rows := t.Shape()[0]

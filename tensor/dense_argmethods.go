@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"reflect"
-	"runtime"
 
 	"github.com/pkg/errors"
 )
@@ -46,7 +45,6 @@ func (t *Dense) Argmax(axis int) (retVal *Dense, err error) {
 	defer ReturnAP(newAP)
 
 	it := IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
 	iteratorLoadAP(it, newAP)
 	return t.argmax(it)
 }
@@ -452,7 +450,6 @@ func (t *Dense) Argmin(axis int) (retVal *Dense, err error) {
 	defer ReturnAP(newAP)
 
 	it := IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
 	iteratorLoadAP(it, newAP)
 	return t.argmin(it)
 }

@@ -1,9 +1,7 @@
 package tensor
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	"runtime"
 	"testing"
 )
 
@@ -205,7 +203,6 @@ func TestMultIteratorFromDense(t *testing.T) {
 		data2[i] = 7 * i
 	}
 	it := MultIteratorFromDense(T1, T2, T3)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
 		x := data1[it.LastIndex(0)]
@@ -476,7 +473,6 @@ func BenchmarkFlatIteratorMulti1(b *testing.B) {
 	ap := NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
 
 	it := NewMultIterator(ap)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	for n := 0; n < b.N; n++ {
 		for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -497,7 +493,6 @@ func BenchmarkFlatIteratorGeneric1(b *testing.B) {
 	ap := NewAP(Shape{30, 60, 10}, []int{1000000, 15000, 50})
 
 	it := NewIterator(ap)
-	runtime.SetFinalizer(it, destroyIterator)
 
 	for n := 0; n < b.N; n++ {
 		for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -522,7 +517,6 @@ func BenchmarkFlatIteratorMulti6(b *testing.B) {
 	}
 
 	it := NewMultIterator(ap...)
-	runtime.SetFinalizer(it, destroyMultIterator)
 
 	for n := 0; n < b.N; n++ {
 		for _, err := it.Next(); err == nil; _, err = it.Next() {

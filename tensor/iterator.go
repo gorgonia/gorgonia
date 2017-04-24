@@ -1,5 +1,9 @@
 package tensor
 
+import (
+	"runtime"
+)
+
 // Iterator is the generic iterator interface
 type Iterator interface {
 	Start() (int, error)
@@ -381,6 +385,7 @@ type FlatMaskedIterator struct {
 // NewFlatMaskedIterator creates a new flat masked iterator
 func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
 	it := new(FlatMaskedIterator)
+	runtime.SetFinalizer(it, destroyIterator)
 	it.FlatIterator = NewFlatIterator(ap)
 	it.mask = mask
 	return it
@@ -389,6 +394,7 @@ func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
 // FlatMaskedIteratorFromDense creates a new FlatMaskedIterator from dense tensor
 func FlatMaskedIteratorFromDense(tt *Dense) *FlatMaskedIterator {
 	it := new(FlatMaskedIterator)
+	runtime.SetFinalizer(it, destroyIterator)
 	it.FlatIterator = FlatIteratorFromDense(tt)
 	it.mask = tt.mask
 	return it

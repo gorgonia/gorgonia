@@ -1,9 +1,5 @@
 package tensor
 
-import (
-	"runtime"
-)
-
 type maskedReduceFn func(Tensor) interface{}
 
 // MaskedReduce applies a reduction function of type maskedReduceFn to mask, and returns
@@ -93,7 +89,6 @@ func doMaskAll(T Tensor) interface{} {
 			}
 		} else {
 			it := IteratorFromDense(t)
-			runtime.SetFinalizer(it, destroyIterator)
 			i, _, _ := it.NextValid()
 			if i != -1 {
 				return false
@@ -121,7 +116,6 @@ func doMaskAny(T Tensor) interface{} {
 			}
 		} else {
 			it := IteratorFromDense(t)
-			runtime.SetFinalizer(it, destroyIterator)
 			i, _, _ := it.NextInvalid()
 			if i != -1 {
 				return true
@@ -152,7 +146,6 @@ func doMaskCt(T Tensor) interface{} {
 			}
 		} else {
 			it := IteratorFromDense(t)
-			runtime.SetFinalizer(it, destroyIterator)
 			for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 				count++
 			}
@@ -186,7 +179,6 @@ func (t *Dense) FlatNotMaskedContiguous() []Slice {
 	sliceList := make([]Slice, 0, 4)
 
 	it := IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
 
 	for start, _, err := it.NextValid(); err == nil; start, _, err = it.NextValid() {
 		end, _, _ := it.NextInvalid()
@@ -206,7 +198,6 @@ func (t *Dense) FlatMaskedContiguous() []Slice {
 	sliceList := make([]Slice, 0, 4)
 
 	it := IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
 
 	for start, _, err := it.NextInvalid(); err == nil; start, _, err = it.NextInvalid() {
 		end, _, _ := it.NextValid()
@@ -228,7 +219,6 @@ func (t *Dense) FlatNotMaskedEdges() (int, int) {
 
 	var start, end int
 	it := IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
 
 	it.SetForward()
 	start, _, err := it.NextValid()
@@ -251,7 +241,6 @@ func (t *Dense) FlatMaskedEdges() (int, int) {
 	}
 	var start, end int
 	it := IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
 
 	it.SetForward()
 	start, _, err := it.NextInvalid()

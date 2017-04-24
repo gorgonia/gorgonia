@@ -1,2 +1,2 @@
-*.vscode
+*.vscode/*
 .gitignore

@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"runtime"
 	"unsafe"
 )
 
@@ -79,7 +78,6 @@ func (t *Dense) Filled(val ...interface{}) (interface{}, error) {
 		}
 	default:
 		it := IteratorFromDense(tc)
-		runtime.SetFinalizer(it, destroyIterator)
 		for i, _, err := it.NextInvalid(); err == nil; i, _, err = it.NextInvalid() {
 			tc.Set(i, fillval)
 		}
@@ -115,7 +113,6 @@ func (t *Dense) FilledInplace(val ...interface{}) (interface{}, error) {
 		}
 	default:
 		it := IteratorFromDense(t)
-		runtime.SetFinalizer(it, destroyIterator)
 		for i, _, err := it.NextInvalid(); err == nil; i, _, err = it.NextInvalid() {
 			t.Set(i, fillval)
 		}

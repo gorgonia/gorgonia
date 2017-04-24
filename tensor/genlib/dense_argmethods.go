@@ -47,7 +47,6 @@ func (t *Dense) {{.ArgName}}(axis int)(retVal *Dense, err error){
 	defer ReturnAP(newAP)
 	
 	it :=IteratorFromDense(t)
-	runtime.SetFinalizer(it, destroyIterator)
 	iteratorLoadAP(it, newAP)	
 	return t.{{lower .ArgName}}(it)
 }

@@ -40,7 +40,6 @@ const testMaskCmpMethodRaw = `func TestDense_{{title .Name}}_{{short .Kind}}(t *
 		T.MaskedEqual({{asType .Kind}}(i*10))
 	}
     it := IteratorFromDense(T)
-    runtime.SetFinalizer(it, destroyIterator)
     
     j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {

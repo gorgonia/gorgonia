@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"github.com/stretchr/testify/assert"
-	//"runtime"
 	"testing"
 )
 

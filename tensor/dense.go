@@ -63,7 +63,7 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 	return
 }
 
-func newDense(dt Dtype, size int, maskSize ...int) *Dense {
+func newDense(dt Dtype, size int) *Dense {
 	d := new(Dense)
 	d.t = dt
 	d.AP = new(AP)
