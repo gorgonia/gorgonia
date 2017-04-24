@@ -73,6 +73,8 @@ const (
 	undefinedOnShape    = "%v undefined on shape %v"
 	unsupportedDtype    = "dtype %v is not yet supported"
 	gradOnDeviceFail    = "Cannot get gradient of %v on %v"
+	makeValueFail       = "Unable to make value of %v with shape %v"
+	allocFail           = "Unable to allocate %v bytes on %v"
 )
 
 var empty struct{}

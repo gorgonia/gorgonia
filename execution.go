@@ -1,6 +1,9 @@
 package gorgonia
 
-import "unsafe"
+import (
+	"log"
+	"unsafe"
+)
 
 // Memory is a representation of memory of the value.
 //
@@ -42,8 +45,9 @@ type ExternalOp struct {
 	ExecutionContext
 
 	Prealloc  Value
-	UseUnsafe bool
-	UseCPU    bool // forces uses of CPU, even if the op is CUDA/CL op
+	Incr      Value // is this a Incr? IncrDoers have higher precedence over PreallocDo
+	UseUnsafe bool  // Is this an unsafe op? Lowest of all "special" Dos
+	UseCPU    bool  // forces uses of CPU, even if the op is CUDA/CL op
 }
 
 // NewExternalOp creates a new *ExternalOp.
@@ -60,6 +64,16 @@ func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
 func (op *ExternalOp) Do(vals ...Value) (Value, error) {
 	if op.UseCPU {
 		switch {
+		case op.Incr != nil:
+			if id, ok := op.Op.(IncrDoer); ok {
+				if err := id.IncrDo(op.Incr, vals...); err != nil {
+					if ver, ok := err.(Valuer); ok {
+						return ver.Value(), nil
+					}
+					return nil, err
+				}
+				return op.Incr, nil
+			}
 		case op.Prealloc != nil:
 			if pd, ok := op.Op.(UsePreallocDoer); ok {
 				pd.UsePreallocDo(op.Prealloc, vals...)
@@ -81,14 +95,36 @@ func (op *ExternalOp) Do(vals ...Value) (Value, error) {
 
 	switch o := op.Op.(type) {
 	case CUDADoer:
-		// if op.UseUnsafe || op.Prealloc == nil {
-		// 	return o.CUDADo(op.External, op.Device, vals[0], vals...)
-		// }
+		if op.Incr != nil {
+			if op.Prealloc != nil {
+				log.Printf("op.Incr 0x%x ", op.Prealloc.Uintptr())
+
+			} else {
+				log.Printf("Prealloc is NUL")
+			}
+
+			v, err := o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
+			if err != nil {
+				return nil, err
+			}
+
+			add := newEBOByType(addOpType, TypeOf(op.Incr), TypeOf(v))
+			addOp := NewExternalOp(add, op.ExecutionContext, nil)
+			addOp.UseUnsafe = true
+			retVal, err := addOp.Do(op.Incr, v)
+			return retVal, err
+		}
 		return o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
 	case CLDoer:
-	case UnsafeDoer:
-		if op.UseUnsafe {
-			return o.UnsafeDo(vals...)
+	case IncrDoer:
+		if op.Incr != nil {
+			if err := o.IncrDo(op.Incr, vals...); err != nil {
+				if ver, ok := err.(Valuer); ok {
+					return ver.Value(), nil
+				}
+				return nil, err
+			}
+			return op.Incr, nil
 		}
 		return op.Op.Do(vals...)
 	case UsePreallocDoer:
@@ -96,9 +132,15 @@ func (op *ExternalOp) Do(vals ...Value) (Value, error) {
 			return o.UsePreallocDo(op.Prealloc, vals...)
 		}
 		return op.Op.Do(vals...)
+	case UnsafeDoer:
+		if op.UseUnsafe {
+			return o.UnsafeDo(vals...)
+		}
+		return op.Op.Do(vals...)
 	default:
 		return o.Do(vals...)
 	}
+
 	panic("Unreachable")
 }
 

@@ -187,7 +187,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	return
 }
 
-// NewAddOp creates a new *ExternalOp that
+// NewAddOp creates a new *ExternalOp that wraps a add op
 func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	add := newElemBinOp(addOpType, a, b)
 	op := NewExternalOp(add, ctx, nil)
@@ -206,5 +206,48 @@ func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 		return op
 	}
 
+	return op
+}
+
+// NewSubOp creates a new *ExternalOp that wraps a sub op
+func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+	sub := newEBOByType(subOpType, a.t, b.t)
+	op := NewExternalOp(sub, ctx, nil)
+
+	if a.Device() == CPU && b.Device() == CPU && ctx.Device == CPU {
+		op.UseCPU = true
+		return op
+	}
+
+	if a.Device() != CPU {
+		op.Device = a.Device()
+		return op
+	}
+
+	if b.Device() != CPU {
+		op.Device = b.Device()
+		return op
+	}
+	return op
+}
+
+func NewHadamardProdOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+	mul := newEBOByType(mulOpType, a.t, b.t)
+	op := NewExternalOp(mul, ctx, nil)
+
+	if a.Device() == CPU && b.Device() == CPU && ctx.Device == CPU {
+		op.UseCPU = true
+		return op
+	}
+
+	if a.Device() != CPU {
+		op.Device = a.Device()
+		return op
+	}
+
+	if b.Device() != CPU {
+		op.Device = b.Device()
+		return op
+	}
 	return op
 }

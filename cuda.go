@@ -360,7 +360,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 		m.totalMem[i] = total
 		m.a[i] = newBFC(memalign)
 
-		var allocsize int64 = 2*sizes[i] + minAllocSize
+		var allocsize int64 = 2*sizes[i] + (sizes[i] / 2) + minAllocSize
 		if allocsize > free {
 			allocsize = free
 		}

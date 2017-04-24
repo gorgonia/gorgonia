@@ -34,7 +34,7 @@ type noIncrErr struct {
 	v Value
 }
 
-func (noIncrErr) Error() string  { return "increment couldn't be done. Safe op was performed instead" }
+func (noIncrErr) Error() string  { return incrErr }
 func (e noIncrErr) Value() Value { return e.v }
 
 // valueErr is an error used internally for when an error is itself a Valuer
