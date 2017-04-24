@@ -173,7 +173,7 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 		it = NewFlatMaskedIterator(t.AP, t.mask)
 	}
 	if other.IsMaterializable() {
-		ot = NewFlatMaskedIterator(other.AP, ot.mask)
+		ot = NewFlatMaskedIterator(other.AP, other.mask)
 	}
 	switch {
 	case incr:
@@ -526,6 +526,7 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 	}
 
 	t.MaskFromDense(t, other)
+
 	if it != nil{
 		it.mask = t.mask
 	}

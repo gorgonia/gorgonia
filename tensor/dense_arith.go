@@ -99,7 +99,7 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		it = NewFlatMaskedIterator(t.AP, t.mask)
 	}
 	if other.IsMaterializable() {
-		ot = NewFlatMaskedIterator(other.AP, ot.mask)
+		ot = NewFlatMaskedIterator(other.AP, other.mask)
 	}
 	switch {
 	case incr:
@@ -1500,6 +1500,7 @@ func (t *Dense) add(other *Dense, itt, ott Iterator) (err error) {
 	}
 
 	t.MaskFromDense(t, other)
+
 	if it != nil {
 		it.mask = t.mask
 	}
@@ -2019,7 +2020,7 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		it = NewFlatMaskedIterator(t.AP, t.mask)
 	}
 	if other.IsMaterializable() {
-		ot = NewFlatMaskedIterator(other.AP, ot.mask)
+		ot = NewFlatMaskedIterator(other.AP, other.mask)
 	}
 	switch {
 	case incr:
@@ -3420,6 +3421,7 @@ func (t *Dense) sub(other *Dense, itt, ott Iterator) (err error) {
 	}
 
 	t.MaskFromDense(t, other)
+
 	if it != nil {
 		it.mask = t.mask
 	}
@@ -3939,7 +3941,7 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		it = NewFlatMaskedIterator(t.AP, t.mask)
 	}
 	if other.IsMaterializable() {
-		ot = NewFlatMaskedIterator(other.AP, ot.mask)
+		ot = NewFlatMaskedIterator(other.AP, other.mask)
 	}
 	switch {
 	case incr:
@@ -5340,6 +5342,7 @@ func (t *Dense) mul(other *Dense, itt, ott Iterator) (err error) {
 	}
 
 	t.MaskFromDense(t, other)
+
 	if it != nil {
 		it.mask = t.mask
 	}
@@ -5860,7 +5863,7 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		it = NewFlatMaskedIterator(t.AP, t.mask)
 	}
 	if other.IsMaterializable() {
-		ot = NewFlatMaskedIterator(other.AP, ot.mask)
+		ot = NewFlatMaskedIterator(other.AP, other.mask)
 	}
 	switch {
 	case incr:
@@ -7824,6 +7827,7 @@ func (t *Dense) div(other *Dense, itt, ott Iterator) (err error) {
 	}
 
 	t.MaskFromDense(t, other)
+
 	if it != nil {
 		it.mask = t.mask
 	}
@@ -8471,7 +8475,7 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		it = NewFlatMaskedIterator(t.AP, t.mask)
 	}
 	if other.IsMaterializable() {
-		ot = NewFlatMaskedIterator(other.AP, ot.mask)
+		ot = NewFlatMaskedIterator(other.AP, other.mask)
 	}
 	switch {
 	case incr:
@@ -9872,6 +9876,7 @@ func (t *Dense) pow(other *Dense, itt, ott Iterator) (err error) {
 	}
 
 	t.MaskFromDense(t, other)
+
 	if it != nil {
 		it.mask = t.mask
 	}

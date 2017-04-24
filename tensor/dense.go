@@ -98,8 +98,10 @@ func (t *Dense) fromSlice(x interface{}, argMask ...[]bool) {
 	t.hdr = hdr
 
 	if len(argMask) > 0 {
-		if len(argMask[0]) != t.len() {
-			panic("Mask is not same length as data")
+		if argMask[0] != nil {
+			if len(argMask[0]) != t.len() {
+				panic("Mask is not same length as data")
+			}
 		}
 		t.mask = argMask[0]
 	}
@@ -236,7 +238,7 @@ func (t *Dense) fix() {
 		size := t.Shape().TotalSize()
 		t.makeArray(size)
 	}
-	if len(t.mask) != t.Size() {
+	if len(t.mask) != t.len() {
 		t.mask = t.mask[:0]
 	}
 	t.lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
@@ -244,7 +246,7 @@ func (t *Dense) fix() {
 
 // makeMask adds a mask slice to tensor if required
 func (t *Dense) makeMask() {
-	size := t.len()
+	size := t.DataSize()
 	if len(t.mask) >= size {
 		t.mask = t.mask[:size]
 	}
@@ -269,7 +271,6 @@ func (t *Dense) MaskFromDense(tts ...*Dense) {
 			hasMask[i] = tt.IsMasked()
 			masked = masked || hasMask[i]
 			if hasMask[i] {
-				t.mask = tt.mask
 				numMasked++
 			}
 		}
@@ -278,24 +279,20 @@ func (t *Dense) MaskFromDense(tts ...*Dense) {
 		return
 	}
 
-	size := t.len()
-	t.makeMask()
+	//Only make mask if none already. This way one of the tts can be t itself
 
-	numCopied := 0
+	if len(t.mask) < t.DataSize() {
+		t.makeMask()
+	}
+
 	for i, tt := range tts {
 		if tt != nil {
 			n := len(tt.mask)
 			if hasMask[i] {
-				if numCopied == 0 {
-					for j := range t.mask {
-						t.mask[j] = tt.mask[j%n]
-					}
-				} else {
-					for j := range t.mask {
-						t.mask[j] = t.mask[j] || tt.mask[j%n]
-					}
+				for j := range t.mask {
+					t.mask[j] = t.mask[j] || tt.mask[j%n]
 				}
-				numCopied++
+
 			}
 		}
 	}
@@ -436,15 +433,6 @@ func (t *Dense) MaskFromSlice(x interface{}) {
 			}
 		}
 	case []byte:
-		for i, v := range m {
-			if v != 0 {
-				t.mask[i] = true
-			}
-			if i >= n {
-				return
-			}
-		}
-	case []uint8:
 		for i, v := range m {
 			if v != 0 {
 				t.mask[i] = true

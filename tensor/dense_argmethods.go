@@ -68,7 +68,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI(t.ints(), mask)))
+			retVal = New(FromScalar(argmaxI(t.ints(), t.mask)))
 			return
 		}
 		data := t.ints()
@@ -97,7 +97,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI8(t.int8s(), mask)))
+			retVal = New(FromScalar(argmaxI8(t.int8s(), t.mask)))
 			return
 		}
 		data := t.int8s()
@@ -126,7 +126,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI16(t.int16s(), mask)))
+			retVal = New(FromScalar(argmaxI16(t.int16s(), t.mask)))
 			return
 		}
 		data := t.int16s()
@@ -155,7 +155,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI32(t.int32s(), mask)))
+			retVal = New(FromScalar(argmaxI32(t.int32s(), t.mask)))
 			return
 		}
 		data := t.int32s()
@@ -184,7 +184,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI64(t.int64s(), mask)))
+			retVal = New(FromScalar(argmaxI64(t.int64s(), t.mask)))
 			return
 		}
 		data := t.int64s()
@@ -213,7 +213,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU(t.uints(), mask)))
+			retVal = New(FromScalar(argmaxU(t.uints(), t.mask)))
 			return
 		}
 		data := t.uints()
@@ -242,7 +242,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU8(t.uint8s(), mask)))
+			retVal = New(FromScalar(argmaxU8(t.uint8s(), t.mask)))
 			return
 		}
 		data := t.uint8s()
@@ -271,7 +271,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU16(t.uint16s(), mask)))
+			retVal = New(FromScalar(argmaxU16(t.uint16s(), t.mask)))
 			return
 		}
 		data := t.uint16s()
@@ -300,7 +300,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU32(t.uint32s(), mask)))
+			retVal = New(FromScalar(argmaxU32(t.uint32s(), t.mask)))
 			return
 		}
 		data := t.uint32s()
@@ -329,7 +329,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU64(t.uint64s(), mask)))
+			retVal = New(FromScalar(argmaxU64(t.uint64s(), t.mask)))
 			return
 		}
 		data := t.uint64s()
@@ -358,7 +358,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxF32(t.float32s(), mask)))
+			retVal = New(FromScalar(argmaxF32(t.float32s(), t.mask)))
 			return
 		}
 		data := t.float32s()
@@ -387,7 +387,7 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxF64(t.float64s(), mask)))
+			retVal = New(FromScalar(argmaxF64(t.float64s(), t.mask)))
 			return
 		}
 		data := t.float64s()
@@ -474,7 +474,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI(t.ints(), mask)))
+			retVal = New(FromScalar(argminI(t.ints(), t.mask)))
 			return
 		}
 		data := t.ints()
@@ -503,7 +503,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI8(t.int8s(), mask)))
+			retVal = New(FromScalar(argminI8(t.int8s(), t.mask)))
 			return
 		}
 		data := t.int8s()
@@ -532,7 +532,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI16(t.int16s(), mask)))
+			retVal = New(FromScalar(argminI16(t.int16s(), t.mask)))
 			return
 		}
 		data := t.int16s()
@@ -561,7 +561,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI32(t.int32s(), mask)))
+			retVal = New(FromScalar(argminI32(t.int32s(), t.mask)))
 			return
 		}
 		data := t.int32s()
@@ -590,7 +590,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI64(t.int64s(), mask)))
+			retVal = New(FromScalar(argminI64(t.int64s(), t.mask)))
 			return
 		}
 		data := t.int64s()
@@ -619,7 +619,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU(t.uints(), mask)))
+			retVal = New(FromScalar(argminU(t.uints(), t.mask)))
 			return
 		}
 		data := t.uints()
@@ -648,7 +648,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU8(t.uint8s(), mask)))
+			retVal = New(FromScalar(argminU8(t.uint8s(), t.mask)))
 			return
 		}
 		data := t.uint8s()
@@ -677,7 +677,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU16(t.uint16s(), mask)))
+			retVal = New(FromScalar(argminU16(t.uint16s(), t.mask)))
 			return
 		}
 		data := t.uint16s()
@@ -706,7 +706,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU32(t.uint32s(), mask)))
+			retVal = New(FromScalar(argminU32(t.uint32s(), t.mask)))
 			return
 		}
 		data := t.uint32s()
@@ -735,7 +735,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU64(t.uint64s(), mask)))
+			retVal = New(FromScalar(argminU64(t.uint64s(), t.mask)))
 			return
 		}
 		data := t.uint64s()
@@ -764,7 +764,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminF32(t.float32s(), mask)))
+			retVal = New(FromScalar(argminF32(t.float32s(), t.mask)))
 			return
 		}
 		data := t.float32s()
@@ -793,7 +793,7 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminF64(t.float64s(), mask)))
+			retVal = New(FromScalar(argminF64(t.float64s(), t.mask)))
 			return
 		}
 		data := t.float64s()

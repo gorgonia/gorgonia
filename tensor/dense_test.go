@@ -17,20 +17,9 @@ func TestDense_shallowClone(t *testing.T) {
 
 func TestDenseMasked(t *testing.T) {
 
-	T := New(Of(Float64), WithShape(3, 2), WithMaskedDimensions([]bool{true, true}))
+	T := New(Of(Float64), WithShape(3, 2))
+	T.ResetMask()
 	assert.Equal(t, []bool{false, false, false, false, false, false}, T.mask)
-	assert.Equal(t, []int{2, 1}, T.maskStrides)
-
-	T = New(Of(Float64), WithShape(3, 2), WithMaskedDimensions([]bool{true, false}))
-	assert.Equal(t, []bool{false, false, false}, T.mask)
-	assert.Equal(t, []int{1, 0}, T.maskStrides)
-
-	T = New(Of(Float64), WithShape(3, 2), WithMaskedDimensions([]bool{false, true}))
-	assert.Equal(t, []bool{false, false}, T.mask)
-	assert.Equal(t, []int{0, 1}, T.maskStrides)
-
-	T = New(Of(Float64), WithShape(3, 2), WithMaskedDimensions([]bool{false, false}))
-	assert.Equal(t, 0, len(T.mask))
 
 }
 

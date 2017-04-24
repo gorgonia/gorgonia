@@ -215,6 +215,218 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI, nil); err != nil {
 		t.Errorf("Incr function test for int failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI := func(a, b *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI, nil); err != nil {
+		t.Errorf("Masked test for int failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI := func(a, b, incr *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI, nil); err != nil {
+		t.Errorf("Incr masked test for int failed %v", nil) //err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -417,6 +629,218 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
 		t.Errorf("Incr function test for int8 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI8 := func(a, b *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI8, nil); err != nil {
+		t.Errorf("Masked test for int8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI8 := func(a, b, incr *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI8, nil); err != nil {
+		t.Errorf("Incr masked test for int8 failed %v", nil) //err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -621,6 +1045,218 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI16, nil); err != nil {
 		t.Errorf("Incr function test for int16 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI16 := func(a, b *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI16, nil); err != nil {
+		t.Errorf("Masked test for int16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI16 := func(a, b, incr *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI16, nil); err != nil {
+		t.Errorf("Incr masked test for int16 failed %v", nil) //err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -823,6 +1459,218 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
 		t.Errorf("Incr function test for int32 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI32 := func(a, b *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI32, nil); err != nil {
+		t.Errorf("Masked test for int32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI32 := func(a, b, incr *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI32, nil); err != nil {
+		t.Errorf("Incr masked test for int32 failed %v", nil) //err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -1027,6 +1875,218 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI64, nil); err != nil {
 		t.Errorf("Incr function test for int64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI64 := func(a, b *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI64, nil); err != nil {
+		t.Errorf("Masked test for int64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI64 := func(a, b, incr *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI64, nil); err != nil {
+		t.Errorf("Incr masked test for int64 failed %v", nil) //err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -1229,6 +2289,218 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU, nil); err != nil {
 		t.Errorf("Incr function test for uint failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU := func(a, b *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU, nil); err != nil {
+		t.Errorf("Masked test for uint failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU := func(a, b, incr *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU, nil); err != nil {
+		t.Errorf("Incr masked test for uint failed %v", nil) //err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -1433,6 +2705,218 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU8, nil); err != nil {
 		t.Errorf("Incr function test for uint8 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU8 := func(a, b *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU8, nil); err != nil {
+		t.Errorf("Masked test for uint8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU8 := func(a, b, incr *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU8, nil); err != nil {
+		t.Errorf("Incr masked test for uint8 failed %v", nil) //err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -1635,6 +3119,218 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
 		t.Errorf("Incr function test for uint16 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU16 := func(a, b *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU16, nil); err != nil {
+		t.Errorf("Masked test for uint16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU16 := func(a, b, incr *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU16, nil); err != nil {
+		t.Errorf("Incr masked test for uint16 failed %v", nil) //err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -1839,6 +3535,218 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU32, nil); err != nil {
 		t.Errorf("Incr function test for uint32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU32 := func(a, b *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU32, nil); err != nil {
+		t.Errorf("Masked test for uint32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU32 := func(a, b, incr *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU32, nil); err != nil {
+		t.Errorf("Incr masked test for uint32 failed %v", nil) //err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -2041,6 +3949,218 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
 		t.Errorf("Incr function test for uint64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU64 := func(a, b *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU64, nil); err != nil {
+		t.Errorf("Masked test for uint64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU64 := func(a, b, incr *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU64, nil); err != nil {
+		t.Errorf("Incr masked test for uint64 failed %v", nil) //err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -2245,6 +4365,218 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(incrF32, nil); err != nil {
 		t.Errorf("Incr function test for float32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedF32 := func(a, b *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF32, nil); err != nil {
+		t.Errorf("Masked test for float32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF32 := func(a, b, incr *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF32, nil); err != nil {
+		t.Errorf("Incr masked test for float32 failed %v", nil) //err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -2447,6 +4779,218 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
 		t.Errorf("Incr function test for float64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedF64 := func(a, b *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF64, nil); err != nil {
+		t.Errorf("Masked test for float64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF64 := func(a, b, incr *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF64, nil); err != nil {
+		t.Errorf("Incr masked test for float64 failed %v", nil) //err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -2651,6 +5195,218 @@ func TestAddBasicProperties(t *testing.T) {
 	if err := quick.Check(incrC64, nil); err != nil {
 		t.Errorf("Incr function test for complex64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedC64 := func(a, b *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC64, nil); err != nil {
+		t.Errorf("Masked test for complex64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC64 := func(a, b, incr *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC64, nil); err != nil {
+		t.Errorf("Incr masked test for complex64 failed %v", nil) //err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -2853,6 +5609,218 @@ func TestAddBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
 		t.Errorf("Incr function test for complex128 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedC128 := func(a, b *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Add(b.Dense)
+		ret2, _ := b.Add(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC128, nil); err != nil {
+		t.Errorf("Masked test for complex128 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC128 := func(a, b, incr *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Add(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Add(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Add(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Add(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC128, nil); err != nil {
+		t.Errorf("Incr masked test for complex128 failed %v", nil) //err)
 	}
 }
 func TestAddFuncOpts(t *testing.T) {
@@ -3133,6 +6101,218 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI, nil); err != nil {
 		t.Errorf("Incr function test for int failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI := func(a, b *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI, nil); err != nil {
+		t.Errorf("Masked test for int failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI := func(a, b, incr *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI, nil); err != nil {
+		t.Errorf("Incr masked test for int failed %v", nil) //err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -3307,6 +6487,218 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
 		t.Errorf("Incr function test for int8 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI8 := func(a, b *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI8, nil); err != nil {
+		t.Errorf("Masked test for int8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI8 := func(a, b, incr *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI8, nil); err != nil {
+		t.Errorf("Incr masked test for int8 failed %v", nil) //err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -3483,6 +6875,218 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI16, nil); err != nil {
 		t.Errorf("Incr function test for int16 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI16 := func(a, b *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI16, nil); err != nil {
+		t.Errorf("Masked test for int16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI16 := func(a, b, incr *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI16, nil); err != nil {
+		t.Errorf("Incr masked test for int16 failed %v", nil) //err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -3657,6 +7261,218 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
 		t.Errorf("Incr function test for int32 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI32 := func(a, b *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI32, nil); err != nil {
+		t.Errorf("Masked test for int32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI32 := func(a, b, incr *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI32, nil); err != nil {
+		t.Errorf("Incr masked test for int32 failed %v", nil) //err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -3833,6 +7649,218 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI64, nil); err != nil {
 		t.Errorf("Incr function test for int64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI64 := func(a, b *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI64, nil); err != nil {
+		t.Errorf("Masked test for int64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI64 := func(a, b, incr *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI64, nil); err != nil {
+		t.Errorf("Incr masked test for int64 failed %v", nil) //err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -4007,6 +8035,218 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU, nil); err != nil {
 		t.Errorf("Incr function test for uint failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU := func(a, b *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU, nil); err != nil {
+		t.Errorf("Masked test for uint failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU := func(a, b, incr *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU, nil); err != nil {
+		t.Errorf("Incr masked test for uint failed %v", nil) //err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -4183,6 +8423,218 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU8, nil); err != nil {
 		t.Errorf("Incr function test for uint8 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU8 := func(a, b *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU8, nil); err != nil {
+		t.Errorf("Masked test for uint8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU8 := func(a, b, incr *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU8, nil); err != nil {
+		t.Errorf("Incr masked test for uint8 failed %v", nil) //err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -4357,6 +8809,218 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
 		t.Errorf("Incr function test for uint16 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU16 := func(a, b *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU16, nil); err != nil {
+		t.Errorf("Masked test for uint16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU16 := func(a, b, incr *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU16, nil); err != nil {
+		t.Errorf("Incr masked test for uint16 failed %v", nil) //err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -4533,6 +9197,218 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU32, nil); err != nil {
 		t.Errorf("Incr function test for uint32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU32 := func(a, b *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU32, nil); err != nil {
+		t.Errorf("Masked test for uint32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU32 := func(a, b, incr *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU32, nil); err != nil {
+		t.Errorf("Incr masked test for uint32 failed %v", nil) //err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -4707,6 +9583,218 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
 		t.Errorf("Incr function test for uint64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU64 := func(a, b *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU64, nil); err != nil {
+		t.Errorf("Masked test for uint64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU64 := func(a, b, incr *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU64, nil); err != nil {
+		t.Errorf("Incr masked test for uint64 failed %v", nil) //err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -4883,6 +9971,218 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(incrF32, nil); err != nil {
 		t.Errorf("Incr function test for float32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedF32 := func(a, b *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF32, nil); err != nil {
+		t.Errorf("Masked test for float32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF32 := func(a, b, incr *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF32, nil); err != nil {
+		t.Errorf("Incr masked test for float32 failed %v", nil) //err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -5057,6 +10357,218 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
 		t.Errorf("Incr function test for float64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedF64 := func(a, b *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF64, nil); err != nil {
+		t.Errorf("Masked test for float64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF64 := func(a, b, incr *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF64, nil); err != nil {
+		t.Errorf("Incr masked test for float64 failed %v", nil) //err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -5233,6 +10745,218 @@ func TestSubBasicProperties(t *testing.T) {
 	if err := quick.Check(incrC64, nil); err != nil {
 		t.Errorf("Incr function test for complex64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedC64 := func(a, b *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC64, nil); err != nil {
+		t.Errorf("Masked test for complex64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC64 := func(a, b, incr *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC64, nil); err != nil {
+		t.Errorf("Incr masked test for complex64 failed %v", nil) //err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -5407,6 +11131,218 @@ func TestSubBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
 		t.Errorf("Incr function test for complex128 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedC128 := func(a, b *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Sub(b.Dense)
+		ret2, _ := b.Sub(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC128, nil); err != nil {
+		t.Errorf("Masked test for complex128 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC128 := func(a, b, incr *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Sub(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Sub(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Sub(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Sub(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC128, nil); err != nil {
+		t.Errorf("Incr masked test for complex128 failed %v", nil) //err)
 	}
 }
 func TestSubFuncOpts(t *testing.T) {
@@ -5718,6 +11654,218 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI, nil); err != nil {
 		t.Errorf("Incr function test for int failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI := func(a, b *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI, nil); err != nil {
+		t.Errorf("Masked test for int failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI := func(a, b, incr *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI, nil); err != nil {
+		t.Errorf("Incr masked test for int failed %v", nil) //err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -5923,6 +12071,218 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
 		t.Errorf("Incr function test for int8 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI8 := func(a, b *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI8, nil); err != nil {
+		t.Errorf("Masked test for int8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI8 := func(a, b, incr *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI8, nil); err != nil {
+		t.Errorf("Incr masked test for int8 failed %v", nil) //err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -6130,6 +12490,218 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI16, nil); err != nil {
 		t.Errorf("Incr function test for int16 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI16 := func(a, b *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI16, nil); err != nil {
+		t.Errorf("Masked test for int16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI16 := func(a, b, incr *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI16, nil); err != nil {
+		t.Errorf("Incr masked test for int16 failed %v", nil) //err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -6335,6 +12907,218 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
 		t.Errorf("Incr function test for int32 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI32 := func(a, b *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI32, nil); err != nil {
+		t.Errorf("Masked test for int32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI32 := func(a, b, incr *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI32, nil); err != nil {
+		t.Errorf("Incr masked test for int32 failed %v", nil) //err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -6542,6 +13326,218 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI64, nil); err != nil {
 		t.Errorf("Incr function test for int64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI64 := func(a, b *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI64, nil); err != nil {
+		t.Errorf("Masked test for int64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI64 := func(a, b, incr *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI64, nil); err != nil {
+		t.Errorf("Incr masked test for int64 failed %v", nil) //err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -6747,6 +13743,218 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU, nil); err != nil {
 		t.Errorf("Incr function test for uint failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU := func(a, b *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU, nil); err != nil {
+		t.Errorf("Masked test for uint failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU := func(a, b, incr *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU, nil); err != nil {
+		t.Errorf("Incr masked test for uint failed %v", nil) //err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -6954,6 +14162,218 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU8, nil); err != nil {
 		t.Errorf("Incr function test for uint8 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU8 := func(a, b *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU8, nil); err != nil {
+		t.Errorf("Masked test for uint8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU8 := func(a, b, incr *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU8, nil); err != nil {
+		t.Errorf("Incr masked test for uint8 failed %v", nil) //err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -7159,6 +14579,218 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
 		t.Errorf("Incr function test for uint16 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU16 := func(a, b *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU16, nil); err != nil {
+		t.Errorf("Masked test for uint16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU16 := func(a, b, incr *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU16, nil); err != nil {
+		t.Errorf("Incr masked test for uint16 failed %v", nil) //err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -7366,6 +14998,218 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU32, nil); err != nil {
 		t.Errorf("Incr function test for uint32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU32 := func(a, b *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU32, nil); err != nil {
+		t.Errorf("Masked test for uint32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU32 := func(a, b, incr *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU32, nil); err != nil {
+		t.Errorf("Incr masked test for uint32 failed %v", nil) //err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -7571,6 +15415,218 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
 		t.Errorf("Incr function test for uint64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU64 := func(a, b *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU64, nil); err != nil {
+		t.Errorf("Masked test for uint64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU64 := func(a, b, incr *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU64, nil); err != nil {
+		t.Errorf("Incr masked test for uint64 failed %v", nil) //err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -7778,6 +15834,218 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(incrF32, nil); err != nil {
 		t.Errorf("Incr function test for float32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedF32 := func(a, b *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF32, nil); err != nil {
+		t.Errorf("Masked test for float32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF32 := func(a, b, incr *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF32, nil); err != nil {
+		t.Errorf("Incr masked test for float32 failed %v", nil) //err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -7983,6 +16251,218 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
 		t.Errorf("Incr function test for float64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedF64 := func(a, b *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF64, nil); err != nil {
+		t.Errorf("Masked test for float64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF64 := func(a, b, incr *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF64, nil); err != nil {
+		t.Errorf("Incr masked test for float64 failed %v", nil) //err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -8190,6 +16670,218 @@ func TestMulBasicProperties(t *testing.T) {
 	if err := quick.Check(incrC64, nil); err != nil {
 		t.Errorf("Incr function test for complex64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedC64 := func(a, b *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC64, nil); err != nil {
+		t.Errorf("Masked test for complex64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC64 := func(a, b, incr *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC64, nil); err != nil {
+		t.Errorf("Incr masked test for complex64 failed %v", nil) //err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -8395,6 +17087,218 @@ func TestMulBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
 		t.Errorf("Incr function test for complex128 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedC128 := func(a, b *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Mul(b.Dense)
+		ret2, _ := b.Mul(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC128, nil); err != nil {
+		t.Errorf("Masked test for complex128 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC128 := func(a, b, incr *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Mul(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Mul(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Mul(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Mul(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC128, nil); err != nil {
+		t.Errorf("Incr masked test for complex128 failed %v", nil) //err)
 	}
 }
 func TestMulFuncOpts(t *testing.T) {
@@ -8683,6 +17587,219 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI, nil); err != nil {
 		t.Errorf("Incr function test for int failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI := func(a, b *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI, nil); err != nil {
+		t.Errorf("Masked test for int failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI := func(a, b, incr *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(int(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI, nil); err != nil {
+		t.Errorf("Incr masked test for int failed %v", nil) //err)
+	}
 	// identity
 	idenI8 := func(a *QCDenseI8) bool {
 		var ret, correct, identity *Dense
@@ -8861,6 +17978,219 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
 		t.Errorf("Incr function test for int8 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI8 := func(a, b *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI8, nil); err != nil {
+		t.Errorf("Masked test for int8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI8 := func(a, b, incr *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(int8(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI8, nil); err != nil {
+		t.Errorf("Incr masked test for int8 failed %v", nil) //err)
 	}
 	// identity
 	idenI16 := func(a *QCDenseI16) bool {
@@ -9041,6 +18371,219 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI16, nil); err != nil {
 		t.Errorf("Incr function test for int16 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI16 := func(a, b *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI16, nil); err != nil {
+		t.Errorf("Masked test for int16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI16 := func(a, b, incr *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(int16(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI16, nil); err != nil {
+		t.Errorf("Incr masked test for int16 failed %v", nil) //err)
+	}
 	// identity
 	idenI32 := func(a *QCDenseI32) bool {
 		var ret, correct, identity *Dense
@@ -9219,6 +18762,219 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
 		t.Errorf("Incr function test for int32 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI32 := func(a, b *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI32, nil); err != nil {
+		t.Errorf("Masked test for int32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI32 := func(a, b, incr *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(int32(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI32, nil); err != nil {
+		t.Errorf("Incr masked test for int32 failed %v", nil) //err)
 	}
 	// identity
 	idenI64 := func(a *QCDenseI64) bool {
@@ -9399,6 +19155,219 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI64, nil); err != nil {
 		t.Errorf("Incr function test for int64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI64 := func(a, b *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI64, nil); err != nil {
+		t.Errorf("Masked test for int64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI64 := func(a, b, incr *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(int64(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI64, nil); err != nil {
+		t.Errorf("Incr masked test for int64 failed %v", nil) //err)
+	}
 	// identity
 	idenU := func(a *QCDenseU) bool {
 		var ret, correct, identity *Dense
@@ -9577,6 +19546,219 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU, nil); err != nil {
 		t.Errorf("Incr function test for uint failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU := func(a, b *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU, nil); err != nil {
+		t.Errorf("Masked test for uint failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU := func(a, b, incr *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(uint(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU, nil); err != nil {
+		t.Errorf("Incr masked test for uint failed %v", nil) //err)
 	}
 	// identity
 	idenU8 := func(a *QCDenseU8) bool {
@@ -9757,6 +19939,219 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU8, nil); err != nil {
 		t.Errorf("Incr function test for uint8 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU8 := func(a, b *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU8, nil); err != nil {
+		t.Errorf("Masked test for uint8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU8 := func(a, b, incr *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(uint8(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU8, nil); err != nil {
+		t.Errorf("Incr masked test for uint8 failed %v", nil) //err)
+	}
 	// identity
 	idenU16 := func(a *QCDenseU16) bool {
 		var ret, correct, identity *Dense
@@ -9935,6 +20330,219 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
 		t.Errorf("Incr function test for uint16 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU16 := func(a, b *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU16, nil); err != nil {
+		t.Errorf("Masked test for uint16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU16 := func(a, b, incr *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(uint16(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU16, nil); err != nil {
+		t.Errorf("Incr masked test for uint16 failed %v", nil) //err)
 	}
 	// identity
 	idenU32 := func(a *QCDenseU32) bool {
@@ -10115,6 +20723,219 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU32, nil); err != nil {
 		t.Errorf("Incr function test for uint32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU32 := func(a, b *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU32, nil); err != nil {
+		t.Errorf("Masked test for uint32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU32 := func(a, b, incr *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(uint32(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU32, nil); err != nil {
+		t.Errorf("Incr masked test for uint32 failed %v", nil) //err)
+	}
 	// identity
 	idenU64 := func(a *QCDenseU64) bool {
 		var ret, correct, identity *Dense
@@ -10293,6 +21114,219 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
 		t.Errorf("Incr function test for uint64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU64 := func(a, b *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU64, nil); err != nil {
+		t.Errorf("Masked test for uint64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU64 := func(a, b, incr *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(uint64(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU64, nil); err != nil {
+		t.Errorf("Incr masked test for uint64 failed %v", nil) //err)
 	}
 	// identity
 	idenF32 := func(a *QCDenseF32) bool {
@@ -10473,6 +21507,219 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(incrF32, nil); err != nil {
 		t.Errorf("Incr function test for float32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedF32 := func(a, b *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF32, nil); err != nil {
+		t.Errorf("Masked test for float32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF32 := func(a, b, incr *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(float32(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF32, nil); err != nil {
+		t.Errorf("Incr masked test for float32 failed %v", nil) //err)
+	}
 	// identity
 	idenF64 := func(a *QCDenseF64) bool {
 		var ret, correct, identity *Dense
@@ -10651,6 +21898,219 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
 		t.Errorf("Incr function test for float64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedF64 := func(a, b *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF64, nil); err != nil {
+		t.Errorf("Masked test for float64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF64 := func(a, b, incr *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(float64(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF64, nil); err != nil {
+		t.Errorf("Incr masked test for float64 failed %v", nil) //err)
 	}
 	// identity
 	idenC64 := func(a *QCDenseC64) bool {
@@ -10831,6 +22291,219 @@ func TestDivBasicProperties(t *testing.T) {
 	if err := quick.Check(incrC64, nil); err != nil {
 		t.Errorf("Incr function test for complex64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedC64 := func(a, b *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC64, nil); err != nil {
+		t.Errorf("Masked test for complex64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC64 := func(a, b, incr *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(complex64(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC64, nil); err != nil {
+		t.Errorf("Incr masked test for complex64 failed %v", nil) //err)
+	}
 	// identity
 	idenC128 := func(a *QCDenseC128) bool {
 		var ret, correct, identity *Dense
@@ -11009,6 +22682,219 @@ func TestDivBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
 		t.Errorf("Incr function test for complex128 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedC128 := func(a, b *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Div(b.Dense)
+		ret2, _ := b.Div(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC128, nil); err != nil {
+		t.Errorf("Masked test for complex128 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC128 := func(a, b, incr *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		b.Dense.Memset(complex128(1))
+		ret, _ = a.Div(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Div(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Div(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Div(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC128, nil); err != nil {
+		t.Errorf("Incr masked test for complex128 failed %v", nil) //err)
 	}
 }
 func TestDivFuncOpts(t *testing.T) {
@@ -11291,6 +23177,218 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI, nil); err != nil {
 		t.Errorf("Incr function test for int failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI := func(a, b *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI, nil); err != nil {
+		t.Errorf("Masked test for int failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI := func(a, b, incr *QCDenseI) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI, nil); err != nil {
+		t.Errorf("Incr masked test for int failed %v", nil) //err)
+	}
 	pow0I8 := func(a *QCDenseI8) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Int8, a.len())
@@ -11463,6 +23561,218 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI8, nil); err != nil {
 		t.Errorf("Incr function test for int8 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI8 := func(a, b *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI8, nil); err != nil {
+		t.Errorf("Masked test for int8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI8 := func(a, b, incr *QCDenseI8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI8, nil); err != nil {
+		t.Errorf("Incr masked test for int8 failed %v", nil) //err)
 	}
 	pow0I16 := func(a *QCDenseI16) bool {
 		var ret, correct, zero *Dense
@@ -11637,6 +23947,218 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI16, nil); err != nil {
 		t.Errorf("Incr function test for int16 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI16 := func(a, b *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI16, nil); err != nil {
+		t.Errorf("Masked test for int16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI16 := func(a, b, incr *QCDenseI16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI16, nil); err != nil {
+		t.Errorf("Incr masked test for int16 failed %v", nil) //err)
+	}
 	pow0I32 := func(a *QCDenseI32) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Int32, a.len())
@@ -11809,6 +24331,218 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrI32, nil); err != nil {
 		t.Errorf("Incr function test for int32 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedI32 := func(a, b *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI32, nil); err != nil {
+		t.Errorf("Masked test for int32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI32 := func(a, b, incr *QCDenseI32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI32, nil); err != nil {
+		t.Errorf("Incr masked test for int32 failed %v", nil) //err)
 	}
 	pow0I64 := func(a *QCDenseI64) bool {
 		var ret, correct, zero *Dense
@@ -11983,6 +24717,218 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(incrI64, nil); err != nil {
 		t.Errorf("Incr function test for int64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedI64 := func(a, b *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedI64, nil); err != nil {
+		t.Errorf("Masked test for int64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedI64 := func(a, b, incr *QCDenseI64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedI64, nil); err != nil {
+		t.Errorf("Incr masked test for int64 failed %v", nil) //err)
+	}
 	pow0U := func(a *QCDenseU) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Uint, a.len())
@@ -12155,6 +25101,218 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU, nil); err != nil {
 		t.Errorf("Incr function test for uint failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU := func(a, b *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU, nil); err != nil {
+		t.Errorf("Masked test for uint failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU := func(a, b, incr *QCDenseU) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU, nil); err != nil {
+		t.Errorf("Incr masked test for uint failed %v", nil) //err)
 	}
 	pow0U8 := func(a *QCDenseU8) bool {
 		var ret, correct, zero *Dense
@@ -12329,6 +25487,218 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU8, nil); err != nil {
 		t.Errorf("Incr function test for uint8 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU8 := func(a, b *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU8, nil); err != nil {
+		t.Errorf("Masked test for uint8 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU8 := func(a, b, incr *QCDenseU8) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU8, nil); err != nil {
+		t.Errorf("Incr masked test for uint8 failed %v", nil) //err)
+	}
 	pow0U16 := func(a *QCDenseU16) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Uint16, a.len())
@@ -12501,6 +25871,218 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU16, nil); err != nil {
 		t.Errorf("Incr function test for uint16 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU16 := func(a, b *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU16, nil); err != nil {
+		t.Errorf("Masked test for uint16 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU16 := func(a, b, incr *QCDenseU16) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU16, nil); err != nil {
+		t.Errorf("Incr masked test for uint16 failed %v", nil) //err)
 	}
 	pow0U32 := func(a *QCDenseU32) bool {
 		var ret, correct, zero *Dense
@@ -12675,6 +26257,218 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(incrU32, nil); err != nil {
 		t.Errorf("Incr function test for uint32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedU32 := func(a, b *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU32, nil); err != nil {
+		t.Errorf("Masked test for uint32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU32 := func(a, b, incr *QCDenseU32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU32, nil); err != nil {
+		t.Errorf("Incr masked test for uint32 failed %v", nil) //err)
+	}
 	pow0U64 := func(a *QCDenseU64) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Uint64, a.len())
@@ -12847,6 +26641,218 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrU64, nil); err != nil {
 		t.Errorf("Incr function test for uint64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedU64 := func(a, b *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedU64, nil); err != nil {
+		t.Errorf("Masked test for uint64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedU64 := func(a, b, incr *QCDenseU64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedU64, nil); err != nil {
+		t.Errorf("Incr masked test for uint64 failed %v", nil) //err)
 	}
 	pow0F32 := func(a *QCDenseF32) bool {
 		var ret, correct, zero *Dense
@@ -13021,6 +27027,218 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(incrF32, nil); err != nil {
 		t.Errorf("Incr function test for float32 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedF32 := func(a, b *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF32, nil); err != nil {
+		t.Errorf("Masked test for float32 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF32 := func(a, b, incr *QCDenseF32) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF32, nil); err != nil {
+		t.Errorf("Incr masked test for float32 failed %v", nil) //err)
+	}
 	pow0F64 := func(a *QCDenseF64) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Float64, a.len())
@@ -13193,6 +27411,218 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrF64, nil); err != nil {
 		t.Errorf("Incr function test for float64 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedF64 := func(a, b *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedF64, nil); err != nil {
+		t.Errorf("Masked test for float64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedF64 := func(a, b, incr *QCDenseF64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedF64, nil); err != nil {
+		t.Errorf("Incr masked test for float64 failed %v", nil) //err)
 	}
 	pow0C64 := func(a *QCDenseC64) bool {
 		var ret, correct, zero *Dense
@@ -13367,6 +27797,218 @@ func TestPowBasicProperties(t *testing.T) {
 	if err := quick.Check(incrC64, nil); err != nil {
 		t.Errorf("Incr function test for complex64 failed %v", err)
 	}
+
+	// operation with mask without incr
+	maskedC64 := func(a, b *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC64, nil); err != nil {
+		t.Errorf("Masked test for complex64 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC64 := func(a, b, incr *QCDenseC64) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC64, nil); err != nil {
+		t.Errorf("Incr masked test for complex64 failed %v", nil) //err)
+	}
 	pow0C128 := func(a *QCDenseC128) bool {
 		var ret, correct, zero *Dense
 		zero = newDense(Complex128, a.len())
@@ -13539,6 +28181,218 @@ func TestPowBasicProperties(t *testing.T) {
 	}
 	if err := quick.Check(incrC128, nil); err != nil {
 		t.Errorf("Incr function test for complex128 failed %v", err)
+	}
+
+	// operation with mask without incr
+	maskedC128 := func(a, b *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+
+		ret1, _ := a.Pow(b.Dense)
+		ret2, _ := b.Pow(a.Dense)
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		if allClose(ret1.Data(), ret2.Data()) {
+			return false
+		}
+		if (ret1.Get(0) != a.Get(0)) || (ret1.Get(1) != a.Get(1)) {
+			return false
+		}
+		if (ret2.Get(0) != b.Get(0)) || (ret2.Get(1) != b.Get(1)) {
+			return false
+		}
+		return true
+	}
+	if err := quick.Check(maskedC128, nil); err != nil {
+		t.Errorf("Masked test for complex128 failed %v", nil) //err)
+	}
+
+	// operation with mask with incr
+	incrMaskedC128 := func(a, b, incr *QCDenseC128) bool {
+		oldmaskA := a.mask
+		oldmaskB := b.mask
+		oldmaskIncr := incr.mask
+		a.mask = nil
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		var correct, clonedIncr, ret, check *Dense
+
+		// build correct
+		ret, _ = a.Pow(b.Dense)
+		correct, _ = incr.Add(ret)
+
+		clonedIncr = incr.Clone().(*Dense)
+		check, _ = a.Pow(b.Dense, WithIncr(clonedIncr))
+
+		if check != clonedIncr {
+			t.Error("Expected clonedIncr == check")
+			return false
+		}
+		if !allClose(correct.Data(), check.Data()) {
+			t.Errorf("Failed close")
+			return false
+		}
+		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {
+			t.Errorf("Failed 0")
+			return false
+		}
+		if (ret.Get(1) != a.Get(1)) || (check.Get(1) != incr.Get(1)) || (correct.Get(1) != incr.Get(1)) {
+			t.Errorf("Failed 1")
+			return false
+		}
+		if (check.Get(2) != incr.Get(2)) || (correct.Get(2) != incr.Get(2)) {
+			t.Errorf("Failed 2")
+			return false
+		}
+		if (ret.MaskedCount() != 2) || (check.MaskedCount() != 3) {
+			t.Errorf("Failed count")
+			return false
+		}
+
+		a.ResetMask(false)
+		a.mask[0] = true
+		b.ResetMask(false)
+		b.mask[1] = true
+		incr.ResetMask(false)
+		incr.mask[2] = true
+
+		// incr iter
+		var oncr, a1, a2, b1, b2 *Dense
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		a1, _ = sliceDense(a.Dense, makeRS(0, 5))
+		a2 = a1.Materialize().(*Dense)
+		b1, _ = sliceDense(b.Dense, makeRS(0, 5))
+		b2 = b1.Materialize().(*Dense)
+		// build correct for incr
+		correct, _ = sliceDense(correct, makeRS(0, 5))
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: a requires iter")
+			return false
+		}
+
+		if check.MaskedCount() != 3 {
+			t.Errorf("Failed count at check: a requires iter %v %v %v %v", check.MaskedCount(), check.mask[:3], oncr.mask[:3], a1.mask[:3])
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: b requires iter")
+			return false
+		}
+
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both a and b requires iter")
+			return false
+		}
+
+		// check both don't require iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		check, _ = a2.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check: both don't require iter")
+			return false
+		}
+
+		// incr noiter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		correct = correct.Materialize().(*Dense)
+
+		// check: a requires iter
+		check, _ = a1.Pow(b2, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when a requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : a requires iter")
+			return false
+		}
+
+		// check: b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a2.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : b requires iter")
+			return false
+		}
+		// check: both a and b requires iter
+		clonedIncr = incr.Dense.Clone().(*Dense)
+		oncr, _ = sliceDense(clonedIncr, makeRS(0, 5))
+		oncr = oncr.Materialize().(*Dense)
+		check, _ = a1.Pow(b1, WithIncr(oncr))
+		if check != oncr {
+			t.Errorf("expected check == oncr when b requires iter")
+			return false
+		}
+
+		if (check.Get(0) != oncr.Get(0)) || (check.Get(1) != oncr.Get(1)) || (check.Get(2) != oncr.Get(2)) {
+			t.Errorf("Failed at check noiter : both a and b requires iter")
+			return false
+		}
+
+		a.mask = oldmaskA
+		b.mask = oldmaskB
+		incr.mask = oldmaskIncr
+
+		return true
+	}
+
+	if err := quick.Check(incrMaskedC128, nil); err != nil {
+		t.Errorf("Incr masked test for complex128 failed %v", nil) //err)
 	}
 }
 func TestPowFuncOpts(t *testing.T) {

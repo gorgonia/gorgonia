@@ -674,7 +674,7 @@ func TestDense_Argmax_F32(t *testing.T) {
 	assert.Equal(2, argmax.ScalarValue(), "NaN test")
 
 	// test with Mask and Nan
-	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.NaN(), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float32{1, 9, math32.NaN(), 4}, []bool{false, true, true, false}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -690,7 +690,7 @@ func TestDense_Argmax_F32(t *testing.T) {
 	assert.Equal(2, argmax.ScalarValue(), "+Inf test")
 
 	// test with Mask and +Inf
-	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float32{1, 9, math32.Inf(1), 4}, []bool{false, true, true, false}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -706,7 +706,7 @@ func TestDense_Argmax_F32(t *testing.T) {
 	assert.Equal(3, argmax.ScalarValue(), "+Inf test")
 
 	// test with Mask and -Inf
-	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(-1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float32{1, 9, math32.Inf(-1), 4}, []bool{false, true, true, false}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -749,7 +749,7 @@ func TestDense_Argmin_F32(t *testing.T) {
 	assert.Equal(2, argmin.ScalarValue(), "NaN test")
 
 	// test with Mask and Nan
-	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.NaN(), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float32{1, -9, math32.NaN(), 4}, []bool{false, true, true, false}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -765,7 +765,7 @@ func TestDense_Argmin_F32(t *testing.T) {
 	assert.Equal(0, argmin.ScalarValue(), "+Inf test")
 
 	// test with Mask and +Inf
-	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float32{1, -9, math32.Inf(1), 4}, []bool{false, true, true, false}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -781,7 +781,7 @@ func TestDense_Argmin_F32(t *testing.T) {
 	assert.Equal(2, argmin.ScalarValue(), "+Inf test")
 
 	// test with Mask and -Inf
-	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(-1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float32{1, -9, math32.Inf(-1), 4}, []bool{false, true, true, false}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -824,7 +824,7 @@ func TestDense_Argmax_F64(t *testing.T) {
 	assert.Equal(2, argmax.ScalarValue(), "NaN test")
 
 	// test with Mask and Nan
-	T = New(WithShape(4), WithBacking([]float64{1, 2, math.NaN(), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float64{1, 9, math.NaN(), 4}, []bool{false, true, true, false}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -840,7 +840,7 @@ func TestDense_Argmax_F64(t *testing.T) {
 	assert.Equal(2, argmax.ScalarValue(), "+Inf test")
 
 	// test with Mask and +Inf
-	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float64{1, 9, math.Inf(1), 4}, []bool{false, true, true, false}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -856,7 +856,7 @@ func TestDense_Argmax_F64(t *testing.T) {
 	assert.Equal(3, argmax.ScalarValue(), "+Inf test")
 
 	// test with Mask and -Inf
-	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(-1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float64{1, 9, math.Inf(-1), 4}, []bool{false, true, true, false}))
 	if argmax, err = T.Argmax(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -899,7 +899,7 @@ func TestDense_Argmin_F64(t *testing.T) {
 	assert.Equal(2, argmin.ScalarValue(), "NaN test")
 
 	// test with Mask and Nan
-	T = New(WithShape(4), WithBacking([]float64{1, 2, math.NaN(), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float64{1, -9, math.NaN(), 4}, []bool{false, true, true, false}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -915,7 +915,7 @@ func TestDense_Argmin_F64(t *testing.T) {
 	assert.Equal(0, argmin.ScalarValue(), "+Inf test")
 
 	// test with Mask and +Inf
-	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float64{1, -9, math.Inf(1), 4}, []bool{false, true, true, false}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}
@@ -931,7 +931,7 @@ func TestDense_Argmin_F64(t *testing.T) {
 	assert.Equal(2, argmin.ScalarValue(), "+Inf test")
 
 	// test with Mask and -Inf
-	T = New(WithShape(4), WithBacking([]float64{1, 2, math.Inf(-1), 4}, []bool{false, false, true, false}))
+	T = New(WithShape(4), WithBacking([]float64{1, -9, math.Inf(-1), 4}, []bool{false, true, true, false}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}

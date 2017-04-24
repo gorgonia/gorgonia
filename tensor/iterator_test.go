@@ -552,6 +552,17 @@ func TestMultIteratorAdd(t *testing.T) {
 	fmt.Println(T1)
 	T1.ResetMask(false)
 	T1.mask[2] = true
+	fmt.Println(T1)
+
+	T2.ResetMask(false)
+	T2.mask[3] = true
+
+	fmt.Println(T1.mask)
+	fmt.Println(T2.mask)
+	T1.MaskFromDense(T1, T2)
+	fmt.Println(T1.mask)
+	return
+
 	//T2.ResetMask(false)
 	//T2.mask[2] = true
 	T4, _ := T1.Add(T2)
@@ -565,22 +576,16 @@ func TestMultIteratorAdd(t *testing.T) {
 }
 
 func TestRando(t *testing.T) {
-	T := New(Of(Int), WithShape(1, 64))
-	T.ResetMask()
-	fmt.Println(T.mask)
-	fmt.Println(T.compMask)
+	T1 := New(Of(Int), WithBacking([]int{1, 3, 4}, []bool{true, false, false}), WithShape(3))
+	//T1.mask = nil
+	fmt.Println(T1.mask)
 
-	T = New(Of(Int), WithShape(1, 2))
-	T.ResetMask()
-	fmt.Println(T.mask)
-	fmt.Println(T.compMask)
+	T2 := New(Of(Int), WithBacking([]int{7, 9}, []bool{true, false}), WithShape(2))
+	//T2.mask = nil
+	fmt.Println(T2.mask)
 
-	T = New(Of(Int), WithShape(1, 9))
-	T.ResetMask()
-	T.mask[8] = true
-	T.ResetMask()
-	T.setCompMask()
-	fmt.Println(T.mask)
-	fmt.Println(T.compMask)
+	T3, _ := T1.Concat(0, T2)
+	fmt.Println(T3.Data(), T3.mask)
+	fmt.Println(T1.Data(), T1.mask)
 
 }

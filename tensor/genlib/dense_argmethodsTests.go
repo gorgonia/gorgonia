@@ -145,7 +145,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	assert.Equal(2, {{.ArgMethod}}.ScalarValue(), "NaN test")
 
 	// test with Mask and Nan
-	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}NaN(), 4}, []bool{false,false,true,false}))
+	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,{{if eq .ArgMethod "argmax"}}9{{else}}-9{{end}},{{mathPkg .Kind}}NaN(), 4}, []bool{false,true,true,false}))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}		
@@ -161,7 +161,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	assert.Equal({{if eq .ArgMethod "argmax"}}2{{else}}0{{end}}, {{.ArgMethod}}.ScalarValue(), "+Inf test")
 
    // test with Mask and +Inf
-	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(1), 4}, []bool{false,false,true,false}))
+	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,{{if eq .ArgMethod "argmax"}}9{{else}}-9{{end}},{{mathPkg .Kind}}Inf(1), 4}, []bool{false,true,true,false}))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}		
@@ -177,7 +177,7 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 	assert.Equal({{if eq .ArgMethod "argmin"}}2{{else}}3{{end}}, {{.ArgMethod}}.ScalarValue(), "+Inf test")
 
 	// test with Mask and -Inf
-	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,2,{{mathPkg .Kind}}Inf(-1), 4}, []bool{false,false,true,false}))
+	T = New(WithShape(4), WithBacking([]{{asType .Kind}}{1,{{if eq .ArgMethod "argmax"}}9{{else}}-9{{end}},{{mathPkg .Kind}}Inf(-1), 4}, []bool{false,true,true,false}))
 	if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(AllAxes); err != nil {
 		t.Errorf("Failed test with NaN: %v", err)
 	}		

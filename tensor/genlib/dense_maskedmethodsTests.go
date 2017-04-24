@@ -39,8 +39,8 @@ const testMaskCmpMethodRaw = `func TestDense_{{title .Name}}_{{short .Kind}}(t *
     for i := 0; i < 5; i++ {
 		T.MaskedEqual({{asType .Kind}}(i*10))
 	}
-    it := MultIteratorFromDense(T)
-    runtime.SetFinalizer(it, destroyMultIterator)
+    it := IteratorFromDense(T)
+    runtime.SetFinalizer(it, destroyIterator)
     
     j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -50,13 +50,13 @@ const testMaskCmpMethodRaw = `func TestDense_{{title .Name}}_{{short .Kind}}(t *
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()

@@ -40,8 +40,8 @@ func TestDense_MaskedEqual_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -51,13 +51,13 @@ func TestDense_MaskedEqual_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -90,8 +90,8 @@ func TestDense_MaskedEqual_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -101,13 +101,13 @@ func TestDense_MaskedEqual_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -140,8 +140,8 @@ func TestDense_MaskedEqual_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -151,13 +151,13 @@ func TestDense_MaskedEqual_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -190,8 +190,8 @@ func TestDense_MaskedEqual_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -201,13 +201,13 @@ func TestDense_MaskedEqual_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -240,8 +240,8 @@ func TestDense_MaskedEqual_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -251,13 +251,13 @@ func TestDense_MaskedEqual_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -290,8 +290,8 @@ func TestDense_MaskedEqual_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -301,13 +301,13 @@ func TestDense_MaskedEqual_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -340,8 +340,8 @@ func TestDense_MaskedEqual_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -351,13 +351,13 @@ func TestDense_MaskedEqual_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -390,8 +390,8 @@ func TestDense_MaskedEqual_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -401,13 +401,13 @@ func TestDense_MaskedEqual_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -440,8 +440,8 @@ func TestDense_MaskedEqual_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -451,13 +451,13 @@ func TestDense_MaskedEqual_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -490,8 +490,8 @@ func TestDense_MaskedEqual_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -501,13 +501,13 @@ func TestDense_MaskedEqual_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -540,8 +540,8 @@ func TestDense_MaskedEqual_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -551,13 +551,13 @@ func TestDense_MaskedEqual_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -590,8 +590,8 @@ func TestDense_MaskedEqual_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -601,13 +601,13 @@ func TestDense_MaskedEqual_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -640,8 +640,8 @@ func TestDense_MaskedEqual_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -651,13 +651,13 @@ func TestDense_MaskedEqual_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -693,8 +693,8 @@ func TestDense_MaskedNotEqual_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -704,13 +704,13 @@ func TestDense_MaskedNotEqual_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -743,8 +743,8 @@ func TestDense_MaskedNotEqual_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -754,13 +754,13 @@ func TestDense_MaskedNotEqual_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -793,8 +793,8 @@ func TestDense_MaskedNotEqual_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -804,13 +804,13 @@ func TestDense_MaskedNotEqual_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -843,8 +843,8 @@ func TestDense_MaskedNotEqual_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -854,13 +854,13 @@ func TestDense_MaskedNotEqual_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -893,8 +893,8 @@ func TestDense_MaskedNotEqual_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -904,13 +904,13 @@ func TestDense_MaskedNotEqual_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -943,8 +943,8 @@ func TestDense_MaskedNotEqual_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -954,13 +954,13 @@ func TestDense_MaskedNotEqual_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -993,8 +993,8 @@ func TestDense_MaskedNotEqual_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1004,13 +1004,13 @@ func TestDense_MaskedNotEqual_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1043,8 +1043,8 @@ func TestDense_MaskedNotEqual_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1054,13 +1054,13 @@ func TestDense_MaskedNotEqual_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1093,8 +1093,8 @@ func TestDense_MaskedNotEqual_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1104,13 +1104,13 @@ func TestDense_MaskedNotEqual_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1143,8 +1143,8 @@ func TestDense_MaskedNotEqual_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1154,13 +1154,13 @@ func TestDense_MaskedNotEqual_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1193,8 +1193,8 @@ func TestDense_MaskedNotEqual_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1204,13 +1204,13 @@ func TestDense_MaskedNotEqual_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1243,8 +1243,8 @@ func TestDense_MaskedNotEqual_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1254,13 +1254,13 @@ func TestDense_MaskedNotEqual_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1293,8 +1293,8 @@ func TestDense_MaskedNotEqual_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1304,13 +1304,13 @@ func TestDense_MaskedNotEqual_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1346,8 +1346,8 @@ func TestDense_MaskedValues_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1357,13 +1357,13 @@ func TestDense_MaskedValues_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1396,8 +1396,8 @@ func TestDense_MaskedValues_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1407,13 +1407,13 @@ func TestDense_MaskedValues_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1449,8 +1449,8 @@ func TestDense_MaskedGreater_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1460,13 +1460,13 @@ func TestDense_MaskedGreater_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1499,8 +1499,8 @@ func TestDense_MaskedGreater_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1510,13 +1510,13 @@ func TestDense_MaskedGreater_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1549,8 +1549,8 @@ func TestDense_MaskedGreater_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1560,13 +1560,13 @@ func TestDense_MaskedGreater_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1599,8 +1599,8 @@ func TestDense_MaskedGreater_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1610,13 +1610,13 @@ func TestDense_MaskedGreater_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1649,8 +1649,8 @@ func TestDense_MaskedGreater_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1660,13 +1660,13 @@ func TestDense_MaskedGreater_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1699,8 +1699,8 @@ func TestDense_MaskedGreater_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1710,13 +1710,13 @@ func TestDense_MaskedGreater_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1749,8 +1749,8 @@ func TestDense_MaskedGreater_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1760,13 +1760,13 @@ func TestDense_MaskedGreater_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1799,8 +1799,8 @@ func TestDense_MaskedGreater_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1810,13 +1810,13 @@ func TestDense_MaskedGreater_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1849,8 +1849,8 @@ func TestDense_MaskedGreater_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1860,13 +1860,13 @@ func TestDense_MaskedGreater_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1899,8 +1899,8 @@ func TestDense_MaskedGreater_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1910,13 +1910,13 @@ func TestDense_MaskedGreater_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1949,8 +1949,8 @@ func TestDense_MaskedGreater_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -1960,13 +1960,13 @@ func TestDense_MaskedGreater_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -1999,8 +1999,8 @@ func TestDense_MaskedGreater_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2010,13 +2010,13 @@ func TestDense_MaskedGreater_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2049,8 +2049,8 @@ func TestDense_MaskedGreater_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2060,13 +2060,13 @@ func TestDense_MaskedGreater_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2102,8 +2102,8 @@ func TestDense_MaskedGreaterEqual_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2113,13 +2113,13 @@ func TestDense_MaskedGreaterEqual_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2152,8 +2152,8 @@ func TestDense_MaskedGreaterEqual_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2163,13 +2163,13 @@ func TestDense_MaskedGreaterEqual_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2202,8 +2202,8 @@ func TestDense_MaskedGreaterEqual_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2213,13 +2213,13 @@ func TestDense_MaskedGreaterEqual_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2252,8 +2252,8 @@ func TestDense_MaskedGreaterEqual_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2263,13 +2263,13 @@ func TestDense_MaskedGreaterEqual_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2302,8 +2302,8 @@ func TestDense_MaskedGreaterEqual_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2313,13 +2313,13 @@ func TestDense_MaskedGreaterEqual_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2352,8 +2352,8 @@ func TestDense_MaskedGreaterEqual_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2363,13 +2363,13 @@ func TestDense_MaskedGreaterEqual_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2402,8 +2402,8 @@ func TestDense_MaskedGreaterEqual_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2413,13 +2413,13 @@ func TestDense_MaskedGreaterEqual_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2452,8 +2452,8 @@ func TestDense_MaskedGreaterEqual_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2463,13 +2463,13 @@ func TestDense_MaskedGreaterEqual_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2502,8 +2502,8 @@ func TestDense_MaskedGreaterEqual_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2513,13 +2513,13 @@ func TestDense_MaskedGreaterEqual_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2552,8 +2552,8 @@ func TestDense_MaskedGreaterEqual_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2563,13 +2563,13 @@ func TestDense_MaskedGreaterEqual_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2602,8 +2602,8 @@ func TestDense_MaskedGreaterEqual_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2613,13 +2613,13 @@ func TestDense_MaskedGreaterEqual_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2652,8 +2652,8 @@ func TestDense_MaskedGreaterEqual_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2663,13 +2663,13 @@ func TestDense_MaskedGreaterEqual_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2702,8 +2702,8 @@ func TestDense_MaskedGreaterEqual_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2713,13 +2713,13 @@ func TestDense_MaskedGreaterEqual_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2755,8 +2755,8 @@ func TestDense_MaskedLess_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2766,13 +2766,13 @@ func TestDense_MaskedLess_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2805,8 +2805,8 @@ func TestDense_MaskedLess_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2816,13 +2816,13 @@ func TestDense_MaskedLess_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2855,8 +2855,8 @@ func TestDense_MaskedLess_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2866,13 +2866,13 @@ func TestDense_MaskedLess_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2905,8 +2905,8 @@ func TestDense_MaskedLess_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2916,13 +2916,13 @@ func TestDense_MaskedLess_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -2955,8 +2955,8 @@ func TestDense_MaskedLess_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -2966,13 +2966,13 @@ func TestDense_MaskedLess_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3005,8 +3005,8 @@ func TestDense_MaskedLess_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3016,13 +3016,13 @@ func TestDense_MaskedLess_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3055,8 +3055,8 @@ func TestDense_MaskedLess_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3066,13 +3066,13 @@ func TestDense_MaskedLess_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3105,8 +3105,8 @@ func TestDense_MaskedLess_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3116,13 +3116,13 @@ func TestDense_MaskedLess_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3155,8 +3155,8 @@ func TestDense_MaskedLess_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3166,13 +3166,13 @@ func TestDense_MaskedLess_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3205,8 +3205,8 @@ func TestDense_MaskedLess_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3216,13 +3216,13 @@ func TestDense_MaskedLess_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3255,8 +3255,8 @@ func TestDense_MaskedLess_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3266,13 +3266,13 @@ func TestDense_MaskedLess_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3305,8 +3305,8 @@ func TestDense_MaskedLess_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3316,13 +3316,13 @@ func TestDense_MaskedLess_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3355,8 +3355,8 @@ func TestDense_MaskedLess_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3366,13 +3366,13 @@ func TestDense_MaskedLess_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3408,8 +3408,8 @@ func TestDense_MaskedLessEqual_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3419,13 +3419,13 @@ func TestDense_MaskedLessEqual_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3458,8 +3458,8 @@ func TestDense_MaskedLessEqual_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3469,13 +3469,13 @@ func TestDense_MaskedLessEqual_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3508,8 +3508,8 @@ func TestDense_MaskedLessEqual_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3519,13 +3519,13 @@ func TestDense_MaskedLessEqual_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3558,8 +3558,8 @@ func TestDense_MaskedLessEqual_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3569,13 +3569,13 @@ func TestDense_MaskedLessEqual_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3608,8 +3608,8 @@ func TestDense_MaskedLessEqual_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3619,13 +3619,13 @@ func TestDense_MaskedLessEqual_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3658,8 +3658,8 @@ func TestDense_MaskedLessEqual_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3669,13 +3669,13 @@ func TestDense_MaskedLessEqual_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3708,8 +3708,8 @@ func TestDense_MaskedLessEqual_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3719,13 +3719,13 @@ func TestDense_MaskedLessEqual_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3758,8 +3758,8 @@ func TestDense_MaskedLessEqual_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3769,13 +3769,13 @@ func TestDense_MaskedLessEqual_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3808,8 +3808,8 @@ func TestDense_MaskedLessEqual_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3819,13 +3819,13 @@ func TestDense_MaskedLessEqual_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3858,8 +3858,8 @@ func TestDense_MaskedLessEqual_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3869,13 +3869,13 @@ func TestDense_MaskedLessEqual_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3908,8 +3908,8 @@ func TestDense_MaskedLessEqual_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3919,13 +3919,13 @@ func TestDense_MaskedLessEqual_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -3958,8 +3958,8 @@ func TestDense_MaskedLessEqual_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -3969,13 +3969,13 @@ func TestDense_MaskedLessEqual_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4008,8 +4008,8 @@ func TestDense_MaskedLessEqual_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4019,13 +4019,13 @@ func TestDense_MaskedLessEqual_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4061,8 +4061,8 @@ func TestDense_MaskedInside_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4072,13 +4072,13 @@ func TestDense_MaskedInside_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4111,8 +4111,8 @@ func TestDense_MaskedInside_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4122,13 +4122,13 @@ func TestDense_MaskedInside_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4161,8 +4161,8 @@ func TestDense_MaskedInside_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4172,13 +4172,13 @@ func TestDense_MaskedInside_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4211,8 +4211,8 @@ func TestDense_MaskedInside_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4222,13 +4222,13 @@ func TestDense_MaskedInside_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4261,8 +4261,8 @@ func TestDense_MaskedInside_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4272,13 +4272,13 @@ func TestDense_MaskedInside_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4311,8 +4311,8 @@ func TestDense_MaskedInside_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4322,13 +4322,13 @@ func TestDense_MaskedInside_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4361,8 +4361,8 @@ func TestDense_MaskedInside_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4372,13 +4372,13 @@ func TestDense_MaskedInside_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4411,8 +4411,8 @@ func TestDense_MaskedInside_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4422,13 +4422,13 @@ func TestDense_MaskedInside_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4461,8 +4461,8 @@ func TestDense_MaskedInside_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4472,13 +4472,13 @@ func TestDense_MaskedInside_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4511,8 +4511,8 @@ func TestDense_MaskedInside_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4522,13 +4522,13 @@ func TestDense_MaskedInside_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4561,8 +4561,8 @@ func TestDense_MaskedInside_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4572,13 +4572,13 @@ func TestDense_MaskedInside_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4611,8 +4611,8 @@ func TestDense_MaskedInside_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4622,13 +4622,13 @@ func TestDense_MaskedInside_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4661,8 +4661,8 @@ func TestDense_MaskedInside_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4672,13 +4672,13 @@ func TestDense_MaskedInside_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4714,8 +4714,8 @@ func TestDense_MaskedOutside_I(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4725,13 +4725,13 @@ func TestDense_MaskedOutside_I(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4764,8 +4764,8 @@ func TestDense_MaskedOutside_I8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4775,13 +4775,13 @@ func TestDense_MaskedOutside_I8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4814,8 +4814,8 @@ func TestDense_MaskedOutside_I16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4825,13 +4825,13 @@ func TestDense_MaskedOutside_I16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4864,8 +4864,8 @@ func TestDense_MaskedOutside_I32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4875,13 +4875,13 @@ func TestDense_MaskedOutside_I32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4914,8 +4914,8 @@ func TestDense_MaskedOutside_I64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(int64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4925,13 +4925,13 @@ func TestDense_MaskedOutside_I64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -4964,8 +4964,8 @@ func TestDense_MaskedOutside_U(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -4975,13 +4975,13 @@ func TestDense_MaskedOutside_U(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -5014,8 +5014,8 @@ func TestDense_MaskedOutside_U8(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint8(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -5025,13 +5025,13 @@ func TestDense_MaskedOutside_U8(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -5064,8 +5064,8 @@ func TestDense_MaskedOutside_U16(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint16(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -5075,13 +5075,13 @@ func TestDense_MaskedOutside_U16(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -5114,8 +5114,8 @@ func TestDense_MaskedOutside_U32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -5125,13 +5125,13 @@ func TestDense_MaskedOutside_U32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -5164,8 +5164,8 @@ func TestDense_MaskedOutside_U64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(uint64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -5175,13 +5175,13 @@ func TestDense_MaskedOutside_U64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -5214,8 +5214,8 @@ func TestDense_MaskedOutside_F32(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float32(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -5225,13 +5225,13 @@ func TestDense_MaskedOutside_F32(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -5264,8 +5264,8 @@ func TestDense_MaskedOutside_F64(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(float64(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -5275,13 +5275,13 @@ func TestDense_MaskedOutside_F64(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()
@@ -5314,8 +5314,8 @@ func TestDense_MaskedOutside_Str(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		T.MaskedEqual(string(i * 10))
 	}
-	it := MultIteratorFromDense(T)
-	runtime.SetFinalizer(it, destroyMultIterator)
+	it := IteratorFromDense(T)
+	runtime.SetFinalizer(it, destroyIterator)
 
 	j := 0
 	for _, err := it.Next(); err == nil; _, err = it.Next() {
@@ -5325,13 +5325,13 @@ func TestDense_MaskedOutside_Str(t *testing.T) {
 	it.Reset()
 	assert.Equal(120, j)
 	j = 0
-	for _, err := it.NextValid(); err == nil; _, err = it.NextValid() {
+	for _, _, err := it.NextValid(); err == nil; _, _, err = it.NextValid() {
 		j++
 	}
 	it.Reset()
 	assert.Equal(115, j)
 	j = 0
-	for _, err := it.NextInvalid(); err == nil; _, err = it.NextInvalid() {
+	for _, _, err := it.NextInvalid(); err == nil; _, _, err = it.NextInvalid() {
 		j++
 	}
 	it.Reset()

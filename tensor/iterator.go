@@ -8,6 +8,7 @@ type Iterator interface {
 	NextInvalid() (int, int, error)
 	Reset()
 	SetReverse()
+	SetForward()
 	Coord() []int
 	Done() bool
 	Shape() Shape
@@ -54,7 +55,7 @@ func iteratorLoadAP(it Iterator, ap *AP) {
 		itt.AP = ap
 	case *FlatMaskedIterator:
 		itt.AP = ap
-	case *MultIterator: // Do nothing
+	case *MultIterator: // Do nothing, TODO: perhaps add something here
 
 	}
 }

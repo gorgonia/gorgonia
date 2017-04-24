@@ -214,7 +214,7 @@ func (f *fmtState) calcWidth(d *Dense) {
 		w, _ := fmt.Fprintf(f.buf, format, d.Get(i))
 		if masked {
 			if d.mask[i] {
-				w, _ := fmt.Fprintf(f.buf, "%s", hInvalid)
+				w, _ = fmt.Fprintf(f.buf, "%s", hInvalid)
 			}
 		}
 		if w > f.w {

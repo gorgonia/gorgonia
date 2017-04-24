@@ -85,7 +85,7 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 	nBlocks := 0
 	offset := 0
 	for i, ap := range aps {
-		f, ok := genIterator(m, ap.strides, i)
+		f, ok := genIterator(m, ap.strides, nBlocks)
 		if !ok {
 			offset = nBlocks * maxDims
 			apStrides, _ := BroadcastStrides(shape, ap.shape, it.strides[offset:offset+maxDims], ap.strides)
@@ -94,10 +94,10 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 			nBlocks++
 		}
 		it.whichBlock[i] = f
-		it.fitArr[nBlocks] = NewFlatIterator(NewAP(it.shape[:maxDims], it.strides[offset:offset+maxDims]))
+		it.fitArr[nBlocks-1] = NewFlatIterator(NewAP(it.shape[:maxDims], it.strides[offset:offset+maxDims]))
 	}
 
-	it.fitArr = it.fitArr[:nBlocks*maxDims]
+	it.fitArr = it.fitArr[:nBlocks]
 	it.strides = it.strides[:nBlocks*maxDims]
 
 	it.fit0 = it.fitArr[0]
@@ -208,7 +208,6 @@ func (it *MultIterator) Next() (int, error) {
 	if it.done {
 		return -1, noopError{}
 	}
-	it.Next()
 	it.done = false
 	for _, f := range it.fitArr {
 		f.Next()
@@ -287,6 +286,11 @@ func (it *MultIterator) Reset() {
 		it.lastIndexArr[i] = it.fitArr[j].lastIndex
 	}
 	it.done = false
+}
+
+// LastIndex returns index of requested iterator
+func (it *MultIterator) LastIndex(j int) int {
+	return it.lastIndexArr[j]
 }
 
 /*

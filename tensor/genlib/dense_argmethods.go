@@ -45,8 +45,8 @@ func (t *Dense) {{.ArgName}}(axis int)(retVal *Dense, err error){
 		newAP = t.AP.Clone()
 	}
 	defer ReturnAP(newAP)
-
-	it :=IteratorFromDense(t)	
+	
+	it :=IteratorFromDense(t)
 	runtime.SetFinalizer(it, destroyIterator)
 	iteratorLoadAP(it, newAP)	
 	return t.{{lower .ArgName}}(it)
@@ -72,17 +72,17 @@ func (t *Dense) {{lower .ArgName}}(it Iterator) (retVal *Dense, err error) {
 		case reflect.{{reflectKind .}}:
 			var isMasked = t.IsMasked()
 			if it == nil {
-				retVal = New(FromScalar({{lower $arg}}{{short .}}(t.{{sliceOf .}},mask)))
+				retVal = New(FromScalar({{lower $arg}}{{short .}}(t.{{sliceOf .}},t.mask)))
 				return
 			}
 			data := t.{{asType . | strip }}s()
 			tmp := make([]{{asType .}}, 0, lastSize)
 			mask = make([]bool, 0, lastSize)
-			for next, err = it.Next(); err == nil; next, err = it.Next() {
+			for next, err = it.Next(); err == nil; next, err = it.Next() {				
 				tmp = append(tmp, data[next])
 				if isMasked {
-				mask = append(mask, t.mask[next])
-				}
+					mask = append(mask, t.mask[next])
+					}
 				if len(tmp) == lastSize {
 						am := {{lower $arg}}{{short .}}(tmp, mask)
 					    indices = append(indices, am)

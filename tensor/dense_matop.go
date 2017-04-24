@@ -350,7 +350,7 @@ func (t *Dense) CopyTo(other *Dense) error {
 //
 // The method treats <nil> as equivalent to a colon slice. T.Slice(nil) is equivalent to T[:] in Numpy syntax
 func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
-	var newAP, maskAP *AP
+	var newAP *AP
 	var ndStart, ndEnd int
 
 	if newAP, ndStart, ndEnd, err = t.AP.S(t.len(), slices...); err != nil {
@@ -422,14 +422,21 @@ func (t *Dense) RollAxis(axis, start int, safe bool) (retVal *Dense, err error) 
 // Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
 func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 	ss := make([]Shape, len(Ts))
+
+	var isMasked = false
 	for i, T := range Ts {
 		ss[i] = T.Shape()
+		isMasked = isMasked || T.IsMasked()
 	}
+
 	var newShape Shape
 	if newShape, err = t.Shape().Concat(axis, ss...); err != nil {
 		return
 	}
 	retVal = recycledDense(t.t, newShape)
+	if isMasked {
+		retVal.makeMask()
+	}
 
 	all := make([]*Dense, len(Ts)+1)
 	all[0] = t
@@ -447,6 +454,7 @@ func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 		if v, err = sliceDense(retVal, slices...); err != nil {
 			return
 		}
+
 		if v.IsVector() && T.IsMatrix() && axis == 0 {
 			v.reshape(v.shape[0], 1)
 		}
@@ -531,6 +539,7 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 	// the "viewStack" method is the more generalized method
 	// and will work for all Tensors, regardless of whether it's a view
 	// But the simpleStack is faster, and is an optimization
+
 	if allNoMat {
 		retVal = t.simpleStack(retVal, axis, others...)
 	} else {
