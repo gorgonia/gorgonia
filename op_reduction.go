@@ -233,9 +233,12 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 		return
 	}
 
-	xdv := inputs[0].boundTo.(*dualValue)
+	x := inputs[0]
+	xdv := x.boundTo.(*dualValue)
 	ydv := output.boundTo.(*dualValue)
 	xShape := xdv.Value.Shape()
+
+	logf("sumOp DoDiff: 0x%x | x Device %v | outputDevice %v", xdv.d.Uintptr(), x.Device(), output.Device())
 
 	var T tensor.Tensor
 	switch ydvd := ydv.d.(type) {
@@ -278,13 +281,45 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 
 	// then just add the two
 	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(val))
-	var d Value
-	if d, err = add.UnsafeDo(xdv.d, val); err != nil {
+	addOp := NewExternalOp(add, ctx, nil)
+	addOp.UseUnsafe = true
+	addOp.Device = x.Device()
+
+	dev := x.Device()
+
+	logf("addOp.USECPU %v | %v", addOp.UseCPU, addOp.Device)
+
+	if output.Device() != dev && dev != CPU {
+		// transfer to device
+		var mem Memory
+		if mem, err = ctx.GetFromValue(dev, val); err != nil {
+			return
+		}
+		if val, err = makeValueFromMem(TypeOf(val), val.Shape(), mem); err != nil {
+			return
+		}
+
+		defer ctx.PutValue(dev, val)
+	}
+	var xd, d Value
+	var extra bool
+	if xd, extra, err = x.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, xd)
+	}
+	if d, err = addOp.Do(xd, val); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
+	logf("0x%x d 0x%x", xdv.d.Uintptr, d.Uintptr())
 	return xdv.SetDeriv(d)
 
+	// var d Value
+	// if d, err = add.UnsafeDo(xdv.d, val); err != nil {
+	// 	return errors.Wrapf(err, unsafeDoFail, add)
+	// }
 }
 
 func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {

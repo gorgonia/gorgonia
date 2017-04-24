@@ -204,8 +204,10 @@ func dvUnitVarManaged(v Value, op *ExternalOp) (*dualValue, error) {
 			d.Memset(1.0)
 		case tensor.Float32:
 			d.Memset(float32(1))
+		case tensor.Bool:
+			d.Memset(true)
 		default:
-			return dv, errors.Errorf("Unhandled dtype")
+			return dv, errors.Errorf("Unhandled dtype: %v", dt)
 		}
 	case *F64:
 		*d = F64(1)
@@ -219,8 +221,10 @@ func dvUnitVarManaged(v Value, op *ExternalOp) (*dualValue, error) {
 		*d = I32(1)
 	case *U8:
 		*d = U8(1)
+	case *B:
+		*d = B(true)
 	default:
-		return dv, errors.Errorf("Unhandeled dtype")
+		return dv, errors.Errorf("Unhandeled type: %T", d)
 	}
 	return dv, nil
 }

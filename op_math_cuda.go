@@ -125,12 +125,14 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	}
 
 	machine := extern.(CUDAMachine)
+	logf("machine.Functions()[name](%q) %v, dev %d", name, machine.Functions()[name], dev)
 	fn := machine.Functions()[name][int(dev)]
 	ctx := machine.Contexts()[int(dev)]
 
 	var mem, memB cu.DevicePtr
 	var size int64
-
+	cudaLogf("a: 0x%x b 0x%x", a.Uintptr(), b.Uintptr())
+	cudaLogf("a %v, b%v", a, b)
 	switch {
 	case vv, vs, ss:
 		if prealloc == nil {
@@ -147,6 +149,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 			retVal = prealloc
 		}
 		memB = cu.DevicePtr(b.Uintptr())
+		cudaLogf("HERE")
 	case sv:
 		if prealloc == nil {
 			mem = cu.DevicePtr(b.Uintptr())
@@ -182,4 +185,26 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
 	return
+}
+
+// NewAddOp creates a new *ExternalOp that
+func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+	add := newElemBinOp(addOpType, a, b)
+	op := NewExternalOp(add, ctx, nil)
+	if a.Device() == CPU && b.Device() == CPU && ctx.Device == CPU {
+		op.UseCPU = true
+		return op
+	}
+
+	if a.Device() != CPU {
+		op.Device = a.Device()
+		return op
+	}
+
+	if b.Device() != CPU {
+		op.Device = b.Device()
+		return op
+	}
+
+	return op
 }

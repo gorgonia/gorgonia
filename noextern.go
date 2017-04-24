@@ -42,14 +42,17 @@ func (m *ExternMetadata) DoWork() error {
 	return nil
 }
 
-// Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
-// it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
+// Get allocates a memory of the size. In this build it returns a NoOpError.
 func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) { return nil, noopError{} }
 
-func (m *ExternMetadata) GetAndCopy(dev Device, size int64, v Value) (Memory, error) { return v, nil }
+// GetFromValue allocates a memory of the size of v. In this build it returns a NoOpError, and v itself
+func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) { return v, noopError{} }
 
 // Put puts a previously allocated memory slab of the provided size back into the pool. Currently this is a No-op in this build.
 func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {}
+
+// PutValue puts a previously allocated value into the pool. In this build,  it is a noop.
+func (m *ExternMetadata) PutValue(dev Device, v Value) {}
 
 func (m *ExternMetadata) Reset() {}
 
@@ -62,7 +65,12 @@ func (m *ExternMetadata) Reset() {}
 func (m *ExternMetadata) Cleanup() {}
 
 // Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
-func (m *ExternMetadata) Signal() { m.signal(); <-m.syncChan }
+func (m *ExternMetadata) Signal() {
+	m.signal()
+	if m.workAvailable != nil {
+		<-m.syncChan
+	}
+}
 
 // collectBLASWork is a muxer for CBLAS/CuBLAS (if any) and the devices
 func (m *ExternMetadata) collectBLASWork() {
@@ -73,4 +81,19 @@ func (m *ExternMetadata) collectBLASWork() {
 	}
 }
 
-func (m *ExternMetadata) signal() { m.workAvailable <- true }
+func (m *ExternMetadata) signal() {
+	if m.workAvailable != nil {
+		m.workAvailable <- true
+	}
+}
+
+// ValueOnDevice gets the value of the node as a Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Value()
+func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+	return n.Value(), false, nil
+}
+
+// GradOnDevice gets the gradient value of the node as a Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Grad()
+func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+	retVal, err = n.Grad()
+	return retVal, false, err
+}

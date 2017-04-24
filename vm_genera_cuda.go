@@ -62,9 +62,13 @@ func (m *lispMachine) calcMemSize() (err error) {
 		interv := m.df.intervals[n]
 		dev := interv.result.device
 		compileLogf("n: %v | %v", n, interv)
+
 		var dt tensor.Dtype
 		if dt, err = dtypeOf(n.t); err != nil {
-			return errors.Wrapf(err, "Cannop calulate memsize of n(%v)", n)
+			if n.isStmt {
+				continue
+			}
+			return errors.Wrapf(err, "Cannot calulate memsize of n(%v)", n)
 		}
 		switch {
 		case n.isArg():

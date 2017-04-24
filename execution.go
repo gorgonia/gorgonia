@@ -16,9 +16,10 @@ type Memory interface {
 
 // Arena is a representation of a pool of Memory
 type Arena interface {
-	Get(dev Device, size int64) (Memory, error)                 // Get returns a NoOpError when it cannot get a memory. Please allocate
-	GetAndCopy(dev Device, size int64, v Value) (Memory, error) // Gets a memory and copies the values into the memory and returns it.
-	Put(dev Device, mem Memory, size int64)                     // puts the memory back into the arena
+	Get(dev Device, size int64) (Memory, error)       // Get returns a NoOpError when it cannot get a memory. Please allocate
+	GetFromValue(dev Device, v Value) (Memory, error) // Gets a memory and copies the values into the memory and returns it.
+	Put(dev Device, mem Memory, size int64)           // puts the memory back into the arena
+	PutValue(dev Device, v Value)                     // puts the memory back into the arena
 }
 
 // External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
@@ -42,6 +43,7 @@ type ExternalOp struct {
 
 	Prealloc  Value
 	UseUnsafe bool
+	UseCPU    bool // forces uses of CPU, even if the op is CUDA/CL op
 }
 
 // NewExternalOp creates a new *ExternalOp.
@@ -56,20 +58,44 @@ func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
 
 // Do performs the op,
 func (op *ExternalOp) Do(vals ...Value) (Value, error) {
+	if op.UseCPU {
+		switch {
+		case op.Prealloc != nil:
+			if pd, ok := op.Op.(UsePreallocDoer); ok {
+				pd.UsePreallocDo(op.Prealloc, vals...)
+			}
+			retVal, err := op.Op.Do(vals...)
+			if err != nil {
+				return retVal, err
+			}
+			return Copy(op.Prealloc, retVal)
+		case op.UseUnsafe:
+			if ud, ok := op.Op.(UnsafeDoer); ok {
+				return ud.UnsafeDo(vals...)
+			}
+			fallthrough
+		default:
+			return op.Op.Do(vals...)
+		}
+	}
+
 	switch o := op.Op.(type) {
 	case CUDADoer:
-		if op.UseUnsafe || op.Prealloc == nil {
-			return o.CUDADo(op.External, op.Device, vals[0], vals...)
-		}
+		// if op.UseUnsafe || op.Prealloc == nil {
+		// 	return o.CUDADo(op.External, op.Device, vals[0], vals...)
+		// }
 		return o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
 	case CLDoer:
 	case UnsafeDoer:
 		if op.UseUnsafe {
 			return o.UnsafeDo(vals...)
 		}
-		return op.Do(vals...)
+		return op.Op.Do(vals...)
 	case UsePreallocDoer:
-		return o.UsePreallocDo(op.Prealloc, vals...)
+		if op.Prealloc != nil {
+			return o.UsePreallocDo(op.Prealloc, vals...)
+		}
+		return op.Op.Do(vals...)
 	default:
 		return o.Do(vals...)
 	}

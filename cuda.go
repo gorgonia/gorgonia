@@ -197,19 +197,19 @@ func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
 	// return nil, noopError{}
 }
 
-// GetAndCopy gets the memory and copies data over
-func (m *ExternMetadata) GetAndCopy(dev Device, size int64, v Value) (Memory, error) {
+// GetFromValue allocates a memory on the GPU, and then copies the data over. v MUST be on CPU.
+func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) {
 	d := int(dev)
 	if d >= len(m.a) {
 		return nil, noopError{}
 	}
+	memsize := calcMemSize(v.Dtype(), v.Shape())
 
-	ptr, err := m.a[d].alloc(size)
+	ptr, err := m.a[d].alloc(memsize)
 	if err != nil {
 		return nil, err
 	}
 
-	memsize := calcMemSize(v.Dtype(), v.Shape())
 	ctx := m.Contexts()[d]
 	ctx.MemcpyHtoD(cu.DevicePtr(ptr), v.Pointer(), memsize)
 	return cu.DevicePtr(ptr), nil
@@ -223,6 +223,18 @@ func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
 	}
 
 	addr := uintptr(mem.Uintptr())
+	m.a[d].free(addr)
+}
+
+// PutValue puts a previously allocated memory slab back into the pool
+func (m *ExternMetadata) PutValue(dev Device, v Value) {
+	d := int(dev)
+	if d >= len(m.a) {
+		return
+	}
+
+	// memsize := calcMemSize(v.Dtype(), v.Shape())
+	addr := uintptr(v.Uintptr())
 	m.a[d].free(addr)
 }
 
@@ -305,8 +317,8 @@ func (m *ExternMetadata) init(sizes []int64) {
 			m.initFail()
 			return
 		}
-		// ctx, err := dev.MakeContext(cu.SchedAuto)
-		ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
+		ctx, err := dev.MakeContext(cu.SchedAuto)
+		// ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
 		if err != nil {
 			if err == cu.OutOfMemory {
 				var free, total int64
@@ -416,9 +428,11 @@ func init() {
 	log.Println("Using CUDA build")
 }
 
-func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, err error) {
+// ValueOnDevice gets the value of the node as a Value but on the desired device. If the node's valud is not on the same device
+// as the desired device, a copy will be made.
+func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
 	if n.dataOn == dev {
-		return n.Value(), nil
+		return n.Value(), false, nil
 	}
 	v := n.Value()
 	dt := v.Dtype()
@@ -433,20 +447,25 @@ func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, err err
 
 		ctx := extern.(CUDAMachine).Contexts()[int(dev)]
 		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(v.Uintptr()), memsize)
+		extern.Signal()
 		return
 	case n.Device() == CPU && dev != CPU:
 		var mem Memory
-		if mem, err = extern.GetAndCopy(dev, memsize, v); err != nil {
-			return nil, errors.Errorf("Cannot GetAndCopy")
+		if mem, err = extern.GetFromValue(dev, v); err != nil {
+			return nil, false, errors.Errorf("Cannot GetAndCopy")
 		}
-		return makeValueFromMem(n.t, s, mem)
+		retVal, err = makeValueFromMem(n.t, s, mem)
+		return retVal, true, err
 	}
 	panic("Unreachable")
 }
 
-func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, err error) {
+// GradOnDevice gets the gradient value of the node as a Value but on the desired device. If the node's valud is not on the same device
+// as the desired device, a copy will be made.
+func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
 	if n.dataOn == dev {
-		return n.Grad()
+		retVal, err = n.Grad()
+		return
 	}
 
 	var d Value
@@ -455,7 +474,7 @@ func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, err erro
 	} else if n.deriv != nil {
 		return n.deriv.ValueOnDevice(dev, extern)
 	} else {
-		return nil, errors.Errorf("No gradient node/value found for %v", n)
+		return nil, false, errors.Errorf("No gradient node/value found for %v", n)
 	}
 
 	nDev := n.Device()
@@ -473,13 +492,15 @@ func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, err erro
 		logf("extern: %T| %v %v | nDev %v", extern, int(dev), dev, nDev)
 		ctx := extern.(CUDAMachine).Contexts()[int(nDev)]
 		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(d.Uintptr()), memsize)
+		extern.Signal() // copy it
 		return
 	case nDev == CPU && dev != CPU:
 		var mem Memory
-		if mem, err = extern.GetAndCopy(dev, memsize, d); err != nil {
-			return nil, errors.Errorf("Cannot GetAndCopy")
+		if mem, err = extern.GetFromValue(dev, d); err != nil {
+			return nil, false, errors.Errorf("Cannot GetAndCopy")
 		}
-		return makeValueFromMem(n.t, s, mem)
+		retVal, err = makeValueFromMem(n.t, s, mem)
+		return retVal, true, err
 	}
 	panic("Unreachable")
 }

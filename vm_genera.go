@@ -107,6 +107,10 @@ func (m *lispMachine) RunAll() (err error) {
 		return errors.Wrap(err, "Could not checkRoots()")
 	}
 
+	defer func() {
+		m.q = nil // this needs to be nil'd or else there would still be references to m. Then there won't be any garbage being collected
+	}()
+
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
 	errChan := make(chan error)
@@ -124,7 +128,10 @@ func (m *lispMachine) RunAll() (err error) {
 				syncChan <- struct{}{}
 			}
 		case err := <-errChan:
-			return errors.Wrapf(err, "Running Node: %v", m.sorted[m.fwd])
+			if m.fwd < len(m.sorted) {
+				return errors.Wrapf(err, "Running Node: %v", m.sorted[m.fwd])
+			}
+			return errors.Wrap(err, "RunAll")
 		case <-doneChan:
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
@@ -252,10 +259,12 @@ func (m *lispMachine) runall(errChan chan error, doneChan chan struct{}) {
 	}
 
 	if err != nil {
+		logf("Sending error")
 		errChan <- err
 	}
 
 	// send a synchronous signal, do all (if any) CUDA work before continuing with backprop
+	logf("sending  signal")
 	m.Signal()
 
 backward:
@@ -373,12 +382,28 @@ func (m *lispMachine) forward() (err error) {
 		switch ot := n.op.(type) {
 		case readOp:
 			machineLogf("ReadOp: %v ", op)
-			childVal := n.children[0].boundTo
-			if dv, ok := childVal.(*dualValue); ok {
-				*ot.into = dv.Value
+			child := children[0]
+			childVal := child.boundTo
+			if child.Device() != CPU {
+				m.Signal() // get work to be done first
+				logf("childVal %T %v", childVal, n.children[0].boundTo)
+
+				if dv, ok := n.children[0].boundTo.(*dualValue); ok {
+					*ot.into = dv.Value
+				} else {
+					*ot.into = childVal
+				}
+
 			} else {
-				*ot.into = childVal
+				if dv, ok := childVal.(*dualValue); ok {
+					*ot.into = dv.Value
+				} else {
+					*ot.into = childVal
+				}
 			}
+
+			logf("READOP %v | %v", *ot.into, childVal)
+
 		case devTrans:
 			// this case is unreachable in non CUDA builds
 			if err = m.execDevTrans(ot, n, children); err != nil {
@@ -421,14 +446,13 @@ func (m *lispMachine) forward() (err error) {
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
-	m.watchedLogf("Ptr: 0x%x", n.boundTo.(*dualValue).Value.Uintptr())
 
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
 			ADOp: aop,
 			ctx:  op.ExecutionContext,
 
-			inputs: n.children,
+			inputs: n.children, // this is correct.
 			output: n,
 		}
 		m.q = append(m.q, instr)
@@ -590,5 +614,19 @@ type adInstr struct {
 }
 
 func (instr adInstr) do() error {
-	return instr.ADOp.DoDiff(instr.ctx, instr.inputs, instr.output)
+	if instr.output.dataOn != CPU {
+		for _, in := range instr.inputs {
+			if in.dataOn == CPU {
+				// ensure everything gets executed in the GPU first
+				instr.ctx.Signal()
+				break
+			}
+		}
+	}
+	err := instr.ADOp.DoDiff(instr.ctx, instr.inputs, instr.output)
+	logf("INPUTS:")
+	for _, in := range instr.inputs {
+		logf("%v\n", in.boundTo.(*dualValue).d)
+	}
+	return err
 }

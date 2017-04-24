@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
@@ -388,7 +390,10 @@ func TestBasicArithmetic(t *testing.T) {
 	}
 
 	for i, bot := range binOpTests {
-
+		log.Printf("i: %d", i)
+		// if i != 2 {
+		// 	continue
+		// }
 		g := NewGraph()
 		xV, _ := CloneValue(bot.a)
 		yV, _ := CloneValue(bot.b)
@@ -412,10 +417,12 @@ func TestBasicArithmetic(t *testing.T) {
 
 		m1 := NewLispMachine(g)
 		if err = m1.RunAll(); err != nil {
-			t.Errorf("Test %d: error while running %v", i, err)
+			t.Errorf("Test %d: error while running %+v", i, err)
 			runtime.GC()
 			continue
 		}
+
+		ioutil.WriteFile("BLAH.dot", []byte(g.ToDot()), 0644)
 
 		as := newAssertState(assert)
 		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)

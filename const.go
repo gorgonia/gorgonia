@@ -72,6 +72,7 @@ const (
 	autodiffFail        = "Failed to differentiate %v"
 	undefinedOnShape    = "%v undefined on shape %v"
 	unsupportedDtype    = "dtype %v is not yet supported"
+	gradOnDeviceFail    = "Cannot get gradient of %v on %v"
 )
 
 var empty struct{}
