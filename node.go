@@ -600,10 +600,10 @@ func (n *Node) dot(g *gographviz.Escape, graphName string, seen map[*Node]string
 
 	for i, child := range n.children {
 		childID := child.dot(g, graphName, seen)
-		edgeAttrs := gographviz.NewAttrs()
-		edgeAttrs.Add("taillabel", fmt.Sprintf(" %d ", i+1))
-		edgeAttrs.Add("labelfloat", "false")
-		// edgeAttrs.Add("dir", "back")
+		edgeAttrs := map[string]string{
+			"taillabel":  fmt.Sprintf(" %d ", i+1),
+			"labelfloat": "false",
+		}
 
 		g.AddPortEdge(id, id+":anchor:s", childID, childID+":anchor:n", true, edgeAttrs)
 	}
@@ -711,10 +711,11 @@ func (n *Node) dotString(g *gographviz.Escape, graphName string) string {
 
 	id := fmt.Sprintf("Node_%p", n)
 	label := buf.String()
-	attrs := gographviz.NewAttrs()
-	attrs.Add("fontname", "monospace")
-	attrs.Add("shape", "none")
-	attrs.Add("label", label)
+	attrs := map[string]string{
+		"fontname": "monospace",
+		"shape":    "none",
+		"label":    label,
+	}
 
 	g.AddNode(graphName, id, attrs)
 	return id

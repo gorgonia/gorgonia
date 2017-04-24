@@ -6,17 +6,25 @@ func overlaps(a, b *Dense) bool {
 	if a.cap() == 0 || b.cap() == 0 {
 		return false
 	}
-	capA := a.hdr.Data + uintptr(a.hdr.Cap)*a.t.Size()
-	capB := b.hdr.Data + uintptr(b.hdr.Cap)*b.t.Size()
-	if capA != capB {
-		return false
+
+	if a.hdr.Data == b.hdr.Data {
+		return true
 	}
 
-	a0 := -a.cap()
-	a1 := a0 + a.len()
-	b0 := -b.cap()
-	b1 := b0 + b.len()
-	return a1 > b0 && b1 > a0
+	capA := a.hdr.Data + uintptr(a.hdr.Cap)*a.t.Size()
+	capB := b.hdr.Data + uintptr(b.hdr.Cap)*b.t.Size()
+
+	switch {
+	case a.hdr.Data < b.hdr.Data:
+		if b.hdr.Data < capA {
+			return true
+		}
+	case a.hdr.Data > b.hdr.Data:
+		if a.hdr.Data < capB {
+			return true
+		}
+	}
+	return false
 }
 
 func assignArray(dest, src *Dense) (err error) {
