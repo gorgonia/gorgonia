@@ -196,4 +196,6 @@ func TestSumOpDiff(t *testing.T) {
 	assert.True(ValueEq(y.Value(), b.Value()))
 	assert.True(ValueEq(yG, bG))
 	assert.True(ValueEq(z.Value(), c.Value()))
+
+	runtime.GC()
 }

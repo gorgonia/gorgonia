@@ -360,13 +360,18 @@ func (m *ExternMetadata) init(sizes []int64) {
 		m.totalMem[i] = total
 		m.a[i] = newBFC(memalign)
 
-		var allocsize int64 = 2*sizes[i] + (sizes[i] / 2) + minAllocSize
-		if allocsize > free {
-			allocsize = free
+		if len(sizes) > 0 {
+			var allocsize int64 = 2*sizes[i] + (sizes[i] / 2) + minAllocSize
+			if allocsize > free {
+				allocsize = free
+			}
+			ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
+			if err != nil {
+				cudaLogf("Failed to allocate %v bytes of managed memory for %v. Err: %v", allocsize, i, err)
+				m.initFail()
+			}
+			m.a[i].reserve(uintptr(ptr), allocsize)
 		}
-		ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
-		m.a[i].reserve(uintptr(ptr), allocsize)
-
 		m.c[i] = cu.NewBatchedContext(ctx, dev)
 		go m.collectWork(i, m.c[i].WorkAvailable())
 	}

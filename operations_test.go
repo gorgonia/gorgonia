@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
@@ -235,7 +236,8 @@ var gtTests = []struct {
 func TestGt(t *testing.T) {
 	defer runtime.GC()
 	for i, gtts := range gtTests {
-		// if i != 5 {
+		log.Printf("i %d", i)
+		// if i != 11 {
 		// 	continue
 		// }
 		g := NewGraph()
@@ -296,6 +298,7 @@ func TestGt(t *testing.T) {
 		if !ValueEq(ret.Value(), ret2.Value()) {
 			t.Errorf("Test %d. Expected %v. Got  %v", i, ret.Value(), ret2.Value())
 		}
+		runtime.GC()
 	}
 
 	// other special cases
@@ -334,12 +337,14 @@ func TestGt(t *testing.T) {
 	if err = m2.RunAll(); err != nil {
 		t.Error(err)
 	}
+	ioutil.WriteFile("BLAH.dot", []byte(h.ToDot()), 0644)
 
 	if (TensorType{Dims: 1, Of: Float64}) != TypeOf(gt2.Value()) {
 		t.Error("Expected a tensor type of float64")
 	}
 
 	t.Logf("%v", gt2.Value())
+	runtime.GC()
 
 }
 
@@ -665,6 +670,7 @@ func TestNorm(t *testing.T) {
 	xT := tensor.New(tensor.WithShape(3, 3), tensor.WithBacking(tensor.Range(tensor.Float64, 0, 9)))
 	Let(x, xT)
 	m.RunAll()
+	ioutil.WriteFile("BLAH.dot", []byte(g.ToDot()), 0644)
 
 	correct := []float64{6.708203932499369, 8.12403840463596, 9.643650760992955}
 	assert.Equal(correct, extractF64s(norm.Value()))

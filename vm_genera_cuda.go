@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/chewxy/cu"
 	"github.com/chewxy/gorgonia/tensor"
@@ -28,6 +29,13 @@ func (m *lispMachine) init() error {
 	if err := m.calcMemSize(); err != nil {
 		return err
 	}
+	log.Printf("%v", m.gpumem)
+	if len(m.gpumem) == 0 {
+		for _, n := range m.sorted {
+			n.dataOn = CPU
+		}
+	}
+	log.Printf("ALL SORTED %v", m.sorted)
 
 	cudaLogf("%v", m.f)
 	funcs := make([]string, 0, len(m.ExternMetadata.f))
@@ -146,6 +154,11 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 		dv.d = d
 		n.boundTo = dv
 
+		cv := child.Value()
+		ctx := m.Contexts()[op.from]
+		ctx.MemcpyDtoH(v.Pointer(), cu.DevicePtr(cv.Uintptr()), calcMemSize(cv.Dtype(), cv.Shape()))
+
+		m.Signal()
 	case op.from == CPU && op.to != CPU:
 		memsize := calcMemSize(dt, child.Shape())
 		var memV, memD Memory

@@ -51,6 +51,9 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	fn := machine.Functions()[name][int(dev)]
 	ctx := machine.Contexts()[int(dev)]
 
+	if prealloc == nil {
+		prealloc = a
+	}
 	var mem cu.DevicePtr
 	if prealloc.Uintptr() == a.Uintptr() && a.Shape().Eq(prealloc.Shape()) {
 		mem = cu.DevicePtr(a.Uintptr())
@@ -112,23 +115,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		name = fmt.Sprintf("%v.%v_vv_f%d", elemBinOpMod, opName, int(dt.Size())*8)
 	}
 
-	hasFn := extern.HasFunc(name)
-	if !hasFn {
-		cudaLogf("NoFn: %q", name)
-		extern.Signal()
-		cudaLogf("DONE. Prealloc \n%v", prealloc)
-		if prealloc != nil {
-			return op.UsePreallocDo(prealloc, inputs...)
-		}
-		cudaLogf("Using DO")
-		return op.Do(inputs...)
-	}
-
 	machine := extern.(CUDAMachine)
-	logf("machine.Functions()[name](%q) %v, dev %d", name, machine.Functions()[name], dev)
-	fn := machine.Functions()[name][int(dev)]
 	ctx := machine.Contexts()[int(dev)]
-
 	var mem, memB cu.DevicePtr
 	var size int64
 	cudaLogf("a: 0x%x b 0x%x", a.Uintptr(), b.Uintptr())
@@ -170,6 +158,24 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		}
 	}
 
+	hasFn := extern.HasFunc(name)
+	if !hasFn {
+		cudaLogf("NoFn: %q", name)
+		extern.Signal()
+		cudaLogf("DONE. Prealloc \n%v", prealloc)
+		if prealloc != nil {
+			return op.UsePreallocDo(prealloc, inputs...)
+		}
+
+		if op.retSame {
+			return op.UsePreallocDo(retVal, inputs...)
+		}
+
+		cudaLogf("Using DO - Prealloc %v", retVal)
+		return op.Do(inputs...)
+	}
+
+	fn := machine.Functions()[name][int(dev)]
 	var args []unsafe.Pointer
 
 	cudaLogf("%v mem %v, memB %v", op, mem, memB)

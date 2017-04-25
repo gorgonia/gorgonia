@@ -286,6 +286,9 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	addOp.Device = x.Device()
 
 	dev := x.Device()
+	if dev == CPU {
+		addOp.UseCPU = true
+	}
 
 	logf("addOp.USECPU %v | %v", addOp.UseCPU, addOp.Device)
 

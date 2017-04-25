@@ -345,49 +345,49 @@ var binOpTests = []struct {
 
 func TestBasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
-	// for i, bot := range binOpTests {
-	// 	g := NewGraph()
-	// 	xV, _ := CloneValue(bot.a)
-	// 	yV, _ := CloneValue(bot.b)
-	// 	x := NodeFromAny(g, xV, WithName("x"))
-	// 	y := NodeFromAny(g, yV, WithName("y"))
+	for i, bot := range binOpTests {
+		g := NewGraph()
+		xV, _ := CloneValue(bot.a)
+		yV, _ := CloneValue(bot.b)
+		x := NodeFromAny(g, xV, WithName("x"))
+		y := NodeFromAny(g, yV, WithName("y"))
 
-	// 	var ret *Node
-	// 	var retVal Value
-	// 	var err error
-	// 	if ret, err = bot.binOp(x, y); err != nil {
-	// 		t.Errorf("Test %d: %v", i, err)
-	// 		continue
-	// 	}
-	// 	Read(ret, &retVal)
+		var ret *Node
+		var retVal Value
+		var err error
+		if ret, err = bot.binOp(x, y); err != nil {
+			t.Errorf("Test %d: %v", i, err)
+			continue
+		}
+		Read(ret, &retVal)
 
-	// 	cost := Must(Sum(ret))
-	// 	var grads Nodes
-	// 	if grads, err = Grad(cost, x, y); err != nil {
-	// 		t.Errorf("Test %d: error while symbolic op: %v", i, err)
-	// 		continue
-	// 	}
+		cost := Must(Sum(ret))
+		var grads Nodes
+		if grads, err = Grad(cost, x, y); err != nil {
+			t.Errorf("Test %d: error while symbolic op: %v", i, err)
+			continue
+		}
 
-	// 	m1 := NewTapeMachine(g)
-	// 	if err = m1.RunAll(); err != nil {
-	// 		t.Errorf("Test %d: error while running %v", i, err)
-	// 		runtime.GC()
-	// 		continue
-	// 	}
+		m1 := NewTapeMachine(g)
+		if err = m1.RunAll(); err != nil {
+			t.Errorf("Test %d: error while running %v", i, err)
+			runtime.GC()
+			continue
+		}
 
-	// 	as := newAssertState(assert)
-	// 	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
-	// 	as.True(bot.correctShape.Eq(ret.Shape()))
-	// 	as.Equal(2, len(grads))
-	// 	as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
-	// 	as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
-	// 	if !as.cont {
-	// 		prog := m1.Prog()
-	// 		t.Logf("Test %d failed. Prog: %v", i, prog)
-	// 	}
+		as := newAssertState(assert)
+		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+		as.True(bot.correctShape.Eq(ret.Shape()))
+		as.Equal(2, len(grads))
+		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
+		if !as.cont {
+			prog := m1.Prog()
+			t.Logf("Test %d failed. Prog: %v", i, prog)
+		}
 
-	// 	runtime.GC()
-	// }
+		runtime.GC()
+	}
 
 	for i, bot := range binOpTests {
 		log.Printf("i: %d", i)
