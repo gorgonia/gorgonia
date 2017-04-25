@@ -9,12 +9,12 @@ func TestCompile_medium(t *testing.T) {
 	xpy := Must(Add(x, y))
 	xmy := Must(Sub(x, y))
 	xpys := Must(Slice(xpy, S(0, 10)))
-	xpys2 := Must(Square(xpys))
+	Must(Square(xpys))
 	xmy2 := Must(Square(xmy))
 
 	var final Value
-	set := Set(xmy2, xpy)
-	read := Read(xmy2, &final)
+	Set(xmy2, xpy)
+	Read(xmy2, &final)
 
 	prog, _, err := Compile(g)
 	if err != nil {
@@ -22,27 +22,7 @@ func TestCompile_medium(t *testing.T) {
 	}
 	t.Log(prog)
 
-	// check flushes
-	var frag fragment
-	var onDev bool
-	frag = prog.m[xpys]
-	switch xpy.op.(type) {
-	case CUDADoer:
-		onDev = true
-		if _, ok := frag[0].(flushInstr); !ok {
-			t.Error("Expected the first instruction to be a flush instr")
-		}
-	case CLDoer:
-	default:
-		// nothing
-	}
-
-	frag = prog.m[xpys2]
-	if xpys2.op.CallsExtern() {
-		if _, ok := frag[0].(alloc); !ok {
-			t.Error("Expect the first instruction to be an alloc")
-		}
-	}
+	onDev := xpy.Device() != CPU
 
 	// leakage test
 	if onDev {
@@ -65,15 +45,23 @@ func TestCompile_medium(t *testing.T) {
 
 	// position tests
 	if onDev {
-		frag = prog.m[set]
-		if _, ok := frag[len(frag)-1].(free); !ok {
-			t.Error("Expected a `free` instruction after LET")
+		// last two instructions should be free
+		if _, ok := prog.instructions[len(prog.instructions)-1].(free); !ok {
+			t.Error("Expected last instruction to be a Free")
+		}
+		if _, ok := prog.instructions[len(prog.instructions)-2].(free); !ok {
+			t.Error("Expected second last instruction to be a Free")
 		}
 
-		frag = prog.m[read]
-		if _, ok := frag[len(frag)-2].(free); !ok {
-			t.Error("Expected a `free` instruction after READ")
-		}
+		// frag = prog.m[set]
+		// if _, ok := frag[len(frag)-1].(free); !ok {
+		// 	t.Error("Expected a `free` instruction after LET")
+		// }
+
+		// frag = prog.m[read]
+		// if _, ok := frag[len(frag)-2].(free); !ok {
+		// 	t.Error("Expected a `free` instruction after READ")
+		// }
 	}
 }
 

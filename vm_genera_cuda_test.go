@@ -3,7 +3,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -30,7 +29,7 @@ func TestGeneraCUDA_init(t *testing.T) {
 
 	logger := log.New(os.Stderr, "", 0)
 	m := NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
-	ioutil.WriteFile("GeneraCUDA.dot", []byte(szpe.ToDot()), 0644)
+
 	t.Logf("%v", m.sorted)
 	t.Logf("%v %v", m.cpumem, m.gpumem)
 	t.Logf("%v", m.df.devTransChildren)

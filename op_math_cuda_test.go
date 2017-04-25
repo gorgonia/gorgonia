@@ -3,8 +3,6 @@
 package gorgonia
 
 import (
-	"log"
-	"os"
 	"runtime"
 	"testing"
 
@@ -24,7 +22,7 @@ func TestCUDACube(t *testing.T) {
 	var x3Val Value
 	Read(x3, &x3Val)
 
-	m := NewTapeMachine(g, UseCudaFor())
+	m := NewTapeMachine(g)
 	defer runtime.GC()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
@@ -43,7 +41,7 @@ func TestCUDACube(t *testing.T) {
 func TestCUDABasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		log.Printf("TEST %d", i)
+		// log.Printf("TEST %d", i)
 		// if i != 2 {
 		// 	continue
 		// }
@@ -72,10 +70,9 @@ func TestCUDABasicArithmetic(t *testing.T) {
 			continue
 		}
 
-		// ioutil.WriteFile("binop.dot", []byte(g.ToDot()), 0644)
-
-		logger := log.New(os.Stderr, "", 0)
-		m1 := NewTapeMachine(g, UseCudaFor(), WithLogger(logger), WithWatchlist())
+		// logger := log.New(os.Stderr, "", 0)
+		// m1 := NewTapeMachine(g, UseCudaFor(), WithLogger(logger), WithWatchlist())
+		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
 			t.Logf("%v", m1.Prog())
 			t.Fatalf("Test %d: error while running %+v", i, err)

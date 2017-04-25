@@ -3,7 +3,6 @@
 package gorgonia
 
 import (
-	"log"
 	"runtime"
 	"testing"
 
@@ -20,7 +19,7 @@ func BenchmarkOneMil(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
-			log.Printf("Failed at n: %d. Error: %v", n, err)
+			b.Fatalf("Failed at n: %d. Error: %v", n, err)
 			break
 		}
 		m.Reset()

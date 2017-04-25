@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
 	"log"
 	"runtime"
 	"testing"
@@ -324,6 +323,8 @@ func TestGt(t *testing.T) {
 		t.Error("Expected a tensor type of float64")
 	}
 
+	// Same test as above, but using *lispMachine
+
 	h := NewGraph()
 	d := NewConstant(F64(1))
 	U := UniformRandomNode(h, Float64, 0, 1, 2)
@@ -337,7 +338,6 @@ func TestGt(t *testing.T) {
 	if err = m2.RunAll(); err != nil {
 		t.Error(err)
 	}
-	ioutil.WriteFile("BLAH.dot", []byte(h.ToDot()), 0644)
 
 	if (TensorType{Dims: 1, Of: Float64}) != TypeOf(gt2.Value()) {
 		t.Error("Expected a tensor type of float64")
@@ -531,7 +531,7 @@ func TestSlice(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ioutil.WriteFile("blah.dot", []byte(g.ToDot()), 0644)
+	// ioutil.WriteFile("blah.dot", []byte(g.ToDot()), 0644)
 	assert.Equal(t, []float64{0, 0, 0, 0, 0, 1}, xG.Data())
 	// visual inspection
 	// t.Logf("x: \n%+v,\n%+v", x.Value(), xG)
@@ -670,7 +670,6 @@ func TestNorm(t *testing.T) {
 	xT := tensor.New(tensor.WithShape(3, 3), tensor.WithBacking(tensor.Range(tensor.Float64, 0, 9)))
 	Let(x, xT)
 	m.RunAll()
-	ioutil.WriteFile("BLAH.dot", []byte(g.ToDot()), 0644)
 
 	correct := []float64{6.708203932499369, 8.12403840463596, 9.643650760992955}
 	assert.Equal(correct, extractF64s(norm.Value()))

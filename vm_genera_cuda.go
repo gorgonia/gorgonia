@@ -4,7 +4,6 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/chewxy/cu"
 	"github.com/chewxy/gorgonia/tensor"
@@ -29,13 +28,12 @@ func (m *lispMachine) init() error {
 	if err := m.calcMemSize(); err != nil {
 		return err
 	}
-	log.Printf("%v", m.gpumem)
+
 	if len(m.gpumem) == 0 {
 		for _, n := range m.sorted {
 			n.dataOn = CPU
 		}
 	}
-	log.Printf("ALL SORTED %v", m.sorted)
 
 	cudaLogf("%v", m.f)
 	funcs := make([]string, 0, len(m.ExternMetadata.f))

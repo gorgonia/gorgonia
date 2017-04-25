@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
 	"runtime"
 	"testing"
 
@@ -171,7 +170,6 @@ func TestSumOpDiff(t *testing.T) {
 	m2 = NewLispMachine(g2)
 	err = m2.RunAll()
 	if err != nil {
-		ioutil.WriteFile("Blah.dot", []byte(g2.ToDot()), 0644)
 		t.Fatalf("%+v", err)
 	}
 

@@ -1,9 +1,6 @@
 package gorgonia
 
-import (
-	"log"
-	"unsafe"
-)
+import "unsafe"
 
 // Memory is a representation of memory of the value.
 //
@@ -96,13 +93,6 @@ func (op *ExternalOp) Do(vals ...Value) (Value, error) {
 	switch o := op.Op.(type) {
 	case CUDADoer:
 		if op.Incr != nil {
-			if op.Prealloc != nil {
-				log.Printf("op.Incr 0x%x ", op.Prealloc.Uintptr())
-
-			} else {
-				log.Printf("Prealloc is NUL")
-			}
-
 			v, err := o.CUDADo(op.External, op.Device, op.Prealloc, vals...)
 			if err != nil {
 				return nil, err

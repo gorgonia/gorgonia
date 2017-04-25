@@ -93,6 +93,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		if cG, err = c.Grad(); err != nil {
 			return
 		}
+
 		assert.True(ValueEq(xG, aG), "Test ssDiff of %v. xG != aG. Got %v and %v", op, xG, aG)
 		assert.True(ValueEq(yG, bG), "Test ssDiff of %v. yG != bG. Got %v and %v", op, yG, bG)
 		assert.True(ValueEq(zG, cG), "Test ssDiff of %v. zG != cG. Got %v and %v", op, zG, cG)

@@ -1,8 +1,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
-	"log"
 	"runtime"
 	"testing"
 
@@ -390,7 +388,7 @@ func TestBasicArithmetic(t *testing.T) {
 	}
 
 	for i, bot := range binOpTests {
-		log.Printf("i: %d", i)
+		// log.Printf("i: %d", i)
 		// if i != 25 {
 		// 	continue
 		// }
@@ -421,8 +419,6 @@ func TestBasicArithmetic(t *testing.T) {
 			runtime.GC()
 			continue
 		}
-
-		ioutil.WriteFile("BLAH.dot", []byte(g.ToDot()), 0644)
 
 		as := newAssertState(assert)
 		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)

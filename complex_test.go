@@ -1,9 +1,6 @@
 package gorgonia
 
-import (
-	"log"
-	"testing"
-)
+import "testing"
 
 func TestWeirdNetwork(t *testing.T) {
 	const (
@@ -130,7 +127,7 @@ func TestWeirdNetwork(t *testing.T) {
 
 	/* SET UP COMPLETE */
 
-	m := NewTapeMachine(g, BindDualValues(model...), UseCudaFor())
+	m := NewTapeMachine(g, BindDualValues(model...))
 
 	// for debug purposes
 	// prog, locMap, err := Compile(g)
@@ -138,7 +135,6 @@ func TestWeirdNetwork(t *testing.T) {
 
 	// for i := 0; i < 104729; i++ {
 	for i := 0; i < 2; i++ {
-		log.Printf("run iter %d\n==========\n", i)
 		if err = m.RunAll(); err != nil {
 			t.Errorf("%d %v", i, err)
 			break

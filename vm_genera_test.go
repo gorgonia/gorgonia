@@ -169,7 +169,6 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 			t.Errorf("Repetition %d error: %+v", i, err)
 			continue
 		}
-		log.Printf("done iteration %d", i)
 
 		var gradX, gradY, gradZ, gradC Value
 		if gradX, err = x.Grad(); err != nil {

@@ -3,7 +3,6 @@
 package gorgonia
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -25,7 +24,7 @@ func TestDevCUDA(t *testing.T) {
 	xpy2s := Must(Slice(xpy2, S(0)))
 
 	logger := log.New(os.Stderr, "", 0)
-	m := NewTapeMachine(g, UseCudaFor(), WithLogger(logger))
+	m := NewTapeMachine(g, WithLogger(logger))
 
 	prog, locMap, _ := Compile(g)
 	t.Logf("prog:\n%v\n", prog)
@@ -34,7 +33,6 @@ func TestDevCUDA(t *testing.T) {
 		t.Errorf("%+v", err)
 	}
 
-	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 	t.Logf("x: %v", x.Value())
 	t.Logf("y: %v", y.Value())
 	t.Logf("xpy %v", xpy.Value())
@@ -49,12 +47,12 @@ func BenchmarkOneMilCUDA(b *testing.B) {
 	x := NewVector(g, Float32, WithShape(1000000), WithName("x"), WithValue(xT))
 	Must(Sigmoid(x))
 
-	m := NewTapeMachine(g, UseCudaFor())
+	m := NewTapeMachine(g)
 
 	// runtime.LockOSThread()
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
-			log.Printf("Failed at n: %d. Error: %v", n, err)
+			b.Fatalf("Failed at n: %d. Error: %v", n, err)
 			break
 		}
 		m.Reset()
@@ -72,7 +70,7 @@ func BenchmarkOneMil(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {
-			log.Printf("Failed at n: %d. Error: %v", n, err)
+			b.Fatalf("Failed at n: %d. Error: %v", n, err)
 			break
 		}
 		m.Reset()

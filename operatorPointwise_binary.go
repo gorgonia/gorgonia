@@ -1,7 +1,6 @@
 package gorgonia
 
 import (
-	"log"
 	"math"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -636,7 +635,6 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	if d, err = add.Do(xd, zd); err != nil {
 		return errors.Wrapf(err, doFail, add)
 	}
-	log.Printf("d %v", d)
 	xdv.SetDeriv(d) // ignore errors on purpose
 
 	return nil

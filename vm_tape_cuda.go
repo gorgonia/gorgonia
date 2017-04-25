@@ -9,47 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// UseCudaFor is an option for *tapeMachine only. At the moment users should pass in strings of the op name ("add", "sub"...)
-// Do not pass in the types (for example, don't pass in "add64")
-func UseCudaFor(ops ...string) VMOpt {
-	f := func(m VM) {
-		// switch v := m.(type) {
-		// case *tapeMachine:
-		// 	if v.c == nil {
-		// 		// v.init()
-		// 		v.f = make(map[string][]cu.Function)
-		// 	}
-
-		// 	if len(ops) == 0 {
-		// 		v.loadDummyStdLib()
-		// 		return
-		// 	}
-
-		// 	for _, op := range ops {
-		// 		op64 := op + "64"
-		// 		op32 := op + "32"
-
-		// 		cudaLogf("Trying to load %q and %q. m.c = %v", op64, op32, v.c)
-
-		// 		if _, ok := cudaStdLib[op64]; ok {
-		// 			// if err := v.LoadCUDAFunc(op64, data); err != nil {
-		// 			// 	log.Printf("Unable to load %q: %v", op64, err)
-		// 			// }
-		// 			v.loadDummyFunc(op64)
-		// 		}
-
-		// 		if _, ok := cudaStdLib[op32]; ok {
-		// 			// if err := v.LoadCUDAFunc(op32, data); err != nil {
-		// 			// 	log.Printf("Unable to load %q: %v", op32, err)
-		// 			// }
-		// 			v.loadDummyFunc(op32)
-		// 		}
-		// 	}
-		// }
-	}
-	return f
-}
-
 func finalizeTapeMachine(m *tapeMachine) {
 	cudaLogf("Finalizing tape machine %p", m)
 	for i, c := range m.c {
