@@ -370,6 +370,7 @@ func (m *model) predict() {
 		}
 
 		sampledID := sample(prev.probs.Value())
+		machine.UnbindAll()
 		var char rune // hur hur varchar
 		if char = vocab[sampledID]; char == END {
 			break
@@ -401,6 +402,8 @@ func (m *model) predict() {
 		}
 
 		sampledID := maxSample(prev.probs.Value())
+		machine.UnbindAll()
+
 		var char rune // hur hur varchar
 		if char = vocab[sampledID]; char == END {
 			break
@@ -448,17 +451,11 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 
 	machine := NewLispMachine(g)
 
-	// if m.free {
-	// 	defer func() {
-	// 		log.Printf("Freeing machine")
-	// 		machine.Free()
-	// 	}()
-	// }
-
 	err = machine.RunAll()
 	if err != nil {
 		return
 	}
+	machine.UnbindAll()
 
 	err = solver.Step(m.inputs())
 	if err != nil {

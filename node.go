@@ -190,6 +190,7 @@ func WithGroupName(name string) NodeConsOpt {
 func newNode(opts ...NodeConsOpt) *Node {
 	n := borrowNode()
 	n.dataOn = CPU
+	n.id = -1
 
 	for _, opt := range opts {
 		opt(n)

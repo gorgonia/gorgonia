@@ -93,7 +93,7 @@ func (m *lispMachine) calcMemSize() (err error) {
 					}
 
 					compileLogf("n: %v. Added Stmt", n)
-					gpumem[int(trans.to)] += 2 * calcMemSize(dt, n.Shape())
+					gpumem[int(trans.to)] += 3 * calcMemSize(dt, n.Shape())
 				}
 			}
 		default:
@@ -110,7 +110,7 @@ func (m *lispMachine) calcMemSize() (err error) {
 					cpumem += calcMemSize(dt, n.Shape())
 				default:
 					compileLogf("n: %v. AddedDEF", n)
-					gpumem[int(dev)] += 2 * calcMemSize(dt, n.Shape())
+					gpumem[int(dev)] += 3 * calcMemSize(dt, n.Shape())
 				}
 			}
 		}

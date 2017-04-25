@@ -161,9 +161,6 @@ func (m *lispMachine) RunForwards() (err error) {
 }
 
 func (m *lispMachine) RunBackwards() (err error) {
-	if err = m.prepGraph(); err != nil {
-		return errors.Wrap(err, "Could not prep graph")
-	}
 	if err = m.checkRoots(); err != nil {
 		return errors.Wrap(err, "Could not check roots")
 	}
@@ -180,13 +177,21 @@ func (m *lispMachine) RunBackwards() (err error) {
 }
 
 func (m *lispMachine) UnbindAll() {
-	if m.dealloc() {
-		for _, n := range m.sorted {
-			m.logf("dealloc n; %v %x %p", n, n.Hashcode(), n)
-			if !n.isInput() {
-				n.unbind()
-				m.logf("OK")
-			}
+	// if m.dealloc() {
+	for _, n := range m.sorted {
+		m.logf("dealloc n; %v %x %p", n, n.Hashcode(), n)
+		if !n.isInput() {
+			n.unbind()
+			m.logf("OK")
+		}
+	}
+	// }
+}
+
+func (m *lispMachine) UnbindOnDevice() {
+	for _, n := range m.sorted {
+		if !n.isInput() && n.dataOn != CPU {
+			n.unbind()
 		}
 	}
 }
@@ -216,8 +221,7 @@ backward:
 func (m *lispMachine) checkRoots() (err error) {
 	if !m.checkedRoots && m.runBwd() {
 		machineLogf("Checking if provided graph is sensible")
-		machineLogf("roots: %v", m.g.Roots())
-		m.watchedLogf("roots: %v", m.g.Roots())
+		m.logf("roots: %v", m.g.Roots())
 		for _, root := range m.g.Roots() {
 			switch {
 			case m.setRootGrad() && !root.isStmt:
@@ -324,7 +328,7 @@ func (m *lispMachine) forward() (err error) {
 	}
 
 	// other wise it's time to execute the op
-	m.watchedLogf("execute Op")
+	m.logf("execute Op")
 
 	dev := n.dataOn
 	op := NewExternalOp(n.op, ExecutionContext{m, dev}, nil)
@@ -333,21 +337,25 @@ func (m *lispMachine) forward() (err error) {
 	var output *dualValue
 
 	inputs := make([]*dualValue, len(n.children))
-	var children Nodes
+	children := n.children
 	if m.df != nil {
 		var ok bool
 		if children, ok = m.df.devTransChildren[n]; !ok {
 			children = n.children
 		}
-	} else {
-		children = n.children
 	}
 
 	m.enterLoggingContext()
 	for i, child := range children {
-		dv := child.boundTo.(*dualValue)
+		dv, ok := child.boundTo.(*dualValue)
+		if !ok {
+			log.Printf("%t, %t", m.g.Has(n), m.g.Has(child))
+			log.Printf("%v", n)
+			log.Printf("%v", child)
+			ioutil.WriteFile("FAIL.dot", []byte(n.RestrictedToDot(1, 3)), 0644)
+			panic(fmt.Sprintf("Expected child to have bound Value. Got %v instead", child.boundTo))
+		}
 		inputs[i] = dv
-		m.watchedLogf("Input %d:\n%v", i, dv)
 	}
 	m.leaveLoggingContext()
 
@@ -359,7 +367,7 @@ func (m *lispMachine) forward() (err error) {
 		machineLogf("Applying op %v to root", op)
 		if n.boundTo == nil {
 			machineLogf("dvBindVar")
-			m.watchedLogf("dvBindVar")
+			m.logf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op, n)
 			}
@@ -368,7 +376,7 @@ func (m *lispMachine) forward() (err error) {
 			}
 		} else {
 			machineLogf("dvBindVar0")
-			m.watchedLogf("dvBindVar0")
+			m.logf("dvBindVar0")
 			dv, ok := n.boundTo.(*dualValue)
 			if !ok {
 				panic(fmt.Sprintf("n not dual value %v", n))
@@ -407,7 +415,7 @@ func (m *lispMachine) forward() (err error) {
 		case devTrans:
 			// this case is unreachable in non CUDA builds
 			if err = m.execDevTrans(ot, n, children); err != nil {
-				return errors.Errorf("Cannot perform device transfer %v", ot)
+				return errors.Wrapf(err, "Cannot perform device transfer %v", ot)
 			}
 		}
 
@@ -519,7 +527,7 @@ func (m *lispMachine) watchedLogf(format string, attrs ...interface{}) {
 
 	if m.fwd >= 0 && m.fwd < len(m.sorted) {
 		n := m.sorted[m.fwd]
-		if m.watchlist.Contains(n) || m.watchAll() || DEBUG {
+		if m.watchlist.Contains(n) || m.watchAll() {
 			m.logf(format, attrs...)
 		}
 		return

@@ -83,7 +83,7 @@ func main() {
 		// log.Printf("Iter: %d", i)
 		cost, perp, err := m.run(i, solver)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("%+v", err))
 		}
 
 		if i%100 == 0 {
@@ -95,7 +95,7 @@ func main() {
 		if i%1000 == 0 {
 			m.predict()
 		}
-		if *memprofile != "" && i == 3000 {
+		if *memprofile != "" && i == 1000 {
 			f, err := os.Create(*memprofile)
 			if err != nil {
 				log.Fatal(err)

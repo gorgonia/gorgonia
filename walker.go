@@ -48,6 +48,16 @@ func Sort(g *ExprGraph) (sorted Nodes, err error) {
 	return
 }
 
+func UnstableSort(g *ExprGraph) (sorted Nodes, err error) {
+	var sortedNodes []graph.Node
+	if sortedNodes, err = topo.Sort(g); err != nil {
+		return nil, errors.Wrap(err, sortFail)
+	}
+
+	sorted = graphNodeToNode(sortedNodes)
+	return
+}
+
 func reverseNodes(sorted Nodes) {
 	for i := len(sorted)/2 - 1; i >= 0; i-- {
 		j := len(sorted) - i - 1

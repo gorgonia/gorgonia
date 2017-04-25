@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
+	"log"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/gonum/graph"
@@ -95,8 +96,6 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 
 	g.addToAll(n)
 	g.byHash[hash] = n
-	n.id = int(g.counter)
-	g.counter++
 	return n
 }
 
@@ -105,13 +104,20 @@ func (g *ExprGraph) addToAll(n *Node) {
 		panic("HELP! trying to add nil")
 	}
 	g.all = append(g.all, n)
+	n.id = int(g.counter)
+	g.counter++
 }
 
 // RemoveNode removes n from the graph, as well as any edges attached to it. If the node
 // is not in the graph it is a no-op.
 func (g *ExprGraph) RemoveNode(node graph.Node) {
 	n := node.(*Node)
+	if n.id == -1 {
+		return // if it's -1, it was never in the graph to begin with
+	}
+
 	hash := n.Hashcode()
+	log.Printf("Removing Node %v %v | %v", n, n.id, g.all.Contains(n))
 
 	delete(g.byHash, hash)
 	delete(g.to, n)
@@ -282,6 +288,10 @@ func (g *ExprGraph) ToDot() string {
 		}
 
 		for _, n := range g.byHash {
+			if n == nil {
+				// collision found... what to do?
+				continue
+			}
 			if n.derivOf != nil {
 				id := fmt.Sprintf("Node_%p", n)
 				for _, derivOf := range n.derivOf {
