@@ -48,6 +48,7 @@ func (w binaryWriter) Error() string {
 // 90% of the world's computers are running on x86+ processors.
 //
 // This method does not close the writer. Closing (if needed) is deferred to the caller
+// If tensor is masked, invalid values are replaced by the default fill value.
 func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	var npdt string
 	if npdt, err = t.t.numpyDtype(); err != nil {
@@ -71,8 +72,20 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 	bw.Write([]byte(header))
 
 	bw.seq = 0
-	for i := 0; i < t.len(); i++ {
-		bw.w(t.Get(i))
+	if t.IsMasked() {
+		fillval := t.FillValue()
+		it := FlatMaskedIteratorFromDense(t)
+		for i, err := it.Next(); err == nil; i, err = it.Next() {
+			if t.mask[i] {
+				bw.w(fillval)
+			} else {
+				bw.w(t.Get(i))
+			}
+		}
+	} else {
+		for i := 0; i < t.len(); i++ {
+			bw.w(t.Get(i))
+		}
 	}
 
 	if bw.error != nil {
@@ -82,6 +95,7 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 }
 
 // WriteCSV writes the *Dense to a CSV. It accepts an optional string formatting ("%v", "%f", etc...), which controls what is written to the CSV.
+// If tensor is masked, invalid values are replaced by the default fill value.
 func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	// checks:
 	if !t.IsMatrix() {
@@ -95,15 +109,24 @@ func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	}
 
 	cw := csv.NewWriter(w)
-	it := NewFlatIterator(t.AP)
+	it := IteratorFromDense(t)
 	coord := it.Coord()
 
 	// rows := t.Shape()[0]
 	cols := t.Shape()[1]
 	record := make([]string, 0, cols)
-	var i, lastCol int
+	var i, k, lastCol int
+	isMasked := t.IsMasked()
+	fillval := t.FillValue()
+	fillstr := fmt.Sprintf(format, fillval)
 	for i, err = it.Next(); err == nil; i, err = it.Next() {
 		record = append(record, fmt.Sprintf(format, t.Get(i)))
+		if isMasked {
+			if t.mask[i] {
+				record[k] = fillstr
+			}
+			k++
+		}
 		if lastCol == cols-1 {
 			if err = cw.Write(record); err != nil {
 				// TODO: wrap errors
@@ -144,6 +167,10 @@ func (t *Dense) GobEncode() (p []byte, err error) {
 	}
 
 	if err = encoder.Encode(t.Strides()); err != nil {
+		return
+	}
+
+	if err = encoder.Encode(t.mask); err != nil {
 		return
 	}
 
@@ -430,7 +457,13 @@ func (t *Dense) GobDecode(p []byte) (err error) {
 	if err = decoder.Decode(&strides); err != nil {
 		return
 	}
+
 	t.AP = NewAP(shape, strides)
+
+	var mask []bool
+	if err = decoder.Decode(&mask); err != nil {
+		return
+	}
 
 	switch dt.Kind() {
 	case reflect.Int:
@@ -438,92 +471,93 @@ func (t *Dense) GobDecode(p []byte) (err error) {
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Int8:
 		var data []int8
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Int16:
 		var data []int16
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Int32:
 		var data []int32
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Int64:
 		var data []int64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Uint:
 		var data []uint
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Uint8:
 		var data []uint8
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Uint16:
 		var data []uint16
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Uint32:
 		var data []uint32
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Uint64:
 		var data []uint64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Float32:
 		var data []float32
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Float64:
 		var data []float64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Complex64:
 		var data []complex64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.Complex128:
 		var data []complex128
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	case reflect.String:
 		var data []string
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data)
+		t.fromSlice(data, mask)
 	}
+
 	t.fix()
 	return t.sanity()
 }

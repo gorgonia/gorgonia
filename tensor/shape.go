@@ -48,6 +48,44 @@ func (s Shape) calcStrides() []int {
 	return retVal
 }
 
+// calcStrideWithMask is similar to calcStrides, except that it has an argument, masks. It is used to mask out given dimensions
+// during calculation of stride
+func (s Shape) calcStridesWithMask(mask []bool) []int {
+	// retVal := make([]int, len(s))
+	retVal := BorrowInts(len(s))
+
+	if s.IsScalar() {
+		return nil
+	}
+
+	if s.IsVector() {
+		retVal[0] = 1
+		retVal = retVal[:1]
+		return retVal
+	}
+
+	if len(mask) != s.Dims() {
+		panic("mask length must be equal to number of shape dimensions")
+	}
+	acc := 1
+	for i := len(s) - 1; i >= 0; i-- {
+		if mask[i] {
+			retVal[i] = acc
+		} else {
+			retVal[i] = 0
+		}
+		d := s[i]
+		if d < 0 {
+			panic("negative dimension size does not make sense")
+		}
+		if mask[i] {
+			acc *= d
+		}
+	}
+
+	return retVal
+}
+
 // Eq indicates if a shape is equal with another. There is a soft concept of equality when it comes to vectors.
 //
 // If s is a column vector and other is a vanilla vector, they're considered equal if the size of the column dimension is the same as the vector size;

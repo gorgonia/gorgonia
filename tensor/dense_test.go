@@ -1,9 +1,9 @@
 package tensor
 
 import (
-	"testing"
-
+	//"fmt"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestDense_shallowClone(t *testing.T) {
@@ -13,6 +13,14 @@ func TestDense_shallowClone(t *testing.T) {
 	T2.float64s()[0] = 1000
 
 	assert.Equal(t, T.Data().([]float64)[0:2], T2.Data())
+}
+
+func TestDenseMasked(t *testing.T) {
+
+	T := New(Of(Float64), WithShape(3, 2))
+	T.ResetMask()
+	assert.Equal(t, []bool{false, false, false, false, false, false}, T.mask)
+
 }
 
 func TestFromScalar(t *testing.T) {

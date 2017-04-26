@@ -19,7 +19,7 @@ const testLoadSaveNumpyRaw = `func TestSaveLoadNumpy(t *testing.T){
 
 	script := "import numpy as np\nx = np.load('test.npy')\nprint(x)"
 
-	cmd := exec.Command("python")
+	cmd := exec.Command("python2")
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		t.Error(err)
@@ -64,6 +64,21 @@ const testLoadSaveNumpyRaw = `func TestSaveLoadNumpy(t *testing.T){
 	assert.Equal(T.Shape(), T2.Shape())
 	assert.Equal(T.Strides(), T2.Strides())
 	assert.Equal(T.Data(), T2.Data())
+
+	// try with masked array. masked elements should be filled with default value
+	T.ResetMask(false)
+	T.mask[0]=true
+	T3 := new(Dense)
+	buf = new(bytes.Buffer)
+	T.WriteNpy(buf)
+	if err = T3.ReadNpy(buf); err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(T.Shape(), T3.Shape())
+	assert.Equal(T.Strides(), T3.Strides())
+	data:= T.float64s()
+	data[0]=T.FillValue().(float64)
+	assert.Equal(data, T3.Data())
 }
 `
 
@@ -98,6 +113,26 @@ const testWriteCSVRaw = `func TestSaveLoadCSV(t *testing.T) {
 	f, _ := os.OpenFile("test.csv", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	T.WriteCSV(f)
 	f.Close()
+
+	// cleanup
+	err := os.Remove("test.csv")
+	if err != nil {
+		t.Error(err)
+	}
+
+	// try with masked array. masked elements should be filled with default value
+	T.ResetMask(false)
+	T.mask[0]=true
+	f, _ = os.OpenFile("test.csv", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	T.WriteCSV(f)
+	f.Close()
+
+	// cleanup again
+	err = os.Remove("test.csv")
+	if err != nil {
+		t.Error(err)
+	}
+	
 }
 
 `
@@ -131,6 +166,31 @@ func TestDense_GobEncodeDecode(t *testing.T){
 		assert.Equal(T.Shape(), T2.Shape())
 		assert.Equal(T.Strides(), T2.Strides())
 		assert.Equal(T.Data(), T2.Data())
+
+		// try with masked array. masked elements should be filled with default value
+		buf = new(bytes.Buffer)
+		encoder = gob.NewEncoder(buf)
+		decoder = gob.NewDecoder(buf)
+
+		T.ResetMask(false)
+		T.mask[0]=true
+		assert.True(T.IsMasked())
+		if err = encoder.Encode(T); err != nil{
+			t.Errorf("Error while encoding %v: %v", gtd, err)
+			continue
+		}
+
+		T3 := new(Dense)
+		if err = decoder.Decode(T3); err != nil {
+			t.Errorf("Error while decoding %v: %v", gtd, err)
+			continue
+		}
+
+		assert.Equal(T.Shape(), T3.Shape())
+		assert.Equal(T.Strides(), T3.Strides())
+		assert.Equal(T.Data(), T3.Data())
+		assert.Equal(T.mask, T3.mask)
+
 	}
 
 }

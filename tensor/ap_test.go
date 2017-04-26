@@ -1,9 +1,9 @@
 package tensor
 
 import (
-	"testing"
-
+	//"fmt"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 type dummySlice struct {

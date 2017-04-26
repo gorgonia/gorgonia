@@ -166,14 +166,36 @@ func ReturnAP(ap *AP) {
 	apPool[ap.Dims()].Put(ap)
 }
 
+/* ----------------------------------------------------------------
+------------------ Create Pools
+------------------------------------------------------------------*/
 /* INTS POOL */
 
 var intsPool [8]sync.Pool
 
+/* BOOLS POOL */
+
+var boolsPool [8]sync.Pool
+
+/* APLIST POOL */
+
+var apListPool [maxAPDims]sync.Pool
+
+// Init function
 func init() {
 	for i := range intsPool {
 		size := i
 		intsPool[i].New = func() interface{} { return make([]int, size) }
+	}
+
+	for i := range boolsPool {
+		size := i
+		boolsPool[i].New = func() interface{} { return make([]bool, size) }
+	}
+
+	for i := range apListPool {
+		size := i
+		apListPool[i].New = func() interface{} { return make([]*AP, size) }
 	}
 
 	for i := range apPool {
@@ -215,4 +237,64 @@ func ReturnInts(is []int) {
 	}
 
 	intsPool[size].Put(is)
+}
+
+// BorrowBools borrows a slice of bools from the pool. USE WITH CAUTION.
+func BorrowBools(size int) []bool {
+	if size >= 8 {
+		return make([]bool, size)
+	}
+
+	retVal := boolsPool[size].Get()
+	if retVal == nil {
+		return make([]bool, size)
+	}
+	return retVal.([]bool)
+}
+
+// ReturnBools returns a slice from the pool. USE WITH CAUTION.
+func ReturnBools(is []bool) {
+	if is == nil {
+		return
+	}
+	size := cap(is)
+	if size >= 8 {
+		return
+	}
+	is = is[:cap(is)]
+	for i := range is {
+		is[i] = false
+	}
+
+	boolsPool[size].Put(is)
+}
+
+// BorrowAPList gets an APList from the pool. USE WITH CAUTION.
+func BorrowAPList(size int) []*AP {
+	if size >= 8 {
+		return make([]*AP, size)
+	}
+
+	retVal := apListPool[size].Get()
+	if retVal == nil {
+		return make([]*AP, size)
+	}
+	return retVal.([]*AP)
+}
+
+// ReturnAPList returns the APList to the pool. USE WITH CAUTION.
+func ReturnAPList(aps []*AP) {
+	if aps == nil {
+		return
+	}
+	size := cap(aps)
+	if size >= 8 {
+		return
+	}
+	aps = aps[:cap(aps)]
+	for i := range aps {
+		aps[i] = nil
+	}
+
+	apListPool[size].Put(aps)
 }

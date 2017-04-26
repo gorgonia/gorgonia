@@ -16,8 +16,17 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Bool:
 		if f, ok := fn.(func(bool) bool); ok {
 			data := t.bools()
-			for i, v := range data {
-				data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						data[i] = f(v)
+					}
+				}
+			} else {
+				for i, v := range data {
+					data[i] = f(v)
+				}
 			}
 			return nil
 		}
@@ -25,11 +34,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Int:
 		if f, ok := fn.(func(int) int); ok {
 			data := t.ints()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -38,11 +62,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Int8:
 		if f, ok := fn.(func(int8) int8); ok {
 			data := t.int8s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -51,11 +90,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Int16:
 		if f, ok := fn.(func(int16) int16); ok {
 			data := t.int16s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -64,11 +118,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Int32:
 		if f, ok := fn.(func(int32) int32); ok {
 			data := t.int32s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -77,11 +146,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Int64:
 		if f, ok := fn.(func(int64) int64); ok {
 			data := t.int64s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -90,11 +174,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Uint:
 		if f, ok := fn.(func(uint) uint); ok {
 			data := t.uints()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -103,11 +202,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Uint8:
 		if f, ok := fn.(func(uint8) uint8); ok {
 			data := t.uint8s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -116,11 +230,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Uint16:
 		if f, ok := fn.(func(uint16) uint16); ok {
 			data := t.uint16s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -129,11 +258,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Uint32:
 		if f, ok := fn.(func(uint32) uint32); ok {
 			data := t.uint32s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -142,11 +286,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Uint64:
 		if f, ok := fn.(func(uint64) uint64); ok {
 			data := t.uint64s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -155,8 +314,17 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Uintptr:
 		if f, ok := fn.(func(uintptr) uintptr); ok {
 			data := t.uintptrs()
-			for i, v := range data {
-				data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						data[i] = f(v)
+					}
+				}
+			} else {
+				for i, v := range data {
+					data[i] = f(v)
+				}
 			}
 			return nil
 		}
@@ -164,11 +332,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Float32:
 		if f, ok := fn.(func(float32) float32); ok {
 			data := t.float32s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -177,11 +360,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Float64:
 		if f, ok := fn.(func(float64) float64); ok {
 			data := t.float64s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -190,11 +388,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Complex64:
 		if f, ok := fn.(func(complex64) complex64); ok {
 			data := t.complex64s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -203,11 +416,26 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.Complex128:
 		if f, ok := fn.(func(complex128) complex128); ok {
 			data := t.complex128s()
-			for i, v := range data {
-				if incr {
-					data[i] += f(v)
-				} else {
-					data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						if !mask[i] {
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					}
+				}
+			} else {
+				for i, v := range data {
+					if incr {
+						data[i] += f(v)
+					} else {
+						data[i] = f(v)
+					}
 				}
 			}
 			return nil
@@ -216,8 +444,17 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.String:
 		if f, ok := fn.(func(string) string); ok {
 			data := t.strings()
-			for i, v := range data {
-				data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						data[i] = f(v)
+					}
+				}
+			} else {
+				for i, v := range data {
+					data[i] = f(v)
+				}
 			}
 			return nil
 		}
@@ -225,8 +462,17 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	case reflect.UnsafePointer:
 		if f, ok := fn.(func(unsafe.Pointer) unsafe.Pointer); ok {
 			data := t.unsafePointers()
-			for i, v := range data {
-				data[i] = f(v)
+			if t.IsMasked() {
+				mask := t.mask
+				if len(mask) == len(data) {
+					for i, v := range data {
+						data[i] = f(v)
+					}
+				}
+			} else {
+				for i, v := range data {
+					data[i] = f(v)
+				}
 			}
 			return nil
 		}
@@ -248,13 +494,13 @@ func (t *Dense) mapFn(fn interface{}, incr bool) (err error) {
 	return nil
 }
 
-func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error) {
+func (t *Dense) iterMap(fn interface{}, it Iterator, incr bool) (err error) {
 	switch t.t.Kind() {
 	case reflect.Bool:
 		if f, ok := fn.(func(bool) bool); ok {
 			data := t.bools()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				data[i] = f(v)
 			}
@@ -265,7 +511,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(int) int); ok {
 			data := t.ints()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -280,7 +526,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(int8) int8); ok {
 			data := t.int8s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -295,7 +541,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(int16) int16); ok {
 			data := t.int16s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -310,7 +556,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(int32) int32); ok {
 			data := t.int32s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -325,7 +571,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(int64) int64); ok {
 			data := t.int64s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -340,7 +586,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(uint) uint); ok {
 			data := t.uints()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -355,7 +601,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(uint8) uint8); ok {
 			data := t.uint8s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -370,7 +616,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(uint16) uint16); ok {
 			data := t.uint16s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -385,7 +631,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(uint32) uint32); ok {
 			data := t.uint32s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -400,7 +646,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(uint64) uint64); ok {
 			data := t.uint64s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -415,7 +661,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(uintptr) uintptr); ok {
 			data := t.uintptrs()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				data[i] = f(v)
 			}
@@ -426,7 +672,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(float32) float32); ok {
 			data := t.float32s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -441,7 +687,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(float64) float64); ok {
 			data := t.float64s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -456,7 +702,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(complex64) complex64); ok {
 			data := t.complex64s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -471,7 +717,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(complex128) complex128); ok {
 			data := t.complex128s()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				if incr {
 					data[i] += f(v)
@@ -486,7 +732,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(string) string); ok {
 			data := t.strings()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				data[i] = f(v)
 			}
@@ -497,7 +743,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func(unsafe.Pointer) unsafe.Pointer); ok {
 			data := t.unsafePointers()
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				data[i] = f(v)
 			}
@@ -513,7 +759,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		}
 		args := make([]reflect.Value, 0, fnT.NumIn())
 		var i int
-		for i, err = it.Next(); err == nil; i, err = it.Next() {
+		for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 			args = append(args, reflect.ValueOf(t.Get(i)))
 			t.Set(i, f.Call(args)[0].Interface())
 			args = args[:0]

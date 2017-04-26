@@ -13,16 +13,35 @@ const mapperRaw = `func (t *Dense) mapFn(fn interface{}, incr bool) (err error) 
 	case reflect.{{reflectKind .}}:
 		if f, ok := fn.(func({{asType .}}){{asType .}}); ok {
 			data := t.{{sliceOf .}}
-			for i, v := range data {
-				{{if isNumber . -}}
-					if incr {
-						data[i] += f(v)
-					} else {
+			if t.IsMasked(){
+				mask:=t.mask
+				if len(mask)==len(data){
+					for i, v := range data {
+					{{if isNumber . -}}
+						if !mask[i]{
+							if incr {
+								data[i] += f(v)
+							} else {
+								data[i] = f(v)
+							}
+						}
+					{{else -}}
 						data[i] = f(v)
-					}
-				{{else -}}
-					data[i] = f(v)
-				{{end -}}
+					{{end -}}
+				}
+				}
+			} else{
+				for i, v := range data {
+					{{if isNumber . -}}
+						if incr {
+							data[i] += f(v)
+						} else {
+							data[i] = f(v)
+						}
+					{{else -}}
+						data[i] = f(v)
+					{{end -}}
+				}
 			}
 			return nil
 		}
@@ -46,7 +65,7 @@ const mapperRaw = `func (t *Dense) mapFn(fn interface{}, incr bool) (err error) 
 	return nil
 }
 
-func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error) {
+func (t *Dense) iterMap(fn interface{}, it Iterator, incr bool) (err error) {
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 	{{if isParameterized . -}}
@@ -55,7 +74,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		if f, ok := fn.(func({{asType .}}){{asType .}}); ok {
 			data := t.{{sliceOf .}}
 			var i int
-			for i, err = it.Next(); err == nil; i, err = it.Next() {
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 				v := data[i]
 				{{if isNumber . -}}
 					if incr {
@@ -81,7 +100,7 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 		}
 		args := make([]reflect.Value, 0, fnT.NumIn())
 		var i int
-		for i, err = it.Next(); err == nil; i, err = it.Next() {
+		for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
 			args = append(args, reflect.ValueOf(t.Get(i)))
 			t.Set(i, f.Call(args)[0].Interface())
 			args = args[:0]
@@ -90,6 +109,8 @@ func (t *Dense) iterMap(fn interface{}, it *FlatIterator, incr bool) (err error)
 	}
 	return nil
 }
+
+
 `
 
 var (

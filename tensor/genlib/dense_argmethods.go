@@ -24,7 +24,6 @@ func (t *Dense) {{.ArgName}}(axis int)(retVal *Dense, err error){
 		err = errors.Errorf(dimMismatch, len(t.Shape()), axis)
 		return
 	}
-
 	
 	axes := make([]int, len(t.Shape()))
 	for i := range t.Shape() {
@@ -46,15 +45,17 @@ func (t *Dense) {{.ArgName}}(axis int)(retVal *Dense, err error){
 		newAP = t.AP.Clone()
 	}
 	defer ReturnAP(newAP)
-
-	it := NewFlatIterator(newAP)
+	
+	it :=IteratorFromDense(t)
+	iteratorLoadAP(it, newAP)	
 	return t.{{lower .ArgName}}(it)
 }
 
-func (t *Dense) {{lower .ArgName}}(it *FlatIterator) (retVal *Dense, err error) {
+func (t *Dense) {{lower .ArgName}}(it Iterator) (retVal *Dense, err error) {
 	var lastSize, next int
 	var newShape Shape
 	var indices []int
+	var mask []bool
 	if it != nil {
 		lastSize = it.Shape()[len(it.Shape())-1]		
 		newShape = it.Shape().Clone()
@@ -68,19 +69,23 @@ func (t *Dense) {{lower .ArgName}}(it *FlatIterator) (retVal *Dense, err error) 
 		{{if hasPrefix .String "complex" -}}
 		{{else -}}
 		case reflect.{{reflectKind .}}:
+			var isMasked = t.IsMasked()
 			if it == nil {
-				retVal = New(FromScalar({{lower $arg}}{{short .}}(t.{{sliceOf .}})))
+				retVal = New(FromScalar({{lower $arg}}{{short .}}(t.{{sliceOf .}},t.mask)))
 				return
 			}
 			data := t.{{asType . | strip }}s()
 			tmp := make([]{{asType .}}, 0, lastSize)
-			for next, err = it.Next(); err == nil; next, err = it.Next() {
+			mask = make([]bool, 0, lastSize)
+			for next, err = it.Next(); err == nil; next, err = it.Next() {				
 				tmp = append(tmp, data[next])
-
+				if isMasked {
+					mask = append(mask, t.mask[next])
+					}
 				if len(tmp) == lastSize {
-					am := {{lower $arg}}{{short .}}(tmp)
-					indices = append(indices, am)
-
+						am := {{lower $arg}}{{short .}}(tmp, mask)
+					    indices = append(indices, am)
+					
 					// reset
 					tmp = tmp[:0]
 				}

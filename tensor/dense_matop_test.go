@@ -55,6 +55,39 @@ func cloneArray(a interface{}) interface{} {
 	return nil
 }
 
+func castToDt(val float64, dt Dtype) interface{} {
+	switch dt {
+	case Bool:
+		return false
+	case Int:
+		return int(val)
+	case Int8:
+		return int8(val)
+	case Int16:
+		return int16(val)
+	case Int32:
+		return int32(val)
+	case Int64:
+		return int64(val)
+	case Uint:
+		return uint(val)
+	case Uint8:
+		return uint8(val)
+	case Uint16:
+		return uint16(val)
+	case Uint32:
+		return uint32(val)
+	case Uint64:
+		return uint64(val)
+	case Float32:
+		return float32(val)
+	case Float64:
+		return float64(val)
+	default:
+		return 0
+	}
+}
+
 var atTests = []struct {
 	data  interface{}
 	shape Shape
@@ -651,6 +684,38 @@ func TestDense_Concat(t *testing.T) {
 		assert.True(cts.correctShape.Eq(T2.Shape()))
 		assert.Equal(cts.correctData, T2.Data())
 	}
+
+	//Masked case
+
+	for _, cts := range concatTests {
+
+		var T0, T1 *Dense
+
+		if cts.a == nil {
+			T0 = New(WithShape(cts.shape...), WithBacking(Range(cts.dt, 0, cts.shape.TotalSize())))
+			T0.MaskedEqual(castToDt(0.0, cts.dt))
+			T1 = New(WithShape(cts.shape...), WithBacking(Range(cts.dt, 0, cts.shape.TotalSize())))
+			T1.MaskedEqual(castToDt(0.0, cts.dt))
+		} else {
+			T0 = New(WithShape(cts.shape...), WithBacking(cts.a))
+			T0.MaskedEqual(castToDt(0.0, cts.dt))
+			T1 = New(WithShape(cts.shape...), WithBacking(cloneArray(cts.a)))
+			T1.MaskedEqual(castToDt(0.0, cts.dt))
+		}
+
+		T2, err := T0.Concat(cts.axis, T1)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+
+		T3 := New(WithShape(cts.correctShape...), WithBacking(cts.correctData))
+		T3.MaskedEqual(castToDt(0.0, cts.dt))
+
+		assert.True(cts.correctShape.Eq(T2.Shape()))
+		assert.Equal(cts.correctData, T2.Data())
+		assert.Equal(T3.mask, T2.mask)
+	}
 }
 
 var simpleStackTests = []struct {
@@ -752,4 +817,79 @@ func TestDense_Stack(t *testing.T) {
 		assert.True(sts.correctShape.Eq(T2.Shape()))
 		assert.Equal(sts.correctData, T2.Data())
 	}
+
+	// Repeat tests with masks
+	for _, sts := range simpleStackTests {
+		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+
+		var stacked []*Dense
+		for i := 0; i < sts.stackCount-1; i++ {
+			offset := (i + 1) * 100
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
+			T1.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+			stacked = append(stacked, T1)
+		}
+
+		T2, err := T.Stack(sts.axis, stacked...)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+
+		T3 := New(WithShape(sts.correctShape...), WithBacking(sts.correctData))
+		T3.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+
+		assert.True(sts.correctShape.Eq(T2.Shape()))
+		assert.Equal(sts.correctData, T2.Data())
+		assert.Equal(T3.mask, T2.mask)
+	}
+
+	for _, sts := range viewStackTests {
+		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+		switch {
+		case sts.slices != nil && sts.transform == nil:
+			var sliced Tensor
+			if sliced, err = T.Slice(sts.slices...); err != nil {
+				t.Error(err)
+				continue
+			}
+			T = sliced.(*Dense)
+		case sts.transform != nil && sts.slices == nil:
+			T.T(sts.transform...)
+		}
+
+		var stacked []*Dense
+		for i := 0; i < sts.stackCount-1; i++ {
+			offset := (i + 1) * 100
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
+			T1.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+			switch {
+			case sts.slices != nil && sts.transform == nil:
+				var sliced Tensor
+				if sliced, err = T1.Slice(sts.slices...); err != nil {
+					t.Error(err)
+					continue
+				}
+				T1 = sliced.(*Dense)
+			case sts.transform != nil && sts.slices == nil:
+				T1.T(sts.transform...)
+			}
+
+			stacked = append(stacked, T1)
+		}
+
+		T2, err := T.Stack(sts.axis, stacked...)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+
+		T3 := New(WithShape(sts.correctShape...), WithBacking(sts.correctData))
+		T3.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+
+		assert.True(sts.correctShape.Eq(T2.Shape()))
+		assert.Equal(sts.correctData, T2.Data())
+		assert.Equal(T3.mask, T2.mask)
+	}
+
 }
