@@ -118,8 +118,6 @@ func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 }
 
 func makeValueFromMem(t hm.Type, s tensor.Shape, mem Memory) (retVal Value, err error) {
-	logf("Make Value from Mem %v %v", t, s)
-
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(t); err != nil {
 		return

@@ -532,11 +532,6 @@ func (instr free) exec(m *tapeMachine) error {
 		size := int64(mem.MemSize())
 
 		m.Put(instr.readsFrom.device, mem, size)
-
-		// if err := instr.readsFrom.device.Free(m, mem, uint(size)); err != nil {
-		// 	return err
-		// }
-		logf("free from %v", instr.readsFrom)
 		m.gpumem[instr.readsFrom.id] = nil
 		return nil
 	}

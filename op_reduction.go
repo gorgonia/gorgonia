@@ -238,8 +238,6 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	ydv := output.boundTo.(*dualValue)
 	xShape := xdv.Value.Shape()
 
-	logf("sumOp DoDiff: 0x%x | x Device %v | outputDevice %v", xdv.d.Uintptr(), x.Device(), output.Device())
-
 	var T tensor.Tensor
 	switch ydvd := ydv.d.(type) {
 	case Scalar:
@@ -290,8 +288,6 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 		addOp.UseCPU = true
 	}
 
-	logf("addOp.USECPU %v | %v", addOp.UseCPU, addOp.Device)
-
 	if output.Device() != dev && dev != CPU {
 		// transfer to device
 		var mem Memory
@@ -316,7 +312,6 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
-	logf("0x%x d 0x%x", xdv.d.Uintptr, d.Uintptr())
 	return xdv.SetDeriv(d)
 
 	// var d Value

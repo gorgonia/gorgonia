@@ -268,7 +268,6 @@ func (m *lispMachine) runall(errChan chan error, doneChan chan struct{}) {
 	}
 
 	// send a synchronous signal, do all (if any) CUDA work before continuing with backprop
-	logf("sending  signal")
 	m.Signal()
 
 backward:
@@ -394,7 +393,6 @@ func (m *lispMachine) forward() (err error) {
 			childVal := child.boundTo
 			if child.Device() != CPU {
 				m.Signal() // get work to be done first
-				logf("childVal %T %v", childVal, n.children[0].boundTo)
 
 				if dv, ok := n.children[0].boundTo.(*dualValue); ok {
 					*ot.into = dv.Value
@@ -409,8 +407,6 @@ func (m *lispMachine) forward() (err error) {
 					*ot.into = childVal
 				}
 			}
-
-			logf("READOP %v | %v", *ot.into, childVal)
 
 		case devTrans:
 			// this case is unreachable in non CUDA builds
@@ -632,9 +628,9 @@ func (instr adInstr) do() error {
 		}
 	}
 	err := instr.ADOp.DoDiff(instr.ctx, instr.inputs, instr.output)
-	logf("INPUTS:")
-	for _, in := range instr.inputs {
-		logf("%v\n", in.boundTo.(*dualValue).d)
-	}
+	// logf("INPUTS:")
+	// for _, in := range instr.inputs {
+	// 	logf("%v\n", in.boundTo.(*dualValue).d)
+	// }
 	return err
 }

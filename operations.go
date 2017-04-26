@@ -188,7 +188,6 @@ func Gt(a, b *Node, retSame bool) (retVal *Node, err error) {
 	op := newElemBinOp(gtOpType, a, b)
 	op.retSame = retSame
 	retVal, err = binOpNode(op, a, b)
-	logf("retVal %v | %v", retVal, retSame)
 	return
 }
 

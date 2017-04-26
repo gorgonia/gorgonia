@@ -139,7 +139,7 @@ func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
-	logf("DOWORK")
+
 	// for i, hw := range m.hasWork {
 	// if hw {
 	// m.c[i].DoWork()
@@ -494,7 +494,6 @@ func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, allocOnE
 			return
 		}
 
-		logf("extern: %T| %v %v | nDev %v", extern, int(dev), dev, nDev)
 		ctx := extern.(CUDAMachine).Contexts()[int(nDev)]
 		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(d.Uintptr()), memsize)
 		extern.Signal() // copy it
