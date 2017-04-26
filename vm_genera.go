@@ -122,6 +122,27 @@ func (m *lispMachine) RunAll() (err error) {
 		case synchronous := <-workAvailable:
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
+				var node *Node
+				switch {
+				case synchronous:
+					if m.fwd < len(m.sorted) {
+						node = m.sorted[m.fwd]
+					} else {
+						node = m.sorted[m.fwd-1]
+					}
+				default:
+					if m.fwd-1 > 0 && m.fwd <= len(m.sorted) {
+						node = m.sorted[m.fwd-1]
+					} else {
+						node = m.sorted[0]
+					}
+				}
+
+				err = vmContextualError{
+					error: errors.Wrapf(err, "DoWork failed"),
+					node:  node,
+					instr: m.fwd,
+				}
 				return err
 			}
 			if synchronous {

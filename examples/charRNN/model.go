@@ -366,7 +366,10 @@ func (m *model) predict() {
 		g := m.g.SubgraphRoots(prev.probs)
 		machine := NewLispMachine(g, ExecuteFwdOnly())
 		if err := machine.RunAll(); err != nil {
-			log.Printf("ERROR while running %v", err)
+			if ctxerr, ok := err.(contextualError); ok {
+				ioutil.WriteFile("FAIL1.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)
+			}
+			log.Printf("ERROR1 while predicting %+v", err)
 		}
 
 		sampledID := sample(prev.probs.Value())
@@ -398,7 +401,10 @@ func (m *model) predict() {
 		g := m.g.SubgraphRoots(prev.probs)
 		machine := NewLispMachine(g, ExecuteFwdOnly())
 		if err := machine.RunAll(); err != nil {
-			log.Printf("ERROR while running %v", err)
+			if ctxerr, ok := err.(contextualError); ok {
+				ioutil.WriteFile("FAIL2.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)
+			}
+			log.Printf("ERROR2 while predicting %+v", err)
 		}
 
 		sampledID := maxSample(prev.probs.Value())
@@ -451,8 +457,11 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 
 	machine := NewLispMachine(g)
 
-	err = machine.RunAll()
-	if err != nil {
+	if err = machine.RunAll(); err != nil {
+		if ctxerr, ok := err.(contextualError); ok {
+			ioutil.WriteFile("FAIL.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)
+
+		}
 		return
 	}
 	machine.UnbindAll()

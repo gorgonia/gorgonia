@@ -31,8 +31,10 @@ var l2reg = 0.000001
 var learnrate = 0.01
 var clipVal = 5.0
 
-type offenderer interface {
-	Offender() interface{}
+type contextualError interface {
+	error
+	Node() *T.Node
+	Value() T.Value
 }
 
 func cleanup(sigChan chan os.Signal, doneChan chan bool, profiling bool) {

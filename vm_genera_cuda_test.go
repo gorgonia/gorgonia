@@ -17,7 +17,7 @@ func TestGeneraCUDA_init(t *testing.T) {
 	xs := Must(Slice(x, S(1)))
 	zpe := Must(Add(zs, ex))
 	zpepxpe := Must(Add(xs, zpe))
-	szpe := Must(Sum(zpepxpe))
+	Must(Sum(zpepxpe))
 
 	xV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{0, 1, 2, 3}))
 	yV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{5, 4, 3, 2}))
