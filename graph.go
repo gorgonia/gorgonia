@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/gonum/graph"
@@ -117,7 +116,6 @@ func (g *ExprGraph) RemoveNode(node graph.Node) {
 	}
 
 	hash := n.Hashcode()
-	log.Printf("Removing Node %v %v | %v", n, n.id, g.all.Contains(n))
 
 	delete(g.byHash, hash)
 	delete(g.to, n)

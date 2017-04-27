@@ -85,7 +85,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-
 	cudaLogf("CUDADoing %v", op)
 	enterLoggingContext()
 	defer leaveLoggingContext()

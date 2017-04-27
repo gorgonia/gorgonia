@@ -362,7 +362,7 @@ func (n *Node) Name() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%s(", n.op)
 	for i, child := range n.children {
-		fmt.Fprintf(&buf, "%%%x", child.Hashcode())
+		fmt.Fprintf(&buf, "%%%x", child.id)
 		if i < len(n.children)-1 {
 			buf.WriteString(", ")
 		}

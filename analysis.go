@@ -128,6 +128,7 @@ func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 func newDevTransNode(read, write *Node, from, to Device) *Node {
 	op := devTrans{from, to, write}
 	n := borrowNode()
+	n.id = -1
 	n.op = op
 	n.shape = read.shape.Clone()
 	n.t = read.t

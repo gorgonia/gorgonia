@@ -256,8 +256,10 @@ func (m *ExternMetadata) Signal() {
 	// pc, _, _, _ := runtime.Caller(1)
 
 	// log.Printf("Signalled by %v", runtime.FuncForPC(pc).Name())
-	m.signal()
-	<-m.syncChan
+	if m.workAvailable != nil {
+		m.signal()
+		<-m.syncChan
+	}
 }
 
 // Reset frees all the memories, and coalesces the allocator

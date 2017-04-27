@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"os"
 	"strconv"
 
 	. "github.com/chewxy/gorgonia"
@@ -362,14 +363,15 @@ func (m *model) predict() {
 		if prev, err = m.fwd(id, prev); err != nil {
 			panic(err)
 		}
-
+		f, _ := os.Create("log1.log")
+		logger := log.New(f, "", 0)
 		g := m.g.SubgraphRoots(prev.probs)
-		machine := NewLispMachine(g, ExecuteFwdOnly())
+		machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
 		if err := machine.RunAll(); err != nil {
 			if ctxerr, ok := err.(contextualError); ok {
 				ioutil.WriteFile("FAIL1.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)
 			}
-			log.Printf("ERROR1 while predicting %+v", err)
+			log.Printf("ERROR1 while predicting with %p %+v", machine, err)
 		}
 
 		sampledID := sample(prev.probs.Value())
@@ -398,13 +400,16 @@ func (m *model) predict() {
 			panic(err)
 		}
 
+		f, _ := os.Create("log2.log")
+		logger := log.New(f, "", 0)
 		g := m.g.SubgraphRoots(prev.probs)
-		machine := NewLispMachine(g, ExecuteFwdOnly())
+		machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
 		if err := machine.RunAll(); err != nil {
 			if ctxerr, ok := err.(contextualError); ok {
+				log.Printf("Instruction ID %v", ctxerr.InstructionID())
 				ioutil.WriteFile("FAIL2.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)
 			}
-			log.Printf("ERROR2 while predicting %+v", err)
+			log.Printf("ERROR2 while predicting with %p: %+v", machine, err)
 		}
 
 		sampledID := maxSample(prev.probs.Value())

@@ -35,6 +35,7 @@ type contextualError interface {
 	error
 	Node() *T.Node
 	Value() T.Value
+	InstructionID() int
 }
 
 func cleanup(sigChan chan os.Signal, doneChan chan bool, profiling bool) {

@@ -111,7 +111,7 @@ func (m *lispMachine) RunAll() (err error) {
 		m.q = nil // this needs to be nil'd or else there would still be references to m. Then there won't be any garbage being collected
 	}()
 
-	workAvailable := m.ExternMetadata.WorkAvailable()
+	workAvailable := m.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
 	errChan := make(chan error)
 	doneChan := make(chan struct{})
@@ -120,6 +120,7 @@ func (m *lispMachine) RunAll() (err error) {
 	for {
 		select {
 		case synchronous := <-workAvailable:
+			m.logf("Do work")
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
 				var node *Node
@@ -137,6 +138,7 @@ func (m *lispMachine) RunAll() (err error) {
 						node = m.sorted[0]
 					}
 				}
+				node = m.sorted[24] // TMP
 
 				err = vmContextualError{
 					error: errors.Wrapf(err, "DoWork failed"),
@@ -166,37 +168,6 @@ func (m *lispMachine) RunAll() (err error) {
 	return nil
 }
 
-func (m *lispMachine) RunForwards() (err error) {
-	if err = m.checkRoots(); err != nil {
-		return errors.Wrap(err, "Could not check roots")
-	}
-
-	if !m.runFwd() {
-		return errors.New("Cannot run forwards")
-	}
-
-	for err = nil; err == nil && m.fwd < len(m.sorted); m.fwd++ {
-		err = m.forward()
-	}
-	return
-}
-
-func (m *lispMachine) RunBackwards() (err error) {
-	if err = m.checkRoots(); err != nil {
-		return errors.Wrap(err, "Could not check roots")
-	}
-
-	if !m.runBwd() || len(m.q) == 0 {
-		return errors.New("Cannot run backwards")
-	}
-	m.bwd = len(m.q) - 1
-
-	for err = nil; err == nil && m.bwd >= 0; m.bwd-- {
-		err = m.backward()
-	}
-	return
-}
-
 func (m *lispMachine) UnbindAll() {
 	// if m.dealloc() {
 	for _, n := range m.sorted {
@@ -207,14 +178,6 @@ func (m *lispMachine) UnbindAll() {
 		}
 	}
 	// }
-}
-
-func (m *lispMachine) UnbindOnDevice() {
-	for _, n := range m.sorted {
-		if !n.isInput() && n.dataOn != CPU {
-			n.unbind()
-		}
-	}
 }
 
 func (m *lispMachine) LastRun() (n *Node, backprop bool) {
@@ -247,10 +210,10 @@ func (m *lispMachine) checkRoots() (err error) {
 			switch {
 			case m.setRootGrad() && !root.isStmt:
 				// check root's value
-				if _, ok := root.boundTo.(*dualValue); !ok {
-					err = errors.Errorf("Expected root %v to have a boundTo of a dualValue", root)
-					return
-				}
+				// if _, ok := root.boundTo.(*dualValue); !ok {
+				// 	err = errors.Errorf("Expected root %v to have a boundTo of a dualValue", root)
+				// 	return
+				// }
 			case !m.setRootGrad() && !root.IsScalar() && !root.isStmt:
 				err = errors.Errorf("Expected cost to be a scalar. Got %v with shape %v instead", root, root.Shape())
 				ioutil.WriteFile("err.dot", []byte(root.RestrictedToDot(2, 10)), 0644)
@@ -314,8 +277,8 @@ func (m *lispMachine) forward() (err error) {
 	if m.fwd < 0 {
 		return nil // or err?
 	}
-
 	n := m.sorted[m.fwd]
+	log.Printf("Instr: %v | %v", m.fwd, n.id)
 	m.watchedLogf("n: %v (%x)", n, n.Hashcode())
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
@@ -367,15 +330,9 @@ func (m *lispMachine) forward() (err error) {
 
 	m.enterLoggingContext()
 	for i, child := range children {
-		dv, ok := child.boundTo.(*dualValue)
-		if !ok {
-			log.Printf("%t, %t", m.g.Has(n), m.g.Has(child))
-			log.Printf("%v", n)
-			log.Printf("%v", child)
-			ioutil.WriteFile("FAIL.dot", []byte(n.RestrictedToDot(1, 3)), 0644)
-			panic(fmt.Sprintf("Expected child to have bound Value. Got %v instead", child.boundTo))
-		}
+		dv := child.boundTo.(*dualValue)
 		inputs[i] = dv
+		m.logf("child %d: 0x%x %v %v", i, dv.Value.Uintptr(), dv.Type(), dv.Shape())
 	}
 	m.leaveLoggingContext()
 

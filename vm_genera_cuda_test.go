@@ -52,3 +52,21 @@ func TestGeneraCUDA_init(t *testing.T) {
 	// Compile(g)
 
 }
+
+func TestGenera_ForceCPU(t *testing.T) {
+	g, x, y, z := simpleMatEqn()
+
+	xV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{0, 1, 2, 3}))
+	yV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{5, 4, 3, 2}))
+
+	Let(x, xV)
+	Let(y, yV)
+	m := NewLispMachine(g, WithManualGradient())
+	m.ForceCPU()
+
+	if err := m.RunAll(); err != nil {
+		t.Errorf("%v", err)
+	}
+
+	t.Logf("%v", z.Value())
+}

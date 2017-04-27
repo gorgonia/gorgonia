@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/chewxy/cu"
 	"github.com/chewxy/gorgonia/tensor"
@@ -30,9 +31,8 @@ func (m *lispMachine) init() error {
 	}
 
 	if len(m.gpumem) == 0 {
-		for _, n := range m.sorted {
-			n.dataOn = CPU
-		}
+		m.ForceCPU()
+		return nil
 	}
 
 	cudaLogf("%v", m.f)
@@ -42,6 +42,10 @@ func (m *lispMachine) init() error {
 	}
 	m.ExternMetadata.init(m.gpumem)
 	m.loadStdLib()
+
+	if len(m.Functions()) == 0 {
+		m.ForceCPU()
+	}
 	return nil
 }
 
@@ -56,6 +60,13 @@ func finalizeLispMachine(m *lispMachine) {
 		cu.DestroyContext(&c.Context)
 	}
 	m.Cleanup()
+}
+
+func (m *lispMachine) WorkAvailable() <-chan bool {
+	if m.ExternMetadata.WorkAvailable() == nil {
+		return nil
+	}
+	return m.ExternMetadata.WorkAvailable()
 }
 
 func (m *lispMachine) calcMemSize() (err error) {
@@ -202,10 +213,14 @@ func (m *lispMachine) loadStdLib() {
 		funcs, ok := cudaStdFuncs[name]
 		if !ok {
 			cudaLogf("No funcs for module %q", name)
+			log.Printf("NO FUNCS FOR MODULE %q", name)
+			// panic("WTF")
 			continue
 		}
 		if err := m.LoadCUDAFunc(name, data, funcs); err != nil {
+			log.Printf("UNABLE TO LOAD %q: %+v", name, err)
 			cudaLogf("Unable to load %q.: %v", name, err)
+			// panic(err)
 		}
 	}
 }
@@ -221,6 +236,7 @@ func (m *lispMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 	mods := make([]cu.Module, len(m.c))
 	fns := make(map[string][]cu.Function)
 	for i, c := range m.c {
+		log.Printf("Using Context %v", c.Context)
 		if err = cu.SetCurrent(c.Context); err != nil {
 			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
 			return
@@ -267,4 +283,25 @@ func (m *lispMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 
 	cudaLogf("Loaded %q", moduleName)
 	return nil
+}
+
+// ForceCPU forces the lispMachine to have the nodes run on the CPU
+func (m *lispMachine) ForceCPU() {
+	m.initFail()
+	m.df = nil
+	m.workAvailable = nil
+
+	for _, n := range m.sorted {
+		n.dataOn = CPU
+	}
+
+	// remove devTrans if any
+	for i := 0; i < len(m.sorted); i++ {
+		n := m.sorted[i]
+		if _, ok := n.op.(devTrans); ok {
+			copy(m.sorted[i:], m.sorted[i+1:])
+			m.sorted = m.sorted[:len(m.sorted)-1]
+			i--
+		}
+	}
 }

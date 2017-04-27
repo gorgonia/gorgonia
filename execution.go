@@ -49,12 +49,19 @@ type ExternalOp struct {
 
 // NewExternalOp creates a new *ExternalOp.
 func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
-	return &ExternalOp{
+	retVal := &ExternalOp{
 		Op:               op,
 		ExecutionContext: ctx,
 		Prealloc:         prealloc,
 		UseUnsafe:        false,
 	}
+	if retVal.Device == CPU {
+		retVal.UseCPU = true
+	}
+
+	logf("NewExternalOp: %v", retVal.Device)
+
+	return retVal
 }
 
 // Do performs the op,

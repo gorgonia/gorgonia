@@ -58,8 +58,9 @@ type vmContextualError struct {
 	instr int   // what instruction ID it was
 }
 
-func (err vmContextualError) Node() *Node  { return err.node }
-func (err vmContextualError) Value() Value { return err.node.Value() }
+func (err vmContextualError) Node() *Node        { return err.node }
+func (err vmContextualError) Value() Value       { return err.node.Value() }
+func (err vmContextualError) InstructionID() int { return err.instr }
 
 func nyi(what string, implFor interface{}) error {
 	return errors.Errorf(nyiFail, what, implFor)
