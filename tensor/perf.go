@@ -96,8 +96,7 @@ func ReturnTensor(t Tensor) {
 	}
 	switch tt := t.(type) {
 	case *Dense:
-		// log.Printf("returning %p", tt)
-		if tt.unmanagedMem() {
+		if tt.IsManuallyManaged() {
 			tt.data = nil
 			tt.hdr.Data = 0
 			return

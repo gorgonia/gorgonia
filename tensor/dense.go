@@ -11,7 +11,7 @@ import (
 type denseFlag byte
 
 const (
-	unmanagedMem denseFlag = 1 << iota
+	manuallyManagedMem denseFlag = 1 << iota
 )
 
 // Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
@@ -167,6 +167,11 @@ func (t *Dense) IsMaterializable() bool {
 	return t.viewOf != nil || t.old != nil
 }
 
+// IsManuallyManaged returns true if the memory associated with this *Dense is manually managed (by the user)
+func (t *Dense) IsManuallyManaged() bool {
+	return (t.flag>>manuallyManagedMem)&denseFlag(1) == 1
+}
+
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {
 	retVal := recycledDense(t.t, t.Shape().Clone())
@@ -199,9 +204,8 @@ func (t *Dense) Pointer() unsafe.Pointer {
 
 // Private methods
 
-func (t *Dense) unmanagedMem() bool { return (t.flag>>unmanagedMem)&denseFlag(1) == 1 }
-func (t *Dense) cap() int           { return t.hdr.Cap }
-func (t *Dense) len() int           { return t.hdr.Len } // exactly the same as DataSize
+func (t *Dense) cap() int { return t.hdr.Cap }
+func (t *Dense) len() int { return t.hdr.Len } // exactly the same as DataSize
 
 func (t *Dense) setShape(s ...int) {
 	t.unlock()

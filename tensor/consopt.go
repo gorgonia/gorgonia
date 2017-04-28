@@ -114,7 +114,7 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 			tt.hdr.Len = int(memsize / tt.t.Size())
 			tt.hdr.Cap = int(memsize / tt.t.Size())
 
-			tt.flag |= unmanagedMem
+			tt.flag |= denseFlag(1) << manuallyManagedMem
 
 			switch tt.t {
 			case Bool:
