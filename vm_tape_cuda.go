@@ -11,15 +11,7 @@ import (
 
 func finalizeTapeMachine(m *tapeMachine) {
 	cudaLogf("Finalizing tape machine %p", m)
-	for i, c := range m.c {
-		cu.SetCurrent(c.Context)
-		for _, v := range m.m {
-			mod := v[i]
-			cu.Unload(mod)
-		}
-		cu.DestroyContext(&c.Context)
-	}
-	m.Cleanup()
+	m.cleanup()
 	m.initFail() // not really a failure. Just call to detroy all the contexts and shit
 }
 

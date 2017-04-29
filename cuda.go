@@ -238,17 +238,48 @@ func (m *ExternMetadata) PutValue(dev Device, v Value) {
 	m.a[d].free(addr)
 }
 
-// Cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
-func (m *ExternMetadata) Cleanup() {
-	for _, c := range m.c {
-		c.Cleanup()
-	}
-
-	for _, a := range m.a {
-		if a.start != 0 {
-			cu.MemFree(cu.DevicePtr(a.start))
+// Transfer transfers data from device to device.
+func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error) {
+	defer func() {
+		if synchronous {
+			m.Signal()
 		}
+	}()
+
+	memsize := calcMemSize(v.Dtype(), v.Shape())
+	switch {
+	case fromDev == CPU && toDev != CPU:
+		d := int(toDev)
+		if d > len(m.c) {
+			return nil, errors.Errorf("No context for ToDev")
+		}
+		ctx := m.c[d]
+
+		var mem Memory
+		if mem, err = m.Get(toDev, memsize); err != nil {
+			return
+		}
+		ctx.MemcpyHtoD(cu.DevicePtr(mem.Uintptr()), v.Pointer(), memsize)
+		return makeValueFromMem(TypeOf(v), v.Shape(), mem)
+
+	case fromDev != CPU && toDev == CPU:
+		d := int(fromDev)
+		if d > len(m.c) {
+			return nil, errors.Errorf("No context for FromDev")
+		}
+		ctx := m.c[d]
+
+		if retVal, err = makeValue(TypeOf(v), v.Shape()); err != nil {
+			return
+		}
+		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(v.Uintptr()), memsize)
+		return
+	case fromDev == toDev:
+		return v, nil
+	case fromDev != toDev && fromDev != CPU && toDev != CPU:
+
 	}
+	panic("Unreachable")
 }
 
 // Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
@@ -400,6 +431,28 @@ func (m *ExternMetadata) initFail() {
 	m.workAvailable = nil
 }
 
+// cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
+func (m *ExternMetadata) cleanup() {
+	for i, c := range m.c {
+		c.Cleanup()
+		cu.SetCurrent(c.Context)
+		for _, v := range m.m {
+			mod := v[i]
+			cu.Unload(mod)
+		}
+		cu.DestroyContext(&c.Context)
+	}
+
+	for _, a := range m.a {
+		if a == nil {
+			continue
+		}
+		if a.start != 0 {
+			cu.MemFree(cu.DevicePtr(a.start))
+		}
+	}
+}
+
 // collectWork is a muxer for all the channels for the different devices
 func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
 	for range workAvailable {
@@ -437,40 +490,28 @@ func init() {
 
 // ValueOnDevice gets the value of the node as a Value but on the desired device. If the node's valud is not on the same device
 // as the desired device, a copy will be made.
-func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
-	if n.dataOn == dev {
+func (n *Node) ValueOnDevice(toDev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+	if n.dataOn == toDev {
 		return n.Value(), false, nil
 	}
 	v := n.Value()
-	dt := v.Dtype()
-	s := n.shape
-	memsize := calcMemSize(dt, s)
-	switch {
-	case n.Device() != CPU && dev == CPU:
-		if retVal, err = makeValue(n.t, s); err != nil {
-			err = errors.Wrapf(err, "Cannot make Value to get ValueOnDevice")
-			return
-		}
+	fromDev := n.Device()
 
-		ctx := extern.(CUDAMachine).Contexts()[int(dev)]
-		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(v.Uintptr()), memsize)
-		extern.Signal()
-		return
-	case n.Device() == CPU && dev != CPU:
-		var mem Memory
-		if mem, err = extern.GetFromValue(dev, v); err != nil {
-			return nil, false, errors.Errorf("Cannot GetAndCopy")
-		}
-		retVal, err = makeValueFromMem(n.t, s, mem)
-		return retVal, true, err
+	var synchronous bool
+	if toDev == CPU {
+		synchronous = true
 	}
-	panic("Unreachable")
+	if toDev != fromDev && toDev != CPU {
+		allocOnExtern = true
+	}
+	retVal, err = extern.Transfer(toDev, fromDev, v, synchronous)
+	return
 }
 
 // GradOnDevice gets the gradient value of the node as a Value but on the desired device. If the node's valud is not on the same device
 // as the desired device, a copy will be made.
-func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
-	if n.dataOn == dev {
+func (n *Node) GradOnDevice(toDev Device, extern External) (retVal Value, allocOnExtern bool, err error) {
+	if n.dataOn == toDev {
 		retVal, err = n.Grad()
 		return
 	}
@@ -479,34 +520,20 @@ func (n *Node) GradOnDevice(dev Device, extern External) (retVal Value, allocOnE
 	if dv, ok := n.boundTo.(*dualValue); ok {
 		d = dv.d
 	} else if n.deriv != nil {
-		return n.deriv.ValueOnDevice(dev, extern)
+		return n.deriv.ValueOnDevice(toDev, extern)
 	} else {
 		return nil, false, errors.Errorf("No gradient node/value found for %v", n)
 	}
 
-	nDev := n.Device()
-	dt := d.Dtype()
-	s := n.shape
-	memsize := calcMemSize(dt, s)
+	fromDev := n.Device()
 
-	switch {
-	case nDev != CPU && dev == CPU:
-		if retVal, err = makeValue(n.t, s); err != nil {
-			err = errors.Wrapf(err, "Cannot make Value to get ValueOnDevice")
-			return
-		}
-
-		ctx := extern.(CUDAMachine).Contexts()[int(nDev)]
-		ctx.MemcpyDtoH(retVal.Pointer(), cu.DevicePtr(d.Uintptr()), memsize)
-		extern.Signal() // copy it
-		return
-	case nDev == CPU && dev != CPU:
-		var mem Memory
-		if mem, err = extern.GetFromValue(dev, d); err != nil {
-			return nil, false, errors.Errorf("Cannot GetAndCopy")
-		}
-		retVal, err = makeValueFromMem(n.t, s, mem)
-		return retVal, true, err
+	var synchronous bool
+	if toDev == CPU {
+		synchronous = true
 	}
-	panic("Unreachable")
+	if toDev != CPU && toDev != fromDev {
+		allocOnExtern = true
+	}
+	retVal, err = extern.Transfer(toDev, fromDev, d, synchronous)
+	return
 }

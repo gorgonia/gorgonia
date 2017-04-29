@@ -282,6 +282,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	addOp := NewExternalOp(add, ctx, nil)
 	addOp.UseUnsafe = true
 	addOp.Device = x.Device()
+	addOp.UseCPU = false // because ctx is atm using CPU
 
 	dev := x.Device()
 	if dev == CPU {
@@ -289,12 +290,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	}
 
 	if output.Device() != dev && dev != CPU {
-		// transfer to device
-		var mem Memory
-		if mem, err = ctx.GetFromValue(dev, val); err != nil {
-			return
-		}
-		if val, err = makeValueFromMem(TypeOf(val), val.Shape(), mem); err != nil {
+		if val, err = ctx.Transfer(dev, output.Device(), val, false); err != nil {
 			return
 		}
 

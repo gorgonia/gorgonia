@@ -186,14 +186,6 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 }
 
 func (m *tapeMachine) RunAll() (err error) {
-	// defer func() {
-	// 	if err == nil {
-	// 		m.dontAlloc()
-	// 	}
-
-	// 	m.Cleanup()
-	// }()
-
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 

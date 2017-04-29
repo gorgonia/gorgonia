@@ -103,6 +103,9 @@ func (m *lispMachine) Reset() {
 }
 
 func (m *lispMachine) RunAll() (err error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	if err = m.checkRoots(); err != nil {
 		return errors.Wrap(err, "Could not checkRoots()")
 	}
@@ -178,6 +181,9 @@ func (m *lispMachine) UnbindAll() {
 		}
 	}
 	// }
+
+	// walkGraph(start, ch, walked)
+
 }
 
 func (m *lispMachine) LastRun() (n *Node, backprop bool) {
@@ -278,7 +284,7 @@ func (m *lispMachine) forward() (err error) {
 		return nil // or err?
 	}
 	n := m.sorted[m.fwd]
-	log.Printf("Instr: %v | %v", m.fwd, n.id)
+
 	m.watchedLogf("n: %v (%x)", n, n.Hashcode())
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
@@ -348,6 +354,7 @@ func (m *lispMachine) forward() (err error) {
 			if output, err = dvBindVar(op, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op, n)
 			}
+			logf("output: %v", output.d)
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
 			}

@@ -12,3 +12,5 @@ func (m *lispMachine) init() error {
 func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err error) { return nil }
 
 func finalizeLispMachine(m *lispMachine) {}
+
+func (m *lispMachine) ForceCPU() {}

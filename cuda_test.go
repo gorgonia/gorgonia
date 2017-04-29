@@ -41,6 +41,51 @@ func TestDevCUDA(t *testing.T) {
 	t.Logf("xmy2 \n%v", xmy2.Value())
 }
 
+func TestExternMetadata_Transfer(t *testing.T) {
+	m := new(ExternMetadata)
+	m.init([]int64{1024}) // allocate 1024 bytes
+
+	v := tensor.New(tensor.Of(Float64), tensor.WithShape(2, 2))
+	go func() {
+		for s := range m.WorkAvailable() {
+			m.DoWork()
+			if s {
+				m.syncChan <- struct{}{}
+			}
+		}
+	}()
+
+	//	 transfer from CPU to GPU
+	v2, err := m.Transfer(Device(0), CPU, v, true)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if vt, ok := v2.(*tensor.Dense); (ok && !vt.IsManuallyManaged()) || !ok {
+		t.Errorf("Expected manually managed value")
+	}
+	t.Logf("v2: 0x%x", v2.Uintptr())
+
+	// transfer from GPU to CPU
+	v3, err := m.Transfer(CPU, Device(0), v2, true)
+	if err != nil {
+		t.Error(err)
+	}
+	if vt, ok := v3.(*tensor.Dense); (ok && vt.IsManuallyManaged()) || !ok {
+		t.Errorf("Expected Go managed value")
+	}
+	t.Logf("v3: 0x%x", v3.Uintptr())
+
+	// transfer from CPU to CPU
+	v4, err := m.Transfer(CPU, CPU, v3, true)
+	if err != nil {
+		t.Error(err)
+	}
+	if v4 != v3 {
+		t.Errorf("Expected the values to be returned exactly the same")
+	}
+}
+
 func BenchmarkOneMilCUDA(b *testing.B) {
 	xT := tensor.New(tensor.WithShape(1000000), tensor.WithBacking(tensor.Random(tensor.Float32, 1000000)))
 	g := NewGraph()

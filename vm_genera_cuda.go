@@ -4,7 +4,6 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/chewxy/cu"
 	"github.com/chewxy/gorgonia/tensor"
@@ -50,16 +49,8 @@ func (m *lispMachine) init() error {
 }
 
 func finalizeLispMachine(m *lispMachine) {
-	cudaLogf("Finalizing lispMachine %p", m)
-	for i, c := range m.c {
-		cu.SetCurrent(c.Context)
-		for _, v := range m.m {
-			mod := v[i]
-			cu.Unload(mod)
-		}
-		cu.DestroyContext(&c.Context)
-	}
-	m.Cleanup()
+	m.cleanup()
+	m.initFail()
 }
 
 func (m *lispMachine) WorkAvailable() <-chan bool {
@@ -133,73 +124,56 @@ func (m *lispMachine) calcMemSize() (err error) {
 }
 
 func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err error) {
-	m.watchedLogf("DevTrans: %v |%v", op, n.boundTo)
 	child := children[0]
-	var dt tensor.Dtype
-	if dt, err = dtypeOf(child.t); err != nil {
-		return errors.Wrapf(err, "Unable to get dtype of %v while executing devTrans", child.t)
-	}
+	m.logf("DevTrans: %v | %v | %v", op, n.boundTo, child.boundTo)
 
 	var dv *dualValue
-	if n.boundTo != nil {
+	var cv, cd, v, d Value
+	if child.boundTo != nil {
 		var ok bool
-		if dv, ok = n.boundTo.(*dualValue); !ok {
+		if dv, ok = child.boundTo.(*dualValue); ok {
+			cv = dv.Value
+			cd = dv.d
+		} else {
+			cv = child.boundTo
+		}
+	} else {
+		err = errors.Errorf("Cannot execute transfer when there is no value in child")
+		return
+	}
 
+	var synchronous bool
+	if op.to == CPU && op.from != CPU {
+		synchronous = true
+	}
+
+	if v, err = m.Transfer(op.to, op.from, cv, false); err != nil {
+		return
+	}
+
+	if cd != nil {
+		if d, err = m.Transfer(op.to, op.from, cd, false); err != nil {
+			return
+		}
+	} else {
+		var mem Memory
+		if mem, err = m.Get(op.to, calcMemSize(cv.Dtype(), child.shape)); err != nil {
+			return
+		}
+		if cd, err = makeValueFromMem(child.t, child.shape, mem); err != nil {
+			return
 		}
 	}
 
-	switch {
-	case op.from != CPU && op.to == CPU:
-		var v, d Value
-		if v, err = makeValue(child.t, child.Shape()); err != nil {
-			return errors.Wrapf(err, "Unable to make value of %v and %v", child.t, child.Shape())
-		}
-		if d, err = makeValue(child.t, child.Shape()); err != nil {
-			return errors.Wrapf(err, "Unable to make value of %v and %v", child.t, child.Shape())
-		}
-
-		dv = new(dualValue)
-		dv.Value = v
-		dv.d = d
-		n.boundTo = dv
-
-		cv := child.Value()
-		ctx := m.Contexts()[op.from]
-		ctx.MemcpyDtoH(v.Pointer(), cu.DevicePtr(cv.Uintptr()), calcMemSize(cv.Dtype(), cv.Shape()))
-
+	if synchronous {
 		m.Signal()
-	case op.from == CPU && op.to != CPU:
-		memsize := calcMemSize(dt, child.Shape())
-		var memV, memD Memory
-		if memV, err = m.Get(op.to, memsize); err != nil {
-			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, op.to)
-		}
-
-		if memD, err = m.Get(op.to, memsize); err != nil {
-			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, op.to)
-		}
-		m.logf("Allocated 0x%x", memD.Uintptr())
-
-		var v, d Value
-		if v, err = makeValueFromMem(child.t, child.Shape(), memV); err != nil {
-			return errors.Wrapf(err, "Unable to make value of %v and %v from memory", child.t, child.Shape())
-		}
-		if d, err = makeValueFromMem(child.t, child.Shape(), memD); err != nil {
-			return errors.Wrapf(err, "Unable to make value of %v and %v from memory", child.t, child.Shape())
-		}
-		m.logf("V: \n%v|%v", v, v.Shape())
-
-		cv := child.Value()
-		ctx := m.Contexts()[op.to]
-		ctx.MemcpyHtoD(cu.DevicePtr(v.Uintptr()), cv.Pointer(), memsize)
-
-		dv = new(dualValue)
-		dv.Value = v
-		dv.d = d
-		n.boundTo = dv
-	default:
-		logf("No op")
 	}
+
+	dv = new(dualValue)
+	dv.Value = v
+	dv.d = d
+	n.boundTo = dv
+
 	return nil
 }
 
@@ -213,12 +187,10 @@ func (m *lispMachine) loadStdLib() {
 		funcs, ok := cudaStdFuncs[name]
 		if !ok {
 			cudaLogf("No funcs for module %q", name)
-			log.Printf("NO FUNCS FOR MODULE %q", name)
 			// panic("WTF")
 			continue
 		}
 		if err := m.LoadCUDAFunc(name, data, funcs); err != nil {
-			log.Printf("UNABLE TO LOAD %q: %+v", name, err)
 			cudaLogf("Unable to load %q.: %v", name, err)
 			// panic(err)
 		}
@@ -236,7 +208,6 @@ func (m *lispMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 	mods := make([]cu.Module, len(m.c))
 	fns := make(map[string][]cu.Function)
 	for i, c := range m.c {
-		log.Printf("Using Context %v", c.Context)
 		if err = cu.SetCurrent(c.Context); err != nil {
 			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
 			return
@@ -287,9 +258,9 @@ func (m *lispMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 
 // ForceCPU forces the lispMachine to have the nodes run on the CPU
 func (m *lispMachine) ForceCPU() {
+	m.cleanup()
 	m.initFail()
 	m.df = nil
-	m.workAvailable = nil
 
 	for _, n := range m.sorted {
 		n.dataOn = CPU

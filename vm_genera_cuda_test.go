@@ -38,6 +38,17 @@ func TestGeneraCUDA_init(t *testing.T) {
 		t.Errorf("Error %v", err)
 	}
 
+	for _, n := range m.sorted {
+		if n.boundTo != nil {
+			if dv, ok := n.boundTo.(*dualValue); ok {
+				log.Printf("\tEncountered %v 0x%x | 0x%x", n, dv.Value.Uintptr(), dv.d.Uintptr())
+			} else {
+				log.Printf("\tEncountered %v 0x%x", n, n.boundTo.Uintptr())
+			}
+		}
+
+	}
+
 	var xG, yG Value
 	var err error
 	if xG, err = x.Grad(); err != nil {

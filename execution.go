@@ -20,6 +20,9 @@ type Arena interface {
 	GetFromValue(dev Device, v Value) (Memory, error) // Gets a memory and copies the values into the memory and returns it.
 	Put(dev Device, mem Memory, size int64)           // puts the memory back into the arena
 	PutValue(dev Device, v Value)                     // puts the memory back into the arena
+
+	// Transfers memory from device to device
+	Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error)
 }
 
 // External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.

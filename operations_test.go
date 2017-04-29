@@ -245,8 +245,6 @@ func TestGt(t *testing.T) {
 
 		var ret *Node
 		var err error
-		logf("a: %v | %v", gtts.a, gtts.b)
-		logf("RETSAME %v", gtts.retSame)
 		ret, err = Gt(a, b, gtts.retSame)
 
 		switch {

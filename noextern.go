@@ -54,6 +54,11 @@ func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {}
 // PutValue puts a previously allocated value into the pool. In this build,  it is a noop.
 func (m *ExternMetadata) PutValue(dev Device, v Value) {}
 
+// Transfer transfers a value from device to device. In this build, it's a noop, returning the input value, and a nil error
+func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error) {
+	return v, nil
+}
+
 func (m *ExternMetadata) Reset() {}
 
 // Cleanup cleans up the ancillary allocations made during the calling of batched external device function.
