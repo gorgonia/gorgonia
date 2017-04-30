@@ -436,6 +436,7 @@ func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	// set up the op to be executed
 	op := NewAddOp(x, z, ctx)
+	op.Device = x.Device()
 	op.UseUnsafe = true
 
 	// we'll use the same device as the device the data from the node resides in
@@ -484,7 +485,9 @@ func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	// set up the op to be executed for y
 	op = NewAddOp(y, z, ctx)
+	op.Device = y.Device()
 	op.UseUnsafe = true
+
 	dev = op.Device
 
 	if yd, extra, err = y.GradOnDevice(dev, ctx.External); err != nil {
@@ -544,6 +547,8 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	add := NewAddOp(x, z, ctx)
 	sub := NewSubOp(y, z, ctx)
+	add.Device = x.Device()
+	sub.Device = y.Device()
 	sub.UseUnsafe = true
 	add.UseUnsafe = true
 	// sub := newEBOByType(subOpType, y.t, z.t)
@@ -670,6 +675,7 @@ func hadamardProdDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	//dzdx
 	mul = NewHadamardProdOp(y, z, ctx)
+	mul.Device = x.Device()
 	dev = mul.Device
 
 	if xd, extra, err = x.GradOnDevice(dev, ctx.External); err != nil {
@@ -737,6 +743,7 @@ dzdy:
 	}
 
 	mul = NewHadamardProdOp(x, z, ctx)
+	mul.Device = y.Device()
 	dev = mul.Device
 
 	if xd, extra, err = x.ValueOnDevice(dev, ctx.External); err != nil {

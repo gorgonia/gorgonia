@@ -196,8 +196,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	add := newElemBinOp(addOpType, a, b)
 	op := NewExternalOp(add, ctx, nil)
-	if a.Device() == CPU && b.Device() == CPU && ctx.Device == CPU {
-		op.UseCPU = true
+	if a.Device() == CPU && b.Device() == CPU {
+		op.Device = CPU
 		return op
 	}
 
@@ -219,8 +219,8 @@ func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	sub := newEBOByType(subOpType, a.t, b.t)
 	op := NewExternalOp(sub, ctx, nil)
 
-	if a.Device() == CPU && b.Device() == CPU && ctx.Device == CPU {
-		op.UseCPU = true
+	if a.Device() == CPU && b.Device() == CPU {
+		op.Device = CPU
 		return op
 	}
 
@@ -240,8 +240,8 @@ func NewHadamardProdOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	mul := newEBOByType(mulOpType, a.t, b.t)
 	op := NewExternalOp(mul, ctx, nil)
 
-	if a.Device() == CPU && b.Device() == CPU && ctx.Device == CPU {
-		op.UseCPU = true
+	if a.Device() == CPU && b.Device() == CPU {
+		op.Device = CPU
 		return op
 	}
 

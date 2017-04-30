@@ -53,6 +53,7 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 		runFlags:       runFlags, // run only fwd and bwd
 	}
 
+	// log.Printf("New Lisp Machine %p", m)
 	for _, opt := range opts {
 		opt(m)
 	}
@@ -60,6 +61,24 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 		panic(err)
 	}
 	runtime.SetFinalizer(m, finalizeLispMachine)
+
+	// for _, a := range m.a {
+	// 	if a == nil {
+	// 		continue
+	// 	}
+	// 	log.Printf("Start: 0x%x End 0x%x", a.start, uintptr(a.size)+a.start)
+	// }
+
+	// for _, n := range m.sorted {
+	// 	if n.boundTo != nil {
+	// 		if dv, ok := n.boundTo.(*dualValue); ok {
+	// 			log.Printf("\tEncountered %v 0x%x | 0x%x", n, dv.Value.Uintptr(), dv.d.Uintptr())
+	// 		} else {
+	// 			log.Printf("\tEncountered %v 0x%x", n, n.boundTo.Uintptr())
+	// 		}
+	// 	}
+
+	// }
 	return m
 }
 
@@ -141,7 +160,6 @@ func (m *lispMachine) RunAll() (err error) {
 						node = m.sorted[0]
 					}
 				}
-				node = m.sorted[24] // TMP
 
 				err = vmContextualError{
 					error: errors.Wrapf(err, "DoWork failed"),
@@ -422,6 +440,7 @@ func (m *lispMachine) forward() (err error) {
 		m.logf("bind(%v) with as much reuse as possible", op)
 		// reuse as much as possible
 		output := dvUnit(n.boundTo)
+		log.Printf("REUSE 0x%x 0x%x", output.Value.Uintptr(), output.d.Uintptr())
 		if err = n.bind(output); err != nil {
 			return errors.Wrap(err, bindFail)
 		}

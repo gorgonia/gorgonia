@@ -81,3 +81,20 @@ func TestGenera_ForceCPU(t *testing.T) {
 
 	t.Logf("%v", z.Value())
 }
+
+func TestGenera_Backprop(t *testing.T) {
+	g, x, y, z := simpleMatEqn()
+	Must(Sum(z))
+
+	xV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{0, 1, 2, 3}))
+	yV := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{5, 4, 3, 2}))
+
+	Let(x, xV)
+	Let(y, yV)
+	m := NewLispMachine(g)
+
+	if err := m.RunAll(); err != nil {
+		t.Errorf("%v", err)
+	}
+	t.Logf("x.Value: 0x%x | d: 0x%x", x.boundTo.(*dualValue).Value.Uintptr(), x.boundTo.(*dualValue).d.Uintptr())
+}

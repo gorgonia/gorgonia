@@ -1,6 +1,10 @@
 package gorgonia
 
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/pkg/errors"
+)
 
 // Memory is a representation of memory of the value.
 //
@@ -47,7 +51,6 @@ type ExternalOp struct {
 	Prealloc  Value
 	Incr      Value // is this a Incr? IncrDoers have higher precedence over PreallocDo
 	UseUnsafe bool  // Is this an unsafe op? Lowest of all "special" Dos
-	UseCPU    bool  // forces uses of CPU, even if the op is CUDA/CL op
 }
 
 // NewExternalOp creates a new *ExternalOp.
@@ -58,18 +61,40 @@ func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
 		Prealloc:         prealloc,
 		UseUnsafe:        false,
 	}
-	if retVal.Device == CPU {
-		retVal.UseCPU = true
-	}
 
 	logf("NewExternalOp: %v", retVal.Device)
 
 	return retVal
 }
 
+func (op *ExternalOp) DetermineDevice(inputs Nodes, output *Node) error {
+	dev := output.dataOn
+	var inDev Device = -2
+	var allSame bool
+	for _, in := range inputs {
+		if in.dataOn != dev {
+			allSame = false
+		}
+
+		if inDev == -2 {
+			inDev = in.dataOn
+			continue
+		}
+		if in.dataOn != inDev && in.dataOn != dev {
+			return errors.Errorf("Cannot automatically determine device.")
+		}
+	}
+
+	if !allSame {
+		return errors.Errorf("Not all the same devices")
+	}
+	op.Device = dev
+	return nil
+}
+
 // Do performs the op,
 func (op *ExternalOp) Do(vals ...Value) (Value, error) {
-	if op.UseCPU {
+	if op.Device == CPU {
 		switch {
 		case op.Incr != nil:
 			if id, ok := op.Op.(IncrDoer); ok {
