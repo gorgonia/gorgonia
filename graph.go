@@ -178,6 +178,23 @@ func (g *ExprGraph) Inputs() (retVal Nodes) {
 	return
 }
 
+// UnbindAll unbinds all the values from the nodes
+func (g *ExprGraph) UnbindAll() {
+	for _, n := range g.all {
+		n.unbind()
+	}
+}
+
+// UnbindAllNonInputs unbinds all the values from nodes that aren't input nodes
+func (g *ExprGraph) UnbindAllNonInputs() {
+	for _, n := range g.all {
+		if n.isInput() {
+			continue
+		}
+		n.unbind()
+	}
+}
+
 // ByName returns nodes that have the name provided.
 // Bear in mind that the name that is compared to is the internal name,
 // not the result of calling node.Name(). The reason for doing this is

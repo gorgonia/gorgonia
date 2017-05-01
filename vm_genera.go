@@ -271,7 +271,6 @@ func (m *lispMachine) runall(errChan chan error, doneChan chan struct{}) {
 	}
 
 	if err != nil {
-		logf("Sending error")
 		errChan <- err
 	}
 
@@ -372,7 +371,6 @@ func (m *lispMachine) forward() (err error) {
 			if output, err = dvBindVar(op, inputs); err != nil {
 				return errors.Wrapf(err, execFail, op, n)
 			}
-			logf("output: %v", output.d)
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
 			}
@@ -440,7 +438,6 @@ func (m *lispMachine) forward() (err error) {
 		m.logf("bind(%v) with as much reuse as possible", op)
 		// reuse as much as possible
 		output := dvUnit(n.boundTo)
-		log.Printf("REUSE 0x%x 0x%x", output.Value.Uintptr(), output.d.Uintptr())
 		if err = n.bind(output); err != nil {
 			return errors.Wrap(err, bindFail)
 		}

@@ -62,8 +62,6 @@ func NewExternalOp(op Op, ctx ExecutionContext, prealloc Value) *ExternalOp {
 		UseUnsafe:        false,
 	}
 
-	logf("NewExternalOp: %v", retVal.Device)
-
 	return retVal
 }
 

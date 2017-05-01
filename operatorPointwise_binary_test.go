@@ -163,7 +163,6 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 
 	// lg := log.New(os.Stderr, "", 0)
 	m2 := NewTapeMachine(g2, TraceExec())
-	logf("prog %v", m2.Prog())
 
 	// m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
 

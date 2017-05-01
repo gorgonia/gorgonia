@@ -84,6 +84,7 @@ func main() {
 	eStart := start
 	for i := 0; i <= 100000; i++ {
 		// log.Printf("Iter: %d", i)
+		// _, _, err := m.run(i, solver)
 		cost, perp, err := m.run(i, solver)
 		if err != nil {
 			panic(fmt.Sprintf("%+v", err))
@@ -96,8 +97,11 @@ func main() {
 		}
 
 		if i%1000 == 0 {
+			log.Printf("Going to predict now")
 			m.predict()
+			log.Printf("Done predicting")
 		}
+
 		if *memprofile != "" && i == 1000 {
 			f, err := os.Create(*memprofile)
 			if err != nil {

@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"runtime"
 	"strconv"
 
 	. "github.com/chewxy/gorgonia"
@@ -363,10 +364,12 @@ func (m *model) predict() {
 		if prev, err = m.fwd(id, prev); err != nil {
 			panic(err)
 		}
-		f, _ := os.Create("log1.log")
-		logger := log.New(f, "", 0)
 		g := m.g.SubgraphRoots(prev.probs)
-		machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
+		// f, _ := os.Create("log1.log")
+		// logger := log.New(f, "", 0)
+		// machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
+		machine := NewLispMachine(g, ExecuteFwdOnly())
+		machine.ForceCPU()
 		if err := machine.RunAll(); err != nil {
 			if ctxerr, ok := err.(contextualError); ok {
 				ioutil.WriteFile("FAIL1.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)
@@ -375,7 +378,6 @@ func (m *model) predict() {
 		}
 
 		sampledID := sample(prev.probs.Value())
-		machine.UnbindAll()
 		var char rune // hur hur varchar
 		if char = vocab[sampledID]; char == END {
 			break
@@ -386,6 +388,7 @@ func (m *model) predict() {
 		}
 
 		sentence = append(sentence, char)
+		// m.g.UnbindAllNonInputs()
 	}
 
 	var sentence2 []rune
@@ -400,10 +403,12 @@ func (m *model) predict() {
 			panic(err)
 		}
 
-		f, _ := os.Create("log2.log")
-		logger := log.New(f, "", 0)
 		g := m.g.SubgraphRoots(prev.probs)
-		machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
+		// f, _ := os.Create("log2.log")
+		// logger := log.New(f, "", 0)
+		// machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
+		machine := NewLispMachine(g, ExecuteFwdOnly())
+		machine.ForceCPU()
 		if err := machine.RunAll(); err != nil {
 			if ctxerr, ok := err.(contextualError); ok {
 				log.Printf("Instruction ID %v", ctxerr.InstructionID())
@@ -413,7 +418,6 @@ func (m *model) predict() {
 		}
 
 		sampledID := maxSample(prev.probs.Value())
-		machine.UnbindAll()
 
 		var char rune // hur hur varchar
 		if char = vocab[sampledID]; char == END {
@@ -426,11 +430,14 @@ func (m *model) predict() {
 
 		sentence2 = append(sentence2, char)
 	}
+	m.g.UnbindAllNonInputs()
 
-	fmt.Printf("Sampled: %q; ArgMax: %q\n", string(sentence), string(sentence2))
+	fmt.Printf("Sampled: %q; \nArgMax: %q\n", string(sentence), string(sentence2))
 }
 
 func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err error) {
+	defer runtime.GC()
+
 	i := rand.Intn(len(sentences))
 	sentence := sentences[i]
 
@@ -456,11 +463,11 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 		g = m.g.SubgraphRoots(cost)
 	}
 
-	// f, _ := os.OpenFile(fmt.Sprintf("%d_%s.log", iter, m.prefix), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	// logger := log.New(f, "", 0)
-	// machine := NewLispMachine(g, WithLogger(nil), WithValueFmt("%-1.1s"), LogFwd(), LogBwd(), WithWatchlist())
+	f, _ := os.OpenFile(fmt.Sprintf("%d_%s.log", iter, m.prefix), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	logger := log.New(f, "", 0)
+	machine := NewLispMachine(g, WithLogger(logger), WithValueFmt("%-1.1s"), LogBothDir(), WithWatchlist())
 
-	machine := NewLispMachine(g)
+	// machine := NewLispMachine(g)
 
 	if err = machine.RunAll(); err != nil {
 		if ctxerr, ok := err.(contextualError); ok {

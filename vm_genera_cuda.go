@@ -4,7 +4,6 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/chewxy/cu"
 	"github.com/chewxy/gorgonia/tensor"
@@ -50,7 +49,7 @@ func (m *lispMachine) init() error {
 }
 
 func finalizeLispMachine(m *lispMachine) {
-	log.Printf("Finalizing lispMachine %p", m)
+	// log.Printf("Finalizing lispMachine %p", m)
 	m.cleanup()
 	m.initFail()
 }
