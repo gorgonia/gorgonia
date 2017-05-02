@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"bytes"
+	"log"
 	"runtime"
 	"testing"
 
@@ -22,9 +23,8 @@ func TestLispMachineBasics(t *testing.T) {
 	assert.True(m.runFwd())
 	assert.True(m.runBwd())
 
-	// logger := log.New(&buf, "", 0)
-	// m = NewLispMachine(g, WithLogger(logger))
-	m = NewLispMachine(g)
+	logger := log.New(&buf, "", 0)
+	m = NewLispMachine(g, WithLogger(logger))
 	assert.Equal(logger, m.logger)
 	assert.Equal(byte(0x0), m.logFlags) // if you pass in a logger without telling which direction to log... nothing gets logged
 
