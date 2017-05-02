@@ -284,6 +284,7 @@ func TestGt(t *testing.T) {
 		if gtts.retSame {
 			Must(Sum(ret2))
 			m2 = NewLispMachine(h)
+
 		} else {
 			m2 = NewLispMachine(h, ExecuteFwdOnly())
 		}
@@ -299,6 +300,7 @@ func TestGt(t *testing.T) {
 	}
 
 	// other special cases
+	log.Printf("Special Cases")
 	g := NewGraph()
 	c := NewConstant(F64(1))
 	// T := NewTensor(g, Float64, 1, WithShape(2), WithInit(RangedFrom(0)))

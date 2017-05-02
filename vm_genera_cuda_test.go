@@ -4,7 +4,6 @@ package gorgonia
 
 import (
 	"log"
-	"os"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -27,8 +26,9 @@ func TestGeneraCUDA_init(t *testing.T) {
 	Let(y, yV)
 	Let(ex, eV)
 
-	logger := log.New(os.Stderr, "", 0)
-	m := NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
+	// logger := log.New(os.Stderr, "", 0)
+	// m := NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
+	m := NewLispMachine(g)
 
 	t.Logf("%v", m.sorted)
 	t.Logf("%v %v", m.cpumem, m.gpumem)
@@ -46,7 +46,6 @@ func TestGeneraCUDA_init(t *testing.T) {
 				log.Printf("\tEncountered %v 0x%x", n, n.boundTo.Uintptr())
 			}
 		}
-
 	}
 
 	var xG, yG Value

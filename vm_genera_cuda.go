@@ -20,7 +20,6 @@ func (m *lispMachine) init() error {
 	// However this also means that CSE won't be performed
 	df := newdataflow()
 	df.replaceWithSelf(m.sorted)
-	m.sorted = df.insertDeviceInstr(m.sorted)
 	df.buildIntervals(m.sorted)
 	df.fixIntervalDevices(m.sorted)
 	m.df = df
@@ -49,7 +48,6 @@ func (m *lispMachine) init() error {
 }
 
 func finalizeLispMachine(m *lispMachine) {
-	// log.Printf("Finalizing lispMachine %p", m)
 	m.cleanup()
 	m.initFail()
 }
@@ -83,39 +81,23 @@ func (m *lispMachine) calcMemSize() (err error) {
 		case n.isArg():
 			cpumem += calcMemSize(dt, n.Shape())
 		case n.isStmt:
-			if trans, ok := n.op.(devTrans); ok {
-				switch trans.to {
-				case CPU:
-					cpumem += calcMemSize(dt, n.Shape())
-				default:
-					if dev != CPU {
-						if len(gpumem) < int(dev)+1 {
-							diff := int(dev) + 1 - len(gpumem)
-							gpumem = append(gpumem, make([]int64, diff)...)
-						}
-					}
-
-					compileLogf("n: %v. Added Stmt", n)
-					gpumem[int(trans.to)] += 3 * calcMemSize(dt, n.Shape())
-				}
-			}
 		default:
-			if !n.op.ReturnsPtr() {
-				if dev != CPU {
-					if len(gpumem) < int(dev)+1 {
-						diff := int(dev) + 1 - len(gpumem)
-						gpumem = append(gpumem, make([]int64, diff)...)
-					}
-				}
-
-				switch dev {
-				case CPU:
-					cpumem += calcMemSize(dt, n.Shape())
-				default:
-					compileLogf("n: %v. AddedDEF", n)
-					gpumem[int(dev)] += 3 * calcMemSize(dt, n.Shape())
+			// if !n.op.ReturnsPtr() {
+			if dev != CPU {
+				if len(gpumem) < int(dev)+1 {
+					diff := int(dev) + 1 - len(gpumem)
+					gpumem = append(gpumem, make([]int64, diff)...)
 				}
 			}
+
+			switch dev {
+			case CPU:
+				cpumem += calcMemSize(dt, n.Shape())
+			default:
+				compileLogf("n: %v. AddedDEF", n)
+				gpumem[int(dev)] += 4 * calcMemSize(dt, n.Shape())
+			}
+			// }
 		}
 	}
 

@@ -68,12 +68,12 @@ func scalarClose(a, b Scalar) bool {
 	switch at := a.(type) {
 	case *F64:
 		if bt, ok := b.(*F64); ok {
-			return closeF64(*at, *bt)
+			return closeF64(float64(*at), float64(*bt))
 		}
 		return false
 	case *F32:
 		if bt, ok := b.(*F32); ok {
-			return closeF64(*at, *bt)
+			return closeF32(float32(*at), float32(*bt))
 		}
 		return false
 	default:
@@ -108,8 +108,33 @@ func tensorClose(a, b tensor.Tensor) bool {
 	case tensor.Float64:
 		aFs := a.Data().([]float64)
 		bFs := b.Data().([]float64)
+		if len(aFs) != len(bFs) {
+			return false
+		}
+		aFs = aFs[:len(aFs)]
+		bFs = bFs[:len(aFs)]
+		for i, v := range aFs {
+			if !closeF64(v, bFs[i]) {
+				return false
+			}
+		}
+		return true
 	case tensor.Float32:
-
+		aFs := a.Data().([]float32)
+		bFs := b.Data().([]float32)
+		if len(aFs) != len(bFs) {
+			return false
+		}
+		aFs = aFs[:len(aFs)]
+		bFs = bFs[:len(aFs)]
+		for i, v := range aFs {
+			if !closeF32(v, bFs[i]) {
+				return false
+			}
+		}
+		return true
+	default:
+		return a.Eq(b)
 	}
 
 }

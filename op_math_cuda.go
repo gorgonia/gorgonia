@@ -22,7 +22,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 		return
 	}
 
-	cudaLogf("CUDADoing %v | %v", op, inputs)
+	cudaLogf("CUDADoing %v | prealloc %v | %v", op, prealloc, inputs)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 

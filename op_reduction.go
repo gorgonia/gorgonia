@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"log"
 
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
@@ -282,14 +281,18 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(val))
 	addOp := NewExternalOp(add, ctx, nil)
 	addOp.UseUnsafe = true
-	addOp.Device = CPU
+	addOp.Device = x.Device()
 
 	dev := x.Device()
 	if output.Device() != dev && dev != CPU {
-		if val, err = ctx.Transfer(dev, output.Device(), val, false); err != nil {
+		var valOnDev Value
+		if valOnDev, err = ctx.Transfer(dev, output.Device(), val, false); err != nil {
 			return
 		}
-		defer ctx.PutValue(dev, val)
+		defer ctx.PutValue(dev, valOnDev)
+		val = valOnDev
+
+		// Copy(valOnDev, val)
 	}
 	var xd, d Value
 	var extra bool
@@ -297,7 +300,6 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
 	}
 	if extra {
-		log.Printf("Extra allocated 0x%x", xd.Uintptr())
 		defer ctx.PutValue(dev, xd)
 	}
 	if d, err = addOp.Do(xd, val); err != nil {

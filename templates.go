@@ -71,7 +71,7 @@ func getGrad(n *Node) string {
 
 func getGradPtr(n *Node) string {
 	grad, err := n.Grad()
-	if err == nil {
+	if err == nil && grad != nil {
 		return fmt.Sprintf("0x%x", grad.Uintptr())
 	}
 	return ""

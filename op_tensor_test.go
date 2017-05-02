@@ -1,8 +1,6 @@
 package gorgonia
 
 import (
-	"log"
-	"os"
 	"runtime"
 	"testing"
 
@@ -246,10 +244,10 @@ func TestTransposeOp(t *testing.T) {
 	AT := Must(Transpose(A))
 	cost1 := Must(Sum(AT))
 
-	logger := log.New(os.Stderr, "", 0)
 	var m VM
 	var err error
-	m = NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
+
+	m = NewLispMachine(g)
 	if err = m.RunAll(); err != nil {
 		t.Error(err)
 	}

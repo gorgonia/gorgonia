@@ -52,9 +52,13 @@ func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
 func (df *dataflow) analyzeDevice(n *Node) {
 	switch n.op.(type) {
 	case CUDADoer:
-		n.dataOn = Device(0)
+		if n.dataOn == CPU {
+			n.dataOn = Device(0)
+		}
 	case CLDoer:
-		n.dataOn = Device(0)
+		if n.dataOn == CPU {
+			n.dataOn = Device(0)
+		}
 	default:
 		n.dataOn = CPU
 	}
@@ -72,15 +76,7 @@ func (df *dataflow) replaceWithSelf(sorted Nodes) {
 // fixIntervalDevices is used only by the lispMachine. It fixes the intervals to have the correct devices
 func (df *dataflow) fixIntervalDevices(sorted Nodes) {
 	for _, n := range sorted {
-		dev := CPU
-		switch n.op.(type) {
-		case CUDADoer:
-			dev = Device(0)
-		case CLDoer:
-			dev = Device(0)
-		default:
-		}
-		df.intervals[n].result.device = dev
+		df.intervals[n].result.device = n.dataOn
 	}
 }
 

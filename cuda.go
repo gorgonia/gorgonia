@@ -284,9 +284,6 @@ func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bo
 
 // Signal sends a signal down the workavailable channel, telling the VM to call the DoWork method. Signal is a synchronous method
 func (m *ExternMetadata) Signal() {
-	// pc, _, _, _ := runtime.Caller(1)
-
-	// log.Printf("Signalled by %v", runtime.FuncForPC(pc).Name())
 	if m.workAvailable != nil {
 		m.signal()
 		<-m.syncChan
@@ -522,6 +519,9 @@ func (n *Node) GradOnDevice(toDev Device, extern External) (retVal Value, allocO
 	} else if n.deriv != nil {
 		return n.deriv.ValueOnDevice(toDev, extern)
 	} else {
+		return nil, false, errors.Errorf("No gradient node/value found for %v", n)
+	}
+	if d == nil {
 		return nil, false, errors.Errorf("No gradient node/value found for %v", n)
 	}
 

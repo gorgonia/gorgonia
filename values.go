@@ -61,6 +61,11 @@ type ValueEqualer interface {
 	ValueEq(Value) bool
 }
 
+// ValueCloser represents any type that can perform a close-value check
+type ValueCloser interface {
+	ValueClose(interface{}) bool
+}
+
 // Cloner represents any type that can clone itself.
 type Cloner interface {
 	Clone() interface{}

@@ -196,9 +196,6 @@ func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) 
 			break
 		}
 
-		// logfile, _ := os.OpenFile(fmt.Sprintf("execlog/exec_%v_%v.log", epoch, batch), os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
-		// logger := log.New(logfile, "", 0)
-
 		for i, correct := range y[start:end] {
 			var loss *Node
 
@@ -246,9 +243,6 @@ func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) 
 }
 
 func (sda *StackedDA) Forwards(x tensor.Tensor) (res tensor.Tensor, err error) {
-	// logfile, _ := os.OpenFile("exec.log", os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
-	// logger := log.New(logfile, "", 0)
-
 	if sda.final.output == nil {
 		panic("sda.final not set!")
 	}

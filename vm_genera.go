@@ -53,7 +53,6 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 		runFlags:       runFlags, // run only fwd and bwd
 	}
 
-	// log.Printf("New Lisp Machine %p", m)
 	for _, opt := range opts {
 		opt(m)
 	}
@@ -61,24 +60,6 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 		panic(err)
 	}
 	runtime.SetFinalizer(m, finalizeLispMachine)
-
-	// for _, a := range m.a {
-	// 	if a == nil {
-	// 		continue
-	// 	}
-	// 	log.Printf("Start: 0x%x End 0x%x", a.start, uintptr(a.size)+a.start)
-	// }
-
-	// for _, n := range m.sorted {
-	// 	if n.boundTo != nil {
-	// 		if dv, ok := n.boundTo.(*dualValue); ok {
-	// 			log.Printf("\tEncountered %v 0x%x | 0x%x", n, dv.Value.Uintptr(), dv.d.Uintptr())
-	// 		} else {
-	// 			log.Printf("\tEncountered %v 0x%x", n, n.boundTo.Uintptr())
-	// 		}
-	// 	}
-
-	// }
 	return m
 }
 
@@ -135,10 +116,10 @@ func (m *lispMachine) RunAll() (err error) {
 		}()
 	}
 
-	m.logf("SORTED:")
-	for i, n := range m.sorted {
-		m.logf("%d: %v (%d)", i, n, n.ID())
-	}
+	// m.logf("SORTED:")
+	// for i, n := range m.sorted {
+	// 	m.logf("%d: %v (%d)", i, n, n.ID())
+	// }
 
 	workAvailable := m.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
@@ -149,7 +130,6 @@ func (m *lispMachine) RunAll() (err error) {
 	for {
 		select {
 		case synchronous := <-workAvailable:
-			m.logf("Do work")
 			err := m.ExternMetadata.DoWork()
 			if err != nil {
 				var node *Node
@@ -202,13 +182,9 @@ func (m *lispMachine) UnbindAll() {
 		m.logf("dealloc n; %v %x %p", n, n.Hashcode(), n)
 		if !n.isInput() {
 			n.unbind()
-			m.logf("OK")
 		}
 	}
 	// }
-
-	// walkGraph(start, ch, walked)
-
 }
 
 func (m *lispMachine) LastRun() (n *Node, backprop bool) {
@@ -309,7 +285,7 @@ func (m *lispMachine) forward() (err error) {
 	}
 	n := m.sorted[m.fwd]
 
-	m.watchedLogf("n: %v (%x)", n, n.Hashcode())
+	m.watchedLogf("n: %v | (%x)", n, n.id)
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
 
@@ -351,18 +327,53 @@ func (m *lispMachine) forward() (err error) {
 
 	inputs := make([]*dualValue, len(n.children))
 	children := n.children
-	if m.df != nil {
-		var ok bool
-		if children, ok = m.df.devTransChildren[n]; !ok {
-			children = n.children
-		}
-	}
 
 	m.enterLoggingContext()
 	for i, child := range children {
-		dv := child.boundTo.(*dualValue)
+		if child.Device() == n.Device() {
+			inputs[i] = child.boundTo.(*dualValue)
+			continue
+		}
+		m.logf("child %v", child)
+		// if child.boundTo != nil {
+		// 	dv := child.boundTo.(*dualValue)
+		// 	if dv.d != nil {
+		// 		m.logf("0x%x | 0x%x", child.boundTo.(*dualValue).Value.Uintptr(), child.boundTo.(*dualValue).d.Uintptr())
+		// 	} else {
+		// 		m.logf("0x%x | NIL", child.boundTo.(*dualValue).Value.Uintptr())
+		// 	}
+		// } else {
+		// 	m.logf("no boundto")
+		// }
+
+		var allocV, allocD bool
+		var v, d Value
+		if v, allocV, err = child.ValueOnDevice(dev, m); err != nil {
+			return errors.Wrapf(err, "Unable to get Value on Device %v", dev)
+		}
+		if d, allocD, err = child.GradOnDevice(dev, m); err != nil {
+			if !child.isRandom() {
+				return errors.Wrapf(err, "Unable to get Grad on Device %v", dev)
+			}
+			err = nil
+		}
+
+		dv := borrowDV()
+
+		dv.Value = v
+		dv.d = d
 		inputs[i] = dv
-		m.logf("child %d: 0x%x %v %v", i, dv.Value.Uintptr(), dv.Type(), dv.Shape())
+
+		defer func() {
+			if allocV {
+				m.logf("Putting 0x%x", v.Uintptr())
+				m.PutValue(dev, v)
+			}
+			if allocD {
+				m.PutValue(dev, d)
+			}
+			returnDV(dv)
+		}()
 	}
 	m.leaveLoggingContext()
 
@@ -376,7 +387,6 @@ func (m *lispMachine) forward() (err error) {
 			machineLogf("dvBindVar")
 			m.logf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
-				return errors.Wrapf(err, execFail, op, n)
 			}
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
@@ -415,24 +425,30 @@ func (m *lispMachine) forward() (err error) {
 					*ot.into = childVal
 				}
 			}
-
-		case devTrans:
-			// this case is unreachable in non CUDA builds
-			if err = m.execDevTrans(ot, n, children); err != nil {
-				return errors.Wrapf(err, "Cannot perform device transfer %v", ot)
-			}
 		}
 
 	case n.boundTo == nil:
 		m.watchedLogf("Fresh, unencountered node, so dvBind(%v)", op)
-		machineLogf("Inputs")
-		enterLoggingContext()
-		for i, in := range inputs {
-			if inT, ok := in.Value.(tensor.Tensor); ok {
-				machineLogf("%d; %v", i, inT.Info())
+		if dev != CPU {
+			var dt tensor.Dtype
+			if dt, err = dtypeOf(n.t); err != nil {
+				return errors.Wrapf(err, dtypeExtractionFail, n.t)
 			}
+
+			var mem Memory
+			memsize := calcMemSize(dt, n.shape)
+			if mem, err = m.Get(dev, memsize); err != nil {
+				return errors.Wrapf(err, allocFail, memsize)
+			}
+
+			var reuse Value
+			if reuse, err = makeValueFromMem(n.t, n.shape, mem); err != nil {
+				return errors.Wrapf(err, makeValueFail, n.t, n.shape)
+			}
+
+			op.Prealloc = reuse
 		}
-		leaveLoggingContext()
+
 		if output, err = dvBind(op, inputs); err != nil {
 			return errors.Wrapf(err, execFail, op, n)
 		}
@@ -449,6 +465,10 @@ func (m *lispMachine) forward() (err error) {
 			return errors.Wrap(err, bindFail)
 		}
 
+		if dev != CPU {
+			op.Prealloc = output.Value
+		}
+
 		err = dvBind0(op, output, inputs)
 		if _, ok := errors.Cause(err).(AutoDiffError); ok {
 			err = nil
@@ -458,6 +478,9 @@ func (m *lispMachine) forward() (err error) {
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
+	if n.boundTo != nil {
+		m.watchedLogf("0x%x | 0x%x", n.boundTo.(*dualValue).Value.Uintptr(), n.boundTo.(*dualValue).d.Uintptr())
+	}
 
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{

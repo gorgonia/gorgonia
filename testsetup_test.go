@@ -24,7 +24,7 @@ func floatsEqual64(a, b []float64) bool {
 	}
 
 	for i, v := range a {
-		if !closF64(v, b[i]) {
+		if !closeF64(v, b[i]) {
 			return false
 		}
 	}

@@ -463,7 +463,6 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 		g = m.g.SubgraphRoots(cost)
 	}
 
-	// f, _ := os.OpenFile(fmt.Sprintf("%d_%s.log", iter, m.prefix), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	f, _ := os.Create("FAIL.log")
 	logger := log.New(f, "", 0)
 	machine := NewLispMachine(g, WithLogger(logger), WithValueFmt("%-1.1s"), LogBothDir(), WithWatchlist())

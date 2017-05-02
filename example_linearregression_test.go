@@ -69,13 +69,11 @@ func linearRegression(Float tensor.Dtype) {
 
 	_, err := Grad(cost, m, c)
 
-	// logger := log.New(os.Stderr, "", 0)
-	// machine := NewTapeMachine(g, BindDualValues(m, c), WithLogger(logger))
+	// machine := NewLispMachine(g)  // you can use a LispMachine, but it'll be VERY slow.
 	machine := NewTapeMachine(g, BindDualValues(m, c))
 	log.Printf("%v", machine.Prog())
-	defer runtime.GC()
 
-	// machine := NewLispMachine(g)  // you can use a LispMachine, but it'll be VERY slow.
+	defer runtime.GC()
 	model := Nodes{m, c}
 	solver := NewVanillaSolver(WithLearnRate(0.001), WithClip(5)) // good idea to clip
 

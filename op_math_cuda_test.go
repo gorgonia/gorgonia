@@ -32,9 +32,9 @@ func TestCUDACube(t *testing.T) {
 	correct := []float32{0, 1, 8, 27, 64, 125, 216, 343, 512, 729, 1000, 1331, 1728, 2197, 2744, 3375, 4096, 4913, 5832, 6859, 8000, 9261, 10648, 12167, 13824, 15625, 17576, 19683, 21952, 24389, 27000, 29791}
 	assert.Equal(correct, x3Val.Data())
 
-	t.Logf("%v", x3Val.Uintptr())
-	t.Logf("%v", m.cpumem[1])
-	t.Logf("%v", m.cpumem[1].Uintptr())
+	t.Logf("0x%x", x3Val.Uintptr())
+	t.Logf("\n%v", m.cpumem[1])
+	t.Logf("0x%x", m.cpumem[1].Uintptr())
 
 	correct = tensor.Range(tensor.Float32, 0, 32).([]float32)
 	assert.Equal(correct, x.Value().Data())
@@ -106,8 +106,8 @@ func TestMultiDeviceArithmetic(t *testing.T) {
 	zpx := Must(Add(x, z)) // z would be on device
 	Must(Sum(zpx))
 
-	xV := tensor.New(tensor.WithBacking([]float64{0, 1, 2, 3}))
-	yV := tensor.New(tensor.WithBacking([]float64{0, 1, 2, 3}))
+	xV := tensor.New(tensor.WithBacking([]float64{0, 1, 2, 3}), tensor.WithShape(2, 2))
+	yV := tensor.New(tensor.WithBacking([]float64{0, 1, 2, 3}), tensor.WithShape(2, 2))
 
 	Let(x, xV)
 	Let(y, yV)
@@ -120,7 +120,7 @@ func TestMultiDeviceArithmetic(t *testing.T) {
 	t.Logf("y.Device: %v", y.Device())
 
 	if err := m.RunAll(); err != nil {
-		t.Errorf("err: %v", err)
+		t.Errorf("err: %+v", err)
 	}
 
 }

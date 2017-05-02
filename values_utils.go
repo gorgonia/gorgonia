@@ -47,6 +47,7 @@ func ValueEq(a, b Value) bool {
 	}
 }
 
+// ValueClose checks whether two values are close to one another. It's predominantly used as an alternative equality test for floats
 func ValueClose(a, b Value) bool {
 	if a == nil && b == nil {
 		return true
@@ -54,7 +55,15 @@ func ValueClose(a, b Value) bool {
 
 	switch at := a.(type) {
 	case Scalar:
+		if bt, ok := b.(Scalar); ok {
+			return scalarClose(at, bt)
+		}
+		return false
 	case tensor.Tensor:
+		if bt, ok := b.(tensor.Tensor); ok {
+			return tensorClose(at, bt)
+		}
+		return false
 	case ValueCloser:
 		return at.ValueClose(b)
 	default:
