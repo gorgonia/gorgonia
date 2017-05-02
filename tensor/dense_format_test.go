@@ -276,3 +276,43 @@ func TestDense_Format_basics(t *testing.T) {
 		}
 	}
 }
+
+func TestDense_Format_Masked(t *testing.T) {
+	assert := assert.New(t)
+	T := New(Of(Int), WithShape(1, 12))
+	data := T.ints()
+	for i := 0; i < len(data); i++ {
+		data[i] = i
+	}
+	T.ResetMask(false)
+	for i := 0; i < 12; i += 2 {
+		T.mask[i] = true
+	}
+
+	s := fmt.Sprintf("%d", T)
+	assert.Equal(`R[--   1  --   3  ... --   9  --  11]`, s)
+
+	T = New(Of(Int), WithShape(2, 4, 16))
+	data = T.ints()
+	for i := 0; i < len(data); i++ {
+		data[i] = i
+	}
+	T.ResetMask(false)
+	for i := 0; i < len(data); i += 2 {
+		T.mask[i] = true
+	}
+
+	s = fmt.Sprintf("%d", T)
+	assert.Equal(`⎡ --    1   --    3  ...  --   13   --   15⎤
+⎢ --   17   --   19  ...  --   29   --   31⎥
+⎢ --   33   --   35  ...  --   45   --   47⎥
+⎣ --   49   --   51  ...  --   61   --   63⎦
+
+⎡ --   65   --   67  ...  --   77   --   79⎤
+⎢ --   81   --   83  ...  --   93   --   95⎥
+⎢ --   97   --   99  ...  --  109   --  111⎥
+⎣ --  113   --  115  ...  --  125   --  127⎦
+
+`, s)
+
+}

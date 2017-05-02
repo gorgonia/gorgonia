@@ -26,14 +26,40 @@ func Of(a Dtype) ConsOpt {
 //		backing := []float64{1,2,3,4}
 // 		t := New(WithBacking(backing))
 // It can be used with other construction options like WithShape
-func WithBacking(x interface{}) ConsOpt {
+func WithBacking(x interface{}, argMask ...[]bool) ConsOpt {
+	var mask []bool
+	if len(argMask) > 0 {
+		mask = argMask[0]
+	}
 	f := func(t Tensor) {
 		if x == nil {
 			return
 		}
 		switch tt := t.(type) {
 		case *Dense:
-			tt.fromSlice(x)
+			tt.fromSlice(x, mask)
+		default:
+			panic("Unsupported Tensor type")
+		}
+	}
+	return f
+}
+
+// WithMask is a construction option for a Tensor
+// Use it as such:
+//		mask := []bool{true,true,false,false}
+// 		t := New(WithBacking(backing))
+// It can be used with other construction options like WithShape
+// The supplied mask can be any type. If non-boolean, then tensor mask is set to true
+// wherever non-zero value is obtained
+func WithMask(x interface{}) ConsOpt {
+	f := func(t Tensor) {
+		if x == nil {
+			return
+		}
+		switch tt := t.(type) {
+		case *Dense:
+			tt.MaskFromSlice(x)
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -52,14 +78,16 @@ func WithShape(dims ...int) ConsOpt {
 		default:
 			panic("Unsupported Tensor type")
 		}
-
 	}
-
 	return f
 }
 
-// FromScalar is a construction option for representing a scalar value as a Tensor.
-func FromScalar(x interface{}) ConsOpt {
+// FromScalar is a construction option for representing a scalar value as a Tensor
+func FromScalar(x interface{}, argMask ...[]bool) ConsOpt {
+	var mask []bool
+	if len(argMask) > 0 {
+		mask = argMask[0]
+	}
 
 	f := func(t Tensor) {
 		switch tt := t.(type) {
@@ -79,6 +107,8 @@ func FromScalar(x interface{}) ConsOpt {
 			tt.v = x
 			tt.t = Dtype{xt}
 			tt.hdr = hdr
+			tt.mask = mask
+
 		default:
 			panic("Unsupported Tensor Type")
 		}

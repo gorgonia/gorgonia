@@ -1,9 +1,8 @@
 package tensor
 
 import (
-	"reflect"
-
 	"github.com/pkg/errors"
+	"reflect"
 )
 
 // Apply applies a function to all the values in the ndarray
@@ -40,7 +39,7 @@ func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error
 	case t.viewOf == nil:
 		err = res.mapFn(fn, incr)
 	case t.viewOf != nil:
-		it := NewFlatIterator(t.AP)
+		it := IteratorFromDense(t)
 		if err = res.iterMap(fn, it, incr); err != nil {
 			return
 		}
@@ -198,6 +197,24 @@ func (t *Dense) At(coords ...int) (interface{}, error) {
 	return t.Get(at), nil
 }
 
+// MaskAt returns the value of the mask at a given coordinate
+// returns false (valid) if not tensor is not masked
+func (t *Dense) MaskAt(coords ...int) (bool, error) {
+	if !t.IsMasked() {
+		return false, nil
+	}
+	if len(coords) != t.Dims() {
+		return true, errors.Errorf(dimMismatch, t.Dims(), len(coords))
+	}
+
+	at, err := t.maskAt(coords...)
+	if err != nil {
+		return true, errors.Wrap(err, "MaskAt()")
+	}
+
+	return t.mask[at], nil
+}
+
 // SetAt sets the value at the given coordinate
 func (t *Dense) SetAt(v interface{}, coords ...int) error {
 	if len(coords) != t.Dims() {
@@ -209,6 +226,32 @@ func (t *Dense) SetAt(v interface{}, coords ...int) error {
 		return errors.Wrap(err, "SetAt()")
 	}
 	t.Set(at, v)
+	return nil
+}
+
+// SetMaskAtDataIndex set the value of the mask at a given index
+func (t *Dense) SetMaskAtIndex(v bool, i int) error {
+	if !t.IsMasked() {
+		return nil
+	}
+	t.mask[i] = v
+	return nil
+}
+
+// SetMaskAt sets the mask value at the given coordinate
+func (t *Dense) SetMaskAt(v bool, coords ...int) error {
+	if !t.IsMasked() {
+		return nil
+	}
+	if len(coords) != t.Dims() {
+		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
+	}
+
+	at, err := t.maskAt(coords...)
+	if err != nil {
+		return errors.Wrap(err, "SetAt()")
+	}
+	t.mask[at] = v
 	return nil
 }
 
@@ -309,6 +352,7 @@ func (t *Dense) CopyTo(other *Dense) error {
 func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 	var newAP *AP
 	var ndStart, ndEnd int
+
 	if newAP, ndStart, ndEnd, err = t.AP.S(t.len(), slices...); err != nil {
 		return
 	}
@@ -323,6 +367,10 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 	view.hdr.Len = t.hdr.Len
 	view.hdr.Cap = t.hdr.Cap
 	view.slice(ndStart, ndEnd)
+
+	if t.IsMasked() {
+		view.mask = t.mask[ndStart:ndEnd]
+	}
 	return view, err
 }
 
@@ -374,14 +422,21 @@ func (t *Dense) RollAxis(axis, start int, safe bool) (retVal *Dense, err error) 
 // Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
 func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 	ss := make([]Shape, len(Ts))
+
+	var isMasked = false
 	for i, T := range Ts {
 		ss[i] = T.Shape()
+		isMasked = isMasked || T.IsMasked()
 	}
+
 	var newShape Shape
 	if newShape, err = t.Shape().Concat(axis, ss...); err != nil {
 		return
 	}
 	retVal = recycledDense(t.t, newShape)
+	if isMasked {
+		retVal.makeMask()
+	}
 
 	all := make([]*Dense, len(Ts)+1)
 	all[0] = t
@@ -399,6 +454,7 @@ func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 		if v, err = sliceDense(retVal, slices...); err != nil {
 			return
 		}
+
 		if v.IsVector() && T.IsMatrix() && axis == 0 {
 			v.reshape(v.shape[0], 1)
 		}
@@ -483,6 +539,7 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 	// the "viewStack" method is the more generalized method
 	// and will work for all Tensors, regardless of whether it's a view
 	// But the simpleStack is faster, and is an optimization
+
 	if allNoMat {
 		retVal = t.simpleStack(retVal, axis, others...)
 	} else {
@@ -523,6 +580,12 @@ func (t *Dense) transposeIndex(i int, transposePat, strides []int) int {
 // This is of course, extensible to any number of dimensions.
 func (t *Dense) at(coords ...int) (at int, err error) {
 	return Ltoi(t.Shape(), t.Strides(), coords...)
+}
+
+// maskat returns the mask index at which the coordinate is referring to.
+func (t *Dense) maskAt(coords ...int) (at int, err error) {
+	//TODO: Add check for non-masked tensor
+	return t.at(coords...)
 }
 
 // simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides

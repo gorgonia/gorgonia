@@ -16,6 +16,14 @@ func TestDense_shallowClone(t *testing.T) {
 	assert.Equal(t, T.Data().([]float64)[0:2], T2.Data())
 }
 
+func TestDenseMasked(t *testing.T) {
+
+	T := New(Of(Float64), WithShape(3, 2))
+	T.ResetMask()
+	assert.Equal(t, []bool{false, false, false, false, false, false}, T.mask)
+
+}
+
 func TestFromScalar(t *testing.T) {
 	T := New(FromScalar(3.14))
 	data := T.float64s()

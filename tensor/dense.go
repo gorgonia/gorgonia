@@ -2,10 +2,13 @@ package tensor
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 	"unsafe"
+)
 
-	"github.com/pkg/errors"
+const (
+	maskCompEvery int = 8
 )
 
 type denseFlag byte
@@ -31,6 +34,9 @@ type Dense struct {
 
 	// if viewOf != nil, then this *Dense is a view.
 	viewOf *Dense
+
+	mask       []bool // mask slice can be used to identify missing or invalid values. len(mask)<=len(v)
+	maskIsSoft bool
 }
 
 // NewDense creates a new *Dense. It tries its best to get from the tensor pool.
@@ -77,11 +83,12 @@ func newDense(dt Dtype, size int) *Dense {
 	return d
 }
 
-func (t *Dense) fromSlice(x interface{}) {
+func (t *Dense) fromSlice(x interface{}, argMask ...[]bool) {
 	xt := reflect.TypeOf(x)
 	if xt.Kind() != reflect.Slice {
 		panic("Not a slice")
 	}
+
 	xt = xt.Elem()
 
 	xv := reflect.ValueOf(x)
@@ -97,10 +104,22 @@ func (t *Dense) fromSlice(x interface{}) {
 	t.v = x
 	t.t = Dtype{xt}
 	t.hdr = hdr
+
+	if len(argMask) > 0 {
+		if argMask[0] != nil {
+			if len(argMask[0]) != t.len() {
+				panic("Mask is not same length as data")
+			}
+		}
+		t.mask = argMask[0]
+	}
 }
 
-// Info returns the accesspattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
+// Info returns the access pattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
 func (t *Dense) Info() *AP { return t.AP }
+
+// IsMasked indicates whether tensor is masked
+func (t *Dense) IsMasked() bool { return len(t.mask) == t.len() }
 
 // Dtype returns the data type of the *Dense tensor.
 func (t *Dense) Dtype() Dtype { return t.t }
@@ -218,7 +237,6 @@ func (t *Dense) fix() {
 	if t.AP == nil {
 		return
 	}
-
 	switch {
 	case t.IsScalar() && t.data == nil:
 		t.makeArray(1)
@@ -233,7 +251,64 @@ func (t *Dense) fix() {
 		size := t.Shape().TotalSize()
 		t.makeArray(size)
 	}
+	if len(t.mask) != t.len() {
+		t.mask = t.mask[:0]
+	}
 	t.lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
+}
+
+// makeMask adds a mask slice to tensor if required
+func (t *Dense) makeMask() {
+	size := t.DataSize()
+	if len(t.mask) >= size {
+		t.mask = t.mask[:size]
+	}
+	if cap(t.mask) < size {
+		t.mask = make([]bool, size)
+	}
+	t.mask = t.mask[:size]
+	memsetBools(t.mask, false)
+}
+
+// MaskFromDense adds a mask slice to tensor by XORing dense argument's masks
+func (t *Dense) MaskFromDense(tts ...*Dense) {
+
+	hasMask := BorrowBools(len(tts))
+	defer ReturnBools(hasMask)
+
+	numMasked := 0
+	var masked = false
+
+	for i, tt := range tts {
+		if tt != nil {
+			hasMask[i] = tt.IsMasked()
+			masked = masked || hasMask[i]
+			if hasMask[i] {
+				numMasked++
+			}
+		}
+	}
+	if numMasked < 1 {
+		return
+	}
+
+	//Only make mask if none already. This way one of the tts can be t itself
+
+	if len(t.mask) < t.DataSize() {
+		t.makeMask()
+	}
+
+	for i, tt := range tts {
+		if tt != nil {
+			n := len(tt.mask)
+			if hasMask[i] {
+				for j := range t.mask {
+					t.mask[j] = t.mask[j] || tt.mask[j%n]
+				}
+
+			}
+		}
+	}
 }
 
 // sanity is a function that sanity checks that a tensor is correct.
@@ -279,4 +354,179 @@ func (t *Dense) shallowClone() *Dense {
 		Cap:  t.hdr.Cap,
 	}
 	return retVal
+}
+
+/* ------ Mask operations */
+
+//ResetMask fills the mask with either false, or the provided boolean value
+func (t *Dense) ResetMask(val ...bool) error {
+	if !t.IsMasked() {
+		t.makeMask()
+	}
+	var fillValue = false
+	if len(val) > 0 {
+		fillValue = val[0]
+	}
+	memsetBools(t.mask, fillValue)
+	return nil
+}
+
+// HardenMask forces the mask to hard. If mask is hard, then true mask values can not be unset
+func (t *Dense) HardenMask() bool {
+	t.maskIsSoft = false
+	return t.maskIsSoft
+}
+
+// SoftenMask forces the mask to soft
+func (t *Dense) SoftenMask() bool {
+	t.maskIsSoft = true
+	return t.maskIsSoft
+}
+
+// MaskFromSlice makes mask from supplied slice
+func (t *Dense) MaskFromSlice(x interface{}) {
+	t.makeMask()
+	n := len(t.mask)
+	switch m := x.(type) {
+	case []bool:
+		copy(t.mask, m)
+		return
+	case []int:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []int8:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []int16:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []int32:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []int64:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []uint:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []byte:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []uint16:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []uint32:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []uint64:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []float32:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []float64:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []complex64:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []complex128:
+		for i, v := range m {
+			if v != 0 {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	case []string:
+		for i, v := range m {
+			if v != "" {
+				t.mask[i] = true
+			}
+			if i >= n {
+				return
+			}
+		}
+	default:
+		return
+	}
 }

@@ -129,6 +129,9 @@ func (t *Dense) Zero() {
 			panic(err)
 		}
 	}
+	if t.IsMasked(){
+		t.ResetMask()
+	}
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
@@ -209,6 +212,13 @@ const copyRaw = `func copyDense(dest, src *Dense) int {
 		err := errors.Errorf(dtypeMismatch, src.t, dest.t)
 		panic(err.Error())
 	}
+	if src.IsMasked(){
+		if cap(dest.mask)<len(src.mask){
+			dest.mask=make([]bool, len(src.mask))
+		}
+		copy(dest.mask, src.mask)
+		dest.mask=dest.mask[:len(src.mask)]
+	}
 	switch dest.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized .}}
@@ -228,6 +238,16 @@ const copyRaw = `func copyDense(dest, src *Dense) int {
 const copySlicedRaw = `func copySliced(dest *Dense, dstart, dend int, src *Dense, sstart, send int) int{
 	if dest.t != src.t {
 		panic("Cannot copy arrays of different types")
+	}
+
+	if src.IsMasked(){
+		mask:=dest.mask
+		if cap(dest.mask) < dend{
+			mask = make([]bool, dend)
+		}
+		copy(mask, dest.mask)
+		dest.mask=mask
+		copy(dest.mask[dstart:dend], src.mask[sstart:send])
 	}
 	switch dest.t.Kind() {
 	{{range .Kinds -}}
@@ -263,6 +283,14 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 		siter = NewFlatIterator(src.AP)
 	}
 	
+	isMasked:= src.IsMasked()
+	if isMasked{
+		if cap(dest.mask)<src.DataSize(){
+			dest.mask=make([]bool, src.DataSize())
+		}
+		dest.mask=dest.mask[:dest.DataSize()]
+	}
+
 	k := dest.t.Kind()
 	var i, j, count int
 	var err error
@@ -279,6 +307,10 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 			}
 			break
 		}
+		if isMasked{
+			dest.mask[i]=src.mask[j]
+		}
+		
 		switch k {
 		{{range .Kinds -}}
 			{{if isParameterized . -}}

@@ -168,17 +168,25 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 	{{$div := hasPrefix .OpName "Div" -}}
 	{{if or $scaleInv $div -}}var errs errorIndices
 	{{end -}}
-	var it, ot *FlatIterator
+	var it, ot *FlatMaskedIterator
 	if t.IsMaterializable() {
-		it = NewFlatIterator(t.AP)
+		it = NewFlatMaskedIterator(t.AP, t.mask)
 	}
 	if other.IsMaterializable() {
-		ot = NewFlatIterator(other.AP)
+		ot = NewFlatMaskedIterator(other.AP, other.mask)
 	}
 	switch {
 	case incr:
 		// when incr returned, the reuse is the *Dense to be incremented
 		retVal = reuse
+		retVal.MaskFromDense(t, other)
+		if it != nil{
+			it.mask = retVal.mask
+		}
+		if ot != nil{
+			ot.mask = retVal.mask
+		}
+		isMasked := retVal.IsMasked()
 		switch reuse.t.Kind() {
 		{{range .Kinds -}}
 			{{if isNumber . -}}
@@ -186,11 +194,11 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 			data := reuse.{{sliceOf .}}
 			switch {
 			case reuse.IsMaterializable():
-				incrIter := NewFlatIterator(reuse.AP)
-				var i, j, incrI int
+				incrIter := FlatMaskedIteratorFromDense(retVal)
+				var i, j, incrI, iterStep int
 				switch {
 				case it == nil && ot == nil:
-					for incrI, err = incrIter.Next(); err == nil; incrI, err = incrIter.Next() {
+					for incrI, iterStep, err = incrIter.NextValid(); err == nil; incrI, iterStep, err = incrIter.NextValid() {
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
 								if other.get{{short .}}(j) == 0 {
@@ -199,22 +207,22 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 								}
 							{{end -}}
 						{{end -}}
-						data[incrI] += {{if $isFunc -}}
-							{{if eq $op "math.Pow" -}}
-								{{if eq .String "complex64" -}}
-									complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
-								{{else if isFloat . -}}
-									{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
-								{{else -}}
-									{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+							data[incrI] += {{if $isFunc -}}
+								{{if eq $op "math.Pow" -}}
+									{{if eq .String "complex64" -}}
+										complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+									{{else if isFloat . -}}
+										{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+									{{else -}}
+										{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+									{{end -}}
 								{{end -}}
+							{{else -}}
+								t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
 							{{end -}}
-						{{else -}}
-							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
-						{{end -}}
-
-						i++
-						j++
+					  
+						i += iterStep
+						j += iterStep
 					}
 					{{if or $div $scaleInv -}}
 						if err != nil {
@@ -224,11 +232,11 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 					{{end -}}
 				case it != nil && ot == nil:
 					for {
-						if i, err = it.Next(); err != nil{
+						if i, _, err = it.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
-						if incrI, err = incrIter.Next(); err != nil{
+						if incrI, iterStep, err = incrIter.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
@@ -253,7 +261,7 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 						{{else -}}
 							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
 						{{end -}}
-						j++
+						j += iterStep
 					}
 					{{if or $div $scaleInv -}}
 						if err != nil {
@@ -263,11 +271,11 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 					{{end -}}
 				case it == nil && ot != nil:
 					for {
-						if j, err = ot.Next(); err != nil{
+						if j, _, err = ot.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
-						if incrI, err = incrIter.Next(); err != nil{
+						if incrI, iterStep, err = incrIter.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
@@ -292,7 +300,7 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 						{{else -}}
 							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
 						{{end -}}
-						i++
+						i += iterStep
 					}
 					{{if or $div $scaleInv -}}
 						if err != nil {
@@ -302,15 +310,15 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 					{{end -}}
 				case it != nil && ot != nil:
 					for {
-						if i, err = it.Next(); err != nil{
+						if i, _, err = it.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
-						if j, err = ot.Next(); err != nil{
+						if j, _, err = ot.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
-						if incrI, err = incrIter.Next(); err != nil{
+						if incrI, _, err = incrIter.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
@@ -346,12 +354,16 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 					{{end -}}					
 				}
 			case !reuse.IsMaterializable():
-				var i, j, incrI int
+				var i, j, incrI, iterStep int
 				switch {
 				case it == nil && ot == nil:
+				if isMasked{
+					err = incrVec{{$opName}}{{short .}}Masked(t.{{sliceOf .}}, other.{{sliceOf .}}, reuse.{{sliceOf .}}, reuse.mask)
+				} else{
 					err = incrVec{{$opName}}{{short .}}(t.{{sliceOf .}}, other.{{sliceOf .}}, reuse.{{sliceOf .}})
+				}
 				case it != nil && ot == nil:
-					for i, err = it.Next(); err == nil; i, err = it.Next() {
+					for i, iterStep, err = it.NextValid(); err == nil; i, iterStep, err = it.NextValid() {
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
 								if other.get{{short .}}(j) == 0 {
@@ -374,12 +386,12 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 						{{else -}}
 							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
 						{{end -}}
-						j++
-						incrI++
+						j += iterStep
+						incrI += iterStep
 					}
 					err = handleNoOp(err)
 				case it == nil && ot != nil:
-					for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+					for j, iterStep, err = ot.NextValid(); err == nil; j, iterStep, err = ot.NextValid() {
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
 								if other.get{{short .}}(j) == 0 {
@@ -402,17 +414,17 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 						{{else -}}
 							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
 						{{end -}}
-						i++
-						incrI++
+						i += iterStep
+						incrI += iterStep
 					}
 					err = handleNoOp(err)
 				case it != nil && ot != nil:
 					for {
-						if i, err = it.Next(); err != nil{
+						if i, iterStep, err = it.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
-						if j, err = ot.Next(); err != nil{
+						if j, _, err = ot.NextValid(); err != nil{
 							err = handleNoOp(err)
 							break
 						}
@@ -438,7 +450,7 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
 						{{end -}}
 
-						incrI++
+						incrI += iterStep
 					}
 					{{if or $div $scaleInv -}}
 						if err != nil {
@@ -459,7 +471,7 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 		
 	case toReuse:
 		if t.IsMaterializable(){
-			copyDenseIter(reuse, t, nil, it)
+			copyDenseIter(reuse, t, nil, it.FlatIterator)
 		} else {
 			copyDense(reuse, t) // technically copyDenseIter would have done the same but it's much slower
 		}
@@ -476,11 +488,52 @@ func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err e
 		err = t.{{lower .OpName}}(other, it, ot)
 		retVal = t
 	}
+	if it != nil{
+		it.mask = nil
+		}
+	if ot != nil{
+		ot.mask = nil
+	}
 	return
 }
 `
 
-const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *Dense, it, ot *FlatIterator) (err error){
+const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *Dense, itt, ott Iterator) (err error){
+	var it, ot *FlatMaskedIterator
+	if itt != nil {
+		it = new(FlatMaskedIterator)	
+		switch iter:= itt.(type) {
+			case *FlatIterator:			
+				it.FlatIterator = iter
+			case *FlatMaskedIterator:
+				it = iter
+			case *MultIterator:
+				it.FlatIterator = iter.fit0
+				it.mask = iter.mask
+		}
+	}
+	if ott != nil {
+		ot = new(FlatMaskedIterator)
+		switch iter:= ott.(type) {
+			case *FlatIterator:
+				ot.FlatIterator = iter
+			case *FlatMaskedIterator:
+				ot = iter
+			case *MultIterator:
+				ot.FlatIterator = iter.fit0
+				ot.mask = iter.mask
+		}
+	}
+
+	t.MaskFromDense(t, other)
+
+	if it != nil{
+		it.mask = t.mask
+	}
+	if ot != nil{
+		ot.mask = t.mask
+	}
+		
 	{{$isFunc := .IsFunc -}}
 	{{$op := .OpSymb -}}
 	{{$opName := .OpName -}}
@@ -494,15 +547,15 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 	case reflect.{{reflectKind .}}:
 		tdata := t.{{sliceOf .}}
 		odata := other.{{sliceOf .}}
-		var i, j int
+		var i, j, iterStep int
 		switch {
 		case it != nil && ot != nil:
 			for {
-				if i, err = it.Next(); err != nil {
+				if i, _, err = it.NextValid(); err != nil {
 					err = handleNoOp(err)
 					break
 				}
-				if j, err = ot.Next(); err != nil {
+				if j, _, err = ot.NextValid(); err != nil {
 					err = handleNoOp(err)
 					break
 				}
@@ -529,7 +582,7 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 				{{end -}}
 			}
 		case it != nil && ot == nil:
-			for i, err = it.Next(); err == nil; i, err = it.Next(){
+			for i, iterStep, err = it.NextValid(); err == nil; i, iterStep, err = it.NextValid(){
 				{{if or $div $scaleInv -}}
 					{{if isntFloat . -}}
 					if odata[j] == 0 {
@@ -551,11 +604,11 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 				{{else -}}
 					tdata[i] {{$op}} odata[j]
 				{{end -}}
-				j++
+				j += iterStep
 			}
 			err = handleNoOp(err)
 		case it == nil && ot != nil:
-			for j, err = ot.Next(); err == nil; j, err = ot.Next() {
+			for j, iterStep, err = ot.NextValid(); err == nil; j, iterStep, err = ot.NextValid() {
 				{{if or $div $scaleInv -}}
 					{{if isntFloat . -}}
 					if odata[j] == 0 {
@@ -577,10 +630,14 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 				{{else -}}
 					tdata[i] {{$op}} odata[j]
 				{{end -}}
-				i++
+				i += iterStep
 			}
 		default:
-			vec{{$opName}}{{short .}}(tdata, odata)
+			if t.IsMasked(){
+				vec{{$opName}}{{short .}}Masked(tdata, odata, t.mask)
+			} else {
+				vec{{$opName}}{{short .}}(tdata, odata)	
+			}
 		}
 		{{end -}}
 	{{end -}}
@@ -608,6 +665,9 @@ func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, 
 	if err != nil {
 		return nil, err
 	}
+	if t.IsMasked() && (reuse != nil) {
+		reuse.MaskFromDense(t)
+		}
 
 	{{$isFunc := .IsFunc -}}
 	{{$op := .OpSymb -}}
@@ -618,7 +678,11 @@ func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, 
 		{{range .Kinds -}}
 		{{if isNumber . -}}
 		case reflect.{{reflectKind .}}:
-			err = incr{{$opName}}{{short .}}(t.{{sliceOf .}}, reuse.{{sliceOf .}}, other.({{asType .}}))
+			if t.IsMasked() {				
+				err = incr{{$opName}}{{short .}}Masked(t.{{sliceOf .}}, reuse.{{sliceOf .}}, other.({{asType .}}), t.mask)				
+			} else {
+				err = incr{{$opName}}{{short .}}(t.{{sliceOf .}}, reuse.{{sliceOf .}}, other.({{asType .}}))
+			}
 			retVal = reuse	
 		{{end -}}
 		{{end -}}
@@ -670,10 +734,10 @@ const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other 
 					return
 				}
 			{{end -}}
-			it := NewFlatIterator(t.AP)
+			it := IteratorFromDense(t)
 			var i int
 			data := t.{{sliceOf .}}
-			for i, err = it.Next(); err == nil; i, err = it.Next(){
+			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid(){
 				data[i] = {{if $isFunc -}}
 					{{if eq $op "math.Pow" -}}
 						{{if eq .String "complex64" -}}

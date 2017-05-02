@@ -41,11 +41,11 @@ type Tensor interface {
 	Eq
 	Cloner
 
-	// type overloading shit
+	// type overloading stuff
 	IsScalar() bool
 	ScalarValue() interface{}
 
-	// view related shit
+	// view related stuff
 	IsView() bool
 	Materialize() Tensor
 

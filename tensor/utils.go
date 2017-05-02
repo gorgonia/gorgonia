@@ -50,6 +50,25 @@ func ProdInts(a []int) (retVal int) {
 	return
 }
 
+// EqInts returns true if slices have same value
+func EqInts(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	if (a == nil) != (b == nil) {
+		return false
+	}
+
+	b = b[:len(a)]
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1
 func IsMonotonicInts(a []int) (monotonic bool, incr1 bool) {
 	var prev int
@@ -345,4 +364,16 @@ func reuseCheckShape(reuse *Dense, s Shape) (err error) {
 		reuse.viewOf = nil
 	}
 	return nil
+}
+
+// memsetBools sets boolean slice to value.
+// Reference http://stackoverflow.com/questions/30614165/is-there-analog-of-memset-in-go
+func memsetBools(a []bool, v bool) {
+	if len(a) == 0 {
+		return
+	}
+	a[0] = v
+	for bp := 1; bp < len(a); bp *= 2 {
+		copy(a[bp:], a[:bp])
+	}
 }

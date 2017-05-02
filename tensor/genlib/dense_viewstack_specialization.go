@@ -8,24 +8,51 @@ import (
 
 const doviewstackSpecialRaw = `func (t *Dense) doViewStack{{short .}}(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int){
 	data := retVal.{{sliceOf .}}[:0]
+	mask := retVal.mask[:0]
+		if t.IsMasked(){
+		fmt.Println("do this")
+		}
+	retIsMasked:= t.IsMasked()
+	for _, ot := range others {
+		retIsMasked = retIsMasked || ot.IsMasked()
+		}
 	for i := 0; i < batches; i++ {
-		for j := 0; j < axisStride; j++ {
+		isMasked := t.IsMasked()
+		var j int
+		for j = 0; j < axisStride; j++ {
 			id, ok := <-ch
 			if !ok {
 				break
 			}
 			data = append(data, t.{{sliceOf .}}[id])
+			if isMasked {
+				mask = append(mask, t.mask[id])
+				}
 		}
-		for j, ot := range others {
-			for k := 0; k < axisStride; k++ {
+		if retIsMasked && (!isMasked) {
+			mask = append(mask, make([]bool,j)...)
+		}
+
+		var ot *Dense
+		for j, ot = range others {
+			isMasked = ot.IsMasked()
+			var k int
+			for k = 0; k < axisStride; k++ {
 				id, ok := <-chs[j]
 				if !ok {
 					break
 				}
 				data = append(data, ot.{{sliceOf .}}[id])
+				if isMasked {
+					mask = append(mask, ot.mask[id])
+				}
+			}
+			if retIsMasked && (!isMasked) {
+				mask = append(mask, make([]bool,k)...)
 			}
 		}
 	}
+	retVal.mask=mask
 }
 `
 const doviewstackRaw = `func (t *Dense) doViewStack(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int){
@@ -38,26 +65,49 @@ const doviewstackRaw = `func (t *Dense) doViewStack(retVal *Dense, axisStride, b
 	{{end -}}
 	default:
 		var index int
+		retIsMasked:= t.IsMasked()
+		mask := retVal.mask[:0]
+		for _, ot := range others {
+			retIsMasked = retIsMasked || ot.IsMasked()
+			}
 		for i := 0; i < batches; i++ {
-			for j := 0; j < axisStride; j++ {
+			isMasked := t.IsMasked()
+			var j int
+			for j = 0; j < axisStride; j++ {
 				id, ok := <-ch
 				if !ok {
 					break
 				}
 				retVal.Set(index, t.Get(id))
 				index++
+				if isMasked {
+					mask = append(mask, t.mask[id])
+				}
 			}
-			for j, ot := range others {
-				for k := 0; k < axisStride; k++ {
+			if retIsMasked && (!isMasked) {
+				mask = append(mask, make([]bool,j)...)
+			}
+			var ot *Dense
+			for j, ot = range others {
+				isMasked = ot.IsMasked()
+				var k int
+				for k = 0; k < axisStride; k++ {
 					id, ok := <-chs[j]
 					if !ok {
 						break
 					}
 					retVal.Set(index, ot.Get(id))
 					index++
+					if isMasked {
+						mask = append(mask, ot.mask[id])
+					}
+				}
+				if retIsMasked && (!isMasked) {
+					mask = append(mask, make([]bool,k)...)
 				}
 			}
 		}
+		retVal.mask=mask
 	}
 }
 `

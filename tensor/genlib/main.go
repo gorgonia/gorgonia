@@ -31,6 +31,8 @@ func main() {
 		genericArgMethodsName         = "../genericArgmethods.go"
 		denseArgMethodsName           = "../dense_argmethods.go"
 		denseArgMethodsTestsName      = "../dense_argmethods_test.go"
+		denseMaskCmpMethodsName       = "../dense_maskcmp_methods.go"
+		denseMaskCmpMethodsTestsName  = "../dense_maskcmp_methods_test.go"
 		genericReductionName          = "../genericReduction.go"
 		denseReductionName            = "../dense_reduction.go"
 		denseReductionTestsName       = "../dense_reduction_test.go"
@@ -66,6 +68,8 @@ func main() {
 	pipeline(genericArgMethodsName, mk, genericArgmethods)
 	pipeline(denseArgMethodsName, mk, argmethods)
 	pipeline(denseArgMethodsTestsName, mk, argmethodsTests)
+	pipeline(denseMaskCmpMethodsName, mk, maskcmpmethods)
+	pipeline(denseMaskCmpMethodsTestsName, mk, maskcmpmethodsTests)
 	pipeline(genericReductionName, mk, genericReduction)
 	pipeline(denseReductionName, mk, reduction)
 	pipeline(denseReductionTestsName, mk, denseReductionTests)
@@ -100,7 +104,7 @@ func pipeline(filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds
 	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
 	fn(f, generic)
 
-	// gofmt and goimports this shit
+	// gofmt and goimports this stuff
 	cmd := exec.Command("goimports", "-w", filename)
 	if err = cmd.Run(); err != nil {
 		log.Fatalf("Go imports failed with %v for %q", err, filename)

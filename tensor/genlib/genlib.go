@@ -233,6 +233,15 @@ func isFloat(a reflect.Kind) bool {
 
 func isntFloat(a reflect.Kind) bool { return !isFloat(a) }
 
+func isComplex(a reflect.Kind) bool {
+	if a == reflect.Complex64 || a == reflect.Complex128 {
+		return true
+	}
+	return false
+}
+
+func isntComplex(a reflect.Kind) bool { return !isComplex(a) }
+
 func filter(a []reflect.Kind, is func(reflect.Kind) bool) (retVal []reflect.Kind) {
 	for _, k := range a {
 		if is(k) {
