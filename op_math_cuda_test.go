@@ -3,6 +3,8 @@
 package gorgonia
 
 import (
+	"log"
+	"os"
 	"runtime"
 	"testing"
 
@@ -94,4 +96,31 @@ func TestCUDABasicArithmetic(t *testing.T) {
 	}
 
 	// _logger_ = spare
+}
+
+func TestMultiDeviceArithmetic(t *testing.T) {
+	g := NewGraph()
+	x := NewMatrix(g, Float64, WithName("x"), WithShape(2, 2))
+	y := NewMatrix(g, Float64, WithName("y"), WithShape(2, 2))
+	z := Must(Add(x, y))
+	zpx := Must(Add(x, z)) // z would be on device
+	Must(Sum(zpx))
+
+	xV := tensor.New(tensor.WithBacking([]float64{0, 1, 2, 3}))
+	yV := tensor.New(tensor.WithBacking([]float64{0, 1, 2, 3}))
+
+	Let(x, xV)
+	Let(y, yV)
+
+	logger := log.New(os.Stderr, "", 0)
+	m := NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
+
+	t.Logf("zpx.Device: %v", zpx.Device())
+	t.Logf("x.Device: %v", x.Device())
+	t.Logf("y.Device: %v", y.Device())
+
+	if err := m.RunAll(); err != nil {
+		t.Errorf("err: %v", err)
+	}
+
 }

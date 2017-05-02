@@ -18,31 +18,17 @@ type errorStacker interface {
 const EPSILON64 float64 = 1e-10
 const EPSILON32 float32 = 1e-5
 
-func floatEquals64(a, b float64) bool {
-	if (a-b) < EPSILON64 && (b-a) < EPSILON64 {
-		return true
-	}
-	return false
-}
-
 func floatsEqual64(a, b []float64) bool {
 	if len(a) != len(b) {
 		return false
 	}
 
 	for i, v := range a {
-		if !floatEquals64(v, b[i]) {
+		if !closF64(v, b[i]) {
 			return false
 		}
 	}
 	return true
-}
-
-func floatEquals32(a, b float32) bool {
-	if (a-b) < EPSILON32 && (b-a) < EPSILON32 {
-		return true
-	}
-	return false
 }
 
 func floatsEqual32(a, b []float32) bool {
@@ -51,7 +37,7 @@ func floatsEqual32(a, b []float32) bool {
 	}
 
 	for i, v := range a {
-		if !floatEquals32(v, b[i]) {
+		if !closeF32(v, b[i]) {
 			return false
 		}
 	}

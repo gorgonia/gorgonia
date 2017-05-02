@@ -9,6 +9,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func unaryOpTestVector(t *testing.T, dt tensor.Dtype, fn func(*Node) (*Node, error)) (x, y, a, b *Node, v Value, err error) {
+	g := NewGraph()
+	x = NewVector(g, dt, WithName("x"), WithShape(2))
+	y = Must(fn(x))
+	Must(Sum(y))
+
+	var xV, aV Value
+	any := tensor.Random(dt, 2)
+	if v, _, _, err = anyToValue(any); err != nil {
+		t.Errorf("anyToValue failed %v", err)
+		return
+	}
+	if xV, err = CloneValue(v); err != nil {
+		t.Errorf("Clone to xV failed %v", err)
+		return
+	}
+
+	h := NewGraph()
+	a = NewVector(g, dt, WithName("x"), WithShape(2))
+	b = Must(fn(x))
+	cost := Must(Sum(b))
+	Grad(cost, a)
+
+	if aV, err = CloneValue(v); err != nil {
+		t.Errorf("Clone to aV failed: %v", err)
+		return
+	}
+
+	m0 := NewLispMachine(g)
+	m1 := NewTapeMachine(g)
+
+	Let(x, xV)
+	if err = m0.RunAll(); err != nil {
+		t.Errorf("m0 failed:", err)
+		return
+	}
+
+	Let(a, aV)
+	if err = m1.RunAll(); err != nil {
+		t.Errorf("m1 failed:", err)
+		return
+	}
+	var yV, xG, bV, aG Value
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	return
+
+}
+
 func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *Node, err error) {
 	_, x, y = simpleUnaryEqn()
 

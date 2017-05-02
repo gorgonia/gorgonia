@@ -129,9 +129,16 @@ func (m *lispMachine) RunAll() (err error) {
 		return errors.Wrap(err, "Could not checkRoots()")
 	}
 
-	defer func() {
-		m.q = nil // this needs to be nil'd or else there would still be references to m. Then there won't be any garbage being collected
-	}()
+	if m.runBwd() {
+		defer func() {
+			m.q = nil // this needs to be nil'd or else there would still be references to m. Then there won't be any garbage being collected
+		}()
+	}
+
+	m.logf("SORTED:")
+	for i, n := range m.sorted {
+		m.logf("%d: %v (%d)", i, n, n.ID())
+	}
 
 	workAvailable := m.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()

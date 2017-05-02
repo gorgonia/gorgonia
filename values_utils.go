@@ -47,6 +47,21 @@ func ValueEq(a, b Value) bool {
 	}
 }
 
+func ValueClose(a, b Value) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	switch at := a.(type) {
+	case Scalar:
+	case tensor.Tensor:
+	case ValueCloser:
+		return at.ValueClose(b)
+	default:
+		panic("Not implemented yet")
+	}
+}
+
 // CloneValue clones a value. For scalars, since Go copies scalars, it returns itself
 func CloneValue(v Value) (Value, error) {
 	switch vt := v.(type) {
