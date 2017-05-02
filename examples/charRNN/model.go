@@ -6,7 +6,6 @@ import (
 	"log"
 	"math"
 	"math/rand"
-	"os"
 	"runtime"
 	"strconv"
 
@@ -463,11 +462,11 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 		g = m.g.SubgraphRoots(cost)
 	}
 
-	f, _ := os.Create("FAIL.log")
-	logger := log.New(f, "", 0)
-	machine := NewLispMachine(g, WithLogger(logger), WithValueFmt("%-1.1s"), LogBothDir(), WithWatchlist())
+	// f, _ := os.Create("FAIL.log")
+	// logger := log.New(f, "", 0)
+	// machine := NewLispMachine(g, WithLogger(logger), WithValueFmt("%-1.1s"), LogBothDir(), WithWatchlist())
 
-	// machine := NewLispMachine(g)
+	machine := NewLispMachine(g)
 	if err = machine.RunAll(); err != nil {
 		if ctxerr, ok := err.(contextualError); ok {
 			ioutil.WriteFile("FAIL.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)
@@ -475,7 +474,8 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 		}
 		return
 	}
-	machine.UnbindAll()
+
+	// machine.UnbindAll()
 
 	err = solver.Step(m.inputs())
 	if err != nil {
@@ -491,6 +491,6 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 			retCost = cv.Data().(float32)
 		}
 	}
-
+	m.g.UnbindAllNonInputs()
 	return
 }
