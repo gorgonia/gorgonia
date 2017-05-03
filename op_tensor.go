@@ -242,7 +242,6 @@ func (op repeatOp) Type() hm.Type {
 
 func (op repeatOp) ReturnsPtr() bool     { return true }
 func (op repeatOp) OverwritesInput() int { return -1 }
-func (op repeatOp) CallsExtern() bool    { return false }
 
 func (op repeatOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
 	input := inputs[0].(tensor.Shape)
@@ -450,17 +449,28 @@ func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	// actually do repeat
 
+	cleanup := make([]tensor.Tensor, 0, len(op.along)-1)
 	for i, axis := range op.along {
 		rep := reps[i]
 		if rep == 1 {
 			// then no need to waste CPU
 			continue
 		}
-		if t, err = tensor.Repeat(t, axis, rep); err != nil {
+		prevT := t
+		if t, err = tensor.Repeat(prevT, axis, rep); err != nil {
 			err = errors.Wrapf(err, repFail, axis, rep)
 			return
 		}
+
+		if i < len(op.along)-1 && prevT != t {
+			cleanup = append(cleanup, prevT)
+		}
 	}
+
+	for _, cu := range cleanup {
+		returnTensor(cu)
+	}
+
 	retVal = t
 	return
 }

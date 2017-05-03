@@ -69,7 +69,6 @@ func TestLispMachineBasics(t *testing.T) {
 	assert.Equal(byte(0x80), m.logFlags)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.watchAll())
-
 }
 
 func TestLispMachineMechanics(t *testing.T) {
@@ -207,6 +206,10 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 				t.Errorf("Unable to set the gradient to 0 for %v. Error : %v", n, err)
 				continue
 			}
+		}
+
+		if CUDA {
+			g.UnbindAllNonInputs()
 		}
 
 		runtime.GC()

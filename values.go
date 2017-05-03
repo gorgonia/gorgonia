@@ -127,9 +127,6 @@ func makeValueFromMem(t hm.Type, s tensor.Shape, mem Memory) (retVal Value, err 
 	if dt, err = dtypeOf(t); err != nil {
 		return
 	}
-	if s.IsScalar() {
-		return makeScalarFromMem(dt, mem)
-	}
 
 	switch tt := t.(type) {
 	case TensorType:

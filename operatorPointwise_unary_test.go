@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"math"
 	"math/rand"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -10,9 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Node) (*Node, error)) (x, y, a, b *Node, v Value, err error) {
+func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Node) (*Node, error)) (x, y, a *Node, v, bV Value, err error) {
 
 	var xV, aV Value
+	var b *Node
 	var any interface{}
 	if shape.IsScalar() {
 		if dt == tensor.Float64 {
@@ -42,6 +44,7 @@ func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Nod
 	a = NodeFromAny(h, xV, WithName("x"))
 	b = Must(fn(a))
 	cost := Must(Sum(b))
+	Read(b, &bV)
 	if grads, err = Grad(cost, a); err != nil {
 		t.Errorf("Unable to get gradient %v", err)
 		return
@@ -67,14 +70,13 @@ func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Nod
 		return
 	}
 
-	var yV, xG, bV, aG Value
+	var yV, xG, aG Value
 	yV = y.Value()
 	if xG, err = x.Grad(); err != nil {
 		t.Errorf("x has no grad: %v", err)
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 		t.Logf("a.deriv %p | %p", a.deriv, grads[0])
@@ -140,16 +142,17 @@ func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *No
 }
 
 func TestAbs(t *testing.T) {
+	defer runtime.GC()
 	assert := assert.New(t)
 
-	var x, y, a, b *Node
+	var x, y, a *Node
 	var v Value
 	var yV, xG, bV, aG Value
 	var err error
 
 	/* FLOAT 64 Scalar */
 
-	x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{}, Abs)
+	x, y, a, v, bV, err = unaryOpTest(t, Float64, tensor.Shape{}, Abs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +163,6 @@ func TestAbs(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
@@ -173,7 +175,7 @@ func TestAbs(t *testing.T) {
 
 	/* FLOAT 32 Scalar */
 
-	x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{}, Abs)
+	x, y, a, v, bV, err = unaryOpTest(t, Float32, tensor.Shape{}, Abs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +186,6 @@ func TestAbs(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
@@ -197,7 +198,7 @@ func TestAbs(t *testing.T) {
 
 	/* FLOAT64 Vector */
 
-	x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{10}, Abs)
+	x, y, a, v, bV, err = unaryOpTest(t, Float64, tensor.Shape{10}, Abs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +209,6 @@ func TestAbs(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
@@ -233,7 +233,7 @@ func TestAbs(t *testing.T) {
 
 	/* FLOAT32 Vector */
 
-	x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{10}, Abs)
+	x, y, a, v, bV, err = unaryOpTest(t, Float32, tensor.Shape{10}, Abs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -244,7 +244,6 @@ func TestAbs(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
@@ -263,7 +262,7 @@ func TestAbs(t *testing.T) {
 	gradF32s := tensor.New(tensor.WithBacking(backingGrad32))
 
 	assert.True(ValueClose(correctVecF32, yV))
-	assert.True(ValueClose(correctVecF32, bV))
+	assert.True(ValueClose(correctVecF32, bV), "bV %v", bV)
 	assert.True(ValueClose(gradF32s, xG), "xG %v", xG)
 	assert.True(ValueClose(gradF32s, aG), "aG %v", aG)
 
@@ -487,16 +486,17 @@ func TestExpm1Diff(t *testing.T) {
 }
 
 func TestSoftplus(t *testing.T) {
+	defer runtime.GC()
 	assert := assert.New(t)
 
-	var x, y, a, b *Node
+	var x, y, a *Node
 	var v Value
 	var xV, yV, xG, bV, aG Value
 	var err error
 
 	/* FLOAT64 SCALAR */
 
-	if x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{}, Softplus); err != nil {
+	if x, y, a, v, bV, err = unaryOpTest(t, Float64, tensor.Shape{}, Softplus); err != nil {
 		t.Fatal(err)
 	}
 
@@ -507,7 +507,6 @@ func TestSoftplus(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
@@ -521,7 +520,7 @@ func TestSoftplus(t *testing.T) {
 
 	/* FLOAT32 SCALAR */
 
-	if x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{}, Softplus); err != nil {
+	if x, y, a, v, bV, err = unaryOpTest(t, Float32, tensor.Shape{}, Softplus); err != nil {
 		t.Fatal(err)
 	}
 
@@ -532,7 +531,6 @@ func TestSoftplus(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
@@ -546,7 +544,7 @@ func TestSoftplus(t *testing.T) {
 
 	/* FLOAT64 Vector */
 
-	if x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{10}, Softplus); err != nil {
+	if x, y, a, v, bV, err = unaryOpTest(t, Float64, tensor.Shape{10}, Softplus); err != nil {
 		t.Fatal(err)
 	}
 
@@ -557,7 +555,6 @@ func TestSoftplus(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
@@ -576,7 +573,7 @@ func TestSoftplus(t *testing.T) {
 
 	/* FLOAT32 Vector */
 
-	if x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{10}, Softplus); err != nil {
+	if x, y, a, v, bV, err = unaryOpTest(t, Float32, tensor.Shape{10}, Softplus); err != nil {
 		t.Fatal(err)
 	}
 
@@ -587,7 +584,6 @@ func TestSoftplus(t *testing.T) {
 		return
 	}
 
-	bV = b.Value()
 	if aG, err = a.Grad(); err != nil {
 		t.Errorf("a has no grad: %v", err)
 	}
