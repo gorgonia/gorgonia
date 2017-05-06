@@ -94,52 +94,52 @@ func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Nod
 	return
 }
 
-func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *Node, err error) {
-	_, x, y = simpleUnaryEqn()
+// func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *Node, err error) {
+// 	_, x, y = simpleUnaryEqn()
 
-	xRandVal = rand.ExpFloat64()
-	fn := *(sf64UnaryOperators[op])
-	diff := ʘUnaryOpDiffFns[op]
+// 	xRandVal = rand.ExpFloat64()
+// 	fn := *(sf64UnaryOperators[op])
+// 	diff := ʘUnaryOpDiffFns[op]
 
-	// let the first stone be cast!
-	Let(x, xRandVal)
-	v, _, _, _ := anyToValue(fn(xRandVal)) // as if the graph has been executed upon
-	ydv := variableDV(v)
+// 	// let the first stone be cast!
+// 	Let(x, xRandVal)
+// 	v, _, _, _ := anyToValue(fn(xRandVal)) // as if the graph has been executed upon
+// 	ydv := variableDV(v)
 
-	if err = y.bind(ydv); err != nil {
-		return
-	}
+// 	if err = y.bind(ydv); err != nil {
+// 		return
+// 	}
 
-	if err = x.bind(dvUnit(x.boundTo)); err != nil {
-		return
-	}
+// 	if err = x.bind(dvUnit(x.boundTo)); err != nil {
+// 		return
+// 	}
 
-	if err = diff(x, y); err != nil {
-		return
-	}
+// 	if err = diff(x, y); err != nil {
+// 		return
+// 	}
 
-	// Tensor edition
-	_, xT, yT = simpleUnaryVecEqn()
+// 	// Tensor edition
+// 	_, xT, yT = simpleUnaryVecEqn()
 
-	xBack := []float64{-xRandVal, xRandVal}
-	yBack := []float64{fn(-xRandVal), fn(xRandVal)}
-	Let(xT, tensor.New(tensor.WithShape(2, 1), tensor.WithBacking(xBack)))
-	vT, _, _, _ := anyToValue(tensor.New(tensor.WithShape(2, 1), tensor.WithBacking(yBack)))
-	yTdv := variableDV(vT)
+// 	xBack := []float64{-xRandVal, xRandVal}
+// 	yBack := []float64{fn(-xRandVal), fn(xRandVal)}
+// 	Let(xT, tensor.New(tensor.WithShape(2, 1), tensor.WithBacking(xBack)))
+// 	vT, _, _, _ := anyToValue(tensor.New(tensor.WithShape(2, 1), tensor.WithBacking(yBack)))
+// 	yTdv := variableDV(vT)
 
-	if err = yT.bind(yTdv); err != nil {
-		return
-	}
+// 	if err = yT.bind(yTdv); err != nil {
+// 		return
+// 	}
 
-	if err = xT.bind(dvUnit(xT.boundTo)); err != nil {
-		return
-	}
+// 	if err = xT.bind(dvUnit(xT.boundTo)); err != nil {
+// 		return
+// 	}
 
-	if err = diff(xT, yT); err != nil {
-		return
-	}
-	return
-}
+// 	if err = diff(xT, yT); err != nil {
+// 		return
+// 	}
+// 	return
+// }
 
 func TestAbs(t *testing.T) {
 	defer runtime.GC()
@@ -268,6 +268,7 @@ func TestAbs(t *testing.T) {
 
 }
 
+/*
 func TestSinDiff(t *testing.T) {
 	assert := assert.New(t)
 	v, x, _, xT, _, err := unaryOpDiffTest(sinOpType)
@@ -434,24 +435,43 @@ func TestTanhDiff(t *testing.T) {
 	xdvd := xT.boundTo.(*dualValue).d.(*tensor.Dense)
 	assert.Equal([]float64{correct, correct}, xdvd.Data())
 }
-
+*/
 func TestSigmoidDiff(t *testing.T) {
+	defer runtime.GC()
 	assert := assert.New(t)
-	v, x, _, xT, _, err := unaryOpDiffTest(sigmoidOpType)
-	if err != nil {
-		t.Error(err)
+
+	var x, y, a *Node
+	var v Value
+	var yV, xG, bV, aG Value
+	var err error
+
+	/* FLOAT64 SCALAR */
+
+	if x, y, a, v, bV, err = unaryOpTest(t, Float64, tensor.Shape{}, Sigmoid); err != nil {
+		t.Fatal(err)
 	}
 
-	correct := math.Exp(-v) / ((1 + math.Exp(-v)) * (1 + math.Exp(-v)))
-	xG := x.boundTo.(*dualValue).d
-	assert.True(closeF64(correct, extractF64(xG)))
+	// xV = x.Value()
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
 
-	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d
-	negCorrect := math.Exp(v) / ((1 + math.Exp(v)) * (1 + math.Exp(v)))
-	corrects := []float64{negCorrect, correct}
-	assert.True(floatsEqual64(corrects, extractF64s(xdvd)))
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	correctVF64 := sigmoidf64(v.Data().(float64))
+	correctDF64 := _sigmoidDifff64(yV.Data().(float64))
+	assert.True(ValueClose(newF64(correctVF64), yV))
+	assert.True(ValueClose(newF64(correctVF64), bV))
+	assert.True(ValueClose(newF64(correctDF64), xG), "Expected close to %v. Got %v", correctDF64, xG)
+	assert.True(ValueClose(newF64(correctDF64), aG), "Expected close to %v. Got %v", correctDF64, aG)
+
 }
+
+/*
 
 func TestLog1pDiff(t *testing.T) {
 	assert := assert.New(t)
@@ -484,6 +504,7 @@ func TestExpm1Diff(t *testing.T) {
 	correct0 := math.Exp(-v)
 	assert.Equal([]float64{correct0, correct}, xdvd.Data())
 }
+*/
 
 func TestSoftplus(t *testing.T) {
 	defer runtime.GC()

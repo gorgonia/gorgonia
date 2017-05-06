@@ -441,8 +441,9 @@ func (op elemUnaryOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 		return
 	}
 
+	ctx.Signal()
 	u := op.ʘUnaryOperator.unaryOpType()
-	return ʘUnaryOpDiffFns[u](inputs[0], output)
+	return ʘUnaryOpDiffFns[u](ctx, inputs[0], output)
 }
 
 func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) {
@@ -611,6 +612,7 @@ func (op linAlgBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+	ctx.Signal()
 
 	o := op.āBinaryOperator
 	return āBinOpDiffs[o](ctx, op.transA, op.transB, inputs[0], inputs[1], output)

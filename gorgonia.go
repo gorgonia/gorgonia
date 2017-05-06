@@ -106,7 +106,9 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 
 	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithName(name), WithShape(s...), WithValue(val)}
 	consOpts = append(consOpts, opts...)
-	return newNode(consOpts...)
+	n := newNode(consOpts...)
+	n.dataOn = CPU
+	return n
 }
 
 // UniformRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from

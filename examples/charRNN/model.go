@@ -462,10 +462,9 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 		g = m.g.SubgraphRoots(cost)
 	}
 
-	// f, _ := os.Create("FAIL.log")
+	// f, _ := os.Create(fmt.Sprintf("FAIL%d.log", iter))
 	// logger := log.New(f, "", 0)
 	// machine := NewLispMachine(g, WithLogger(logger), WithValueFmt("%-1.1s"), LogBothDir(), WithWatchlist())
-
 	machine := NewLispMachine(g)
 	if err = machine.RunAll(); err != nil {
 		if ctxerr, ok := err.(contextualError); ok {
@@ -474,8 +473,6 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 		}
 		return
 	}
-
-	// machine.UnbindAll()
 
 	err = solver.Step(m.inputs())
 	if err != nil {
@@ -491,6 +488,7 @@ func (m *model) run(iter int, solver Solver) (retCost, retPerp float32, err erro
 			retCost = cv.Data().(float32)
 		}
 	}
+	machine.UnbindAll() // here so that a reference to machine exists
 	m.g.UnbindAllNonInputs()
 	return
 }

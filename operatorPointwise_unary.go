@@ -130,7 +130,7 @@ All the functions here are expressed in terms of *Node and/or Nodes
 func nondiffUnaryOpExpr(x, y, gradY *Node) (*Node, error) {
 	return nil, errors.Errorf("Nondifferentiable Function")
 }
-func nondiffUnaryOp(x, y *Node) error {
+func nondiffUnaryOp(ctx ExecutionContext, x, y *Node) error {
 	return AutoDiffError{}
 }
 
@@ -148,7 +148,7 @@ func absDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func absDiff(x, y *Node) (err error) {
+func absDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -185,7 +185,7 @@ func sinDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func sinDiff(x, y *Node) (err error) {
+func sinDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -227,7 +227,7 @@ func cosDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func cosDiff(x, y *Node) (err error) {
+func cosDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -257,7 +257,7 @@ func expDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return HadamardProd(y, gradY)
 }
 
-func expDiff(x, y *Node) (err error) {
+func expDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -276,7 +276,7 @@ func lnDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return HadamardDiv(gradY, x)
 }
 
-func lnDiff(x, y *Node) (err error) {
+func lnDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -321,7 +321,7 @@ func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func log2Diff(x, y *Node) (err error) {
+func log2Diff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -365,7 +365,7 @@ func negDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return Neg(gradY)
 }
 
-func negDiff(x, y *Node) (err error) {
+func negDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -408,7 +408,7 @@ func squareDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func squareDiff(x, y *Node) (err error) {
+func squareDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -474,7 +474,7 @@ func sqrtDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func sqrtDiff(x, y *Node) (err error) {
+func sqrtDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -530,7 +530,7 @@ func inverseDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func inverseDiff(x, y *Node) (err error) {
+func inverseDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -592,7 +592,7 @@ func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func cubeDiff(x, y *Node) (err error) {
+func cubeDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -668,7 +668,7 @@ func tanhDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func tanhDiff(x, y *Node) (err error) {
+func tanhDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -747,7 +747,7 @@ func sigmoidDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func sigmoidDiff(x, y *Node) (err error) {
+func sigmoidDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -821,7 +821,7 @@ func log1pDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return
 }
 
-func log1pDiff(x, y *Node) (err error) {
+func log1pDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -869,7 +869,7 @@ func expm1DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return nil, errors.Wrap(err, "Failled to carry Exp()")
 }
 
-func expm1Diff(x, y *Node) (err error) {
+func expm1Diff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 
@@ -901,7 +901,7 @@ func softplusDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	return nil, errors.Wrap(err, "Failed to carry Sigmoid()")
 }
 
-func softplusDiff(x, y *Node) (err error) {
+func softplusDiff(ctx ExecutionContext, x, y *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 

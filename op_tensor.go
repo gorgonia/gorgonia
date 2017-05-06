@@ -297,6 +297,7 @@ func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+	ctx.Signal()
 
 	xdv := inputs[0].boundTo.(*dualValue)
 	ydv := output.boundTo.(*dualValue)
@@ -585,6 +586,7 @@ func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+	ctx.Signal()
 
 	xdv := inputs[0].boundTo.(*dualValue)
 	ydv := output.boundTo.(*dualValue)
@@ -736,6 +738,7 @@ func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 }
 
 func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+	ctx.Signal()
 	xdv := inputs[0].boundTo.(*dualValue)
 	ydv := inputs[1].boundTo.(*dualValue)
 	zdv := output.boundTo.(*dualValue)
@@ -909,6 +912,7 @@ func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 }
 
 func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+	ctx.Signal()
 	xdv := inputs[0].boundTo.(*dualValue)
 	zdv := output.boundTo.(*dualValue)
 
@@ -1087,6 +1091,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 }
 
 func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+	ctx.Signal()
 	odv := output.boundTo.(*dualValue)
 	odvd := odv.d.(tensor.Tensor)
 

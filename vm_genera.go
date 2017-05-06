@@ -103,8 +103,8 @@ func (m *lispMachine) Reset() {
 }
 
 func (m *lispMachine) RunAll() (err error) {
-	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+	// runtime.LockOSThread()
+	// defer runtime.UnlockOSThread()
 
 	if err = m.checkRoots(); err != nil {
 		return errors.Wrap(err, "Could not checkRoots()")
@@ -169,7 +169,7 @@ func (m *lispMachine) RunAll() (err error) {
 				return err
 			}
 			return nil
-		default:
+			// default:
 		}
 	}
 

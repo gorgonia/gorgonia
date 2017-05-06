@@ -160,11 +160,6 @@ type CLDoer interface {
 	CLDo(inputs ...Value) (Value, error)
 }
 
-type CUDAADOp interface {
-	ADOp
-	CUDADoDiff(extern External, dev Device, inputs Nodes, output *Node) error
-}
-
 // a constant is an unchanging value. I think everyone would know what a constant is
 // a constant op is an op that creates a constant. It is also a Value of a constant value
 type constant interface {

@@ -36,9 +36,15 @@ func compileCUDA(src, targetLoc string, maj, min int) {
 
 	var slow *exec.Cmd
 	if *debug {
-		slow = exec.Command("nvcc", output, arch, "-lineinfo", "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+		slow = exec.Command("nvcc", output, arch,
+			"-lcublas_static", "-lculibos ",
+			"-lineinfo", "-ptx", "-Xptxas",
+			"--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
 	} else {
-		slow = exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
+		slow = exec.Command("nvcc", output, arch,
+			"-lcublas_static", "-lculibos ",
+			"-ptx", "-Xptxas",
+			"--allow-expensive-optimizations", "-fmad=false", "-ftz=false", "-prec-div=true", "-prec-sqrt=true", src)
 	}
 
 	slow.Stderr = &stderr

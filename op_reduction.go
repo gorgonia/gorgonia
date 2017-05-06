@@ -232,6 +232,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+	ctx.Signal()
 
 	x := inputs[0]
 	xdv := x.boundTo.(*dualValue)

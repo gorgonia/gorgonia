@@ -4,6 +4,9 @@ package gorgonia
 
 // for non-cuda builds, look at noextern.go
 
+// // #cgo LDFLAGS:-lcublas
+// import "C"
+
 import (
 	"log"
 
@@ -241,7 +244,7 @@ func (m *ExternMetadata) PutValue(dev Device, v Value) {
 // Transfer transfers data from device to device.
 func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error) {
 	defer func() {
-		if synchronous {
+		if synchronous && (fromDev != CPU && toDev == CPU) {
 			m.Signal()
 		}
 	}()
@@ -253,14 +256,18 @@ func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bo
 		if d > len(m.c) {
 			return nil, errors.Errorf("No context for ToDev")
 		}
-		ctx := m.c[d]
+		// ctx := m.c[d]
 
 		var mem Memory
 		if mem, err = m.Get(toDev, memsize); err != nil {
 			return
 		}
-		ctx.MemcpyHtoD(cu.DevicePtr(mem.Uintptr()), v.Pointer(), memsize)
-		return makeValueFromMem(TypeOf(v), v.Shape(), mem)
+		// ctx.MemcpyHtoD(cu.DevicePtr(mem.Uintptr()), v.Pointer(), memsize)
+		// return makeValueFromMem(TypeOf(v), v.Shape(), mem)
+		if retVal, err = makeValueFromMem(TypeOf(v), v.Shape(), mem); err != nil {
+			return
+		}
+		return Copy(retVal, v)
 
 	case fromDev != CPU && toDev == CPU:
 		d := int(fromDev)
