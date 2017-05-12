@@ -131,6 +131,7 @@ func TestMul(t *testing.T) {
 		}
 
 		m := NewLispMachine(g)
+
 		if err = m.RunAll(); err != nil {
 			// ioutil.WriteFile(fmt.Sprintf("fullGraph_%v.dot", mts.name), []byte(g.ToDot()), 0644)
 			t.Errorf("Error while executing %q. Err: %v", mts.name, err)

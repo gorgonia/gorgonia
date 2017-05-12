@@ -4,11 +4,9 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/chewxy/cu"
-	"github.com/chewxy/gorgonia/tensor"
 )
 
 // module names
@@ -192,33 +190,6 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
 	return
-}
-
-func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
-	if prealloc == nil {
-		shapes := make([]DimSizer, len(inputs))
-		for i, input := range inputs {
-			shapes[i] = input.Shape().Clone()
-		}
-		var s tensor.Shape
-		if s, err = op.InferShape(shapes...); err != nil {
-			return
-		}
-		log.Printf("Shape %v", s)
-
-		var mem Memory
-		memsize := calcMemSize(inputs[0].Dtype(), s)
-		if mem, err = extern.Get(dev, memsize); err != nil {
-			return
-		}
-
-		t := newTensorType(s.Dims(), inputs[0].Dtype())
-		if prealloc, err = makeValueFromMem(t, s, mem); err != nil {
-			return
-		}
-	}
-	extern.Signal()
-	return op.UsePreallocDo(prealloc, inputs...)
 }
 
 // NewAddOp creates a new *ExternalOp that wraps a add op

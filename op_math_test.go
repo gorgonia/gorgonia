@@ -344,10 +344,6 @@ var binOpTests = []struct {
 func TestBasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		// log.Printf("i %d", i)
-		// if i != 10 {
-		// 	continue
-		// }
 		g := NewGraph()
 		xV, _ := CloneValue(bot.a)
 		yV, _ := CloneValue(bot.b)
@@ -449,5 +445,4 @@ func TestBasicArithmetic(t *testing.T) {
 
 		runtime.GC()
 	}
-
 }

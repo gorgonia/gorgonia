@@ -202,7 +202,6 @@ func (m *tapeMachine) RunAll() (err error) {
 			if err != nil {
 				return err
 			}
-
 			if sychronous {
 				syncChan <- struct{}{}
 			}

@@ -387,7 +387,6 @@ func (m *lispMachine) forward() (err error) {
 			machineLogf("dvBindVar")
 			m.logf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
-				return errors.Wrapf(err, opDoFail)
 			}
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
