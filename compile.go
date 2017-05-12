@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 )
 
@@ -17,27 +18,36 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 	enterLoggingContext()
 	defer leaveLoggingContext()
 
+	if len(g.Nodes()) == 0 {
+		err = errors.Errorf("Cannot compile an empty graph")
+		return
+	}
+
 	compileLogf("sorting")
 	var sortedNodes Nodes
 	if sortedNodes, err = Sort(g); err != nil {
 		return nil, nil, errors.Wrap(err, sortFail)
 	}
-
-	inputs := g.Inputs()
+	reverseNodes(sortedNodes)
 
 	df := analyze(g, sortedNodes)
-	df.intervals = buildIntervals(sortedNodes)
+	sortedNodes = df.insertDeviceInstr(sortedNodes)
+	df.buildIntervals(sortedNodes)
 
 	ra := newRegalloc(df)
 	ra.alloc(sortedNodes)
 
-	compileLogf("Intervals: %+v", FmtNodeMap(df.intervals))
+	// debug related stuff
+	df.debugIntervals(sortedNodes)
 	logCompileState(g.name, g, df)
 
+	inputs := g.Inputs()
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
-	// prog, locMap = codegen(inputs, sortedNodes, df)
-	prog.locs = ra.count
+	prog.cpulocs = ra.cpucount
+	prog.gpulocs = ra.gpucount
+	prog.cpumem = cg.cpumem
+	prog.gpumem = cg.gpumem
 	prog.df = df
 	prog.g = g
 	prog.sorted = sortedNodes
@@ -68,17 +78,19 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 	if sortedNodes, err = Sort(subgraph); err != nil {
 		return nil, nil, errors.Wrap(err, sortFail)
 	}
+	reverseNodes(sortedNodes)
 
 	df := analyze(subgraph, sortedNodes)
-	df.intervals = buildIntervals(sortedNodes)
+	sortedNodes = df.insertDeviceInstr(sortedNodes)
+	df.buildIntervals(sortedNodes)
 
 	ra := newRegalloc(df)
 	ra.alloc(sortedNodes)
 
 	cg := newCodeGenerator(inputs, sortedNodes, df)
 	prog, locMap = cg.gen()
-	// prog, locMap = codegen(inputs, sortedNodes, df)
-	prog.locs = ra.count
+	prog.cpulocs = ra.cpucount
+	prog.gpulocs = ra.gpucount
 	prog.df = df
 	prog.g = subgraph
 	prog.sorted = sortedNodes
@@ -89,10 +101,18 @@ func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap
 // codgenerator holds the state for the code generation process
 type codegenerator struct {
 	locMap     map[*Node]register
-	lastWrites map[int]int
+	lastWrites map[register]*Node
 	flushed    map[int]struct{}
+	allocated  map[register]struct{}
+	freed      map[register]struct{}
+	deferFree  map[register]struct{}
 	instrMap   map[*Node]fragment
-	queue      []int // queue to flus
+	queue      []int // queue to flush
+
+	lastReads map[register]int
+
+	cpumem int64
+	gpumem []int64
 
 	g              *ExprGraph
 	inputs, sorted Nodes
@@ -103,9 +123,13 @@ type codegenerator struct {
 func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 	return &codegenerator{
 		locMap:     make(map[*Node]register),
-		lastWrites: make(map[int]int),
+		lastWrites: make(map[register]*Node),
 		flushed:    make(map[int]struct{}),
+		allocated:  make(map[register]struct{}),
+		freed:      make(map[register]struct{}),
+		deferFree:  make(map[register]struct{}),
 		instrMap:   make(map[*Node]fragment),
+		lastReads:  make(map[register]int),
 
 		g:      inputs[0].g,
 		inputs: inputs,
@@ -114,6 +138,8 @@ func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 	}
 }
 
+// addInstr adds the instruction to the associated node in the instrMap.
+// when we add instructions to the node map, we also try to determine the size of the allocations required
 func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 	if instrs := cg.instrMap[node]; instrs != nil {
 		instrs = append(instrs, instr)
@@ -121,13 +147,74 @@ func (cg *codegenerator) addInstr(node *Node, instr tapeInstr) {
 	} else {
 		cg.instrMap[node] = fragment{instr}
 	}
+
+	var dt tensor.Dtype
+	var err error
+	switch inst := instr.(type) {
+	case loadArg:
+		if dt, err = dtypeOf(node.t); err != nil {
+			panic(err)
+		}
+		d := instr.writes().device
+		if d != CPU {
+			if len(cg.gpumem) < int(d)+1 {
+				diff := int(d) + 1 - len(cg.gpumem)
+				cg.gpumem = append(cg.gpumem, make([]int64, diff)...)
+			}
+		}
+
+		switch d {
+		case CPU:
+			cg.cpumem += calcMemSize(dt, node.Shape())
+		default:
+			cg.gpumem[int(d)] += calcMemSize(dt, node.Shape())
+		}
+	case alloc:
+		if dt, err = dtypeOf(inst.t); err != nil {
+			panic(err)
+		}
+
+		d := instr.writes().device
+		if d != CPU {
+			if len(cg.gpumem) < int(d)+1 {
+				diff := int(d) + 1 - len(cg.gpumem)
+				cg.gpumem = append(cg.gpumem, make([]int64, diff)...)
+			}
+		}
+
+		switch d {
+		case CPU:
+			cg.cpumem += calcMemSize(dt, inst.s)
+		default:
+			cg.gpumem[int(d)] += calcMemSize(dt, inst.s)
+		}
+	case *execOp:
+		if !inst.op.ReturnsPtr() {
+			d := instr.writes().device
+			if d != CPU {
+				if len(cg.gpumem) < int(d)+1 {
+					diff := int(d) + 1 - len(cg.gpumem)
+					cg.gpumem = append(cg.gpumem, make([]int64, diff)...)
+				}
+			}
+			switch d {
+			case CPU:
+				cg.cpumem += inst.size
+			default:
+				cg.gpumem[int(d)] += inst.size
+			}
+		}
+
+	default:
+		// panic("EHLP")
+	}
 }
 
 // every time an instruction is added to the list of instructions,
 // also add the instructionID and the register the instruction writes to.
 // This helps with determining if a flushInstruction needs to be issued.
-func (cg *codegenerator) updateLastWrites(id int) {
-	cg.lastWrites[id] = len(cg.instructions) - 1
+func (cg *codegenerator) updateLastWrites(reg register, n *Node) {
+	cg.lastWrites[reg] = n
 }
 
 func (cg *codegenerator) flush() {
@@ -147,61 +234,114 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 		index:   node.ID(),
 		writeTo: writeTo,
 	}
-	cg.instructions = append(cg.instructions, instr)
+	// cg.instructions = append(cg.instructions, instr)
 
 	cg.addInstr(node, instr)
-	cg.updateLastWrites(writeTo.id)
+	cg.updateLastWrites(writeTo, node)
 }
 
-func (cg *codegenerator) addStmt(node *Node, interv *interval) {
-	compileLogf("Statement")
+func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
+	compileLogf("Add Statement")
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	writeTo := interv.result
+
+	var children Nodes
+	var ok bool
+	if children, ok = cg.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
 
 	switch op := node.op.(type) {
 	case letOp:
 		// there should be only 2 chilren
-		if len(node.children) != 2 {
+		if len(children) != 2 {
 			panic("Expected only two children")
 		}
-		compileLogf("node.children %d. [1]: %v; [0]: %v", node.ID(), node.children[1], node.children[0])
+		compileLogf("node.children %d. [1]: %v; [0]: %v", node.ID(), children[1], children[0])
 		compileLogf("node isInput %v", node.isInput())
-		from := cg.df.intervals[node.children[1]].result
-		to := cg.df.intervals[node.children[0]].result
+		from := cg.df.intervals[children[1]].result
+		to := cg.df.intervals[children[0]].result
 
 		instr := letInstr{
 			readFrom: from,
 			writeTo:  to,
 		}
-		cg.instructions = append(cg.instructions, instr)
+		// cg.instructions = append(cg.instructions, instr)
 
 		cg.addInstr(node, instr)
-		cg.updateLastWrites(writeTo.id)
+		cg.updateLastWrites(writeTo, node)
 	case readOp:
 		// there should be only 1 child
-		if len(node.children) != 1 {
+		if len(children) != 1 {
 			panic("Expected only one child")
 		}
-		compileLogf("node.children %d. [0]: %v", node.ID(), node.children[0])
+		compileLogf("node.children %d. [0]: %v", node.ID(), children[0])
 		compileLogf("node isInput %v", node.isInput())
-		from := cg.df.intervals[node.children[0]].result
-		instr := readInstr{
+		compileLogf("node.children[0] Type %v, shape %v", children[0].t, children[0].shape)
+
+		if _, ok := cg.flushed[i]; !ok {
+			cg.addInstr(node, flushInstr{})
+			cg.flush()
+		}
+
+		from := cg.df.intervals[children[0]].result
+		instr := &readInstr{
 			into:     op.into,
 			readFrom: from,
+
+			t: children[0].t,
+			s: children[0].shape,
 		}
-		cg.instructions = append(cg.instructions, instr)
+		// cg.instructions = append(cg.instructions, instr)
 
 		cg.addInstr(node, instr)
-		cg.updateLastWrites(writeTo.id)
+		cg.updateLastWrites(writeTo, node)
+	case devTrans:
+		if _, ok := cg.allocated[writeTo]; !ok {
+			// insert new alloc
+			var instr alloc
+			instr = newAlloc(node, writeTo)
+			// cg.instructions = append(cg.instructions, instr)
+
+			cg.addInstr(node, instr)
+			cg.updateLastWrites(writeTo, node)
+			cg.queue = append(cg.queue, i)
+			cg.allocated[writeTo] = struct{}{}
+		}
+
+		compileLogf("devTrans")
+		if len(children) != 1 {
+			panic("Expected only one child")
+		}
+
+		from := cg.df.intervals[children[0]].result
+		to := cg.df.intervals[node].result
+
+		instr := deviceTransport{
+			from: from, to: to,
+		}
+		cg.addInstr(node, instr)
+		cg.updateLastWrites(writeTo, node)
 	}
 }
 
 func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i int) {
-	compileLogf("Expr")
-	compileLogf("Node: %x %v", node.ID(), node.op)
+	compileLogf("AddNode: %x %v", node.ID(), node.op)
 	compileLogf("interval %v", interv)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
 	writeTo := interv.result
+
 	var reads []register
-	for _, child := range node.children {
+	var children Nodes
+	var ok bool
+	if children, ok = cg.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
+	for _, child := range children {
 		cReplacement := cg.df.replacements[child]
 		cInterv := cg.df.intervals[cReplacement]
 		reads = append(reads, cInterv.result)
@@ -216,50 +356,95 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		// if the instruction calls an extern (cBLAS or cuBlas), then we should preallocate the vector
 		if node.op.CallsExtern() {
 			compileLogf("calls extern")
-			var instr alloc
-			// if i == 0 {
-			// 	// if the instruction is the last instruction, we STILL want to  allocate to a new register
-			// 	// if this clause is not here, the last instruction will allocate to an existing register, and overwrites any val
-			// 	writeTo = register{device: writeTo.device, id: writeTo.id + 1}
-			// }
-			instr = newAlloc(node, writeTo)
-			cg.instructions = append(cg.instructions, instr)
+			if _, ok := cg.allocated[writeTo]; !ok {
+				compileLogf("Inserting new alloc")
+				var instr alloc
+				instr = newAlloc(node, writeTo)
+				// cg.instructions = append(cg.instructions, instr)
 
-			cg.addInstr(node, instr)
-			cg.updateLastWrites(writeTo.id)
+				cg.addInstr(node, instr)
+				cg.updateLastWrites(writeTo, node)
 
-			prealloc = true
+				prealloc = true
 
-			cg.queue = append(cg.queue, len(cg.instructions)) // no -1.
+				cg.queue = append(cg.queue, i)
+				// cg.queue = append(cg.queue, len(cg.instructions)) // no -1.
+				cg.allocated[writeTo] = struct{}{}
+			}
 		}
 
 		// check if any previously buffered cBLAS or cuBLAS calls need to be flushed
 		// it doesn't matter if the machine isn't using a batchedBLAS. flushInstr would just be a no-op at runtime
 		for _, read := range reads {
-			if instrID, ok := cg.lastWrites[read.id]; ok {
-				viaticum := cg.instructions[instrID] // ;) - it IS on the way
-				if instr, ok := viaticum.(execOp); ok {
-					if instr.op.CallsExtern() && !node.op.CallsExtern() {
-						// the && bit is to make sure that if we have sequential cBLAS/cuBLAS calls,
-						// we just add it to the batch.
-						// sequential in this can mean several instructions apart. For example:
-						//		4 	A × B 	; read %2	; write to %3
-						//		 	⋮	(doesn't use %3 or %10)
-						//			⋮
-						//		10  Aᵀ × B	; read %3	; write to %10
-						//			⋮	(doesn't use %3, or %10)
-						//			⋮
-						//		12 	+		; read %10	; write to %12
-						//
-						// It is before instruction 12 that the flush will be added. 5 and 10 are considered sequential
-						if _, ok := cg.flushed[instrID]; !ok {
-							cg.instructions = append(cg.instructions, flushInstr{})
-							cg.addInstr(node, flushInstr{})
-							cg.updateLastWrites(-1) // flush doesn't write to any register
-							cg.flush()
-						}
+			if lastWriteNode, ok := cg.lastWrites[read]; ok {
+				instrID := cg.sorted.index(lastWriteNode)
+				var op Op
+				var onDev, nodeOnDev Device
+
+				switch {
+				case lastWriteNode.isArg(), lastWriteNode.isStmt:
+					continue
+				default:
+					op = lastWriteNode.op
+				}
+				switch op.(type) {
+				case CUDADoer:
+					onDev = Device(0)
+				case CLDoer:
+					onDev = Device(0)
+				default:
+					onDev = CPU
+				}
+
+				switch node.op.(type) {
+				case CUDADoer:
+					nodeOnDev = Device(0)
+				case CLDoer:
+					nodeOnDev = Device(0)
+				default:
+					nodeOnDev = CPU
+				}
+
+				// if we have sequential Extern calls,  we just add it to the batch.
+				// sequential in this can mean several instructions apart. For example:
+				//		4 	A × B 	; read %2	; write to %3
+				//		 	⋮	(doesn't use %3 or %10)
+				//			⋮
+				//		10  Aᵀ × B	; read %3	; write to %10
+				//			⋮	(doesn't use %3, or %10)
+				//			⋮
+				//		12 	+		; read %10	; write to %12
+				//
+				// It is before instruction 12 that the flush will be added. 4 and 10 are considered sequential
+				//
+				// It is not sequential when both are not the same devices
+				switch {
+				case !op.CallsExtern():
+					// op doesn't call extern... don't bother flushing
+				case op.CallsExtern() && node.op.CallsExtern() && onDev == nodeOnDev:
+					// same device, both calls extern
+					// no flush needed
+				case op.CallsExtern() && node.op.CallsExtern() && onDev != nodeOnDev:
+					// different devices, both calls extern
+					// flush needed
+					fallthrough
+				case op.CallsExtern() && !node.op.CallsExtern():
+					// node is gonna use the value immediately
+					// flush needed
+					fallthrough
+				default:
+					if _, ok := cg.flushed[instrID]; !ok {
+						// cg.instructions = append(cg.instructions, flushInstr{})
+						cg.addInstr(node, flushInstr{})
+						cg.flush()
 					}
 				}
+
+				// viaticum := cg.instructions[instrID] // ;) - it IS on the way
+				// if instr, ok := viaticum.(*execOp); ok {
+				// if op.CallsExtern() && !node.op.CallsExtern() {
+				// }
+				// }
 			}
 		}
 
@@ -275,28 +460,120 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 				useUnsafe = true
 			}
 		}
+
 	}
 
 	cg.locMap[node] = writeTo
 
 	// otherwise, the replacement has already been written
 	if node == replacement {
-		compileLogf("New Exec Op")
+		compileLogf("New Exec Op: %v", node.op)
 		instr := newExecOp(node)
 		instr.readFrom = reads
 		instr.writeTo = writeTo
 		instr.preAllocated = prealloc
 		instr.useUnsafe = useUnsafe
 
-		cg.instructions = append(cg.instructions, instr)
+		// cg.instructions = append(cg.instructions, instr)
 		cg.addInstr(node, instr)
-		cg.updateLastWrites(writeTo.id)
+		cg.updateLastWrites(writeTo, node)
 	}
 }
 
+func (cg *codegenerator) insertFree(instrID int, node *Node) {
+	compileLogf("Inserting Free for instrID %d | instr: %v | op: %v", instrID, node, node.op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+
+	var reads []register
+	var children Nodes
+	var ok bool
+	if children, ok = cg.df.devTransChildren[node]; !ok {
+		children = node.children
+	}
+	for _, child := range children {
+		cReplacement := cg.df.replacements[child]
+		cInterv := cg.df.intervals[cReplacement]
+		reads = append(reads, cInterv.result)
+	}
+	compileLogf("reads %v", reads)
+
+	// check if anything needs to be freed
+	for _, read := range reads {
+		var readNode *Node
+		for n, reg := range cg.locMap {
+			if reg == read {
+				if readNode == nil {
+					readNode = n
+					continue
+				}
+				if readNode.id < n.id {
+					readNode = n
+				}
+			}
+		}
+		// interv := cg.df.intervals[readNode]
+		readRepl := cg.df.replacements[readNode]
+		if readRepl == nil {
+			readRepl = readNode
+		}
+		if readRepl == nil {
+			continue
+		}
+		interv := cg.df.intervals[readRepl]
+		compileLogf("interv for readRepl %v: %v", readRepl, interv)
+		lastUse := interv.lastUse()
+		compileLogf("Interval: %v; read: %v; Read Node %v; Op %v; LastUse %v; Instrid: %v", interv, read, readNode, readNode.op, lastUse, instrID)
+		if lastUse >= 0 && lastUse <= instrID && read.device != CPU {
+			if _, ok := cg.freed[read]; !ok {
+				compileLogf("Adding Free %v. LastUse %d", read, interv.lastUse())
+				// cg.instructions = append(cg.instructions, free{read})
+				cg.addInstr(node, free{read})
+				cg.freed[read] = struct{}{}
+			}
+		}
+	}
+
+	write := cg.locMap[node]
+	repl := cg.df.replacements[node]
+	interv := cg.df.intervals[repl]
+	compileLogf("Node %v | write  %v | Last Use %v | %v", node, write, interv.lastUse(), node.isRoot())
+	if interv.lastUse() == -1 || interv.lastUse() >= len(cg.sorted) {
+		// if node.isRoot() {
+		cg.deferFree[write] = struct{}{}
+		// return
+		// }
+
+		// otherwise, it's essentially a NOOP, so we free the memory immediately after the Op is executed
+		// TODO: do NO-OP optimizations
+		// if _, ok := cg.freed[write]; !ok {
+		// 	compileLogf("Adding Free %v. Last Use %d", write, interv.lastUse())
+		// 	cg.addInstr(node, free{write})
+		// 	cg.freed[write] = struct{}{}
+		// }
+	}
+}
+
+func (cg *codegenerator) insertLastFrees() int {
+	node := cg.sorted[len(cg.sorted)-1]
+	var instructionsAdded int
+	for reg := range cg.deferFree {
+		if _, ok := cg.freed[reg]; !ok {
+			compileLogf("Adding Free %v to the final instruction", reg)
+			cg.addInstr(node, free{reg})
+			instructionsAdded++
+		}
+	}
+	return instructionsAdded
+}
+
 func (cg *codegenerator) gen() (*program, map[*Node]register) {
-	for i := len(cg.sorted) - 1; i >= 0; i-- {
-		node := cg.sorted[i]
+	compileLogf("Generating from SORTED: %v", cg.sorted)
+	enterLoggingContext()
+	defer leaveLoggingContext()
+	for i, node := range cg.sorted {
+		// for i := len(cg.sorted) - 1; i >= 0; i-- {
+		// node := cg.sorted[i]
 		replacement := cg.df.replacements[node]
 		compileLogf("Working on %x. Replacement: %x", node.ID(), replacement.ID())
 
@@ -305,11 +582,28 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 		case node.isArg():
 			cg.addArg(node, nInterv)
 		case node.isStmt:
-			cg.addStmt(node, nInterv)
+			cg.addStmt(node, nInterv, i)
 		default:
 			cg.addNode(node, replacement, nInterv, i)
 		}
 	}
+
+	var instructionCount int
+	for i := len(cg.sorted) - 1; i >= 0; i-- {
+		node := cg.sorted[i]
+		cg.insertFree(i, node)
+
+		instructionCount += len(cg.instrMap[node])
+	}
+
+	instructionCount += cg.insertLastFrees()
+
+	cg.instructions = make(fragment, 0, instructionCount)
+	for _, node := range cg.sorted {
+		instrs := cg.instrMap[node]
+		cg.instructions = append(cg.instructions, instrs...)
+	}
+
 	return &program{
 		instructions: cg.instructions,
 		args:         len(cg.inputs),

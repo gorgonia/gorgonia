@@ -1,7 +1,7 @@
 package gorgonia
 
 import (
-	"io/ioutil"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -17,6 +17,7 @@ var binOpTests = []struct {
 	correctDerivB Value
 	correctShape  tensor.Shape
 }{
+
 	{Add,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
@@ -350,11 +351,13 @@ func TestBasicArithmetic(t *testing.T) {
 		y := NodeFromAny(g, yV, WithName("y"))
 
 		var ret *Node
+		var retVal Value
 		var err error
 		if ret, err = bot.binOp(x, y); err != nil {
 			t.Errorf("Test %d: %v", i, err)
 			continue
 		}
+		Read(ret, &retVal)
 
 		cost := Must(Sum(ret))
 		var grads Nodes
@@ -363,28 +366,83 @@ func TestBasicArithmetic(t *testing.T) {
 			continue
 		}
 
-		prog, locMap, err := Compile(g)
-		// t.Log(prog)
-		// t.Log(locMap)
-		if err != nil {
-			t.Errorf("Test %d: error while compiling: %v", i, err)
-			continue
-		}
-
-		// logger := log.New(os.Stderr, "", 0)
-		// m1 := NewTapeMachine(prog, locMap, WithLogger(logger), WithWatchlist())
-		m1 := NewTapeMachine(prog, locMap, TraceExec())
+		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %d: error while running %v", i, err)
+			runtime.GC()
 			continue
 		}
 
-		ioutil.WriteFile("add.dot", []byte(g.ToDot()), 0644)
+		as := newAssertState(assert)
+		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+		as.True(bot.correctShape.Eq(ret.Shape()))
+		as.Equal(2, len(grads))
+		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
+		if !as.cont {
+			prog := m1.Prog()
+			t.Logf("Test %d failed. Prog: %v", i, prog)
+		}
 
-		assert.Equal(bot.correct.Data(), ret.Value().Data())
-		assert.True(bot.correctShape.Eq(ret.Shape()))
-		assert.Equal(2, len(grads))
-		assert.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v", i)
-		assert.Equal(bot.correctDerivB.Data(), grads[1].Value().Data())
+		runtime.GC()
+	}
+
+	for i, bot := range binOpTests {
+		// log.Printf("i: %d", i)
+		// if i != 0 {
+		// 	continue
+		// }
+		g := NewGraph()
+		xV, _ := CloneValue(bot.a)
+		yV, _ := CloneValue(bot.b)
+		x := NodeFromAny(g, xV, WithName("x"))
+		y := NodeFromAny(g, yV, WithName("y"))
+
+		var ret *Node
+		var retVal Value
+		var err error
+		if ret, err = bot.binOp(x, y); err != nil {
+			t.Errorf("Test %d: %v", i, err)
+			continue
+		}
+		Read(ret, &retVal)
+
+		if xV.Shape().IsScalar() && yV.Shape().IsScalar() {
+
+		} else {
+			Must(Sum(ret))
+		}
+
+		m1 := NewLispMachine(g)
+		if err = m1.RunAll(); err != nil {
+			t.Errorf("Test %d: error while running %+v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		as := newAssertState(assert)
+		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+		as.True(bot.correctShape.Eq(ret.Shape()))
+
+		var xG, yG Value
+		if xG, err = x.Grad(); err != nil {
+			t.Errorf("Test %d: error while getting grad of x: %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		if yG, err = y.Grad(); err != nil {
+			t.Errorf("Test %d: error while getting grad of x: %v", i, err)
+			runtime.GC()
+			continue
+		}
+
+		as.Equal(bot.correctDerivA.Data(), xG.Data(), "Test %v xgrad", i)
+		as.Equal(bot.correctDerivB.Data(), yG.Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, yG)
+		if !as.cont {
+			t.Errorf("an error occured")
+		}
+
+		runtime.GC()
 	}
 }

@@ -46,6 +46,7 @@ func main() {
 		denseGenTestsName             = "../dense_generated_test.go"
 		denseIOName                   = "../dense_io.go"
 		denseIOTestsName              = "../dense_io_test.go"
+		blah                          = "../__blah__.go"
 
 		testTestName = "../test_test.go"
 	)
@@ -82,6 +83,7 @@ func main() {
 	pipeline(denseGenTestsName, mk, generateDenseTests)
 	pipeline(denseIOName, mk, generateDenseIO)
 	pipeline(denseIOTestsName, mk, generateDenseIOTests)
+	pipeline(blah, mk, maskcmpmethods)
 }
 
 func makeManyKinds() *ManyKinds {

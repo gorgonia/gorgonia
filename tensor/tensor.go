@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"unsafe"
 
 	"github.com/pkg/errors"
 )
@@ -47,6 +48,12 @@ type Tensor interface {
 	// view related stuff
 	IsView() bool
 	Materialize() Tensor
+
+	// all Tensors should be able to be expressed of as a slab of memory
+	// Note: the size of each element can be acquired by T.Dtype().Size()
+	MemSize() uintptr        // the size in memory
+	Uintptr() uintptr        // the pointer to the first element, as a uintptr
+	Pointer() unsafe.Pointer // the pointer to the first elemment as a unsafe.Ponter
 
 	// formatters
 	fmt.Formatter

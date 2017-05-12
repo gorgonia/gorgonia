@@ -27,6 +27,8 @@ uintptr_t process(struct fnargs* fa, int count) {
 */
 import "C"
 import (
+	"unsafe"
+
 	"github.com/gonum/blas"
 	"github.com/gonum/blas/cgo"
 )
@@ -48,7 +50,7 @@ const workbufLen int = 3
 //A Worker is a BLAS implementation that reports back if there is anything in the queue (WorkAvailable())
 // and a way to flush that queue
 type Worker interface {
-	WorkAvailable() int
+	WorkAvailable() <-chan struct{}
 	DoWork()
 }
 
@@ -90,41 +92,71 @@ type call struct {
 type context struct {
 	cgo.Implementation
 
+	workAvailable chan struct{}
+	work          chan call
+
 	fns   []C.struct_fnargs
 	queue []call
 }
 
 func newContext() *context {
 	return &context{
-		fns:   make([]C.struct_fnargs, workbufLen+1, workbufLen+1),
-		queue: make([]call, 0, workbufLen+1), // the extra 1 is for cases where the queue is full, and a blocking call comes in
+		workAvailable: make(chan struct{}, 1),
+		work:          make(chan call, workbufLen),
+
+		fns:   make([]C.struct_fnargs, workbufLen, workbufLen),
+		queue: make([]call, 0, workbufLen),
 	}
 }
 
 func (ctx *context) enqueue(c call) {
-	if len(ctx.queue) == workbufLen-1 || c.blocking {
-		ctx.queue = append(ctx.queue, c)
+	ctx.work <- c
+	select {
+	case ctx.workAvailable <- struct{}{}:
+	default:
+	}
+	if c.blocking {
+		// do something
 		ctx.DoWork()
-		return
 	}
-	ctx.queue = append(ctx.queue, c)
-	return
 }
 
-// DoWork basically drops everything and just performs the work
+// DoWork retrieves as many work items as possible, puts them into a queue, and then processes the queue.
+// The function may return without doing any work.
 func (ctx *context) DoWork() {
-	// runtime.LockOSThread()
-	// defer runtime.UnlockOSThread()
-	for i, c := range ctx.queue {
-		fn := c.args.toCStruct()
-		ctx.fns[i] = fn
-	}
-	C.process(&ctx.fns[0], C.int(len(ctx.queue)))
+	for {
+		select {
+		case w := <-ctx.work:
+			ctx.queue = append(ctx.queue, w)
+		default:
+			return
+		}
 
-	// cleanup - clear queue
-	ctx.queue = ctx.queue[:0]
+		blocking := ctx.queue[len(ctx.queue)-1].blocking
+	enqueue:
+		for len(ctx.queue) < cap(ctx.queue) && !blocking {
+			select {
+			case w := <-ctx.work:
+				ctx.queue = append(ctx.queue, w)
+				blocking = ctx.queue[len(ctx.queue)-1].blocking
+			default:
+				break enqueue
+
+			}
+
+			for i, c := range ctx.queue {
+				ctx.fns[i] = *(*C.struct_fnargs)(unsafe.Pointer(c.args))
+			}
+			C.process(&ctx.fns[0], C.int(len(ctx.queue)))
+
+			// clear queue
+			ctx.queue = ctx.queue[:0]
+		}
+	}
 }
 
-func (ctx *context) WorkAvailable() int { return len(ctx.queue) }
+// WorkAvailable is the channel which users should subscribe to to know if there is work incoming.
+func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
+// String implements runtime.Stringer and fmt.Stringer. It returns the name of the BLAS implementation.
 func (ctxt *context) String() string { return "Blase" }

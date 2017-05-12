@@ -100,7 +100,7 @@ func matMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 	return
 }
 
-func matMulDiff(transA, transB bool, x, y, z *Node) (err error) {
+func matMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -226,7 +226,7 @@ func matVecMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 	return
 }
 
-func matVecMulDiff(transA, transB bool, x, y, z *Node) (err error) {
+func matVecMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -274,7 +274,7 @@ func vecDotDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 	return
 }
 
-func vecDotDiff(transA, transB bool, x, y, z *Node) (err error) {
+func vecDotDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -309,7 +309,7 @@ func outerProdDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 	return
 }
 
-func outerProdDiff(transA, transB bool, x, y, z *Node) (err error) {
+func outerProdDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)

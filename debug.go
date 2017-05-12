@@ -3,6 +3,7 @@
 package gorgonia
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -24,6 +25,7 @@ var (
 	stabilizationDev  = false
 	solverDev         = false
 	cudaDev           = true
+	allocatorDev      = false
 )
 
 var READMEMSTATS = true
@@ -124,6 +126,12 @@ func cudaLogf(format string, attrs ...interface{}) {
 	}
 }
 
+func allocatorLogf(format string, attrs ...interface{}) {
+	if allocatorDev {
+		logf(format, attrs...)
+	}
+}
+
 func recoverFrom(format string, attrs ...interface{}) {
 	if r := recover(); r != nil {
 		_logger_.Printf(format, attrs...)
@@ -131,6 +139,26 @@ func recoverFrom(format string, attrs ...interface{}) {
 	}
 }
 
+/* Graph Collision related debugging code */
+var nnc, cc, ec int64
+
+func incrNN() {
+	atomic.AddInt64(&nnc, 1)
+}
+
+func incrCC() {
+	atomic.AddInt64(&cc, 1)
+}
+
+func incrEC() {
+	atomic.AddInt64(&ec, 1)
+}
+
+func GraphCollisionStats() (int, int, int) {
+	return int(atomic.LoadInt64(&nnc)), int(atomic.LoadInt64(&cc)), int(atomic.LoadInt64(&ec))
+}
+
+/* Compilation related debug utility functions/methods*/
 func logCompileState(name string, g *ExprGraph, df *dataflow) {
 	var fname string
 	if name == "" {
@@ -148,20 +176,12 @@ func logCompileState(name string, g *ExprGraph, df *dataflow) {
 	compileLogf("Written Compile State to %v", fname)
 }
 
-var nnc, cc, ec int64
-
-func incrNN() {
-	atomic.AddInt64(&nnc, 1)
-}
-
-func incrCC() {
-	atomic.AddInt64(&cc, 1)
-}
-
-func incrEC() {
-	atomic.AddInt64(&ec, 1)
-}
-
-func GraphCollisionStats() (int, int, int) {
-	return int(atomic.LoadInt64(&nnc)), int(atomic.LoadInt64(&cc)), int(atomic.LoadInt64(&ec))
+/* Analysis Debug Utility Functions/Methods */
+func (df *dataflow) debugIntervals(sorted Nodes) {
+	var buf bytes.Buffer
+	buf.Write([]byte("Intervals:\n"))
+	for _, n := range sorted {
+		fmt.Fprintf(&buf, "\t%v:\t%v\n", n, df.intervals[n])
+	}
+	compileLogf(buf.String())
 }

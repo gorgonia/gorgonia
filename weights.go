@@ -46,6 +46,40 @@ func RangedFrom(start int) InitWFn {
 	return f
 }
 
+func ValuesOf(val interface{}) InitWFn {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
+		size := tensor.Shape(s).TotalSize()
+
+		switch dt {
+		case tensor.Float64:
+			v := val.(float64)
+			retVal := make([]float64, size)
+			for i := range retVal {
+				retVal[i] = v
+			}
+			return retVal
+		case tensor.Float32:
+			v := val.(float32)
+			retVal := make([]float32, size)
+			for i := range retVal {
+				retVal[i] = v
+			}
+			return retVal
+		case tensor.Int:
+			v := val.(int)
+			retVal := make([]int, size)
+			for i := range retVal {
+				retVal[i] = v
+			}
+			return retVal
+		default:
+			err := errors.Errorf(nyiTypeFail, "Zeroes", dt)
+			panic(err)
+		}
+	}
+	return f
+}
+
 // Gaussian creates a InitWFn with the specified parameters.
 // Example Usage:
 //		w := NewMatrix(g, Float64, WithName("w"), WithShape(2,2), WithInit(Gaussian(0, 1)))

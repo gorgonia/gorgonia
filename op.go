@@ -36,11 +36,6 @@ func DimSizersToShapes(ds []DimSizer) ([]tensor.Shape, error) {
 	return retVal, nil
 }
 
-// External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
-type External interface {
-	HasFunc(string) bool
-}
-
 // An Op is a symbolic representation of an operation
 // Think of them as functions, taking an input (or multiple), and outputting something
 //
@@ -101,6 +96,12 @@ type BinaryOp interface {
 	IsBinary() bool
 }
 
+type BestDoer interface {
+	Op
+
+	BestDo(prealloc Value, vals ...Value) (Value, error)
+}
+
 // A NoRetOp is an Op that reads a value, but does not return any value. It's a representation of a not-pure function
 type NoRetOp interface {
 	Op
@@ -112,7 +113,7 @@ type NoRetOp interface {
 type ADOp interface {
 	Op
 
-	DoDiff(inputs Nodes, output *Node) error
+	DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error
 }
 
 // A SDOp is an Op that supports symbolic differentiation
@@ -151,8 +152,7 @@ type UnsafeDoer interface {
 
 // CUDADoer uses CUDA to perform the Op.
 type CUDADoer interface {
-	CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (Value, error)
-	CUDAFuncName() string
+	CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error)
 }
 
 // CLDoer uses OpenCL to perform the Op. As of now, there are NO Ops that support OpenCL
@@ -228,5 +228,3 @@ func (c constantTensor) Hashcode() uint32 {
 
 func (c constantTensor) isconstant() bool { return true }
 func (c constantTensor) Value() Value     { return c.v }
-
-/* SHAPE RELATED OPs */

@@ -6,9 +6,6 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 )
 
-// maxInt is the maximum value of the machine-dependent int type.
-const maxInt int = int(^uint(0) >> 1)
-
 const (
 	// graphviz name for a full graph
 	fullGraphName = "fullGraph"
@@ -75,6 +72,9 @@ const (
 	autodiffFail        = "Failed to differentiate %v"
 	undefinedOnShape    = "%v undefined on shape %v"
 	unsupportedDtype    = "dtype %v is not yet supported"
+	gradOnDeviceFail    = "Cannot get gradient of %v on %v"
+	makeValueFail       = "Unable to make value of %v with shape %v"
+	allocFail           = "Unable to allocate %v bytes on %v"
 )
 
 var empty struct{}

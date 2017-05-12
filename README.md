@@ -85,14 +85,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// compile into a program
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// create a VM to run the program on
-	machine := NewTapeMachine(prog, locMap)
+	machine := NewTapeMachine(g)
 
 	// set initial values then run
 	Let(x, 2.0)
@@ -220,14 +214,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// compile into a program
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// create a VM to run the program on
-	machine := NewTapeMachine(prog, locMap)
+	machine := NewTapeMachine(g)
 
 	// set initial values then run
 	Let(x, 2.0)
@@ -330,8 +318,7 @@ func main() {
 	xpy := T.Must(T.Add(x, y))
 	xpy2 := T.Must(T.Tanh(xpy))
 
-	prog, locMap, _ := T.Compile(g)
-	m := T.NewTapeMachine(prog, locMap, T.UseCudaFor("tanh"))
+	m := T.NewTapeMachine(g, T.UseCudaFor("tanh"))
 
 	T.Let(x, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
 	T.Let(y, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
@@ -428,15 +415,17 @@ Gorgonia's API is as of right now, not considered stable. It will be stable from
 Here are the goals for Gorgonia, sorted by importance 
 
 - [ ] 80+% test coverage. Current coverage is 50% for Gorgonia and 80% for the `tensor`.
+- [ ] Refactor the CuBLAS package as well as the Blase package to follow in vein of the CUDA implementation.
+- [ ] Refactor the `tensor` package into its own git repository.
+- [ ] Refactor `Op`, `VM` and `Solver` into its own packages.
+- [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in general.
+- [ ] Distributed computing. The ability to spread jobs out across multiple machines and communicating with each other has been attempted at least 3 times, but failed each time.
+- [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely. Use table driven tests where possible.
 - [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
 - [x] TravisCI for this package.
 - [x] Coveralls for this package.
-- [ ] Clean out the tests. The tests were the results of many years of accumulation. It'd be nice to refactor them out nicely. Use table driven tests where possible.
 - [x] Improve performance especially re: allocation, minimize impact of type system.
 - [x] Improve Op extensibility by exposing/changing the Op interface to be all exported, and not a mix of exported and unexported methods (Alternatively, create a `Compose` Op type for extensibility). This way everyone can make their own custom `Op`s.
-- [ ] Refactor the CuBLAS package as well as the Blase package to follow in vein of the CUDA implementation.
-- [ ] Distributed computing. The ability to spread jobs out across multiple machines and communicating with each other has been attempted at least 3 times, but failed each time.
-- [ ] Better documentation on why certain decisions were made, and the design of Gorgonia in general.
 - [ ] Higher order derivative optimization algorithms (LBFGS comes to mind)
 - [ ] Derivative-free optimization algorithms
 

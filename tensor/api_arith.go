@@ -206,18 +206,6 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		return Mul(a, b.ScalarValue())
 	}
 
-	// now that the stupid scalar stuff is out of the way, let's do some linear algebra
-	// if incr != nil {
-	// 	defer func() {
-	// 		if !retVal.Shape().Eq(incr.Shape()) {
-	// 			err = errors.Errorf(shapeMismatch, retVal.Shape(), incr.Shape())
-	// 			return
-	// 		}
-	// 		retD := retVal.(*Dense)
-	// 		retVal, err = incr.Add(retD, UseUnsafe())
-	// 	}()
-	// }
-
 	switch {
 	case a.IsVector():
 		switch {

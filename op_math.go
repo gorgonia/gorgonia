@@ -233,13 +233,13 @@ func (op elemBinOp) Do(values ...Value) (Value, error) {
 	return op.ʘBinaryOperator.Do(op.retSame, values...)
 }
 
-func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op elemBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
 	b := op.ʘBinaryOperator.binOpType()
-	if err = ʘBinOpDiffFns[b](inputs[0], inputs[1], output); err != nil {
+	if err = ʘBinOpDiffFns[b](ctx, inputs[0], inputs[1], output); err != nil {
 		if _, ok := err.(AutoDiffError); !ok {
 			return errors.Wrapf(err, autodiffFail, b)
 		}
@@ -268,13 +268,14 @@ func (op elemBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
 }
 
 func (op elemBinOp) ReturnsPtr() bool {
-	if _, ok := op.arg0.(TensorType); ok {
-		return true
-	} else if _, ok := op.arg1.(TensorType); ok {
-		return true
-	}
+	// if _, ok := op.arg0.(TensorType); ok {
+	// 	return true
+	// } else if _, ok := op.arg1.(TensorType); ok {
+	// 	return true
+	// }
 
-	return false
+	// return false
+	return true
 }
 
 func (op elemBinOp) OverwritesInput() int {
@@ -312,7 +313,10 @@ func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value
 		return pd.UsePreallocDo(prealloc, op.retSame, inputs...)
 	}
 
-	return op.Do(inputs...)
+	if retVal, err = op.Do(inputs...); err != nil {
+		return
+	}
+	return Copy(prealloc, retVal)
 }
 
 // Fulfils UnsafeDoer interface
@@ -329,25 +333,23 @@ func (op elemBinOp) UnsafeDo(inputs ...Value) (retVal Value, err error) {
 
 // Fulfils the IncrDoer interface
 func (op elemBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
-	if !op.ReturnsPtr() {
-		var retVal Value
-		if retVal, err = op.Do(inputs...); err != nil {
-			return errors.Wrapf(err, doFail, op)
-		}
-
-		add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
-		if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, add)
-		}
-		err = noIncrErr{retVal}
-		return
-	}
-
 	if id, ok := op.ʘBinaryOperator.(incrDoerBinOp); ok {
 		return id.IncrDo(incr, op.retSame, inputs...)
 	}
 
-	panic("unreachable")
+	// if !op.ReturnsPtr() {
+	var retVal Value
+	if retVal, err = op.Do(inputs...); err != nil {
+		return errors.Wrapf(err, doFail, op)
+	}
+
+	add := newEBOByType(addOpType, TypeOf(incr), TypeOf(retVal))
+	if retVal, err = add.UnsafeDo(incr, retVal); err != nil {
+		return errors.Wrapf(err, unsafeDoFail, add)
+	}
+	err = noIncrErr{retVal}
+	return
+	// }
 }
 
 func (op elemBinOp) String() string { return fmt.Sprintf("%v %t", op.ʘBinaryOperator, op.retSame) }
@@ -434,22 +436,29 @@ func (op elemUnaryOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op elemUnaryOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op elemUnaryOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
+	ctx.Signal()
 	u := op.ʘUnaryOperator.unaryOpType()
-	return ʘUnaryOpDiffFns[u](inputs[0], output)
+	return ʘUnaryOpDiffFns[u](ctx, inputs[0], output)
 }
 
-func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
+func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	return op.do(inputs[0])
+}
 
 func (op elemUnaryOp) ReturnsPtr() bool {
-	if op.argTensor {
-		return true
-	}
-	return false
+	// if op.argTensor {
+	// 	return true
+	// }
+	// return false
+	return true
 }
 
 func (op elemUnaryOp) OverwritesInput() int {
@@ -479,7 +488,10 @@ func (op elemUnaryOp) Hashcode() uint32 {
 
 // fulfils UnsafeDoer interface
 func (op elemUnaryOp) UnsafeDo(inputs ...Value) (Value, error) {
-	return op.do(inputs, tensor.UseUnsafe())
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+	return op.do(inputs[0], tensor.UseUnsafe())
 }
 
 // fulfils UnaryOp interface
@@ -488,12 +500,7 @@ func (op elemUnaryOp) isUnary() bool { return true }
 
 // misc private methods
 
-func (op elemUnaryOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
-	if err = checkArity(op, len(inputs)); err != nil {
-		return
-	}
-
-	a := inputs[0]
+func (op elemUnaryOp) do(a Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
 	switch v := a.(type) {
 	case tensor.Tensor:
 		var t tensor.Tensor
@@ -601,13 +608,14 @@ func (op linAlgBinOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Node
 	return
 }
 
-func (op linAlgBinOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op linAlgBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
+	ctx.Signal()
 
 	o := op.āBinaryOperator
-	return āBinOpDiffs[o](op.transA, op.transB, inputs[0], inputs[1], output)
+	return āBinOpDiffs[o](ctx, op.transA, op.transB, inputs[0], inputs[1], output)
 }
 
 func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }

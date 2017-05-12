@@ -140,7 +140,7 @@ var ʘUnaryOpDiffExprs = [maxʘUnaryOperator]func(x, y, gradY *Node) (*Node, err
 	log1pDiffExpr, expm1DiffExpr, softplusDiffExpr,
 }
 
-var ʘUnaryOpDiffFns = [maxʘUnaryOperator]func(x, y *Node) error{
+var ʘUnaryOpDiffFns = [maxʘUnaryOperator]func(ctx ExecutionContext, x, y *Node) error{
 	absDiff, nondiffUnaryOp, nondiffUnaryOp, nondiffUnaryOp,
 	sinDiff, cosDiff, expDiff,
 	lnDiff, log2Diff, negDiff, squareDiff, sqrtDiff,

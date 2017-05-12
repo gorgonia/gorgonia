@@ -13,14 +13,14 @@ import (
 )
 
 type tapeMachine struct {
-	ExternMetadata
+	*ExternMetadata
 
-	p       *program
-	storage []Value
-	locMap  map[*Node]register
+	p      *program
+	locMap map[*Node]register
 
-	// execution devices
-	b batchedBLAS
+	// "register" banks
+	cpumem []Value // Value - knows its own type and shape
+	gpumem []Value // Value of which the memories are stored in GPU memory
 
 	// state stuff, to allow continuation
 	pc int
@@ -38,13 +38,11 @@ type tapeMachine struct {
 	runFlags byte //  spare2: trace(copy values and put into nodes)
 }
 
-// NewTapeMachine creates a VM that executes a pre-compiled graph.
-func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *tapeMachine {
+// NewTapeMachine creates a VM that compiles a graph into a prog.
+func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
-		p:        prog,
-		locMap:   locMap,
-		storage:  make([]Value, prog.locs),
-		valueFmt: "%3.3f",
+		ExternMetadata: new(ExternMetadata),
+		valueFmt:       "%3.3g",
 	}
 
 	if b, ok := whichblas.(batchedBLAS); ok {
@@ -58,6 +56,20 @@ func NewTapeMachine(prog *program, locMap map[*Node]register, opts ...VMOpt) *ta
 	m.doAlloc()
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
+
+	if m.p == nil || m.locMap == nil {
+		prog, locMap, err := Compile(g)
+		if err != nil {
+			panic(err)
+		}
+
+		m.p = prog
+		m.locMap = locMap
+		m.cpumem = make([]Value, prog.cpulocs)
+		m.gpumem = make([]Value, prog.gpulocs)
+	}
+	m.init()
+
 	return m
 }
 
@@ -93,6 +105,18 @@ func (m *tapeMachine) bindDV() bool { return m.runFlags>>spare3&byte(1) == 1 }
 func (m *tapeMachine) doBindDV()    { m.runFlags |= byte(1) << spare3 }
 func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 
+// Reset resets the run state of the machine by changing the instruction pointer back to 0
+func (m *tapeMachine) Reset() {
+	m.pc = 0
+	m.ExternMetadata.Reset()
+}
+
+// Prog returns the compiled program. This would mainly be used in debugging functions
+func (m *tapeMachine) Prog() *program { return m.p }
+
+// LocMap returns the location where the Node's execution results are stored. This would mainly be used in debugging functions.
+func (m *tapeMachine) LocMap() map[*Node]register { return m.locMap }
+
 // Let wraps the Let() function of the package, with additional checks that n is in the machine
 func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
 	if !m.p.g.Has(n) {
@@ -102,6 +126,7 @@ func (m *tapeMachine) Let(n *Node, be interface{}) (err error) {
 	return Let(n, be)
 }
 
+// Set wraps the Set() function of this package, with additional checks that both a and b are in the machine
 func (m *tapeMachine) Set(a, b *Node) (err error) {
 	if !m.p.g.Has(a) {
 		return errors.Errorf("Node %v does not exist in this graph", a)
@@ -110,15 +135,23 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 		return errors.Errorf("Node %v does not exist in this graph", b)
 	}
 
-	// get the registry location
-	// areg := m.locMap[a]
-	breg := m.locMap[b]
-	v := m.storage[breg.id]
-	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
+	if b.Value() != nil {
+		return a.bind(b.Value())
+	}
 
+	// get the registry location
+	breg := m.locMap[b]
+	v := m.getValue(breg)
+	if v == nil {
+		err = errors.Errorf(nyiFail, "handling of Memory -> Value")
+		return
+	}
+
+	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
 	return a.bind(v)
 }
 
+// Run runs a fragment (a subset of a program).
 func (m *tapeMachine) Run(frag fragment) (err error) {
 	defer func() {
 		if err == nil {
@@ -138,7 +171,13 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 			continue
 		}
 
-		if err = n.bind(m.storage[r.id]); err != nil {
+		v := m.getValue(r)
+		if v == nil {
+			err = errors.Errorf(nyiFail, "converting Memory to Value")
+			return
+		}
+
+		if err = n.bind(m.cpumem[r.id]); err != nil {
 			return errors.Wrap(err, bindFail)
 		}
 	}
@@ -147,27 +186,65 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 }
 
 func (m *tapeMachine) RunAll() (err error) {
-	defer func() {
-		if err == nil {
-			m.dontAlloc()
-		}
-	}()
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
+	workAvailable := m.ExternMetadata.WorkAvailable()
+	syncChan := m.ExternMetadata.Sync()
+	errChan := make(chan error)
+	doneChan := make(chan struct{})
+
+	go m.runall(errChan, doneChan)
+	for {
+		select {
+		case sychronous := <-workAvailable:
+			err := m.ExternMetadata.DoWork()
+			if err != nil {
+				return err
+			}
+			if sychronous {
+				syncChan <- struct{}{}
+			}
+		case err := <-errChan:
+			return errors.Wrapf(err, "PC: %d", m.pc)
+		case <-doneChan:
+			err := m.ExternMetadata.DoWork()
+			if err != nil {
+				return err
+			}
+			return nil
+			// default:
+		}
+	}
+	return
+}
+
+func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
-		if err = instr.exec(m); err != nil {
-			return errors.Wrap(err, "Failed to carry exec()")
+		m.logf("PC %d", m.pc)
+		if err := instr.exec(m); err != nil {
+			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
+			errChan <- err
+			return
 		}
 
 		if m.watchNaN() {
 			writeTo := instr.writes().id
 			id := instr.ID()
 			if writeTo > 0 && id > 0 {
-				v := m.storage[writeTo]
-				n := m.p.g.Node(id).(*Node)
+				v := m.getValue(instr.writes())
+				if v == nil {
+					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchNaN")
+					errChan <- err
+					return
+				}
 
 				if hasNaN(v) {
-					return errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
+					n := m.p.g.Node(id).(*Node)
+					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
+					errChan <- err
+					return
 				}
 			}
 		}
@@ -176,19 +253,42 @@ func (m *tapeMachine) RunAll() (err error) {
 			writeTo := instr.writes().id
 			id := instr.ID()
 			if writeTo > 0 && id > 0 {
-				v := m.storage[writeTo]
-				n := m.p.g.Node(id).(*Node)
+				v := m.getValue(instr.writes())
+				if v == nil {
+					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchInf")
+					errChan <- err
+					return
+				}
+
 				if hasInf(v) {
-					return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
+					n := m.p.g.Node(id).(*Node)
+					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
+					errChan <- err
+					return
 				}
 			}
 		}
 	}
-	return
+
+	doneChan <- struct{}{}
 }
 
-func (m *tapeMachine) Reset() {
-	m.pc = 0
+func (m *tapeMachine) getValue(r register) Value {
+	switch r.device {
+	case CPU:
+		return m.cpumem[r.id]
+	default:
+		return m.gpumem[r.id]
+	}
+}
+
+func (m *tapeMachine) writeValue(r register, v Value) {
+	switch r.device {
+	case CPU:
+		m.cpumem[r.id] = v
+	default:
+		m.gpumem[r.id] = v
+	}
 }
 
 func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
@@ -283,7 +383,10 @@ func (m *tapeMachine) leaveLoggingContext() {
 type program struct {
 	instructions fragment
 	args         int
-	locs         int
+	cpulocs      int
+	gpulocs      int
+	cpumem       int64
+	gpumem       []int64
 	g            *ExprGraph         // original dag
 	df           *dataflow          // dataflow analysis
 	m            map[*Node]fragment // store which nodes create which instructions
@@ -292,18 +395,21 @@ type program struct {
 
 func (p *program) String() string {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | Memories: %d\n\nNode:instructions map:\n", p.instructions, p.args, p.locs)
+	fmt.Fprintf(&buf, "Instructions:\n%s\nArgs: %d | CPU Memories: %d | GPU Memories: %d\nCPU Mem: %v | GPU Mem %v\n\nNode:instructions map:\n", p.instructions, p.args, p.cpulocs, p.gpulocs, p.cpumem, p.gpumem)
 
-	for k, v := range p.m {
-		fmt.Fprintf(&buf, "\t%x:", k.ID())
-		for i, instr := range v {
-			if i == 0 {
+	for i, n := range p.sorted {
+		fmt.Fprintf(&buf, "\t%d\t%x:", i, n.ID())
+		frag := p.m[n]
+		for j, instr := range frag {
+			if j == 0 {
 				fmt.Fprintf(&buf, "\t%v\n", instr)
 			} else {
 				fmt.Fprintf(&buf, "\t\t%v\n", instr)
 			}
 		}
+
 	}
+
 	return buf.String()
 }
 
@@ -319,7 +425,7 @@ func (r register) String() string { return fmt.Sprintf("%s%d", r.device, r.id) }
 /* INSTRUCTIONS */
 
 type tapeInstr interface {
-	ID() int
+	ID() int // ID is the node ID
 	reads() []register
 	writes() register
 	exec(*tapeMachine) error
@@ -334,6 +440,15 @@ func (f fragment) String() string {
 		fmt.Fprintf(&buf, "\t%d\t%s\n", i, instr)
 	}
 	return buf.String()
+}
+
+func (f fragment) has(want tapeInstr) bool {
+	for _, instr := range f {
+		if instr == want {
+			return true
+		}
+	}
+	return false
 }
 
 type alloc struct {
@@ -361,63 +476,59 @@ func (instr alloc) writes() register  { return instr.writeTo }
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
 
-	dest := instr.writeTo.id
-
-	// check
-	var have, want hm.Type
-	if m.storage[dest] == nil {
-		goto mustalloc
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(instr.t); err != nil {
+		return errors.Wrapf(err, dtypeExtractionFail, instr.t)
 	}
-	have = TypeOf(m.storage[dest])
-	want = instr.t
 
-	if !m.alloc() && have == want {
-		m.logf("Already prealloc")
-
+	dev := instr.writeTo.device
+	var v Value
+	switch dev {
+	case CPU:
+		v, err = makeValue(instr.t, instr.s)
+	default:
+		var mem Memory
+		memsize := calcMemSize(dt, instr.s)
+		if mem, err = m.ExternMetadata.Get(dev, memsize); err != nil {
+			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
+		}
+		v, err = makeValueFromMem(instr.t, instr.s, mem)
+	}
+	if err != nil {
 		return
 	}
 
-mustalloc:
-	// check first if there is already a value bound to the node.
-	node := m.p.g.Node(instr.id).(*Node)
-	if node.boundTo != nil {
-		switch v := node.boundTo.(type) {
-		case tensor.Tensor:
-			m.storage[dest] = v
-			return nil
-		case *dualValue:
-			if tv, ok := v.Value.(tensor.Tensor); ok {
-				m.storage[dest] = tv
-				return nil
-			}
-		case Scalar:
-			// do nothing
-		}
-	}
-
-	machineLogf("Have to allocate %v in register %v", instr.t, instr.writeTo)
-	var tt TensorType
-	var ok bool
-	if tt, ok = instr.t.(TensorType); !ok {
-		return errors.New("Alloc only allocates tensor types")
-
-		// allocate a "scalar" vector
-	}
-
-	var dt tensor.Dtype
-	if dt, ok = tt.Of.(tensor.Dtype); !ok {
-		return errors.Errorf("No dtype to allocate. Type: %T", tt.Of)
-	}
-
-	//TODO: runtime shape check
-	t := tensor.New(tensor.Of(dt), tensor.WithShape(instr.s...))
-	m.storage[dest] = t
-	return
+	m.writeValue(instr.writeTo, v)
+	return nil
 }
 
 func (instr alloc) String() string {
-	return fmt.Sprintf("Alloc %v\t\t%v", instr.t, instr.writeTo)
+	return fmt.Sprintf("Alloc %v%v\t\t%v", instr.t, instr.s, instr.writeTo)
 }
+
+type free struct {
+	readsFrom register
+}
+
+func (instr free) ID() int           { return -1 }
+func (instr free) reads() []register { return []register{instr.readsFrom} }
+func (instr free) writes() register  { return register{-1, CPU} }
+func (instr free) exec(m *tapeMachine) error {
+	m.logf("Executing Free %v", instr.readsFrom)
+	switch instr.readsFrom.device {
+	case CPU:
+		return nil
+	default:
+		m.logf("instr.read from not CPU - %v %v %d", instr.readsFrom, instr.readsFrom.device == CPU, instr.readsFrom.device)
+		mem := m.gpumem[instr.readsFrom.id]
+		size := int64(mem.MemSize())
+
+		m.Put(instr.readsFrom.device, mem, size)
+		m.gpumem[instr.readsFrom.id] = nil
+		return nil
+	}
+}
+func (instr free) String() string { return fmt.Sprintf("Free %v", instr.readsFrom) }
 
 type loadArg struct {
 	index   int
@@ -446,9 +557,9 @@ func (instr loadArg) exec(m *tapeMachine) error {
 		v = node.boundTo
 	}
 
-	m.storage[instr.writeTo.id] = v
-	m.watchedLogf("Write To: %v", instr.writeTo)
-	m.watchedLogf(m.valueFmt, m.storage[instr.writeTo.id])
+	m.writeValue(instr.writeTo, v)
+	// m.watchedLogf("Write To: %v", instr.writeTo)
+	// m.watchedLogf(m.valueFmt, m.cpumem[instr.writeTo.id])
 	return nil
 }
 
@@ -457,184 +568,61 @@ func (instr loadArg) String() string {
 }
 
 type execOp struct {
-	op          Op
-	inputTypes  hm.Types
-	outputType  hm.Type
-	outputShape tensor.Shape
+	op Op
 
 	id int
 
 	readFrom []register
 	writeTo  register
+	size     int64 // size represents the outputsize
 
 	preAllocated bool
 	useUnsafe    bool
 	useGPU       bool
 }
 
-func (instr execOp) ID() int           { return instr.id }
-func (instr execOp) reads() []register { return instr.readFrom }
-func (instr execOp) writes() register  { return instr.writeTo }
+func (instr *execOp) ID() int           { return instr.id }
+func (instr *execOp) reads() []register { return instr.readFrom }
+func (instr *execOp) writes() register  { return instr.writeTo }
 
-func newExecOp(n *Node) execOp {
-	var inputTypes hm.Types
-	for _, child := range n.children {
-		inputTypes = append(inputTypes, child.t)
-	}
-
+func newExecOp(n *Node) *execOp {
 	_, useGPU := n.op.(CUDADoer)
+	compileLogf("op %v uses GPU %v", n.op, useGPU)
+	dt, err := dtypeOf(n.t)
+	if err != nil {
+		panic(err)
+	}
+	size := calcMemSize(dt, n.Shape())
 
-	return execOp{
-		op:         n.op,
-		id:         n.ID(),
-		inputTypes: inputTypes,
-		outputType: n.t,
-		useGPU:     useGPU,
+	return &execOp{
+		op:     n.op,
+		id:     n.ID(),
+		useGPU: useGPU,
+		size:   size,
 	}
 }
 
-func (instr execOp) exec(m *tapeMachine) (err error) {
-	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
-
-	// Read
-	m.watchedLogf("Inputs:")
-	m.enterLoggingContext()
-	var inputs []Value
-	for _, reg := range instr.readFrom {
-		v := m.storage[reg.id]
-		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v)
-	}
-	m.leaveLoggingContext()
-
-	// Execute
-	var v Value
-	switch {
-	case instr.useGPU:
-		switch cd := instr.op.(type) {
-		case CUDADoer:
-			fromDevs := make([]Device, len(instr.readFrom))
-			for i, r := range instr.readFrom {
-				fromDevs[i] = r.device
-			}
-			toDev := instr.writeTo.device
-			p := m.storage[instr.writeTo.id]
-
-			if v, err = cd.CUDADo(m, fromDevs, toDev, p, inputs...); err != nil {
-				return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
-			}
-		case CLDoer:
-		default:
-			// TODO: maybe warn?
-			if v, err = instr.op.Do(inputs...); err != nil {
-				return errors.Wrap(err, opDoFail)
-			}
-		}
-	case instr.preAllocated:
-		if pd, ok := instr.op.(UsePreallocDoer); ok {
-			p := m.storage[instr.writeTo.id]
-			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
-				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
-			}
-		} else {
-			// TODO: maybe warn?
-			if v, err = instr.op.Do(inputs...); err != nil {
-				return errors.Wrap(err, opDoFail)
-			}
-		}
-	case instr.useUnsafe:
-		if ud, ok := instr.op.(UnsafeDoer); ok {
-			if v, err = ud.UnsafeDo(inputs...); err != nil {
-				return errors.Wrap(err, "Failed to carry UnsafeDo()")
-			}
-		} else {
-			// TODO: warn?
-			if v, err = instr.op.Do(inputs...); err != nil {
-				return errors.Wrap(err, opDoFail)
-			}
-		}
-	default:
-		if v, err = instr.op.Do(inputs...); err != nil {
-			return errors.Wrap(err, opDoFail)
-		}
-	}
-
-	m.watchedLogf("Result:")
-	m.enterLoggingContext()
-	m.watchedLogf(m.valueFmt, v)
-	m.leaveLoggingContext()
-	// TODO: type and shape checks
-
-	// Write
-	dest := instr.writeTo.id
-	m.storage[dest] = v
-	node := m.p.g.Node(instr.id).(*Node)
-
-	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
-		if err = node.bindCopy(v); err != nil {
-			return errors.Wrapf(err, "TraceExec failed to bind copy")
-		}
-	} else {
-		node.bind(v)
-	}
-
-	// this is a gradient node then, we should also bind the value to the node's dualValue
-	if m.bindDV() && node.derivOf != nil {
-		for _, src := range node.derivOf {
-			if len(m.bindNodesDV) > 0 && !m.bindNodesDV.Contains(src) {
-				continue
-			}
-
-			if src.boundTo != nil {
-				dv := dvUnit(src.boundTo)
-
-				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
-
-				if d, err := add.UnsafeDo(dv.d, v); err == nil {
-					dv.SetDeriv(d)
-					src.bind(dv)
-				} else {
-					return err
-				}
-				// dv := dvUnit0(src.boundTo)
-				// var cloned Value
-				// if cloned, err = CloneValue(v); err != nil {
-				// 	return errors.Wrap(err, cloneFail)
-				// }
-				// dv.SetDeriv(cloned) // important!! do NOT use node.boundTo
-				// src.bind(dv)
-			}
-		}
-
-	}
-
-	m.watchedLogf("Written To: %v", instr.writeTo)
-	m.enterLoggingContext()
-	m.watchedLogf(m.valueFmt, v)
-	m.leaveLoggingContext()
-	return nil
-}
-func (instr execOp) String() string {
-	return fmt.Sprintf("%v\t%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.inputTypes, instr.op.CallsExtern(), instr.useUnsafe, instr.preAllocated)
+func (instr *execOp) String() string {
+	return fmt.Sprintf("%v\t%v\t%v\t%t\t%t\t%t", instr.op, instr.readFrom, instr.writeTo, instr.op.CallsExtern(), instr.useUnsafe, instr.preAllocated)
 }
 
 // flushInstr is for blastoise and cubone
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
-	if m.b == nil {
+	// m.logf("Executing DoWork")
+	// m.ExternMetadata.DoWork()
+	if m.WorkAvailable() == nil {
 		return nil
 	}
-	m.b.DoWork()
+	m.ExternMetadata.Signal()
 	return nil
 }
 
 func (instr flushInstr) ID() int           { return -1 }
 func (instr flushInstr) reads() []register { return nil }
 func (instr flushInstr) writes() register  { return register{-1, CPU} }
-func (instr flushInstr) String() string    { return "Do Batched BLAS" }
+func (instr flushInstr) String() string    { return "DoWork" }
 
 type letInstr struct {
 	readFrom register
@@ -653,13 +641,22 @@ func (instr letInstr) String() string {
 type readInstr struct {
 	readFrom register
 	into     *Value
+
+	// required to convert Memory to Value
+	t hm.Type
+	s tensor.Shape
 }
 
-func (instr readInstr) ID() int           { return -1 }
-func (instr readInstr) reads() []register { return []register{instr.readFrom} }
-func (instr readInstr) writes() register  { return register{-1, CPU} }
-func (instr readInstr) exec(m *tapeMachine) error {
-	v := m.storage[instr.readFrom.id]
+func (instr *readInstr) ID() int           { return -1 }
+func (instr *readInstr) reads() []register { return []register{instr.readFrom} }
+func (instr *readInstr) writes() register  { return register{-1, CPU} }
+func (instr *readInstr) exec(m *tapeMachine) (err error) {
+	m.logf("Executing READ - read from %v", instr.readFrom)
+	v := m.getValue(instr.readFrom)
+	if v == nil {
+		return errors.Errorf(nyiFail, "Cannot read instruction")
+	}
+
 	v2, err := CloneValue(v)
 	if err != nil {
 		return errors.Wrap(err, cloneFail)
@@ -669,6 +666,20 @@ func (instr readInstr) exec(m *tapeMachine) error {
 	return nil
 }
 
-func (instr readInstr) String() string {
+func (instr *readInstr) String() string {
 	return fmt.Sprintf("Read %v into %p", instr.readFrom, instr.into)
+}
+
+type deviceTransport struct {
+	from, to register
+}
+
+func (instr deviceTransport) ID() int { return -1 }
+func (instr deviceTransport) reads() []register {
+	return []register{instr.from}
+}
+func (instr deviceTransport) writes() register { return instr.to }
+
+func (instr deviceTransport) String() string {
+	return fmt.Sprintf("memcpy(%v, %v)", instr.to, instr.from)
 }

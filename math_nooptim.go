@@ -38,3 +38,7 @@ func _sigmoidf32(x float32) float32 {
 	}
 	return float32(1.0 / (1.0 + math.Exp(float64(-x))))
 }
+
+func _sigmoidDifff32(y float32) float32 { return (1 - y) * y }
+
+func _sigmoidDifff64(y float64) float64 { return (1 - y) * y }

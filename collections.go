@@ -187,12 +187,15 @@ func (ns Nodes) replace(what, with *Node) Nodes {
 	return ns
 }
 
+var removers = make(map[string]int)
+
 func (ns Nodes) remove(what *Node) Nodes {
 	for i := ns.index(what); i != -1; i = ns.index(what) {
 		copy(ns[i:], ns[i+1:])
 		ns[len(ns)-1] = nil // to prevent any unwanted references so things can be GC'd away
 		ns = ns[:len(ns)-1]
 	}
+
 	return ns
 }
 

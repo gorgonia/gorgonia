@@ -26,6 +26,9 @@ func TypeOf(v Value) hm.Type {
 
 // ValueEq is the equality function for values
 func ValueEq(a, b Value) bool {
+	if a == nil && b == nil {
+		return true
+	}
 	switch at := a.(type) {
 	case Scalar:
 		if bt, ok := b.(Scalar); ok {
@@ -39,6 +42,30 @@ func ValueEq(a, b Value) bool {
 		return false
 	case ValueEqualer:
 		return at.ValueEq(b)
+	default:
+		panic("Not implemented yet")
+	}
+}
+
+// ValueClose checks whether two values are close to one another. It's predominantly used as an alternative equality test for floats
+func ValueClose(a, b Value) bool {
+	if a == nil && b == nil {
+		return true
+	}
+
+	switch at := a.(type) {
+	case Scalar:
+		if bt, ok := b.(Scalar); ok {
+			return scalarClose(at, bt)
+		}
+		return false
+	case tensor.Tensor:
+		if bt, ok := b.(tensor.Tensor); ok {
+			return tensorClose(at, bt)
+		}
+		return false
+	case ValueCloser:
+		return at.ValueClose(b)
 	default:
 		panic("Not implemented yet")
 	}
@@ -69,7 +96,7 @@ func CloneValue(v Value) (Value, error) {
 		retVal := *vt
 		return &retVal, nil
 	case tensor.Tensor:
-		return vt.Clone().(tensor.Tensor), nil
+		return vt.Clone().(*tensor.Dense), nil
 	case Cloner:
 		return vt.Clone().(Value), nil
 	default:

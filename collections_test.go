@@ -27,7 +27,7 @@ func TestNodes(t *testing.T) {
 	set = set.Set()
 	correct := Nodes{n0, n1, n2, n3}
 	for _, n := range correct {
-		assert.Contains(set, n)
+		assert.Contains(set, n, "SET: %v", set)
 	}
 	assert.Equal(len(correct), len(set))
 

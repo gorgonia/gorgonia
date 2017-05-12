@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
-	"unsafe"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/gonum/graph"
@@ -23,6 +22,7 @@ type ExprGraph struct {
 	leaves    Nodes
 	constants Nodes
 	roots     Nodes
+	counter   uint
 }
 
 type graphconopt func(g *ExprGraph)
@@ -103,12 +103,18 @@ func (g *ExprGraph) addToAll(n *Node) {
 		panic("HELP! trying to add nil")
 	}
 	g.all = append(g.all, n)
+	n.id = int(g.counter)
+	g.counter++
 }
 
 // RemoveNode removes n from the graph, as well as any edges attached to it. If the node
 // is not in the graph it is a no-op.
 func (g *ExprGraph) RemoveNode(node graph.Node) {
 	n := node.(*Node)
+	if n.id == -1 {
+		return // if it's -1, it was never in the graph to begin with
+	}
+
 	hash := n.Hashcode()
 
 	delete(g.byHash, hash)
@@ -150,7 +156,15 @@ func (g *ExprGraph) Roots() (retVal Nodes) {
 		if len(tos) == 0 {
 			retVal = append(retVal, n)
 		}
+		// if the root is a statement (typically a read), and it only has one child
+		if len(n.children) == 1 && n.isStmt {
+			child := n.children[0]
+			if len(g.to[child]) == 1 {
+				retVal = append(retVal, child)
+			}
+		}
 	}
+	g.roots = retVal
 	return retVal
 }
 
@@ -162,6 +176,23 @@ func (g *ExprGraph) Inputs() (retVal Nodes) {
 		}
 	}
 	return
+}
+
+// UnbindAll unbinds all the values from the nodes
+func (g *ExprGraph) UnbindAll() {
+	for _, n := range g.all {
+		n.unbind()
+	}
+}
+
+// UnbindAllNonInputs unbinds all the values from nodes that aren't input nodes
+func (g *ExprGraph) UnbindAllNonInputs() {
+	for _, n := range g.all {
+		if n.isInput() {
+			continue
+		}
+		n.unbind()
+	}
 }
 
 // ByName returns nodes that have the name provided.
@@ -272,6 +303,10 @@ func (g *ExprGraph) ToDot() string {
 		}
 
 		for _, n := range g.byHash {
+			if n == nil {
+				// collision found... what to do?
+				continue
+			}
 			if n.derivOf != nil {
 				id := fmt.Sprintf("Node_%p", n)
 				for _, derivOf := range n.derivOf {
@@ -366,9 +401,11 @@ func (g *ExprGraph) removeAllEdgesFrom(n *Node) {
 
 // Node returns the node in the graph with the given ID.
 func (g *ExprGraph) Node(id int) graph.Node {
-	n := (*Node)(unsafe.Pointer(uintptr(id)))
-	if _, ok := g.to[n]; ok {
-		return n
+	// n := (*Node)(unsafe.Pointer(uintptr(id)))
+	for _, n := range g.all {
+		if n.id == id {
+			return n
+		}
 	}
 	return nil
 }

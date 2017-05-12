@@ -430,34 +430,99 @@ func addDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return Nodes{gradZ, gradZ}, nil
 }
 
-func addDiff(x, y, z *Node) (err error) {
+func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
 
-	add := newElemBinOp(addOpType, x, z)
+	// set up the op to be executed
+	op := NewAddOp(x, z, ctx)
+	op.Device = x.Device()
+	op.UseUnsafe = true
 
-	var d Value
-	if x.IsScalar() {
-		if d, err = add.Do(xdv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, doFail, add)
+	// we'll use the same device as the device the data from the node resides in
+	dev := op.Device
+
+	var d, xd, yd, zd Value
+	var extra bool
+
+	// allocate if necessary
+	if xd, extra, err = x.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, xd)
+	}
+
+	if zd, extra, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, z, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, xd)
+	}
+
+	// if x is scalar, an additional vector needs to be acquired
+	if x.IsScalar() && dev != CPU {
+		var mem Memory
+		var xd2 Value
+		memsize := calcMemSize(zd.Dtype(), zd.Shape())
+		if mem, err = ctx.Get(dev, memsize); err != nil {
+			return
 		}
-	} else {
-		if d, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, add)
+
+		if xd2, err = makeValueFromMem(z.t, zd.Shape(), mem); err != nil {
+			return
 		}
+
+		op.Prealloc = xd2
+		defer ctx.Signal()
+	}
+
+	// xd += zd
+	if d, err = op.Do(xd, zd); err != nil {
+		return errors.Wrapf(err, doFail, op)
 	}
 	xdv.SetDeriv(d)
 
-	add = newElemBinOp(addOpType, y, z)
-	if y.IsScalar() {
-		if d, err = add.Do(ydv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, doFail, add)
+	// set up the op to be executed for y
+	op = NewAddOp(y, z, ctx)
+	op.Device = y.Device()
+	op.UseUnsafe = true
+
+	dev = op.Device
+
+	if yd, extra, err = y.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, y, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, yd)
+	}
+
+	if zd, extra, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, z, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, zd)
+	}
+
+	// if y is scalar, an additional vector needs to be acquired
+	if y.IsScalar() && dev != CPU {
+		var mem Memory
+		var yd2 Value
+		memsize := calcMemSize(zd.Dtype(), zd.Shape())
+		if mem, err = ctx.Get(dev, memsize); err != nil {
+			return
 		}
-	} else {
-		if d, err = add.UnsafeDo(ydv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, add)
+		if yd2, err = makeValueFromMem(z.t, zd.Shape(), mem); err != nil {
+			return
 		}
+
+		op.Prealloc = yd2
+		defer ctx.Signal()
+	}
+
+	// yd += zd
+	if d, err = op.Do(yd, zd); err != nil {
+		return errors.Wrapf(err, doFail, op)
 	}
 	ydv.SetDeriv(d) // ignore errors on purpose
 
@@ -476,37 +541,104 @@ func subDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return
 }
 
-func subDiff(x, y, z *Node) (err error) {
+func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
 
-	sub := newEBOByType(subOpType, y.t, z.t)
-	add := newEBOByType(addOpType, x.t, z.t)
+	add := NewAddOp(x, z, ctx)
+	sub := NewSubOp(y, z, ctx)
+	add.Device = x.Device()
+	sub.Device = y.Device()
+	sub.UseUnsafe = true
+	add.UseUnsafe = true
+	// sub := newEBOByType(subOpType, y.t, z.t)
+	// add := newEBOByType(addOpType, x.t, z.t)
 
-	var d Value
+	dev := sub.Device
+	var xd, yd, zd, d Value
+	var extra bool
 
-	// dz/dy
-	if y.IsScalar() {
-		if d, err = sub.Do(ydv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, doFail, sub)
+	if zd, extra, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, z, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, zd)
+	}
+
+	if yd, extra, err = y.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, y, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, yd)
+	}
+
+	// if y is scalar an additional vector needs to be allocated for the prelloc
+	switch {
+	case y.IsScalar() && dev != CPU:
+		var mem Memory
+		var yd2 Value
+		memsize := calcMemSize(zd.Dtype(), zd.Shape())
+		if mem, err = ctx.Get(dev, memsize); err != nil {
+			return errors.Wrapf(err, allocFail, memsize, dev)
 		}
-	} else {
-		if d, err = sub.UnsafeDo(ydv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, sub)
+		if yd2, err = makeValueFromMem(z.t, zd.Shape(), mem); err != nil {
+			return errors.Wrapf(err, makeValueFail, z.t, zd.Shape())
+		}
+
+		sub.Prealloc = yd2
+		defer ctx.Signal()
+	case y.IsScalar() && dev == CPU:
+		if sub.Prealloc, err = makeValue(z.t, zd.Shape()); err != nil {
+			return
 		}
 	}
-	ydv.SetDeriv(d) // ignore errors on purpose
+
+	// dz/dy
+	if d, err = sub.Do(yd, zd); err != nil {
+		return errors.Wrapf(err, doFail, sub)
+	}
+	ydv.SetDeriv(d) // errors are ignored on purpose
+
+	//	handle x
+
+	dev = add.Device
+	if zd, extra, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, z, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, zd)
+	}
+
+	if xd, extra, err = x.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, xd)
+	}
+
+	switch {
+	case x.IsScalar() && dev != CPU:
+		var mem Memory
+		var xd2 Value
+		memsize := calcMemSize(zd.Dtype(), zd.Shape())
+		if mem, err = ctx.Get(dev, memsize); err != nil {
+			return
+		}
+
+		if xd2, err = makeValueFromMem(z.t, zd.Shape(), mem); err != nil {
+			return
+		}
+		add.Prealloc = xd2
+		defer ctx.Signal()
+	case x.IsScalar() && dev == CPU:
+		if sub.Prealloc, err = makeValue(z.t, zd.Shape()); err != nil {
+			return
+		}
+	}
 
 	// dz/dx
-	if x.IsScalar() {
-		if d, err = add.Do(xdv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, doFail, add)
-		}
-	} else {
-		if d, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
-			return errors.Wrapf(err, unsafeDoFail, add)
-		}
+	if d, err = add.Do(xd, zd); err != nil {
+		return errors.Wrapf(err, doFail, add)
 	}
 	xdv.SetDeriv(d) // ignore errors on purpose
 
@@ -528,47 +660,149 @@ func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
-func hadamardProdDiff(x, y, z *Node) (err error) {
+func hadamardProdDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
 
-	var mul elemBinOp
-	zdvdType := TypeOf(zdv.d)
+	var mul *ExternalOp
+	var dev Device
+	var xd, yd, zd, d Value
+	var extra bool
 
 	if x.isConstant() {
 		goto dzdy
 	}
 
 	//dzdx
-	mul = newEBOByType(mulOpType, TypeOf(ydv.Value), zdvdType)
-	err = mul.IncrDo(xdv.d, ydv.Value, zdv.d)
-	if err != nil {
-		var ver Valuer
-		var ok bool
-		if ver, ok = err.(Valuer); !ok {
-			return errors.Wrap(err, "IncrDo xdv.d failed")
+	mul = NewHadamardProdOp(y, z, ctx)
+	mul.Device = x.Device()
+	dev = mul.Device
+
+	if xd, extra, err = x.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, xd)
+	}
+
+	if yd, extra, err = y.ValueOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, y, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, yd)
+	}
+
+	if zd, extra, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, z, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, zd)
+	}
+
+	mul.Incr = xd
+
+	// if y is Scalar, then it needs to be broadcasted across to the
+	if x.IsScalar() && dev != CPU && !zd.Shape().IsScalar() {
+		var memIncr, mem2 Memory
+		var xdIncr, xd2 Value
+		memsize := calcMemSize(zd.Dtype(), zd.Shape())
+		if mem2, err = ctx.Get(dev, memsize); err != nil {
+			return errors.Wrapf(err, allocFail, memsize, dev)
 		}
 
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
+		if xd2, err = makeValueFromMem(z.t, zd.Shape(), mem2); err != nil {
+			return errors.Wrapf(err, makeValueFail, z.t, zd.Shape())
+		}
+
+		// "broadcast" x (in a very sloppy way)
+		if memIncr, err = ctx.Get(dev, memsize); err != nil {
+			return errors.Wrapf(err, allocFail, memsize, dev)
+		}
+
+		if xdIncr, err = makeValueFromMem(z.t, zd.Shape(), memIncr); err != nil {
+			return errors.Wrapf(err, makeValueFail, z.t, zd.Shape())
+		}
+		xdIncr.(tensor.Tensor).Memset(xdv.d.Data())
+
+		mul.Prealloc = xd2
+		mul.Incr = xdIncr
+
+		defer ctx.PutValue(dev, xd2) // xd2 is temporary, we need to dealloc it
+		defer ctx.Signal()           // work needs to be done
 	}
+
+	if d, err = mul.Do(yd, zd); err != nil {
+		return errors.Wrapf(err, "IncrDo xd faile")
+	}
+
+	xdv.SetDeriv(d)
 
 dzdy:
 	if y.isConstant() {
 		goto end
 	}
 
-	mul = newEBOByType(mulOpType, TypeOf(xdv.Value), zdvdType)
-	err = mul.IncrDo(ydv.d, xdv.Value, zdv.d)
-	if err != nil {
-		var ver Valuer
-		var ok bool
-		if ver, ok = err.(Valuer); !ok {
-			return errors.Wrap(err, "IncrDo ydv.d failed")
+	mul = NewHadamardProdOp(x, z, ctx)
+	mul.Device = y.Device()
+	dev = mul.Device
+
+	if xd, extra, err = x.ValueOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, xd)
+	}
+
+	if yd, extra, err = y.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, y, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, yd)
+	}
+
+	if zd, extra, err = z.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, z, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, zd)
+	}
+
+	mul.Incr = yd
+
+	// if y is Scalar, then it needs to be broadcasted across to the
+	if y.IsScalar() && dev != CPU && !zd.Shape().IsScalar() {
+		var memIncr, mem2 Memory
+		var ydIncr, yd2 Value
+		memsize := calcMemSize(zd.Dtype(), zd.Shape())
+		if mem2, err = ctx.Get(dev, memsize); err != nil {
+			return errors.Wrapf(err, allocFail, memsize, dev)
 		}
 
-		ydv.SetDeriv(ver.Value()) // ignore errors on purpose
+		if yd2, err = makeValueFromMem(z.t, zd.Shape(), mem2); err != nil {
+			return errors.Wrapf(err, makeValueFail, z.t, zd.Shape())
+		}
+
+		// "broadcast" y (in a very sloppy way)
+		if memIncr, err = ctx.Get(dev, memsize); err != nil {
+			return errors.Wrapf(err, allocFail, memsize, dev)
+		}
+
+		if ydIncr, err = makeValueFromMem(z.t, zd.Shape(), memIncr); err != nil {
+			return errors.Wrapf(err, makeValueFail, z.t, zd.Shape())
+		}
+		ydIncr.(tensor.Tensor).Memset(ydv.d.Data())
+
+		mul.Prealloc = yd2
+		mul.Incr = ydIncr
+
+		defer ctx.PutValue(dev, yd2) // yd2 is temporary, we need to dealloc it
+		defer ctx.Signal()           // work needs to be done
 	}
+
+	if d, err = mul.Do(xd, zd); err != nil {
+		return errors.Wrapf(err, "IncrDo yd failed")
+	}
+	ydv.SetDeriv(d)
 
 end:
 	return nil
@@ -596,7 +830,7 @@ func hadamardDivDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 	return nil, errors.Wrap(err, "Failed to carry HadamardProd()")
 }
 
-func hadamardDivDiff(x, y, z *Node) (err error) {
+func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -699,7 +933,7 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	// return nil, errors.New("hadamardPowDiffExpr not yet implemented")
 }
 
-func hadamardPowDiff(x, y, z *Node) (err error) {
+func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	xdv := x.boundTo.(*dualValue)
 	ydv := y.boundTo.(*dualValue)
 	zdv := z.boundTo.(*dualValue)
@@ -773,6 +1007,6 @@ func nondiffBinOpExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 	return nil, errors.New("Nondifferentiable")
 }
 
-func nondiffBinOp(x, y, z *Node) (err error) {
+func nondiffBinOp(ctx ExecutionContext, x, y, z *Node) (err error) {
 	return AutoDiffError{}
 }

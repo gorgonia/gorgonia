@@ -1,7 +1,7 @@
 package gorgonia
 
 import (
-	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
@@ -87,13 +87,7 @@ func TestMul(t *testing.T) {
 			}
 		}
 
-		prog, locMap, err := Compile(g)
-		if err != nil {
-			t.Errorf("Error while compiling %q. Err: %v", mts.name, err)
-			continue
-		}
-
-		m := NewTapeMachine(prog, locMap)
+		m := NewTapeMachine(g)
 		if err = m.RunAll(); err != nil {
 			t.Errorf("Error while executing %q. Err: %v", mts.name, err)
 			continue
@@ -239,7 +233,12 @@ var gtTests = []struct {
 }
 
 func TestGt(t *testing.T) {
+	defer runtime.GC()
 	for i, gtts := range gtTests {
+		log.Printf("i %d", i)
+		// if i != 11 {
+		// 	continue
+		// }
 		g := NewGraph()
 		a := NodeFromAny(g, gtts.a, WithName("a"))
 		b := NodeFromAny(g, gtts.b, WithName("b"))
@@ -264,9 +263,9 @@ func TestGt(t *testing.T) {
 			Grad(cost, a, b)
 		}
 
-		prog, locMap, err := Compile(g)
-		m1 := NewTapeMachine(prog, locMap)
+		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
+			t.Errorf("%v", m1.Prog())
 			t.Errorf("Test %d: %+v", i, err)
 			continue
 		}
@@ -285,6 +284,7 @@ func TestGt(t *testing.T) {
 		if gtts.retSame {
 			Must(Sum(ret2))
 			m2 = NewLispMachine(h)
+
 		} else {
 			m2 = NewLispMachine(h, ExecuteFwdOnly())
 		}
@@ -296,9 +296,11 @@ func TestGt(t *testing.T) {
 		if !ValueEq(ret.Value(), ret2.Value()) {
 			t.Errorf("Test %d. Expected %v. Got  %v", i, ret.Value(), ret2.Value())
 		}
+		runtime.GC()
 	}
 
 	// other special cases
+	log.Printf("Special Cases")
 	g := NewGraph()
 	c := NewConstant(F64(1))
 	// T := NewTensor(g, Float64, 1, WithShape(2), WithInit(RangedFrom(0)))
@@ -312,8 +314,7 @@ func TestGt(t *testing.T) {
 	cost := Must(Sum(gt))
 	Grad(cost, T)
 
-	prog, locMap, err := Compile(g)
-	m1 := NewTapeMachine(prog, locMap)
+	m1 := NewTapeMachine(g)
 	if err = m1.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -321,6 +322,8 @@ func TestGt(t *testing.T) {
 	if (TensorType{Dims: 1, Of: Float64}) != TypeOf(gt.Value()) {
 		t.Error("Expected a tensor type of float64")
 	}
+
+	// Same test as above, but using *lispMachine
 
 	h := NewGraph()
 	d := NewConstant(F64(1))
@@ -341,6 +344,7 @@ func TestGt(t *testing.T) {
 	}
 
 	t.Logf("%v", gt2.Value())
+	runtime.GC()
 
 }
 
@@ -357,18 +361,14 @@ func TestSoftMax(t *testing.T) {
 	if _, err := Grad(cost, x); err != nil {
 		t.Error(err)
 	}
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		t.Error(err)
-	}
 
-	m := NewTapeMachine(prog, locMap)
-	err = m.RunAll()
-	if err != nil {
+	m := NewTapeMachine(g)
+	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
 
 	var smg, xG Value
+	var err error
 	if smg, err = sm.Grad(); err != nil {
 		t.Error(err)
 	}
@@ -455,12 +455,8 @@ func TestSlice(t *testing.T) {
 			t.Errorf("Test %q failed to backprop: %+v", sts.name, err)
 			continue
 		}
-		prog, locMap, err := Compile(g)
-		if err != nil {
-			t.Errorf("Test %q failed to compile: %+v", sts.name, err)
-			continue
-		}
-		m1 := NewTapeMachine(prog, locMap)
+
+		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
 			t.Errorf("Test %q Runtime error %+v ", sts.name, err)
 			continue
@@ -520,13 +516,13 @@ func TestSlice(t *testing.T) {
 	sliced, _ := Slice(x, S(0))
 	cost := Must(Slice(sliced, S(0)))
 	Grad(cost, x)
-	prog, locMap, err := Compile(g)
-	m := NewTapeMachine(prog, locMap)
+
+	m := NewTapeMachine(g)
 
 	// mutate the graph before running
 	UnsafeLet(sliced, S(1))
 	UnsafeLet(cost, S(2))
-	if err = m.RunAll(); err != nil {
+	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -535,7 +531,7 @@ func TestSlice(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ioutil.WriteFile("blah.dot", []byte(g.ToDot()), 0644)
+	// ioutil.WriteFile("blah.dot", []byte(g.ToDot()), 0644)
 	assert.Equal(t, []float64{0, 0, 0, 0, 0, 1}, xG.Data())
 	// visual inspection
 	// t.Logf("x: \n%+v,\n%+v", x.Value(), xG)
@@ -608,13 +604,7 @@ func TestSum(t *testing.T) {
 			continue
 		}
 
-		prog, locMap, err := Compile(g)
-		if err != nil {
-			t.Errorf("Test %q - Unable to compile. Err: %+v", sts.name, err)
-			continue
-		}
-
-		m := NewTapeMachine(prog, locMap)
+		m := NewTapeMachine(g)
 		if err = m.RunAll(); err != nil {
 			t.Errorf("Test %q - Runtime error: %v", sts.name, err)
 			continue

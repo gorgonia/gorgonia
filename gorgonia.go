@@ -106,7 +106,9 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 
 	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithName(name), WithShape(s...), WithValue(val)}
 	consOpts = append(consOpts, opts...)
-	return newNode(consOpts...)
+	n := newNode(consOpts...)
+	n.dataOn = CPU
+	return n
 }
 
 // UniformRandomNode creates an input node that has a random op so everytime the node is passed, random values will be plucked from
@@ -173,7 +175,7 @@ func OneHotVector(id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 }
 
 // Grad takes a scalar cost node and a list of with-regards-to, and returns the gradient
-func Grad(cost *Node, WRTs ...*Node) (retVal []*Node, err error) {
+func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 	symdiffLogf("Cost:%v", cost)
 	if !cost.IsScalar() {
 		return nil, errors.Errorf("Expected Cost to be a scalar. Got %v instead", cost)
