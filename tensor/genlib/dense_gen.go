@@ -6,7 +6,7 @@ import (
 )
 
 const onesRaw = `// Ones creates a *Dense with the provided shape and type
-func Ones(dt Dtype, shape ...int) Tensor {
+func Ones(dt Dtype, shape ...int) *Dense {
 	d := recycledDense(dt, shape)
 	switch d.t.Kind() {
 		{{range .Kinds -}}
@@ -48,7 +48,7 @@ const Iraw = `// I creates the identity matrix (usually a square) matrix with 1s
 // 		⎢1  0  0  0⎥
 // 		⎢0  1  0  0⎥
 // 		⎣0  0  1  0⎦
-func I(dt Dtype, r, c, k int) Tensor{
+func I(dt Dtype, r, c, k int) *Dense{
 	ret := New(Of(dt), WithShape(r,c))
 	i := k
 	if k < 0 {

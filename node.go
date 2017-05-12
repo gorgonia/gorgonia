@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"unsafe"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/gorgonia/tensor"
@@ -34,12 +33,14 @@ type Node struct {
 	// value bondage
 	// inputs are bound to values directly
 	boundTo Value
+	dataOn  Device // where is the data on
 
 	// to track derivations
 	derivOf Nodes
 	deriv   *Node
 
 	// for hashing nodes
+	id   int // id is the ID at which the node is added to the graph
 	hash uint32
 
 	hashed        bool
@@ -188,6 +189,9 @@ func WithGroupName(name string) NodeConsOpt {
 
 func newNode(opts ...NodeConsOpt) *Node {
 	n := borrowNode()
+	n.dataOn = CPU
+	n.id = -1
+
 	for _, opt := range opts {
 		opt(n)
 	}
@@ -214,7 +218,7 @@ func NewUniqueNode(opts ...NodeConsOpt) *Node {
 }
 
 // ID returns the ID of the node. This satisfies the gonum/graph.Node interface
-func (n *Node) ID() int { return int(uintptr(unsafe.Pointer(n))) }
+func (n *Node) ID() int { return n.id }
 
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }
@@ -340,6 +344,9 @@ func (n *Node) Dims() int {
 // Shape returns the shape of the node
 func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
 
+// Device returns the device the data will be on
+func (n *Node) Device() Device { return n.dataOn }
+
 // IsVec returns whether this node is a vector
 func (n *Node) IsVec() bool { return n.IsVector() }
 
@@ -355,7 +362,7 @@ func (n *Node) Name() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%s(", n.op)
 	for i, child := range n.children {
-		fmt.Fprintf(&buf, "%%%x", child.Hashcode())
+		fmt.Fprintf(&buf, "%%%x", child.id)
 		if i < len(n.children)-1 {
 			buf.WriteString(", ")
 		}

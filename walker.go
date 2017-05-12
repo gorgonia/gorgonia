@@ -1,6 +1,8 @@
 package gorgonia
 
 import (
+	"sort"
+
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/topo"
 	"github.com/pkg/errors"
@@ -34,8 +36,19 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 
 }
 
-// Sort topologically sorts a ExprGraph
+// Sort topologically sorts a ExprGraph: root of graph will be first
 func Sort(g *ExprGraph) (sorted Nodes, err error) {
+	var sortedNodes []graph.Node
+	// if sortedNodes, err = topo.Sort(g); err != nil {
+	if sortedNodes, err = topo.SortStabilized(g, reverseLexical); err != nil {
+		return nil, errors.Wrap(err, sortFail)
+	}
+
+	sorted = graphNodeToNode(sortedNodes)
+	return
+}
+
+func UnstableSort(g *ExprGraph) (sorted Nodes, err error) {
 	var sortedNodes []graph.Node
 	if sortedNodes, err = topo.Sort(g); err != nil {
 		return nil, errors.Wrap(err, sortFail)
@@ -43,4 +56,21 @@ func Sort(g *ExprGraph) (sorted Nodes, err error) {
 
 	sorted = graphNodeToNode(sortedNodes)
 	return
+}
+
+func reverseNodes(sorted Nodes) {
+	for i := len(sorted)/2 - 1; i >= 0; i-- {
+		j := len(sorted) - i - 1
+		sorted[i], sorted[j] = sorted[j], sorted[i]
+	}
+}
+
+type byID []graph.Node
+
+func (ns byID) Len() int           { return len(ns) }
+func (ns byID) Less(i, j int) bool { return ns[i].ID() > ns[j].ID() }
+func (ns byID) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
+
+func reverseLexical(a []graph.Node) {
+	sort.Sort(byID(a))
 }

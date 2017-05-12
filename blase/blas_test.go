@@ -38,13 +38,9 @@ func randomFloat64(r, c int) []float64 {
 	return retVal
 }
 
-func TestQueue(t *testing.T) {
-	assert := assert.New(t)
-	whichblas := Implementation()
-
+func testDGEMM(t *testing.T, whichblas *context) (C, correct []float64) {
 	A := randomFloat64(2, 2)
 	B := randomFloat64(2, 3)
-	C := make([]float64, 2*3)
 
 	tA := blas.NoTrans
 	tB := blas.NoTrans
@@ -57,11 +53,7 @@ func TestQueue(t *testing.T) {
 	beta := 0.0
 	ldc := 3
 
-	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
-
-	correct := []float64{0, 0, 0, 0, 0, 0}
-	assert.Equal(correct, C)
-
+	C = make([]float64, 2*3)
 	correct = []float64{
 		A[0]*B[0] + A[1]*B[3],
 		A[0]*B[1] + A[1]*B[4],
@@ -72,64 +64,35 @@ func TestQueue(t *testing.T) {
 		A[2]*B[2] + A[3]*B[5],
 	}
 
+	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
+	return
+}
+
+func TestQueue(t *testing.T) {
+	assert := assert.New(t)
+	whichblas := Implementation()
+
+	workAvailable := whichblas.WorkAvailable()
+	go func() {
+		for range workAvailable {
+			whichblas.DoWork()
+		}
+	}()
+
+	var corrects [][]float64
+	var Cs [][]float64
+	for i := 0; i < 4; i++ {
+		C, correct := testDGEMM(t, whichblas)
+		Cs = append(Cs, C)
+		corrects = append(corrects, correct)
+
+		if i < workbufLen {
+			assert.True(floatsEqual(make([]float64, 6), C))
+		}
+	}
 	whichblas.DoWork()
-	assert.True(floatsEqual(correct, C))
 
-	/* Test if the queueing works */
-	correct = []float64{0, 0, 0, 0, 0, 0}
-
-	A = randomFloat64(2, 2)
-	B = randomFloat64(2, 3)
-	C1 := make([]float64, 2*3)
-
-	correct1 := []float64{
-		A[0]*B[0] + A[1]*B[3],
-		A[0]*B[1] + A[1]*B[4],
-		A[0]*B[2] + A[1]*B[5],
-
-		A[2]*B[0] + A[3]*B[3],
-		A[2]*B[1] + A[3]*B[4],
-		A[2]*B[2] + A[3]*B[5],
+	for i, C := range Cs {
+		assert.True(floatsEqual(corrects[i], C))
 	}
-
-	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C1, ldc)
-
-	A = randomFloat64(2, 2)
-	B = randomFloat64(2, 3)
-	C2 := make([]float64, 2*3)
-
-	correct2 := []float64{
-		A[0]*B[0] + A[1]*B[3],
-		A[0]*B[1] + A[1]*B[4],
-		A[0]*B[2] + A[1]*B[5],
-
-		A[2]*B[0] + A[3]*B[3],
-		A[2]*B[1] + A[3]*B[4],
-		A[2]*B[2] + A[3]*B[5],
-	}
-
-	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C2, ldc)
-
-	assert.True(floatsEqual(correct, C1))
-	assert.True(floatsEqual(correct, C2))
-
-	A = randomFloat64(2, 2)
-	B = randomFloat64(2, 3)
-	C3 := make([]float64, 2*3)
-
-	correct3 := []float64{
-		A[0]*B[0] + A[1]*B[3],
-		A[0]*B[1] + A[1]*B[4],
-		A[0]*B[2] + A[1]*B[5],
-
-		A[2]*B[0] + A[3]*B[3],
-		A[2]*B[1] + A[3]*B[4],
-		A[2]*B[2] + A[3]*B[5],
-	}
-
-	whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C3, ldc)
-
-	assert.True(floatsEqual(correct1, C1))
-	assert.True(floatsEqual(correct2, C2))
-	assert.True(floatsEqual(correct3, C3))
 }

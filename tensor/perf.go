@@ -84,7 +84,9 @@ func borrowDense(dt Dtype, size int) *Dense {
 	}
 
 end:
-	return pool.Get().(*Dense)
+	retVal := pool.Get().(*Dense)
+	// log.Printf("borrowing %p", retVal)
+	return retVal
 }
 
 // ReturnTensor returns a Tensor to their respective pools. USE WITH CAUTION
@@ -94,6 +96,12 @@ func ReturnTensor(t Tensor) {
 	}
 	switch tt := t.(type) {
 	case *Dense:
+		if tt.IsManuallyManaged() {
+			tt.data = nil
+			tt.hdr.Data = 0
+			return
+		}
+
 		dt := tt.t.Kind()
 		if _, ok := densePool[dt]; !ok {
 			return

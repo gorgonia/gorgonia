@@ -157,7 +157,7 @@ func repeatOpDiff(repeatOn int, shape tensor.Shape, xV, yV interface{}) (g *Expr
 	yVal, _, _, _ := anyToValue(yV)
 	x.bind(dvUnit(xVal))
 	y.bind(dvUnitVar(yVal))
-	if err = repeat.DoDiff(Nodes{x, repN}, y); err != nil {
+	if err = repeat.DoDiff(ExecutionContext{}, Nodes{x, repN}, y); err != nil {
 		return
 	}
 	return
@@ -242,14 +242,52 @@ func TestTransposeOp(t *testing.T) {
 	g := NewGraph()
 	A := NewMatrix(g, Float64, WithShape(2, 3), WithInit(RangedFrom(0)))
 	AT := Must(Transpose(A))
-	Must(Sum(AT))
+	cost1 := Must(Sum(AT))
 
-	m := NewLispMachine(g)
-	if err := m.RunAll(); err != nil {
+	var m VM
+	var err error
+
+	m = NewLispMachine(g)
+	if err = m.RunAll(); err != nil {
 		t.Error(err)
 	}
 
 	assert.Equal(tensor.Shape{3, 2}, AT.shape)
+
+	h := NewGraph()
+	B := NewMatrix(h, Float64, WithShape(2, 3), WithInit(RangedFrom(0)))
+	BT := Must(Transpose(B))
+	cost2 := Must(Sum(BT))
+	Grad(cost2, B)
+
+	m = NewTapeMachine(h)
+	if err = m.RunAll(); err != nil {
+		t.Error(err)
+	}
+	assert.Equal(tensor.Shape{3, 2}, BT.shape)
+
+	var ag, bg Value
+	if ag, err = A.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of A", err)
+	}
+
+	if bg, err = B.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of B", err)
+	}
+
+	var costGrad1, costGrad2 Value
+	if costGrad1, err = cost1.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of Cost1")
+	}
+
+	if costGrad2, err = cost2.Grad(); err != nil {
+		t.Fatalf("Cannot get grad of Cost2")
+	}
+
+	t.Logf("%v %v", cost1.Value(), cost2.Value())
+	t.Logf("%v %v", costGrad1, costGrad2)
+
+	assert.True(ValueEq(ag, bg))
 }
 
 func TestConcatOp(t *testing.T) {
@@ -280,14 +318,9 @@ func TestConcatOp(t *testing.T) {
 	xBack := []float64{1, 2}
 	xT := tensor.New(tensor.WithShape(2), tensor.WithBacking(xBack))
 
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	Let(a, aT)
 	Let(x, xT)
-	m1 := NewTapeMachine(prog, locMap)
+	m1 := NewTapeMachine(g)
 	m2 := NewLispMachine(g2)
 
 	if err = m1.RunAll(); err != nil {

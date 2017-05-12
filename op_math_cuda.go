@@ -4,178 +4,255 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/chewxy/cu"
-	"github.com/pkg/errors"
+)
+
+// module names
+const (
+	elemBinOpMod   = "elembinop"
+	elemUnaryOpMod = "elemunaryop"
 )
 
 func (op elemUnaryOp) CallsExtern() bool { return true }
 
-func (op elemUnaryOp) CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
-	a := inputs[0]
-	if a.Shape().IsScalar() {
-		return op.do(inputs)
-	}
+	cudaLogf("CUDADoing %v | prealloc %v | %v", op, prealloc, inputs)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 
-	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(a.Dtype().Size())*8)
+	// check
+	cudaLogf("checking if input is scalar")
+	a := inputs[0]
+	dt := a.Dtype()
+
+	// build name
+	name := fmt.Sprintf("%v.%v_f%d", elemUnaryOpMod, op.unaryOpType(), int(dt.Size())*8)
+
 	if !extern.HasFunc(name) {
 		cudaLogf("extern does not have func %q", name)
-		return op.Do(inputs...)
-	}
+		extern.Signal()
 
-	// TODO: maybe check arity of fromDevs?
-	dev := toDev
+		if retVal, err = op.do(a); err != nil {
+			return
+		}
+		if prealloc == nil {
+			return
+		}
+		return Copy(prealloc, retVal)
+	}
 
 	machine := extern.(CUDAMachine)
-	fns := machine.Functions()
-	if len(machine.Contexts()) == 0 {
-		return op.Do(inputs...) // resort to using slow methods if no devices were found
+	fn := machine.Functions()[name][int(dev)]
+	ctx := machine.Contexts()[int(dev)]
+
+	if prealloc == nil {
+		prealloc = a
 	}
-
-	if retVal, err = Copy(prealloc, a); err != nil {
-		return op.Do(inputs...)
-	}
-
-	fn := fns[name][int(dev)]
-
 	var mem cu.DevicePtr
-	if mem, err = valToDevicePointer(retVal); err != nil {
-		err = errors.Wrapf(err, opDoFail)
-		return
+	if prealloc.Uintptr() == a.Uintptr() && a.Shape().Eq(prealloc.Shape()) {
+		mem = cu.DevicePtr(a.Uintptr())
+	} else {
+		mem = cu.DevicePtr(prealloc.Uintptr())
+		memSize := int64(a.MemSize())
+		memA := cu.DevicePtr(a.Uintptr())
+		ctx.Memcpy(mem, memA, memSize)
 	}
+	size := logicalSize(a.Shape())
 
-	// no leaks plz
-	defer func(mem cu.DevicePtr) {
-		if err := cu.MemFree(mem); err != nil {
-			cudaLogf("memfree err %v", err)
-		}
-	}(mem)
-
-	size := a.Shape().TotalSize()
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(size, int(dev))
+	// blocks, threads := machine.(*tapeMachine).blockThread(int(size), int(dev))
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&mem),
 		unsafe.Pointer(&size),
 	}
-
-	cudaLogf("CUDADO %q, size %v", name, size)
-	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	if err = fn.LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args); err != nil {
-		cudaLogf("err %v", err)
-		return
-	}
-
-	err = devPtrToValue(retVal, mem)
-	return
-}
-
-func (op elemUnaryOp) CUDAFuncName() string {
-	return op.String()
+	cudaLogf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	cudaLogf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	cudaLogf("LaunchKernel Params. mem: %v. Size %v", mem, size)
+	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
+	// ctx.LaunchAndSync(fn, blocks, 1, 1, threads, 1, 1, 0, cu.Stream(0), args)
+	return prealloc, nil
 }
 
 func (op elemBinOp) CallsExtern() bool { return true }
 
-func (op elemBinOp) CUDADo(extern External, fromDevs []Device, toDev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-
-	if !op.isArith() {
-		if prealloc != nil && !prealloc.Shape().IsScalar() {
-			return op.UsePreallocDo(prealloc, inputs...)
-		}
-		return op.Do(inputs...)
-	}
+	cudaLogf("CUDADoing %v", op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 
 	a := inputs[0]
 	b := inputs[1]
-	if a.Shape().IsScalar() || b.Shape().IsScalar() || prealloc == nil || prealloc.Shape().IsScalar() {
-		return op.Do(inputs...)
-	}
+	as := a.Shape()
+	bs := b.Shape()
 
-	name := fmt.Sprintf("%v%d", op.CUDAFuncName(), int(a.Dtype().Size())*8)
-	if !extern.HasFunc(name) {
-		if prealloc != nil {
-			return op.UsePreallocDo(prealloc, inputs...)
-		}
-		return op.Do(inputs...)
-	}
+	var vv, vs, sv, ss bool
 
-	// TODO: maybe check arity of fromDevs?
-	dev := toDev
+	dt := a.Dtype()
+	opName := ʘBinOpNames[op.binOpType()]
+	var name string
+	switch {
+	case as.IsScalar() && bs.IsScalar():
+		ss = true
+		name = fmt.Sprintf("%v.%v_ss_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	case as.IsScalar() && !bs.IsScalar():
+		sv = true
+		name = fmt.Sprintf("%v.%v_sv_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	case !as.IsScalar() && bs.IsScalar():
+		vs = true
+		name = fmt.Sprintf("%v.%v_vs_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	case !as.IsScalar() && !bs.IsScalar():
+		vv = true
+		name = fmt.Sprintf("%v.%v_vv_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	}
 
 	machine := extern.(CUDAMachine)
-	fns := machine.Functions()
+	ctx := machine.Contexts()[int(dev)]
+	var mem, memB cu.DevicePtr
+	var size int64
+	cudaLogf("a: 0x%x b 0x%x", a.Uintptr(), b.Uintptr())
+	cudaLogf("a %v, b%v", a, b)
+	switch {
+	case vv, vs, ss:
+		if prealloc == nil {
+			mem = cu.DevicePtr(a.Uintptr())
+			retVal = a
+			size = int64(logicalSize(a.Shape()))
+		} else {
+			mem = cu.DevicePtr(prealloc.Uintptr())
+			memA := cu.DevicePtr(a.Uintptr())
+			memSize := int64(a.MemSize())
+			ctx.Memcpy(mem, memA, memSize)
 
-	if len(machine.Contexts()) == 0 {
+			size = int64(logicalSize(prealloc.Shape()))
+			retVal = prealloc
+		}
+		memB = cu.DevicePtr(b.Uintptr())
+		cudaLogf("HERE")
+	case sv:
+		if prealloc == nil {
+			mem = cu.DevicePtr(b.Uintptr())
+			retVal = b
+			size = int64(logicalSize(b.Shape()))
+			memB = cu.DevicePtr(b.Uintptr())
+		} else {
+			mem = cu.DevicePtr(a.Uintptr())
+			preallocMem := cu.DevicePtr(prealloc.Uintptr())
+
+			B := cu.DevicePtr(b.Uintptr())
+			memSize := int64(b.MemSize())
+			ctx.Memcpy(preallocMem, B, memSize)
+
+			size = int64(logicalSize(prealloc.Shape()))
+			retVal = prealloc
+			memB = preallocMem
+		}
+	}
+
+	hasFn := extern.HasFunc(name)
+	if !hasFn {
+		cudaLogf("NoFn: %q", name)
+		extern.Signal()
+		cudaLogf("DONE. Prealloc \n%v", prealloc)
 		if prealloc != nil {
 			return op.UsePreallocDo(prealloc, inputs...)
 		}
+
+		if op.retSame {
+			return op.UsePreallocDo(retVal, inputs...)
+		}
+
+		cudaLogf("Using DO - Prealloc %v", retVal)
 		return op.Do(inputs...)
 	}
 
-	if retVal, err = Copy(prealloc, a); err != nil {
-		// TODO: maybe warn?
-		if prealloc != nil {
-			return op.UsePreallocDo(prealloc, inputs...)
-		}
-		return op.Do(inputs...)
-	}
+	fn := machine.Functions()[name][int(dev)]
+	var args []unsafe.Pointer
 
-	fn := fns[name][int(dev)]
-	// TODO: optimize kernel to maximize parallelization
-	// var maxThreads int
-	// d := cu.Device(dev)
-	// if maxThreads, err = d.Attribute(cu.MaxThreadsPerBlock); err != nil {
-	// 	return op.Do(inputs...) // resort to using slow methods if there was an error
-	// }
-
-	var memA, memB cu.DevicePtr
-	if memA, err = valToDevicePointer(retVal); err != nil {
-		err = errors.Wrapf(err, opDoFail)
-		return
-	}
-
-	if memB, err = valToDevicePointer(b); err != nil {
-		err = errors.Wrapf(err, opDoFail)
-		return
-	}
-
-	// we don't want no leaks
-	defer func(memA, memB cu.DevicePtr) {
-		if err := cu.MemFree(memA); err != nil {
-			log.Printf("memfree(A): %v", err)
-		}
-		if err := cu.MemFree(memB); err != nil {
-			log.Printf("memfree(B): %v", err)
-		}
-	}(memA, memB)
-
-	size := a.Shape().TotalSize()
-	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(size, int(dev))
-	args := []unsafe.Pointer{
-		unsafe.Pointer(&memA),
+	cudaLogf("%v mem %v, memB %v", op, mem, memB)
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := machine.ElemGridSize(int(size), int(dev))
+	args = []unsafe.Pointer{
+		unsafe.Pointer(&mem),
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
 
 	cudaLogf("CUDADO %q, size %v", name, size)
+	cudaLogf("LaunchKernel params. mem: %v memB: %v size: %v", mem, memB, size)
 	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	if err = fn.LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args); err != nil {
-		return
-	}
-
-	err = devPtrToValue(retVal, memA)
+	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
 	return
-
 }
 
-func (op elemBinOp) CUDAFuncName() string {
-	return ʘBinOpNames[op.binOpType()]
+// NewAddOp creates a new *ExternalOp that wraps a add op
+func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+	add := newElemBinOp(addOpType, a, b)
+	op := NewExternalOp(add, ctx, nil)
+	if a.Device() == CPU && b.Device() == CPU {
+		op.Device = CPU
+		return op
+	}
+
+	if a.Device() != CPU {
+		op.Device = a.Device()
+		return op
+	}
+
+	if b.Device() != CPU {
+		op.Device = b.Device()
+		return op
+	}
+
+	return op
+}
+
+// NewSubOp creates a new *ExternalOp that wraps a sub op
+func NewSubOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+	sub := newEBOByType(subOpType, a.t, b.t)
+	op := NewExternalOp(sub, ctx, nil)
+
+	if a.Device() == CPU && b.Device() == CPU {
+		op.Device = CPU
+		return op
+	}
+
+	if a.Device() != CPU {
+		op.Device = a.Device()
+		return op
+	}
+
+	if b.Device() != CPU {
+		op.Device = b.Device()
+		return op
+	}
+	return op
+}
+
+func NewHadamardProdOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
+	mul := newEBOByType(mulOpType, a.t, b.t)
+	op := NewExternalOp(mul, ctx, nil)
+
+	if a.Device() == CPU && b.Device() == CPU {
+		op.Device = CPU
+		return op
+	}
+
+	if a.Device() != CPU {
+		op.Device = a.Device()
+		return op
+	}
+
+	if b.Device() != CPU {
+		op.Device = b.Device()
+		return op
+	}
+	return op
 }

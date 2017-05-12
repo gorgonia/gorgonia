@@ -31,8 +31,11 @@ var l2reg = 0.000001
 var learnrate = 0.01
 var clipVal = 5.0
 
-type offenderer interface {
-	Offender() interface{}
+type contextualError interface {
+	error
+	Node() *T.Node
+	Value() T.Value
+	InstructionID() int
 }
 
 func cleanup(sigChan chan os.Signal, doneChan chan bool, profiling bool) {
@@ -81,9 +84,10 @@ func main() {
 	eStart := start
 	for i := 0; i <= 100000; i++ {
 		// log.Printf("Iter: %d", i)
+		// _, _, err := m.run(i, solver)
 		cost, perp, err := m.run(i, solver)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("%+v", err))
 		}
 
 		if i%100 == 0 {
@@ -93,9 +97,12 @@ func main() {
 		}
 
 		if i%1000 == 0 {
+			log.Printf("Going to predict now")
 			m.predict()
+			log.Printf("Done predicting")
 		}
-		if *memprofile != "" && i == 3000 {
+
+		if *memprofile != "" && i == 1000 {
 			f, err := os.Create(*memprofile)
 			if err != nil {
 				log.Fatal(err)

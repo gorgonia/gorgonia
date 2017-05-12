@@ -11,9 +11,17 @@ const (
 	maskCompEvery int = 8
 )
 
+type denseFlag byte
+
+const (
+	manuallyManagedMem denseFlag = 1 << iota
+)
+
 // Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
 type Dense struct {
 	*AP
+
+	flag denseFlag
 
 	data unsafe.Pointer       // Unsafe.Pointer is required to keep the pointer of the first element of the slice, to prevent the slice from being GC'd
 	hdr  *reflect.SliceHeader // we keep a separate SliceHeader because it'd be easier to cast into a slice when doing get ops
@@ -176,6 +184,11 @@ func (t *Dense) IsView() bool {
 // IsMaterializeable() indicates if the Tensor is materializable - if it has either gone through some transforms or slicing
 func (t *Dense) IsMaterializable() bool {
 	return t.viewOf != nil || t.old != nil
+}
+
+// IsManuallyManaged returns true if the memory associated with this *Dense is manually managed (by the user)
+func (t *Dense) IsManuallyManaged() bool {
+	return (t.flag>>manuallyManagedMem)&denseFlag(1) == 1
 }
 
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated

@@ -28,8 +28,8 @@ const (
 	watchNaN
 	watchInf
 	allocVals
-	spare2
-	spare3
+	spare2 // spare2 = trace in tapeVM,
+	spare3 // spare3 = bindDV in tapeVM, manualRootGrad in LispVM
 	watchAll
 )
 
@@ -244,6 +244,36 @@ func BindDualValues(nodes ...*Node) VMOpt {
 			v.bindNodesDV = v.bindNodesDV.Set()
 		default:
 			// on by default for LispMachine
+		}
+	}
+	return f
+}
+
+// WithPrecompiled is an option to pass in compiled programs.
+// This is useful for users who use the CompileFunction function
+func WithPrecompiled(prog *program, locMap map[*Node]register) VMOpt {
+	f := func(m VM) {
+		switch v := m.(type) {
+		case *tapeMachine:
+			v.p = prog
+			v.locMap = locMap
+			v.cpumem = make([]Value, prog.cpulocs)
+			v.gpumem = make([]Value, prog.gpulocs)
+		default:
+			// no op
+		}
+	}
+	return f
+}
+
+// WithManualGradient allows the user to set the gradient of the root, before backprop. The root gradients should be set using the SetDeriv method
+func WithManualGradient() VMOpt {
+	f := func(m VM) {
+		switch v := m.(type) {
+		case *lispMachine:
+			v.allowSetRootGrad()
+		default:
+			// noop
 		}
 	}
 	return f

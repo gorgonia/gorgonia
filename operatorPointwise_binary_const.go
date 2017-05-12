@@ -99,7 +99,7 @@ var ʘBinOpDiffExprs = [maxʘBinaryOpType]func(x, y, z, gradZ *Node) (Nodes, err
 	nondiffBinOpExpr, nondiffBinOpExpr, nondiffBinOpExpr, nondiffBinOpExpr, nondiffBinOpExpr, nondiffBinOpExpr,
 }
 
-var ʘBinOpDiffFns = [maxʘBinaryOpType]func(x, y, z *Node) error{
+var ʘBinOpDiffFns = [maxʘBinaryOpType]func(ctx ExecutionContext, x, y, z *Node) error{
 	addDiff, subDiff, hadamardProdDiff, hadamardDivDiff, hadamardPowDiff,
 	nondiffBinOp, nondiffBinOp, nondiffBinOp, nondiffBinOp, nondiffBinOp, nondiffBinOp,
 }

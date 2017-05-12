@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"bytes"
 	"log"
+	"runtime"
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -16,54 +17,55 @@ func TestLispMachineBasics(t *testing.T) {
 	var buf bytes.Buffer
 
 	// test various flags first
-	m = NewLispMachine(nil)
+	g := NewGraph()
+	m = NewLispMachine(g)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.runFwd())
 	assert.True(m.runBwd())
 
 	logger := log.New(&buf, "", 0)
-	m = NewLispMachine(nil, WithLogger(logger))
+	m = NewLispMachine(g, WithLogger(logger))
 	assert.Equal(logger, m.logger)
 	assert.Equal(byte(0x0), m.logFlags) // if you pass in a logger without telling which direction to log... nothing gets logged
 
-	m = NewLispMachine(nil, WithLogger(nil))
+	m = NewLispMachine(g, WithLogger(nil))
 	assert.NotNil(m.logger)
 
-	m = NewLispMachine(nil, WithValueFmt("%v"))
+	m = NewLispMachine(g, WithValueFmt("%v"))
 	assert.Equal("%v", m.valueFmt)
 
-	m = NewLispMachine(nil, WithNaNWatch())
+	m = NewLispMachine(g, WithNaNWatch())
 	assert.Equal(byte(0x7), m.runFlags)
 	assert.True(m.watchNaN())
 
-	m = NewLispMachine(nil, WithInfWatch())
+	m = NewLispMachine(g, WithInfWatch())
 	assert.Equal(byte(0xb), m.runFlags)
 	assert.True(m.watchInf())
 
-	m = NewLispMachine(nil, ExecuteFwdOnly())
+	m = NewLispMachine(g, ExecuteFwdOnly())
 	assert.Equal(byte(0x1), m.runFlags)
 	assert.True(m.runFwd())
 	assert.False(m.runBwd())
 
-	m = NewLispMachine(nil, ExecuteBwdOnly())
+	m = NewLispMachine(g, ExecuteBwdOnly())
 	assert.Equal(byte(0x2), m.runFlags)
 	assert.True(m.runBwd())
 	assert.False(m.runFwd())
 
-	m = NewLispMachine(nil, LogFwd())
+	m = NewLispMachine(g, LogFwd())
 	assert.Equal(byte(0x1), m.logFlags)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.logFwd())
 	assert.False(m.logBwd())
 
-	m = NewLispMachine(nil, LogBwd())
+	m = NewLispMachine(g, LogBwd())
 	assert.Equal(byte(0x2), m.logFlags)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.logBwd())
 	assert.False(m.logFwd())
 
 	// if you pass in a watchlist, but don't have any logger, well, it's not gonna log anything
-	m = NewLispMachine(nil, WithWatchlist())
+	m = NewLispMachine(g, WithWatchlist())
 	assert.Equal(byte(0x80), m.logFlags)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.watchAll())
@@ -164,7 +166,7 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 	for i := 0; i < reps; i++ {
 		m := NewLispMachine(g)
 		if err := m.RunAll(); err != nil {
-			t.Errorf("Repetition %d error: %v", i, err)
+			t.Errorf("Repetition %d error: %+v", i, err)
 			continue
 		}
 
@@ -206,6 +208,8 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 				continue
 			}
 		}
+
+		runtime.GC()
 	}
 
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 type errorStacker interface {
@@ -17,31 +18,17 @@ type errorStacker interface {
 const EPSILON64 float64 = 1e-10
 const EPSILON32 float32 = 1e-5
 
-func floatEquals64(a, b float64) bool {
-	if (a-b) < EPSILON64 && (b-a) < EPSILON64 {
-		return true
-	}
-	return false
-}
-
 func floatsEqual64(a, b []float64) bool {
 	if len(a) != len(b) {
 		return false
 	}
 
 	for i, v := range a {
-		if !floatEquals64(v, b[i]) {
+		if !closeF64(v, b[i]) {
 			return false
 		}
 	}
 	return true
-}
-
-func floatEquals32(a, b float32) bool {
-	if (a-b) < EPSILON32 && (b-a) < EPSILON32 {
-		return true
-	}
-	return false
 }
 
 func floatsEqual32(a, b []float32) bool {
@@ -50,7 +37,7 @@ func floatsEqual32(a, b []float32) bool {
 	}
 
 	for i, v := range a {
-		if !floatEquals32(v, b[i]) {
+		if !closeF32(v, b[i]) {
 			return false
 		}
 	}
@@ -152,4 +139,25 @@ func (t malformed) Eq(hm.Type) bool                { return false }
 func (t malformed) Types() hm.Types                { return nil }
 func (t malformed) Normalize(a, b hm.TypeVarSet) (hm.Type, error) {
 	return nil, errors.Errorf("cannot normalize malformed")
+}
+
+type assertState struct {
+	*assert.Assertions
+	cont bool
+}
+
+func newAssertState(a *assert.Assertions) *assertState { return &assertState{a, true} }
+
+func (a *assertState) Equal(expected interface{}, actual interface{}, msgAndArgs ...interface{}) {
+	if !a.cont {
+		return
+	}
+	a.cont = a.Assertions.Equal(expected, actual, msgAndArgs...)
+}
+
+func (a *assertState) True(value bool, msgAndArgs ...interface{}) {
+	if !a.cont {
+		return
+	}
+	a.cont = a.Assertions.True(value, msgAndArgs...)
 }

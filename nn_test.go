@@ -29,14 +29,13 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 		return err
 	}
 
-	prog, locMap, err := Compile(g)
-	// t.Logf("prog: %v", prog)
 	// logger := log.New(os.Stderr, "", 0)
-	// m := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues(), WithLogger(logger), WithWatchlist())
-	m := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
+
+	// m := NewTapeMachine(g, TraceExec(), BindDualValues(), WithLogger(logger), WithWatchlist())
+	m := NewTapeMachine(g, TraceExec(), BindDualValues())
+	cudaLogf("%v", m.Prog())
 	defer runtime.GC()
 	if err := m.RunAll(); err != nil {
-		// t.Errorf("%+v", err)
 		return err
 	}
 	return nil

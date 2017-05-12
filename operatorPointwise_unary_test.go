@@ -6,8 +6,91 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
+	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
 )
+
+func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Node) (*Node, error)) (x, y, a, b *Node, v Value, err error) {
+
+	var xV, aV Value
+	var any interface{}
+	if shape.IsScalar() {
+		if dt == tensor.Float64 {
+			any = rand.ExpFloat64()
+		} else {
+			any = float32(rand.ExpFloat64())
+		}
+	} else {
+		any = tensor.New(tensor.WithBacking(tensor.Random(dt, shape.TotalSize())))
+	}
+	if v, _, _, err = anyToValue(any); err != nil {
+		t.Errorf("anyToValue failed %v", err)
+		return
+	}
+	if xV, err = CloneValue(v); err != nil {
+		t.Errorf("Clone to xV failed %v", err)
+		return
+	}
+
+	g := NewGraph()
+	x = NodeFromAny(g, xV, WithName("x"))
+	y = Must(fn(x))
+	Must(Sum(y))
+
+	var grads Nodes
+	h := NewGraph()
+	a = NodeFromAny(h, xV, WithName("x"))
+	b = Must(fn(a))
+	cost := Must(Sum(b))
+	if grads, err = Grad(cost, a); err != nil {
+		t.Errorf("Unable to get gradient %v", err)
+		return
+	}
+
+	if aV, err = CloneValue(v); err != nil {
+		t.Errorf("Clone to aV failed: %v", err)
+		return
+	}
+
+	m0 := NewLispMachine(g)
+	m1 := NewTapeMachine(h)
+
+	Let(x, xV)
+	if err = m0.RunAll(); err != nil {
+		t.Errorf("m0 failed:", err)
+		return
+	}
+
+	Let(a, aV)
+	if err = m1.RunAll(); err != nil {
+		t.Errorf("m1 failed:", err)
+		return
+	}
+
+	var yV, xG, bV, aG Value
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+		t.Logf("a.deriv %p | %p", a.deriv, grads[0])
+		return
+	}
+
+	if !ValueClose(yV, bV) {
+		t.Errorf("Expected yV and bV to be close. yV: %v, bV: %v", yV, bV)
+	}
+
+	if !ValueClose(aG, xG) {
+		t.Errorf("Expected aG and xG to be close. aG: %v, xG %v", aG, xG)
+	}
+
+	return
+}
 
 func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *Node, err error) {
 	_, x, y = simpleUnaryEqn()
@@ -56,18 +139,134 @@ func unaryOpDiffTest(op ʘUnaryOperatorType) (xRandVal float64, x, y, xT, yT *No
 	return
 }
 
-func TestAbsDiff(t *testing.T) {
+func TestAbs(t *testing.T) {
 	assert := assert.New(t)
-	_, x, _, xT, _, err := unaryOpDiffTest(absOpType)
+
+	var x, y, a, b *Node
+	var v Value
+	var yV, xG, bV, aG Value
+	var err error
+
+	/* FLOAT 64 Scalar */
+
+	x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{}, Abs)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	assert.Equal(1.0, x.boundTo.(*dualValue).d.Data())
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
 
-	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(*tensor.Dense)
-	assert.Equal([]float64{-1, 1}, xdvd.Data())
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	correctF64 := math.Abs(v.Data().(float64))
+	assert.True(ValueClose(newF64(correctF64), yV))
+	assert.True(ValueClose(newF64(correctF64), bV))
+	assert.True(ValueClose(newF64(1.0), xG))
+	assert.True(ValueClose(newF64(1.0), aG))
+
+	/* FLOAT 32 Scalar */
+
+	x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{}, Abs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	correctF32 := math32.Abs(v.Data().(float32))
+	assert.True(ValueClose(newF32(correctF32), yV))
+	assert.True(ValueClose(newF32(correctF32), bV))
+	assert.True(ValueClose(newF32(1.0), xG))
+	assert.True(ValueClose(newF32(1.0), aG))
+
+	/* FLOAT64 Vector */
+
+	x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{10}, Abs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	absF64s := v.Data().([]float64)
+	backingGrad64 := make([]float64, len(absF64s))
+	for i, v := range absF64s {
+		absF64s[i] = math.Abs(v)
+		if v > 0 {
+			backingGrad64[i] = 1
+		} else {
+			backingGrad64[i] = -1
+		}
+	}
+	correctVecF64 := tensor.New(tensor.WithBacking(absF64s))
+	gradF64s := tensor.New(tensor.WithBacking(backingGrad64))
+
+	assert.True(ValueClose(correctVecF64, yV))
+	assert.True(ValueClose(correctVecF64, bV))
+	assert.True(ValueClose(gradF64s, xG), "xG %v", xG)
+	assert.True(ValueClose(gradF64s, aG), "aG %v", aG)
+
+	/* FLOAT32 Vector */
+
+	x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{10}, Abs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	absF32s := v.Data().([]float32)
+	backingGrad32 := make([]float32, len(absF32s))
+	for i, v := range absF32s {
+		absF32s[i] = math32.Abs(v)
+		if v > 0 {
+			backingGrad32[i] = 1
+		} else {
+			backingGrad32[i] = -1
+		}
+	}
+	correctVecF32 := tensor.New(tensor.WithBacking(absF32s))
+	gradF32s := tensor.New(tensor.WithBacking(backingGrad32))
+
+	assert.True(ValueClose(correctVecF32, yV))
+	assert.True(ValueClose(correctVecF32, bV))
+	assert.True(ValueClose(gradF32s, xG), "xG %v", xG)
+	assert.True(ValueClose(gradF32s, aG), "aG %v", aG)
+
 }
 
 func TestSinDiff(t *testing.T) {
@@ -213,7 +412,8 @@ func TestCubeDiff(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	assert.True(floatEquals64(correct, extractF64(xG)), "%v != %v", xG, correct)
+
+	assert.True(closeF64(correct, extractF64(xG)), "%v != %v", xG, correct)
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d
@@ -245,7 +445,7 @@ func TestSigmoidDiff(t *testing.T) {
 
 	correct := math.Exp(-v) / ((1 + math.Exp(-v)) * (1 + math.Exp(-v)))
 	xG := x.boundTo.(*dualValue).d
-	assert.True(floatEquals64(correct, extractF64(xG)))
+	assert.True(closeF64(correct, extractF64(xG)))
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d
@@ -286,18 +486,121 @@ func TestExpm1Diff(t *testing.T) {
 	assert.Equal([]float64{correct0, correct}, xdvd.Data())
 }
 
-func TestSoftplusDiff(t *testing.T) {
+func TestSoftplus(t *testing.T) {
 	assert := assert.New(t)
-	v, x, _, xT, _, err := unaryOpDiffTest(softplusOpType)
-	if err != nil {
-		t.Error(err)
+
+	var x, y, a, b *Node
+	var v Value
+	var xV, yV, xG, bV, aG Value
+	var err error
+
+	/* FLOAT64 SCALAR */
+
+	if x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{}, Softplus); err != nil {
+		t.Fatal(err)
 	}
 
-	correct := sigmoidf64(v)
-	assert.Equal(correct, x.boundTo.(*dualValue).d.Data())
+	xV = x.Value()
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
 
-	// Tensor edition
-	xdvd := xT.boundTo.(*dualValue).d.(*tensor.Dense)
-	correct0 := sigmoidf64(-v)
-	assert.Equal([]float64{correct0, correct}, xdvd.Data())
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	correctVF64 := softplusf64(v.Data().(float64))
+	correctDF64 := sigmoidf64(xV.Data().(float64))
+	assert.True(ValueClose(newF64(correctVF64), yV))
+	assert.True(ValueClose(newF64(correctVF64), bV))
+	assert.True(ValueClose(newF64(correctDF64), xG))
+	assert.True(ValueClose(newF64(correctDF64), aG))
+
+	/* FLOAT32 SCALAR */
+
+	if x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{}, Softplus); err != nil {
+		t.Fatal(err)
+	}
+
+	xV = x.Value()
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	correctVF32 := softplusf32(v.Data().(float32))
+	correctDF32 := sigmoidf32(xV.Data().(float32))
+	assert.True(ValueClose(newF32(correctVF32), yV))
+	assert.True(ValueClose(newF32(correctVF32), bV))
+	assert.True(ValueClose(newF32(correctDF32), xG))
+	assert.True(ValueClose(newF32(correctDF32), aG))
+
+	/* FLOAT64 Vector */
+
+	if x, y, a, b, v, err = unaryOpTest(t, Float64, tensor.Shape{10}, Softplus); err != nil {
+		t.Fatal(err)
+	}
+
+	xV = x.Value()
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	correctVF64s := v.Data().([]float64)
+	correctDF64s := xV.Data().([]float64)
+
+	for i, v := range correctVF64s {
+		correctVF64s[i] = softplusf64(v)
+		correctDF64s[i] = sigmoidf64(correctDF64s[i])
+	}
+	assert.True(floatsEqual64(correctVF64s, yV.Data().([]float64)))
+	assert.True(floatsEqual64(correctVF64s, bV.Data().([]float64)))
+	assert.True(floatsEqual64(correctDF64s, xG.Data().([]float64)))
+	assert.True(floatsEqual64(correctDF64s, aG.Data().([]float64)))
+
+	/* FLOAT32 Vector */
+
+	if x, y, a, b, v, err = unaryOpTest(t, Float32, tensor.Shape{10}, Softplus); err != nil {
+		t.Fatal(err)
+	}
+
+	xV = x.Value()
+	yV = y.Value()
+	if xG, err = x.Grad(); err != nil {
+		t.Errorf("x has no grad: %v", err)
+		return
+	}
+
+	bV = b.Value()
+	if aG, err = a.Grad(); err != nil {
+		t.Errorf("a has no grad: %v", err)
+	}
+
+	correctVF32s := v.Data().([]float32)
+	correctDF32s := xV.Data().([]float32)
+
+	for i, v := range correctVF32s {
+		correctVF32s[i] = softplusf32(v)
+		correctDF32s[i] = sigmoidf32(correctDF32s[i])
+	}
+	assert.True(floatsEqual32(correctVF32s, yV.Data().([]float32)))
+	assert.True(floatsEqual32(correctVF32s, bV.Data().([]float32)))
+	assert.True(floatsEqual32(correctDF32s, xG.Data().([]float32)))
+	assert.True(floatsEqual32(correctDF32s, aG.Data().([]float32)))
 }

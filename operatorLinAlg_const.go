@@ -19,7 +19,7 @@ var āBinOpDiffExprs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z, grad *Nod
 	outerProdDiffExpr,
 }
 
-var āBinOpDiffs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z *Node) error{
+var āBinOpDiffs = [maxĀBinaryOperator]func(ctx ExecutionContext, tA, tB bool, x, y, z *Node) error{
 	matMulDiff,
 	matVecMulDiff,
 	vecDotDiff,

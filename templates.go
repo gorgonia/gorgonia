@@ -11,10 +11,11 @@ const exprNodeTemplText = `<
 
 <TR><TD>{{printf "%x" .ID}}</TD><TD>{{printf "%v" .Name | html | dotEscape}} :: {{nodeType . | html | dotEscape }}</TD></TR>
 {{if printOp . }}<TR><TD>Op</TD><TD>{{ opStr . | html | dotEscape }} :: {{ opType . | html | dotEscape }}</TD></TR>{{end}}
-{{if hasShape .}}<TR><TD COLSPAN="2">{{ getShape .}}</TD></TR>{{end}}
-<TR><TD COLSPAN="2">{{overwritesInput . }}</TD></TR>
+{{if hasShape .}}<TR><TD>Shape</TD><TD>{{ getShape .}}</TD></TR>{{end}}
+<TR><TD>Overwrites Input {{overwritesInput . }}</TD><TD>Data On: {{.Device}}</TD></TR>
 {{if hasGrad .}}<TR><TD>Value</TD><TD>Grad</TD></TR>
 <TR><TD>{{printf "%+3.3s" .Value | dotEscape}}</TD><TD>{{getGrad . | dotEscape }} </TD></TR>
+<TR><TD>Ptr: {{printf "0x%x" .Value.Uintptr}} </TD><TD>Ptr: {{getGradPtr .}} </TD></TR>
 {{else}}
 <TR><TD>Value</TD><TD>{{printf "%+3.3s" .Value | dotEscape}}</TD></TR>
 {{end}}
@@ -63,7 +64,15 @@ func getShape(n *Node) string {
 func getGrad(n *Node) string {
 	grad, err := n.Grad()
 	if err == nil {
-		return fmt.Sprintf("%+3.3s (%p)", grad, grad)
+		return fmt.Sprintf("%+3.3s", grad)
+	}
+	return ""
+}
+
+func getGradPtr(n *Node) string {
+	grad, err := n.Grad()
+	if err == nil && grad != nil {
+		return fmt.Sprintf("0x%x", grad.Uintptr())
 	}
 	return ""
 }
@@ -80,6 +89,7 @@ var funcMap = template.FuncMap{
 	"hasGrad":         hasGrad,
 	"getShape":        getShape,
 	"getGrad":         getGrad,
+	"getGradPtr":      getGradPtr,
 	"overwritesInput": overwritesInput,
 	"opStr":           opStr,
 	"opType":          opType,

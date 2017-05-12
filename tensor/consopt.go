@@ -67,7 +67,7 @@ func WithMask(x interface{}) ConsOpt {
 	return f
 }
 
-// WithShape is a construction option for a Tensor. It creates the ndarray in the required shape
+// WithShape is a construction option for a Tensor. It creates the ndarray in the required shape.
 func WithShape(dims ...int) ConsOpt {
 	f := func(t Tensor) {
 		switch tt := t.(type) {
@@ -88,6 +88,7 @@ func FromScalar(x interface{}, argMask ...[]bool) ConsOpt {
 	if len(argMask) > 0 {
 		mask = argMask[0]
 	}
+
 	f := func(t Tensor) {
 		switch tt := t.(type) {
 		case *Dense:
@@ -110,6 +111,80 @@ func FromScalar(x interface{}, argMask ...[]bool) ConsOpt {
 
 		default:
 			panic("Unsupported Tensor Type")
+		}
+	}
+	return f
+}
+
+// FromMemory is a construction option for creating a *Dense (for now) from memory location. This is a useful
+// option for super large tensors that don't fit into memory - the user may need to `mmap` a file the tensor.
+//
+// Bear in mind that at the current stage of the ConsOpt design, the order of the ConsOpt is important.
+// FromMemory  requires the *Dense's Dtype be set already.
+// This would fail (and panic):
+//		New(FromMemory(ptr, size), Of(Float64))
+// This would not:
+//		New(Of(Float64), FromMemory(ptr, size))
+// This behaviour  of  requiring the ConsOpts to be in order might be changed in the future.
+//
+// Memory must be manually managed by the caller.
+// Tensors called with this construction option will not be returned to any pool - rather, all references to the pointers will be null'd.
+// Use with caution.
+func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
+	f := func(t Tensor) {
+		switch tt := t.(type) {
+		case *Dense:
+			tt.v = nil // if there were any underlying slices it should be GC'd
+			if tt.hdr == nil {
+				tt.hdr = &reflect.SliceHeader{}
+			}
+
+			tt.data = unsafe.Pointer(ptr)
+			tt.hdr.Data = ptr
+			tt.hdr.Len = int(memsize / tt.t.Size())
+			tt.hdr.Cap = int(memsize / tt.t.Size())
+
+			tt.flag |= denseFlag(1) << manuallyManagedMem
+
+			switch tt.t {
+			case Bool:
+				tt.v = *(*[]bool)(unsafe.Pointer(tt.hdr))
+			case Int:
+				tt.v = *(*[]int)(unsafe.Pointer(tt.hdr))
+			case Int8:
+				tt.v = *(*[]int8)(unsafe.Pointer(tt.hdr))
+			case Int16:
+				tt.v = *(*[]int16)(unsafe.Pointer(tt.hdr))
+			case Int32:
+				tt.v = *(*[]int32)(unsafe.Pointer(tt.hdr))
+			case Int64:
+				tt.v = *(*[]int64)(unsafe.Pointer(tt.hdr))
+			case Uint:
+				tt.v = *(*[]uint)(unsafe.Pointer(tt.hdr))
+			case Byte:
+				tt.v = *(*[]uint8)(unsafe.Pointer(tt.hdr))
+			case Uint16:
+				tt.v = *(*[]uint16)(unsafe.Pointer(tt.hdr))
+			case Uint32:
+				tt.v = *(*[]uint32)(unsafe.Pointer(tt.hdr))
+			case Uint64:
+				tt.v = *(*[]uint64)(unsafe.Pointer(tt.hdr))
+			case Float32:
+				tt.v = *(*[]float32)(unsafe.Pointer(tt.hdr))
+			case Float64:
+				tt.v = *(*[]float64)(unsafe.Pointer(tt.hdr))
+			case Complex64:
+				tt.v = *(*[]complex64)(unsafe.Pointer(tt.hdr))
+			case Complex128:
+				tt.v = *(*[]complex128)(unsafe.Pointer(tt.hdr))
+			case String:
+				tt.v = *(*[]string)(unsafe.Pointer(tt.hdr))
+			default:
+				panic("Unsupported Dtype for using the FromMemory construction option")
+			}
+
+		default:
+			panic("Unsupported Tensor type")
 		}
 	}
 	return f

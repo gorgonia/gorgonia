@@ -85,14 +85,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// compile into a program
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// create a VM to run the program on
-	machine := NewTapeMachine(prog, locMap)
+	machine := NewTapeMachine(g)
 
 	// set initial values then run
 	Let(x, 2.0)
@@ -220,14 +214,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// compile into a program
-	prog, locMap, err := Compile(g)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// create a VM to run the program on
-	machine := NewTapeMachine(prog, locMap)
+	machine := NewTapeMachine(g)
 
 	// set initial values then run
 	Let(x, 2.0)
@@ -330,8 +318,7 @@ func main() {
 	xpy := T.Must(T.Add(x, y))
 	xpy2 := T.Must(T.Tanh(xpy))
 
-	prog, locMap, _ := T.Compile(g)
-	m := T.NewTapeMachine(prog, locMap, T.UseCudaFor("tanh"))
+	m := T.NewTapeMachine(g, T.UseCudaFor("tanh"))
 
 	T.Let(x, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
 	T.Let(y, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))

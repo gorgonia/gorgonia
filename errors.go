@@ -2,11 +2,21 @@ package gorgonia
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/pkg/errors"
 )
 
+// NoOpError is an error returned when an operation does nothing.
+type NoOpError interface {
+	NoOp() bool
+}
+
+type noopError struct{}
+
+func (e noopError) NoOp() bool    { return true }
+func (e noopError) Error() string { return "NoOp" }
+
+// errNoStabilization is an error used internally for when there is no stabilization mechanism is found.
 type errNoStabilization interface {
 	error
 	noStabilization() bool
@@ -23,43 +33,34 @@ type noIncrErr struct {
 	v Value
 }
 
-func (noIncrErr) Error() string  { return "increment couldn't be done. Safe op was performed instead" }
+func (noIncrErr) Error() string  { return incrErr }
 func (e noIncrErr) Value() Value { return e.v }
 
-type valueErr struct {
-	Valuer
-
-	msg    string
-	fnName string
-	file   string
-	line   int
+// oomError represents an Out of Memory error. It is typically used for CUDA related machine work
+type oomError struct {
+	res       int64
+	allocated int64
 }
 
-func newValueErr(v Valuer, format string, attrs ...interface{}) error {
-	pc, _, _, _ := runtime.Caller(1)
-	fn := runtime.FuncForPC(pc)
-	file, line := fn.FileLine(pc)
-
-	return valueErr{
-		Valuer: v,
-
-		msg:    fmt.Sprintf(format, attrs...),
-		fnName: fn.Name(),
-		file:   file,
-		line:   line,
-	}
-}
-
-func (err valueErr) Error() string {
-	return fmt.Sprintf("ValueError: %v. Happened at %v:%d. Called by: %v", err.msg, err.file, err.line, err.fnName)
-}
-
-func (err valueErr) Offender() interface{} { return err.Valuer }
+func (e oomError) Reserved() int64  { return e.res }
+func (e oomError) Allocated() int64 { return e.allocated }
+func (e oomError) Error() string    { return fmt.Sprintf("allocated/reserved: %v/%v", e.allocated, e.res) }
 
 // AutoDiffError is an error which should be passed if the function is not differentiable. This is useful for Op implementations
 type AutoDiffError struct{}
 
 func (err AutoDiffError) Error() string { return "AutoDiffError" }
+
+// vmContextualError is an error that is used to wrap errors that arise from the VM
+type vmContextualError struct {
+	error
+	node  *Node // which node was it processing
+	instr int   // what instruction ID it was
+}
+
+func (err vmContextualError) Node() *Node        { return err.node }
+func (err vmContextualError) Value() Value       { return err.node.Value() }
+func (err vmContextualError) InstructionID() int { return err.instr }
 
 func nyi(what string, implFor interface{}) error {
 	return errors.Errorf(nyiFail, what, implFor)

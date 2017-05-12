@@ -159,6 +159,76 @@ func dvUnit0(v Value) *dualValue {
 	return retVal
 }
 
+// dvUnitManaged does dvUnit for values whose memories are manually managed
+func dvUnitManaged(v Value, op *ExternalOp) (*dualValue, error) {
+	if op.Device == CPU {
+		return dvUnit(v), nil
+	}
+
+	if dv, ok := v.(*dualValue); ok {
+		return dv, nil
+	}
+
+	retVal := borrowDV()
+	retVal.Value = v
+
+	s := v.Shape()
+	dt := v.Dtype()
+	memsize := calcMemSize(dt, s)
+	// allocate on device
+	mem, err := op.Get(op.Device, memsize)
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := makeValueFromMem(TypeOf(v), s, mem)
+	if err != nil {
+		return nil, err
+	}
+	retVal.d = d
+
+	return retVal, nil
+}
+
+func dvUnitVarManaged(v Value, op *ExternalOp) (*dualValue, error) {
+	dv, err := dvUnitManaged(v, op)
+	if err != nil {
+		return dv, err
+	}
+
+	switch d := dv.d.(type) {
+	case tensor.Tensor:
+		dt := d.Dtype()
+		switch dt {
+		case tensor.Float64:
+			d.Memset(1.0)
+		case tensor.Float32:
+			d.Memset(float32(1))
+		case tensor.Bool:
+			d.Memset(true)
+		default:
+			return dv, errors.Errorf("Unhandled dtype: %v", dt)
+		}
+	case *F64:
+		*d = F64(1)
+	case *F32:
+		*d = F32(1)
+	case *I:
+		*d = I(1)
+	case *I64:
+		*d = I64(1)
+	case *I32:
+		*d = I32(1)
+	case *U8:
+		*d = U8(1)
+	case *B:
+		*d = B(true)
+	default:
+		return dv, errors.Errorf("Unhandeled type: %T", d)
+	}
+	return dv, nil
+}
+
 // helper to unpack from []*dualValue
 func idValue(inputs []*dualValue) (retVals []Value) {
 	retVals = make([]Value, len(inputs))
@@ -168,6 +238,7 @@ func idValue(inputs []*dualValue) (retVals []Value) {
 	return
 }
 
+// dvBind applies an op to the inputs, and returns a *dualValue
 func dvBind(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	enterLoggingContext()
 	defer leaveLoggingContext()
@@ -175,10 +246,13 @@ func dvBind(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	vals := idValue(inputs)
 
 	var ret Value
-	if ret, err = op.Do(vals...); err == nil {
-		return dvUnit(ret), nil
+	if ret, err = op.Do(vals...); err != nil {
+		return nil, errors.Wrap(err, opDoFail)
 	}
-	return nil, errors.Wrap(err, opDoFail)
+	if o, ok := op.(*ExternalOp); ok {
+		return dvUnitManaged(ret, o)
+	}
+	return dvUnit(ret), nil
 }
 
 // dvBindVar returns a dvUnitVar instead of dvUnit (which zeroes the derivative).
@@ -187,10 +261,13 @@ func dvBindVar(op Op, inputs []*dualValue) (retVal *dualValue, err error) {
 	vals := idValue(inputs)
 
 	var ret Value
-	if ret, err = op.Do(vals...); err == nil {
-		return dvUnitVar(ret), nil
+	if ret, err = op.Do(vals...); err != nil {
+		return nil, errors.Wrap(err, opDoFail)
 	}
-	return nil, errors.Wrap(err, opDoFail)
+	if o, ok := op.(*ExternalOp); ok {
+		return dvUnitVarManaged(ret, o)
+	}
+	return dvUnitVar(ret), nil
 }
 
 //TODO test vecvecdot divBind0
@@ -202,8 +279,7 @@ func dvBind0(op Op, retVal *dualValue, inputs []*dualValue) (err error) {
 
 	var ret Value
 	if pd, ok := op.(UsePreallocDoer); ok {
-		ret, err = pd.UsePreallocDo(prealloc, vals...)
-		if err == nil {
+		if ret, err = pd.UsePreallocDo(prealloc, vals...); err == nil {
 			goto next
 		}
 	}

@@ -294,7 +294,7 @@ func (op repeatOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, 
 	return
 }
 
-func (op repeatOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -571,7 +571,7 @@ func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nod
 	return
 }
 
-func (op *sliceOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -627,7 +627,7 @@ func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 }
 
 func (op *sliceOp) ReturnsPtr() bool     { return true }
-func (op *sliceOp) CallsExtern() bool    { return false }
+func (op *sliceOp) CallsExtern() bool    { return true }
 func (op *sliceOp) OverwritesInput() int { return -1 }
 func (op *sliceOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("slice"))
@@ -674,6 +674,12 @@ func (op sliceOp) String() string {
 	return buf.String()
 }
 
+// func (op sliceOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+// 	return op.Do(inputs...)
+// }
+
+// func (op sliceOp) CUDAFuncName() string { return "" }
+
 func (op sliceOp) all() bool { return op.Slice == nil || op.End() <= op.Start() }
 
 // T[:] +=incr
@@ -719,7 +725,7 @@ func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	return
 }
 
-func (op sliceIncrOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	xdv := inputs[0].boundTo.(*dualValue)
 	ydv := inputs[1].boundTo.(*dualValue)
 	zdv := output.boundTo.(*dualValue)
@@ -785,6 +791,10 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	}
 	return
 }
+
+// func (op sliceIncrOp) usePreallocDoer(prealloc Value, inputs ...Value) (retVal Value, err error) {
+
+// }
 
 func (op sliceIncrOp) OverwritesInput() int { return 0 }
 
@@ -888,7 +898,7 @@ func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	return
 }
 
-func (op transposeOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	xdv := inputs[0].boundTo.(*dualValue)
 	zdv := output.boundTo.(*dualValue)
 
@@ -1066,7 +1076,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 	return
 }
 
-func (op concatOp) DoDiff(inputs Nodes, output *Node) error {
+func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
 	odv := output.boundTo.(*dualValue)
 	odvd := odv.d.(tensor.Tensor)
 

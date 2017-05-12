@@ -13,6 +13,7 @@ import (
 )
 
 func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err error) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	var randX, randY interface{}
 	switch dt {
@@ -57,13 +58,7 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		m1 = NewLispMachine(g, ExecuteFwdOnly())
 	}
 
-	prog, locMap, err := Compile(g2)
-	if err != nil {
-		return err
-	}
-
-	m2 := NewTapeMachine(prog, locMap, TraceExec(), BindDualValues())
-	defer runtime.GC()
+	m2 := NewTapeMachine(g2, TraceExec(), BindDualValues())
 
 	Let(x, randX)
 	Let(y, randY)
@@ -98,19 +93,21 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		if cG, err = c.Grad(); err != nil {
 			return
 		}
-		assert.True(ValueEq(xG, aG), "Test ssDiff of %v. xG != aG. Got %v and %v", op, xG, aG)
-		assert.True(ValueEq(yG, bG), "Test ssDiff of %v. yG != bG. Got %v and %v", op, yG, bG)
-		assert.True(ValueEq(zG, cG), "Test ssDiff of %v. zG != cG. Got %v and %v", op, zG, cG)
+
+		assert.True(ValueClose(xG, aG), "Test ssDiff of %v. xG != aG. Got %v and %v", op, xG, aG)
+		assert.True(ValueClose(yG, bG), "Test ssDiff of %v. yG != bG. Got %v and %v", op, yG, bG)
+		assert.True(ValueClose(zG, cG), "Test ssDiff of %v. zG != cG. Got %v and %v", op, zG, cG)
 	}
 
-	assert.True(ValueEq(x.Value(), a.Value()), "Test ss op %v. Values are different: x: %v, a %v", op, x.Value(), a.Value())
-	assert.True(ValueEq(y.Value(), b.Value()), "Test ss op %v. Values are different: y: %v, b %v", op, y.Value(), b.Value())
-	assert.True(ValueEq(z.Value(), c.Value()), "Test ss op %v. Values are different: z: %v, c %v", op, z.Value(), c.Value())
+	assert.True(ValueClose(x.Value(), a.Value()), "Test ss op %v. Values are different: x: %v, a %v", op, x.Value(), a.Value())
+	assert.True(ValueClose(y.Value(), b.Value()), "Test ss op %v. Values are different: y: %v, b %v", op, y.Value(), b.Value())
+	assert.True(ValueClose(z.Value(), c.Value()), "Test ss op %v. Values are different: z: %v, c %v", op, z.Value(), c.Value())
 
 	return nil
 }
 
 func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err error) {
+	defer runtime.GC()
 	assert := assert.New(t)
 	var x, y, z, a, b, c, cost *Node
 	var g, g2 *ExprGraph
@@ -164,14 +161,9 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		m1 = NewLispMachine(g, ExecuteFwdOnly())
 	}
 
-	prog, locMap, err := Compile(g2)
-	if err != nil {
-		return err
-	}
-
 	// lg := log.New(os.Stderr, "", 0)
-	m2 := NewTapeMachine(prog, locMap, TraceExec())
-	defer runtime.GC()
+	m2 := NewTapeMachine(g2, TraceExec())
+
 	// m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
 
 	Let(x, xV)
@@ -207,14 +199,14 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 		if cG, err = c.Grad(); err != nil {
 			return
 		}
-		assert.True(ValueEq(xG, aG), "Test ttDiff of %v. xG != aG. Got %+v \nand %+v", op, xG, aG)
-		assert.True(ValueEq(yG, bG), "Test ttDiff of %v. yG != bG. Got %+v \nand %+v", op, yG, bG)
-		assert.True(ValueEq(zG, cG), "Test ttDiff of %v. zG != cG. Got %+v \nand %+v", op, zG, cG)
+		assert.True(ValueClose(xG, aG), "Test ttDiff of %v. xG != aG. Got %+v \nand %+v", op, xG, aG)
+		assert.True(ValueClose(yG, bG), "Test ttDiff of %v. yG != bG. Got %+v \nand %+v", op, yG, bG)
+		assert.True(ValueClose(zG, cG), "Test ttDiff of %v. zG != cG. Got %+v \nand %+v", op, zG, cG)
 	}
 
-	assert.True(ValueEq(x.Value(), a.Value()), "Test tt op %v. Values are different: x: %+v\n a %+v", op, x.Value(), a.Value())
-	assert.True(ValueEq(y.Value(), b.Value()), "Test tt op %v. Values are different: y: %+v\n b %+v", op, y.Value(), b.Value())
-	assert.True(ValueEq(z.Value(), c.Value()), "Test tt op %v. Values are different: z: %+v\n c %+v", op, z.Value(), c.Value())
+	assert.True(ValueClose(x.Value(), a.Value()), "Test tt op %v. Values are different: x: %+v\n a %+v", op, x.Value(), a.Value())
+	assert.True(ValueClose(y.Value(), b.Value()), "Test tt op %v. Values are different: y: %+v\n b %+v", op, y.Value(), b.Value())
+	assert.True(ValueClose(z.Value(), c.Value()), "Test tt op %v. Values are different: z: %+v\n c %+v", op, z.Value(), c.Value())
 
 	if t.Failed() {
 		ioutil.WriteFile(fmt.Sprintf("Test_%v_tt.dot", op), []byte(g2.ToDot()), 0644)
@@ -225,6 +217,12 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 
 func TestBinOps(t *testing.T) {
 	for op := addOpType; op < maxʘBinaryOpType; op++ {
+		t.Logf("OP: %v", op)
+
+		// if op != addOpType {
+		// 	continue
+		// }
+
 		// for op := subOpType; op < mulOpType; op++ {
 		var err error
 		err = ssBinOpTest(t, op, Float64)

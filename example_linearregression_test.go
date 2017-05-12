@@ -10,20 +10,34 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 )
 
+const (
+	vecSize = 1000000
+)
+
 // manually generate a fake dataset which is y=2x+random
 func xy(dt tensor.Dtype) (x tensor.Tensor, y tensor.Tensor) {
 	var xBack, yBack interface{}
 	switch dt {
 	case Float32:
-		xBack = []float32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-		yBack = []float32{2.5, 4.2, 6.1, 8, 9.992, 11.7, 15.1, 16, 18.1, 19.89}
+		xBack = tensor.Range(tensor.Float32, 1, vecSize+1).([]float32)
+		yBackC := tensor.Range(tensor.Float32, 1, vecSize+1).([]float32)
+
+		for i, v := range yBackC {
+			yBackC[i] = v*2 + rand.Float32()
+		}
+		yBack = yBackC
 	case Float64:
-		xBack = []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-		yBack = []float64{2.5, 4.2, 6.1, 8, 9.992, 11.7, 15.1, 16, 18.1, 19.89}
+		xBack = tensor.Range(tensor.Float64, 1, vecSize+1).([]float64)
+		yBackC := tensor.Range(tensor.Float64, 1, vecSize+1).([]float64)
+
+		for i, v := range yBackC {
+			yBackC[i] = v*2 + rand.Float64()
+		}
+		yBack = yBackC
 	}
 
-	x = tensor.New(tensor.WithBacking(xBack), tensor.WithShape(10))
-	y = tensor.New(tensor.WithBacking(yBack), tensor.WithShape(10))
+	x = tensor.New(tensor.WithBacking(xBack), tensor.WithShape(vecSize))
+	y = tensor.New(tensor.WithBacking(yBack), tensor.WithShape(vecSize))
 	return
 }
 
@@ -44,8 +58,8 @@ func linearRegression(Float tensor.Dtype) {
 	xT, yT = xy(Float)
 
 	g := NewGraph()
-	x := NewVector(g, Float, WithShape(10), WithName("x"), WithValue(xT))
-	y := NewVector(g, Float, WithShape(10), WithName("y"), WithValue(yT))
+	x := NewVector(g, Float, WithShape(vecSize), WithName("x"), WithValue(xT))
+	y := NewVector(g, Float, WithShape(vecSize), WithName("y"), WithValue(yT))
 	m := NewScalar(g, Float, WithName("m"), WithValue(random(Float)))
 	c := NewScalar(g, Float, WithName("c"), WithValue(random(Float)))
 
@@ -54,10 +68,12 @@ func linearRegression(Float tensor.Dtype) {
 	cost := Must(Mean(se))
 
 	_, err := Grad(cost, m, c)
-	prog, locMap, err := Compile(g)
 
-	machine := NewTapeMachine(prog, locMap, BindDualValues())
 	// machine := NewLispMachine(g)  // you can use a LispMachine, but it'll be VERY slow.
+	machine := NewTapeMachine(g, BindDualValues(m, c))
+	log.Printf("%v", machine.Prog())
+
+	defer runtime.GC()
 	model := Nodes{m, c}
 	solver := NewVanillaSolver(WithLearnRate(0.001), WithClip(5)) // good idea to clip
 
@@ -65,7 +81,7 @@ func linearRegression(Float tensor.Dtype) {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 	}
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 500; i++ {
 		if err = machine.RunAll(); err != nil {
 			fmt.Printf("Error during iteration: %v: %v\n", i, err)
 			break
@@ -94,6 +110,6 @@ func Example_linearRegression() {
 	linearRegression(Float64)
 
 	// Output:
-	// float32: y = 1.975x + 0.302
-	// float64: y = 1.975x + 0.302
+	// float32: y = 2.001x + 2.001
+	// float64: y = 2.001x + 2.001
 }

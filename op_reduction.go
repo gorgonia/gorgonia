@@ -228,12 +228,13 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	return
 }
 
-func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
+func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
-	xdv := inputs[0].boundTo.(*dualValue)
+	x := inputs[0]
+	xdv := x.boundTo.(*dualValue)
 	ydv := output.boundTo.(*dualValue)
 	xShape := xdv.Value.Shape()
 
@@ -273,22 +274,44 @@ func (op sumOp) DoDiff(inputs Nodes, output *Node) (err error) {
 		}
 		val = T
 	} else {
-		val = ydv.d
+		val = T
 	}
 
 	// then just add the two
 	add := newEBOByType(addOpType, TypeOf(xdv.d), TypeOf(val))
-	var d Value
-	if d, err = add.UnsafeDo(xdv.d, val); err != nil {
+	addOp := NewExternalOp(add, ctx, nil)
+	addOp.UseUnsafe = true
+	addOp.Device = x.Device()
+
+	dev := x.Device()
+	if output.Device() != dev && dev != CPU {
+		var valOnDev Value
+		if valOnDev, err = ctx.Transfer(dev, output.Device(), val, false); err != nil {
+			return
+		}
+		defer ctx.PutValue(dev, valOnDev)
+		val = valOnDev
+
+		// Copy(valOnDev, val)
+	}
+	var xd, d Value
+	var extra bool
+	if xd, extra, err = x.GradOnDevice(dev, ctx.External); err != nil {
+		return errors.Wrapf(err, gradOnDeviceFail, x, dev)
+	}
+	if extra {
+		defer ctx.PutValue(dev, xd)
+	}
+	if d, err = addOp.Do(xd, val); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
 
-	// check if xdv.d is scalar
-	if isScalarType(TypeOf(xdv.d)) {
-		return xdv.SetDeriv(d)
-	}
-	return
+	return xdv.SetDeriv(d)
 
+	// var d Value
+	// if d, err = add.UnsafeDo(xdv.d, val); err != nil {
+	// 	return errors.Wrapf(err, unsafeDoFail, add)
+	// }
 }
 
 func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
