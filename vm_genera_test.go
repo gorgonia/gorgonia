@@ -98,7 +98,7 @@ func TestLispMachineMechanics(t *testing.T) {
 	assert.True(ValueEq(grad, xG))
 	assert.True(ValueEq(grad, yG))
 
-	// tack more shit onto the graph, and execute it again
+	// tack more items onto the graph, and execute it again
 	szp2 := Must(Add(sz, twof64))
 	szp3 := Must(Add(sz, threef64))
 

@@ -323,7 +323,7 @@ func (n *Node) Grad() (Value, error) {
 		return n.deriv.Value(), nil
 	}
 
-	return nil, errors.Errorf("No Gradient node/value found for %v", n)
+	return nil, errors.Errorf("No Gradient node/value found for %T", n)
 }
 
 // Dims indicates how many dimensions the node's result has
