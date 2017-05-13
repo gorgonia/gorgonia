@@ -156,7 +156,6 @@ func main() {
 
 	f.Write([]byte("}\n"))
 
-	// gofmt and goimports this shit
 	cmd := exec.Command("gofmt", "-w", gorgoniaLoc+"/cudamodules.go")
 	if err = cmd.Run(); err != nil {
 		log.Fatalf("Go imports failed with %v for %q", err, gorgoniaLoc+"/cudamodules.go")
