@@ -1109,3 +1109,75 @@ func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) erro
 	}
 	return nil
 }
+
+type reshapeOp struct {
+	from, to tensor.Shape
+}
+
+func (op reshapeOp) Arity() int                                      { return 1 }
+func (op reshapeOp) Type() hm.Type                                   { return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a')) }
+func (op reshapeOp) InferShape(ds ...DimSizer) (tensor.Shape, error) { return op.to.Clone(), nil }
+
+func (op reshapeOp) Do(vals ...Value) (Value, error) {
+	if err := checkArity(op, len(vals)); err != nil {
+		return nil, err
+	}
+	val := vals[0]
+	if !val.Shape().Eq(op.from) {
+		return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
+	}
+
+	switch v := val.(type) {
+	case tensor.Tensor:
+		if err := v.Reshape(op.to...); err != nil {
+			return nil, err
+		}
+		return v, nil
+	case Scalar:
+		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
+	}
+
+	panic("Unreachable")
+}
+
+func (op reshapeOp) ReturnsPtr() bool     { return true }
+func (op reshapeOp) CallsExtern() bool    { return false }
+func (op reshapeOp) OverwritesInput() int { return -1 }
+func (op reshapeOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("reshapeOp"))
+	fmt.Fprintf(h, "from: %v, dims: %v", op.from, op.to)
+}
+
+func (op reshapeOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op reshapeOp) String() string {
+	return fmt.Sprintf("Reshape%v", op.to)
+}
+
+func (op reshapeOp) DiffWRT(i int) []bool { return []bool{true} }
+
+func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	var ret *Node
+	if ret, err = Reshape(grad, op.from); err != nil {
+		return
+	}
+	return Nodes{ret}, nil
+}
+
+func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+	var grad Value
+	if grad, err = output.Grad(); err != nil {
+		return
+	}
+	T := grad.(tensor.Tensor)
+	if err = T.Reshape(op.from...); err != nil {
+		return
+	}
+	input := inputs[0]
+	dv := input.boundTo.(*dualValue)
+	return dv.SetDeriv(T)
+}

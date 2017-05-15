@@ -145,3 +145,38 @@ func (op randomOp) Hashcode() uint32 {
 func (op randomOp) String() string {
 	return fmt.Sprintf("%v(%v, %v) - %v", op.which, op.a, op.b, op.shape)
 }
+
+type im2colOp struct {
+	h, w             int
+	padH, padW       int
+	strideH, strideW int
+}
+
+func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
+	retHeight := (height+2*op.padH-op.h)/op.strideH + 1
+	retWidth := (width+2*op.padW-op.w)/op.strideW + 1
+	retChans := channels * op.h * op.w
+
+	padH := op.padH
+	padW := op.padW
+	for c := 0; c < retChans; c++ {
+		widthOffset := c % op.w
+		heightOffset := (c / op.w) % op.h
+		imChan := c / op.h / op.w
+
+		for h := 0; h < retHeight; h++ {
+			for w := 0; w < retWidth; w++ {
+				padH = h*op.strideH - padH + heightOffset
+				padW = w*op.strideW - padW + widthOffset
+
+				idx := retChans*chanWidths*h + retChans*w + c
+				if padH >= 0 && padH < height && padW >= 0 && padW < width {
+					imIdx := (retChans*height+padH)*width + padW
+					col[idx] = im[imIdx]
+				} else {
+					col[idx] = 0
+				}
+			}
+		}
+	}
+}
