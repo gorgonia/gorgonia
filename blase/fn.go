@@ -16,7 +16,7 @@ type fnargs struct {
 	tA    C.cblas_transpose
 	tB    C.cblas_transpose
 
-	// shit that needs to be passed to C in a very unsafe manner
+	// things that needs to be passed to C in a very unsafe manner
 	a0 uintptr
 	a1 uintptr
 	a2 uintptr

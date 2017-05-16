@@ -164,7 +164,7 @@ func init() {
 		{"Tensor Float64", newTensorType(1, Float64), false, false},
 		{"Tensor Float64 (special)", newTensorType(0, Float64), true, false},
 
-		// bad shit
+		// this is bad
 		{"a", hm.TypeVariable('a'), false, true},
 		{"malformed", malformed{}, false, true},
 	}
@@ -178,7 +178,7 @@ func init() {
 		{Float64, Float64, false},
 		{newTensorType(1, Float64), Float64, false},
 
-		// bad shit
+		// this is bad
 		// {hm.TypeVariable('a'), MAXDTYPE, true},
 		// {hm.TypeVariable('a'), MAXDTYPE, true},
 		// {newTensorType(1, hm.TypeVariable('a')), MAXDTYPE, true},

@@ -186,7 +186,7 @@ func TestDense_SVD(t *testing.T) {
 		}
 	}
 
-	// illogical stuff
+	// this is illogical
 	T = New(Of(Float64), WithShape(2, 2))
 	if _, _, _, err = T.SVD(false, true); err == nil {
 		t.Errorf("Expected an error!")
