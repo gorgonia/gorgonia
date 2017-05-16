@@ -341,11 +341,17 @@ func (n *Node) Dims() int {
 	}
 }
 
+// Type returns the type of the node
+func (n *Node) Type() hm.Type { return n.t }
+
 // Shape returns the shape of the node
 func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
 
 // Device returns the device the data will be on
 func (n *Node) Device() Device { return n.dataOn }
+
+// Op returns the Op of the node
+func (n *Node) Op() Op { return n.op }
 
 // IsVec returns whether this node is a vector
 func (n *Node) IsVec() bool { return n.IsVector() }
