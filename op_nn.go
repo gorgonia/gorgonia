@@ -169,9 +169,9 @@ func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
 				padH = h*op.strideH - padH + heightOffset
 				padW = w*op.strideW - padW + widthOffset
 
-				idx := retChans*chanWidths*h + retChans*w + c
+				idx := retChans*retWidth*h + retChans*w + c
 				if padH >= 0 && padH < height && padW >= 0 && padW < width {
-					imIdx := (retChans*height+padH)*width + padW
+					imIdx := (imChan*height+padH)*width + padW
 					col[idx] = im[imIdx]
 				} else {
 					col[idx] = 0

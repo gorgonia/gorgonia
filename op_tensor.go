@@ -1160,24 +1160,26 @@ func (op reshapeOp) String() string {
 
 func (op reshapeOp) DiffWRT(i int) []bool { return []bool{true} }
 
-func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
-	var ret *Node
-	if ret, err = Reshape(grad, op.from); err != nil {
-		return
-	}
-	return Nodes{ret}, nil
+func (op reshapeOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	// var ret *Node
+	// if ret, err = Reshape(grad, op.from); err != nil {
+	// 	return
+	// }
+	// return Nodes{ret}, nil
+	return nil, nil
 }
 
-func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
-	var grad Value
-	if grad, err = output.Grad(); err != nil {
-		return
-	}
-	T := grad.(tensor.Tensor)
-	if err = T.Reshape(op.from...); err != nil {
-		return
-	}
-	input := inputs[0]
-	dv := input.boundTo.(*dualValue)
-	return dv.SetDeriv(T)
+func (op reshapeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+	// var grad Value
+	// if grad, err = output.Grad(); err != nil {
+	// 	return
+	// }
+	// T := grad.(tensor.Tensor)
+	// if err = T.Reshape(op.from...); err != nil {
+	// 	return
+	// }
+	// input := inputs[0]
+	// dv := input.boundTo.(*dualValue)
+	// return dv.SetDeriv(T)
+	return nil
 }
