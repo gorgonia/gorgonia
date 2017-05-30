@@ -15,7 +15,7 @@ const exprNodeTemplText = `<
 <TR><TD>Overwrites Input {{overwritesInput . }}</TD><TD>Data On: {{.Device}}</TD></TR>
 {{if hasGrad .}}<TR><TD>Value</TD><TD>Grad</TD></TR>
 <TR><TD>{{printf "%+3.3s" .Value | dotEscape}}</TD><TD>{{getGrad . | dotEscape }} </TD></TR>
-<TR><TD>Ptr: {{printf "0x%x" .Value.Uintptr}} </TD><TD>Ptr: {{getGradPtr .}} </TD></TR>
+<TR><TD>Ptr: {{getValPtr .}} </TD><TD>Ptr: {{getGradPtr .}} </TD></TR>
 {{else}}
 <TR><TD>Value</TD><TD>{{printf "%+3.3s" .Value | dotEscape}}</TD></TR>
 {{end}}
@@ -77,6 +77,13 @@ func getGradPtr(n *Node) string {
 	return ""
 }
 
+func getValPtr(n *Node) string {
+	if n.Value() == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("0x%dx", n.Value().Uintptr())
+}
+
 var funcMap = template.FuncMap{
 	"dotEscape":       dotEscape,
 	"printOp":         printOp,
@@ -88,6 +95,7 @@ var funcMap = template.FuncMap{
 	"hasShape":        hasShape,
 	"hasGrad":         hasGrad,
 	"getShape":        getShape,
+	"getValPtr":       getValPtr,
 	"getGrad":         getGrad,
 	"getGradPtr":      getGradPtr,
 	"overwritesInput": overwritesInput,
