@@ -1160,7 +1160,7 @@ func (op reshapeOp) String() string {
 
 func (op reshapeOp) DiffWRT(i int) []bool { return []bool{true} }
 
-func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+func (op reshapeOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
 	var ret *Node
 	if ret, err = Reshape(grad, op.from); err != nil {
 		return
@@ -1168,7 +1168,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 	return Nodes{ret}, nil
 }
 
-func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+func (op reshapeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
 	var grad Value
 	if grad, err = output.Grad(); err != nil {
 		return

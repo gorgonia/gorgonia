@@ -12,6 +12,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	_ Op = im2colOp{}
+)
+
 /*
 	This file contains all the Ops related to building a neural network.
 
@@ -154,26 +158,23 @@ type im2colOp struct {
 
 func (op im2colOp) Arity() int { return 1 }
 
-// im2col :: (Floats a) ⇒ Tensor a → Tensor a
+// im2col :: (Floats a) ⇒ a →  a
 func (op im2colOp) Type() hm.Type {
-	tt := newTensorType(op.shape.Dims(), op.dt)
-	return hm.NewFnType(tt, tt)
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
 func (op im2colOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err error) {
-	if err = checkarity(op, len(shapes)); err != nil {
+	if err = checkArity(op, len(shapes)); err != nil {
 		return
 	}
 
-	var s tensor.Shape
-	if s, err = shapes[0].(tensor.Shape); err != nil {
-		return
+	if s, ok := shapes[0].(tensor.Shape); ok {
+		return op.calcShape(s), nil
 	}
-
-	return op.calcShape(s), nil
+	return nil, errors.Errorf("expected tensor.Shape. got %T instead", shapes[0])
 }
 
-func (op im2ColOp) Do(inputs ...Value) (retVal Value, err error) {
+func (op im2colOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -194,7 +195,7 @@ func (op im2colOp) CallsExtern() bool    { return false }
 func (op im2colOp) OverwritesInput() int { return -1 }
 
 func (op im2colOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "im2col:%d-%d-%d-%d-%d-%d", op.h, op.w, op.padH, op.padW, op.strideH, op.StrideW)
+	fmt.Fprintf(h, "im2col:%d-%d-%d-%d-%d-%d", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
 func (op im2colOp) Hashcode() uint32 {
@@ -203,8 +204,8 @@ func (op im2colOp) Hashcode() uint32 {
 	return h.Sum32()
 }
 
-func (op randomOp) String() string {
-	return fmt.Sprintf(h, "im2col<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.StrideW)
+func (op im2colOp) String() string {
+	return fmt.Sprintf("im2col<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
 func (op im2colOp) calcShape(s tensor.Shape) (retVal tensor.Shape) {
@@ -237,14 +238,14 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	switch input.Dtype() {
 	case tensor.Float64:
 		for i := 0; i < b; i++ {
-			op.f64s(c, h, w, im.Data().([]float64), prealloc.Data().([]float64))
+			op.f64s(c, h, w, input.Data().([]float64), prealloc.Data().([]float64))
 		}
 	case tensor.Float32:
 		for i := 0; i < b; i++ {
 			// op.f32s(c, h, w, im.Data().([]float32), ...)
 		}
 	default:
-		return err, nyiFail("im2col", input.Dtype())
+		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
 	}
 	return prealloc, nil
 }
@@ -264,7 +265,34 @@ func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
 				padH := h*op.strideH - op.padH + heightOffset
 				padW := w*op.strideW - op.padW + widthOffset
 
-				idx := retChans*chanWidths*h + retChans*w + c
+				idx := retChans*retWidth*h + retChans*w + c
+				if padH >= 0 && padH < height && padW >= 0 && padW < width {
+					imIdx := (retChans*height+padH)*width + padW
+					col[idx] = im[imIdx]
+				} else {
+					col[idx] = 0
+				}
+			}
+		}
+	}
+}
+
+func (op im2colOp) f32s(channels, height, width int, im, col []float32) {
+	retHeight := (height+2*op.padH-op.h)/op.strideH + 1
+	retWidth := (width+2*op.padW-op.w)/op.strideW + 1
+	retChans := channels * op.h * op.w
+
+	for c := 0; c < retChans; c++ {
+		widthOffset := c % op.w
+		heightOffset := (c / op.w) % op.h
+		imChan := c / op.h / op.w
+
+		for h := 0; h < retHeight; h++ {
+			for w := 0; w < retWidth; w++ {
+				padH := h*op.strideH - op.padH + heightOffset
+				padW := w*op.strideW - op.padW + widthOffset
+
+				idx := retChans*retWidth*h + retChans*w + c
 				if padH >= 0 && padH < height && padW >= 0 && padW < width {
 					imIdx := (retChans*height+padH)*width + padW
 					col[idx] = im[imIdx]
@@ -282,7 +310,7 @@ type col2imOp struct {
 	strideH, strideW int
 }
 
-func (op col2imOp) f64s(channels, height, width int, col, im []floa64) {
+func (op col2imOp) f64s(channels, height, width int, col, im []float64) {
 	// memset im to 0
 	for i := 0; i < height*width*channels; i++ {
 		im[i] = 0
@@ -299,7 +327,7 @@ func (op col2imOp) f64s(channels, height, width int, col, im []floa64) {
 		for h := 0; h < colHeight; h++ {
 			for w := 0; w < colWidth; w++ {
 				padH := h*op.strideH - op.padH + heightOffset
-				padW := w*op.stridew - op.padW + widthOffset
+				padW := w*op.strideW - op.padW + widthOffset
 				if padH >= 0 && padH < height && padW > 0 && padW < width {
 					imIdx := (imChan*height+padH)*width + padW
 					colIdx := colChans*colWidth*h + colChans*w + c
