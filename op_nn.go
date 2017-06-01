@@ -147,12 +147,31 @@ func (op randomOp) String() string {
 }
 
 type im2colOp struct {
-	h, w             int
+	h, w             int // kernel height and width
 	padH, padW       int
 	strideH, strideW int
 }
 
 func (op im2colOp) Arity() int { return 1 }
+
+// im2col :: (Floats a) ⇒ Tensor a → Tensor a
+func (op im2colOp) Type() hm.Type {
+	tt := newTensorType(op.shape.Dims(), op.dt)
+	return hm.NewFnType(tt, tt)
+}
+
+func (op im2colOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err error) {
+	if err = checkarity(op, len(shapes)); err != nil {
+		return
+	}
+
+	var s tensor.Shape
+	if s, err = shapes[0].(tensor.Shape); err != nil {
+		return
+	}
+
+	return op.calcShape(s), nil
+}
 
 func (op im2ColOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
@@ -163,23 +182,71 @@ func (op im2ColOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	// todo type check values
 	// todo shape check values
-	// extract bchw - this bit can be expanded in the future, but for now we only support bchw
-	s := im.Shape()
+
+	retShape := op.calcShape(im.Shape())
+	prealloc := tensor.New(tensor.Of(im.Dtype()), tensor.WithShape(retShape...))
+
+	return op.do(prealloc, im)
+}
+
+func (op im2colOp) ReturnsPtr() bool     { return false }
+func (op im2colOp) CallsExtern() bool    { return false }
+func (op im2colOp) OverwritesInput() int { return -1 }
+
+func (op im2colOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "im2col:%d-%d-%d-%d-%d-%d", op.h, op.w, op.padH, op.padW, op.strideH, op.StrideW)
+}
+
+func (op im2colOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op randomOp) String() string {
+	return fmt.Sprintf(h, "im2col<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.StrideW)
+}
+
+func (op im2colOp) calcShape(s tensor.Shape) (retVal tensor.Shape) {
 	b := s[0]
 	c := s[1]
 	h := s[2]
 	w := s[3]
 
-	// todo: figure out what the best way to get allocate the retval slice
+	h2 := (h+2*op.padH-op.h)/op.strideH + 1
+	w2 := (w+2*op.padW-op.w)/op.strideW + 1
+	retVal = tensor.Shape(tensor.BorrowInts(4))
 
-	switch im.Dtype() {
+	// todo: double check this with tests
+	retVal[0] = b
+	retVal[1] = h2
+	retVal[2] = w2
+	retVal[3] = c * op.w * op.h
+
+	return
+}
+
+func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
+	// extract bchw - this bit can be expanded in the future, but for now we only support bchw
+	s := input.Shape()
+	b := s[0]
+	c := s[1]
+	h := s[2]
+	w := s[3]
+
+	switch input.Dtype() {
 	case tensor.Float64:
-		for b := 0; b < batchsize; b++ {
-			// op.f64s(c, h, w, im.Data().([]float64), ...)
+		for i := 0; i < b; i++ {
+			op.f64s(c, h, w, im.Data().([]float64), prealloc.Data().([]float64))
+		}
+	case tensor.Float32:
+		for i := 0; i < b; i++ {
+			// op.f32s(c, h, w, im.Data().([]float32), ...)
 		}
 	default:
+		return err, nyiFail("im2col", input.Dtype())
 	}
-
+	return prealloc, nil
 }
 
 func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
