@@ -267,7 +267,7 @@ func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
 
 				idx := retChans*retWidth*h + retChans*w + c
 				if padH >= 0 && padH < height && padW >= 0 && padW < width {
-					imIdx := (retChans*height+padH)*width + padW
+					imIdx := (imChan*height+padH)*width + padW
 					col[idx] = im[imIdx]
 				} else {
 					col[idx] = 0
@@ -294,7 +294,7 @@ func (op im2colOp) f32s(channels, height, width int, im, col []float32) {
 
 				idx := retChans*retWidth*h + retChans*w + c
 				if padH >= 0 && padH < height && padW >= 0 && padW < width {
-					imIdx := (retChans*height+padH)*width + padW
+					imIdx := (imChan*height+padH)*width + padW
 					col[idx] = im[imIdx]
 				} else {
 					col[idx] = 0

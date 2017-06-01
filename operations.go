@@ -705,3 +705,11 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 	op := concatOp{axis: axis, d: d, children: len(ns)}
 	return applyOp(op, ns...)
 }
+
+func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
+	op := reshapeOp{
+		from: n.Shape(),
+		to:   to,
+	}
+	return applyOp(op, n)
+}
