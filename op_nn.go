@@ -152,13 +152,41 @@ type im2colOp struct {
 	strideH, strideW int
 }
 
+func (op im2colOp) Arity() int { return 1 }
+
+func (op im2ColOp) Do(inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	im := inputs[0]
+
+	// todo type check values
+	// todo shape check values
+	// extract bchw - this bit can be expanded in the future, but for now we only support bchw
+	s := im.Shape()
+	b := s[0]
+	c := s[1]
+	h := s[2]
+	w := s[3]
+
+	// todo: figure out what the best way to get allocate the retval slice
+
+	switch im.Dtype() {
+	case tensor.Float64:
+		for b := 0; b < batchsize; b++ {
+			// op.f64s(c, h, w, im.Data().([]float64), ...)
+		}
+	default:
+	}
+
+}
+
 func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
 	retHeight := (height+2*op.padH-op.h)/op.strideH + 1
 	retWidth := (width+2*op.padW-op.w)/op.strideW + 1
 	retChans := channels * op.h * op.w
 
-	padH := op.padH
-	padW := op.padW
 	for c := 0; c < retChans; c++ {
 		widthOffset := c % op.w
 		heightOffset := (c / op.w) % op.h
@@ -166,8 +194,8 @@ func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
 
 		for h := 0; h < retHeight; h++ {
 			for w := 0; w < retWidth; w++ {
-				padH = h*op.strideH - padH + heightOffset
-				padW = w*op.strideW - padW + widthOffset
+				padH := h*op.strideH - op.padH + heightOffset
+				padW := w*op.strideW - op.padW + widthOffset
 
 				idx := retChans*chanWidths*h + retChans*w + c
 				if padH >= 0 && padH < height && padW >= 0 && padW < width {
@@ -175,6 +203,40 @@ func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
 					col[idx] = im[imIdx]
 				} else {
 					col[idx] = 0
+				}
+			}
+		}
+	}
+}
+
+type col2imOp struct {
+	h, w             int // patch height and width
+	padH, padW       int
+	strideH, strideW int
+}
+
+func (op col2imOp) f64s(channels, height, width int, col, im []floa64) {
+	// memset im to 0
+	for i := 0; i < height*width*channels; i++ {
+		im[i] = 0
+	}
+
+	colHeight := (height+2*op.padH-op.h)/op.strideH + 1
+	colWidth := (width+2*op.padW-op.w)/op.strideW + 1
+	colChans := channels * op.h * op.w
+
+	for c := 0; c < colChans; c++ {
+		widthOffset := c % op.w
+		heightOffset := (c / op.w) % op.h
+		imChan := c / op.w / op.h
+		for h := 0; h < colHeight; h++ {
+			for w := 0; w < colWidth; w++ {
+				padH := h*op.strideH - op.padH + heightOffset
+				padW := w*op.stridew - op.padW + widthOffset
+				if padH >= 0 && padH < height && padW > 0 && padW < width {
+					imIdx := (imChan*height+padH)*width + padW
+					colIdx := colChans*colWidth*h + colChans*w + c
+					im[imIdx] += col[colIdx]
 				}
 			}
 		}
