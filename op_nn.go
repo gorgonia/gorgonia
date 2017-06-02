@@ -14,6 +14,7 @@ import (
 
 var (
 	_ Op = im2colOp{}
+	_ Op = col2imOp{}
 )
 
 /*
@@ -242,7 +243,7 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 		}
 	case tensor.Float32:
 		for i := 0; i < b; i++ {
-			// op.f32s(c, h, w, im.Data().([]float32), ...)
+			op.f32s(c, h, w, input.Data().([]float32), prealloc.Data().([]float32))
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
@@ -305,12 +306,114 @@ func (op im2colOp) f32s(channels, height, width int, im, col []float32) {
 }
 
 type col2imOp struct {
-	h, w             int // patch height and width
+	unpadded         tensor.Shape // unpadded is basically the input shape (if we assume col2im as the inverse of im2col)
+	h, w             int          // patch height and width
 	padH, padW       int
 	strideH, strideW int
 }
 
+func (op col2imOp) Arity() int { return 1 }
+
+// im2col :: (Floats a) ⇒ a →  a
+func (op col2imOp) Type() hm.Type {
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
+}
+
+func (op col2imOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err error) {
+	if op.unpadded != nil {
+		return op.unpadded, nil
+	}
+
+	return nil, errors.Errorf(nyiFail, "col2impOp.InferShape", "calculate shapes")
+}
+
+func (op col2imOp) Do(inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	im := inputs[0]
+
+	// todo type check values
+	// todo shape check values
+	if op.unpadded == nil || op.unpadded.TotalSize() != 4 {
+		return nil, errors.Errorf(nyiFail, "col2imOp.Do", "calculate shapes")
+	}
+
+	retShape := op.unpadded
+	prealloc := tensor.New(tensor.Of(im.Dtype()), tensor.WithShape(retShape...))
+
+	return op.do(prealloc, im)
+}
+
+func (op col2imOp) ReturnsPtr() bool     { return false }
+func (op col2imOp) CallsExtern() bool    { return false }
+func (op col2imOp) OverwritesInput() int { return -1 }
+
+func (op col2imOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "col2im:%d-%d-%d-%d-%d-%d", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+}
+
+func (op col2imOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op col2imOp) String() string {
+	return fmt.Sprintf("col2im<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+}
+
+func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
+	b := op.unpadded[0]
+	c := op.unpadded[1]
+	h := op.unpadded[2]
+	w := op.unpadded[3]
+
+	switch input.Dtype() {
+	case tensor.Float64:
+		for i := 0; i < b; i++ {
+			op.f64s(c, h, w, input.Data().([]float64), prealloc.Data().([]float64))
+		}
+	case tensor.Float32:
+		for i := 0; i < b; i++ {
+			op.f32s(c, h, w, input.Data().([]float32), prealloc.Data().([]float32))
+		}
+	default:
+		return nil, errors.Errorf(nyiFail, "col2im", input.Dtype())
+	}
+	return
+}
+
 func (op col2imOp) f64s(channels, height, width int, col, im []float64) {
+	// memset im to 0
+	for i := 0; i < height*width*channels; i++ {
+		im[i] = 0
+	}
+
+	colHeight := (height+2*op.padH-op.h)/op.strideH + 1
+	colWidth := (width+2*op.padW-op.w)/op.strideW + 1
+	colChans := channels * op.h * op.w
+
+	for c := 0; c < colChans; c++ {
+		widthOffset := c % op.w
+		heightOffset := (c / op.w) % op.h
+		imChan := c / op.w / op.h
+		for h := 0; h < colHeight; h++ {
+			for w := 0; w < colWidth; w++ {
+				padH := h*op.strideH - op.padH + heightOffset
+				padW := w*op.strideW - op.padW + widthOffset
+				if padH >= 0 && padH < height && padW > 0 && padW < width {
+					imIdx := (imChan*height+padH)*width + padW
+					colIdx := colChans*colWidth*h + colChans*w + c
+					im[imIdx] += col[colIdx]
+				}
+			}
+		}
+	}
+}
+
+func (op col2imOp) f32s(channels, height, width int, col, im []float32) {
 	// memset im to 0
 	for i := 0; i < height*width*channels; i++ {
 		im[i] = 0
