@@ -209,6 +209,32 @@ func (op im2colOp) String() string {
 	return fmt.Sprintf("im2col<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
+func (op im2colOp) DiffWRT(i int) []bool { return []bool{true} }
+
+func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	im := inputs[0]
+
+	diffOp := col2imOp{
+		unpadded: im.Shape(),
+		h:        op.h,
+		w:        op.w,
+		padH:     op.padH,
+		padW:     op.padW,
+		strideH:  op.strideH,
+		strideW:  op.strideW,
+	}
+
+	var ret *Node
+	if ret, err = applyOp(op, grad); err != nil {
+		return
+	}
+	retVal = Nods{ret}
+	return
+}
+
 func (op im2colOp) calcShape(s tensor.Shape) (retVal tensor.Shape) {
 	b := s[0]
 	c := s[1]
