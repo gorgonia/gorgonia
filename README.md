@@ -1,4 +1,5 @@
-# Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/chewxy/gorgonia)](https://goreportcard.com/report/github.com/chewxy/gorgonia) #
+# Gorgonia [![GoDoc](https://godoc.org/github.com/chewxy/gorgonia?status.svg)](https://godoc.org/github.com/chewxy/gorgonia) [![Build Status](https://travis-ci.org/chewxy/gorgonia.svg?branch=master)](https://travis-ci.org/chewxy/gorgonia) [![Coverage Status](https://coveralls.io/repos/github/chewxy/gorgonia/badge.svg?branch=master)](https://coveralls.io/github/chewxy/gorgonia?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/chewxy/gorgonia)](https://goreportcard.com/report/github.com/chewxy/gorgonia) [![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
+#
 
 <img src="https://raw.githubusercontent.com/chewxy/gorgonia/master/media/mascot_small.jpg" align="right" />
 
@@ -408,7 +409,7 @@ BenchmarkOneMil-8       	      50	  33169036 ns/op
 # API Stability #
 Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
 
-1.0 is defined by when the test coverage hits 90%, and the relevant `Tensor` methods have been completed.
+As we move towards 1.0, the github repository will be moved to the [organization gorgonia](https://github.com/chewxy/gorgonia/issues/98). See the issue for more updates.
 
 # Roadmap #
 
