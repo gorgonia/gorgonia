@@ -42,8 +42,8 @@ func NewGraph(opts ...graphconopt) *ExprGraph {
 		evac:   make(map[uint32]Nodes),
 		to:     make(map[*Node]Nodes),
 
-		leaves:    make(Nodes, 0),
-		constants: make(Nodes, 0),
+		leaves:    make(Nodes, 0, 64),
+		constants: make(Nodes, 0, 8),
 	}
 
 	for _, opt := range opts {
@@ -90,6 +90,7 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 
 	if n.isConstant() {
 		n = n.clone()
+		g.constants = g.constants.Add(n)
 		n.g = g
 	}
 
@@ -206,6 +207,18 @@ func (g *ExprGraph) ByName(name string) (retVal Nodes) {
 		}
 	}
 	return
+}
+
+// Constant returns a constant that may be found in the graph. If no constant were found, a new one is created instead
+func (g *ExprGraph) Constant(v Value) *Node {
+	for _, n := range g.constants {
+		if ValueEq(n.Value(), v) {
+			return n
+		}
+	}
+
+	n := NewConstant(v)
+	return g.AddNode(n)
 }
 
 func (g *ExprGraph) String() string {

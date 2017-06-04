@@ -207,3 +207,15 @@ func TestGraphSubgraphRoots(t *testing.T) {
 	assert.NotContains(ns, sz)
 	assert.NotContains(ns, readSZ)
 }
+
+func TestGraph_Constant(t *testing.T) {
+	g := NewGraph()
+
+	v1 := newF64(1.0)
+	c0 := g.Constant(v1)
+	c1 := g.Constant(v1)
+
+	if c0 != c1 {
+		t.Errorf("Expected c0 and c1 to be the same (pointer and all that)")
+	}
+}

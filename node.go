@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"log"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/gorgonia/tensor"
@@ -496,6 +497,9 @@ func (n *Node) String() string {
 
 // TODO: check type, check shape, check if needsGrad -> promote to dualValue
 func (n *Node) bind(v Value) error {
+	// pc, _, _, _ := runtime.Caller(1)
+	// log.Printf("binding to %p. Called by %v", n, runtime.FuncForPC(pc).Name())
+
 	if n.boundTo == nil {
 		n.boundTo = v
 		return nil
@@ -511,7 +515,9 @@ func (n *Node) bind(v Value) error {
 				dv.Value = vdv.Value
 				return nil
 			}
-
+			// n.boundTo = vdv
+			// return nil
+			log.Printf("n %p", n)
 			panic("Undefined behaviour") // no seriously there literally is no defined behaviour of what should the right thing be. I'll come back to this TODO.
 		}
 		dv.Value = v
