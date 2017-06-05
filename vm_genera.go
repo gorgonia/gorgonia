@@ -158,9 +158,14 @@ func (m *lispMachine) RunAll() (err error) {
 			if synchronous {
 				syncChan <- struct{}{}
 			}
-		case err := <-errChan:
+		case err = <-errChan:
 			if m.fwd < len(m.sorted) {
-				return errors.Wrapf(err, "Running Node: %v", m.sorted[m.fwd])
+				err = vmContextualError{
+					error: errors.Wrapf(err, "Running Node: %v", m.sorted[m.fwd]),
+					node:  m.sorted[m.fwd],
+					instr: m.fwd,
+				}
+				return
 			}
 			return errors.Wrap(err, "RunAll")
 		case <-doneChan:
@@ -330,11 +335,11 @@ func (m *lispMachine) forward() (err error) {
 
 	m.enterLoggingContext()
 	for i, child := range children {
+		m.logf("child %v %v", child, child.Shape())
 		if child.Device() == n.Device() {
 			inputs[i] = child.boundTo.(*dualValue)
 			continue
 		}
-		m.logf("child %v", child)
 		// if child.boundTo != nil {
 		// 	dv := child.boundTo.(*dualValue)
 		// 	if dv.d != nil {
