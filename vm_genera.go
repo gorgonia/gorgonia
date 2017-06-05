@@ -174,7 +174,6 @@ func (m *lispMachine) RunAll() (err error) {
 				return err
 			}
 			return nil
-		default:
 		}
 	}
 
