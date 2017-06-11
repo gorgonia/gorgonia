@@ -161,3 +161,112 @@ func (a *assertState) True(value bool, msgAndArgs ...interface{}) {
 	}
 	a.cont = a.Assertions.True(value, msgAndArgs...)
 }
+
+func deepNodeEq(a, b *Node) bool {
+	if a == b {
+		return true
+	}
+
+	if a.isInput() {
+		if !b.isInput() {
+			return false
+		}
+
+		if a.name != b.name {
+			return false
+		}
+		if !ValueEq(a.boundTo, b.boundTo) {
+			return false
+		}
+		return true
+	}
+
+	if b.isInput() {
+		return false
+	}
+
+	if a.name != b.name {
+		return false
+	}
+
+	if a.group != b.group {
+		return false
+	}
+
+	if a.id != b.id {
+		return false
+	}
+
+	if a.hash != b.hash {
+		return false
+	}
+
+	if a.hashed != b.hashed {
+		return false
+	}
+
+	if a.inferredShape != b.inferredShape {
+		return false
+	}
+
+	if a.unchanged != b.unchanged {
+		return false
+	}
+
+	if a.isStmt != b.isStmt {
+		return false
+	}
+
+	if a.ofInterest != b.ofInterest {
+		return false
+	}
+
+	if a.dataOn != b.dataOn {
+		return false
+	}
+
+	if !a.t.Eq(b.t) {
+		return false
+	}
+	if !a.shape.Eq(b.shape) {
+		return false
+	}
+
+	if a.op.Hashcode() != b.op.Hashcode() {
+		return false
+	}
+
+	if !ValueEq(a.boundTo, b.boundTo) {
+		return false
+	}
+
+	if len(a.children) != len(b.children) {
+		return false
+	}
+
+	if len(a.derivOf) != len(b.derivOf) {
+		return false
+	}
+
+	if a.deriv != nil {
+		if b.deriv == nil {
+			return false
+		}
+		if a.deriv.Hashcode() != b.deriv.Hashcode() {
+			return false
+		}
+	}
+
+	for i, c := range a.children {
+		if c.Hashcode() != b.children[i].Hashcode() {
+			return false
+		}
+	}
+
+	for i, c := range a.derivOf {
+		if c.Hashcode() != b.derivOf[i].Hashcode() {
+			return false
+		}
+	}
+	return true
+}

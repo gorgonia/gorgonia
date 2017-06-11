@@ -43,7 +43,7 @@ func ValueEq(a, b Value) bool {
 	case ValueEqualer:
 		return at.ValueEq(b)
 	default:
-		panic("Not implemented yet")
+		panic(fmt.Sprintf("Not implemented yet, %T", a))
 	}
 }
 
@@ -97,6 +97,16 @@ func CloneValue(v Value) (Value, error) {
 		return &retVal, nil
 	case tensor.Tensor:
 		return vt.Clone().(*tensor.Dense), nil
+	case CloneErrorer:
+		ret, err := vt.Clone()
+		if err != nil {
+			return nil, err
+		}
+		retVal, ok := ret.(Value)
+		if !ok {
+			return nil, errors.Errorf("Cloner is not a value: %v %T", v, v)
+		}
+		return retVal, nil
 	case Cloner:
 		return vt.Clone().(Value), nil
 	default:

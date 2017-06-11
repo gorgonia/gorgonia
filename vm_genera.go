@@ -289,7 +289,7 @@ func (m *lispMachine) forward() (err error) {
 	}
 	n := m.sorted[m.fwd]
 
-	m.watchedLogf("n: %v | (%x)", n, n.id)
+	m.watchedLogf("n: %v | (%x) | %p", n, n.id, n)
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
 
@@ -482,9 +482,9 @@ func (m *lispMachine) forward() (err error) {
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
-	if n.boundTo != nil {
-		m.watchedLogf("0x%x | 0x%x", n.boundTo.(*dualValue).Value.Uintptr(), n.boundTo.(*dualValue).d.Uintptr())
-	}
+	// if n.boundTo != nil {
+	// 	m.watchedLogf("0x%x | 0x%x", n.boundTo.(*dualValue).Value.Uintptr(), n.boundTo.(*dualValue).d.Uintptr())
+	// }
 
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{

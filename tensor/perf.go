@@ -122,6 +122,7 @@ func ReturnTensor(t Tensor) {
 			return // yes, we're not putting it back into the pool
 		}
 
+		tt.Zero()
 		size := tt.cap()
 		poolsClosed.RLock()
 		pool, ok := densePool[dt][size]

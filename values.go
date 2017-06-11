@@ -71,6 +71,11 @@ type Cloner interface {
 	Clone() interface{}
 }
 
+// CloneErrorer represents any type that can clone itself and return an error if necessary
+type CloneErrorer interface {
+	Clone() (interface{}, error)
+}
+
 // CopierTo represents any type that can copy data to the destination.
 type CopierTo interface {
 	CopyTo(dest interface{}) error

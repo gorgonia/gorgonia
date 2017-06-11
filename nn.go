@@ -121,7 +121,7 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	cmp := newElemBinOp(gteOpType, x, zero)
 	cmp.retSame = true
 
-	if retVal, err = applyOp(cmp, x); err != nil {
+	if retVal, err = applyOp(cmp, x, zero); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
 
