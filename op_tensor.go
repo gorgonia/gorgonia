@@ -580,16 +580,16 @@ func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	ydv := output.boundTo.(*dualValue)
 	incrOp := sliceIncrOp{op}
 
-	var d Value
-	if d, err = incrOp.UsePreallocDo(xdv.d, xdv.d, ydv.d); err != nil {
+	// var d Value
+	if _, err = incrOp.UsePreallocDo(xdv.d, xdv.d, ydv.d); err != nil {
 		return errors.Wrapf(err, doFail, incrOp)
 	}
 
 	// there is no need to handle scalars, because you can never slice a scalar
-	add := newElemBinOp(addOpType, inputs[0], output)
-	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
-		return errors.Wrapf(err, unsafeDoFail, add)
-	}
+	// add := newElemBinOp(addOpType, inputs[0], output)
+	// if _, err = add.UnsafeDo(xdv.d, d); err != nil {
+	// 	return errors.Wrapf(err, unsafeDoFail, add)
+	// }
 
 	return
 }

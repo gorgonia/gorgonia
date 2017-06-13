@@ -235,7 +235,6 @@ var gtTests = []struct {
 func TestGt(t *testing.T) {
 	defer runtime.GC()
 	for i, gtts := range gtTests {
-		log.Printf("i %d", i)
 		// if i != 11 {
 		// 	continue
 		// }

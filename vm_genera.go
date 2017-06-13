@@ -464,12 +464,6 @@ func (m *lispMachine) forward() (err error) {
 
 	default:
 		m.logf("bind(%v) with as much reuse as possible", op)
-		// check if grad needs to be zero'd
-		if dv, ok := n.boundTo.(*dualValue); ok {
-			log.Printf("zeroing")
-			ZeroValue(dv.d)
-		}
-
 		// reuse as much as possible
 		output := dvUnit(n.boundTo)
 		if err = n.bind(output); err != nil {
