@@ -334,10 +334,10 @@ func (m *lispMachine) forward() (err error) {
 
 	m.enterLoggingContext()
 	for i, child := range children {
-		m.logf("child %v %v", child, child.Shape())
+		m.logf("child!! %v %v", child, child.Shape())
 		if child.Device() == n.Device() {
 			inputs[i] = child.boundTo.(*dualValue)
-			continue
+			// continue
 		}
 		// if child.boundTo != nil {
 		// 	dv := child.boundTo.(*dualValue)
@@ -391,6 +391,7 @@ func (m *lispMachine) forward() (err error) {
 			machineLogf("dvBindVar")
 			m.logf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
+
 			}
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
@@ -510,6 +511,9 @@ func (m *lispMachine) forward() (err error) {
 func (m *lispMachine) backward() (err error) {
 	if m.bwd < 0 {
 		return errors.New("no backprop queue")
+	}
+	if m.bwd >= len(m.q) {
+		return errors.New("Nothing to backprop")
 	}
 
 	instr := m.q[m.bwd]

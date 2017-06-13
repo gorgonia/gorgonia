@@ -464,10 +464,10 @@ func TestSlice(t *testing.T) {
 
 		sV := sliced.Value()
 		if !sts.expected.Eq(sV.Shape()) {
-			t.Errorf("Test %q. Expected sliced value to have the shape %v. Got %v instead", sts.name, sts.expected, sV.Shape())
+			t.Errorf("Test %q For TapeMachine. Expected sliced value to have the shape %v. Got %v instead", sts.name, sts.expected, sV.Shape())
 		}
 
-		assert.Equal(t, sts.data, sV.Data(), "Test %q data expected %v, Got %v instead. Formatted:\n %+v", sts.name, sts.data, sV.Data(), sV)
+		assert.Equal(t, sts.data, sV.Data(), "Test %q For TapeMachine data expected %v, Got %v instead. Formatted:\n %+v", sts.name, sts.data, sV.Data(), sV)
 
 		// Test Lisp Machine for equivalence of gradients
 
@@ -484,10 +484,10 @@ func TestSlice(t *testing.T) {
 
 		s2V := sliced2.Value()
 		if !sts.expected.Eq(s2V.Shape()) {
-			t.Errorf("Test %q. Expected sliced value to have the shape %v. Got %v instead", sts.name, sts.expected, s2V.Shape())
+			t.Errorf("Test %q For LispMachine. Expected sliced value to have the shape %v. Got %v instead", sts.name, sts.expected, s2V.Shape())
 		}
 
-		assert.Equal(t, sts.data, s2V.Data(), "Test %q data expected %v, Got %v instead. Formatted:\n %+v", sts.name, sts.data, s2V.Data(), s2V)
+		assert.Equal(t, sts.data, s2V.Data(), "Test %q For TapeMachine data expected %v, Got %v instead. Formatted:\n %+v", sts.name, sts.data, s2V.Data(), s2V)
 
 		sG, err := sliced.Grad()
 		if err != nil {

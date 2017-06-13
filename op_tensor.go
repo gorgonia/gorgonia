@@ -581,7 +581,7 @@ func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	incrOp := sliceIncrOp{op}
 
 	var d Value
-	if d, err = incrOp.Do(xdv.Value, ydv.d); err != nil {
+	if d, err = incrOp.Do(xdv.d, ydv.d); err != nil {
 		return errors.Wrapf(err, doFail, incrOp)
 	}
 
@@ -722,6 +722,7 @@ func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 		return nil, errors.Wrap(err, operationError)
 	}
 	retVal = Nodes{gradNode, slicedRes}
+
 	return
 }
 
@@ -792,9 +793,44 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-// func (op sliceIncrOp) usePreallocDoer(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op sliceIncrOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+	machineLogf("Doing %v", op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 
-// }
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	incr := inputs[1]
+
+	// prep the slices
+	slices := make([]tensor.Slice, op.d)
+	if !op.all() {
+		slices[op.along] = op
+	}
+
+	switch T := prealloc.(type) {
+	case *tensor.Dense:
+		var v tensor.Tensor
+		if v, err = T.Slice(slices...); err != nil {
+			return nil, errors.Wrapf(err, sliceFail, slices)
+		}
+		switch i := incr.(type) {
+		case *F64:
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
+		case *F32:
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
+		case *tensor.Dense:
+			tensor.Add(v, i, tensor.UseUnsafe())
+		}
+		retVal = T
+	case Scalar:
+		return nil, errors.New("Cannot slice a scalar value")
+	default:
+		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", prealloc)
+	}
+	return
+}
 
 func (op sliceIncrOp) OverwritesInput() int { return 0 }
 
