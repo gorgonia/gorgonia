@@ -581,7 +581,7 @@ func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	incrOp := sliceIncrOp{op}
 
 	var d Value
-	if d, err = incrOp.Do(xdv.d, ydv.d); err != nil {
+	if d, err = incrOp.UsePreallocDo(xdv.d, xdv.d, ydv.d); err != nil {
 		return errors.Wrapf(err, doFail, incrOp)
 	}
 
