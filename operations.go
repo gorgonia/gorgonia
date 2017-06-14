@@ -57,14 +57,16 @@ func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
 		return
 	}
 
+	ds := Nodes(children).dimSizers()
 	var s tensor.Shape
-	if s, err = op.InferShape(Nodes(children).dimSizers()...); err == nil {
+	if s, err = op.InferShape(ds...); err == nil {
 		shapeLogf("inferred shape %v", s)
 		retVal = NewUniqueNode(WithType(retType), WithOp(op), WithChildren(children), In(g), WithShape(s...))
 	} else {
 		err = errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
 		// retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
 	}
+	returnDimSizers(ds)
 	return
 }
 

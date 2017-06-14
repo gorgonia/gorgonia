@@ -189,7 +189,8 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 		arg0Dim:  children[0].Dims(),
 	}
 
-	if s, err := retVal.InferShape(children.dimSizers()...); err == nil {
+	ds := children.dimSizers()
+	if s, err := retVal.InferShape(ds...); err == nil {
 		retVal.inputShape = s
 		if s.IsColVec() {
 			retVal.d = 1
@@ -199,6 +200,7 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 	} else {
 		panic(err)
 	}
+	returnDimSizers(ds)
 
 	return retVal
 }
