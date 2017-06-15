@@ -48,7 +48,8 @@ func inferNodeType(op Op, children ...*Node) (retVal hm.Type, err error) {
 		defer hm.ReturnFnType(fnt)
 	}
 
-	argTypes := make(hm.Types, len(children)+1)
+	argTypes := hm.BorrowTypes(len(children) + 1)
+	defer hm.ReturnTypes(argTypes)
 	for i, child := range children {
 		if argTypes[i], err = inferType(child); err != nil {
 			return nil, errors.Wrapf(err, "Failed to infer type of %v", child)

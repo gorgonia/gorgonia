@@ -200,7 +200,7 @@ func (ns Nodes) remove(what *Node) Nodes {
 }
 
 func (ns Nodes) dimSizers() []DimSizer {
-	retVal := make([]DimSizer, len(ns))
+	retVal := borrowDimSizers(len(ns))
 	for i, n := range ns {
 		if s, ok := n.op.(sizeOp); ok {
 			retVal[i] = s
