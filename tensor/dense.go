@@ -2,9 +2,10 @@ package tensor
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
 	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -22,11 +23,11 @@ type Dense struct {
 	*AP
 
 	flag denseFlag
-
 	data unsafe.Pointer       // Unsafe.Pointer is required to keep the pointer of the first element of the slice, to prevent the slice from being GC'd
 	hdr  *reflect.SliceHeader // we keep a separate SliceHeader because it'd be easier to cast into a slice when doing get ops
 	v    interface{}          // we keep a reference to the underlying slice
 	t    Dtype                // the element type
+	e    Engine               // execution engine for the *Dense (optional)
 
 	// backup AP. When a transpose is done, the old *AP is backed up here, for easy untransposes
 	old           *AP

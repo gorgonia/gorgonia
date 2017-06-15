@@ -23,6 +23,7 @@ type Tensor interface {
 	Dims() int
 	Size() int
 	DataSize() int
+	Engine() Engine // Engine can be nil
 
 	// ops
 	At(...int) (interface{}, error)
