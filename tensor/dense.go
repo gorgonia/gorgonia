@@ -119,9 +119,6 @@ func (t *Dense) fromSlice(x interface{}, argMask ...[]bool) {
 // Info returns the access pattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
 func (t *Dense) Info() *AP { return t.AP }
 
-// IsMasked indicates whether tensor is masked
-func (t *Dense) IsMasked() bool { return len(t.mask) == t.len() }
-
 // Dtype returns the data type of the *Dense tensor.
 func (t *Dense) Dtype() Dtype { return t.t }
 
@@ -140,6 +137,9 @@ func (t *Dense) DataSize() int {
 	}
 	return t.hdr.Len
 }
+
+// Engine returns the execution engine associated with this Tensor
+func (t *Dense) Engine() Engine { return t.e }
 
 // Reshape reshapes a *Dense. If the tensors need to be materialized (either it's a view or transpose), it will be materialized before the reshape happens
 func (t *Dense) Reshape(dims ...int) error {
@@ -222,6 +222,9 @@ func (t *Dense) Pointer() unsafe.Pointer {
 	return t.data
 }
 
+// IsMasked indicates whether tensor is masked
+func (t *Dense) IsMasked() bool { return len(t.mask) == t.len() }
+
 // Private methods
 
 func (t *Dense) cap() int { return t.hdr.Cap }
@@ -250,7 +253,58 @@ func (t *Dense) fix() {
 		}
 	case t.data == nil && t.t != Dtype{}:
 		size := t.Shape().TotalSize()
-		t.makeArray(size)
+		if t.e != nil {
+			mem, err := t.e.Alloc(calcMemSize(t.t, size))
+			if err != nil {
+				panic(err)
+			}
+			if t.hdr == nil {
+				t.hdr = new(reflect.SliceHeader)
+			}
+			t.data = mem.Pointer()
+			t.hdr.Data = ptr
+			t.hdr.Len = size
+			t.hdr.Cap = size
+			switch tt.t {
+			case Bool:
+				tt.v = *(*[]bool)(unsafe.Pointer(tt.hdr))
+			case Int:
+				tt.v = *(*[]int)(unsafe.Pointer(tt.hdr))
+			case Int8:
+				tt.v = *(*[]int8)(unsafe.Pointer(tt.hdr))
+			case Int16:
+				tt.v = *(*[]int16)(unsafe.Pointer(tt.hdr))
+			case Int32:
+				tt.v = *(*[]int32)(unsafe.Pointer(tt.hdr))
+			case Int64:
+				tt.v = *(*[]int64)(unsafe.Pointer(tt.hdr))
+			case Uint:
+				tt.v = *(*[]uint)(unsafe.Pointer(tt.hdr))
+			case Byte:
+				tt.v = *(*[]uint8)(unsafe.Pointer(tt.hdr))
+			case Uint16:
+				tt.v = *(*[]uint16)(unsafe.Pointer(tt.hdr))
+			case Uint32:
+				tt.v = *(*[]uint32)(unsafe.Pointer(tt.hdr))
+			case Uint64:
+				tt.v = *(*[]uint64)(unsafe.Pointer(tt.hdr))
+			case Float32:
+				tt.v = *(*[]float32)(unsafe.Pointer(tt.hdr))
+			case Float64:
+				tt.v = *(*[]float64)(unsafe.Pointer(tt.hdr))
+			case Complex64:
+				tt.v = *(*[]complex64)(unsafe.Pointer(tt.hdr))
+			case Complex128:
+				tt.v = *(*[]complex128)(unsafe.Pointer(tt.hdr))
+			case String:
+				tt.v = *(*[]string)(unsafe.Pointer(tt.hdr))
+			default:
+				panic("Unsupported Dtype for using the engine")
+			}
+
+		} else {
+			t.makeArray(size)
+		}
 	}
 	if len(t.mask) != t.len() {
 		t.mask = t.mask[:0]

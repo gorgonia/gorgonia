@@ -17,38 +17,45 @@ type Memory interface {
 }
 
 // Engine is a representation of an execution engine.
-// While different execution engines can have different capabilities, all execution engines must be able to make memory.
+// While different execution engines can have different capabilities, all execution engines must be able to allocate and free memory
 type Engine interface {
-	Make(dt Dtype, size int) Memory
+	Alloc(size int64) (Memory, error)         // Allocates memory
+	Free(mem Memory, size int64) error        // Frees memory
+	Memset(mem Memory, val interface{}) error // Memset
+	Memclr(mem Memory)                        // Memclear
 }
 
-/* NUMBER INTERFACES */
+/* NUMBER INTERFACES
+All these are expected to be unsafe on the first tensor
+*/
 
 type Adder interface {
-	Add(a, b Tensor) (Tensor, error)
-	Trans(a Tensor, b interface{}) (Tensor, error)
+	Add(a, b Tensor) error
+	Trans(a Tensor, b interface{}) error
 }
 
 type Subber interface {
 	Sub(a, b Tensor) (Tensor, error)
-	TransInv(a Tensor, b interface{}) (Tensor, error)
+	TransInv(a Tensor, b interface{}) error
 }
 
 type Muler interface {
 	Mul(a, b Tensor) (Tensor, error)
-	Scale(a Tensor, b interface{}) (Tensor, error)
+	Scale(a Tensor, b interface{}) error
 }
 
 type Diver interface {
 	Div(a, b Tensor) (Tensor, error)
-	ScaleInv(a Tensor, b interface{}) (Tensor, error)
+	ScaleInv(a Tensor, b interface{}) error
 }
 
 type Power interface {
 	Pow(a, b Tensor) (Tensor, error)
-	PowOf(a Tensor, b interface{}) (Tensor, error)
-	PowOfR(a interface{}, b tensor) (Tensor, error)
+	PowOf(a Tensor, b interface{}) error
+	PowOfR(a interface{}, b Tensor) error
 }
+
+/* LINEAR ALGEBRA INTERFACES */
 
 type MatMuler interface {
 	MatMul(a, b Tensor) (Tensor, error)
@@ -105,3 +112,19 @@ type ElEqer interface {
 }
 
 /* Unary Operators for Numbers */
+
+type Squarer interface {
+	Square(a Tensor) error
+}
+
+type Exper interface {
+	Exp(a Tensor) error
+}
+
+type InvSqrter interface {
+	InvSqrt(a Tensor) error
+}
+
+func calcMemSize(dt Dtype, size int) int64 {
+	return int64(dt.Size()) * int64(size)
+}
