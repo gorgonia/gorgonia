@@ -221,14 +221,16 @@ func (t *Dense) GobDecode(p []byte) (err error){
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data,mask)
+		t.fromSlice(data)
+		t.addMask(mask)
 	{{end -}}
 	case reflect.String:
 		var data []string
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data,mask)
+		t.fromSlice(data)
+		t.addMask(mask)
 	}
 
 	t.fix()
