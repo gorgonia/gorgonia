@@ -39,7 +39,7 @@ func WithBacking(x interface{}, argMask ...[]bool) ConsOpt {
 		case *Dense:
 			tt.fromSlice(x)
 			if len(argMask) > 0 {
-				tt.addMask(argMask[0])
+				tt.addMask(mask)
 			}
 		default:
 			panic("Unsupported Tensor type")

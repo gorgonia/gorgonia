@@ -471,92 +471,93 @@ func (t *Dense) GobDecode(p []byte) (err error) {
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Int8:
 		var data []int8
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Int16:
 		var data []int16
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Int32:
 		var data []int32
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Int64:
 		var data []int64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Uint:
 		var data []uint
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Uint8:
 		var data []uint8
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Uint16:
 		var data []uint16
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Uint32:
 		var data []uint32
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Uint64:
 		var data []uint64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Float32:
 		var data []float32
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Float64:
 		var data []float64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Complex64:
 		var data []complex64
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.Complex128:
 		var data []complex128
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	case reflect.String:
 		var data []string
 		if err = decoder.Decode(&data); err != nil {
 			return
 		}
-		t.fromSlice(data, mask)
+		t.fromSlice(data)
 	}
+	t.addMask(mask)
 
 	t.fix()
 	return t.sanity()

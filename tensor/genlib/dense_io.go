@@ -222,7 +222,6 @@ func (t *Dense) GobDecode(p []byte) (err error){
 			return
 		}
 		t.fromSlice(data)
-		t.addMask(mask)
 	{{end -}}
 	case reflect.String:
 		var data []string
@@ -230,8 +229,8 @@ func (t *Dense) GobDecode(p []byte) (err error){
 			return
 		}
 		t.fromSlice(data)
-		t.addMask(mask)
 	}
+	t.addMask(mask)
 
 	t.fix()
 	return t.sanity()
