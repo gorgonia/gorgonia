@@ -253,58 +253,8 @@ func (t *Dense) fix() {
 		}
 	case t.data == nil && t.t != Dtype{}:
 		size := t.Shape().TotalSize()
-		if t.e != nil {
-			mem, err := t.e.Alloc(calcMemSize(t.t, size))
-			if err != nil {
-				panic(err)
-			}
-			if t.hdr == nil {
-				t.hdr = new(reflect.SliceHeader)
-			}
-			t.data = mem.Pointer()
-			t.hdr.Data = ptr
-			t.hdr.Len = size
-			t.hdr.Cap = size
-			switch tt.t {
-			case Bool:
-				tt.v = *(*[]bool)(unsafe.Pointer(tt.hdr))
-			case Int:
-				tt.v = *(*[]int)(unsafe.Pointer(tt.hdr))
-			case Int8:
-				tt.v = *(*[]int8)(unsafe.Pointer(tt.hdr))
-			case Int16:
-				tt.v = *(*[]int16)(unsafe.Pointer(tt.hdr))
-			case Int32:
-				tt.v = *(*[]int32)(unsafe.Pointer(tt.hdr))
-			case Int64:
-				tt.v = *(*[]int64)(unsafe.Pointer(tt.hdr))
-			case Uint:
-				tt.v = *(*[]uint)(unsafe.Pointer(tt.hdr))
-			case Byte:
-				tt.v = *(*[]uint8)(unsafe.Pointer(tt.hdr))
-			case Uint16:
-				tt.v = *(*[]uint16)(unsafe.Pointer(tt.hdr))
-			case Uint32:
-				tt.v = *(*[]uint32)(unsafe.Pointer(tt.hdr))
-			case Uint64:
-				tt.v = *(*[]uint64)(unsafe.Pointer(tt.hdr))
-			case Float32:
-				tt.v = *(*[]float32)(unsafe.Pointer(tt.hdr))
-			case Float64:
-				tt.v = *(*[]float64)(unsafe.Pointer(tt.hdr))
-			case Complex64:
-				tt.v = *(*[]complex64)(unsafe.Pointer(tt.hdr))
-			case Complex128:
-				tt.v = *(*[]complex128)(unsafe.Pointer(tt.hdr))
-			case String:
-				tt.v = *(*[]string)(unsafe.Pointer(tt.hdr))
-			default:
-				panic("Unsupported Dtype for using the engine")
-			}
+		t.makeArray(size)
 
-		} else {
-			t.makeArray(size)
-		}
 	}
 	if len(t.mask) != t.len() {
 		t.mask = t.mask[:0]

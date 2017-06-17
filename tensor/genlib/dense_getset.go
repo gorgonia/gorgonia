@@ -191,6 +191,33 @@ func (t *Dense) zeroIter() (err error){
 }
 `
 const makeDataRaw = `func (t *Dense) makeArray(size int) {
+	if t.e != nil {
+		mem, err := t.e.Alloc(calcMemSize(t.t, size))
+		if err != nil {
+			panic(err)
+		}
+		if t.hdr == nil {
+			t.hdr = new(reflect.SliceHeader)
+		}
+		t.data = mem.Pointer()
+		t.hdr.Data = ptr
+		t.hdr.Len = size
+		t.hdr.Cap = size
+		switch tt.t.Kind() {
+		{{range .Kinds -}}
+			{{if isParameterized .}}
+			{{else -}}
+		case reflect.{{reflectKind .}}:
+			arr := make([]{{.String | lower | clean }}, size)
+			t.fromSlice(arr)
+			{{end -}}
+		{{end -}}	
+		default:
+			
+		}
+		return
+	}
+
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{if isParameterized .}}
@@ -201,7 +228,6 @@ const makeDataRaw = `func (t *Dense) makeArray(size int) {
 		{{end -}}
 	{{end -}}
 	default:
-
 	}
 }
 
