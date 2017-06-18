@@ -777,7 +777,7 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				return false
 			}
 			if !allClose(correct.Data(), check.Data()) {
-				t.Errorf("Correct: %v, check %v", correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
+				t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
 				return false
 			}
 

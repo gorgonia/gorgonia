@@ -28556,7 +28556,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -28619,7 +28619,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -28682,7 +28682,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -28745,7 +28745,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -28808,7 +28808,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -28871,7 +28871,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -28934,7 +28934,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -28997,7 +28997,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -29060,7 +29060,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -29123,7 +29123,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -29186,7 +29186,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -29249,7 +29249,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -29312,7 +29312,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -29375,7 +29375,7 @@ func TestTransBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
@@ -29443,7 +29443,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -29506,7 +29506,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -29569,7 +29569,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -29632,7 +29632,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -29695,7 +29695,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -29758,7 +29758,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -29821,7 +29821,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -29884,7 +29884,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -29947,7 +29947,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -30010,7 +30010,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -30073,7 +30073,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -30136,7 +30136,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -30199,7 +30199,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -30262,7 +30262,7 @@ func TestTransInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
@@ -30287,7 +30287,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -30307,7 +30307,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -30327,7 +30327,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -30347,7 +30347,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -30367,7 +30367,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -30387,7 +30387,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -30407,7 +30407,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -30427,7 +30427,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -30447,7 +30447,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -30467,7 +30467,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -30487,7 +30487,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -30507,7 +30507,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -30527,7 +30527,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -30547,7 +30547,7 @@ func TestTransInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
@@ -30617,7 +30617,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -30682,7 +30682,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -30747,7 +30747,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -30812,7 +30812,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -30877,7 +30877,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -30942,7 +30942,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -31007,7 +31007,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -31072,7 +31072,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -31137,7 +31137,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -31202,7 +31202,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -31267,7 +31267,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -31332,7 +31332,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -31397,7 +31397,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -31462,7 +31462,7 @@ func TestScaleBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
@@ -31532,7 +31532,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -31597,7 +31597,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -31662,7 +31662,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -31727,7 +31727,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -31792,7 +31792,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -31857,7 +31857,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -31922,7 +31922,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -31987,7 +31987,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -32052,7 +32052,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -32117,7 +32117,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -32182,7 +32182,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -32247,7 +32247,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -32312,7 +32312,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -32377,7 +32377,7 @@ func TestScaleInvBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
@@ -32402,7 +32402,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -32422,7 +32422,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -32442,7 +32442,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -32462,7 +32462,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -32482,7 +32482,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -32502,7 +32502,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -32522,7 +32522,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -32542,7 +32542,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -32562,7 +32562,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -32582,7 +32582,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -32602,7 +32602,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -32622,7 +32622,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -32642,7 +32642,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -32662,7 +32662,7 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
@@ -32728,7 +32728,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -32789,7 +32789,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -32850,7 +32850,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -32911,7 +32911,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -32972,7 +32972,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -33033,7 +33033,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -33094,7 +33094,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -33155,7 +33155,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -33216,7 +33216,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -33277,7 +33277,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -33338,7 +33338,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -33399,7 +33399,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -33460,7 +33460,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -33521,7 +33521,7 @@ func TestPowOfBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
@@ -33546,7 +33546,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
 
@@ -33566,7 +33566,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
 
@@ -33586,7 +33586,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
 
@@ -33606,7 +33606,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
 
@@ -33626,7 +33626,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
 
@@ -33646,7 +33646,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
 
@@ -33666,7 +33666,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
 
@@ -33686,7 +33686,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
 
@@ -33706,7 +33706,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
 
@@ -33726,7 +33726,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
 
@@ -33746,7 +33746,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
 
@@ -33766,7 +33766,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
 
@@ -33786,7 +33786,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
 
@@ -33806,7 +33806,7 @@ func TestPowOfRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Correct: %v, check %v", correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
+			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
 
