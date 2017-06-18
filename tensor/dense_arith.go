@@ -10504,7 +10504,7 @@ func (t *Dense) Trans(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.trans(other)
+		err = reuse.trans(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -10512,9 +10512,9 @@ func (t *Dense) Trans(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.trans(other)
+		err = retVal.trans(other)
 	case !safe:
-		t.trans(other)
+		err = t.trans(other)
 		retVal = t
 	}
 	return
@@ -10815,7 +10815,7 @@ func (t *Dense) TransInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.transinv(other)
+		err = reuse.transinv(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -10823,9 +10823,9 @@ func (t *Dense) TransInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.transinv(other)
+		err = retVal.transinv(other)
 	case !safe:
-		t.transinv(other)
+		err = t.transinv(other)
 		retVal = t
 	}
 	return
@@ -11126,7 +11126,7 @@ func (t *Dense) TransInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.transinvr(other)
+		err = reuse.transinvr(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -11134,9 +11134,9 @@ func (t *Dense) TransInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.transinvr(other)
+		err = retVal.transinvr(other)
 	case !safe:
-		t.transinvr(other)
+		err = t.transinvr(other)
 		retVal = t
 	}
 	return
@@ -11437,7 +11437,7 @@ func (t *Dense) Scale(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.scale(other)
+		err = reuse.scale(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -11445,9 +11445,9 @@ func (t *Dense) Scale(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.scale(other)
+		err = retVal.scale(other)
 	case !safe:
-		t.scale(other)
+		err = t.scale(other)
 		retVal = t
 	}
 	return
@@ -11748,7 +11748,7 @@ func (t *Dense) ScaleInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.scaleinv(other)
+		err = reuse.scaleinv(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -11756,9 +11756,9 @@ func (t *Dense) ScaleInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.scaleinv(other)
+		err = retVal.scaleinv(other)
 	case !safe:
-		t.scaleinv(other)
+		err = t.scaleinv(other)
 		retVal = t
 	}
 	return
@@ -12185,7 +12185,7 @@ func (t *Dense) ScaleInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.scaleinvr(other)
+		err = reuse.scaleinvr(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -12193,9 +12193,9 @@ func (t *Dense) ScaleInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.scaleinvr(other)
+		err = retVal.scaleinvr(other)
 	case !safe:
-		t.scaleinvr(other)
+		err = t.scaleinvr(other)
 		retVal = t
 	}
 	return
@@ -12622,7 +12622,7 @@ func (t *Dense) PowOf(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.powof(other)
+		err = reuse.powof(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -12630,9 +12630,9 @@ func (t *Dense) PowOf(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.powof(other)
+		err = retVal.powof(other)
 	case !safe:
-		t.powof(other)
+		err = t.powof(other)
 		retVal = t
 	}
 	return
@@ -12933,7 +12933,7 @@ func (t *Dense) PowOfR(other interface{}, opts ...FuncOpt) (retVal *Dense, err e
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.powofr(other)
+		err = reuse.powofr(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -12941,9 +12941,9 @@ func (t *Dense) PowOfR(other interface{}, opts ...FuncOpt) (retVal *Dense, err e
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.powofr(other)
+		err = retVal.powofr(other)
 	case !safe:
-		t.powofr(other)
+		err = t.powofr(other)
 		retVal = t
 	}
 	return

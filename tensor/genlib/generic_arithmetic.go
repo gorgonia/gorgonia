@@ -178,7 +178,7 @@ const genericVecScalarArithRaw = `func {{if .IsIncr}}incr{{.OpName}}{{else}}{{lo
 			{{end -}}
 			}
 	{{else -}}
-		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+		{{$scaleInv := eq .OpName "ScaleInv" -}}
 		{{$scaleInvR := eq .OpName "ScaleInvR" -}}
 		{{$div := hasPrefix .OpName "Div" -}}
 		

@@ -694,7 +694,7 @@ func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, 
 		} else {
 			copyDense(reuse, t) 
 		}
-		reuse.{{lower .OpName}}(other)
+		err = reuse.{{lower .OpName}}(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable(){
@@ -702,9 +702,9 @@ func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, 
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.{{lower .OpName}}(other)
+		err = retVal.{{lower .OpName}}(other)
 	case !safe:
-		t.{{lower .OpName}}(other)
+		err = t.{{lower .OpName}}(other)
 		retVal = t
 	}
 	return

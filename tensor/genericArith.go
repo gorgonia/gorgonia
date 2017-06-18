@@ -6932,9 +6932,6 @@ func scaleinvC128Masked(a []complex128, b complex128, mask []bool) error {
 /* ScaleInvR */
 
 func scaleinvrI(a []int, b int) error {
-	if b == int(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int(0) {
@@ -6972,9 +6969,6 @@ func scaleinvrIMasked(a []int, b int, mask []bool) error {
 }
 
 func scaleinvrI8(a []int8, b int8) error {
-	if b == int8(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int8(0) {
@@ -7012,9 +7006,6 @@ func scaleinvrI8Masked(a []int8, b int8, mask []bool) error {
 }
 
 func scaleinvrI16(a []int16, b int16) error {
-	if b == int16(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int16(0) {
@@ -7052,9 +7043,6 @@ func scaleinvrI16Masked(a []int16, b int16, mask []bool) error {
 }
 
 func scaleinvrI32(a []int32, b int32) error {
-	if b == int32(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int32(0) {
@@ -7092,9 +7080,6 @@ func scaleinvrI32Masked(a []int32, b int32, mask []bool) error {
 }
 
 func scaleinvrI64(a []int64, b int64) error {
-	if b == int64(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int64(0) {
@@ -7132,9 +7117,6 @@ func scaleinvrI64Masked(a []int64, b int64, mask []bool) error {
 }
 
 func scaleinvrU(a []uint, b uint) error {
-	if b == uint(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint(0) {
@@ -7172,9 +7154,6 @@ func scaleinvrUMasked(a []uint, b uint, mask []bool) error {
 }
 
 func scaleinvrU8(a []uint8, b uint8) error {
-	if b == uint8(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint8(0) {
@@ -7212,9 +7191,6 @@ func scaleinvrU8Masked(a []uint8, b uint8, mask []bool) error {
 }
 
 func scaleinvrU16(a []uint16, b uint16) error {
-	if b == uint16(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint16(0) {
@@ -7252,9 +7228,6 @@ func scaleinvrU16Masked(a []uint16, b uint16, mask []bool) error {
 }
 
 func scaleinvrU32(a []uint32, b uint32) error {
-	if b == uint32(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint32(0) {
@@ -7292,9 +7265,6 @@ func scaleinvrU32Masked(a []uint32, b uint32, mask []bool) error {
 }
 
 func scaleinvrU64(a []uint64, b uint64) error {
-	if b == uint64(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint64(0) {
@@ -9332,9 +9302,6 @@ func incrScaleInvC128Masked(a, incr []complex128, b complex128, mask []bool) err
 /* incr ScaleInvR */
 
 func incrScaleInvRI(a, incr []int, b int) error {
-	if b == int(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int(0) {
@@ -9372,9 +9339,6 @@ func incrScaleInvRIMasked(a, incr []int, b int, mask []bool) error {
 }
 
 func incrScaleInvRI8(a, incr []int8, b int8) error {
-	if b == int8(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int8(0) {
@@ -9412,9 +9376,6 @@ func incrScaleInvRI8Masked(a, incr []int8, b int8, mask []bool) error {
 }
 
 func incrScaleInvRI16(a, incr []int16, b int16) error {
-	if b == int16(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int16(0) {
@@ -9452,9 +9413,6 @@ func incrScaleInvRI16Masked(a, incr []int16, b int16, mask []bool) error {
 }
 
 func incrScaleInvRI32(a, incr []int32, b int32) error {
-	if b == int32(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int32(0) {
@@ -9492,9 +9450,6 @@ func incrScaleInvRI32Masked(a, incr []int32, b int32, mask []bool) error {
 }
 
 func incrScaleInvRI64(a, incr []int64, b int64) error {
-	if b == int64(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == int64(0) {
@@ -9532,9 +9487,6 @@ func incrScaleInvRI64Masked(a, incr []int64, b int64, mask []bool) error {
 }
 
 func incrScaleInvRU(a, incr []uint, b uint) error {
-	if b == uint(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint(0) {
@@ -9572,9 +9524,6 @@ func incrScaleInvRUMasked(a, incr []uint, b uint, mask []bool) error {
 }
 
 func incrScaleInvRU8(a, incr []uint8, b uint8) error {
-	if b == uint8(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint8(0) {
@@ -9612,9 +9561,6 @@ func incrScaleInvRU8Masked(a, incr []uint8, b uint8, mask []bool) error {
 }
 
 func incrScaleInvRU16(a, incr []uint16, b uint16) error {
-	if b == uint16(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint16(0) {
@@ -9652,9 +9598,6 @@ func incrScaleInvRU16Masked(a, incr []uint16, b uint16, mask []bool) error {
 }
 
 func incrScaleInvRU32(a, incr []uint32, b uint32) error {
-	if b == uint32(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint32(0) {
@@ -9692,9 +9635,6 @@ func incrScaleInvRU32Masked(a, incr []uint32, b uint32, mask []bool) error {
 }
 
 func incrScaleInvRU64(a, incr []uint64, b uint64) error {
-	if b == uint64(0) {
-		return errors.New(div0General)
-	}
 	var errs errorIndices
 	for i, v := range a {
 		if v == uint64(0) {

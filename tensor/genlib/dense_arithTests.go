@@ -652,6 +652,7 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 	{{$isInv := .IsInv -}}
 	{{$invOpName := .InvOpName -}}
 	{{$isScaleInvR := eq .OpName "ScaleInvR" -}}
+	{{$isScaleInv := eq .OpName "ScaleInv" -}}
 	{{range .Kinds -}}
 		{{if $hasIden -}}
 			// identity
@@ -769,9 +770,29 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 		{{end -}}
 		incr{{short .}} := func(a, incr *QCDense{{short .}}, b {{asType .}}) bool {
 			// build correct
-			cloned := incr.Clone()
-			ret, _ := a.{{$op}}(b)
-			correct, _ := incr.Add(ret)
+			{{if $isScaleInv -}}
+			{{if panicsDiv0 .}}
+				ret, err := a.{{$op}}(b)
+				correct, _ := incr.Add(ret)
+				if b == 0 {
+					if err == nil {
+						t.Errorf("Expected a DivideByZero error")
+						return false
+					}
+					if err.Error() != div0General{
+						t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+						return false
+					}
+					return true
+				}
+			{{else -}}
+				ret, _ := a.{{$op}}(b)
+				correct, _ := incr.Add(ret)
+			{{end -}}
+			{{else -}}
+				ret, _ := a.{{$op}}(b)
+				correct, _ := incr.Add(ret)
+			{{end -}}
 
 			{{if $isScaleInvR -}}
 			{{if panicsDiv0 .}}
@@ -792,7 +813,6 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				return false
 			}
 			if !allClose(correct.Data(), check.Data()) {
-				t.Errorf("\na%#-v\n%#-v", a, cloned)
 				t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
 				return false
 			}

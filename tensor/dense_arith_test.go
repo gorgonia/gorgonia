@@ -28547,17 +28547,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -28612,17 +28609,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -28677,17 +28671,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -28742,17 +28733,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -28807,17 +28795,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -28872,17 +28857,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -28937,17 +28919,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -29002,17 +28981,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -29067,17 +29043,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -29132,17 +29105,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -29197,17 +29167,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -29262,17 +29229,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -29327,17 +29291,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -29392,17 +29353,14 @@ func TestTransBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Trans(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Trans(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
@@ -29462,17 +29420,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -29527,17 +29482,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -29592,17 +29544,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -29657,17 +29606,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -29722,17 +29668,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -29787,17 +29730,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -29852,17 +29792,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -29917,17 +29854,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -29982,17 +29916,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -30047,17 +29978,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -30112,17 +30040,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -30177,17 +30102,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -30242,17 +30164,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -30307,17 +30226,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
@@ -30334,17 +30250,14 @@ func TestTransInvBasicProperties(t *testing.T) {
 func TestTransInvRBasicProperties(t *testing.T) {
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -30356,17 +30269,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -30378,17 +30288,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -30400,17 +30307,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -30422,17 +30326,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -30444,17 +30345,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -30466,17 +30364,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -30488,17 +30383,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -30510,17 +30402,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -30532,17 +30421,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -30554,17 +30440,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -30576,17 +30459,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -30598,17 +30478,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -30620,17 +30497,14 @@ func TestTransInvRBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.TransInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.TransInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
@@ -30692,17 +30566,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -30759,17 +30630,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -30826,17 +30694,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -30893,17 +30758,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -30960,17 +30822,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -31027,17 +30886,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -31094,17 +30950,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -31161,17 +31014,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -31228,17 +31078,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -31295,17 +31142,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -31362,17 +31206,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -31429,17 +31270,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -31496,17 +31334,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -31563,17 +31398,14 @@ func TestScaleBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.Scale(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.Scale(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
@@ -31635,17 +31467,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -31702,17 +31543,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -31769,17 +31619,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -31836,17 +31695,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -31903,17 +31771,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -31970,17 +31847,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -32037,17 +31923,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -32104,17 +31999,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -32171,17 +32075,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -32238,17 +32151,26 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
-		ret, _ := a.ScaleInv(b)
-		correct, _ := incr.Add(ret)
 
+		ret, err := a.ScaleInv(b)
+		correct, _ := incr.Add(ret)
+		if b == 0 {
+			if err == nil {
+				t.Errorf("Expected a DivideByZero error")
+				return false
+			}
+			if err.Error() != div0General {
+				t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+				return false
+			}
+			return true
+		}
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -32305,17 +32227,14 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -32372,17 +32291,14 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -32439,17 +32355,14 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -32506,17 +32419,14 @@ func TestScaleInvBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInv(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInv(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
@@ -32533,7 +32443,6 @@ func TestScaleInvBasicProperties(t *testing.T) {
 func TestScaleInvRBasicProperties(t *testing.T) {
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32551,7 +32460,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -32563,7 +32471,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32581,7 +32488,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -32593,7 +32499,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32611,7 +32516,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -32623,7 +32527,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32641,7 +32544,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -32653,7 +32555,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32671,7 +32572,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -32683,7 +32583,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32701,7 +32600,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -32713,7 +32611,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32731,7 +32628,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -32743,7 +32639,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32761,7 +32656,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -32773,7 +32667,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32791,7 +32684,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -32803,7 +32695,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
 
@@ -32821,7 +32712,6 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -32833,17 +32723,14 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -32855,17 +32742,14 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -32877,17 +32761,14 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -32899,17 +32780,14 @@ func TestScaleInvRBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.ScaleInvR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.ScaleInvR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
@@ -32967,17 +32845,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -33030,17 +32905,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -33093,17 +32965,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -33156,17 +33025,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -33219,17 +33085,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -33282,17 +33145,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -33345,17 +33205,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -33408,17 +33265,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -33471,17 +33325,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -33534,17 +33385,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -33597,17 +33445,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -33660,17 +33505,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -33723,17 +33565,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -33786,17 +33625,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOf(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOf(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
@@ -33813,17 +33649,14 @@ func TestPowOfBasicProperties(t *testing.T) {
 func TestPowOfRBasicProperties(t *testing.T) {
 	incrI := func(a, incr *QCDenseI, b int) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int)[0:10], check.Data().([]int)[0:10])
 			return false
 		}
@@ -33835,17 +33668,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrI8 := func(a, incr *QCDenseI8, b int8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int8)[0:10], check.Data().([]int8)[0:10])
 			return false
 		}
@@ -33857,17 +33687,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrI16 := func(a, incr *QCDenseI16, b int16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int16)[0:10], check.Data().([]int16)[0:10])
 			return false
 		}
@@ -33879,17 +33706,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrI32 := func(a, incr *QCDenseI32, b int32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int32)[0:10], check.Data().([]int32)[0:10])
 			return false
 		}
@@ -33901,17 +33725,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrI64 := func(a, incr *QCDenseI64, b int64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]int64)[0:10], check.Data().([]int64)[0:10])
 			return false
 		}
@@ -33923,17 +33744,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrU := func(a, incr *QCDenseU, b uint) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint)[0:10], check.Data().([]uint)[0:10])
 			return false
 		}
@@ -33945,17 +33763,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrU8 := func(a, incr *QCDenseU8, b uint8) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint8)[0:10], check.Data().([]uint8)[0:10])
 			return false
 		}
@@ -33967,17 +33782,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrU16 := func(a, incr *QCDenseU16, b uint16) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint16)[0:10], check.Data().([]uint16)[0:10])
 			return false
 		}
@@ -33989,17 +33801,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrU32 := func(a, incr *QCDenseU32, b uint32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint32)[0:10], check.Data().([]uint32)[0:10])
 			return false
 		}
@@ -34011,17 +33820,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrU64 := func(a, incr *QCDenseU64, b uint64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]uint64)[0:10], check.Data().([]uint64)[0:10])
 			return false
 		}
@@ -34033,17 +33839,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrF32 := func(a, incr *QCDenseF32, b float32) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float32)[0:10], check.Data().([]float32)[0:10])
 			return false
 		}
@@ -34055,17 +33858,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrF64 := func(a, incr *QCDenseF64, b float64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]float64)[0:10], check.Data().([]float64)[0:10])
 			return false
 		}
@@ -34077,17 +33877,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrC64 := func(a, incr *QCDenseC64, b complex64) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex64)[0:10], check.Data().([]complex64)[0:10])
 			return false
 		}
@@ -34099,17 +33896,14 @@ func TestPowOfRBasicProperties(t *testing.T) {
 	}
 	incrC128 := func(a, incr *QCDenseC128, b complex128) bool {
 		// build correct
-		cloned := incr.Clone()
 		ret, _ := a.PowOfR(b)
 		correct, _ := incr.Add(ret)
-
 		check, _ := a.PowOfR(b, WithIncr(incr.Dense))
 		if check != incr.Dense {
 			t.Error("Expected incr.Dense == check")
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("\na%#-v\n%#-v", a, cloned)
 			t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]complex128)[0:10], check.Data().([]complex128)[0:10])
 			return false
 		}
