@@ -651,6 +651,7 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 	{{$isAssoc := .IsAssociative -}}
 	{{$isInv := .IsInv -}}
 	{{$invOpName := .InvOpName -}}
+	{{$isScaleInvR := eq .OpName "ScaleInvR" -}}
 	{{range .Kinds -}}
 		{{if $hasIden -}}
 			// identity
@@ -768,8 +769,22 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 		{{end -}}
 		incr{{short .}} := func(a, incr *QCDense{{short .}}, b {{asType .}}) bool {
 			// build correct
+			cloned := incr.Clone()
 			ret, _ := a.{{$op}}(b)
 			correct, _ := incr.Add(ret)
+
+			{{if $isScaleInvR -}}
+			{{if panicsDiv0 .}}
+				// zero out any where a == 0
+				data := correct.Data().([]{{asType .}})
+				aData := a.Data().([]{{asType .}})
+				for i, v := range aData {
+					if v == 0 {
+						data[i] = 0
+					}
+				}
+			{{end -}}
+			{{end -}}
 
 			check, _ := a.{{$op}}(b, WithIncr(incr.Dense))
 			if check != incr.Dense {
@@ -777,6 +792,7 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				return false
 			}
 			if !allClose(correct.Data(), check.Data()) {
+				t.Errorf("\na%#-v\n%#-v", a, cloned)
 				t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
 				return false
 			}
