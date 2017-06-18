@@ -651,6 +651,8 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 	{{$isAssoc := .IsAssociative -}}
 	{{$isInv := .IsInv -}}
 	{{$invOpName := .InvOpName -}}
+	{{$isScaleInvR := eq .OpName "ScaleInvR" -}}
+	{{$isScaleInv := eq .OpName "ScaleInv" -}}
 	{{range .Kinds -}}
 		{{if $hasIden -}}
 			// identity
@@ -768,8 +770,42 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 		{{end -}}
 		incr{{short .}} := func(a, incr *QCDense{{short .}}, b {{asType .}}) bool {
 			// build correct
-			ret, _ := a.{{$op}}(b)
-			correct, _ := incr.Add(ret)
+			{{if $isScaleInv -}}
+			{{if panicsDiv0 .}}
+				ret, err := a.{{$op}}(b)
+				correct, _ := incr.Add(ret)
+				if b == 0 {
+					if err == nil {
+						t.Errorf("Expected a DivideByZero error")
+						return false
+					}
+					if err.Error() != div0General{
+						t.Errorf("Expected a DivideByZero error. Got %v instead", err)
+						return false
+					}
+					return true
+				}
+			{{else -}}
+				ret, _ := a.{{$op}}(b)
+				correct, _ := incr.Add(ret)
+			{{end -}}
+			{{else -}}
+				ret, _ := a.{{$op}}(b)
+				correct, _ := incr.Add(ret)
+			{{end -}}
+
+			{{if $isScaleInvR -}}
+			{{if panicsDiv0 .}}
+				// zero out any where a == 0
+				data := correct.Data().([]{{asType .}})
+				aData := a.Data().([]{{asType .}})
+				for i, v := range aData {
+					if v == 0 {
+						data[i] = 0
+					}
+				}
+			{{end -}}
+			{{end -}}
 
 			check, _ := a.{{$op}}(b, WithIncr(incr.Dense))
 			if check != incr.Dense {
@@ -777,7 +813,7 @@ const testDSBasicPropertiesRaw = `func Test{{.OpName}}BasicProperties(t *testing
 				return false
 			}
 			if !allClose(correct.Data(), check.Data()) {
-				t.Errorf("Correct: %v, check %v", correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
+				t.Errorf("b :%v | Correct: %v, check %v", b, correct.Data().([]{{asType .}})[0:10], check.Data().([]{{asType .}})[0:10])
 				return false
 			}
 

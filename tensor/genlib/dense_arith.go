@@ -694,7 +694,7 @@ func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, 
 		} else {
 			copyDense(reuse, t) 
 		}
-		reuse.{{lower .OpName}}(other)
+		err = reuse.{{lower .OpName}}(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable(){
@@ -702,9 +702,9 @@ func (t *Dense) {{.OpName}}(other interface{}, opts ...FuncOpt) (retVal *Dense, 
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.{{lower .OpName}}(other)
+		err = retVal.{{lower .OpName}}(other)
 	case !safe:
-		t.{{lower .OpName}}(other)
+		err = t.{{lower .OpName}}(other)
 		retVal = t
 	}
 	return
@@ -715,6 +715,7 @@ const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other 
 	{{$isFunc := .IsFunc -}}
 	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
 	{{$div := hasPrefix .OpName "Div" -}}
+	{{$isReversed := hasSuffix .OpName "R" -}}
 	switch t.t.Kind() {
 	{{$opName := .OpName -}}
 	{{$op := .OpSymb -}}
@@ -749,12 +750,16 @@ const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other 
 						{{end -}}
 					{{end -}}
 				{{else -}}
-					data[i] {{$op}} b
+					{{if $isReversed -}}
+						b {{$op}} data[i]
+					{{else -}}
+						data[i] {{$op}} b
+					{{end -}}
 				{{end -}}
 			}
 			return nil
 		}
-		{{lower $opName}}{{short .}}(t.{{sliceOf .}}, b)
+		return {{lower $opName}}{{short .}}(t.{{sliceOf .}}, b)
 		{{end -}}
 		
 	{{end -}}
