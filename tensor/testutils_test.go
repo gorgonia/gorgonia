@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 	"testing"
+	"unsafe"
 )
 
 func checkErr(t *testing.T, expected bool, err error, name string, id interface{}) (cont bool) {
@@ -45,3 +46,24 @@ func RandomFloat64(size int) []float64 {
 	}
 	return r
 }
+
+// fakemem is a byteslice, while making it a Memory
+type fakemem []byte
+
+func (m fakemem) Uintptr() uintptr        { return uintptr(unsafe.Pointer(&m[0])) }
+func (m fakemem) MemSize() uintptr        { return uintptr(len(m)) }
+func (m fakemem) Pointer() unsafe.Pointer { return unsafe.Pointer(&m[0]) }
+
+// dummyEngine implements Engine. The bool indicates whether the data is native-accessible
+type dummyEngine bool
+
+func (e dummyEngine) AllocAccessible() bool { return bool(e) }
+func (e dummyEngine) Alloc(size int64) (Memory, error) {
+	ps := make(fakemem, int(size))
+	return ps, nil
+}
+func (e dummyEngine) Free(mem Memory, size int64) error        { return nil }
+func (e dummyEngine) Memset(mem Memory, val interface{}) error { return nil }
+func (e dummyEngine) Memclr(mem Memory)                        {}
+func (e dummyEngine) Memcpy(dst, src Memory) error             { return nil }
+func (e dummyEngine) Accessible(mem Memory) (Memory, error)    { return mem, nil }
