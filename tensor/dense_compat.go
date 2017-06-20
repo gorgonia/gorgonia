@@ -314,10 +314,10 @@ func convToFloat64(x interface{}) float64 {
 // FromMat64 converts a *"gonum/matrix/mat64".Dense into a *tensorf64.Tensor.
 func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 	r, c := m.Dims()
-	fo := parseFuncOpts(opts...)
-	toCopy := fo.safe()
-	as := fo.t
-	if fo.t.Type == nil {
+	fo := ParseFuncOpts(opts...)
+	toCopy := fo.Safe()
+	as := fo.As()
+	if as.Type == nil {
 		as = Float64
 	}
 
@@ -400,8 +400,8 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 		return
 	}
 
-	fo := parseFuncOpts(opts...)
-	toCopy := fo.safe()
+	fo := ParseFuncOpts(opts...)
+	toCopy := fo.Safe()
 
 	// fix dims
 	r := t.Shape()[0]

@@ -27,9 +27,9 @@ func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse,
 		return
 	}
 
-	fo := parseFuncOpts(opts...)
-	reuseT, incr := fo.incrReuse()
-	safe = fo.safe()
+	fo := ParseFuncOpts(opts...)
+	reuseT, incr := fo.IncrReuse()
+	safe = fo.Safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -59,9 +59,9 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 		return
 	}
 
-	fo := parseFuncOpts(opts...)
-	reuseT, incr := fo.incrReuse()
-	safe = fo.safe()
+	fo := ParseFuncOpts(opts...)
+	reuseT, incr := fo.IncrReuse()
+	safe = fo.Safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -89,9 +89,38 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 
 // Add performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
+	if t.e != nil {
+		if add, ok := t.e.(Adder); ok {
+			// if safe, then make a copy
+			var ret Tensor
+			if ret, err = add.Add(t, other, opts...); err != nil {
+				goto attemptGo
+			}
+			retVal = ret.(*Dense)
+			return
+		}
+	}
+
+attemptGo:
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
 		return nil, err
+	}
+
+	// check if the tensors are accessible
+	if !t.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, t)
+		return
+	}
+
+	if !other.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	if reuse != nil && !reuse.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
 	}
 
 	var it, ot *FlatMaskedIterator
@@ -2010,9 +2039,38 @@ func (t *Dense) add(other *Dense, itt, ott Iterator) (err error) {
 
 // Sub performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
+	if t.e != nil {
+		if sub, ok := t.e.(Suber); ok {
+			// if safe, then make a copy
+			var ret Tensor
+			if ret, err = sub.Sub(t, other, opts...); err != nil {
+				goto attemptGo
+			}
+			retVal = ret.(*Dense)
+			return
+		}
+	}
+
+attemptGo:
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
 		return nil, err
+	}
+
+	// check if the tensors are accessible
+	if !t.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, t)
+		return
+	}
+
+	if !other.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	if reuse != nil && !reuse.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
 	}
 
 	var it, ot *FlatMaskedIterator
@@ -3931,9 +3989,38 @@ func (t *Dense) sub(other *Dense, itt, ott Iterator) (err error) {
 
 // Mul performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
+	if t.e != nil {
+		if mul, ok := t.e.(Muler); ok {
+			// if safe, then make a copy
+			var ret Tensor
+			if ret, err = mul.Mul(t, other, opts...); err != nil {
+				goto attemptGo
+			}
+			retVal = ret.(*Dense)
+			return
+		}
+	}
+
+attemptGo:
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
 		return nil, err
+	}
+
+	// check if the tensors are accessible
+	if !t.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, t)
+		return
+	}
+
+	if !other.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	if reuse != nil && !reuse.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
 	}
 
 	var it, ot *FlatMaskedIterator
@@ -5852,9 +5939,38 @@ func (t *Dense) mul(other *Dense, itt, ott Iterator) (err error) {
 
 // Div performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
+	if t.e != nil {
+		if div, ok := t.e.(Diver); ok {
+			// if safe, then make a copy
+			var ret Tensor
+			if ret, err = div.Div(t, other, opts...); err != nil {
+				goto attemptGo
+			}
+			retVal = ret.(*Dense)
+			return
+		}
+	}
+
+attemptGo:
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
 		return nil, err
+	}
+
+	// check if the tensors are accessible
+	if !t.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, t)
+		return
+	}
+
+	if !other.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	if reuse != nil && !reuse.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
 	}
 
 	var errs errorIndices
@@ -8465,9 +8581,38 @@ func (t *Dense) div(other *Dense, itt, ott Iterator) (err error) {
 
 // Pow performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
+	if t.e != nil {
+		if pow, ok := t.e.(Power); ok {
+			// if safe, then make a copy
+			var ret Tensor
+			if ret, err = pow.Pow(t, other, opts...); err != nil {
+				goto attemptGo
+			}
+			retVal = ret.(*Dense)
+			return
+		}
+	}
+
+attemptGo:
 	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
 	if err != nil {
 		return nil, err
+	}
+
+	// check if the tensors are accessible
+	if !t.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, t)
+		return
+	}
+
+	if !other.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	if reuse != nil && !reuse.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
 	}
 
 	var it, ot *FlatMaskedIterator

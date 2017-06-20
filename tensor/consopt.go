@@ -192,3 +192,16 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 	}
 	return f
 }
+
+func WithEngine(e Engine) ConsOpt {
+	f := func(t Tensor) {
+		switch tt := t.(type) {
+		case *Dense:
+			tt.e = e
+			if e.AllocAccessible() {
+				tt.flag |= denseFlag(1) << nativeAccessible
+			}
+		}
+	}
+	return f
+}

@@ -359,6 +359,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 
 	view := new(Dense)
 	view.t = t.t
+	view.flag = t.flag
 	view.viewOf = t
 	view.AP = newAP
 	view.hdr = new(reflect.SliceHeader)

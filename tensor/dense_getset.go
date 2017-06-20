@@ -120,6 +120,81 @@ func (t *Dense) setUnsafePointer(i int, x unsafe.Pointer) { t.unsafePointers()[i
 func (t *Dense) getUnsafePointer(i int) unsafe.Pointer    { return t.unsafePointers()[i] }
 
 func (t *Dense) makeArray(size int) {
+	if t.e != nil {
+		mem, err := t.e.Alloc(calcMemSize(t.t, size))
+		if err != nil {
+			panic(err)
+		}
+		if t.hdr == nil {
+			t.hdr = new(reflect.SliceHeader)
+		}
+		t.data = mem.Pointer()
+		t.hdr.Data = mem.Uintptr()
+		t.hdr.Len = size
+		t.hdr.Cap = size
+		switch t.t.Kind() {
+		case reflect.Bool:
+			arr := make([]bool, size)
+			t.fromSlice(arr)
+		case reflect.Int:
+			arr := make([]int, size)
+			t.fromSlice(arr)
+		case reflect.Int8:
+			arr := make([]int8, size)
+			t.fromSlice(arr)
+		case reflect.Int16:
+			arr := make([]int16, size)
+			t.fromSlice(arr)
+		case reflect.Int32:
+			arr := make([]int32, size)
+			t.fromSlice(arr)
+		case reflect.Int64:
+			arr := make([]int64, size)
+			t.fromSlice(arr)
+		case reflect.Uint:
+			arr := make([]uint, size)
+			t.fromSlice(arr)
+		case reflect.Uint8:
+			arr := make([]uint8, size)
+			t.fromSlice(arr)
+		case reflect.Uint16:
+			arr := make([]uint16, size)
+			t.fromSlice(arr)
+		case reflect.Uint32:
+			arr := make([]uint32, size)
+			t.fromSlice(arr)
+		case reflect.Uint64:
+			arr := make([]uint64, size)
+			t.fromSlice(arr)
+		case reflect.Uintptr:
+			arr := make([]uintptr, size)
+			t.fromSlice(arr)
+		case reflect.Float32:
+			arr := make([]float32, size)
+			t.fromSlice(arr)
+		case reflect.Float64:
+			arr := make([]float64, size)
+			t.fromSlice(arr)
+		case reflect.Complex64:
+			arr := make([]complex64, size)
+			t.fromSlice(arr)
+		case reflect.Complex128:
+			arr := make([]complex128, size)
+			t.fromSlice(arr)
+
+		case reflect.String:
+			arr := make([]string, size)
+			t.fromSlice(arr)
+
+		case reflect.UnsafePointer:
+			arr := make([]unsafe.Pointer, size)
+			t.fromSlice(arr)
+		default:
+
+		}
+		return
+	}
+
 	switch t.t.Kind() {
 	case reflect.Bool:
 		arr := make([]bool, size)
@@ -178,7 +253,6 @@ func (t *Dense) makeArray(size int) {
 		arr := make([]unsafe.Pointer, size)
 		t.fromSlice(arr)
 	default:
-
 	}
 }
 

@@ -278,6 +278,9 @@ func (t *Dense) fix() {
 	if t.AP == nil {
 		return
 	}
+	if t.e == nil {
+		t.flag |= denseFlag(1) << nativeAccessible
+	}
 	switch {
 	case t.IsScalar() && t.data == nil:
 		t.makeArray(1)
@@ -351,6 +354,7 @@ func (t *Dense) ostrides() []int {
 func (t *Dense) shallowClone() *Dense {
 	retVal := new(Dense)
 	retVal.AP = t.AP.Clone()
+	retVal.flag = t.flag
 	retVal.data = t.data
 	retVal.v = t.v
 	retVal.t = t.t

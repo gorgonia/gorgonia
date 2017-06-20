@@ -110,10 +110,10 @@ func pipeline(filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds
 		log.Fatalf("Go imports failed with %v for %q", err, filename)
 	}
 
-	// cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, filename)
-	// if err = cmd.Run(); err != nil {
-	// 	log.Fatalf("sed failed with %v for %q", err, filename)
-	// }
+	cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, filename)
+	if err = cmd.Run(); err != nil {
+		log.Fatalf("sed failed with %v for %q", err, filename)
+	}
 
 	cmd = exec.Command("gofmt", "-s", "-w", filename)
 	if err = cmd.Run(); err != nil {

@@ -694,9 +694,9 @@ func convFromStrs(to Dtype, record []string) (interface{}, error) {
 //
 // BUG(chewxy): reading CSV doesn't handle CSVs with different columns per row yet.
 func (t *Dense) ReadCSV(r io.Reader, opts ...FuncOpt) (err error) {
-	fo := parseFuncOpts(opts...)
-	as := fo.t
-	if fo.t.Type == nil {
+	fo := ParseFuncOpts(opts...)
+	as := fo.As()
+	if as.Type == nil {
 		as = Float64
 	}
 
