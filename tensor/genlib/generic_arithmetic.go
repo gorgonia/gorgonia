@@ -178,18 +178,31 @@ const genericVecScalarArithRaw = `func {{if .IsIncr}}incr{{.OpName}}{{else}}{{lo
 			{{end -}}
 			}
 	{{else -}}
-		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+		{{$scaleInv := eq .OpName "ScaleInv" -}}
+		{{$scaleInvR := eq .OpName "ScaleInvR" -}}
 		{{$div := hasPrefix .OpName "Div" -}}
-		{{if or $scaleInv $div -}}var errs errorIndices
-		{{end -}}
-		for i, v := range a {
-			{{if or $scaleInv $div -}}
-			if v == {{asType .Kind}}(0) {
-				errs = append(errs, i)
-				a[i] = 0 
-				continue
+		
+		{{if or $scaleInv $div -}}
+			{{if panicsDiv0 .Kind -}}
+			if b == {{asType .Kind}}(0){
+				return errors.New(div0General)
 			}
+			{{end -}}
+		{{end -}}
+		{{if $scaleInvR -}}var errs errorIndices
+		{{end -}}
 
+		for i, v := range a {
+			{{if $scaleInvR -}}
+				if v == {{asType .Kind}}(0){
+					errs = append(errs, i)
+					{{if .IsIncr -}}
+						incr[i] = 0
+					{{else -}}
+						a[i] = 0
+					{{end -}}
+					continue
+				}
 			{{end -}}
 			{{if .IsIncr}}incr[i] +{{else}}a[i] {{end}}= {{if hasSuffix .OpName "R" -}}
 				{{if .IsFunc -}} 
@@ -205,7 +218,7 @@ const genericVecScalarArithRaw = `func {{if .IsIncr}}incr{{.OpName}}{{else}}{{lo
 				{{end -}}
 			{{end -}}
 		}
-		{{if or $scaleInv $div -}}
+		{{if $scaleInvR -}}
 			if errs != nil {
 				return errs
 			}
@@ -229,19 +242,32 @@ func {{if .IsIncr}}incr{{.OpName}}{{else}}{{lower .OpName}}{{end}}{{short .Kind}
 				}
 			}
 	{{else -}}
-		{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
+		{{$scaleInv := eq .OpName "ScaleInv" -}}
+		{{$scaleInvR := eq .OpName "ScaleInvR" -}}
 		{{$div := hasPrefix .OpName "Div" -}}
-		{{if or $scaleInv $div -}}var errs errorIndices
+
+		{{if or $scaleInv $div -}}
+			{{if panicsDiv0 .Kind -}}
+			if b == {{asType .Kind}}(0){
+				return errors.New(div0General)
+			}
+			{{end -}}
 		{{end -}}
+		{{if $scaleInvR -}}var errs errorIndices
+		{{end -}}
+
 		for i, v := range a {
 			if !mask[i]{
-				{{if or $scaleInv $div -}}
-				if v == {{asType .Kind}}(0) {
-					errs = append(errs, i)
-					a[i] = 0 
-					continue
-				}
-
+				{{if $scaleInvR -}}
+					if v == {{asType .Kind}}(0){
+						errs = append(errs, i)
+						{{if .IsIncr -}}
+							incr[i] = 0
+						{{else -}}
+							a[i] = 0
+						{{end -}}
+						continue
+					}
 				{{end -}}
 				{{if .IsIncr}}incr[i] +{{else}}a[i] {{end}}= {{if hasSuffix .OpName "R" -}}
 					{{if .IsFunc -}} 
@@ -258,7 +284,7 @@ func {{if .IsIncr}}incr{{.OpName}}{{else}}{{lower .OpName}}{{end}}{{short .Kind}
 				{{end -}}
 			}
 		}
-		{{if or $scaleInv $div -}}
+		{{if $scaleInvR -}}
 			if errs != nil {
 				return errs
 			}
