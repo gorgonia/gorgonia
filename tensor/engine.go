@@ -19,31 +19,42 @@ type Memory interface {
 // Engine is a representation of an execution engine.
 // While different execution engines can have different capabilities, all execution engines must be able to allocate and free memory
 type Engine interface {
+	AllocAccessible() bool                    // does the engine return Go-accessible memory pointers?
 	Alloc(size int64) (Memory, error)         // Allocates memory
 	Free(mem Memory, size int64) error        // Frees memory
 	Memset(mem Memory, val interface{}) error // Memset
 	Memclr(mem Memory)                        // Memclear
+	Accessible(mem Memory) (Memory, error)    // returns Go-accesible memory pointers
 }
 
 /* NUMBER INTERFACES
 All these are expected to be unsafe on the first tensor
 */
 
+// Adder is any engine that can perform elementwise addition. The methods are expected to be unsafe (it clobbers the first Tensor)
 type Adder interface {
+	// Add performs a + b
 	Add(a, b Tensor) error
+	// Trans performs a + b. By convention, b hasthe same data type as a
 	Trans(a Tensor, b interface{}) error
 }
 
+// Subber is any engine that can perform elementwise subtraction. The methods are expected to be unsafe (it clobbers the first Tensor)
 type Subber interface {
+	// Sub performs a - b
 	Sub(a, b Tensor) (Tensor, error)
+	// TransInv performs a - b. By convention, b hasthe same data type as a
 	TransInv(a Tensor, b interface{}) error
 }
 
+// Mul is any engine that can perform elementwise multiplication. The methods are expected to be unsafe (it clobbers the first Tensor)
+// For matrix multiplication, see MatMul() and MatVecMul() and Inner()
 type Muler interface {
 	Mul(a, b Tensor) (Tensor, error)
 	Scale(a Tensor, b interface{}) error
 }
 
+// Diver is any engine that can perform elementwise division. The methods are expected to be unsafe (it clobbers the first Tensor)
 type Diver interface {
 	Div(a, b Tensor) (Tensor, error)
 	ScaleInv(a Tensor, b interface{}) error
@@ -58,19 +69,19 @@ type Power interface {
 /* LINEAR ALGEBRA INTERFACES */
 
 type MatMuler interface {
-	MatMul(a, b Tensor) (Tensor, error)
+	MatMul(a, b, reuse Tensor) error
 }
 
 type MatVecMuler interface {
-	MatVecMul(a, b Tensor) (Tensor, error)
+	MatVecMul(a, b, reuse Tensor) error
 }
 
 type InnerProder interface {
-	Inner(a, b Tensor) (Tensor, error)
+	Inner(a, b Tensor) (interface{}, error) // Inner always returns a scalar value
 }
 
 type OuterProder interface {
-	Outer(a, b Tensor) (Tensor, error)
+	Outer(a, b, reuse Tensor) error
 }
 
 /* ORD INTERFACES */
@@ -99,7 +110,9 @@ type Gteer interface {
 	GteST(a interface{}, b Tensor) (Tensor, error)
 }
 
-/* EQ INTERFACES */
+/* EQ INTERFACES
+These return the same types
+*/
 
 type ElEqer interface {
 	ElEq(a, b Tensor) (Tensor, error)

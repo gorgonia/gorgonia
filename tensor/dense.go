@@ -15,7 +15,8 @@ const (
 type denseFlag byte
 
 const (
-	manuallyManagedMem denseFlag = 1 << iota
+	nativeAccessible denseFlag = 1 << iota
+	manuallyManagedMem
 )
 
 // Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
@@ -159,11 +160,6 @@ func (t *Dense) reshape(dims ...int) error {
 	return t.sanity()
 }
 
-// // Zero zeroes a *Dense.
-// func (t *Dense) Zero() {
-// 	// t.data.Zero()
-// }
-
 // ScalarValue returns the scalar value of a *Tensor,
 // IF and ONLY IF it's a Tensor representation of a scalar value.
 // This is required because operations like a (vec · vec) would return a scalar value.
@@ -207,6 +203,8 @@ func (t *Dense) Clone() interface{} {
 	return retVal
 }
 
+/* *Dense is a Memory */
+
 // Uintptr returns the pointer of the first value of the slab
 func (t *Dense) Uintptr() uintptr {
 	return uintptr(t.data)
@@ -224,6 +222,46 @@ func (t *Dense) Pointer() unsafe.Pointer {
 
 // IsMasked indicates whether tensor is masked
 func (t *Dense) IsMasked() bool { return len(t.mask) == t.len() }
+
+// MaskFromDense adds a mask slice to tensor by XORing dense arguments' masks
+func (t *Dense) MaskFromDense(tts ...*Dense) {
+
+	hasMask := BorrowBools(len(tts))
+	defer ReturnBools(hasMask)
+
+	numMasked := 0
+	var masked = false
+
+	for i, tt := range tts {
+		if tt != nil {
+			hasMask[i] = tt.IsMasked()
+			masked = masked || hasMask[i]
+			if hasMask[i] {
+				numMasked++
+			}
+		}
+	}
+	if numMasked < 1 {
+		return
+	}
+
+	//Only make mask if none already. This way one of the tts can be t itself
+
+	if len(t.mask) < t.DataSize() {
+		t.makeMask()
+	}
+
+	for i, tt := range tts {
+		if tt != nil {
+			n := len(tt.mask)
+			if hasMask[i] {
+				for j := range t.mask {
+					t.mask[j] = t.mask[j] || tt.mask[j%n]
+				}
+			}
+		}
+	}
+}
 
 // Private methods
 
@@ -275,45 +313,9 @@ func (t *Dense) makeMask() {
 	memsetBools(t.mask, false)
 }
 
-// MaskFromDense adds a mask slice to tensor by XORing dense argument's masks
-func (t *Dense) MaskFromDense(tts ...*Dense) {
-
-	hasMask := BorrowBools(len(tts))
-	defer ReturnBools(hasMask)
-
-	numMasked := 0
-	var masked = false
-
-	for i, tt := range tts {
-		if tt != nil {
-			hasMask[i] = tt.IsMasked()
-			masked = masked || hasMask[i]
-			if hasMask[i] {
-				numMasked++
-			}
-		}
-	}
-	if numMasked < 1 {
-		return
-	}
-
-	//Only make mask if none already. This way one of the tts can be t itself
-
-	if len(t.mask) < t.DataSize() {
-		t.makeMask()
-	}
-
-	for i, tt := range tts {
-		if tt != nil {
-			n := len(tt.mask)
-			if hasMask[i] {
-				for j := range t.mask {
-					t.mask[j] = t.mask[j] || tt.mask[j%n]
-				}
-
-			}
-		}
-	}
+// isNativeAccessible checks if the pointers are accessible by Go
+func (t *Dense) isNativeAccessible() bool {
+	return (t.flag>>nativeAccessible)&denseFlag(1) == 1
 }
 
 // sanity is a function that sanity checks that a tensor is correct.
