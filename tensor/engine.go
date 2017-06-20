@@ -24,6 +24,7 @@ type Engine interface {
 	Free(mem Memory, size int64) error        // Frees memory
 	Memset(mem Memory, val interface{}) error // Memset
 	Memclr(mem Memory)                        // Memclear
+	Memcpy(dst, src Memory) error             // Memcpy
 	Accessible(mem Memory) (Memory, error)    // returns Go-accesible memory pointers
 }
 
@@ -31,49 +32,49 @@ type Engine interface {
 All these are expected to be unsafe on the first tensor
 */
 
-// Adder is any engine that can perform elementwise addition. The methods are expected to be unsafe (it clobbers the first Tensor)
+// Adder is any engine that can perform elementwise addition.
 type Adder interface {
 	// Add performs a + b
-	Add(a, b Tensor) error
+	Add(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	// Trans performs a + b. By convention, b hasthe same data type as a
-	Trans(a Tensor, b interface{}) error
+	Trans(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
-// Subber is any engine that can perform elementwise subtraction. The methods are expected to be unsafe (it clobbers the first Tensor)
-type Subber interface {
+// Subber is any engine that can perform elementwise subtraction.
+type Suber interface {
 	// Sub performs a - b
-	Sub(a, b Tensor) (Tensor, error)
+	Sub(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	// TransInv performs a - b. By convention, b hasthe same data type as a
-	TransInv(a Tensor, b interface{}) error
+	TransInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
-// Mul is any engine that can perform elementwise multiplication. The methods are expected to be unsafe (it clobbers the first Tensor)
-// For matrix multiplication, see MatMul() and MatVecMul() and Inner()
+// Mul is any engine that can perform elementwise multiplication.
+// For matrix multiplication, an engine should implement MatMul() or MatVecMul() or Inner()
 type Muler interface {
-	Mul(a, b Tensor) (Tensor, error)
-	Scale(a Tensor, b interface{}) error
+	Mul(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	Scale(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
-// Diver is any engine that can perform elementwise division. The methods are expected to be unsafe (it clobbers the first Tensor)
+// Diver is any engine that can perform elementwise division.
 type Diver interface {
-	Div(a, b Tensor) (Tensor, error)
-	ScaleInv(a Tensor, b interface{}) error
+	Div(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	ScaleInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 type Power interface {
-	Pow(a, b Tensor) (Tensor, error)
-	PowOf(a Tensor, b interface{}) error
-	PowOfR(a interface{}, b Tensor) error
+	Pow(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	PowOf(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+	PowOfR(a interface{}, b Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
 /* LINEAR ALGEBRA INTERFACES */
 
 type MatMuler interface {
-	MatMul(a, b, reuse Tensor) error
+	MatMul(a, b, preallocated Tensor) error
 }
 
 type MatVecMuler interface {
-	MatVecMul(a, b, reuse Tensor) error
+	MatVecMul(a, b, preallocated Tensor) error
 }
 
 type InnerProder interface {
@@ -81,7 +82,7 @@ type InnerProder interface {
 }
 
 type OuterProder interface {
-	Outer(a, b, reuse Tensor) error
+	Outer(a, b, preallocated Tensor) error
 }
 
 /* ORD INTERFACES */

@@ -31,10 +31,10 @@ const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse 
 		err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
 		return 
 	}
-	fo := parseFuncOpts(opts...)
-	reuseT, _ := fo.incrReuse()
-	safe = fo.safe()
-	same = fo.same
+	fo := ParseFuncOpts(opts...)
+	reuseT, _ := fo.IncrReuse()
+	safe = fo.Safe()
+	same = fo.Same()
 	if !safe{
 		same = true
 	}
@@ -63,10 +63,10 @@ const prepCmpRaw = `func prepBinaryDenseCmp(a, b *Dense, opts ...FuncOpt)(reuse 
 }
 
 func prepUnaryDenseCmp(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, same, toReuse bool, err error){
-	fo := parseFuncOpts(opts...)
-	reuseT, _ := fo.incrReuse()
-	safe = fo.safe()
-	same = fo.same
+	fo := ParseFuncOpts(opts...)
+	reuseT, _ := fo.IncrReuse()
+	safe = fo.Safe()
+	same = fo.Same()
 	if !safe{
 		same = true
 	}

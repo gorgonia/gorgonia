@@ -200,10 +200,10 @@ const makeDataRaw = `func (t *Dense) makeArray(size int) {
 			t.hdr = new(reflect.SliceHeader)
 		}
 		t.data = mem.Pointer()
-		t.hdr.Data = ptr
+		t.hdr.Data = mem.Uintptr()
 		t.hdr.Len = size
 		t.hdr.Cap = size
-		switch tt.t.Kind() {
+		switch t.t.Kind() {
 		{{range .Kinds -}}
 			{{if isParameterized .}}
 			{{else -}}

@@ -94,9 +94,9 @@ const prepArithRaw = `func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse 
 		return
 	}
 
-	fo := parseFuncOpts(opts...)
-	reuseT, incr := fo.incrReuse()
-	safe = fo.safe()
+	fo := ParseFuncOpts(opts...)
+	reuseT, incr := fo.IncrReuse()
+	safe = fo.Safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -126,9 +126,9 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 		return
 	}
 
-	fo := parseFuncOpts(opts...)
-	reuseT, incr := fo.incrReuse()
-	safe = fo.safe()
+	fo := ParseFuncOpts(opts...)
+	reuseT, incr := fo.IncrReuse()
+	safe = fo.Safe()
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -156,16 +156,47 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 
 const denseDenseArithRaw = `// {{.OpName}} performs the operation on another *Dense. It takes a list of FuncOpts.
 func (t *Dense) {{.OpName}}(other *Dense, opts ...FuncOpt) (retVal *Dense, err error){
-	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
-	if err != nil {
-		return nil, err
-	}
-
 	{{$isFunc := .IsFunc -}}
 	{{$op := .OpSymb -}}
 	{{$opName := .OpName -}}
 	{{$scaleInv := hasPrefix .OpName "ScaleInv" -}}
 	{{$div := hasPrefix .OpName "Div" -}}
+
+	if t.e != nil {
+		if {{lower $opName}}, ok := t.e.({{title $opName}}er); ok {
+			// if safe, then make a copy
+			var ret Tensor
+			if ret, err = {{lower $opName}}.{{title $opName}}(t, other, opts...); err != nil {
+				goto attemptGo
+			}
+			retVal = ret.(*Dense)
+			return
+		}
+	}
+
+attemptGo:
+	reuse, safe, toReuse, incr, err := prepBinaryDense(t, other, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if the tensors are accessible
+	if !t.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, t)
+		return
+	}
+
+	if !other.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	if reuse != nil && !reuse.isNativeAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+
 	{{if or $scaleInv $div -}}var errs errorIndices
 	{{end -}}
 	var it, ot *FlatMaskedIterator
