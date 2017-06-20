@@ -283,11 +283,11 @@ func (n NormOrder) String() string {
 }
 
 // FuncOpt are optionals for calling Tensor function.
-type FuncOpt func(*funcOpt)
+type FuncOpt func(*OpOpt)
 
 // WithIncr passes in a Tensor to be incremented.
 func WithIncr(incr Tensor) FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.incr = incr
 	}
 	return f
@@ -295,7 +295,7 @@ func WithIncr(incr Tensor) FuncOpt {
 
 // WithReuse passes in a Tensor to be reused.
 func WithReuse(reuse Tensor) FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.reuse = reuse
 	}
 	return f
@@ -303,7 +303,7 @@ func WithReuse(reuse Tensor) FuncOpt {
 
 // UseSafe ensures that the operation is a safe operation (copies data, does not clobber). This is the default option for most methods and functions
 func UseSafe() FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.unsafe = false
 	}
 	return f
@@ -311,7 +311,7 @@ func UseSafe() FuncOpt {
 
 // UseUnsafe ensures that the operation is an unsafe operation - data will be clobbered, and operations performed inplace
 func UseUnsafe() FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.unsafe = true
 	}
 	return f
@@ -319,7 +319,7 @@ func UseUnsafe() FuncOpt {
 
 // AsSameType makes sure that the return Tensor is the same type as input Tensors.
 func AsSameType() FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.same = true
 	}
 	return f
@@ -327,7 +327,7 @@ func AsSameType() FuncOpt {
 
 // As makes sure that the the return Tensor is of the type specified. Currently only works for FromMat64
 func As(t Dtype) FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.t = t
 	}
 	return f

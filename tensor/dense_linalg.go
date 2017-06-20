@@ -159,8 +159,8 @@ func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err err
 	expectedShape := Shape{m}
 
 	// check whether retVal has the same size as the resulting matrix would be: mx1
-	fo := parseFuncOpts(opts...)
-	if retVal, err = handleReuse(fo.reuse, expectedShape); err != nil {
+	fo := ParseFuncOpts(opts...)
+	if retVal, err = handleReuse(fo.Reuse(), expectedShape); err != nil {
 		err = errors.Wrapf(err, opFail, "MatVecMul")
 		return
 	}
@@ -179,7 +179,7 @@ func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err err
 		return
 	}
 
-	return handleIncr(retVal, fo.reuse, fo.incr, expectedShape)
+	return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
 }
 
 // matVecMul is a thin layer over BLAS' DGEMV
@@ -260,8 +260,8 @@ func (t *Dense) MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 	// check whether retVal has the same size as the resulting matrix would be: mxn
 	expectedShape := Shape{m, n}
 
-	fo := parseFuncOpts(opts...)
-	if retVal, err = handleReuse(fo.reuse, expectedShape); err != nil {
+	fo := ParseFuncOpts(opts...)
+	if retVal, err = handleReuse(fo.Reuse(), expectedShape); err != nil {
 		err = errors.Wrapf(err, opFail, "MatMul")
 		return
 	}
@@ -280,7 +280,7 @@ func (t *Dense) MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 		return
 	}
 
-	return handleIncr(retVal, fo.reuse, fo.incr, expectedShape)
+	return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
 }
 
 // matMul is a thin layer over DGEMM.
@@ -357,8 +357,8 @@ func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) 
 	// check whether retVal has the same size as the resulting matrix would be: mxn
 	expectedShape := Shape{m, n}
 
-	fo := parseFuncOpts(opts...)
-	if retVal, err = handleReuse(fo.reuse, expectedShape); err != nil {
+	fo := ParseFuncOpts(opts...)
+	if retVal, err = handleReuse(fo.Reuse(), expectedShape); err != nil {
 		err = errors.Wrapf(err, opFail, "Outer")
 		return
 	}
@@ -378,7 +378,7 @@ func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) 
 	if err = t.outer(od, retVal); err != nil {
 		return
 	}
-	return handleIncr(retVal, fo.reuse, fo.incr, expectedShape)
+	return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
 }
 
 func (t *Dense) outer(other, retVal *Dense) (err error) {

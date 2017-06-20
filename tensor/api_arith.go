@@ -144,7 +144,7 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		return
 	}
 
-	fo := parseFuncOpts(opts...)
+	fo := ParseFuncOpts(opts...)
 
 	var reuse, incr *Dense
 	if reuse, err = getFloatDense(fo.reuse); err != nil {

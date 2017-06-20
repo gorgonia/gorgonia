@@ -52,6 +52,7 @@ const (
 	incrReshapeErr    = "Failed to reshape the incr *Dense into %v. Size was: %d"
 	retValReshapeErr  = "Failed to reshape the retVal *Dense into %v. Size was: %d"
 	div0              = "Division by 0. Index was %v"
+	div0General       = "Division by 0"
 	opFail            = "Failed to perform %v"
 	extractionFail    = "Failed to extract %v from %T"
 	unknownState      = "Unknown state reached: Safe %t, Incr %t, Reuse %t"

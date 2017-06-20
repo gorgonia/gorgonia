@@ -7,9 +7,9 @@ import (
 
 // Apply applies a function to all the values in the ndarray
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	fo := parseFuncOpts(opts...)
-	reuseT, incr := fo.incrReuse()
-	safe := fo.safe()
+	fo := ParseFuncOpts(opts...)
+	reuseT, incr := fo.IncrReuse()
+	safe := fo.Safe()
 
 	var reuse *Dense
 	if reuse, err = getDense(reuseT); err != nil {

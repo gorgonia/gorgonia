@@ -10504,7 +10504,7 @@ func (t *Dense) Trans(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.trans(other)
+		err = reuse.trans(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -10512,9 +10512,9 @@ func (t *Dense) Trans(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.trans(other)
+		err = retVal.trans(other)
 	case !safe:
-		t.trans(other)
+		err = t.trans(other)
 		retVal = t
 	}
 	return
@@ -10532,7 +10532,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transI(t.ints(), b)
+		return transI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -10544,7 +10544,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transI8(t.int8s(), b)
+		return transI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -10556,7 +10556,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transI16(t.int16s(), b)
+		return transI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -10568,7 +10568,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transI32(t.int32s(), b)
+		return transI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -10580,7 +10580,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transI64(t.int64s(), b)
+		return transI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -10592,7 +10592,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transU(t.uints(), b)
+		return transU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -10604,7 +10604,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transU8(t.uint8s(), b)
+		return transU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -10616,7 +10616,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transU16(t.uint16s(), b)
+		return transU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -10628,7 +10628,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transU32(t.uint32s(), b)
+		return transU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -10640,7 +10640,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transU64(t.uint64s(), b)
+		return transU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -10652,7 +10652,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transF32(t.float32s(), b)
+		return transF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -10664,7 +10664,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transF64(t.float64s(), b)
+		return transF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -10676,7 +10676,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transC64(t.complex64s(), b)
+		return transC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -10688,7 +10688,7 @@ func (t *Dense) trans(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transC128(t.complex128s(), b)
+		return transC128(t.complex128s(), b)
 	}
 	return nil
 }
@@ -10815,7 +10815,7 @@ func (t *Dense) TransInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.transinv(other)
+		err = reuse.transinv(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -10823,9 +10823,9 @@ func (t *Dense) TransInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.transinv(other)
+		err = retVal.transinv(other)
 	case !safe:
-		t.transinv(other)
+		err = t.transinv(other)
 		retVal = t
 	}
 	return
@@ -10843,7 +10843,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvI(t.ints(), b)
+		return transinvI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -10855,7 +10855,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvI8(t.int8s(), b)
+		return transinvI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -10867,7 +10867,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvI16(t.int16s(), b)
+		return transinvI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -10879,7 +10879,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvI32(t.int32s(), b)
+		return transinvI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -10891,7 +10891,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvI64(t.int64s(), b)
+		return transinvI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -10903,7 +10903,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvU(t.uints(), b)
+		return transinvU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -10915,7 +10915,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvU8(t.uint8s(), b)
+		return transinvU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -10927,7 +10927,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvU16(t.uint16s(), b)
+		return transinvU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -10939,7 +10939,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvU32(t.uint32s(), b)
+		return transinvU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -10951,7 +10951,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvU64(t.uint64s(), b)
+		return transinvU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -10963,7 +10963,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvF32(t.float32s(), b)
+		return transinvF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -10975,7 +10975,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvF64(t.float64s(), b)
+		return transinvF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -10987,7 +10987,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvC64(t.complex64s(), b)
+		return transinvC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -10999,7 +10999,7 @@ func (t *Dense) transinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		transinvC128(t.complex128s(), b)
+		return transinvC128(t.complex128s(), b)
 	}
 	return nil
 }
@@ -11126,7 +11126,7 @@ func (t *Dense) TransInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.transinvr(other)
+		err = reuse.transinvr(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -11134,9 +11134,9 @@ func (t *Dense) TransInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.transinvr(other)
+		err = retVal.transinvr(other)
 	case !safe:
-		t.transinvr(other)
+		err = t.transinvr(other)
 		retVal = t
 	}
 	return
@@ -11150,11 +11150,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.ints()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrI(t.ints(), b)
+		return transinvrI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -11162,11 +11162,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.int8s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrI8(t.int8s(), b)
+		return transinvrI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -11174,11 +11174,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.int16s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrI16(t.int16s(), b)
+		return transinvrI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -11186,11 +11186,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.int32s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrI32(t.int32s(), b)
+		return transinvrI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -11198,11 +11198,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.int64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrI64(t.int64s(), b)
+		return transinvrI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -11210,11 +11210,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.uints()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrU(t.uints(), b)
+		return transinvrU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -11222,11 +11222,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint8s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrU8(t.uint8s(), b)
+		return transinvrU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -11234,11 +11234,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint16s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrU16(t.uint16s(), b)
+		return transinvrU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -11246,11 +11246,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint32s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrU32(t.uint32s(), b)
+		return transinvrU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -11258,11 +11258,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrU64(t.uint64s(), b)
+		return transinvrU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -11270,11 +11270,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.float32s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrF32(t.float32s(), b)
+		return transinvrF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -11282,11 +11282,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.float64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrF64(t.float64s(), b)
+		return transinvrF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -11294,11 +11294,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.complex64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrC64(t.complex64s(), b)
+		return transinvrC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -11306,11 +11306,11 @@ func (t *Dense) transinvr(other interface{}) (err error) {
 			var i int
 			data := t.complex128s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] - b
+				data[i] = b - data[i]
 			}
 			return nil
 		}
-		transinvrC128(t.complex128s(), b)
+		return transinvrC128(t.complex128s(), b)
 	}
 	return nil
 }
@@ -11437,7 +11437,7 @@ func (t *Dense) Scale(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.scale(other)
+		err = reuse.scale(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -11445,9 +11445,9 @@ func (t *Dense) Scale(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.scale(other)
+		err = retVal.scale(other)
 	case !safe:
-		t.scale(other)
+		err = t.scale(other)
 		retVal = t
 	}
 	return
@@ -11465,7 +11465,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleI(t.ints(), b)
+		return scaleI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -11477,7 +11477,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleI8(t.int8s(), b)
+		return scaleI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -11489,7 +11489,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleI16(t.int16s(), b)
+		return scaleI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -11501,7 +11501,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleI32(t.int32s(), b)
+		return scaleI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -11513,7 +11513,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleI64(t.int64s(), b)
+		return scaleI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -11525,7 +11525,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleU(t.uints(), b)
+		return scaleU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -11537,7 +11537,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleU8(t.uint8s(), b)
+		return scaleU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -11549,7 +11549,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleU16(t.uint16s(), b)
+		return scaleU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -11561,7 +11561,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleU32(t.uint32s(), b)
+		return scaleU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -11573,7 +11573,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleU64(t.uint64s(), b)
+		return scaleU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -11585,7 +11585,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleF32(t.float32s(), b)
+		return scaleF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -11597,7 +11597,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleF64(t.float64s(), b)
+		return scaleF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -11609,7 +11609,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleC64(t.complex64s(), b)
+		return scaleC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -11621,7 +11621,7 @@ func (t *Dense) scale(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleC128(t.complex128s(), b)
+		return scaleC128(t.complex128s(), b)
 	}
 	return nil
 }
@@ -11748,7 +11748,7 @@ func (t *Dense) ScaleInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.scaleinv(other)
+		err = reuse.scaleinv(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -11756,9 +11756,9 @@ func (t *Dense) ScaleInv(other interface{}, opts ...FuncOpt) (retVal *Dense, err
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.scaleinv(other)
+		err = retVal.scaleinv(other)
 	case !safe:
-		t.scaleinv(other)
+		err = t.scaleinv(other)
 		retVal = t
 	}
 	return
@@ -11785,7 +11785,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvI(t.ints(), b)
+		return scaleinvI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -11806,7 +11806,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvI8(t.int8s(), b)
+		return scaleinvI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -11827,7 +11827,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvI16(t.int16s(), b)
+		return scaleinvI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -11848,7 +11848,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvI32(t.int32s(), b)
+		return scaleinvI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -11869,7 +11869,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvI64(t.int64s(), b)
+		return scaleinvI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -11890,7 +11890,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvU(t.uints(), b)
+		return scaleinvU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -11911,7 +11911,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvU8(t.uint8s(), b)
+		return scaleinvU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -11932,7 +11932,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvU16(t.uint16s(), b)
+		return scaleinvU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -11953,7 +11953,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvU32(t.uint32s(), b)
+		return scaleinvU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -11974,7 +11974,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvU64(t.uint64s(), b)
+		return scaleinvU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -11995,7 +11995,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvF32(t.float32s(), b)
+		return scaleinvF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -12016,7 +12016,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvF64(t.float64s(), b)
+		return scaleinvF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -12037,7 +12037,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvC64(t.complex64s(), b)
+		return scaleinvC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -12058,7 +12058,7 @@ func (t *Dense) scaleinv(other interface{}) (err error) {
 			}
 			return nil
 		}
-		scaleinvC128(t.complex128s(), b)
+		return scaleinvC128(t.complex128s(), b)
 	}
 	return nil
 }
@@ -12185,7 +12185,7 @@ func (t *Dense) ScaleInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.scaleinvr(other)
+		err = reuse.scaleinvr(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -12193,9 +12193,9 @@ func (t *Dense) ScaleInvR(other interface{}, opts ...FuncOpt) (retVal *Dense, er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.scaleinvr(other)
+		err = retVal.scaleinvr(other)
 	case !safe:
-		t.scaleinvr(other)
+		err = t.scaleinvr(other)
 		retVal = t
 	}
 	return
@@ -12218,11 +12218,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.ints()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrI(t.ints(), b)
+		return scaleinvrI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -12239,11 +12239,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.int8s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrI8(t.int8s(), b)
+		return scaleinvrI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -12260,11 +12260,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.int16s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrI16(t.int16s(), b)
+		return scaleinvrI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -12281,11 +12281,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.int32s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrI32(t.int32s(), b)
+		return scaleinvrI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -12302,11 +12302,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.int64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrI64(t.int64s(), b)
+		return scaleinvrI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -12323,11 +12323,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.uints()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrU(t.uints(), b)
+		return scaleinvrU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -12344,11 +12344,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint8s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrU8(t.uint8s(), b)
+		return scaleinvrU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -12365,11 +12365,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint16s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrU16(t.uint16s(), b)
+		return scaleinvrU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -12386,11 +12386,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint32s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrU32(t.uint32s(), b)
+		return scaleinvrU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -12407,11 +12407,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.uint64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrU64(t.uint64s(), b)
+		return scaleinvrU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -12428,11 +12428,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.float32s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrF32(t.float32s(), b)
+		return scaleinvrF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -12449,11 +12449,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.float64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrF64(t.float64s(), b)
+		return scaleinvrF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -12470,11 +12470,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.complex64s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrC64(t.complex64s(), b)
+		return scaleinvrC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -12491,11 +12491,11 @@ func (t *Dense) scaleinvr(other interface{}) (err error) {
 			var i int
 			data := t.complex128s()
 			for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-				data[i] = data[i] / b
+				data[i] = b / data[i]
 			}
 			return nil
 		}
-		scaleinvrC128(t.complex128s(), b)
+		return scaleinvrC128(t.complex128s(), b)
 	}
 	return nil
 }
@@ -12622,7 +12622,7 @@ func (t *Dense) PowOf(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.powof(other)
+		err = reuse.powof(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -12630,9 +12630,9 @@ func (t *Dense) PowOf(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.powof(other)
+		err = retVal.powof(other)
 	case !safe:
-		t.powof(other)
+		err = t.powof(other)
 		retVal = t
 	}
 	return
@@ -12650,7 +12650,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofI(t.ints(), b)
+		return powofI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -12662,7 +12662,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofI8(t.int8s(), b)
+		return powofI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -12674,7 +12674,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofI16(t.int16s(), b)
+		return powofI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -12686,7 +12686,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofI32(t.int32s(), b)
+		return powofI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -12698,7 +12698,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofI64(t.int64s(), b)
+		return powofI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -12710,7 +12710,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofU(t.uints(), b)
+		return powofU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -12722,7 +12722,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofU8(t.uint8s(), b)
+		return powofU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -12734,7 +12734,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofU16(t.uint16s(), b)
+		return powofU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -12746,7 +12746,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofU32(t.uint32s(), b)
+		return powofU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -12758,7 +12758,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofU64(t.uint64s(), b)
+		return powofU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -12770,7 +12770,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofF32(t.float32s(), b)
+		return powofF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -12782,7 +12782,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofF64(t.float64s(), b)
+		return powofF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -12794,7 +12794,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofC64(t.complex64s(), b)
+		return powofC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -12806,7 +12806,7 @@ func (t *Dense) powof(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofC128(t.complex128s(), b)
+		return powofC128(t.complex128s(), b)
 	}
 	return nil
 }
@@ -12933,7 +12933,7 @@ func (t *Dense) PowOfR(other interface{}, opts ...FuncOpt) (retVal *Dense, err e
 		} else {
 			copyDense(reuse, t)
 		}
-		reuse.powofr(other)
+		err = reuse.powofr(other)
 		retVal = reuse
 	case safe:
 		if t.IsMaterializable() {
@@ -12941,9 +12941,9 @@ func (t *Dense) PowOfR(other interface{}, opts ...FuncOpt) (retVal *Dense, err e
 		} else {
 			retVal = t.Clone().(*Dense)
 		}
-		retVal.powofr(other)
+		err = retVal.powofr(other)
 	case !safe:
-		t.powofr(other)
+		err = t.powofr(other)
 		retVal = t
 	}
 	return
@@ -12961,7 +12961,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrI(t.ints(), b)
+		return powofrI(t.ints(), b)
 	case reflect.Int8:
 		b := other.(int8)
 		if t.IsMaterializable() {
@@ -12973,7 +12973,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrI8(t.int8s(), b)
+		return powofrI8(t.int8s(), b)
 	case reflect.Int16:
 		b := other.(int16)
 		if t.IsMaterializable() {
@@ -12985,7 +12985,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrI16(t.int16s(), b)
+		return powofrI16(t.int16s(), b)
 	case reflect.Int32:
 		b := other.(int32)
 		if t.IsMaterializable() {
@@ -12997,7 +12997,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrI32(t.int32s(), b)
+		return powofrI32(t.int32s(), b)
 	case reflect.Int64:
 		b := other.(int64)
 		if t.IsMaterializable() {
@@ -13009,7 +13009,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrI64(t.int64s(), b)
+		return powofrI64(t.int64s(), b)
 	case reflect.Uint:
 		b := other.(uint)
 		if t.IsMaterializable() {
@@ -13021,7 +13021,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrU(t.uints(), b)
+		return powofrU(t.uints(), b)
 	case reflect.Uint8:
 		b := other.(uint8)
 		if t.IsMaterializable() {
@@ -13033,7 +13033,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrU8(t.uint8s(), b)
+		return powofrU8(t.uint8s(), b)
 	case reflect.Uint16:
 		b := other.(uint16)
 		if t.IsMaterializable() {
@@ -13045,7 +13045,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrU16(t.uint16s(), b)
+		return powofrU16(t.uint16s(), b)
 	case reflect.Uint32:
 		b := other.(uint32)
 		if t.IsMaterializable() {
@@ -13057,7 +13057,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrU32(t.uint32s(), b)
+		return powofrU32(t.uint32s(), b)
 	case reflect.Uint64:
 		b := other.(uint64)
 		if t.IsMaterializable() {
@@ -13069,7 +13069,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrU64(t.uint64s(), b)
+		return powofrU64(t.uint64s(), b)
 	case reflect.Float32:
 		b := other.(float32)
 		if t.IsMaterializable() {
@@ -13081,7 +13081,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrF32(t.float32s(), b)
+		return powofrF32(t.float32s(), b)
 	case reflect.Float64:
 		b := other.(float64)
 		if t.IsMaterializable() {
@@ -13093,7 +13093,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrF64(t.float64s(), b)
+		return powofrF64(t.float64s(), b)
 	case reflect.Complex64:
 		b := other.(complex64)
 		if t.IsMaterializable() {
@@ -13105,7 +13105,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrC64(t.complex64s(), b)
+		return powofrC64(t.complex64s(), b)
 	case reflect.Complex128:
 		b := other.(complex128)
 		if t.IsMaterializable() {
@@ -13117,7 +13117,7 @@ func (t *Dense) powofr(other interface{}) (err error) {
 			}
 			return nil
 		}
-		powofrC128(t.complex128s(), b)
+		return powofrC128(t.complex128s(), b)
 	}
 	return nil
 }

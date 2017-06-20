@@ -85,7 +85,7 @@ func newDense(dt Dtype, size int) *Dense {
 	return d
 }
 
-func (t *Dense) fromSlice(x interface{}, argMask ...[]bool) {
+func (t *Dense) fromSlice(x interface{}) {
 	xt := reflect.TypeOf(x)
 	if xt.Kind() != reflect.Slice {
 		panic("Not a slice")
@@ -106,15 +106,14 @@ func (t *Dense) fromSlice(x interface{}, argMask ...[]bool) {
 	t.v = x
 	t.t = Dtype{xt}
 	t.hdr = hdr
+}
 
-	if len(argMask) > 0 {
-		if argMask[0] != nil {
-			if len(argMask[0]) != t.len() {
-				panic("Mask is not same length as data")
-			}
-		}
-		t.mask = argMask[0]
+func (t *Dense) addMask(mask []bool) {
+	l := len(mask)
+	if l > 0 && l != t.len() {
+		panic("Mask is not same length as data")
 	}
+	t.mask = mask
 }
 
 // Info returns the access pattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
