@@ -23,13 +23,11 @@ func (s Shape) TotalSize() int {
 }
 
 func (s Shape) calcStrides() []int {
-	// retVal := make([]int, len(s))
-	retVal := BorrowInts(len(s))
-
 	if s.IsScalar() {
 		return nil
 	}
 
+	retVal := BorrowInts(len(s))
 	if s.IsVector() {
 		retVal[0] = 1
 		retVal = retVal[:1]
@@ -48,16 +46,14 @@ func (s Shape) calcStrides() []int {
 	return retVal
 }
 
-// calcStrideWithMask is similar to calcStrides, except that it has an argument, masks. It is used to mask out given dimensions
+// calcStridesWithMask is similar to calcStrides, except that it has an argument, masks. It is used to mask out given dimensions
 // during calculation of stride
 func (s Shape) calcStridesWithMask(mask []bool) []int {
-	// retVal := make([]int, len(s))
-	retVal := BorrowInts(len(s))
-
 	if s.IsScalar() {
 		return nil
 	}
 
+	retVal := BorrowInts(len(s))
 	if s.IsVector() {
 		retVal[0] = 1
 		retVal = retVal[:1]
@@ -83,6 +79,30 @@ func (s Shape) calcStridesWithMask(mask []bool) []int {
 		}
 	}
 
+	return retVal
+}
+
+func (s Shape) calcStridesColMajor() []int {
+	if s.IsScalar() {
+		return nil
+	}
+
+	retVal := BorrowInts(len(s))
+	if s.IsVector() {
+		retVal[0] = 1
+		retVal = retVal[:1]
+		return retVal
+	}
+
+	acc := 1
+	for i := 0; i < len(s); i++ {
+		retVa[i] = acc
+		d := s[i]
+		if d < 0 {
+			panic("negative dimension size does not make sense")
+		}
+		acc *= d
+	}
 	return retVal
 }
 

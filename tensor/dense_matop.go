@@ -168,7 +168,15 @@ func (t *Dense) Transpose() {
 	}()
 
 	expShape := t.Shape()
-	expStrides := expShape.calcStrides() // important! because the strides would have changed once the underlying data changed
+
+	// important! because the strides would have changed once the underlying data changed
+	var expStrides []int
+	if t.AP.isColMajor() {
+		expStrides = expShape.calcStridesColMajor()
+	} else {
+
+		expStrides = expShape.calcStrides()
+	}
 	defer ReturnInts(expStrides)
 	defer func() {
 		t.setShape(expShape...)
@@ -523,8 +531,15 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 		cur++
 	}
 
-	newStrides := newShape.calcStrides()
+	var newStrides []int
+	if t.AP.isColMajor() {
+		newStrides = newShape.calcStridesColMajor()
+	} else {
+		newStrides = newShape.calcStrides()
+
+	}
 	ap := NewAP(newShape, newStrides)
+	ap.flag = t.AP.flag
 
 	allNoMat := !t.IsMaterializable()
 	for _, ot := range others {

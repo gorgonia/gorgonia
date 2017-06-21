@@ -193,6 +193,7 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 	return f
 }
 
+// WithEngine is a construction option that would cause a Tensor to be linked with an execution engine.
 func WithEngine(e Engine) ConsOpt {
 	f := func(t Tensor) {
 		switch tt := t.(type) {
@@ -204,4 +205,16 @@ func WithEngine(e Engine) ConsOpt {
 		}
 	}
 	return f
+}
+
+func AsFortran() ConsOpt {
+	f := func(t Tensor) {
+		switch tt := t.(type) {
+		case *Dense:
+			if tt.AP == nil {
+				// create AP
+			}
+			tt.AP.o = MakeDataOrder(tt.AP.o, ColMajor)
+		}
+	}
 }

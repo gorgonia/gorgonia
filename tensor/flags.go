@@ -4,8 +4,14 @@ package tensor
 type DataOrder byte
 
 const (
-	ColMajor      DataOrder = 1 << iota // 1 == ColMajor. 0 == RowMajor
-	NonContiguous                       // 1 == NonContiguous. 0 == Contiguous
+	// ColMajor indicates that the data is stored in a col-major way.
+	// A data can only be stored in either ColMajor(1) or RowMajor(0).
+	// The way the DataOrder was designed causes the default to be RowMajor
+	ColMajor      DataOrder = 1 << iota
+	// NonContiguous indicates that the data is not contiguous.
+	// A data can either be Contiguous (0) or NonContiguous (1).
+	// The way DataOrder was designed causes the default to be Contiguous.
+	NonContiguous                       
 )
 
 func MakeDataOrder(fs ...DataOrder) (retVal DataOrder) {

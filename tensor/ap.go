@@ -22,8 +22,8 @@ type AP struct {
 	strides []int // strides is usually calculated from shape
 	fin     bool  // is this struct change-proof?
 
-	// future stuff
-	// triangle byte // up = 0xf0;  down = 0x0f; symmetric = 0xff; not a triangle = 0x00
+	o DataOrder
+	t Triangle
 }
 
 // NewAP creates a new AP, given the shape and strides
@@ -60,7 +60,7 @@ func (ap *AP) SetShape(s ...int) {
 			ap.strides = nil
 		}
 		ap.shape = Shape(s).Clone()
-		ap.strides = ap.shape.calcStrides()
+		ap.strides = ap.calcStrides()
 	}
 }
 
@@ -263,6 +263,16 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 	}
 
 	return
+}
+
+func (ap *AP) calcStrides() []int {
+	switch {
+	case ap.o.isRowMajor():
+		return ap.shape.calcStrides()
+	case ap.o.isColMajor():
+		return ap.shape.calcStridesColMajor()
+	}
+	panic("unreachable")
 }
 
 // TransposeIndex returns the new index given the old index
