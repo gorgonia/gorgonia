@@ -96,7 +96,7 @@ func (s Shape) calcStridesColMajor() []int {
 
 	acc := 1
 	for i := 0; i < len(s); i++ {
-		retVa[i] = acc
+		retVal[i] = acc
 		d := s[i]
 		if d < 0 {
 			panic("negative dimension size does not make sense")

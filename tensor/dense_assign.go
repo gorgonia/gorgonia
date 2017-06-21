@@ -82,6 +82,7 @@ func assignArray(dest, src *Dense) (err error) {
 	}
 	dap := dest.AP
 	sap := NewAP(tmpShape, newStrides)
+	sap.o = src.AP.o
 
 	diter := NewFlatIterator(dap)
 	siter := NewFlatIterator(sap)

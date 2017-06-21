@@ -64,10 +64,6 @@ func (ap *AP) SetShape(s ...int) {
 	}
 }
 
-// locking and unlocking is used to ensure that the shape and stride doesn't change (it's not really safe though, as a direct mutation of the strides/shape would still mutate it, but at least the dimensions cannot change)
-func (ap *AP) lock()   { ap.fin = true }
-func (ap *AP) unlock() { ap.fin = false }
-
 // Shape returns the shape of the AP
 func (ap *AP) Shape() Shape { return ap.shape }
 
@@ -121,12 +117,12 @@ func (ap *AP) Clone() (retVal *AP) {
 
 // C returns true if the access pattern is C-contiguous array
 func (ap *AP) C() bool {
-	return ap.strides[len(ap.strides)-1] == 1
+	return ap.o.isRowMajor() && ap.o.isContiguous()
 }
 
 // F returns true if the access pattern is Fortran contiguous array
 func (ap *AP) F() bool {
-	return ap.strides[0] == 1
+	return ap.o.isColMajor() && ap.o.isContiguous()
 }
 
 // S returns the metadata of the sliced tensor.
@@ -161,6 +157,7 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 
 		var start, end, step int
 		if start, end, step, err = SliceDetails(sl, size); err != nil {
+			err = errors.Wrapf(err, "Unable to get slice details on slice %d with size %d: %v", i, sl, size)
 			return
 		}
 
@@ -204,6 +201,7 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		}
 
 		newAP = NewAP(newShape, newStrides)
+		newAP.o = MakeDataOrder(ap.o, NonContiguous)
 	}
 	return
 }
@@ -264,6 +262,10 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 
 	return
 }
+
+// locking and unlocking is used to ensure that the shape and stride doesn't change (it's not really safe though, as a direct mutation of the strides/shape would still mutate it, but at least the dimensions cannot change)
+func (ap *AP) lock()   { ap.fin = true }
+func (ap *AP) unlock() { ap.fin = false }
 
 func (ap *AP) calcStrides() []int {
 	switch {

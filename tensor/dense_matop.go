@@ -1,8 +1,9 @@
 package tensor
 
 import (
-	"github.com/pkg/errors"
 	"reflect"
+
+	"github.com/pkg/errors"
 )
 
 // Apply applies a function to all the values in the ndarray
@@ -171,7 +172,7 @@ func (t *Dense) Transpose() {
 
 	// important! because the strides would have changed once the underlying data changed
 	var expStrides []int
-	if t.AP.isColMajor() {
+	if t.AP.o.isColMajor() {
 		expStrides = expShape.calcStridesColMajor()
 	} else {
 
@@ -532,14 +533,15 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 	}
 
 	var newStrides []int
-	if t.AP.isColMajor() {
+	if t.AP.o.isColMajor() {
 		newStrides = newShape.calcStridesColMajor()
 	} else {
 		newStrides = newShape.calcStrides()
 
 	}
 	ap := NewAP(newShape, newStrides)
-	ap.flag = t.AP.flag
+	ap.o = t.AP.o
+	ap.t = t.AP.t
 
 	allNoMat := !t.IsMaterializable()
 	for _, ot := range others {

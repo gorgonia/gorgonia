@@ -170,6 +170,14 @@ func (t *Dense) GobEncode() (p []byte, err error) {
 		return
 	}
 
+	if err = encoder.Encode(t.AP.o); err != nil {
+		return
+	}
+
+	if err = encoder.Encode(t.AP.t); err != nil {
+		return
+	}
+
 	if err = encoder.Encode(t.mask); err != nil {
 		return
 	}
@@ -458,7 +466,17 @@ func (t *Dense) GobDecode(p []byte) (err error) {
 		return
 	}
 
+	var o DataOrder
+	var tr Triangle
+	if err = decoder.Decode(&o); err == nil {
+		if err = decoder.Decode(&tr); err != nil {
+			return
+		}
+	}
+
 	t.AP = NewAP(shape, strides)
+	t.AP.o = o
+	t.AP.t = tr
 
 	var mask []bool
 	if err = decoder.Decode(&mask); err != nil {

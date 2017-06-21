@@ -217,4 +217,5 @@ func AsFortran() ConsOpt {
 			tt.AP.o = MakeDataOrder(tt.AP.o, ColMajor)
 		}
 	}
+	return f
 }
