@@ -147,7 +147,7 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 			tt.hdr.Len = int(memsize / tt.t.Size())
 			tt.hdr.Cap = int(memsize / tt.t.Size())
 
-			tt.flag |= denseFlag(1) << manuallyManagedMem
+			tt.flag = MakeMemoryFlag(tt.flag, ManuallyManaged)
 
 			switch tt.t {
 			case Bool:
@@ -198,8 +198,8 @@ func WithEngine(e Engine) ConsOpt {
 		switch tt := t.(type) {
 		case *Dense:
 			tt.e = e
-			if e.AllocAccessible() {
-				tt.flag |= denseFlag(1) << nativeAccessible
+			if !e.AllocAccessible() {
+				tt.flag = MakeMemoryFlag(tt.flag, NativelyInaccessible)
 			}
 		}
 	}

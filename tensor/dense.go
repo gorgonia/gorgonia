@@ -12,18 +12,13 @@ const (
 	maskCompEvery int = 8
 )
 
-type denseFlag byte
 
-const (
-	nativeAccessible denseFlag = 1 << iota
-	manuallyManagedMem
-)
 
 // Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
 type Dense struct {
 	*AP
 
-	flag denseFlag
+	flag MemoryFlag
 	data unsafe.Pointer       // Unsafe.Pointer is required to keep the pointer of the first element of the slice, to prevent the slice from being GC'd
 	hdr  *reflect.SliceHeader // we keep a separate SliceHeader because it'd be easier to cast into a slice when doing get ops
 	v    interface{}          // we keep a reference to the underlying slice
@@ -183,9 +178,7 @@ func (t *Dense) IsMaterializable() bool {
 }
 
 // IsManuallyManaged returns true if the memory associated with this *Dense is manually managed (by the user)
-func (t *Dense) IsManuallyManaged() bool {
-	return (t.flag>>manuallyManagedMem)&denseFlag(1) == 1
-}
+func (t *Dense) IsManuallyManaged() bool {return t.flag.manuallyManaged()}
 
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {
@@ -278,9 +271,9 @@ func (t *Dense) fix() {
 	if t.AP == nil {
 		return
 	}
-	if t.e == nil {
-		t.flag |= denseFlag(1) << nativeAccessible
-	}
+	// if t.e == nil {
+	// 	t.flag |= MemoryFlag(1) << nativeAccessible
+	// }
 	switch {
 	case t.IsScalar() && t.data == nil:
 		t.makeArray(1)
@@ -316,9 +309,7 @@ func (t *Dense) makeMask() {
 }
 
 // isNativeAccessible checks if the pointers are accessible by Go
-func (t *Dense) isNativeAccessible() bool {
-	return (t.flag>>nativeAccessible)&denseFlag(1) == 1
-}
+func (t *Dense) isNativeAccessible() bool { return t.flag.nativelyAccessible()}
 
 // sanity is a function that sanity checks that a tensor is correct.
 func (t *Dense) sanity() error {

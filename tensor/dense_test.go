@@ -42,7 +42,7 @@ func TestFromMemory(t *testing.T) {
 		t.Error("expected 200 float32s")
 	}
 	assert.Equal(t, make([]float32, 200), T.Data())
-	assert.True(t, T.IsManuallyManaged(), "Unamanged %v |%v", manuallyManagedMem, T.flag)
+	assert.True(t, T.IsManuallyManaged(), "Unamanged %v |%v | q: %v", ManuallyManaged, T.flag, (T.flag >> ManuallyManaged) & MemoryFlag(1))
 
 	fail := func() { New(FromMemory(ptr, size), Of(Float32)) }
 	assert.Panics(t, fail, "Expected bad New() call to panic")
