@@ -529,13 +529,13 @@ func (t *Dense) MaskFromSlice(x interface{}) {
 	}
 }
 
-// func copyDense(dest, src *Dense) int {
-// 	if src.IsMasked() {
-// 		if cap(dest.mask) < len(src.mask) {
-// 			dest.mask = make([]bool, len(src.mask))
-// 		}
-// 		copy(dest.mask, src.mask)
-// 		dest.mask = dest.mask[:len(src.mask)]
-// 	}
-// 	return copyArray(dest.array, src.array)
-// }
+func copyDense(dest, src *Dense) int {
+	if src.IsMasked() {
+		if cap(dest.mask) < len(src.mask) {
+			dest.mask = make([]bool, len(src.mask))
+		}
+		copy(dest.mask, src.mask)
+		dest.mask = dest.mask[:len(src.mask)]
+	}
+	return copyArray(dest.array, src.array)
+}

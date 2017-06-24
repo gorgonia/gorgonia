@@ -53,27 +53,38 @@ func makeArrayFromHeader(hdr header, t Dtype) array {
 	}
 }
 
-// func copyArray(dst, src array) int {
-// 	if dst.t != src.t {
-// 		panic("Cannot copy arrays of different types.")
-// 	}
+func (a array) byteSlice() []byte {
+	size := a.l * int(a.t.Size())
+	hdr := reflect.SliceHeader{
+		Data: uintptr(a.ptr),
+		Len:  size,
+		Cap:  size,
+	}
+	return *(*[]byte)(unsafe.Pointer(&hdr))
+}
 
-// 	if dst.l == 0 || src.l == 0 {
-// 		return 0
-// 	}
+func copyArray(dst, src array) int {
+	if dst.t != src.t {
+		panic("Cannot copy arrays of different types.")
+	}
 
-// 	// handle struct{} type
-// 	if dst.t.Size() == 0 {
-// 		n := src.l
-// 		if dst.l < n {
-// 			n = dst.l
-// 		}
-// 		return n
-// 	}
+	if dst.l == 0 || src.l == 0 {
+		return 0
+	}
 
-// 	// otherwise, just copy bytes.
-// 	// FUTURE: implement memmove
-// 	dstBA := dst.uint8s()
-// 	srcBA := src.uint8s()
-// 	return copy(dstBA, srcBA)
-// }
+	n := src.l
+	if dst.l < n {
+		n = dst.l
+	}
+
+	// handle struct{} type
+	if dst.t.Size() == 0 {
+		return n
+	}
+
+	// otherwise, just copy bytes.
+	// FUTURE: implement memmove
+	dstBA := dst.byteSlice()
+	srcBA := src.byteSlice()
+	return copy(dstBA, srcBA)
+}

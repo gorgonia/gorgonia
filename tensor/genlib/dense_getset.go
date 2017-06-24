@@ -143,34 +143,6 @@ func (t *Dense) zeroIter() (err error){
 }
 `
 
-const copyRaw = `func copyDense(dest, src *Dense) int {
-	if dest.t != src.t {
-		err := errors.Errorf(dtypeMismatch, src.t, dest.t)
-		panic(err.Error())
-	}
-	if src.IsMasked(){
-		if cap(dest.mask)<len(src.mask){
-			dest.mask=make([]bool, len(src.mask))
-		}
-		copy(dest.mask, src.mask)
-		dest.mask=dest.mask[:len(src.mask)]
-	}
-	switch dest.t.Kind() {
-	{{range .Kinds -}}
-		{{if isParameterized .}}
-		{{else -}}
-	case reflect.{{reflectKind .}}:
-		return copy(dest.{{sliceOf .}}, src.{{sliceOf .}})
-		{{end -}}
-	{{end -}}
-	default:
-		dv := reflect.ValueOf(dest.v)
-		sv := reflect.ValueOf(src.v)
-		return reflect.Copy(dv, sv)
-	}
-}
-`
-
 const copySlicedRaw = `func copySliced(dest *Dense, dstart, dend int, src *Dense, sstart, send int) int{
 	if dest.t != src.t {
 		panic("Cannot copy arrays of different types")
@@ -330,7 +302,6 @@ func (t *Dense) Eq(other interface{}) bool {
 var (
 	Memset     *template.Template
 	Zero       *template.Template
-	Copy       *template.Template
 	CopySliced *template.Template
 	CopyIter   *template.Template
 	Slice      *template.Template
@@ -341,7 +312,6 @@ func init() {
 	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
 	Zero = template.Must(template.New("Zero").Funcs(funcs).Parse(zeroRaw))
 
-	Copy = template.Must(template.New("copy").Funcs(funcs).Parse(copyRaw))
 	CopySliced = template.Must(template.New("copySliced").Funcs(funcs).Parse(copySlicedRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
 	Slice = template.Must(template.New("slice").Funcs(funcs).Parse(sliceRaw))
@@ -354,8 +324,6 @@ func getset(f io.Writer, generic *ManyKinds) {
 	Memset.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Zero.Execute(f, generic)
-	fmt.Fprintf(f, "\n\n\n")
-	Copy.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	CopySliced.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")

@@ -633,64 +633,6 @@ func (t *Dense) zeroIter() (err error) {
 	return
 }
 
-func copyDense(dest, src *Dense) int {
-	if dest.t != src.t {
-		err := errors.Errorf(dtypeMismatch, src.t, dest.t)
-		panic(err.Error())
-	}
-	if src.IsMasked() {
-		if cap(dest.mask) < len(src.mask) {
-			dest.mask = make([]bool, len(src.mask))
-		}
-		copy(dest.mask, src.mask)
-		dest.mask = dest.mask[:len(src.mask)]
-	}
-	switch dest.t.Kind() {
-	case reflect.Bool:
-		return copy(dest.bools(), src.bools())
-	case reflect.Int:
-		return copy(dest.ints(), src.ints())
-	case reflect.Int8:
-		return copy(dest.int8s(), src.int8s())
-	case reflect.Int16:
-		return copy(dest.int16s(), src.int16s())
-	case reflect.Int32:
-		return copy(dest.int32s(), src.int32s())
-	case reflect.Int64:
-		return copy(dest.int64s(), src.int64s())
-	case reflect.Uint:
-		return copy(dest.uints(), src.uints())
-	case reflect.Uint8:
-		return copy(dest.uint8s(), src.uint8s())
-	case reflect.Uint16:
-		return copy(dest.uint16s(), src.uint16s())
-	case reflect.Uint32:
-		return copy(dest.uint32s(), src.uint32s())
-	case reflect.Uint64:
-		return copy(dest.uint64s(), src.uint64s())
-	case reflect.Uintptr:
-		return copy(dest.uintptrs(), src.uintptrs())
-	case reflect.Float32:
-		return copy(dest.float32s(), src.float32s())
-	case reflect.Float64:
-		return copy(dest.float64s(), src.float64s())
-	case reflect.Complex64:
-		return copy(dest.complex64s(), src.complex64s())
-	case reflect.Complex128:
-		return copy(dest.complex128s(), src.complex128s())
-
-	case reflect.String:
-		return copy(dest.strings(), src.strings())
-
-	case reflect.UnsafePointer:
-		return copy(dest.unsafePointers(), src.unsafePointers())
-	default:
-		dv := reflect.ValueOf(dest.v)
-		sv := reflect.ValueOf(src.v)
-		return reflect.Copy(dv, sv)
-	}
-}
-
 func copySliced(dest *Dense, dstart, dend int, src *Dense, sstart, send int) int {
 	if dest.t != src.t {
 		panic("Cannot copy arrays of different types")
