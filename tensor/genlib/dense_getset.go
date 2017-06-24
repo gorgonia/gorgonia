@@ -6,12 +6,6 @@ import (
 	"text/template"
 )
 
-const asSliceRaw = `func (t *Dense) {{asType . | strip }}s() []{{asType .}} { return *(*[]{{asType .}})(unsafe.Pointer(&t.header)) }
-`
-const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{asType .}}) { t.{{sliceOf .}}[i] = x }
-`
-const getBasicRaw = `func (t *Dense) get{{short .}}(i int) {{asType .}} { return t.{{lower .String | clean | strip }}s()[i]}
-`
 const getRaw = `// Get returns the ith element of the underlying array of the *Dense tensor.
 func (t *Dense) Get(i int) interface{} {
 	switch t.t.Kind() {
@@ -189,45 +183,6 @@ func (t *Dense) zeroIter() (err error){
 	}
 	return
 }
-`
-const makeDataRaw = `func (t *Dense) makeArray(size int) {
-	if t.e != nil {
-		mem, err := t.e.Alloc(calcMemSize(t.t, size))
-		if err != nil {
-			panic(err)
-		}
-	
-		t.ptr = mem.Pointer()
-		t.l = size
-		t.c = size
-		switch t.t.Kind() {
-		{{range .Kinds -}}
-			{{if isParameterized .}}
-			{{else -}}
-		case reflect.{{reflectKind .}}:
-			arr := make([]{{.String | lower | clean }}, size)
-			t.fromSlice(arr)
-			{{end -}}
-		{{end -}}	
-		default:
-			
-		}
-		return
-	}
-
-	switch t.t.Kind() {
-	{{range .Kinds -}}
-		{{if isParameterized .}}
-		{{else -}}
-	case reflect.{{reflectKind .}}:
-		arr := make([]{{.String | lower | clean }}, size)
-		t.fromSlice(arr)
-		{{end -}}
-	{{end -}}
-	default:
-	}
-}
-
 `
 
 const copyRaw = `func copyDense(dest, src *Dense) int {
@@ -416,8 +371,6 @@ func (t *Dense) Eq(other interface{}) bool {
 
 var (
 	AsSlice    *template.Template
-	SimpleSet  *template.Template
-	SimpleGet  *template.Template
 	Get        *template.Template
 	Set        *template.Template
 	Memset     *template.Template
@@ -432,13 +385,11 @@ var (
 
 func init() {
 	AsSlice = template.Must(template.New("AsSlice").Funcs(funcs).Parse(asSliceRaw))
-	SimpleSet = template.Must(template.New("SimpleSet").Funcs(funcs).Parse(setBasicRaw))
-	SimpleGet = template.Must(template.New("SimpleGet").Funcs(funcs).Parse(getBasicRaw))
+
 	Get = template.Must(template.New("Get").Funcs(funcs).Parse(getRaw))
 	Set = template.Must(template.New("Set").Funcs(funcs).Parse(setRaw))
 	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
 	Zero = template.Must(template.New("Zero").Funcs(funcs).Parse(zeroRaw))
-	MakeData = template.Must(template.New("makedata").Funcs(funcs).Parse(makeDataRaw))
 	Copy = template.Must(template.New("copy").Funcs(funcs).Parse(copyRaw))
 	CopySliced = template.Must(template.New("copySliced").Funcs(funcs).Parse(copySlicedRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
@@ -447,16 +398,6 @@ func init() {
 }
 
 func getset(f io.Writer, generic *ManyKinds) {
-	for _, k := range generic.Kinds {
-		if !isParameterized(k) {
-			fmt.Fprintf(f, "/* %v */\n\n", k)
-			AsSlice.Execute(f, k)
-			SimpleSet.Execute(f, k)
-			SimpleGet.Execute(f, k)
-			fmt.Fprint(f, "\n")
-		}
-	}
-	MakeData.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Set.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")

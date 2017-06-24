@@ -106,6 +106,33 @@ func (t *Dense) addMask(mask []bool) {
 	t.mask = mask
 }
 
+func (t *Dense) makeArray(size int) {
+	if t.e != nil {
+		mem, err := t.e.Alloc(calcMemSize(t.t, size))
+		if err != nil {
+			panic(err)
+		}
+
+		t.ptr = mem.Pointer()
+		t.l = size
+		t.c = size
+
+	} else {
+		t.header = makeArray(t.t, size)
+	}
+	// build a type of []T
+	hdr := reflect.SliceHeader{
+		Data: uintptr(t.ptr),
+		Len:  t.l,
+		Cap:  t.l,
+	}
+	sliceT := reflect.SliceOf(t.t.Type)
+	ptr := unsafe.Pointer(&hdr)
+	val := reflect.Indirect(reflect.NewAt(sliceT, ptr))
+	t.v = val.Interface()
+	return
+}
+
 // Info returns the access pattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
 func (t *Dense) Info() *AP { return t.AP }
 
