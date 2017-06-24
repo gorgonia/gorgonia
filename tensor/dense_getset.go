@@ -13,109 +13,111 @@ GENERATED FILE. DO NOT EDIT
 
 /* bool */
 
-func (t *Dense) bools() []bool      { return *(*[]bool)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) bools() []bool      { return *(*[]bool)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setB(i int, x bool) { t.bools()[i] = x }
 func (t *Dense) getB(i int) bool    { return t.bools()[i] }
 
 /* int */
 
-func (t *Dense) ints() []int       { return *(*[]int)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) ints() []int       { return *(*[]int)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setI(i int, x int) { t.ints()[i] = x }
 func (t *Dense) getI(i int) int    { return t.ints()[i] }
 
 /* int8 */
 
-func (t *Dense) int8s() []int8       { return *(*[]int8)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) int8s() []int8       { return *(*[]int8)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setI8(i int, x int8) { t.int8s()[i] = x }
 func (t *Dense) getI8(i int) int8    { return t.int8s()[i] }
 
 /* int16 */
 
-func (t *Dense) int16s() []int16       { return *(*[]int16)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) int16s() []int16       { return *(*[]int16)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setI16(i int, x int16) { t.int16s()[i] = x }
 func (t *Dense) getI16(i int) int16    { return t.int16s()[i] }
 
 /* int32 */
 
-func (t *Dense) int32s() []int32       { return *(*[]int32)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) int32s() []int32       { return *(*[]int32)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setI32(i int, x int32) { t.int32s()[i] = x }
 func (t *Dense) getI32(i int) int32    { return t.int32s()[i] }
 
 /* int64 */
 
-func (t *Dense) int64s() []int64       { return *(*[]int64)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) int64s() []int64       { return *(*[]int64)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setI64(i int, x int64) { t.int64s()[i] = x }
 func (t *Dense) getI64(i int) int64    { return t.int64s()[i] }
 
 /* uint */
 
-func (t *Dense) uints() []uint      { return *(*[]uint)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) uints() []uint      { return *(*[]uint)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setU(i int, x uint) { t.uints()[i] = x }
 func (t *Dense) getU(i int) uint    { return t.uints()[i] }
 
 /* uint8 */
 
-func (t *Dense) uint8s() []uint8      { return *(*[]uint8)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) uint8s() []uint8      { return *(*[]uint8)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setU8(i int, x uint8) { t.uint8s()[i] = x }
 func (t *Dense) getU8(i int) uint8    { return t.uint8s()[i] }
 
 /* uint16 */
 
-func (t *Dense) uint16s() []uint16      { return *(*[]uint16)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) uint16s() []uint16      { return *(*[]uint16)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setU16(i int, x uint16) { t.uint16s()[i] = x }
 func (t *Dense) getU16(i int) uint16    { return t.uint16s()[i] }
 
 /* uint32 */
 
-func (t *Dense) uint32s() []uint32      { return *(*[]uint32)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) uint32s() []uint32      { return *(*[]uint32)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setU32(i int, x uint32) { t.uint32s()[i] = x }
 func (t *Dense) getU32(i int) uint32    { return t.uint32s()[i] }
 
 /* uint64 */
 
-func (t *Dense) uint64s() []uint64      { return *(*[]uint64)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) uint64s() []uint64      { return *(*[]uint64)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setU64(i int, x uint64) { t.uint64s()[i] = x }
 func (t *Dense) getU64(i int) uint64    { return t.uint64s()[i] }
 
 /* uintptr */
 
-func (t *Dense) uintptrs() []uintptr         { return *(*[]uintptr)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) uintptrs() []uintptr         { return *(*[]uintptr)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setUintptr(i int, x uintptr) { t.uintptrs()[i] = x }
 func (t *Dense) getUintptr(i int) uintptr    { return t.uintptrs()[i] }
 
 /* float32 */
 
-func (t *Dense) float32s() []float32     { return *(*[]float32)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) float32s() []float32     { return *(*[]float32)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setF32(i int, x float32) { t.float32s()[i] = x }
 func (t *Dense) getF32(i int) float32    { return t.float32s()[i] }
 
 /* float64 */
 
-func (t *Dense) float64s() []float64     { return *(*[]float64)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) float64s() []float64     { return *(*[]float64)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setF64(i int, x float64) { t.float64s()[i] = x }
 func (t *Dense) getF64(i int) float64    { return t.float64s()[i] }
 
 /* complex64 */
 
-func (t *Dense) complex64s() []complex64   { return *(*[]complex64)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) complex64s() []complex64   { return *(*[]complex64)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setC64(i int, x complex64) { t.complex64s()[i] = x }
 func (t *Dense) getC64(i int) complex64    { return t.complex64s()[i] }
 
 /* complex128 */
 
-func (t *Dense) complex128s() []complex128   { return *(*[]complex128)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) complex128s() []complex128   { return *(*[]complex128)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setC128(i int, x complex128) { t.complex128s()[i] = x }
 func (t *Dense) getC128(i int) complex128    { return t.complex128s()[i] }
 
 /* string */
 
-func (t *Dense) strings() []string      { return *(*[]string)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) strings() []string      { return *(*[]string)(unsafe.Pointer(&t.header)) }
 func (t *Dense) setStr(i int, x string) { t.strings()[i] = x }
 func (t *Dense) getStr(i int) string    { return t.strings()[i] }
 
 /* unsafe.Pointer */
 
-func (t *Dense) unsafePointers() []unsafe.Pointer         { return *(*[]unsafe.Pointer)(unsafe.Pointer(t.hdr)) }
+func (t *Dense) unsafePointers() []unsafe.Pointer {
+	return *(*[]unsafe.Pointer)(unsafe.Pointer(&t.header))
+}
 func (t *Dense) setUnsafePointer(i int, x unsafe.Pointer) { t.unsafePointers()[i] = x }
 func (t *Dense) getUnsafePointer(i int) unsafe.Pointer    { return t.unsafePointers()[i] }
 
@@ -125,13 +127,10 @@ func (t *Dense) makeArray(size int) {
 		if err != nil {
 			panic(err)
 		}
-		if t.hdr == nil {
-			t.hdr = new(reflect.SliceHeader)
-		}
-		t.data = mem.Pointer()
-		t.hdr.Data = mem.Uintptr()
-		t.hdr.Len = size
-		t.hdr.Cap = size
+
+		t.ptr = mem.Pointer()
+		t.l = size
+		t.c = size
 		switch t.t.Kind() {
 		case reflect.Bool:
 			arr := make([]bool, size)
@@ -315,7 +314,7 @@ func (t *Dense) Set(i int, x interface{}) {
 		t.setUnsafePointer(i, xv)
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.data)
+		ptr := uintptr(t.ptr)
 		want := ptr + uintptr(i)*t.t.Size()
 		val := reflect.NewAt(t.t, unsafe.Pointer(want))
 		val = reflect.Indirect(val)
@@ -363,7 +362,7 @@ func (t *Dense) Get(i int) interface{} {
 	case reflect.UnsafePointer:
 		return t.getUnsafePointer(i)
 	default:
-		at := uintptr(t.data) + uintptr(i)*t.t.Size()
+		at := uintptr(t.ptr) + uintptr(i)*t.t.Size()
 		val := reflect.NewAt(t.t, unsafe.Pointer(at))
 		val = reflect.Indirect(val)
 		return val.Interface()
@@ -540,8 +539,8 @@ func (t *Dense) Memset(x interface{}) error {
 		}
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.data)
-		for i := 0; i < t.hdr.Len; i++ {
+		ptr := uintptr(t.ptr)
+		for i := 0; i < t.l; i++ {
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
 			val = reflect.Indirect(val)
@@ -737,7 +736,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		err = handleNoOp(err)
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.data)
+		ptr := uintptr(t.ptr)
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
@@ -854,8 +853,8 @@ func (t *Dense) Zero() {
 
 		}
 	default:
-		ptr := uintptr(t.data)
-		for i := 0; i < t.hdr.Len; i++ {
+		ptr := uintptr(t.ptr)
+		for i := 0; i < t.l; i++ {
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
 			val = reflect.Indirect(val)
@@ -980,7 +979,7 @@ func (t *Dense) zeroIter() (err error) {
 		}
 		err = handleNoOp(err)
 	default:
-		ptr := uintptr(t.data)
+		ptr := uintptr(t.ptr)
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))

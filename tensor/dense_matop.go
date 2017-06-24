@@ -1,10 +1,6 @@
 package tensor
 
-import (
-	"reflect"
-
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // Apply applies a function to all the values in the ndarray
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
@@ -371,11 +367,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 	view.flag = t.flag
 	view.viewOf = t
 	view.AP = newAP
-	view.hdr = new(reflect.SliceHeader)
-	view.data = t.data
-	view.hdr.Data = t.hdr.Data
-	view.hdr.Len = t.hdr.Len
-	view.hdr.Cap = t.hdr.Cap
+	view.header = t.header
 	view.slice(ndStart, ndEnd)
 
 	if t.IsMasked() {

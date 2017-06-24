@@ -10,6 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+// header is like reflect.SliceHeader. It is used to do very dirty dirty things.
+type header struct {
+	ptr unsafe.Pointer
+	l   int
+	c   int
+}
+
 // Dtype represents a data type of a Tensor. Concretely it's implemented as an embedded reflect.Type
 // which allows for easy reflection operations. It also implements hm.Type, for type inference in Gorgonia
 type Dtype struct {

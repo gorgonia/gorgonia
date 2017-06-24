@@ -12,18 +12,15 @@ const (
 	maskCompEvery int = 8
 )
 
-
-
 // Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
 type Dense struct {
 	*AP
-
 	flag MemoryFlag
-	data unsafe.Pointer       // Unsafe.Pointer is required to keep the pointer of the first element of the slice, to prevent the slice from being GC'd
-	hdr  *reflect.SliceHeader // we keep a separate SliceHeader because it'd be easier to cast into a slice when doing get ops
-	v    interface{}          // we keep a reference to the underlying slice
-	t    Dtype                // the element type
-	e    Engine               // execution engine for the *Dense (optional)
+
+	header             // the header
+	v      interface{} // we keep another reference to the underlying slice
+	t      Dtype       // the element type
+	e      Engine      // execution engine for the *Dense (optional)
 
 	// backup AP. When a transpose is done, the old *AP is backed up here, for easy untransposes
 	old           *AP
@@ -92,15 +89,13 @@ func (t *Dense) fromSlice(x interface{}) {
 	ptr := xv.Pointer()
 	uptr := unsafe.Pointer(ptr)
 
-	hdr := &reflect.SliceHeader{
-		Data: ptr,
-		Len:  xv.Len(),
-		Cap:  xv.Cap(),
-	}
-	t.data = uptr
+	// set the underlying array
+	t.ptr = uptr
+	t.l = xv.Len()
+	t.c = xv.Cap()
+
 	t.v = x
 	t.t = Dtype{xt}
-	t.hdr = hdr
 }
 
 func (t *Dense) addMask(mask []bool) {
@@ -125,12 +120,12 @@ func (t *Dense) Data() interface{} {
 	return t.v
 }
 
-// DataSize returns the size of the array. Typically t.DataSize() == t.Shape().TotalSize()
+// DataSize returns the size of the underlying array. Typically t.DataSize() == t.Shape().TotalSize()
 func (t *Dense) DataSize() int {
 	if t.IsScalar() {
 		return 0
 	}
-	return t.hdr.Len
+	return t.l
 }
 
 // Engine returns the execution engine associated with this Tensor
@@ -178,7 +173,7 @@ func (t *Dense) IsMaterializable() bool {
 }
 
 // IsManuallyManaged returns true if the memory associated with this *Dense is manually managed (by the user)
-func (t *Dense) IsManuallyManaged() bool {return t.flag.manuallyManaged()}
+func (t *Dense) IsManuallyManaged() bool { return t.flag.manuallyManaged() }
 
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {
@@ -198,19 +193,13 @@ func (t *Dense) Clone() interface{} {
 /* *Dense is a Memory */
 
 // Uintptr returns the pointer of the first value of the slab
-func (t *Dense) Uintptr() uintptr {
-	return uintptr(t.data)
-}
+func (t *Dense) Uintptr() uintptr { return uintptr(t.ptr) }
 
 // MemSize returns how big the slice is in bytes
-func (t *Dense) MemSize() uintptr {
-	return uintptr(t.hdr.Len) * t.t.Size()
-}
+func (t *Dense) MemSize() uintptr { return uintptr(t.l) * t.t.Size() }
 
 // Pointer returns the pointer of the first value of the slab, as an unsafe.Pointer
-func (t *Dense) Pointer() unsafe.Pointer {
-	return t.data
-}
+func (t *Dense) Pointer() unsafe.Pointer { return t.ptr }
 
 // IsMasked indicates whether tensor is masked
 func (t *Dense) IsMasked() bool { return len(t.mask) == t.len() }
@@ -257,8 +246,8 @@ func (t *Dense) MaskFromDense(tts ...*Dense) {
 
 // Private methods
 
-func (t *Dense) cap() int { return t.hdr.Cap }
-func (t *Dense) len() int { return t.hdr.Len } // exactly the same as DataSize
+func (t *Dense) cap() int { return t.c }
+func (t *Dense) len() int { return t.l } // exactly the same as DataSize
 
 func (t *Dense) setShape(s ...int) {
 	t.unlock()
@@ -275,16 +264,16 @@ func (t *Dense) fix() {
 	// 	t.flag |= MemoryFlag(1) << nativeAccessible
 	// }
 	switch {
-	case t.IsScalar() && t.data == nil:
+	case t.IsScalar() && t.ptr == nil:
 		t.makeArray(1)
-	case t.Shape() == nil && t.data != nil:
-		size := t.hdr.Len
+	case t.Shape() == nil && t.ptr != nil:
+		size := t.l
 		if size == 1 {
 			t.SetShape() // scalar
 		} else {
 			t.SetShape(size) // vector
 		}
-	case t.data == nil && t.t != Dtype{}:
+	case t.ptr == nil && t.t != Dtype{}:
 		size := t.Shape().TotalSize()
 		t.makeArray(size)
 
@@ -292,7 +281,7 @@ func (t *Dense) fix() {
 	if len(t.mask) != t.len() {
 		t.mask = t.mask[:0]
 	}
-	t.lock() // don't put this in a defer - if t.data == nil and t.Shape() == nil. then leave it unlocked
+	t.lock() // don't put this in a defer - if t.ptr == nil and t.Shape() == nil. then leave it unlocked
 }
 
 // makeMask adds a mask slice to tensor if required
@@ -309,15 +298,15 @@ func (t *Dense) makeMask() {
 }
 
 // isNativeAccessible checks if the pointers are accessible by Go
-func (t *Dense) isNativeAccessible() bool { return t.flag.nativelyAccessible()}
+func (t *Dense) isNativeAccessible() bool { return t.flag.nativelyAccessible() }
 
 // sanity is a function that sanity checks that a tensor is correct.
 func (t *Dense) sanity() error {
-	if t.AP != nil && t.Shape() == nil && t.data == nil {
+	if t.AP != nil && t.Shape() == nil && t.ptr == nil {
 		return errors.New(emptyTensor)
 	}
 
-	size := t.hdr.Len
+	size := t.l
 	expected := t.Size()
 	if t.viewOf == nil && size != expected && !t.IsScalar() {
 		return errors.Errorf(shapeMismatch, t.Shape(), size)
@@ -346,14 +335,9 @@ func (t *Dense) shallowClone() *Dense {
 	retVal := new(Dense)
 	retVal.AP = t.AP.Clone()
 	retVal.flag = t.flag
-	retVal.data = t.data
 	retVal.v = t.v
 	retVal.t = t.t
-	retVal.hdr = &reflect.SliceHeader{
-		Data: t.hdr.Data,
-		Len:  t.hdr.Len,
-		Cap:  t.hdr.Cap,
-	}
+	retVal.header = t.header
 	return retVal
 }
 

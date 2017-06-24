@@ -7,20 +7,22 @@ func overlaps(a, b *Dense) bool {
 		return false
 	}
 
-	if a.hdr.Data == b.hdr.Data {
+	if a.ptr == b.ptr {
 		return true
 	}
+	aptr := uintptr(a.ptr)
+	bptr := uintptr(b.ptr)
 
-	capA := a.hdr.Data + uintptr(a.hdr.Cap)*a.t.Size()
-	capB := b.hdr.Data + uintptr(b.hdr.Cap)*b.t.Size()
+	capA := aptr + uintptr(a.c)*a.t.Size()
+	capB := bptr + uintptr(b.c)*b.t.Size()
 
 	switch {
-	case a.hdr.Data < b.hdr.Data:
-		if b.hdr.Data < capA {
+	case aptr < bptr:
+		if bptr < capA {
 			return true
 		}
-	case a.hdr.Data > b.hdr.Data:
-		if a.hdr.Data < capB {
+	case aptr > bptr:
+		if aptr < capB {
 			return true
 		}
 	}

@@ -101,15 +101,12 @@ func FromScalar(x interface{}, argMask ...[]bool) ConsOpt {
 			xvi.Set(reflect.ValueOf(x))
 			ptr := xv.Pointer()
 			uptr := unsafe.Pointer(ptr)
-			hdr := &reflect.SliceHeader{
-				Data: ptr,
-				Len:  1,
-				Cap:  1,
-			}
-			tt.data = uptr
+
+			tt.ptr = uptr
+			tt.l = 1
+			tt.c = 1
 			tt.v = x
 			tt.t = Dtype{xt}
-			tt.hdr = hdr
 			tt.mask = mask
 
 		default:
@@ -138,50 +135,46 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 		switch tt := t.(type) {
 		case *Dense:
 			tt.v = nil // if there were any underlying slices it should be GC'd
-			if tt.hdr == nil {
-				tt.hdr = &reflect.SliceHeader{}
-			}
 
-			tt.data = unsafe.Pointer(ptr)
-			tt.hdr.Data = ptr
-			tt.hdr.Len = int(memsize / tt.t.Size())
-			tt.hdr.Cap = int(memsize / tt.t.Size())
+			tt.ptr = unsafe.Pointer(ptr)
+			tt.l = int(memsize / tt.t.Size())
+			tt.c = int(memsize / tt.t.Size())
 
 			tt.flag = MakeMemoryFlag(tt.flag, ManuallyManaged)
 
 			switch tt.t {
 			case Bool:
-				tt.v = *(*[]bool)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]bool)(unsafe.Pointer(&tt.header))
 			case Int:
-				tt.v = *(*[]int)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]int)(unsafe.Pointer(&tt.header))
 			case Int8:
-				tt.v = *(*[]int8)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]int8)(unsafe.Pointer(&tt.header))
 			case Int16:
-				tt.v = *(*[]int16)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]int16)(unsafe.Pointer(&tt.header))
 			case Int32:
-				tt.v = *(*[]int32)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]int32)(unsafe.Pointer(&tt.header))
 			case Int64:
-				tt.v = *(*[]int64)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]int64)(unsafe.Pointer(&tt.header))
 			case Uint:
-				tt.v = *(*[]uint)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]uint)(unsafe.Pointer(&tt.header))
 			case Byte:
-				tt.v = *(*[]uint8)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]uint8)(unsafe.Pointer(&tt.header))
 			case Uint16:
-				tt.v = *(*[]uint16)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]uint16)(unsafe.Pointer(&tt.header))
 			case Uint32:
-				tt.v = *(*[]uint32)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]uint32)(unsafe.Pointer(&tt.header))
 			case Uint64:
-				tt.v = *(*[]uint64)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]uint64)(unsafe.Pointer(&tt.header))
 			case Float32:
-				tt.v = *(*[]float32)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]float32)(unsafe.Pointer(&tt.header))
 			case Float64:
-				tt.v = *(*[]float64)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]float64)(unsafe.Pointer(&tt.header))
 			case Complex64:
-				tt.v = *(*[]complex64)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]complex64)(unsafe.Pointer(&tt.header))
 			case Complex128:
-				tt.v = *(*[]complex128)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]complex128)(unsafe.Pointer(&tt.header))
 			case String:
-				tt.v = *(*[]string)(unsafe.Pointer(tt.hdr))
+				tt.v = *(*[]string)(unsafe.Pointer(&tt.header))
 			default:
 				panic("Unsupported Dtype for using the FromMemory construction option")
 			}

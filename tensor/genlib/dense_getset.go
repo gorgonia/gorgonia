@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-const asSliceRaw = `func (t *Dense) {{asType . | strip }}s() []{{asType .}} { return *(*[]{{asType .}})(unsafe.Pointer(t.hdr)) }
+const asSliceRaw = `func (t *Dense) {{asType . | strip }}s() []{{asType .}} { return *(*[]{{asType .}})(unsafe.Pointer(&t.header)) }
 `
 const setBasicRaw = `func (t *Dense) set{{short .}}(i int, x {{asType .}}) { t.{{sliceOf .}}[i] = x }
 `
@@ -23,7 +23,7 @@ func (t *Dense) Get(i int) interface{} {
 		{{end -}}
 	{{end -}}
 	default:
-		at := uintptr(t.data) + uintptr(i) * t.t.Size()
+		at := uintptr(t.ptr) + uintptr(i) * t.t.Size()
 		val := reflect.NewAt(t.t, unsafe.Pointer(at))
 		val = reflect.Indirect(val)
 		return val.Interface()
@@ -44,7 +44,7 @@ func (t *Dense) Set(i int, x interface{}) {
 	{{end -}}
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.data)
+		ptr := uintptr(t.ptr)
 		want := ptr + uintptr(i)*t.t.Size()
 		val := reflect.NewAt(t.t, unsafe.Pointer(want))
 		val = reflect.Indirect(val)
@@ -76,8 +76,8 @@ func (t *Dense) Memset(x interface{}) error {
 	{{end -}}
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.data)
-		for i := 0; i < t.hdr.Len; i++ {
+		ptr := uintptr(t.ptr)
+		for i := 0; i < t.l; i++ {
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
 			val = reflect.Indirect(val)
@@ -108,7 +108,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 	{{end -}}
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.data)
+		ptr := uintptr(t.ptr)
 		for i, err = it.Next(); err == nil; i, err = it.Next(){
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
@@ -148,8 +148,8 @@ func (t *Dense) Zero() {
 		{{end -}}
 	{{end -}}
 	default:
-		ptr := uintptr(t.data)
-		for i := 0; i < t.hdr.Len; i++ {
+		ptr := uintptr(t.ptr)
+		for i := 0; i < t.l; i++ {
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
 			val = reflect.Indirect(val)
@@ -178,7 +178,7 @@ func (t *Dense) zeroIter() (err error){
 		{{end -}}
 	{{end -}}
 	default:
-		ptr := uintptr(t.data)
+		ptr := uintptr(t.ptr)
 		for i, err = it.Next(); err == nil; i, err = it.Next(){
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
@@ -196,13 +196,10 @@ const makeDataRaw = `func (t *Dense) makeArray(size int) {
 		if err != nil {
 			panic(err)
 		}
-		if t.hdr == nil {
-			t.hdr = new(reflect.SliceHeader)
-		}
-		t.data = mem.Pointer()
-		t.hdr.Data = mem.Uintptr()
-		t.hdr.Len = size
-		t.hdr.Cap = size
+	
+		t.ptr = mem.Pointer()
+		t.l = size
+		t.c = size
 		switch t.t.Kind() {
 		{{range .Kinds -}}
 			{{if isParameterized .}}

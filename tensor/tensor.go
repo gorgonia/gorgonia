@@ -16,7 +16,6 @@ import (
 // It can be used to represent a vector, matrix, 3D matrix and n-dimensional tensors.
 type Tensor interface {
 	// info about the ndarray
-	Info() *AP
 	Shape() Shape
 	Strides() []int
 	Dtype() Dtype
@@ -136,7 +135,7 @@ func getFloatDense(t Tensor) (retVal *Dense, err error) {
 		return
 	}
 	if !isFloat(retVal.t) {
-		err = errors.Errorf(dtypeMismatch, retVal.t, retVal.data)
+		err = errors.Errorf(dtypeMismatch, retVal.t, retVal.ptr)
 		return
 	}
 	return
