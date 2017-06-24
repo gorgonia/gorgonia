@@ -99,7 +99,7 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 		}
 		ap2 := NewAP(it.shape[:maxDims], it.strides[offset:offset+maxDims])
 		ap2.o = ap.o
-		ap2.t = ap.t
+		ap2.Δ = ap.Δ
 
 		it.whichBlock[i] = f
 		it.fitArr[nBlocks-1] = NewFlatIterator(ap2)

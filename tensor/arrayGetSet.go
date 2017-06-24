@@ -1,6 +1,9 @@
 package tensor
 
-import "unsafe"
+import (
+	"reflect"
+	"unsafe"
+)
 
 /*
 GENERATED FILE. DO NOT EDIT
@@ -113,3 +116,117 @@ func (h *header) getStr(i int) string    { return h.strings()[i] }
 func (h *header) unsafePointers() []unsafe.Pointer         { return *(*[]unsafe.Pointer)(unsafe.Pointer(h)) }
 func (h *header) setUnsafePointer(i int, x unsafe.Pointer) { h.unsafePointers()[i] = x }
 func (h *header) getUnsafePointer(i int) unsafe.Pointer    { return h.unsafePointers()[i] }
+
+// Set sets the value of the underlying array at the index i.
+func (a *array) Set(i int, x interface{}) {
+	switch a.t.Kind() {
+	case reflect.Bool:
+		xv := x.(bool)
+		a.setB(i, xv)
+	case reflect.Int:
+		xv := x.(int)
+		a.setI(i, xv)
+	case reflect.Int8:
+		xv := x.(int8)
+		a.setI8(i, xv)
+	case reflect.Int16:
+		xv := x.(int16)
+		a.setI16(i, xv)
+	case reflect.Int32:
+		xv := x.(int32)
+		a.setI32(i, xv)
+	case reflect.Int64:
+		xv := x.(int64)
+		a.setI64(i, xv)
+	case reflect.Uint:
+		xv := x.(uint)
+		a.setU(i, xv)
+	case reflect.Uint8:
+		xv := x.(uint8)
+		a.setU8(i, xv)
+	case reflect.Uint16:
+		xv := x.(uint16)
+		a.setU16(i, xv)
+	case reflect.Uint32:
+		xv := x.(uint32)
+		a.setU32(i, xv)
+	case reflect.Uint64:
+		xv := x.(uint64)
+		a.setU64(i, xv)
+	case reflect.Uintptr:
+		xv := x.(uintptr)
+		a.setUintptr(i, xv)
+	case reflect.Float32:
+		xv := x.(float32)
+		a.setF32(i, xv)
+	case reflect.Float64:
+		xv := x.(float64)
+		a.setF64(i, xv)
+	case reflect.Complex64:
+		xv := x.(complex64)
+		a.setC64(i, xv)
+	case reflect.Complex128:
+		xv := x.(complex128)
+		a.setC128(i, xv)
+	case reflect.String:
+		xv := x.(string)
+		a.setStr(i, xv)
+	case reflect.UnsafePointer:
+		xv := x.(unsafe.Pointer)
+		a.setUnsafePointer(i, xv)
+	default:
+		xv := reflect.ValueOf(x)
+		ptr := uintptr(a.ptr)
+		want := ptr + uintptr(i)*a.t.Size()
+		val := reflect.NewAt(a.t, unsafe.Pointer(want))
+		val = reflect.Indirect(val)
+		val.Set(xv)
+	}
+}
+
+// Get returns the ith element of the underlying array of the *Dense tensor.
+func (a *array) Get(i int) interface{} {
+	switch a.t.Kind() {
+	case reflect.Bool:
+		return a.getB(i)
+	case reflect.Int:
+		return a.getI(i)
+	case reflect.Int8:
+		return a.getI8(i)
+	case reflect.Int16:
+		return a.getI16(i)
+	case reflect.Int32:
+		return a.getI32(i)
+	case reflect.Int64:
+		return a.getI64(i)
+	case reflect.Uint:
+		return a.getU(i)
+	case reflect.Uint8:
+		return a.getU8(i)
+	case reflect.Uint16:
+		return a.getU16(i)
+	case reflect.Uint32:
+		return a.getU32(i)
+	case reflect.Uint64:
+		return a.getU64(i)
+	case reflect.Uintptr:
+		return a.getUintptr(i)
+	case reflect.Float32:
+		return a.getF32(i)
+	case reflect.Float64:
+		return a.getF64(i)
+	case reflect.Complex64:
+		return a.getC64(i)
+	case reflect.Complex128:
+		return a.getC128(i)
+	case reflect.String:
+		return a.getStr(i)
+	case reflect.UnsafePointer:
+		return a.getUnsafePointer(i)
+	default:
+		at := uintptr(a.ptr) + uintptr(i)*a.t.Size()
+		val := reflect.NewAt(a.t, unsafe.Pointer(at))
+		val = reflect.Indirect(val)
+		return val.Interface()
+	}
+}

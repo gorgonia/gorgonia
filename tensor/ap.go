@@ -23,7 +23,7 @@ type AP struct {
 	fin     bool  // is this struct change-proof?
 
 	o DataOrder
-	t Triangle
+	Δ Triangle
 }
 
 // NewAP creates a new AP, given the shape and strides

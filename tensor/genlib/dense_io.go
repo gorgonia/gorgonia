@@ -165,7 +165,7 @@ func (t *Dense) GobEncode() (p []byte, err error){
 		return
 	}
 
-	if err = encoder.Encode(t.AP.t); err != nil {
+	if err = encoder.Encode(t.AP.Δ); err != nil {
 		return
 	}
 
@@ -225,7 +225,7 @@ func (t *Dense) GobDecode(p []byte) (err error){
 
 	t.AP = NewAP(shape, strides)
 	t.AP.o = o
-	t.AP.t = tr
+	t.AP.Δ = tr
 
 	var mask []bool
 	if err = decoder.Decode(&mask); err != nil {

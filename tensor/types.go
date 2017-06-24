@@ -10,24 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// header is like reflect.SliceHeader. It is used to do very dirty dirty things.
-type header struct {
-	ptr unsafe.Pointer
-	l   int
-	c   int
-}
-
-// makeArray makes an array. The memory allocation is handled by Go
-func makeArray(t Dtype, length int) header {
-	size := int(calcMemSize(t, length))
-	s := make([]byte, size)
-	return header{
-		ptr: unsafe.Pointer(&s[0]),
-		l:   length,
-		c:   length,
-	}
-}
-
 // Dtype represents a data type of a Tensor. Concretely it's implemented as an embedded reflect.Type
 // which allows for easy reflection operations. It also implements hm.Type, for type inference in Gorgonia
 type Dtype struct {

@@ -6,48 +6,6 @@ import (
 	"text/template"
 )
 
-const getRaw = `// Get returns the ith element of the underlying array of the *Dense tensor.
-func (t *Dense) Get(i int) interface{} {
-	switch t.t.Kind() {
-	{{range .Kinds -}}
-		{{if isParameterized . -}}
-		{{else -}}
-	case reflect.{{reflectKind .}}:
-		return t.get{{short .}}(i)
-		{{end -}}
-	{{end -}}
-	default:
-		at := uintptr(t.ptr) + uintptr(i) * t.t.Size()
-		val := reflect.NewAt(t.t, unsafe.Pointer(at))
-		val = reflect.Indirect(val)
-		return val.Interface()
-	}
-}
-
-`
-const setRaw = `// Set sets the value of the underlying array at the index i. 
-func (t *Dense) Set(i int, x interface{}) {
-	switch t.t.Kind() {
-	{{range .Kinds -}}
-		{{if isParameterized . -}}
-		{{else -}}
-	case reflect.{{reflectKind .}}:
-		xv := x.({{asType .}})
-		t.set{{short .}}(i, xv)
-		{{end -}}
-	{{end -}}
-	default:
-		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.ptr)
-		want := ptr + uintptr(i)*t.t.Size()
-		val := reflect.NewAt(t.t, unsafe.Pointer(want))
-		val = reflect.Indirect(val)
-		val.Set(xv)
-	}
-}
-
-`
-
 const memsetRaw = `// Memset sets all values in the *Dense tensor to x.
 func (t *Dense) Memset(x interface{}) error {
 	if t.IsMaterializable() {
@@ -370,12 +328,8 @@ func (t *Dense) Eq(other interface{}) bool {
 `
 
 var (
-	AsSlice    *template.Template
-	Get        *template.Template
-	Set        *template.Template
 	Memset     *template.Template
 	Zero       *template.Template
-	MakeData   *template.Template
 	Copy       *template.Template
 	CopySliced *template.Template
 	CopyIter   *template.Template
@@ -384,12 +338,9 @@ var (
 )
 
 func init() {
-	AsSlice = template.Must(template.New("AsSlice").Funcs(funcs).Parse(asSliceRaw))
-
-	Get = template.Must(template.New("Get").Funcs(funcs).Parse(getRaw))
-	Set = template.Must(template.New("Set").Funcs(funcs).Parse(setRaw))
 	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
 	Zero = template.Must(template.New("Zero").Funcs(funcs).Parse(zeroRaw))
+
 	Copy = template.Must(template.New("copy").Funcs(funcs).Parse(copyRaw))
 	CopySliced = template.Must(template.New("copySliced").Funcs(funcs).Parse(copySlicedRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
@@ -399,9 +350,6 @@ func init() {
 
 func getset(f io.Writer, generic *ManyKinds) {
 	fmt.Fprintf(f, "\n\n\n")
-	Set.Execute(f, generic)
-	fmt.Fprintf(f, "\n\n\n")
-	Get.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Memset.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")

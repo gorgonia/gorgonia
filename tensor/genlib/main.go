@@ -20,7 +20,7 @@ func main() {
 		genUtilsName                  = "../genericUtils.go"
 		transposeName                 = "../dense_transpose_specializations.go"
 		viewStackName                 = "../dense_viewstack_specializations.go"
-		genericGetSetName             = "../genericGetSet.go"
+		arrayGetSetName               = "../arrayGetSet.go"
 		genericArithName              = "../genericArith.go"
 		genericCmpName                = "../genericCmp.go"
 		denseArithName                = "../dense_arith.go"
@@ -47,7 +47,6 @@ func main() {
 		denseGenTestsName             = "../dense_generated_test.go"
 		denseIOName                   = "../dense_io.go"
 		denseIOTestsName              = "../dense_io_test.go"
-		blah                          = "../__blah__.go"
 
 		testTestName = "../test_test.go"
 	)
@@ -57,7 +56,7 @@ func main() {
 	pipeline(genUtilsName, mk, utils)
 	pipeline(transposeName, mk, transpose)
 	pipeline(viewStackName, mk, viewstack)
-	pipeline(genericGetSetName, mk, genericGetSet)
+	pipeline(arrayGetSetName, mk, arrayGetSet)
 	pipeline(genericArithName, mk, genericArith)
 	pipeline(genericCmpName, mk, genericCmp)
 	pipeline(denseArithName, mk, arith)
@@ -85,7 +84,7 @@ func main() {
 	pipeline(denseGenTestsName, mk, generateDenseTests)
 	pipeline(denseIOName, mk, generateDenseIO)
 	pipeline(denseIOTestsName, mk, generateDenseIOTests)
-	pipeline(blah, mk, maskcmpmethods)
+	// pipeline(blah, mk, maskcmpmethods)
 }
 
 func makeManyKinds() *ManyKinds {

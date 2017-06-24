@@ -15,12 +15,10 @@ const (
 // Dense represents a dense tensor - this is the most common form of tensors. It can be used to represent vectors, matrices.. etc
 type Dense struct {
 	*AP
-	flag MemoryFlag
+	array
 
-	header             // the header
-	v      interface{} // we keep another reference to the underlying slice
-	t      Dtype       // the element type
-	e      Engine      // execution engine for the *Dense (optional)
+	flag MemoryFlag
+	e    Engine // execution engine for the *Dense (optional)
 
 	// backup AP. When a transpose is done, the old *AP is backed up here, for easy untransposes
 	old           *AP
@@ -113,24 +111,14 @@ func (t *Dense) makeArray(size int) {
 			panic(err)
 		}
 
-		t.ptr = mem.Pointer()
-		t.l = size
-		t.c = size
-
-	} else {
-		t.header = makeArray(t.t, size)
+		var hdr header
+		hdr.ptr = mem.Pointer()
+		hdr.l = size
+		hdr.c = size
+		t.array = makeArrayFromHeader(hdr, t.t)
+		return
 	}
-	// build a type of []T
-	hdr := reflect.SliceHeader{
-		Data: uintptr(t.ptr),
-		Len:  t.l,
-		Cap:  t.l,
-	}
-	sliceT := reflect.SliceOf(t.t.Type)
-	ptr := unsafe.Pointer(&hdr)
-	val := reflect.Indirect(reflect.NewAt(sliceT, ptr))
-	t.v = val.Interface()
-	return
+	t.array = makeArray(t.t, size)
 }
 
 // Info returns the access pattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
@@ -362,9 +350,7 @@ func (t *Dense) shallowClone() *Dense {
 	retVal := new(Dense)
 	retVal.AP = t.AP.Clone()
 	retVal.flag = t.flag
-	retVal.v = t.v
-	retVal.t = t.t
-	retVal.header = t.header
+	retVal.array = t.array
 	return retVal
 }
 
@@ -542,3 +528,14 @@ func (t *Dense) MaskFromSlice(x interface{}) {
 		return
 	}
 }
+
+// func copyDense(dest, src *Dense) int {
+// 	if src.IsMasked() {
+// 		if cap(dest.mask) < len(src.mask) {
+// 			dest.mask = make([]bool, len(src.mask))
+// 		}
+// 		copy(dest.mask, src.mask)
+// 		dest.mask = dest.mask[:len(src.mask)]
+// 	}
+// 	return copyArray(dest.array, src.array)
+// }

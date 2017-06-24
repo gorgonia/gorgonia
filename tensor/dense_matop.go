@@ -367,7 +367,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 	view.flag = t.flag
 	view.viewOf = t
 	view.AP = newAP
-	view.header = t.header
+	view.array = t.array
 	view.slice(ndStart, ndEnd)
 
 	if t.IsMasked() {
@@ -533,7 +533,7 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 	}
 	ap := NewAP(newShape, newStrides)
 	ap.o = t.AP.o
-	ap.t = t.AP.t
+	ap.Δ = t.AP.Δ
 
 	allNoMat := !t.IsMaterializable()
 	for _, ot := range others {
