@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"fmt"
-	"reflect"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -76,24 +75,7 @@ func newDense(dt Dtype, size int) *Dense {
 }
 
 func (t *Dense) fromSlice(x interface{}) {
-	xt := reflect.TypeOf(x)
-	if xt.Kind() != reflect.Slice {
-		panic("Not a slice")
-	}
-
-	xt = xt.Elem()
-
-	xv := reflect.ValueOf(x)
-	ptr := xv.Pointer()
-	uptr := unsafe.Pointer(ptr)
-
-	// set the underlying array
-	t.ptr = uptr
-	t.l = xv.Len()
-	t.c = xv.Cap()
-
-	t.v = x
-	t.t = Dtype{xt}
+	t.array = arrayFromSlice(x)
 }
 
 func (t *Dense) addMask(mask []bool) {

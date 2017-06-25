@@ -55,6 +55,28 @@ func makeArrayFromHeader(hdr header, t Dtype) array {
 	}
 }
 
+func arrayFromSlice(x interface{}) array {
+	xT := reflect.TypeOf(x)
+	if xT.Kind() != reflect.Slice {
+		panic("Expected a slice")
+	}
+	elT := xT.Elem()
+
+	xV := reflect.ValueOf(x)
+	ptr := xV.Pointer()
+	uptr := unsafe.Pointer(ptr)
+
+	return array{
+		header: header{
+			ptr: uptr,
+			l:   xV.Len(),
+			c:   xV.Cap(),
+		},
+		t: Dtype{elT},
+		v: x,
+	}
+}
+
 // byteSlice casts the underlying slice into a byte slice. Useful for copying and zeroing, but not much else
 func (a array) byteSlice() []byte {
 	size := a.l * int(a.t.Size())

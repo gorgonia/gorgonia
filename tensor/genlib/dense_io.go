@@ -149,9 +149,6 @@ const gobEncodeRaw = `// GobEncode implements gob.GobEncoder
 func (t *Dense) GobEncode() (p []byte, err error){
 	var buf bytes.Buffer
 	encoder := gob.NewEncoder(&buf)
-	if err = encoder.Encode(t.t.id()); err != nil {
-		return
-	}
 
 	if err = encoder.Encode(t.Shape()); err != nil {
 		return
@@ -173,17 +170,9 @@ func (t *Dense) GobEncode() (p []byte, err error){
 		return
 	}
 
-	switch t.t.Kind() {
-	{{range .Kinds -}}
-	case reflect.{{reflectKind .}}:
-		if err = encoder.Encode(t.{{sliceOf .}}); err != nil {
-			return
-		}
-	{{end -}}
-	case reflect.String:
-		if err = encoder.Encode(t.strings()); err != nil {
-			return
-		}
+	data := t.Data()
+	if err = encoder.Encode(&data); err != nil {
+		return
 	}
 	
 	return buf.Bytes(), err
@@ -195,16 +184,7 @@ func (t *Dense) GobDecode(p []byte) (err error){
 	buf := bytes.NewBuffer(p)
 	decoder := gob.NewDecoder(buf)
 
-	var dt Dtype
-	var id int
-	if err = decoder.Decode(&id); err != nil {
-		return
-	}
-	if dt, err = fromTypeID(id); err != nil {
-		return
-	}
-	t.t = dt
-
+	
 	var shape Shape
 	if err = decoder.Decode(&shape); err != nil {
 		return
@@ -232,24 +212,12 @@ func (t *Dense) GobDecode(p []byte) (err error){
 		return
 	}
 	
-	switch dt.Kind() {
-	{{range .Kinds -}}
-	case reflect.{{reflectKind . -}}:
-		var data []{{asType .}}
-		if err = decoder.Decode(&data); err != nil {
-			return
-		}
-		t.fromSlice(data)
-	{{end -}}
-	case reflect.String:
-		var data []string
-		if err = decoder.Decode(&data); err != nil {
-			return
-		}
-		t.fromSlice(data)
+	var data interface{}
+	if err = decoder.Decode(&data); err != nil {
+		return
 	}
+	t.fromSlice(data)
 	t.addMask(mask)
-
 	t.fix()
 	return t.sanity()
 }
