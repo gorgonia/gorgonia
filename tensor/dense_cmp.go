@@ -93,13 +93,13 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	var ret interface{} // slice of some sort
 	switch t.t.Kind() {
 
 	case reflect.Bool:
 		td := t.bools()
 		od := other.bools()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -142,13 +142,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = eqDDBoolsB(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -237,13 +235,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsI(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -332,13 +328,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsI8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -427,13 +421,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsI16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -522,13 +514,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsI32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -617,13 +607,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsI64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -712,13 +700,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsU(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -807,13 +793,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsU8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -902,13 +886,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsU16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -997,13 +979,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsU32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1092,13 +1072,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsU64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uintptr:
 		td := t.uintptrs()
 		od := other.uintptrs()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1141,13 +1119,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = eqDDBoolsUintptr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1236,13 +1212,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsF32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1331,13 +1305,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsF64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Complex64:
 		td := t.complex64s()
 		od := other.complex64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1426,13 +1398,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsC64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Complex128:
 		td := t.complex128s()
 		od := other.complex128s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1521,13 +1491,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = eqDDBoolsC128(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1570,13 +1538,11 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = eqDDBoolsStr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.UnsafePointer:
 		td := t.unsafePointers()
 		od := other.unsafePointers()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1619,7 +1585,6 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = eqDDBoolsUnsafePointer(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "eq")
@@ -1628,7 +1593,7 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	if err != nil {
 		return
 	}
-
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -1654,13 +1619,13 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	var ret interface{} // slice of some sort
 	switch t.t.Kind() {
 
 	case reflect.Bool:
 		td := t.bools()
 		od := other.bools()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1703,13 +1668,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = neDDBoolsB(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1798,13 +1761,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsI(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1893,13 +1854,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsI8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -1988,13 +1947,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsI16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2083,13 +2040,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsI32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2178,13 +2133,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsI64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2273,13 +2226,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsU(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2368,13 +2319,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsU8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2463,13 +2412,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsU16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2558,13 +2505,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsU32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2653,13 +2598,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsU64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uintptr:
 		td := t.uintptrs()
 		od := other.uintptrs()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2702,13 +2645,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = neDDBoolsUintptr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2797,13 +2738,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsF32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2892,13 +2831,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsF64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Complex64:
 		td := t.complex64s()
 		od := other.complex64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -2987,13 +2924,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsC64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Complex128:
 		td := t.complex128s()
 		od := other.complex128s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3082,13 +3017,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = neDDBoolsC128(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3131,13 +3064,11 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = neDDBoolsStr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.UnsafePointer:
 		td := t.unsafePointers()
 		od := other.unsafePointers()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3180,7 +3111,6 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = neDDBoolsUnsafePointer(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "ne")
@@ -3189,7 +3119,7 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	if err != nil {
 		return
 	}
-
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -3215,13 +3145,13 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	var ret interface{} // slice of some sort
 	switch t.t.Kind() {
 
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3310,13 +3240,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsI(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3405,13 +3333,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsI8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3500,13 +3426,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsI16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3595,13 +3519,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsI32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3690,13 +3612,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsI64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3785,13 +3705,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsU(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3880,13 +3798,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsU8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -3975,13 +3891,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsU16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4070,13 +3984,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsU32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4165,13 +4077,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsU64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4260,13 +4170,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsF32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4355,13 +4263,11 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = gtDDBoolsF64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4404,7 +4310,6 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = gtDDBoolsStr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "gt")
@@ -4413,7 +4318,7 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	if err != nil {
 		return
 	}
-
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -4439,13 +4344,13 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	}
 
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	var ret interface{} // slice of some sort
 	switch t.t.Kind() {
 
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4534,13 +4439,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsI(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4629,13 +4532,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsI8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4724,13 +4625,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsI16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4819,13 +4718,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsI32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -4914,13 +4811,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsI64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5009,13 +4904,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsU(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5104,13 +4997,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsU8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5199,13 +5090,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsU16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5294,13 +5183,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsU32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5389,13 +5276,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsU64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5484,13 +5369,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsF32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5579,13 +5462,11 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = gteDDBoolsF64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5628,7 +5509,6 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		default:
 			ret = gteDDBoolsStr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "gte")
@@ -5637,7 +5517,7 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	if err != nil {
 		return
 	}
-
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -5663,13 +5543,13 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	}
 
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	var ret interface{} // slice of some sort
 	switch t.t.Kind() {
 
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5758,13 +5638,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsI(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5853,13 +5731,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsI8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -5948,13 +5824,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsI16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6043,13 +5917,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsI32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6138,13 +6010,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsI64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6233,13 +6103,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsU(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6328,13 +6196,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsU8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6423,13 +6289,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsU16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6518,13 +6382,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsU32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6613,13 +6475,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsU64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6708,13 +6568,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsF32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6803,13 +6661,11 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 				ret = ltDDBoolsF64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6852,7 +6708,6 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		default:
 			ret = ltDDBoolsStr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "lt")
@@ -6861,7 +6716,7 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	if err != nil {
 		return
 	}
-
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -6887,13 +6742,13 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	}
 
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	var ret interface{} // slice of some sort
 	switch t.t.Kind() {
 
 	case reflect.Int:
 		td := t.ints()
 		od := other.ints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -6982,13 +6837,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsI(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int8:
 		td := t.int8s()
 		od := other.int8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7077,13 +6930,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsI8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int16:
 		td := t.int16s()
 		od := other.int16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7172,13 +7023,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsI16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int32:
 		td := t.int32s()
 		od := other.int32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7267,13 +7116,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsI32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Int64:
 		td := t.int64s()
 		od := other.int64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7362,13 +7209,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsI64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint:
 		td := t.uints()
 		od := other.uints()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7457,13 +7302,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsU(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint8:
 		td := t.uint8s()
 		od := other.uint8s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7552,13 +7395,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsU8(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint16:
 		td := t.uint16s()
 		od := other.uint16s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7647,13 +7488,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsU16(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint32:
 		td := t.uint32s()
 		od := other.uint32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7742,13 +7581,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsU32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Uint64:
 		td := t.uint64s()
 		od := other.uint64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7837,13 +7674,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsU64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float32:
 		td := t.float32s()
 		od := other.float32s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -7932,13 +7767,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsF32(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.Float64:
 		td := t.float64s()
 		od := other.float64s()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8027,13 +7860,11 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 				ret = lteDDBoolsF64(td, od)
 			}
 		}
-		retVal.fromSlice(ret)
 
 	case reflect.String:
 		td := t.strings()
 		od := other.strings()
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8076,7 +7907,6 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		default:
 			ret = lteDDBoolsStr(td, od)
 		}
-		retVal.fromSlice(ret)
 
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "lte")
@@ -8085,7 +7915,7 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	if err != nil {
 		return
 	}
-
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -8110,12 +7940,12 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		return nil, err
 	}
 
+	var ret interface{} // slice of some sort
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Bool:
 		data := t.bools()
 		b := other.(bool)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8129,11 +7959,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = eqDSBoolsB(data, b)
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int:
 		data := t.ints()
 		b := other.(int)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8166,11 +7994,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsI(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int8:
 		data := t.int8s()
 		b := other.(int8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8203,11 +8029,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsI8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int16:
 		data := t.int16s()
 		b := other.(int16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8240,11 +8064,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsI16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int32:
 		data := t.int32s()
 		b := other.(int32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8277,11 +8099,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsI32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int64:
 		data := t.int64s()
 		b := other.(int64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8314,11 +8134,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsI64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint:
 		data := t.uints()
 		b := other.(uint)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8351,11 +8169,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsU(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint8:
 		data := t.uint8s()
 		b := other.(uint8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8388,11 +8204,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsU8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint16:
 		data := t.uint16s()
 		b := other.(uint16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8425,11 +8239,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsU16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint32:
 		data := t.uint32s()
 		b := other.(uint32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8462,11 +8274,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsU32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint64:
 		data := t.uint64s()
 		b := other.(uint64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8499,11 +8309,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsU64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uintptr:
 		data := t.uintptrs()
 		b := other.(uintptr)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8517,11 +8325,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = eqDSBoolsUintptr(data, b)
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8554,11 +8360,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsF32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float64:
 		data := t.float64s()
 		b := other.(float64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8591,11 +8395,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsF64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Complex64:
 		data := t.complex64s()
 		b := other.(complex64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8628,11 +8430,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsC64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Complex128:
 		data := t.complex128s()
 		b := other.(complex128)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8665,11 +8465,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = eqDSBoolsC128(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.String:
 		data := t.strings()
 		b := other.(string)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8683,11 +8481,9 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = eqDSBoolsStr(data, b)
 		}
-		retVal.fromSlice(ret)
 	case reflect.UnsafePointer:
 		data := t.unsafePointers()
 		b := other.(unsafe.Pointer)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8701,11 +8497,11 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = eqDSBoolsUnsafePointer(data, b)
 		}
-		retVal.fromSlice(ret)
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "eq")
 		return
 	}
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -8730,12 +8526,12 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		return nil, err
 	}
 
+	var ret interface{} // slice of some sort
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Bool:
 		data := t.bools()
 		b := other.(bool)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8749,11 +8545,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = neDSBoolsB(data, b)
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int:
 		data := t.ints()
 		b := other.(int)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8786,11 +8580,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsI(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int8:
 		data := t.int8s()
 		b := other.(int8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8823,11 +8615,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsI8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int16:
 		data := t.int16s()
 		b := other.(int16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8860,11 +8650,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsI16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int32:
 		data := t.int32s()
 		b := other.(int32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8897,11 +8685,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsI32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int64:
 		data := t.int64s()
 		b := other.(int64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8934,11 +8720,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsI64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint:
 		data := t.uints()
 		b := other.(uint)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -8971,11 +8755,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsU(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint8:
 		data := t.uint8s()
 		b := other.(uint8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9008,11 +8790,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsU8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint16:
 		data := t.uint16s()
 		b := other.(uint16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9045,11 +8825,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsU16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint32:
 		data := t.uint32s()
 		b := other.(uint32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9082,11 +8860,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsU32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint64:
 		data := t.uint64s()
 		b := other.(uint64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9119,11 +8895,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsU64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uintptr:
 		data := t.uintptrs()
 		b := other.(uintptr)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9137,11 +8911,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = neDSBoolsUintptr(data, b)
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9174,11 +8946,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsF32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float64:
 		data := t.float64s()
 		b := other.(float64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9211,11 +8981,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsF64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Complex64:
 		data := t.complex64s()
 		b := other.(complex64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9248,11 +9016,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsC64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Complex128:
 		data := t.complex128s()
 		b := other.(complex128)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9285,11 +9051,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = neDSBoolsC128(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.String:
 		data := t.strings()
 		b := other.(string)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9303,11 +9067,9 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = neDSBoolsStr(data, b)
 		}
-		retVal.fromSlice(ret)
 	case reflect.UnsafePointer:
 		data := t.unsafePointers()
 		b := other.(unsafe.Pointer)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9321,11 +9083,11 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = neDSBoolsUnsafePointer(data, b)
 		}
-		retVal.fromSlice(ret)
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "ne")
 		return
 	}
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -9350,12 +9112,12 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		return nil, err
 	}
 
+	var ret interface{} // slice of some sort
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
 		data := t.ints()
 		b := other.(int)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9388,11 +9150,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsI(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int8:
 		data := t.int8s()
 		b := other.(int8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9425,11 +9185,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsI8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int16:
 		data := t.int16s()
 		b := other.(int16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9462,11 +9220,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsI16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int32:
 		data := t.int32s()
 		b := other.(int32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9499,11 +9255,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsI32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int64:
 		data := t.int64s()
 		b := other.(int64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9536,11 +9290,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsI64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint:
 		data := t.uints()
 		b := other.(uint)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9573,11 +9325,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsU(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint8:
 		data := t.uint8s()
 		b := other.(uint8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9610,11 +9360,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsU8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint16:
 		data := t.uint16s()
 		b := other.(uint16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9647,11 +9395,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsU16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint32:
 		data := t.uint32s()
 		b := other.(uint32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9684,11 +9430,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsU32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint64:
 		data := t.uint64s()
 		b := other.(uint64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9721,11 +9465,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsU64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9758,11 +9500,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsF32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float64:
 		data := t.float64s()
 		b := other.(float64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9795,11 +9535,9 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = gtDSBoolsF64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.String:
 		data := t.strings()
 		b := other.(string)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9813,11 +9551,11 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = gtDSBoolsStr(data, b)
 		}
-		retVal.fromSlice(ret)
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "gt")
 		return
 	}
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -9842,12 +9580,12 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		return nil, err
 	}
 
+	var ret interface{} // slice of some sort
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
 		data := t.ints()
 		b := other.(int)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9880,11 +9618,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsI(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int8:
 		data := t.int8s()
 		b := other.(int8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9917,11 +9653,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsI8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int16:
 		data := t.int16s()
 		b := other.(int16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9954,11 +9688,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsI16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int32:
 		data := t.int32s()
 		b := other.(int32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -9991,11 +9723,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsI32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int64:
 		data := t.int64s()
 		b := other.(int64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10028,11 +9758,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsI64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint:
 		data := t.uints()
 		b := other.(uint)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10065,11 +9793,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsU(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint8:
 		data := t.uint8s()
 		b := other.(uint8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10102,11 +9828,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsU8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint16:
 		data := t.uint16s()
 		b := other.(uint16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10139,11 +9863,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsU16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint32:
 		data := t.uint32s()
 		b := other.(uint32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10176,11 +9898,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsU32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint64:
 		data := t.uint64s()
 		b := other.(uint64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10213,11 +9933,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsU64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10250,11 +9968,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsF32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float64:
 		data := t.float64s()
 		b := other.(float64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10287,11 +10003,9 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = gteDSBoolsF64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.String:
 		data := t.strings()
 		b := other.(string)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10305,11 +10019,11 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		default:
 			ret = gteDSBoolsStr(data, b)
 		}
-		retVal.fromSlice(ret)
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "gte")
 		return
 	}
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -10334,12 +10048,12 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		return nil, err
 	}
 
+	var ret interface{} // slice of some sort
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
 		data := t.ints()
 		b := other.(int)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10372,11 +10086,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsI(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int8:
 		data := t.int8s()
 		b := other.(int8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10409,11 +10121,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsI8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int16:
 		data := t.int16s()
 		b := other.(int16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10446,11 +10156,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsI16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int32:
 		data := t.int32s()
 		b := other.(int32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10483,11 +10191,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsI32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int64:
 		data := t.int64s()
 		b := other.(int64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10520,11 +10226,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsI64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint:
 		data := t.uints()
 		b := other.(uint)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10557,11 +10261,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsU(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint8:
 		data := t.uint8s()
 		b := other.(uint8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10594,11 +10296,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsU8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint16:
 		data := t.uint16s()
 		b := other.(uint16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10631,11 +10331,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsU16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint32:
 		data := t.uint32s()
 		b := other.(uint32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10668,11 +10366,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsU32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint64:
 		data := t.uint64s()
 		b := other.(uint64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10705,11 +10401,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsU64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10742,11 +10436,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsF32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float64:
 		data := t.float64s()
 		b := other.(float64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10779,11 +10471,9 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 				ret = ltDSBoolsF64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.String:
 		data := t.strings()
 		b := other.(string)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10797,11 +10487,11 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 		default:
 			ret = ltDSBoolsStr(data, b)
 		}
-		retVal.fromSlice(ret)
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "lt")
 		return
 	}
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -10826,12 +10516,12 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		return nil, err
 	}
 
+	var ret interface{} // slice of some sort
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
 		data := t.ints()
 		b := other.(int)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10864,11 +10554,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsI(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int8:
 		data := t.int8s()
 		b := other.(int8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10901,11 +10589,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsI8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int16:
 		data := t.int16s()
 		b := other.(int16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10938,11 +10624,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsI16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int32:
 		data := t.int32s()
 		b := other.(int32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -10975,11 +10659,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsI32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Int64:
 		data := t.int64s()
 		b := other.(int64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11012,11 +10694,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsI64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint:
 		data := t.uints()
 		b := other.(uint)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11049,11 +10729,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsU(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint8:
 		data := t.uint8s()
 		b := other.(uint8)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11086,11 +10764,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsU8(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint16:
 		data := t.uint16s()
 		b := other.(uint16)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11123,11 +10799,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsU16(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint32:
 		data := t.uint32s()
 		b := other.(uint32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11160,11 +10834,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsU32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Uint64:
 		data := t.uint64s()
 		b := other.(uint64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11197,11 +10869,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsU64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float32:
 		data := t.float32s()
 		b := other.(float32)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11234,11 +10904,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsF32(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.Float64:
 		data := t.float64s()
 		b := other.(float64)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11271,11 +10939,9 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 				ret = lteDSBoolsF64(data, b)
 			}
 		}
-		retVal.fromSlice(ret)
 	case reflect.String:
 		data := t.strings()
 		b := other.(string)
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -11289,11 +10955,11 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 		default:
 			ret = lteDSBoolsStr(data, b)
 		}
-		retVal.fromSlice(ret)
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "lte")
 		return
 	}
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 

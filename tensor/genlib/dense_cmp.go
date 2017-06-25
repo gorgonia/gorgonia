@@ -104,6 +104,7 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 	{{$opName := .OpName -}}
 	{{$op := .OpSymb -}}
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
+	var ret interface{} // slice of some sort
 	switch t.t.Kind() {
 	{{range .Kinds -}}
 		{{ $eq := isEq . -}}
@@ -119,7 +120,6 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 		td := t.{{sliceOf .}}
 		od := other.{{sliceOf .}}
 		var i, j, k int
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -239,7 +239,6 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 				ret = {{lower $opName}}DDBools{{short .}}(td, od)
 			{{end -}}
 		}
-		retVal.fromSlice(ret)
 
 		{{end -}}
 
@@ -251,7 +250,7 @@ const eleqordDDRaw = `func (t *Dense) {{lower .OpName}}DD(other *Dense, opts ...
 	if err != nil{
 		return
 	}
-
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 
@@ -280,6 +279,7 @@ const eleqordDSRaw = `func (t *Dense) {{lower .OpName}}DS(other interface{}, opt
 	{{ $opNe := eq $opName "Ne" -}}
 	{{ $opE := or $opEq $opNe}}
 	{{$op := .OpSymb}}
+	var ret interface{} // slice of some sort
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	{{range .Kinds -}}
@@ -291,7 +291,6 @@ const eleqordDSRaw = `func (t *Dense) {{lower .OpName}}DS(other interface{}, opt
 	case reflect.{{reflectKind .}}:
 		data := t.{{sliceOf .}}
 		b := other.({{asType .}})
-		var ret interface{} // slice of some sort
 		switch {
 		case t.IsMaterializable():
 			it := NewFlatIterator(t.AP)
@@ -336,13 +335,13 @@ const eleqordDSRaw = `func (t *Dense) {{lower .OpName}}DS(other interface{}, opt
 			ret = {{lower $opName}}DSBools{{short .}}(data, b)
 			{{end -}}
 		}
-		retVal.fromSlice(ret)
 		{{end -}}
 	{{end -}}
 	default:
 		err = errors.Errorf(unsupportedDtype, t.t, "{{lower .OpName}}")
 		return
 	}
+	retVal.fromSlice(ret)
 	retVal.fix()
 	err = retVal.sanity()
 

@@ -88,6 +88,8 @@ func (a array) byteSlice() []byte {
 	return *(*[]byte)(unsafe.Pointer(&hdr))
 }
 
+func (a array) Data() interface{} { return a.v }
+
 // Zero zeroes out the underlying array of the *Dense tensor
 func (a array) Zero() {
 	if !isParameterizedKind(a.t.Kind()) {
