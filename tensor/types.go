@@ -25,15 +25,6 @@ func (dt Dtype) Types() hm.Types                               { return nil }
 func (dt Dtype) Format(s fmt.State, c rune)                    { fmt.Fprintf(s, "%s", dt.Name()) }
 func (dt Dtype) Eq(other hm.Type) bool                         { return other == dt }
 
-func (dt Dtype) id() int {
-	for i, v := range allTypes {
-		if v == dt {
-			return i
-		}
-	}
-	return -1
-}
-
 // NumpyDtype returns the Numpy's Dtype equivalent. This is predominantly used in converting a Tensor to a Numpy ndarray,
 // however, not all Dtypes are supported
 func (dt Dtype) numpyDtype() (string, error) {
