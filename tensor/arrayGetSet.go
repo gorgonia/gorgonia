@@ -3,6 +3,8 @@ package tensor
 import (
 	"reflect"
 	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 /*
@@ -229,4 +231,323 @@ func (a *array) Get(i int) interface{} {
 		val = reflect.Indirect(val)
 		return val.Interface()
 	}
+}
+
+// Memset sets all values in the array.
+func (a *array) Memset(x interface{}) error {
+	switch a.t.Kind() {
+	case reflect.Bool:
+		xv, ok := x.(bool)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.bools()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int:
+		xv, ok := x.(int)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.ints()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int8:
+		xv, ok := x.(int8)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.int8s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int16:
+		xv, ok := x.(int16)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.int16s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int32:
+		xv, ok := x.(int32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.int32s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Int64:
+		xv, ok := x.(int64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.int64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint:
+		xv, ok := x.(uint)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.uints()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint8:
+		xv, ok := x.(uint8)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.uint8s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint16:
+		xv, ok := x.(uint16)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.uint16s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint32:
+		xv, ok := x.(uint32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.uint32s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uint64:
+		xv, ok := x.(uint64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.uint64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Uintptr:
+		xv, ok := x.(uintptr)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.uintptrs()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Float32:
+		xv, ok := x.(float32)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.float32s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Float64:
+		xv, ok := x.(float64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.float64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Complex64:
+		xv, ok := x.(complex64)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.complex64s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.Complex128:
+		xv, ok := x.(complex128)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.complex128s()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.String:
+		xv, ok := x.(string)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.strings()
+		for i := range data {
+			data[i] = xv
+		}
+	case reflect.UnsafePointer:
+		xv, ok := x.(unsafe.Pointer)
+		if !ok {
+			return errors.Errorf(dtypeMismatch, a.t, x)
+		}
+		data := a.unsafePointers()
+		for i := range data {
+			data[i] = xv
+		}
+	default:
+		xv := reflect.ValueOf(x)
+		ptr := uintptr(a.ptr)
+		for i := 0; i < a.l; i++ {
+			want := ptr + uintptr(i)*a.t.Size()
+			val := reflect.NewAt(a.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(xv)
+		}
+	}
+	return nil
+}
+
+// Eq checks that any two arrays are equal
+func (a array) Eq(other interface{}) bool {
+	if oa, ok := other.(array); ok {
+		if oa.t != a.t {
+			return false
+		}
+
+		if oa.l != a.l {
+			return false
+		}
+
+		if oa.c != a.c {
+			return false
+		}
+
+		// same exact thing
+		if uintptr(oa.ptr) == uintptr(a.ptr) {
+			return true
+		}
+
+		switch a.t.Kind() {
+		case reflect.Bool:
+			for i, v := range a.bools() {
+				if oa.getB(i) != v {
+					return false
+				}
+			}
+		case reflect.Int:
+			for i, v := range a.ints() {
+				if oa.getI(i) != v {
+					return false
+				}
+			}
+		case reflect.Int8:
+			for i, v := range a.int8s() {
+				if oa.getI8(i) != v {
+					return false
+				}
+			}
+		case reflect.Int16:
+			for i, v := range a.int16s() {
+				if oa.getI16(i) != v {
+					return false
+				}
+			}
+		case reflect.Int32:
+			for i, v := range a.int32s() {
+				if oa.getI32(i) != v {
+					return false
+				}
+			}
+		case reflect.Int64:
+			for i, v := range a.int64s() {
+				if oa.getI64(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint:
+			for i, v := range a.uints() {
+				if oa.getU(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint8:
+			for i, v := range a.uint8s() {
+				if oa.getU8(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint16:
+			for i, v := range a.uint16s() {
+				if oa.getU16(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint32:
+			for i, v := range a.uint32s() {
+				if oa.getU32(i) != v {
+					return false
+				}
+			}
+		case reflect.Uint64:
+			for i, v := range a.uint64s() {
+				if oa.getU64(i) != v {
+					return false
+				}
+			}
+		case reflect.Uintptr:
+			for i, v := range a.uintptrs() {
+				if oa.getUintptr(i) != v {
+					return false
+				}
+			}
+		case reflect.Float32:
+			for i, v := range a.float32s() {
+				if oa.getF32(i) != v {
+					return false
+				}
+			}
+		case reflect.Float64:
+			for i, v := range a.float64s() {
+				if oa.getF64(i) != v {
+					return false
+				}
+			}
+		case reflect.Complex64:
+			for i, v := range a.complex64s() {
+				if oa.getC64(i) != v {
+					return false
+				}
+			}
+		case reflect.Complex128:
+			for i, v := range a.complex128s() {
+				if oa.getC128(i) != v {
+					return false
+				}
+			}
+		case reflect.String:
+			for i, v := range a.strings() {
+				if oa.getStr(i) != v {
+					return false
+				}
+			}
+		case reflect.UnsafePointer:
+			for i, v := range a.unsafePointers() {
+				if oa.getUnsafePointer(i) != v {
+					return false
+				}
+			}
+		default:
+			for i := 0; i < a.l; i++ {
+				if !reflect.DeepEqual(a.Get(i), oa.Get(i)) {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	return false
 }

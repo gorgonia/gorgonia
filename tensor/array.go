@@ -5,13 +5,15 @@ import (
 	"unsafe"
 )
 
-// header is like reflect.SliceHeader. It is used to do very dirty dirty things.
+// header is runtime representation of a slice. It's a cleaner version of reflect.SliceHeader.
+// With this, we wouldn't need to keep the uintptr.
 type header struct {
 	ptr unsafe.Pointer
 	l   int
 	c   int
 }
 
+// makeHeader makes a array header
 func makeHeader(t Dtype, length int) header {
 	size := int(calcMemSize(t, length))
 	s := make([]byte, size)
@@ -22,11 +24,11 @@ func makeHeader(t Dtype, length int) header {
 	}
 }
 
-// array is the underlying generic array
+// array is the underlying generic array.
 type array struct {
 	header             // the header - the Go representation (a slice)
 	t      Dtype       // the element type
-	v      interface{} // an additional reference to the underlying slice
+	v      interface{} // an additional reference to the underlying slice. This is not strictly necessary, but does improve upon anything that calls .Data()
 }
 
 // makeArray makes an array. The memory allocation is handled by Go
@@ -53,6 +55,7 @@ func makeArrayFromHeader(hdr header, t Dtype) array {
 	}
 }
 
+// byteSlice casts the underlying slice into a byte slice. Useful for copying and zeroing, but not much else
 func (a array) byteSlice() []byte {
 	size := a.l * int(a.t.Size())
 	hdr := reflect.SliceHeader{
@@ -61,6 +64,31 @@ func (a array) byteSlice() []byte {
 		Cap:  size,
 	}
 	return *(*[]byte)(unsafe.Pointer(&hdr))
+}
+
+// Zero zeroes out the underlying array of the *Dense tensor
+func (a array) Zero() {
+	if !isParameterizedKind(a.t.Kind()) {
+		ba := a.byteSlice()
+		for i := range ba {
+			ba[i] = 0
+		}
+		return
+	}
+	if a.t.Kind() == reflect.String {
+		ss := a.strings()
+		for i := range ss {
+			ss[i] = ""
+		}
+		return
+	}
+	ptr := uintptr(a.ptr)
+	for i := 0; i < a.l; i++ {
+		want := ptr + uintptr(i)*a.t.Size()
+		val := reflect.NewAt(a.t, unsafe.Pointer(want))
+		val = reflect.Indirect(val)
+		val.Set(reflect.Zero(a.t))
+	}
 }
 
 func copyArray(dst, src array) int {

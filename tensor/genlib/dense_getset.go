@@ -6,39 +6,7 @@ import (
 	"text/template"
 )
 
-const memsetRaw = `// Memset sets all values in the *Dense tensor to x.
-func (t *Dense) Memset(x interface{}) error {
-	if t.IsMaterializable() {
-		return t.memsetIter(x)
-	}
-	switch t.t.Kind() {
-	{{range .Kinds -}}
-		{{if isParameterized . -}}
-		{{else -}}
-	case reflect.{{reflectKind .}}:
-		xv, ok := x.({{asType .}})
-		if !ok {
-			return errors.Errorf(dtypeMismatch, t.t, x)
-		}
-		data := t.{{sliceOf .}}
-		for i := range data{
-			data[i] = xv
-		}
-		{{end -}}
-	{{end -}}
-	default:
-		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.ptr)
-		for i := 0; i < t.l; i++ {
-			want := ptr + uintptr(i)*t.t.Size()
-			val := reflect.NewAt(t.t, unsafe.Pointer(want))
-			val = reflect.Indirect(val)
-			val.Set(xv)
-		}
-	}
-	return nil
-}
-
+const memsetIterRaw = `
 func (t *Dense) memsetIter(x interface{}) (err error) {
 	it := NewFlatIterator(t.AP)
 	var i int
@@ -74,43 +42,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 
 `
 
-const zeroRaw = `// Zero zeroes out the underlying array of the *Dense tensor
-func (t *Dense) Zero() {
-	if t.IsMaterializable() {
-		if err := t.zeroIter(); err !=nil {
-			panic(err)
-		}
-	}
-	if t.IsMasked(){
-		t.ResetMask()
-	}
-	switch t.t.Kind() {
-	{{range .Kinds -}}
-		{{if isParameterized . -}}
-		{{else -}}
-	case reflect.{{reflectKind .}}:
-		data := t.{{sliceOf .}}
-		for i := range data {
-			data[i] = {{if eq .String "bool" -}}
-				false
-			{{else if eq .String "string" -}}""
-			{{else if eq .String "unsafe.Pointer" -}}nil
-			{{else -}}0{{end}}
-		}
-		{{end -}}
-	{{end -}}
-	default:
-		ptr := uintptr(t.ptr)
-		for i := 0; i < t.l; i++ {
-			want := ptr + uintptr(i)*t.t.Size()
-			val := reflect.NewAt(t.t, unsafe.Pointer(want))
-			val = reflect.Indirect(val)
-			val.Set(reflect.Zero(t.t))
-		}
-	}
-}
-
-func (t *Dense) zeroIter() (err error){
+const zeroRaw = `func (t *Dense) zeroIter() (err error){
 	it := NewFlatIterator(t.AP)
 	var i int
 	switch t.t.Kind() {
@@ -255,73 +187,24 @@ func (t *Dense) slice(start, end int) {
 }
 `
 
-const denseEqRaw = `// Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
-func (t *Dense) Eq(other interface{}) bool {
-	if ot, ok := other.(*Dense); ok {
-		if ot == t {
-			return true
-		}
-
-		if ot.len() != t.len() {
-			return false
-		}
-
-		if t.t != ot.t {
-			return false
-		}
-
-		if !t.Shape().Eq(ot.Shape()) {
-			return false
-		}
-
-		switch t.t.Kind() {
-		{{range .Kinds -}}
-			{{if isParameterized . -}}
-			{{else -}}
-		case reflect.{{reflectKind .}}:
-			for i, v := range t.{{sliceOf .}} {
-				if ot.get{{short .}}(i) != v {
-					return false
-				}
-			}
-			{{end -}}
-		{{end -}}
-		default:
-			for i := 0; i < t.len(); i++{
-				if !reflect.DeepEqual(t.Get(i), ot.Get(i)){
-					return false
-				}
-			}
-		}
-		return true
-	}
-	return false
-}
-`
-
 var (
-	Memset     *template.Template
+	MemsetIter *template.Template
 	Zero       *template.Template
 	CopySliced *template.Template
 	CopyIter   *template.Template
 	Slice      *template.Template
-	Eq         *template.Template
 )
 
 func init() {
-	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
+	MemsetIter = template.Must(template.New("MemsetIter").Funcs(funcs).Parse(memsetIterRaw))
 	Zero = template.Must(template.New("Zero").Funcs(funcs).Parse(zeroRaw))
-
 	CopySliced = template.Must(template.New("copySliced").Funcs(funcs).Parse(copySlicedRaw))
 	CopyIter = template.Must(template.New("copyIter").Funcs(funcs).Parse(copyIterRaw))
 	Slice = template.Must(template.New("slice").Funcs(funcs).Parse(sliceRaw))
-	Eq = template.Must(template.New("eq").Funcs(funcs).Parse(denseEqRaw))
 }
 
 func getset(f io.Writer, generic *ManyKinds) {
-	fmt.Fprintf(f, "\n\n\n")
-	fmt.Fprintf(f, "\n\n\n")
-	Memset.Execute(f, generic)
+	MemsetIter.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Zero.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
@@ -331,5 +214,4 @@ func getset(f io.Writer, generic *ManyKinds) {
 	fmt.Fprintf(f, "\n\n\n")
 	Slice.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
-	Eq.Execute(f, generic)
 }

@@ -135,7 +135,7 @@ var parameterizedKinds = [...]reflect.Kind{
 	reflect.Struct,
 }
 
-func isSimpleKind(k reflect.Kind) bool {
+func isParameterizedKind(k reflect.Kind) bool {
 	for _, v := range parameterizedKinds {
 		if v == k {
 			return true

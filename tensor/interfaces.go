@@ -48,3 +48,15 @@ type Number interface {
 type Densor interface {
 	Dense() *Dense
 }
+
+// ScalarRep is any Tensor that can represent a scalar
+type ScalarRep interface {
+	IsScalar() bool
+	ScalarValue() interface{}
+}
+
+// Viewable is any Tensor that can provide a view on memory
+type Viewable interface {
+	IsView() bool
+	Materialize() Tensor
+}

@@ -50,7 +50,7 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 	if shape.IsScalar() {
 		size = 1
 	}
-	if isSimpleKind(dt.Kind()) {
+	if !isParameterizedKind(dt.Kind()) {
 		retVal = borrowDense(dt, size)
 	} else {
 		retVal = newDense(dt, size)
@@ -538,4 +538,38 @@ func copyDense(dest, src *Dense) int {
 		dest.mask = dest.mask[:len(src.mask)]
 	}
 	return copyArray(dest.array, src.array)
+}
+
+// Memset sets all the values in the *Dense tensor.
+func (t *Dense) Memset(x interface{}) error {
+	if t.IsMaterializable() {
+		return t.memsetIter(x)
+	}
+	return t.array.Memset(x)
+}
+
+// Eq checks that any two things are equal. If the shapes are the same, but the strides are not the same, it's will still be considered the same
+func (t *Dense) Eq(other interface{}) bool {
+	if ot, ok := other.(*Dense); ok {
+		if ot == t {
+			return true
+		}
+		if !t.Shape().Eq(ot.Shape()) {
+			return false
+		}
+		return t.array.Eq(ot.array)
+	}
+	return false
+}
+
+func (t *Dense) Zero() {
+	if t.IsMaterializable() {
+		if err := t.zeroIter(); err != nil {
+			panic(err)
+		}
+	}
+	if t.IsMasked() {
+		t.ResetMask()
+	}
+	t.array.Zero()
 }
