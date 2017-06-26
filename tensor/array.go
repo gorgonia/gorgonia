@@ -88,6 +88,27 @@ func (a array) byteSlice() []byte {
 	return *(*[]byte)(unsafe.Pointer(&hdr))
 }
 
+// sliceInto creates a slice. Instead of returning an array, which would cause a lot of reallocations, sliceInto expects a array to
+// already have been created. This allows repetitive actions to be done without having to have many pointless allocation
+func (a array) sliceInto(i, j int, res *array) {
+	base := uintptr(a.ptr)
+	c := a.c
+
+	if i < 0 || j < i || j > c {
+		panic("Cannot slice %v - index %d:%d is out of bounds", a, i, j)
+	}
+
+	res.l = j - i
+	res.c = c - i
+
+	if c-1 > 0 {
+		res.ptr = unsafe.Pointer(base + uintptr(i)*a.t.Size())
+	} else {
+		// don't adviance
+		res.ptr = unsafe.Pointer(base)
+	}
+}
+
 func (a array) Data() interface{} { return a.v }
 
 // Zero zeroes out the underlying array of the *Dense tensor
