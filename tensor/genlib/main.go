@@ -3,87 +3,109 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 type ManyKinds struct {
 	Kinds []reflect.Kind
 }
 
-func main() {
-	const (
-		getSetName                    = "../dense_getset.go"
-		getSetTestsName               = "../dense_getset_test.go"
-		genUtilsName                  = "../genericUtils.go"
-		transposeName                 = "../dense_transpose_specializations.go"
-		viewStackName                 = "../dense_viewstack_specializations.go"
-		arrayGetSetName               = "../arrayGetSet.go"
-		genericArithName              = "../genericArith.go"
-		genericCmpName                = "../genericCmp.go"
-		denseArithName                = "../dense_arith.go"
-		denseArithTestsName           = "../dense_arith_test.go"
-		denseCmpName                  = "../dense_cmp.go"
-		denseCmpTestsName             = "../dense_cmp_test.go"
-		denseCompatName               = "../dense_compat.go"
-		denseCompatTestsName          = "../dense_compat_test.go"
-		genericArgMethodsName         = "../genericArgmethods.go"
-		denseArgMethodsName           = "../dense_argmethods.go"
-		denseArgMethodsTestsName      = "../dense_argmethods_test.go"
-		denseMaskCmpMethodsName       = "../dense_maskcmp_methods.go"
-		denseMaskCmpMethodsTestsName  = "../dense_maskcmp_methods_test.go"
-		genericReductionName          = "../genericReduction.go"
-		denseReductionName            = "../dense_reduction.go"
-		denseReductionTestsName       = "../dense_reduction_test.go"
-		denseReductionMethodsName     = "../dense_reduction_methods.go"
-		denseReductionMethodsTestName = "../dense_reduction_methods_test.go"
-		denseMapperName               = "../dense_mapper.go"
-		denseApplyTestsName           = "../dense_apply_test.go"
-		apiUnaryGenName               = "../api_unary_generated.go"
-		apiUnaryGenTestsName          = "../api_unary_generated_test.go"
-		denseGenName                  = "../dense_generated.go"
-		denseGenTestsName             = "../dense_generated_test.go"
-		denseIOName                   = "../dense_io.go"
-		denseIOTestsName              = "../dense_io_test.go"
+var (
+	gopath       string
+	tensorPkgLoc string
+	opsPkgLoc    string
+)
 
-		testTestName = "../test_test.go"
-	)
+const (
+	genmsg = "GENERATED FILE. DO NOT EDIT"
+)
+
+const (
+	getSetName                    = "dense_getset.go"
+	getSetTestsName               = "dense_getset_test.go"
+	genUtilsName                  = "genericUtils.go"
+	transposeName                 = "dense_transpose_specializations.go"
+	viewStackName                 = "dense_viewstack_specializations.go"
+	arrayGetSetName               = "arrayGetSet.go"
+	genericArithName              = "genericArith.go"
+	genericCmpName                = "genericCmp.go"
+	denseArithName                = "dense_arith.go"
+	denseArithTestsName           = "dense_arith_test.go"
+	denseCmpName                  = "dense_cmp.go"
+	denseCmpTestsName             = "dense_cmp_test.go"
+	denseCompatName               = "dense_compat.go"
+	denseCompatTestsName          = "dense_compat_test.go"
+	genericArgMethodsName         = "genericArgmethods.go"
+	denseArgMethodsName           = "dense_argmethods.go"
+	denseArgMethodsTestsName      = "dense_argmethods_test.go"
+	denseMaskCmpMethodsName       = "dense_maskcmp_methods.go"
+	denseMaskCmpMethodsTestsName  = "dense_maskcmp_methods_test.go"
+	genericReductionName          = "genericReduction.go"
+	denseReductionName            = "dense_reduction.go"
+	denseReductionTestsName       = "dense_reduction_test.go"
+	denseReductionMethodsName     = "dense_reduction_methods.go"
+	denseReductionMethodsTestName = "dense_reduction_methods_test.go"
+	denseMapperName               = "dense_mapper.go"
+	denseApplyTestsName           = "dense_apply_test.go"
+	apiUnaryGenName               = "api_unary_generated.go"
+	apiUnaryGenTestsName          = "api_unary_generated_test.go"
+	denseGenName                  = "dense_generated.go"
+	denseGenTestsName             = "dense_generated_test.go"
+	denseIOName                   = "dense_io.go"
+	denseIOTestsName              = "dense_io_test.go"
+
+	testTestName = "test_test.go"
+)
+
+func init() {
+	gopath = os.Getenv("GOPATH")
+	tensorPkgLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor")
+	opsPkgLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor/ops")
+}
+
+func main() {
+	pregenerate()
 	mk := makeManyKinds()
-	pipeline(getSetName, mk, getset)
-	pipeline(getSetTestsName, mk, getsetTest)
-	pipeline(genUtilsName, mk, utils)
-	pipeline(transposeName, mk, transpose)
-	pipeline(viewStackName, mk, viewstack)
-	pipeline(arrayGetSetName, mk, arrayGetSet)
-	pipeline(genericArithName, mk, genericArith)
-	pipeline(genericCmpName, mk, genericCmp)
-	pipeline(denseArithName, mk, arith)
-	pipeline(denseArithTestsName, mk, denseArithTests)
-	pipeline(denseCmpName, mk, denseCmp)
-	pipeline(denseCmpTestsName, mk, denseCmpTests)
-	pipeline(denseCompatName, mk, compat)
-	pipeline(denseCompatTestsName, mk, testCompat)
-	pipeline(testTestName, mk, testtest)
-	pipeline(genericArgMethodsName, mk, genericArgmethods)
-	pipeline(denseArgMethodsName, mk, argmethods)
-	pipeline(denseArgMethodsTestsName, mk, argmethodsTests)
-	pipeline(denseMaskCmpMethodsName, mk, maskcmpmethods)
-	pipeline(denseMaskCmpMethodsTestsName, mk, maskcmpmethodsTests)
-	pipeline(genericReductionName, mk, genericReduction)
-	pipeline(denseReductionName, mk, reduction)
-	pipeline(denseReductionTestsName, mk, denseReductionTests)
-	pipeline(denseReductionMethodsName, mk, generateDenseReductionMethods)
-	pipeline(denseReductionMethodsTestName, mk, generateDenseReductionMethodsTests)
-	pipeline(denseMapperName, mk, generateDenseMapper)
-	pipeline(denseApplyTestsName, mk, generateDenseApplyTests)
-	pipeline(apiUnaryGenName, mk, generateUnaryAPIFuncs)
-	pipeline(apiUnaryGenTestsName, mk, generateUnaryTests)
-	pipeline(denseGenName, mk, generateDenseConstructionFns)
-	pipeline(denseGenTestsName, mk, generateDenseTests)
-	pipeline(denseIOName, mk, generateDenseIO)
-	pipeline(denseIOTestsName, mk, generateDenseIOTests)
+	pipeline(tensorPkgLoc, getSetName, mk, getset)
+	pipeline(tensorPkgLoc, getSetTestsName, mk, getsetTest)
+	pipeline(tensorPkgLoc, genUtilsName, mk, utils)
+	pipeline(tensorPkgLoc, transposeName, mk, transpose)
+	pipeline(tensorPkgLoc, viewStackName, mk, viewstack)
+	pipeline(tensorPkgLoc, arrayGetSetName, mk, arrayGetSet)
+	pipeline(tensorPkgLoc, genericArithName, mk, genericArith)
+	pipeline(tensorPkgLoc, genericCmpName, mk, genericCmp)
+	pipeline(tensorPkgLoc, denseArithName, mk, arith)
+	pipeline(tensorPkgLoc, denseArithTestsName, mk, denseArithTests)
+	pipeline(tensorPkgLoc, denseCmpName, mk, denseCmp)
+	pipeline(tensorPkgLoc, denseCmpTestsName, mk, denseCmpTests)
+	pipeline(tensorPkgLoc, denseCompatName, mk, compat)
+	pipeline(tensorPkgLoc, denseCompatTestsName, mk, testCompat)
+	pipeline(tensorPkgLoc, testTestName, mk, testtest)
+	pipeline(tensorPkgLoc, genericArgMethodsName, mk, genericArgmethods)
+	pipeline(tensorPkgLoc, denseArgMethodsName, mk, argmethods)
+	pipeline(tensorPkgLoc, denseArgMethodsTestsName, mk, argmethodsTests)
+	pipeline(tensorPkgLoc, denseMaskCmpMethodsName, mk, maskcmpmethods)
+	pipeline(tensorPkgLoc, denseMaskCmpMethodsTestsName, mk, maskcmpmethodsTests)
+	pipeline(tensorPkgLoc, genericReductionName, mk, genericReduction)
+	pipeline(tensorPkgLoc, denseReductionName, mk, reduction)
+	pipeline(tensorPkgLoc, denseReductionTestsName, mk, denseReductionTests)
+	pipeline(tensorPkgLoc, denseReductionMethodsName, mk, generateDenseReductionMethods)
+	pipeline(tensorPkgLoc, denseReductionMethodsTestName, mk, generateDenseReductionMethodsTests)
+	pipeline(tensorPkgLoc, denseMapperName, mk, generateDenseMapper)
+	pipeline(tensorPkgLoc, denseApplyTestsName, mk, generateDenseApplyTests)
+	pipeline(tensorPkgLoc, apiUnaryGenName, mk, generateUnaryAPIFuncs)
+	pipeline(tensorPkgLoc, apiUnaryGenTestsName, mk, generateUnaryTests)
+	pipeline(tensorPkgLoc, denseGenName, mk, generateDenseConstructionFns)
+	pipeline(tensorPkgLoc, denseGenTestsName, mk, generateDenseTests)
+	pipeline(tensorPkgLoc, denseIOName, mk, generateDenseIO)
+	pipeline(tensorPkgLoc, denseIOTestsName, mk, generateDenseIOTests)
 	// pipeline(blah, mk, maskcmpmethods)
 }
 
@@ -95,29 +117,52 @@ func makeManyKinds() *ManyKinds {
 	return &ManyKinds{mk}
 }
 
-func pipeline(filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds)) {
-	f, err := os.Create(filename)
+func pipeline(pkg, filename string, generic *ManyKinds, fn func(io.Writer, *ManyKinds)) {
+	fullpath := path.Join(pkg, filename)
+	f, err := os.Create(fullpath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
-	fmt.Fprintf(f, "package tensor\n/*\nGENERATED FILE. DO NOT EDIT\n*/\n\n")
+	fmt.Fprintf(f, "package tensor\n/*\n%v\n*/\n\n", genmsg)
 	fn(f, generic)
 
 	// gofmt and goimports this stuff
-	cmd := exec.Command("goimports", "-w", filename)
+	cmd := exec.Command("goimports", "-w", fullpath)
 	if err = cmd.Run(); err != nil {
-		log.Fatalf("Go imports failed with %v for %q", err, filename)
+		log.Fatalf("Go imports failed with %v for %q", err, fullpath)
 	}
 
-	cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, filename)
+	cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
 	if err = cmd.Run(); err != nil {
-		log.Fatalf("sed failed with %v for %q", err, filename)
+		log.Fatalf("sed failed with %v for %q", err, fullpath)
 	}
 
-	cmd = exec.Command("gofmt", "-s", "-w", filename)
+	cmd = exec.Command("gofmt", "-s", "-w", fullpath)
 	if err = cmd.Run(); err != nil {
-		log.Fatalf("Gofmt failed for %q", filename)
+		log.Fatalf("Gofmt failed for %q", fullpath)
 	}
+}
+
+// pregenerate cleans up all files that were previously generated.
+func pregenerate() error {
+	pattern1 := path.Join(tensorPkgLoc, "*.go")
+	matches, err := filepath.Glob(pattern1)
+	if err != nil {
+		return err
+	}
+	for _, m := range matches {
+		b, err := ioutil.ReadFile(m)
+		if err != nil {
+			return err
+		}
+		s := string(b)
+		if strings.Contains(s, genmsg) {
+			if err := os.Remove(m); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

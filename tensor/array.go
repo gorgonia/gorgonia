@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"fmt"
 	"reflect"
 	"unsafe"
 )
@@ -95,7 +96,7 @@ func (a array) sliceInto(i, j int, res *array) {
 	c := a.c
 
 	if i < 0 || j < i || j > c {
-		panic("Cannot slice %v - index %d:%d is out of bounds", a, i, j)
+		panic(fmt.Sprintf("Cannot slice %v - index %d:%d is out of bounds", a, i, j))
 	}
 
 	res.l = j - i
