@@ -5,7 +5,6 @@ import (
 	"unsafe"
 
 	"github.com/pkg/errors"
-	"log"
 	"sort"
 )
 
@@ -20,31 +19,33 @@ type Sparse interface {
 	Iterator() Iterator // get an iterator
 }
 
-// coo is an internal representation of the Coordinate type sparse matrix. It's not exported because you probably shouldn't be using it
+// coo is an internal representation of the Coordinate type sparse matrix. 
+// It's not exported because you probably shouldn't be using it. 
+// Instead, constructors for the *CS type supports using a coordinate as an input.
 type coo struct {
-	o DataOrder
+	o      DataOrder
 	xs, ys []int
-	data array
+	data   array
 }
 
-func (c *coo) Len() int {return c.data.l}
+func (c *coo) Len() int { return c.data.l }
 func (c *coo) Less(i, j int) bool {
 	if c.o.isColMajor() {
-		return c.colMajorLess(i,j)
+		return c.colMajorLess(i, j)
 	}
 	return c.rowMajorLess(i, j)
 }
 func (c *coo) Swap(i, j int) {
 	c.xs[i], c.xs[j] = c.xs[j], c.xs[i]
 	c.ys[i], c.ys[j] = c.ys[j], c.ys[i]
-	c.data.swap(i,j)	
+	c.data.swap(i, j)
 }
 
 func (c *coo) colMajorLess(i, j int) bool {
 	if c.ys[i] < c.ys[j] {
 		return true
 	}
-	if c.ys[i] == c.ys[j]{
+	if c.ys[i] == c.ys[j] {
 		// check xs
 		if c.xs[i] <= c.xs[j] {
 			return true
@@ -53,14 +54,14 @@ func (c *coo) colMajorLess(i, j int) bool {
 	return false
 }
 
-func (c *coo) rowMajorLess(i, j int) bool{
+func (c *coo) rowMajorLess(i, j int) bool {
 	if c.xs[i] < c.xs[j] {
 		return true
 	}
 
 	if c.xs[i] == c.xs[j] {
 		// check ys
-		if c.ys[i] < c.ys[j] {
+		if c.ys[i] <= c.ys[j] {
 			return true
 		}
 	}
@@ -80,7 +81,7 @@ type CS struct {
 	e Engine
 }
 
-// NewCSR creates a new Compressed Sparse Row matrix
+// NewCSR creates a new Compressed Sparse Row matrix. The data has to be a slice or it panics.
 func NewCSR(indices, indptr []int, data interface{}, opts ...ConsOpt) *CS {
 	t := new(CS)
 	t.indices = indices
@@ -94,6 +95,7 @@ func NewCSR(indices, indptr []int, data interface{}, opts ...ConsOpt) *CS {
 	return t
 }
 
+// NewCSC creates a new Compressed Sparse Column matrix. The data has to be a slice, or it panics.
 func NewCSC(indices, indptr []int, data interface{}, opts ...ConsOpt) *CS {
 	t := new(CS)
 	t.indices = indices
@@ -107,39 +109,57 @@ func NewCSC(indices, indptr []int, data interface{}, opts ...ConsOpt) *CS {
 	return t
 }
 
-func CSRFromCoord(rows, cols []int, shape Shape, data interface{}) *CS {
+// CSRFromCoord creates a new Compressed Sparse Row matrix given the coordinates. The data has to be a slice or it panics.
+func CSRFromCoord(xs, ys []int, shape Shape, data interface{}) *CS {
 	t := new(CS)
 	t.s = shape
 	t.o = NonContiguous
 	t.array = arrayFromSlice(data)
 
+	// coord matrix
+	cm := &coo{t.o, xs, ys, t.array}
+	sort.Sort(cm)
+
 	r := shape[0]
+	c := shape[1]
+	if r <= cm.xs[len(cm.xs)-1] || c <= MaxInts(cm.ys...) {
+		panic("Cannot create sparse matrix where provided shape is smaller than the implied shape of the data")
+	}
+
 	indptr := make([]int, r+1)
 
 	var i, j, tmp int
 	for i = 1; i < r+1; i++ {
-		for j = tmp; j < len(rows) && rows[j] < i; j++ {
+		for j = tmp; j < len(xs) && xs[j] < i; j++ {
 
 		}
 		tmp = j
 		indptr[i] = j
 	}
-	t.indices = cols
+	t.indices = ys
 	t.indptr = indptr
 	return t
 }
 
+// CSRFromCoord creates a new Compressed Sparse Column matrix given the coordinates. The data has to be a slice or it panics.
 func CSCFromCoord(xs, ys []int, shape Shape, data interface{}) *CS {
 	t := new(CS)
 	t.s = shape
 	t.o = MakeDataOrder(NonContiguous, ColMajor)
 	t.array = arrayFromSlice(data)
 
-	// coord matrix 
+	// coord matrix
 	cm := &coo{t.o, xs, ys, t.array}
 	sort.Sort(cm)
 
+	r := shape[0]
 	c := shape[1]
+
+	// check shape
+	if r <= MaxInts(cm.xs...) || c <= cm.ys[len(cm.ys)-1] {
+		panic("Cannot create sparse matrix where provided shape is smaller than the implied shape of the data")
+	}
+
 	indptr := make([]int, c+1)
 
 	var i, j, tmp int
@@ -171,7 +191,7 @@ func (t *CS) At(coord ...int) (interface{}, error) {
 		return t.Get(i), nil
 	}
 
-	return reflect.Zero(t.t.Type), nil
+	return reflect.Zero(t.t.Type).Interface(), nil
 }
 
 func (t *CS) SetAt(v interface{}, coord ...int) error {
@@ -184,22 +204,32 @@ func (t *CS) SetAt(v interface{}, coord ...int) error {
 
 func (t *CS) Reshape(...int) error { return errors.New("compressed sparse matrix cannot be reshaped") }
 
+// T transposes the matrix. Concretely, it just changes a bit - the state goes from CSC to CSR, and vice versa.
 func (t *CS) T(axes ...int) error {
-	if len(axes) != t.Dims() && len(axes) != 0 {
+	dims := t.Dims()
+	if len(axes) != dims && len(axes) != 0 {
 		return errors.Errorf("Cannot transpose along axes %v", axes)
 	}
-	// toggle t.order
-	// TODO
+	if len(axes) == 0 || axes == nil {
+
+		axes = make([]int, dims)
+		for i := 0; i < dims; i++ {
+			axes[i] = dims - 1 - i
+		}
+	}
+	UnsafePermute(axes, []int(t.s))
+	t.o = t.o.toggleColMajor()
 	return errors.Errorf(methodNYI, "T")
 }
 
-func (t *CS) UT() {}
+// UT untransposes the CS
+func (t *CS) UT() { t.T() }
 
+// Transpose is a no-op. The data does not move
 func (t *CS) Transpose() {}
 
-func (t *CS) Slice(...Slice) (Tensor, error) {
-	return nil, errors.New("compressed sparse matrix cannot be sliced")
-}
+// Slice is not supported
+func (t *CS) Slice(...Slice) (Tensor, error) {	return nil, errors.New("compressed sparse matrix cannot be sliced") }
 
 func (t *CS) Apply(fn interface{}, opts ...FuncOpt) (Tensor, error) {
 	return nil, errors.Errorf(methodNYI, "Apply")
@@ -255,12 +285,15 @@ func (t *CS) Clone() interface{} {
 func (t *CS) IsScalar() bool           { return false }
 func (t *CS) ScalarValue() interface{} { panic("Sparse Matrices cannot represent Scalar Values") }
 func (t *CS) IsView() bool             { return false }
+
+// Materialize creates a Dense tensor. (It's an alias for Dense())
 func (t *CS) Materialize() Tensor      { return t.Dense() }
 
 func (t *CS) MemSize() uintptr        { return uintptr(calcMemSize(t.t, t.l)) }
 func (t *CS) Uintptr() uintptr        { return uintptr(t.ptr) }
 func (t *CS) Pointer() unsafe.Pointer { return t.ptr }
 
+// NonZeroes returns the nonzeroes. In academic literature this is often written as NNZ.
 func (t *CS) NonZeroes() int     { return t.l }
 func (t *CS) Iterator() Iterator { return nil } // not yet created
 
@@ -282,14 +315,14 @@ func (t *CS) at(coord ...int) (int, bool) {
 	return -1, false
 }
 
+// Dense creates a Dense tensor from the compressed one.
 func (t *CS) Dense() *Dense {
 	// if t.e != nil , use engine instead
-	d := recycledDense(t.t, t.Shape().Clone())
 
+	d := recycledDense(t.t, t.Shape().Clone())
 	if t.o.isColMajor() {
 		for i := 0; i < len(t.indptr)-1; i++ {
 			for j := t.indptr[i]; j < t.indptr[i+1]; j++ {
-				log.Printf("Cord: %v %v: j: %d", i, t.indices[j], j)
 				d.SetAt(t.Get(j), t.indices[j], i)
 			}
 		}

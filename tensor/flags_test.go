@@ -24,7 +24,6 @@ func TestMemoryFlag(t *testing.T) {
 		t.Errorf("Expected NativelyInaccessible to be false %v", b.nativelyAccessible())
 	}
 
-
 	c := MakeMemoryFlag(ManuallyManaged, NativelyInaccessible)
 	if !c.manuallyManaged() {
 		t.Errorf("Expected c to be manually managed")
@@ -34,7 +33,7 @@ func TestMemoryFlag(t *testing.T) {
 	}
 }
 
-func TestDataOrder (t *testing.T) {
+func TestDataOrder(t *testing.T) {
 	var defaultFlag DataOrder
 	if defaultFlag.isColMajor() || defaultFlag.isNotContiguous() {
 		t.Errorf("Expected default flag to be row major and contiguous")
@@ -49,5 +48,16 @@ func TestDataOrder (t *testing.T) {
 	}
 	if cm.isNotContiguous() {
 		t.Errorf("ColMajor by default is contiguous")
+	}
+
+	// check toggle
+	rm := cm.toggleColMajor()
+	if rm.isColMajor() {
+		t.Errorf("toggled cm should be rm")
+	}
+
+	cm = rm.toggleColMajor()
+	if cm.isRowMajor() {
+		t.Errorf("toggled rm should be cm")
 	}
 }

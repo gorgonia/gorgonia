@@ -8,6 +8,7 @@ import (
 
 // header is runtime representation of a slice. It's a cleaner version of reflect.SliceHeader.
 // With this, we wouldn't need to keep the uintptr.
+// This usually means additional pressure for the GC though, especially when passing around headers
 type header struct {
 	ptr unsafe.Pointer
 	l   int
@@ -38,6 +39,7 @@ func makeArray(t Dtype, length int) array {
 	return makeArrayFromHeader(hdr, t)
 }
 
+// makeArrayFromHeader makes an array given a header
 func makeArrayFromHeader(hdr header, t Dtype) array {
 	// build a type of []T
 	shdr := reflect.SliceHeader{
@@ -56,6 +58,7 @@ func makeArrayFromHeader(hdr header, t Dtype) array {
 	}
 }
 
+// arrayFromSlice creates an array from a slice. If x is not a slice, it will panic.
 func arrayFromSlice(x interface{}) array {
 	xT := reflect.TypeOf(x)
 	if xT.Kind() != reflect.Slice {
@@ -110,6 +113,7 @@ func (a array) sliceInto(i, j int, res *array) {
 	}
 }
 
+// swap swaps the elements i and j in the array
 func (a array) swap(i, j int) {
 	if a.t == String {
 		ss := *(*[]string)(a.ptr)
@@ -136,9 +140,10 @@ func (a array) swap(i, j int) {
 	reflect.Swapper(a.v)(i, j)
 }
 
+// Data returns the representation of a slice.
 func (a array) Data() interface{} { return a.v }
 
-// Zero zeroes out the underlying array of the *Dense tensor
+// Zero zeroes out the underlying array of the *Dense tensor.
 func (a array) Zero() {
 	if !isParameterizedKind(a.t.Kind()) {
 		ba := a.byteSlice()
@@ -163,6 +168,7 @@ func (a array) Zero() {
 	}
 }
 
+// copyArray copies an array.
 func copyArray(dst, src array) int {
 	if dst.t != src.t {
 		panic("Cannot copy arrays of different types.")

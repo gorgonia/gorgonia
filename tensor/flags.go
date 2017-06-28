@@ -7,11 +7,11 @@ const (
 	// ColMajor indicates that the data is stored in a col-major way.
 	// A data can only be stored in either ColMajor(1) or RowMajor(0).
 	// The way the DataOrder was designed causes the default to be RowMajor
-	ColMajor      DataOrder = 1 << iota
+	ColMajor DataOrder = 1 << iota
 	// NonContiguous indicates that the data is not contiguous.
 	// A data can either be Contiguous (0) or NonContiguous (1).
 	// The way DataOrder was designed causes the default to be Contiguous.
-	NonContiguous                       
+	NonContiguous
 )
 
 func MakeDataOrder(fs ...DataOrder) (retVal DataOrder) {
@@ -24,10 +24,11 @@ func MakeDataOrder(fs ...DataOrder) (retVal DataOrder) {
 	return
 }
 
-func (f DataOrder) isColMajor() bool      { return (f & ColMajor) != 0 }
-func (f DataOrder) isRowMajor() bool      { return !f.isColMajor() }
-func (f DataOrder) isContiguous() bool    { return !f.isNotContiguous() }
-func (f DataOrder) isNotContiguous() bool { return (f & NonContiguous) != 0 }
+func (f DataOrder) isColMajor() bool          { return (f & ColMajor) != 0 }
+func (f DataOrder) isRowMajor() bool          { return !f.isColMajor() }
+func (f DataOrder) isContiguous() bool        { return !f.isNotContiguous() }
+func (f DataOrder) isNotContiguous() bool     { return (f & NonContiguous) != 0 }
+func (f DataOrder) toggleColMajor() DataOrder { return f ^ (ColMajor) }
 
 // Triangle is a flag representing the "triangle"ness of a matrix
 type Triangle byte
