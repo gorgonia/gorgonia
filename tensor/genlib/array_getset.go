@@ -132,6 +132,23 @@ func (a array) Eq(other interface{}) bool {
 	return false
 }`
 
+const arraySwapRaw = `func (a array) swap(i, j int) {
+	switch a.t.Kind() {
+	{{range .Kinds -}}
+		{{if isParameterized . -}}
+		{{else -}}
+	case reflect.{{reflectKind .}}:
+		data := a.{{sliceOf .}}
+		data[i], data[j] = data[j], data[i]
+		{{end -}}
+	default:
+		swapper := reflect.Swapper(a.v)
+		swapper(i,j)
+	{{end -}}
+	}
+}
+`
+
 var (
 	AsSlice   *template.Template
 	SimpleSet *template.Template
@@ -140,6 +157,7 @@ var (
 	Set       *template.Template
 	Memset    *template.Template
 	Eq        *template.Template
+	Swap      *template.Template
 )
 
 func init() {
@@ -150,6 +168,7 @@ func init() {
 	Set = template.Must(template.New("Set").Funcs(funcs).Parse(setRaw))
 	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
 	Eq = template.Must(template.New("ArrayEq").Funcs(funcs).Parse(arrayEqRaw))
+	Swap = template.Must(template.New("ArraySwap").Funcs(funcs).Parse(arraySwapRaw))
 }
 
 func arrayGetSet(f io.Writer, generic *ManyKinds) {
@@ -171,4 +190,6 @@ func arrayGetSet(f io.Writer, generic *ManyKinds) {
 	fmt.Fprintf(f, "\n\n\n")
 	Eq.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
+	// Swap.Execute(f, generic)
+	// fmt.Fprintf(f, "\n\n\n")
 }

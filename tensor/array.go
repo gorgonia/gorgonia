@@ -110,6 +110,32 @@ func (a array) sliceInto(i, j int, res *array) {
 	}
 }
 
+func (a array) swap(i, j int) {
+	if a.t == String {
+		ss := *(*[]string)(a.ptr)
+		ss[i], ss[j] = ss[j], ss[i]
+		return
+	}
+	if !isParameterizedKind(a.t.Kind()) {
+		switch a.t.Size() {
+		case 8:
+			us := *(*[]uint64)(unsafe.Pointer(&a.header))
+			us[i], us[j] = us[j], us[i]
+		case 4:
+			us := *(*[]uint32)(unsafe.Pointer(&a.header))
+			us[i], us[j] = us[j], us[i]
+		case 2:
+			us := *(*[]uint16)(unsafe.Pointer(&a.header))
+			us[i], us[j] = us[j], us[i]
+		case 1:
+			us := *(*[]uint8)(unsafe.Pointer(&a.header))
+			us[i], us[j] = us[j], us[i]
+		}
+		return
+	}
+	reflect.Swapper(a.v)(i, j)
+}
+
 func (a array) Data() interface{} { return a.v }
 
 // Zero zeroes out the underlying array of the *Dense tensor
