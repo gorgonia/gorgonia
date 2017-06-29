@@ -20,12 +20,12 @@ func TestCS_Basics(t *testing.T) {
 	var dp0, dp1 *Dense
 	var err error
 	fails := func() {
-		CSCFromCoord(xs0, ys0, Shape{7, 6}, vals0)
+		CSCFromCoord(Shape{7, 6}, xs0, ys0 , vals0)
 	}
 	assert.Panics(fails)
 
 	// Test CSC
-	T0 = CSCFromCoord(xs0, ys0, Shape{9, 7}, vals0)
+	T0 = CSCFromCoord(Shape{9, 7},xs0, ys0,  vals0)
 	d0 = T0.Dense()
 	T0.T()
 	dp0 = T0.Dense()
@@ -33,9 +33,9 @@ func TestCS_Basics(t *testing.T) {
 
 	// Test CSR
 	fails = func() {
-		CSRFromCoord(xs1, ys1, Shape{7, 6}, vals1)
+		CSRFromCoord(Shape{7, 6},xs1, ys1,  vals1)
 	}
-	T1 = CSRFromCoord(xs1, ys1, Shape{9, 7}, vals1)
+	T1 = CSRFromCoord(Shape{9, 7}, xs1, ys1,  vals1)
 	d1 = T1.Dense()
 	T1.T()
 	dp1 = T1.Dense()

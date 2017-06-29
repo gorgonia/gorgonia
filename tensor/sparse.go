@@ -73,12 +73,14 @@ func (c *coo) rowMajorLess(i, j int) bool {
 type CS struct {
 	s Shape
 	o DataOrder
+	e Engine
+	f MemoryFlag
+	z interface{} // z is the "zero" value. Typically it's not used.
 
 	indices []int
 	indptr  []int
 
 	array
-	e Engine
 }
 
 // NewCSR creates a new Compressed Sparse Row matrix. The data has to be a slice or it panics.
@@ -110,7 +112,7 @@ func NewCSC(indices, indptr []int, data interface{}, opts ...ConsOpt) *CS {
 }
 
 // CSRFromCoord creates a new Compressed Sparse Row matrix given the coordinates. The data has to be a slice or it panics.
-func CSRFromCoord(xs, ys []int, shape Shape, data interface{}) *CS {
+func CSRFromCoord(shape Shape, xs, ys []int, data interface{}) *CS {
 	t := new(CS)
 	t.s = shape
 	t.o = NonContiguous
@@ -142,7 +144,7 @@ func CSRFromCoord(xs, ys []int, shape Shape, data interface{}) *CS {
 }
 
 // CSRFromCoord creates a new Compressed Sparse Column matrix given the coordinates. The data has to be a slice or it panics.
-func CSCFromCoord(xs, ys []int, shape Shape, data interface{}) *CS {
+func CSCFromCoord(shape Shape, xs, ys []int, data interface{}) *CS {
 	t := new(CS)
 	t.s = shape
 	t.o = MakeDataOrder(NonContiguous, ColMajor)
@@ -190,8 +192,10 @@ func (t *CS) At(coord ...int) (interface{}, error) {
 	if i, ok := t.at(coord...); ok {
 		return t.Get(i), nil
 	}
-
-	return reflect.Zero(t.t.Type).Interface(), nil
+	if t.z == nil {
+		return reflect.Zero(t.t.Type).Interface(), nil
+	}
+	return t.z, nil
 }
 
 func (t *CS) SetAt(v interface{}, coord ...int) error {
@@ -334,4 +338,18 @@ func (t *CS) Dense() *Dense {
 		}
 	}
 	return d
+}
+
+// Other Accessors
+
+func (t *CS) Indptr() []int {
+	retVal := BorrowInts(len(t.indptr))
+	copy(retVal, t.indptr)
+	return retVal
+}
+
+func (t *CS) Indices() []int {
+	retVal := BorrowInts(len(t.indices))
+	copy(retVal, t.indices)
+	return retVal
 }

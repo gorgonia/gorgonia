@@ -223,6 +223,12 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 `
 
+const negRaw = `// Neg returns the sign function as applied to each element in the ndarray.
+// Incr is not supported (it doesn't make sense anyway)
+func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+}
+`
+
 var (
 	clamp *template.Template
 	sign  *template.Template

@@ -14,6 +14,8 @@ func Of(a Dtype) ConsOpt {
 		switch tt := t.(type) {
 		case *Dense:
 			tt.t = a
+		case *CS:
+			tt.t = a
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -78,6 +80,14 @@ func WithShape(dims ...int) ConsOpt {
 			throw := BorrowInts(len(dims))
 			copy(throw, dims)
 			tt.setShape(throw...)
+		case *CS:
+			if len(dims) != 2 {
+				panic("Only sparse matrices are supported")
+			}
+			throw := BorrowInts(len(dims))
+			copy(throw, dims)
+			tt.s = throw
+
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -192,8 +202,13 @@ func WithEngine(e Engine) ConsOpt {
 		switch tt := t.(type) {
 		case *Dense:
 			tt.e = e
-			if !e.AllocAccessible() {
+			if e != nil && !e.AllocAccessible() {
 				tt.flag = MakeMemoryFlag(tt.flag, NativelyInaccessible)
+			}
+		case *CS:
+			tt.e = e
+			if e!= nil && !e.AllocAccessible() {
+				tt.f = MakeMemoryFlag(tt.f, NativelyInaccessible)
 			}
 		}
 	}
