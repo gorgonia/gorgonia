@@ -138,12 +138,13 @@ func (a array) swap(i, j int) {
 		return
 	}
 
-	tmp := make([]byte, a.t.Size())
+	size := int(a.t.Size())
+	tmp := make([]byte, size)
 	bs := a.byteSlice()
-	is := i * a.t.Size()
-	ie := is + a.t.Size()
-	js := j * a.t.Size()
-	je := js + a.t.Size()
+	is := i * size
+	ie := is + size
+	js := j * size
+	je := js + size
 	copy(tmp, bs[is:ie])
 	copy(bs[is:ie], bs[js:je])
 	copy(bs[js:je], tmp)
