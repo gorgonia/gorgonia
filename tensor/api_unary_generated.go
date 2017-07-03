@@ -736,6 +736,11 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch t := a.(type) {
 	case *Dense:
+		if !isNumber(t.t) {
+			err = errors.Errorf("Sign only works on numbers")
+			return
+		}
+
 		if t.IsMaterializable() {
 			var f interface{}
 			switch t.t.Kind() {
@@ -789,6 +794,41 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					return 0
 				}
+			case reflect.Uint:
+				f = func(x uint) uint {
+					if x > 0 {
+						return 1
+					}
+					return 0
+				}
+			case reflect.Uint8:
+				f = func(x uint8) uint8 {
+					if x > 0 {
+						return 1
+					}
+					return 0
+				}
+			case reflect.Uint16:
+				f = func(x uint16) uint16 {
+					if x > 0 {
+						return 1
+					}
+					return 0
+				}
+			case reflect.Uint32:
+				f = func(x uint32) uint32 {
+					if x > 0 {
+						return 1
+					}
+					return 0
+				}
+			case reflect.Uint64:
+				f = func(x uint64) uint64 {
+					if x > 0 {
+						return 1
+					}
+					return 0
+				}
 			case reflect.Float32:
 				f = func(x float32) float32 {
 					if x < 0 {
@@ -813,16 +853,11 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			return t.Apply(f, opts...)
 		}
 
-		if !isNumber(t.t) {
-			err = errors.Errorf("Clamp only works on numbers")
-			return
-		}
-
 		// otherwise, we have optimizations for this (basically remove the repeated function calls)
 		var reuse *Dense
 		var safe, toReuse, incr bool
 		if reuse, safe, toReuse, incr, err = prepUnaryDense(t, opts...); err != nil {
-			err = errors.Wrapf(err, opFail, "Clamp")
+			err = errors.Wrapf(err, opFail, "Sign")
 			return
 		}
 
@@ -850,7 +885,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -861,11 +898,12 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
 						}
+						data[i] = 0
 					}
 				}
 			}
-
 		case reflect.Int8:
 			data := ret.int8s()
 			if !ret.IsMasked() {
@@ -876,7 +914,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -887,11 +927,12 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
 						}
+						data[i] = 0
 					}
 				}
 			}
-
 		case reflect.Int16:
 			data := ret.int16s()
 			if !ret.IsMasked() {
@@ -902,7 +943,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -913,11 +956,12 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
 						}
+						data[i] = 0
 					}
 				}
 			}
-
 		case reflect.Int32:
 			data := ret.int32s()
 			if !ret.IsMasked() {
@@ -928,7 +972,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -939,11 +985,12 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
 						}
+						data[i] = 0
 					}
 				}
 			}
-
 		case reflect.Int64:
 			data := ret.int64s()
 			if !ret.IsMasked() {
@@ -954,7 +1001,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -965,11 +1014,97 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
+						}
+						data[i] = 0
+					}
+				}
+			}
+		case reflect.Uint:
+			data := ret.uints()
+			if !ret.IsMasked() {
+				for i := range data {
+					if data[i] > 0 {
+						data[i] = 1
+					}
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						if data[i] > 0 {
+							data[i] = 1
 						}
 					}
 				}
 			}
-
+		case reflect.Uint8:
+			data := ret.uint8s()
+			if !ret.IsMasked() {
+				for i := range data {
+					if data[i] > 0 {
+						data[i] = 1
+					}
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						if data[i] > 0 {
+							data[i] = 1
+						}
+					}
+				}
+			}
+		case reflect.Uint16:
+			data := ret.uint16s()
+			if !ret.IsMasked() {
+				for i := range data {
+					if data[i] > 0 {
+						data[i] = 1
+					}
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						if data[i] > 0 {
+							data[i] = 1
+						}
+					}
+				}
+			}
+		case reflect.Uint32:
+			data := ret.uint32s()
+			if !ret.IsMasked() {
+				for i := range data {
+					if data[i] > 0 {
+						data[i] = 1
+					}
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						if data[i] > 0 {
+							data[i] = 1
+						}
+					}
+				}
+			}
+		case reflect.Uint64:
+			data := ret.uint64s()
+			if !ret.IsMasked() {
+				for i := range data {
+					if data[i] > 0 {
+						data[i] = 1
+					}
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						if data[i] > 0 {
+							data[i] = 1
+						}
+					}
+				}
+			}
 		case reflect.Float32:
 			data := ret.float32s()
 			if !ret.IsMasked() {
@@ -980,7 +1115,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -991,11 +1128,12 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
 						}
+						data[i] = 0
 					}
 				}
 			}
-
 		case reflect.Float64:
 			data := ret.float64s()
 			if !ret.IsMasked() {
@@ -1006,7 +1144,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -1017,7 +1157,227 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
 						}
+						data[i] = 0
+					}
+				}
+			}
+		}
+		retVal = ret
+		return
+	default:
+		return nil, errors.Errorf(typeNYI, "Sign", a)
+	}
+}
+
+// Neg returns the sign function as applied to each element in the ndarray.
+// Incr is not supported (it doesn't make sense anyway - you'd just call Sub())
+func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	switch t := a.(type) {
+	case *Dense:
+		if !isNumber(t.t) || isUnsigned(t.t) {
+			err = errors.Errorf("Neg only works on signed numbers")
+			return
+		}
+
+		if t.IsMaterializable() {
+			var f interface{}
+			switch t.t.Kind() {
+
+			case reflect.Int:
+				f = func(x int) int {
+					return -x
+				}
+
+			case reflect.Int8:
+				f = func(x int8) int8 {
+					return -x
+				}
+
+			case reflect.Int16:
+				f = func(x int16) int16 {
+					return -x
+				}
+
+			case reflect.Int32:
+				f = func(x int32) int32 {
+					return -x
+				}
+
+			case reflect.Int64:
+				f = func(x int64) int64 {
+					return -x
+				}
+
+			case reflect.Float32:
+				f = func(x float32) float32 {
+					return -x
+				}
+
+			case reflect.Float64:
+				f = func(x float64) float64 {
+					return -x
+				}
+
+			case reflect.Complex64:
+				f = func(x complex64) complex64 {
+					return -x
+				}
+
+			case reflect.Complex128:
+				f = func(x complex128) complex128 {
+					return -x
+				}
+
+			}
+			return t.Apply(f, opts...)
+		}
+
+		// otherwise, we have optimizations for this (basically remove the repeated function calls)
+		var reuse *Dense
+		var safe, toReuse, incr bool
+		if reuse, safe, toReuse, incr, err = prepUnaryDense(t, opts...); err != nil {
+			err = errors.Wrapf(err, opFail, "Neg")
+			return
+		}
+
+		var ret *Dense
+		switch {
+		case incr:
+			fallthrough
+		case toReuse:
+			copyDense(reuse, t)
+			ret = reuse
+		case safe:
+			ret = t.Clone().(*Dense)
+		case !safe:
+			ret = t
+		}
+
+		switch t.t.Kind() {
+		case reflect.Int:
+			data := ret.ints()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Int8:
+			data := ret.int8s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Int16:
+			data := ret.int16s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Int32:
+			data := ret.int32s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Int64:
+			data := ret.int64s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Float32:
+			data := ret.float32s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Float64:
+			data := ret.float64s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Complex64:
+			data := ret.complex64s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
+					}
+				}
+			}
+
+		case reflect.Complex128:
+			data := ret.complex128s()
+			if !ret.IsMasked() {
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i] {
+						data[i] = -data[i]
 					}
 				}
 			}
@@ -1026,6 +1386,6 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = ret
 		return
 	default:
-		return nil, errors.Errorf(typeNYI, "Clamp", a)
+		return nil, errors.Errorf(typeNYI, "Neg", a)
 	}
 }

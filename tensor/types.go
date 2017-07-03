@@ -64,13 +64,6 @@ func (dt Dtype) numpyDtype() (string, error) {
 	}
 }
 
-func fromTypeID(i int) (Dtype, error) {
-	if i > len(allTypes) || i < 0 {
-		return Dtype{}, errors.Errorf("Unsupported Dtype for serialization")
-	}
-	return allTypes[i], nil
-}
-
 func fromNumpyDtype(t string) (Dtype, error) {
 	switch t {
 	case "b1":
@@ -180,6 +173,8 @@ var ordTypes = []Dtype{
 	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
 }
 
+var unsignedTypes = [...]Dtype{Uint, Uint8, Uint16, Uint32, Uint64}
+
 func isSpecialized(dt Dtype) bool {
 	for _, s := range specializedTypes {
 		if s.Kind() == dt.Kind() {
@@ -200,6 +195,15 @@ func isNumber(dt Dtype) bool {
 
 func isFloat(dt Dtype) bool {
 	return dt.Kind() == reflect.Float64 || dt.Kind() == reflect.Float32
+}
+
+func isUnsigned(dt Dtype) bool {
+	for _, s := range unsignedTypes {
+		if s.Kind() == dt.Kind() {
+			return true
+		}
+	}
+	return false
 }
 
 // NormOrder represents the order of the norm. Ideally, we'd only represent norms with a uint/byte.

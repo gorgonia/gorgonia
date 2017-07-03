@@ -190,6 +190,13 @@ func isNumber(a reflect.Kind) bool {
 	return false
 }
 
+func isComplex(a reflect.Kind) bool {
+	if a == reflect.Complex128 || a == reflect.Complex64 {
+		return true
+	}
+	return false
+}
+
 func panicsDiv0(a reflect.Kind) bool {
 	for _, v := range div0panics {
 		if v == a {
@@ -255,13 +262,6 @@ func isFloat(a reflect.Kind) bool {
 }
 
 func isntFloat(a reflect.Kind) bool { return !isFloat(a) }
-
-func isComplex(a reflect.Kind) bool {
-	if a == reflect.Complex64 || a == reflect.Complex128 {
-		return true
-	}
-	return false
-}
 
 func isntComplex(a reflect.Kind) bool { return !isComplex(a) }
 

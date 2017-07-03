@@ -1,6 +1,8 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 // Apply applies a function to all the values in the ndarray
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {

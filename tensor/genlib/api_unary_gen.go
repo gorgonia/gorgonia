@@ -128,12 +128,18 @@ const signRaw = `// Sign returns the sign function as applied to each element in
 func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch t := a.(type) {
 	case *Dense:
+		if !isNumber(t.t) {
+			err = errors.Errorf("Sign only works on numbers")
+			return
+		}
+
 		if t.IsMaterializable() {
 			var f interface{}
 			switch t.t.Kind() {
 			{{range .Kinds -}}
 			{{$isInt := hasPrefix .String "int" -}}
 			{{$isFloat := hasPrefix .String "float" -}}
+			{{$isUint := hasPrefix .String "uint" -}}
 			{{if isNumber . -}}
 			{{if or $isInt $isFloat -}}
 			case reflect.{{reflectKind .}}:
@@ -146,6 +152,14 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					return 0
 				}
+			{{else if $isUint -}}
+			case reflect.{{reflectKind .}}:
+				f = func(x {{asType .}}) {{asType .}}{
+					if x > 0 {
+						return 1
+					}
+					return 0
+				}
 			{{end -}}
 			{{end -}}
 			{{end -}}
@@ -153,16 +167,11 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			return t.Apply(f, opts...)
 		}
 
-		if !isNumber(t.t) {
-			err = errors.Errorf("Clamp only works on numbers")
-			return
-		}
-
 		// otherwise, we have optimizations for this (basically remove the repeated function calls)
 		var reuse *Dense
 		var safe, toReuse, incr bool
 		if reuse, safe, toReuse, incr, err = prepUnaryDense(t, opts...); err != nil {
-			err = errors.Wrapf(err, opFail, "Clamp")
+			err = errors.Wrapf(err, opFail, "Sign")
 			return
 		}
 
@@ -183,6 +192,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		{{range .Kinds -}}
 		{{$isInt := hasPrefix .String "int" -}}
 		{{$isFloat := hasPrefix .String "float" -}}
+		{{$isUint := hasPrefix .String "uint" -}}
 		{{if isNumber . -}}
 		{{if or $isInt $isFloat -}}
 		case reflect.{{reflectKind .}}:
@@ -195,7 +205,9 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 					}
 					if v > 0 {
 						data[i] = 1
+						continue
 					}
+					data[i] = 0
 				}
 			} else {
 				for i, v := range data {
@@ -206,7 +218,113 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 						}
 						if v > 0 {
 							data[i] = 1
+							continue
 						}
+						data[i] = 0
+					}
+				}
+			}
+		{{else if $isUint -}}
+			case reflect.{{reflectKind .}}:
+				data := ret.{{sliceOf .}}
+				if !ret.IsMasked() {
+					for i := range data {
+						if data[i]>0{
+							data[i] = 1
+						}
+					}
+				}else {
+					for i := range data {
+						if !ret.mask[i] {
+							if data[i] >0 {
+								data[i] = 1
+							}
+						}
+					}
+				}
+		{{end -}}
+		{{end -}}
+		{{end -}}
+		}
+		retVal = ret
+		return
+	default:
+		return nil, errors.Errorf(typeNYI, "Sign", a)
+	}
+}
+`
+
+const negRaw = `// Neg returns the sign function as applied to each element in the ndarray.
+// Incr is not supported (it doesn't make sense anyway - you'd just call Sub())
+func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	switch t := a.(type) {
+	case *Dense:
+		if !isNumber(t.t) || isUnsigned(t.t) {
+			err = errors.Errorf("Neg only works on signed numbers")
+			return
+		}
+
+		if t.IsMaterializable() {
+			var f interface{}
+			switch t.t.Kind() {
+			{{range .Kinds -}}
+			{{$isInt := hasPrefix .String "int" -}}
+			{{$isFloat := hasPrefix .String "float" -}}
+			{{$isComplex := hasPrefix .String "complex"}}
+			{{if isNumber . -}}
+			{{if or $isInt $isFloat $isComplex -}}
+			case reflect.{{reflectKind .}}:
+				f = func(x {{asType .}}) {{asType .}}{
+					return -x
+				}
+			{{end -}}
+			{{end -}}
+			{{end -}}
+			}
+			return t.Apply(f, opts...)
+		}
+
+
+
+		// otherwise, we have optimizations for this (basically remove the repeated function calls)
+		var reuse *Dense
+		var safe, toReuse, incr bool
+		if reuse, safe, toReuse, incr, err = prepUnaryDense(t, opts...); err != nil {
+			err = errors.Wrapf(err, opFail, "Neg")
+			return
+		}
+
+		var ret *Dense
+		switch {
+		case incr:
+			fallthrough
+		case toReuse:
+			copyDense(reuse, t)
+			ret = reuse
+		case safe:
+			ret = t.Clone().(*Dense)
+		case !safe:
+			ret = t
+		}
+
+
+		switch t.t.Kind() {
+		{{range .Kinds -}}
+		{{$isInt := hasPrefix .String "int" -}}
+		{{$isFloat := hasPrefix .String "float" -}}
+		{{$isComplex := hasPrefix .String "complex" -}}
+		{{if isNumber . -}}
+		{{if or $isInt $isFloat $isComplex -}}
+		case reflect.{{reflectKind .}}:
+			data := ret.{{sliceOf .}}
+			if !ret.IsMasked(){
+				for i := range data {
+					data[i] = -data[i]
+				}
+			} else {
+				for i := range data {
+					if !ret.mask[i]{
+						data[i] = -data[i]
 					}
 				}
 			}
@@ -218,29 +336,27 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = ret
 		return
 	default:
-		return nil, errors.Errorf(typeNYI, "Clamp", a)
+		return nil, errors.Errorf(typeNYI, "Neg", a)
 	}
-}
-`
-
-const negRaw = `// Neg returns the sign function as applied to each element in the ndarray.
-// Incr is not supported (it doesn't make sense anyway)
-func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 `
 
 var (
 	clamp *template.Template
 	sign  *template.Template
+	neg   *template.Template
 )
 
 func init() {
 	clamp = template.Must(template.New("clamp").Funcs(funcs).Parse(clampRaw))
 	sign = template.Must(template.New("sign").Funcs(funcs).Parse(signRaw))
+	neg = template.Must(template.New("neg").Funcs(funcs).Parse(negRaw))
 }
 
 func generateUnaryAPIFuncs(f io.Writer, generic *ManyKinds) {
 	clamp.Execute(f, generic)
 	fmt.Fprint(f, "\n")
 	sign.Execute(f, generic)
+	fmt.Fprint(f, "\n")
+	neg.Execute(f, generic)
 }
