@@ -137,7 +137,16 @@ func (a array) swap(i, j int) {
 		}
 		return
 	}
-	reflect.Swapper(a.v)(i, j)
+
+	tmp := make([]byte, a.t.Size())
+	bs := a.byteSlice()
+	is := i * a.t.Size()
+	ie := is + a.t.Size()
+	js := j * a.t.Size()
+	je := js + a.t.Size()
+	copy(tmp, bs[is:ie])
+	copy(bs[is:ie], bs[js:je])
+	copy(bs[js:je], tmp)
 }
 
 // Data returns the representation of a slice.
