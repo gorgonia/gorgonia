@@ -4,8 +4,9 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"sort"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -19,8 +20,8 @@ type Sparse interface {
 	Iterator() Iterator // get an iterator
 }
 
-// coo is an internal representation of the Coordinate type sparse matrix. 
-// It's not exported because you probably shouldn't be using it. 
+// coo is an internal representation of the Coordinate type sparse matrix.
+// It's not exported because you probably shouldn't be using it.
 // Instead, constructors for the *CS type supports using a coordinate as an input.
 type coo struct {
 	o      DataOrder
@@ -233,7 +234,9 @@ func (t *CS) UT() { t.T() }
 func (t *CS) Transpose() {}
 
 // Slice is not supported
-func (t *CS) Slice(...Slice) (Tensor, error) {	return nil, errors.New("compressed sparse matrix cannot be sliced") }
+func (t *CS) Slice(...Slice) (Tensor, error) {
+	return nil, errors.New("compressed sparse matrix cannot be sliced")
+}
 
 func (t *CS) Apply(fn interface{}, opts ...FuncOpt) (Tensor, error) {
 	return nil, errors.Errorf(methodNYI, "Apply")
@@ -291,7 +294,7 @@ func (t *CS) ScalarValue() interface{} { panic("Sparse Matrices cannot represent
 func (t *CS) IsView() bool             { return false }
 
 // Materialize creates a Dense tensor. (It's an alias for Dense())
-func (t *CS) Materialize() Tensor      { return t.Dense() }
+func (t *CS) Materialize() Tensor { return t.Dense() }
 
 func (t *CS) MemSize() uintptr        { return uintptr(calcMemSize(t.t, t.l)) }
 func (t *CS) Uintptr() uintptr        { return uintptr(t.ptr) }
@@ -352,4 +355,18 @@ func (t *CS) Indices() []int {
 	retVal := BorrowInts(len(t.indices))
 	copy(retVal, t.indices)
 	return retVal
+}
+
+func (t *CS) AsCSR() {
+	if t.o.isRowMajor() {
+		return
+	}
+	t.o.toggleColMajor()
+}
+
+func (t *CS) AsCSC() {
+	if t.o.isColMajor() {
+		return
+	}
+	t.o.toggleColMajor()
 }

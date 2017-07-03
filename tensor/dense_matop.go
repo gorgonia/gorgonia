@@ -164,15 +164,6 @@ func (t *Dense) Transpose() {
 		return // cannot transpose scalars
 	}
 
-	if !t.isNativeAccessible() {
-		transposer, ok := t.e.(UnsafeTransposer)
-		if !ok {
-			panic("Cannot transpose non natively accessible data")
-		}
-		transposer.UnsafeTranspose(t)
-		return
-	}
-
 	defer func() {
 		ReturnAP(t.old)
 		t.old = nil
@@ -197,6 +188,15 @@ func (t *Dense) Transpose() {
 
 	if t.IsVector() {
 		// no change of strides.
+		return
+	}
+
+	if !t.isNativeAccessible() {
+		transposer, ok := t.e.(UnsafeTransposer)
+		if !ok {
+			panic("Cannot transpose non natively accessible data")
+		}
+		transposer.UnsafeTranspose(t)
 		return
 	}
 

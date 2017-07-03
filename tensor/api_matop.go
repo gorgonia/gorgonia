@@ -23,6 +23,20 @@ func T(t Tensor, axes ...int) (retVal Tensor, err error) {
 	panic("Unreachable")
 }
 
+func Transpose(t Tensor, axes ...int) (retVal Tensor, err error) {
+	switch tt := t.(type){
+	case *Dense:
+		var ret *Dense
+		if ret, err = tt.SafeT(axes...);err != nil {
+			return 
+		}
+		ret.Transpose()
+		retVal = ret
+		return
+	}
+	panic("Unreachable")
+}
+
 // Concat concatenates a list of Tensors. At the moment the operation only supports Tensors of the same type
 // (*Dense can only be concatenated with a bunch of *Dense, CSCs can only be concatenated with a bunch of CSC, etc)
 func Concat(axis int, t Tensor, others ...Tensor) (retVal Tensor, err error) {
