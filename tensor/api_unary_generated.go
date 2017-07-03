@@ -302,7 +302,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.ints()
+			data := ret.Ints()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -338,7 +338,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.int8s()
+			data := ret.Int8s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -374,7 +374,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.int16s()
+			data := ret.Int16s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -410,7 +410,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.int32s()
+			data := ret.Int32s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -446,7 +446,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.int64s()
+			data := ret.Int64s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -482,7 +482,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.uints()
+			data := ret.Uints()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -518,7 +518,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.uint8s()
+			data := ret.Uint8s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -554,7 +554,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.uint16s()
+			data := ret.Uint16s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -590,7 +590,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.uint32s()
+			data := ret.Uint32s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -626,7 +626,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.uint64s()
+			data := ret.Uint64s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -662,7 +662,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.float32s()
+			data := ret.Float32s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -698,7 +698,7 @@ func Clamp(a Tensor, minVal, maxVal interface{}, opts ...FuncOpt) (retVal Tensor
 				err = errors.Wrapf(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 				return
 			}
-			data := ret.float64s()
+			data := ret.Float64s()
 
 			if !ret.IsMasked() {
 				for i, v := range data {
@@ -876,7 +876,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := ret.ints()
+			data := ret.Ints()
 			if !ret.IsMasked() {
 				for i, v := range data {
 					if v < 0 {
@@ -905,7 +905,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Int8:
-			data := ret.int8s()
+			data := ret.Int8s()
 			if !ret.IsMasked() {
 				for i, v := range data {
 					if v < 0 {
@@ -934,7 +934,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Int16:
-			data := ret.int16s()
+			data := ret.Int16s()
 			if !ret.IsMasked() {
 				for i, v := range data {
 					if v < 0 {
@@ -963,7 +963,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Int32:
-			data := ret.int32s()
+			data := ret.Int32s()
 			if !ret.IsMasked() {
 				for i, v := range data {
 					if v < 0 {
@@ -992,7 +992,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Int64:
-			data := ret.int64s()
+			data := ret.Int64s()
 			if !ret.IsMasked() {
 				for i, v := range data {
 					if v < 0 {
@@ -1021,7 +1021,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Uint:
-			data := ret.uints()
+			data := ret.Uints()
 			if !ret.IsMasked() {
 				for i := range data {
 					if data[i] > 0 {
@@ -1038,7 +1038,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Uint8:
-			data := ret.uint8s()
+			data := ret.Uint8s()
 			if !ret.IsMasked() {
 				for i := range data {
 					if data[i] > 0 {
@@ -1055,7 +1055,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Uint16:
-			data := ret.uint16s()
+			data := ret.Uint16s()
 			if !ret.IsMasked() {
 				for i := range data {
 					if data[i] > 0 {
@@ -1072,7 +1072,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Uint32:
-			data := ret.uint32s()
+			data := ret.Uint32s()
 			if !ret.IsMasked() {
 				for i := range data {
 					if data[i] > 0 {
@@ -1089,7 +1089,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Uint64:
-			data := ret.uint64s()
+			data := ret.Uint64s()
 			if !ret.IsMasked() {
 				for i := range data {
 					if data[i] > 0 {
@@ -1106,7 +1106,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Float32:
-			data := ret.float32s()
+			data := ret.Float32s()
 			if !ret.IsMasked() {
 				for i, v := range data {
 					if v < 0 {
@@ -1135,7 +1135,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				}
 			}
 		case reflect.Float64:
-			data := ret.float64s()
+			data := ret.Float64s()
 			if !ret.IsMasked() {
 				for i, v := range data {
 					if v < 0 {
@@ -1257,7 +1257,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 
 		switch t.t.Kind() {
 		case reflect.Int:
-			data := ret.ints()
+			data := ret.Ints()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1271,7 +1271,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Int8:
-			data := ret.int8s()
+			data := ret.Int8s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1285,7 +1285,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Int16:
-			data := ret.int16s()
+			data := ret.Int16s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1299,7 +1299,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Int32:
-			data := ret.int32s()
+			data := ret.Int32s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1313,7 +1313,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Int64:
-			data := ret.int64s()
+			data := ret.Int64s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1327,7 +1327,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Float32:
-			data := ret.float32s()
+			data := ret.Float32s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1341,7 +1341,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Float64:
-			data := ret.float64s()
+			data := ret.Float64s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1355,7 +1355,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Complex64:
-			data := ret.complex64s()
+			data := ret.Complex64s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]
@@ -1369,7 +1369,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 
 		case reflect.Complex128:
-			data := ret.complex128s()
+			data := ret.Complex128s()
 			if !ret.IsMasked() {
 				for i := range data {
 					data[i] = -data[i]

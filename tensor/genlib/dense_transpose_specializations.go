@@ -23,7 +23,7 @@ const transposeSpecializedRaw = `func (t *Dense) transpose{{short .}}(expStrides
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.set{{short .}}(i, saved)
+			t.{{setOne .}}(i, saved)
 			{{if eq .String "bool" -}}
 				saved = false
 			{{else if eq .String "string" -}}
@@ -42,8 +42,8 @@ const transposeSpecializedRaw = `func (t *Dense) transpose{{short .}}(expStrides
 		}
 
 		track.Set(i)
-		tmp = t.get{{short .}}(i)
-		t.set{{short .}}(i, saved)
+		tmp = t.{{getOne .}}(i)
+		t.{{setOne .}}(i, saved)
 		saved = tmp
 
 		i = dest

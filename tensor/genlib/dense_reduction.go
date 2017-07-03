@@ -146,7 +146,7 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 		data := retVal.{{sliceOf .}}
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.get{{short .}}(j + start))
+				data[j] = f(data[j], t.{{getOne .}}(j + start))
 			}
 			start += split
 		}
@@ -193,7 +193,7 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 		}
 		for start := 0; start <= t.len() - size; start += size {
 			r := reduce{{short .}}(f, def, t.{{sliceOf .}}[start:start+size]...)
-			retVal.set{{short .}}(at, r)
+			retVal.{{setOne .}}(at, r)
 			at++
 		}	
 
@@ -323,7 +323,7 @@ func (t *Dense) sReduce{{short .}}(axis int, zeroFn func(a, b []{{asType .}}) er
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len() - size; start += size {
-			retVal.set{{short .}}(at, lastFn(t.{{sliceOf .}}[start: start+size]))
+			retVal.{{setOne .}}(at, lastFn(t.{{sliceOf .}}[start: start+size]))
 			at++
 		}
 	default:

@@ -67,7 +67,7 @@ func calcSigma(s, T *Dense, shape Shape) (sigma *Dense, err error) {
 		if idx, err = Ltoi(sigma.Shape(), sigma.Strides(), i, i); err != nil {
 			return
 		}
-		sigma.float64s()[idx] = s.float64s()[i]
+		sigma.Float64s()[idx] = s.Float64s()[i]
 	}
 
 	return

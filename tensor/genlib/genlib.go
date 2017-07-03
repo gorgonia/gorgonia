@@ -145,6 +145,8 @@ var funcs = template.FuncMap{
 	"reflectKind": reflectKind,
 	"asType":      asType,
 	"sliceOf":     sliceOf,
+	"getOne":      getOne,
+	"setOne":      setOne,
 
 	"mathPkg":   mathPkg,
 	"bitSizeOf": bitSizeOf,
@@ -328,6 +330,14 @@ func asType(a reflect.Kind) string {
 }
 
 func sliceOf(a reflect.Kind) string {
-	s := fmt.Sprintf("%ss()", a)
+	s := fmt.Sprintf("%ss()", strings.Title(a.String()))
 	return strip(clean(s))
+}
+
+func getOne(a reflect.Kind) string {
+	return fmt.Sprintf("Get%s", short(a))
+}
+
+func setOne(a reflect.Kind) string {
+	return fmt.Sprintf("Set%s", short(a))
 }

@@ -280,7 +280,7 @@ func TestDense_Format_basics(t *testing.T) {
 func TestDense_Format_Masked(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(1, 12))
-	data := T.ints()
+	data := T.Ints()
 	for i := 0; i < len(data); i++ {
 		data[i] = i
 	}
@@ -293,7 +293,7 @@ func TestDense_Format_Masked(t *testing.T) {
 	assert.Equal(`R[--   1  --   3  ... --   9  --  11]`, s)
 
 	T = New(Of(Int), WithShape(2, 4, 16))
-	data = T.ints()
+	data = T.Ints()
 	for i := 0; i < len(data); i++ {
 		data[i] = i
 	}

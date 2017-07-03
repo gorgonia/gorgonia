@@ -12,7 +12,7 @@ GENERATED FILE. DO NOT EDIT
 /* bool */
 
 func (t *Dense) doViewStackB(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.bools()[:0]
+	data := retVal.Bools()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -29,7 +29,7 @@ func (t *Dense) doViewStackB(retVal *Dense, axisStride, batches int, ch chan int
 			if !ok {
 				break
 			}
-			data = append(data, t.bools()[id])
+			data = append(data, t.Bools()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -47,7 +47,7 @@ func (t *Dense) doViewStackB(retVal *Dense, axisStride, batches int, ch chan int
 				if !ok {
 					break
 				}
-				data = append(data, ot.bools()[id])
+				data = append(data, ot.Bools()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -63,7 +63,7 @@ func (t *Dense) doViewStackB(retVal *Dense, axisStride, batches int, ch chan int
 /* int */
 
 func (t *Dense) doViewStackI(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.ints()[:0]
+	data := retVal.Ints()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -80,7 +80,7 @@ func (t *Dense) doViewStackI(retVal *Dense, axisStride, batches int, ch chan int
 			if !ok {
 				break
 			}
-			data = append(data, t.ints()[id])
+			data = append(data, t.Ints()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -98,7 +98,7 @@ func (t *Dense) doViewStackI(retVal *Dense, axisStride, batches int, ch chan int
 				if !ok {
 					break
 				}
-				data = append(data, ot.ints()[id])
+				data = append(data, ot.Ints()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -114,7 +114,7 @@ func (t *Dense) doViewStackI(retVal *Dense, axisStride, batches int, ch chan int
 /* int8 */
 
 func (t *Dense) doViewStackI8(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.int8s()[:0]
+	data := retVal.Int8s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -131,7 +131,7 @@ func (t *Dense) doViewStackI8(retVal *Dense, axisStride, batches int, ch chan in
 			if !ok {
 				break
 			}
-			data = append(data, t.int8s()[id])
+			data = append(data, t.Int8s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -149,7 +149,7 @@ func (t *Dense) doViewStackI8(retVal *Dense, axisStride, batches int, ch chan in
 				if !ok {
 					break
 				}
-				data = append(data, ot.int8s()[id])
+				data = append(data, ot.Int8s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -165,7 +165,7 @@ func (t *Dense) doViewStackI8(retVal *Dense, axisStride, batches int, ch chan in
 /* int16 */
 
 func (t *Dense) doViewStackI16(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.int16s()[:0]
+	data := retVal.Int16s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -182,7 +182,7 @@ func (t *Dense) doViewStackI16(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.int16s()[id])
+			data = append(data, t.Int16s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -200,7 +200,7 @@ func (t *Dense) doViewStackI16(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.int16s()[id])
+				data = append(data, ot.Int16s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -216,7 +216,7 @@ func (t *Dense) doViewStackI16(retVal *Dense, axisStride, batches int, ch chan i
 /* int32 */
 
 func (t *Dense) doViewStackI32(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.int32s()[:0]
+	data := retVal.Int32s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -233,7 +233,7 @@ func (t *Dense) doViewStackI32(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.int32s()[id])
+			data = append(data, t.Int32s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -251,7 +251,7 @@ func (t *Dense) doViewStackI32(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.int32s()[id])
+				data = append(data, ot.Int32s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -267,7 +267,7 @@ func (t *Dense) doViewStackI32(retVal *Dense, axisStride, batches int, ch chan i
 /* int64 */
 
 func (t *Dense) doViewStackI64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.int64s()[:0]
+	data := retVal.Int64s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -284,7 +284,7 @@ func (t *Dense) doViewStackI64(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.int64s()[id])
+			data = append(data, t.Int64s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -302,7 +302,7 @@ func (t *Dense) doViewStackI64(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.int64s()[id])
+				data = append(data, ot.Int64s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -318,7 +318,7 @@ func (t *Dense) doViewStackI64(retVal *Dense, axisStride, batches int, ch chan i
 /* uint */
 
 func (t *Dense) doViewStackU(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.uints()[:0]
+	data := retVal.Uints()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -335,7 +335,7 @@ func (t *Dense) doViewStackU(retVal *Dense, axisStride, batches int, ch chan int
 			if !ok {
 				break
 			}
-			data = append(data, t.uints()[id])
+			data = append(data, t.Uints()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -353,7 +353,7 @@ func (t *Dense) doViewStackU(retVal *Dense, axisStride, batches int, ch chan int
 				if !ok {
 					break
 				}
-				data = append(data, ot.uints()[id])
+				data = append(data, ot.Uints()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -369,7 +369,7 @@ func (t *Dense) doViewStackU(retVal *Dense, axisStride, batches int, ch chan int
 /* uint8 */
 
 func (t *Dense) doViewStackU8(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.uint8s()[:0]
+	data := retVal.Uint8s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -386,7 +386,7 @@ func (t *Dense) doViewStackU8(retVal *Dense, axisStride, batches int, ch chan in
 			if !ok {
 				break
 			}
-			data = append(data, t.uint8s()[id])
+			data = append(data, t.Uint8s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -404,7 +404,7 @@ func (t *Dense) doViewStackU8(retVal *Dense, axisStride, batches int, ch chan in
 				if !ok {
 					break
 				}
-				data = append(data, ot.uint8s()[id])
+				data = append(data, ot.Uint8s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -420,7 +420,7 @@ func (t *Dense) doViewStackU8(retVal *Dense, axisStride, batches int, ch chan in
 /* uint16 */
 
 func (t *Dense) doViewStackU16(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.uint16s()[:0]
+	data := retVal.Uint16s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -437,7 +437,7 @@ func (t *Dense) doViewStackU16(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.uint16s()[id])
+			data = append(data, t.Uint16s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -455,7 +455,7 @@ func (t *Dense) doViewStackU16(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.uint16s()[id])
+				data = append(data, ot.Uint16s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -471,7 +471,7 @@ func (t *Dense) doViewStackU16(retVal *Dense, axisStride, batches int, ch chan i
 /* uint32 */
 
 func (t *Dense) doViewStackU32(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.uint32s()[:0]
+	data := retVal.Uint32s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -488,7 +488,7 @@ func (t *Dense) doViewStackU32(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.uint32s()[id])
+			data = append(data, t.Uint32s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -506,7 +506,7 @@ func (t *Dense) doViewStackU32(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.uint32s()[id])
+				data = append(data, ot.Uint32s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -522,7 +522,7 @@ func (t *Dense) doViewStackU32(retVal *Dense, axisStride, batches int, ch chan i
 /* uint64 */
 
 func (t *Dense) doViewStackU64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.uint64s()[:0]
+	data := retVal.Uint64s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -539,7 +539,7 @@ func (t *Dense) doViewStackU64(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.uint64s()[id])
+			data = append(data, t.Uint64s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -557,7 +557,7 @@ func (t *Dense) doViewStackU64(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.uint64s()[id])
+				data = append(data, ot.Uint64s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -573,7 +573,7 @@ func (t *Dense) doViewStackU64(retVal *Dense, axisStride, batches int, ch chan i
 /* float32 */
 
 func (t *Dense) doViewStackF32(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.float32s()[:0]
+	data := retVal.Float32s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -590,7 +590,7 @@ func (t *Dense) doViewStackF32(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.float32s()[id])
+			data = append(data, t.Float32s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -608,7 +608,7 @@ func (t *Dense) doViewStackF32(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.float32s()[id])
+				data = append(data, ot.Float32s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -624,7 +624,7 @@ func (t *Dense) doViewStackF32(retVal *Dense, axisStride, batches int, ch chan i
 /* float64 */
 
 func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.float64s()[:0]
+	data := retVal.Float64s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -641,7 +641,7 @@ func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.float64s()[id])
+			data = append(data, t.Float64s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -659,7 +659,7 @@ func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.float64s()[id])
+				data = append(data, ot.Float64s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -675,7 +675,7 @@ func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan i
 /* complex64 */
 
 func (t *Dense) doViewStackC64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.complex64s()[:0]
+	data := retVal.Complex64s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -692,7 +692,7 @@ func (t *Dense) doViewStackC64(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.complex64s()[id])
+			data = append(data, t.Complex64s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -710,7 +710,7 @@ func (t *Dense) doViewStackC64(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.complex64s()[id])
+				data = append(data, ot.Complex64s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -726,7 +726,7 @@ func (t *Dense) doViewStackC64(retVal *Dense, axisStride, batches int, ch chan i
 /* complex128 */
 
 func (t *Dense) doViewStackC128(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.complex128s()[:0]
+	data := retVal.Complex128s()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -743,7 +743,7 @@ func (t *Dense) doViewStackC128(retVal *Dense, axisStride, batches int, ch chan 
 			if !ok {
 				break
 			}
-			data = append(data, t.complex128s()[id])
+			data = append(data, t.Complex128s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -761,7 +761,7 @@ func (t *Dense) doViewStackC128(retVal *Dense, axisStride, batches int, ch chan 
 				if !ok {
 					break
 				}
-				data = append(data, ot.complex128s()[id])
+				data = append(data, ot.Complex128s()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}
@@ -777,7 +777,7 @@ func (t *Dense) doViewStackC128(retVal *Dense, axisStride, batches int, ch chan 
 /* string */
 
 func (t *Dense) doViewStackStr(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.strings()[:0]
+	data := retVal.Strings()[:0]
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
@@ -794,7 +794,7 @@ func (t *Dense) doViewStackStr(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
-			data = append(data, t.strings()[id])
+			data = append(data, t.Strings()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])
 			}
@@ -812,7 +812,7 @@ func (t *Dense) doViewStackStr(retVal *Dense, axisStride, batches int, ch chan i
 				if !ok {
 					break
 				}
-				data = append(data, ot.strings()[id])
+				data = append(data, ot.Strings()[id])
 				if isMasked {
 					mask = append(mask, ot.mask[id])
 				}

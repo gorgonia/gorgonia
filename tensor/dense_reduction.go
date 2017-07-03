@@ -141,10 +141,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b bool) bool. Got %v instead", fn)
 		}
 
-		data := retVal.bools()
+		data := retVal.Bools()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getB(j+start))
+				data[j] = f(data[j], t.GetB(j+start))
 			}
 			start += split
 		}
@@ -154,10 +154,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b int) int. Got %v instead", fn)
 		}
 
-		data := retVal.ints()
+		data := retVal.Ints()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getI(j+start))
+				data[j] = f(data[j], t.GetI(j+start))
 			}
 			start += split
 		}
@@ -167,10 +167,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b int8) int8. Got %v instead", fn)
 		}
 
-		data := retVal.int8s()
+		data := retVal.Int8s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getI8(j+start))
+				data[j] = f(data[j], t.GetI8(j+start))
 			}
 			start += split
 		}
@@ -180,10 +180,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b int16) int16. Got %v instead", fn)
 		}
 
-		data := retVal.int16s()
+		data := retVal.Int16s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getI16(j+start))
+				data[j] = f(data[j], t.GetI16(j+start))
 			}
 			start += split
 		}
@@ -193,10 +193,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b int32) int32. Got %v instead", fn)
 		}
 
-		data := retVal.int32s()
+		data := retVal.Int32s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getI32(j+start))
+				data[j] = f(data[j], t.GetI32(j+start))
 			}
 			start += split
 		}
@@ -206,10 +206,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b int64) int64. Got %v instead", fn)
 		}
 
-		data := retVal.int64s()
+		data := retVal.Int64s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getI64(j+start))
+				data[j] = f(data[j], t.GetI64(j+start))
 			}
 			start += split
 		}
@@ -219,10 +219,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b uint) uint. Got %v instead", fn)
 		}
 
-		data := retVal.uints()
+		data := retVal.Uints()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getU(j+start))
+				data[j] = f(data[j], t.GetU(j+start))
 			}
 			start += split
 		}
@@ -232,10 +232,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b uint8) uint8. Got %v instead", fn)
 		}
 
-		data := retVal.uint8s()
+		data := retVal.Uint8s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getU8(j+start))
+				data[j] = f(data[j], t.GetU8(j+start))
 			}
 			start += split
 		}
@@ -245,10 +245,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b uint16) uint16. Got %v instead", fn)
 		}
 
-		data := retVal.uint16s()
+		data := retVal.Uint16s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getU16(j+start))
+				data[j] = f(data[j], t.GetU16(j+start))
 			}
 			start += split
 		}
@@ -258,10 +258,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b uint32) uint32. Got %v instead", fn)
 		}
 
-		data := retVal.uint32s()
+		data := retVal.Uint32s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getU32(j+start))
+				data[j] = f(data[j], t.GetU32(j+start))
 			}
 			start += split
 		}
@@ -271,10 +271,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b uint64) uint64. Got %v instead", fn)
 		}
 
-		data := retVal.uint64s()
+		data := retVal.Uint64s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getU64(j+start))
+				data[j] = f(data[j], t.GetU64(j+start))
 			}
 			start += split
 		}
@@ -284,10 +284,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b uintptr) uintptr. Got %v instead", fn)
 		}
 
-		data := retVal.uintptrs()
+		data := retVal.Uintptrs()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getUintptr(j+start))
+				data[j] = f(data[j], t.GetUintptr(j+start))
 			}
 			start += split
 		}
@@ -297,10 +297,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b float32) float32. Got %v instead", fn)
 		}
 
-		data := retVal.float32s()
+		data := retVal.Float32s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getF32(j+start))
+				data[j] = f(data[j], t.GetF32(j+start))
 			}
 			start += split
 		}
@@ -310,10 +310,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b float64) float64. Got %v instead", fn)
 		}
 
-		data := retVal.float64s()
+		data := retVal.Float64s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getF64(j+start))
+				data[j] = f(data[j], t.GetF64(j+start))
 			}
 			start += split
 		}
@@ -323,10 +323,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b complex64) complex64. Got %v instead", fn)
 		}
 
-		data := retVal.complex64s()
+		data := retVal.Complex64s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getC64(j+start))
+				data[j] = f(data[j], t.GetC64(j+start))
 			}
 			start += split
 		}
@@ -336,10 +336,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b complex128) complex128. Got %v instead", fn)
 		}
 
-		data := retVal.complex128s()
+		data := retVal.Complex128s()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getC128(j+start))
+				data[j] = f(data[j], t.GetC128(j+start))
 			}
 			start += split
 		}
@@ -349,10 +349,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b string) string. Got %v instead", fn)
 		}
 
-		data := retVal.strings()
+		data := retVal.Strings()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getStr(j+start))
+				data[j] = f(data[j], t.GetStr(j+start))
 			}
 			start += split
 		}
@@ -362,10 +362,10 @@ func (t *Dense) reduce0(retVal *Dense, fn interface{}) (err error) {
 			return errors.Errorf("Expected reduction function to be func(a, b unsafe.Pointer) unsafe.Pointer. Got %v instead", fn)
 		}
 
-		data := retVal.unsafePointers()
+		data := retVal.UnsafePointers()
 		for i := 0; i < size-1; i++ {
 			for j := 0; j < split; j++ {
-				data[j] = f(data[j], t.getUnsafePointer(j+start))
+				data[j] = f(data[j], t.GetUnsafePointer(j+start))
 			}
 			start += split
 		}
@@ -406,8 +406,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be bool. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceB(f, def, t.bools()[start:start+size]...)
-			retVal.setB(at, r)
+			r := reduceB(f, def, t.Bools()[start:start+size]...)
+			retVal.SetB(at, r)
 			at++
 		}
 
@@ -421,8 +421,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be int. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceI(f, def, t.ints()[start:start+size]...)
-			retVal.setI(at, r)
+			r := reduceI(f, def, t.Ints()[start:start+size]...)
+			retVal.SetI(at, r)
 			at++
 		}
 
@@ -436,8 +436,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be int8. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceI8(f, def, t.int8s()[start:start+size]...)
-			retVal.setI8(at, r)
+			r := reduceI8(f, def, t.Int8s()[start:start+size]...)
+			retVal.SetI8(at, r)
 			at++
 		}
 
@@ -451,8 +451,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be int16. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceI16(f, def, t.int16s()[start:start+size]...)
-			retVal.setI16(at, r)
+			r := reduceI16(f, def, t.Int16s()[start:start+size]...)
+			retVal.SetI16(at, r)
 			at++
 		}
 
@@ -466,8 +466,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be int32. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceI32(f, def, t.int32s()[start:start+size]...)
-			retVal.setI32(at, r)
+			r := reduceI32(f, def, t.Int32s()[start:start+size]...)
+			retVal.SetI32(at, r)
 			at++
 		}
 
@@ -481,8 +481,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be int64. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceI64(f, def, t.int64s()[start:start+size]...)
-			retVal.setI64(at, r)
+			r := reduceI64(f, def, t.Int64s()[start:start+size]...)
+			retVal.SetI64(at, r)
 			at++
 		}
 
@@ -496,8 +496,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be uint. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceU(f, def, t.uints()[start:start+size]...)
-			retVal.setU(at, r)
+			r := reduceU(f, def, t.Uints()[start:start+size]...)
+			retVal.SetU(at, r)
 			at++
 		}
 
@@ -511,8 +511,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be uint8. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceU8(f, def, t.uint8s()[start:start+size]...)
-			retVal.setU8(at, r)
+			r := reduceU8(f, def, t.Uint8s()[start:start+size]...)
+			retVal.SetU8(at, r)
 			at++
 		}
 
@@ -526,8 +526,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be uint16. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceU16(f, def, t.uint16s()[start:start+size]...)
-			retVal.setU16(at, r)
+			r := reduceU16(f, def, t.Uint16s()[start:start+size]...)
+			retVal.SetU16(at, r)
 			at++
 		}
 
@@ -541,8 +541,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be uint32. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceU32(f, def, t.uint32s()[start:start+size]...)
-			retVal.setU32(at, r)
+			r := reduceU32(f, def, t.Uint32s()[start:start+size]...)
+			retVal.SetU32(at, r)
 			at++
 		}
 
@@ -556,8 +556,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be uint64. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceU64(f, def, t.uint64s()[start:start+size]...)
-			retVal.setU64(at, r)
+			r := reduceU64(f, def, t.Uint64s()[start:start+size]...)
+			retVal.SetU64(at, r)
 			at++
 		}
 
@@ -571,8 +571,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be uintptr. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceUintptr(f, def, t.uintptrs()[start:start+size]...)
-			retVal.setUintptr(at, r)
+			r := reduceUintptr(f, def, t.Uintptrs()[start:start+size]...)
+			retVal.SetUintptr(at, r)
 			at++
 		}
 
@@ -586,8 +586,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be float32. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceF32(f, def, t.float32s()[start:start+size]...)
-			retVal.setF32(at, r)
+			r := reduceF32(f, def, t.Float32s()[start:start+size]...)
+			retVal.SetF32(at, r)
 			at++
 		}
 
@@ -601,8 +601,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be float64. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceF64(f, def, t.float64s()[start:start+size]...)
-			retVal.setF64(at, r)
+			r := reduceF64(f, def, t.Float64s()[start:start+size]...)
+			retVal.SetF64(at, r)
 			at++
 		}
 
@@ -616,8 +616,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be complex64. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceC64(f, def, t.complex64s()[start:start+size]...)
-			retVal.setC64(at, r)
+			r := reduceC64(f, def, t.Complex64s()[start:start+size]...)
+			retVal.SetC64(at, r)
 			at++
 		}
 
@@ -631,8 +631,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be complex128. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceC128(f, def, t.complex128s()[start:start+size]...)
-			retVal.setC128(at, r)
+			r := reduceC128(f, def, t.Complex128s()[start:start+size]...)
+			retVal.SetC128(at, r)
 			at++
 		}
 
@@ -646,8 +646,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be string. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceStr(f, def, t.strings()[start:start+size]...)
-			retVal.setStr(at, r)
+			r := reduceStr(f, def, t.Strings()[start:start+size]...)
+			retVal.SetStr(at, r)
 			at++
 		}
 
@@ -661,8 +661,8 @@ func (t *Dense) reduceLast(retVal *Dense, axis int, fn interface{}, defaultValue
 			return errors.Errorf("Expected default value to be unsafe.Pointer. Got %v of %T instead", defaultValue, defaultValue)
 		}
 		for start := 0; start <= t.len()-size; start += size {
-			r := reduceUnsafePointer(f, def, t.unsafePointers()[start:start+size]...)
-			retVal.setUnsafePointer(at, r)
+			r := reduceUnsafePointer(f, def, t.UnsafePointers()[start:start+size]...)
+			retVal.SetUnsafePointer(at, r)
 			at++
 		}
 
@@ -699,8 +699,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.bools()[start : start+oStride]
-			rdata := retVal.bools()
+			tdata := t.Bools()[start : start+oStride]
+			rdata := retVal.Bools()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -724,8 +724,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.ints()[start : start+oStride]
-			rdata := retVal.ints()
+			tdata := t.Ints()[start : start+oStride]
+			rdata := retVal.Ints()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -749,8 +749,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.int8s()[start : start+oStride]
-			rdata := retVal.int8s()
+			tdata := t.Int8s()[start : start+oStride]
+			rdata := retVal.Int8s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -774,8 +774,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.int16s()[start : start+oStride]
-			rdata := retVal.int16s()
+			tdata := t.Int16s()[start : start+oStride]
+			rdata := retVal.Int16s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -799,8 +799,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.int32s()[start : start+oStride]
-			rdata := retVal.int32s()
+			tdata := t.Int32s()[start : start+oStride]
+			rdata := retVal.Int32s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -824,8 +824,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.int64s()[start : start+oStride]
-			rdata := retVal.int64s()
+			tdata := t.Int64s()[start : start+oStride]
+			rdata := retVal.Int64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -849,8 +849,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.uints()[start : start+oStride]
-			rdata := retVal.uints()
+			tdata := t.Uints()[start : start+oStride]
+			rdata := retVal.Uints()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -874,8 +874,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.uint8s()[start : start+oStride]
-			rdata := retVal.uint8s()
+			tdata := t.Uint8s()[start : start+oStride]
+			rdata := retVal.Uint8s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -899,8 +899,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.uint16s()[start : start+oStride]
-			rdata := retVal.uint16s()
+			tdata := t.Uint16s()[start : start+oStride]
+			rdata := retVal.Uint16s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -924,8 +924,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.uint32s()[start : start+oStride]
-			rdata := retVal.uint32s()
+			tdata := t.Uint32s()[start : start+oStride]
+			rdata := retVal.Uint32s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -949,8 +949,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.uint64s()[start : start+oStride]
-			rdata := retVal.uint64s()
+			tdata := t.Uint64s()[start : start+oStride]
+			rdata := retVal.Uint64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -974,8 +974,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.uintptrs()[start : start+oStride]
-			rdata := retVal.uintptrs()
+			tdata := t.Uintptrs()[start : start+oStride]
+			rdata := retVal.Uintptrs()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -999,8 +999,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.float32s()[start : start+oStride]
-			rdata := retVal.float32s()
+			tdata := t.Float32s()[start : start+oStride]
+			rdata := retVal.Float32s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1024,8 +1024,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.float64s()[start : start+oStride]
-			rdata := retVal.float64s()
+			tdata := t.Float64s()[start : start+oStride]
+			rdata := retVal.Float64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1049,8 +1049,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.complex64s()[start : start+oStride]
-			rdata := retVal.complex64s()
+			tdata := t.Complex64s()[start : start+oStride]
+			rdata := retVal.Complex64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1074,8 +1074,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.complex128s()[start : start+oStride]
-			rdata := retVal.complex128s()
+			tdata := t.Complex128s()[start : start+oStride]
+			rdata := retVal.Complex128s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1099,8 +1099,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.strings()[start : start+oStride]
-			rdata := retVal.strings()
+			tdata := t.Strings()[start : start+oStride]
+			rdata := retVal.Strings()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1124,8 +1124,8 @@ func (t *Dense) reduceDefault(retVal *Dense, axis int, fn interface{}) error {
 		for i := 0; i < t.Shape()[0]; i++ {
 			// this loop can be parallelized!
 			start := i * oStride
-			tdata := t.unsafePointers()[start : start+oStride]
-			rdata := retVal.unsafePointers()
+			tdata := t.UnsafePointers()[start : start+oStride]
+			rdata := retVal.UnsafePointers()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1195,11 +1195,11 @@ func (t *Dense) sReduceI(axis int, zeroFn func(a, b []int) error, lastFn func([]
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.ints()[0:split], t.ints()[0:split])
+		copy(retVal.Ints()[0:split], t.Ints()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.ints(), t.ints()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Ints(), t.Ints()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1208,7 +1208,7 @@ func (t *Dense) sReduceI(axis int, zeroFn func(a, b []int) error, lastFn func([]
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setI(at, lastFn(t.ints()[start:start+size]))
+			retVal.SetI(at, lastFn(t.Ints()[start:start+size]))
 			at++
 		}
 	default:
@@ -1219,8 +1219,8 @@ func (t *Dense) sReduceI(axis int, zeroFn func(a, b []int) error, lastFn func([]
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.ints()[start : start+outerStride]
-			rdata := retVal.ints()
+			tdata := t.Ints()[start : start+outerStride]
+			rdata := retVal.Ints()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1266,11 +1266,11 @@ func (t *Dense) sReduceI8(axis int, zeroFn func(a, b []int8) error, lastFn func(
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.int8s()[0:split], t.int8s()[0:split])
+		copy(retVal.Int8s()[0:split], t.Int8s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.int8s(), t.int8s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Int8s(), t.Int8s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1279,7 +1279,7 @@ func (t *Dense) sReduceI8(axis int, zeroFn func(a, b []int8) error, lastFn func(
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setI8(at, lastFn(t.int8s()[start:start+size]))
+			retVal.SetI8(at, lastFn(t.Int8s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1290,8 +1290,8 @@ func (t *Dense) sReduceI8(axis int, zeroFn func(a, b []int8) error, lastFn func(
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.int8s()[start : start+outerStride]
-			rdata := retVal.int8s()
+			tdata := t.Int8s()[start : start+outerStride]
+			rdata := retVal.Int8s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1337,11 +1337,11 @@ func (t *Dense) sReduceI16(axis int, zeroFn func(a, b []int16) error, lastFn fun
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.int16s()[0:split], t.int16s()[0:split])
+		copy(retVal.Int16s()[0:split], t.Int16s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.int16s(), t.int16s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Int16s(), t.Int16s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1350,7 +1350,7 @@ func (t *Dense) sReduceI16(axis int, zeroFn func(a, b []int16) error, lastFn fun
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setI16(at, lastFn(t.int16s()[start:start+size]))
+			retVal.SetI16(at, lastFn(t.Int16s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1361,8 +1361,8 @@ func (t *Dense) sReduceI16(axis int, zeroFn func(a, b []int16) error, lastFn fun
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.int16s()[start : start+outerStride]
-			rdata := retVal.int16s()
+			tdata := t.Int16s()[start : start+outerStride]
+			rdata := retVal.Int16s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1408,11 +1408,11 @@ func (t *Dense) sReduceI32(axis int, zeroFn func(a, b []int32) error, lastFn fun
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.int32s()[0:split], t.int32s()[0:split])
+		copy(retVal.Int32s()[0:split], t.Int32s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.int32s(), t.int32s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Int32s(), t.Int32s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1421,7 +1421,7 @@ func (t *Dense) sReduceI32(axis int, zeroFn func(a, b []int32) error, lastFn fun
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setI32(at, lastFn(t.int32s()[start:start+size]))
+			retVal.SetI32(at, lastFn(t.Int32s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1432,8 +1432,8 @@ func (t *Dense) sReduceI32(axis int, zeroFn func(a, b []int32) error, lastFn fun
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.int32s()[start : start+outerStride]
-			rdata := retVal.int32s()
+			tdata := t.Int32s()[start : start+outerStride]
+			rdata := retVal.Int32s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1479,11 +1479,11 @@ func (t *Dense) sReduceI64(axis int, zeroFn func(a, b []int64) error, lastFn fun
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.int64s()[0:split], t.int64s()[0:split])
+		copy(retVal.Int64s()[0:split], t.Int64s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.int64s(), t.int64s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Int64s(), t.Int64s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1492,7 +1492,7 @@ func (t *Dense) sReduceI64(axis int, zeroFn func(a, b []int64) error, lastFn fun
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setI64(at, lastFn(t.int64s()[start:start+size]))
+			retVal.SetI64(at, lastFn(t.Int64s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1503,8 +1503,8 @@ func (t *Dense) sReduceI64(axis int, zeroFn func(a, b []int64) error, lastFn fun
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.int64s()[start : start+outerStride]
-			rdata := retVal.int64s()
+			tdata := t.Int64s()[start : start+outerStride]
+			rdata := retVal.Int64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1550,11 +1550,11 @@ func (t *Dense) sReduceU(axis int, zeroFn func(a, b []uint) error, lastFn func([
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.uints()[0:split], t.uints()[0:split])
+		copy(retVal.Uints()[0:split], t.Uints()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.uints(), t.uints()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Uints(), t.Uints()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1563,7 +1563,7 @@ func (t *Dense) sReduceU(axis int, zeroFn func(a, b []uint) error, lastFn func([
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setU(at, lastFn(t.uints()[start:start+size]))
+			retVal.SetU(at, lastFn(t.Uints()[start:start+size]))
 			at++
 		}
 	default:
@@ -1574,8 +1574,8 @@ func (t *Dense) sReduceU(axis int, zeroFn func(a, b []uint) error, lastFn func([
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.uints()[start : start+outerStride]
-			rdata := retVal.uints()
+			tdata := t.Uints()[start : start+outerStride]
+			rdata := retVal.Uints()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1621,11 +1621,11 @@ func (t *Dense) sReduceU8(axis int, zeroFn func(a, b []uint8) error, lastFn func
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.uint8s()[0:split], t.uint8s()[0:split])
+		copy(retVal.Uint8s()[0:split], t.Uint8s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.uint8s(), t.uint8s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Uint8s(), t.Uint8s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1634,7 +1634,7 @@ func (t *Dense) sReduceU8(axis int, zeroFn func(a, b []uint8) error, lastFn func
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setU8(at, lastFn(t.uint8s()[start:start+size]))
+			retVal.SetU8(at, lastFn(t.Uint8s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1645,8 +1645,8 @@ func (t *Dense) sReduceU8(axis int, zeroFn func(a, b []uint8) error, lastFn func
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.uint8s()[start : start+outerStride]
-			rdata := retVal.uint8s()
+			tdata := t.Uint8s()[start : start+outerStride]
+			rdata := retVal.Uint8s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1692,11 +1692,11 @@ func (t *Dense) sReduceU16(axis int, zeroFn func(a, b []uint16) error, lastFn fu
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.uint16s()[0:split], t.uint16s()[0:split])
+		copy(retVal.Uint16s()[0:split], t.Uint16s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.uint16s(), t.uint16s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Uint16s(), t.Uint16s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1705,7 +1705,7 @@ func (t *Dense) sReduceU16(axis int, zeroFn func(a, b []uint16) error, lastFn fu
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setU16(at, lastFn(t.uint16s()[start:start+size]))
+			retVal.SetU16(at, lastFn(t.Uint16s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1716,8 +1716,8 @@ func (t *Dense) sReduceU16(axis int, zeroFn func(a, b []uint16) error, lastFn fu
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.uint16s()[start : start+outerStride]
-			rdata := retVal.uint16s()
+			tdata := t.Uint16s()[start : start+outerStride]
+			rdata := retVal.Uint16s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1763,11 +1763,11 @@ func (t *Dense) sReduceU32(axis int, zeroFn func(a, b []uint32) error, lastFn fu
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.uint32s()[0:split], t.uint32s()[0:split])
+		copy(retVal.Uint32s()[0:split], t.Uint32s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.uint32s(), t.uint32s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Uint32s(), t.Uint32s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1776,7 +1776,7 @@ func (t *Dense) sReduceU32(axis int, zeroFn func(a, b []uint32) error, lastFn fu
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setU32(at, lastFn(t.uint32s()[start:start+size]))
+			retVal.SetU32(at, lastFn(t.Uint32s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1787,8 +1787,8 @@ func (t *Dense) sReduceU32(axis int, zeroFn func(a, b []uint32) error, lastFn fu
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.uint32s()[start : start+outerStride]
-			rdata := retVal.uint32s()
+			tdata := t.Uint32s()[start : start+outerStride]
+			rdata := retVal.Uint32s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1834,11 +1834,11 @@ func (t *Dense) sReduceU64(axis int, zeroFn func(a, b []uint64) error, lastFn fu
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.uint64s()[0:split], t.uint64s()[0:split])
+		copy(retVal.Uint64s()[0:split], t.Uint64s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.uint64s(), t.uint64s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Uint64s(), t.Uint64s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1847,7 +1847,7 @@ func (t *Dense) sReduceU64(axis int, zeroFn func(a, b []uint64) error, lastFn fu
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setU64(at, lastFn(t.uint64s()[start:start+size]))
+			retVal.SetU64(at, lastFn(t.Uint64s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1858,8 +1858,8 @@ func (t *Dense) sReduceU64(axis int, zeroFn func(a, b []uint64) error, lastFn fu
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.uint64s()[start : start+outerStride]
-			rdata := retVal.uint64s()
+			tdata := t.Uint64s()[start : start+outerStride]
+			rdata := retVal.Uint64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1905,11 +1905,11 @@ func (t *Dense) sReduceF32(axis int, zeroFn func(a, b []float32) error, lastFn f
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.float32s()[0:split], t.float32s()[0:split])
+		copy(retVal.Float32s()[0:split], t.Float32s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.float32s(), t.float32s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Float32s(), t.Float32s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1918,7 +1918,7 @@ func (t *Dense) sReduceF32(axis int, zeroFn func(a, b []float32) error, lastFn f
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setF32(at, lastFn(t.float32s()[start:start+size]))
+			retVal.SetF32(at, lastFn(t.Float32s()[start:start+size]))
 			at++
 		}
 	default:
@@ -1929,8 +1929,8 @@ func (t *Dense) sReduceF32(axis int, zeroFn func(a, b []float32) error, lastFn f
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.float32s()[start : start+outerStride]
-			rdata := retVal.float32s()
+			tdata := t.Float32s()[start : start+outerStride]
+			rdata := retVal.Float32s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -1976,11 +1976,11 @@ func (t *Dense) sReduceF64(axis int, zeroFn func(a, b []float64) error, lastFn f
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.float64s()[0:split], t.float64s()[0:split])
+		copy(retVal.Float64s()[0:split], t.Float64s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.float64s(), t.float64s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Float64s(), t.Float64s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -1989,7 +1989,7 @@ func (t *Dense) sReduceF64(axis int, zeroFn func(a, b []float64) error, lastFn f
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setF64(at, lastFn(t.float64s()[start:start+size]))
+			retVal.SetF64(at, lastFn(t.Float64s()[start:start+size]))
 			at++
 		}
 	default:
@@ -2000,8 +2000,8 @@ func (t *Dense) sReduceF64(axis int, zeroFn func(a, b []float64) error, lastFn f
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.float64s()[start : start+outerStride]
-			rdata := retVal.float64s()
+			tdata := t.Float64s()[start : start+outerStride]
+			rdata := retVal.Float64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -2047,11 +2047,11 @@ func (t *Dense) sReduceC64(axis int, zeroFn func(a, b []complex64) error, lastFn
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.complex64s()[0:split], t.complex64s()[0:split])
+		copy(retVal.Complex64s()[0:split], t.Complex64s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.complex64s(), t.complex64s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Complex64s(), t.Complex64s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -2060,7 +2060,7 @@ func (t *Dense) sReduceC64(axis int, zeroFn func(a, b []complex64) error, lastFn
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setC64(at, lastFn(t.complex64s()[start:start+size]))
+			retVal.SetC64(at, lastFn(t.Complex64s()[start:start+size]))
 			at++
 		}
 	default:
@@ -2071,8 +2071,8 @@ func (t *Dense) sReduceC64(axis int, zeroFn func(a, b []complex64) error, lastFn
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.complex64s()[start : start+outerStride]
-			rdata := retVal.complex64s()
+			tdata := t.Complex64s()[start : start+outerStride]
+			rdata := retVal.Complex64s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {
@@ -2118,11 +2118,11 @@ func (t *Dense) sReduceC128(axis int, zeroFn func(a, b []complex128) error, last
 	case 0:
 		// most efficient
 		split := t.len() / size
-		copy(retVal.complex128s()[0:split], t.complex128s()[0:split])
+		copy(retVal.Complex128s()[0:split], t.Complex128s()[0:split])
 
 		start := split
 		for i := 0; i < size-1; i++ {
-			if err := zeroFn(retVal.complex128s(), t.complex128s()[start:start+split]); err != nil {
+			if err := zeroFn(retVal.Complex128s(), t.Complex128s()[start:start+split]); err != nil {
 				panic(err)
 			}
 			start += split
@@ -2131,7 +2131,7 @@ func (t *Dense) sReduceC128(axis int, zeroFn func(a, b []complex128) error, last
 		// second most efficient
 		var at int
 		for start := 0; start <= t.len()-size; start += size {
-			retVal.setC128(at, lastFn(t.complex128s()[start:start+size]))
+			retVal.SetC128(at, lastFn(t.Complex128s()[start:start+size]))
 			at++
 		}
 	default:
@@ -2142,8 +2142,8 @@ func (t *Dense) sReduceC128(axis int, zeroFn func(a, b []complex128) error, last
 
 		for i := 0; i < outerSize; i++ {
 			start := i * outerStride
-			tdata := t.complex128s()[start : start+outerStride]
-			rdata := retVal.complex128s()
+			tdata := t.Complex128s()[start : start+outerStride]
+			rdata := retVal.Complex128s()
 			var innerStart, strideTrack int
 			for j := 0; j < expected; j++ {
 				for k := 0; k < size; k++ {

@@ -74,7 +74,7 @@ func (t *Dense) {{lower .ArgName}}(it Iterator) (retVal *Dense, err error) {
 				retVal = New(FromScalar({{lower $arg}}{{short .}}(t.{{sliceOf .}},t.mask)))
 				return
 			}
-			data := t.{{asType . | strip }}s()
+			data := t.{{sliceOf .}}
 			tmp := make([]{{asType .}}, 0, lastSize)
 			mask = make([]bool, 0, lastSize)
 			for next, err = it.Next(); err == nil; next, err = it.Next() {				

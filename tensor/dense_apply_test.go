@@ -80,8 +80,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.bools()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.bools()[0:10])
+			if !allClose(ret.Data(), correct.Bools()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Bools()[0:10])
 				return false
 			}
 
@@ -163,8 +163,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.ints()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.ints()[0:10])
+			if !allClose(ret.Data(), correct.Ints()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Ints()[0:10])
 				return false
 			}
 
@@ -267,8 +267,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.int8s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.int8s()[0:10])
+			if !allClose(ret.Data(), correct.Int8s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Int8s()[0:10])
 				return false
 			}
 
@@ -371,8 +371,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.int16s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.int16s()[0:10])
+			if !allClose(ret.Data(), correct.Int16s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Int16s()[0:10])
 				return false
 			}
 
@@ -475,8 +475,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.int32s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.int32s()[0:10])
+			if !allClose(ret.Data(), correct.Int32s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Int32s()[0:10])
 				return false
 			}
 
@@ -579,8 +579,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.int64s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.int64s()[0:10])
+			if !allClose(ret.Data(), correct.Int64s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Int64s()[0:10])
 				return false
 			}
 
@@ -683,8 +683,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.uints()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.uints()[0:10])
+			if !allClose(ret.Data(), correct.Uints()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Uints()[0:10])
 				return false
 			}
 
@@ -787,8 +787,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.uint8s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.uint8s()[0:10])
+			if !allClose(ret.Data(), correct.Uint8s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Uint8s()[0:10])
 				return false
 			}
 
@@ -891,8 +891,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.uint16s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.uint16s()[0:10])
+			if !allClose(ret.Data(), correct.Uint16s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Uint16s()[0:10])
 				return false
 			}
 
@@ -995,8 +995,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.uint32s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.uint32s()[0:10])
+			if !allClose(ret.Data(), correct.Uint32s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Uint32s()[0:10])
 				return false
 			}
 
@@ -1099,8 +1099,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.uint64s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.uint64s()[0:10])
+			if !allClose(ret.Data(), correct.Uint64s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Uint64s()[0:10])
 				return false
 			}
 
@@ -1203,8 +1203,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.uintptrs()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.uintptrs()[0:10])
+			if !allClose(ret.Data(), correct.Uintptrs()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Uintptrs()[0:10])
 				return false
 			}
 
@@ -1286,8 +1286,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.float32s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.float32s()[0:10])
+			if !allClose(ret.Data(), correct.Float32s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Float32s()[0:10])
 				return false
 			}
 
@@ -1390,8 +1390,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.float64s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.float64s()[0:10])
+			if !allClose(ret.Data(), correct.Float64s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Float64s()[0:10])
 				return false
 			}
 
@@ -1494,8 +1494,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.complex64s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.complex64s()[0:10])
+			if !allClose(ret.Data(), correct.Complex64s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Complex64s()[0:10])
 				return false
 			}
 
@@ -1598,8 +1598,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.complex128s()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.complex128s()[0:10])
+			if !allClose(ret.Data(), correct.Complex128s()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Complex128s()[0:10])
 				return false
 			}
 
@@ -1702,8 +1702,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.strings()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.strings()[0:10])
+			if !allClose(ret.Data(), correct.Strings()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.Strings()[0:10])
 				return false
 			}
 
@@ -1785,8 +1785,8 @@ func TestDense_Apply(t *testing.T) {
 				t.Error(err)
 				return false
 			}
-			if !allClose(ret.Data(), correct.unsafePointers()[0:10]) {
-				t.Logf("ret.Data() %v || %v", ret.Data(), correct.unsafePointers()[0:10])
+			if !allClose(ret.Data(), correct.UnsafePointers()[0:10]) {
+				t.Logf("ret.Data() %v || %v", ret.Data(), correct.UnsafePointers()[0:10])
 				return false
 			}
 

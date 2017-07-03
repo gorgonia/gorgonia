@@ -111,13 +111,13 @@ func (t *Dense) inner(other Tensor) (retVal *Dense, err error) {
 
 	switch t.t.Kind() {
 	case reflect.Float32:
-		a := t.float32s()
-		b := ot.float32s()
+		a := t.Float32s()
+		b := ot.Float32s()
 		ret := whichblas.Sdot(t.len(), a, 1, b, 1)
 		retVal = New(FromScalar(ret))
 	case reflect.Float64:
-		a := t.float64s()
-		b := ot.float64s()
+		a := t.Float64s()
+		b := ot.Float64s()
 		ret := whichblas.Ddot(t.len(), a, 1, b, 1)
 		retVal = New(FromScalar(ret))
 	}

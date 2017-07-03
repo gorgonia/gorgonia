@@ -66,10 +66,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI(t.ints(), t.mask)))
+			retVal = New(FromScalar(argmaxI(t.Ints(), t.mask)))
 			return
 		}
-		data := t.ints()
+		data := t.Ints()
 		tmp := make([]int, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -95,10 +95,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI8(t.int8s(), t.mask)))
+			retVal = New(FromScalar(argmaxI8(t.Int8s(), t.mask)))
 			return
 		}
-		data := t.int8s()
+		data := t.Int8s()
 		tmp := make([]int8, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -124,10 +124,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI16(t.int16s(), t.mask)))
+			retVal = New(FromScalar(argmaxI16(t.Int16s(), t.mask)))
 			return
 		}
-		data := t.int16s()
+		data := t.Int16s()
 		tmp := make([]int16, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -153,10 +153,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI32(t.int32s(), t.mask)))
+			retVal = New(FromScalar(argmaxI32(t.Int32s(), t.mask)))
 			return
 		}
-		data := t.int32s()
+		data := t.Int32s()
 		tmp := make([]int32, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -182,10 +182,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxI64(t.int64s(), t.mask)))
+			retVal = New(FromScalar(argmaxI64(t.Int64s(), t.mask)))
 			return
 		}
-		data := t.int64s()
+		data := t.Int64s()
 		tmp := make([]int64, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -211,10 +211,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU(t.uints(), t.mask)))
+			retVal = New(FromScalar(argmaxU(t.Uints(), t.mask)))
 			return
 		}
-		data := t.uints()
+		data := t.Uints()
 		tmp := make([]uint, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -240,10 +240,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU8(t.uint8s(), t.mask)))
+			retVal = New(FromScalar(argmaxU8(t.Uint8s(), t.mask)))
 			return
 		}
-		data := t.uint8s()
+		data := t.Uint8s()
 		tmp := make([]uint8, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -269,10 +269,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU16(t.uint16s(), t.mask)))
+			retVal = New(FromScalar(argmaxU16(t.Uint16s(), t.mask)))
 			return
 		}
-		data := t.uint16s()
+		data := t.Uint16s()
 		tmp := make([]uint16, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -298,10 +298,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU32(t.uint32s(), t.mask)))
+			retVal = New(FromScalar(argmaxU32(t.Uint32s(), t.mask)))
 			return
 		}
-		data := t.uint32s()
+		data := t.Uint32s()
 		tmp := make([]uint32, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -327,10 +327,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxU64(t.uint64s(), t.mask)))
+			retVal = New(FromScalar(argmaxU64(t.Uint64s(), t.mask)))
 			return
 		}
-		data := t.uint64s()
+		data := t.Uint64s()
 		tmp := make([]uint64, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -356,10 +356,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxF32(t.float32s(), t.mask)))
+			retVal = New(FromScalar(argmaxF32(t.Float32s(), t.mask)))
 			return
 		}
-		data := t.float32s()
+		data := t.Float32s()
 		tmp := make([]float32, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -385,10 +385,10 @@ func (t *Dense) argmax(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argmaxF64(t.float64s(), t.mask)))
+			retVal = New(FromScalar(argmaxF64(t.Float64s(), t.mask)))
 			return
 		}
-		data := t.float64s()
+		data := t.Float64s()
 		tmp := make([]float64, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -471,10 +471,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI(t.ints(), t.mask)))
+			retVal = New(FromScalar(argminI(t.Ints(), t.mask)))
 			return
 		}
-		data := t.ints()
+		data := t.Ints()
 		tmp := make([]int, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -500,10 +500,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI8(t.int8s(), t.mask)))
+			retVal = New(FromScalar(argminI8(t.Int8s(), t.mask)))
 			return
 		}
-		data := t.int8s()
+		data := t.Int8s()
 		tmp := make([]int8, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -529,10 +529,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI16(t.int16s(), t.mask)))
+			retVal = New(FromScalar(argminI16(t.Int16s(), t.mask)))
 			return
 		}
-		data := t.int16s()
+		data := t.Int16s()
 		tmp := make([]int16, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -558,10 +558,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI32(t.int32s(), t.mask)))
+			retVal = New(FromScalar(argminI32(t.Int32s(), t.mask)))
 			return
 		}
-		data := t.int32s()
+		data := t.Int32s()
 		tmp := make([]int32, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -587,10 +587,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Int64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminI64(t.int64s(), t.mask)))
+			retVal = New(FromScalar(argminI64(t.Int64s(), t.mask)))
 			return
 		}
-		data := t.int64s()
+		data := t.Int64s()
 		tmp := make([]int64, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -616,10 +616,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU(t.uints(), t.mask)))
+			retVal = New(FromScalar(argminU(t.Uints(), t.mask)))
 			return
 		}
-		data := t.uints()
+		data := t.Uints()
 		tmp := make([]uint, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -645,10 +645,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint8:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU8(t.uint8s(), t.mask)))
+			retVal = New(FromScalar(argminU8(t.Uint8s(), t.mask)))
 			return
 		}
-		data := t.uint8s()
+		data := t.Uint8s()
 		tmp := make([]uint8, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -674,10 +674,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint16:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU16(t.uint16s(), t.mask)))
+			retVal = New(FromScalar(argminU16(t.Uint16s(), t.mask)))
 			return
 		}
-		data := t.uint16s()
+		data := t.Uint16s()
 		tmp := make([]uint16, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -703,10 +703,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU32(t.uint32s(), t.mask)))
+			retVal = New(FromScalar(argminU32(t.Uint32s(), t.mask)))
 			return
 		}
-		data := t.uint32s()
+		data := t.Uint32s()
 		tmp := make([]uint32, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -732,10 +732,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Uint64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminU64(t.uint64s(), t.mask)))
+			retVal = New(FromScalar(argminU64(t.Uint64s(), t.mask)))
 			return
 		}
-		data := t.uint64s()
+		data := t.Uint64s()
 		tmp := make([]uint64, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -761,10 +761,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float32:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminF32(t.float32s(), t.mask)))
+			retVal = New(FromScalar(argminF32(t.Float32s(), t.mask)))
 			return
 		}
-		data := t.float32s()
+		data := t.Float32s()
 		tmp := make([]float32, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {
@@ -790,10 +790,10 @@ func (t *Dense) argmin(it Iterator) (retVal *Dense, err error) {
 	case reflect.Float64:
 		var isMasked = t.IsMasked()
 		if it == nil {
-			retVal = New(FromScalar(argminF64(t.float64s(), t.mask)))
+			retVal = New(FromScalar(argminF64(t.Float64s(), t.mask)))
 			return
 		}
-		data := t.float64s()
+		data := t.Float64s()
 		tmp := make([]float64, 0, lastSize)
 		mask = make([]bool, 0, lastSize)
 		for next, err = it.Next(); err == nil; next, err = it.Next() {

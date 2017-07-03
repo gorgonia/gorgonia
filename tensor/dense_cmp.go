@@ -97,8 +97,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch t.t.Kind() {
 
 	case reflect.Bool:
-		td := t.bools()
-		od := other.bools()
+		td := t.Bools()
+		od := other.Bools()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -144,8 +144,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int:
-		td := t.ints()
-		od := other.ints()
+		td := t.Ints()
+		od := other.Ints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -237,8 +237,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int8:
-		td := t.int8s()
-		od := other.int8s()
+		td := t.Int8s()
+		od := other.Int8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -330,8 +330,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int16:
-		td := t.int16s()
-		od := other.int16s()
+		td := t.Int16s()
+		od := other.Int16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -423,8 +423,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int32:
-		td := t.int32s()
-		od := other.int32s()
+		td := t.Int32s()
+		od := other.Int32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -516,8 +516,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int64:
-		td := t.int64s()
-		od := other.int64s()
+		td := t.Int64s()
+		od := other.Int64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -609,8 +609,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint:
-		td := t.uints()
-		od := other.uints()
+		td := t.Uints()
+		od := other.Uints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -702,8 +702,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint8:
-		td := t.uint8s()
-		od := other.uint8s()
+		td := t.Uint8s()
+		od := other.Uint8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -795,8 +795,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint16:
-		td := t.uint16s()
-		od := other.uint16s()
+		td := t.Uint16s()
+		od := other.Uint16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -888,8 +888,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint32:
-		td := t.uint32s()
-		od := other.uint32s()
+		td := t.Uint32s()
+		od := other.Uint32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -981,8 +981,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint64:
-		td := t.uint64s()
-		od := other.uint64s()
+		td := t.Uint64s()
+		od := other.Uint64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1074,8 +1074,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uintptr:
-		td := t.uintptrs()
-		od := other.uintptrs()
+		td := t.Uintptrs()
+		od := other.Uintptrs()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1121,8 +1121,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float32:
-		td := t.float32s()
-		od := other.float32s()
+		td := t.Float32s()
+		od := other.Float32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1214,8 +1214,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float64:
-		td := t.float64s()
-		od := other.float64s()
+		td := t.Float64s()
+		od := other.Float64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1307,8 +1307,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Complex64:
-		td := t.complex64s()
-		od := other.complex64s()
+		td := t.Complex64s()
+		od := other.Complex64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1400,8 +1400,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Complex128:
-		td := t.complex128s()
-		od := other.complex128s()
+		td := t.Complex128s()
+		od := other.Complex128s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1493,8 +1493,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.String:
-		td := t.strings()
-		od := other.strings()
+		td := t.Strings()
+		od := other.Strings()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1540,8 +1540,8 @@ func (t *Dense) eqDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.UnsafePointer:
-		td := t.unsafePointers()
-		od := other.unsafePointers()
+		td := t.UnsafePointers()
+		od := other.UnsafePointers()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1623,8 +1623,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch t.t.Kind() {
 
 	case reflect.Bool:
-		td := t.bools()
-		od := other.bools()
+		td := t.Bools()
+		od := other.Bools()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1670,8 +1670,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int:
-		td := t.ints()
-		od := other.ints()
+		td := t.Ints()
+		od := other.Ints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1763,8 +1763,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int8:
-		td := t.int8s()
-		od := other.int8s()
+		td := t.Int8s()
+		od := other.Int8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1856,8 +1856,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int16:
-		td := t.int16s()
-		od := other.int16s()
+		td := t.Int16s()
+		od := other.Int16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -1949,8 +1949,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int32:
-		td := t.int32s()
-		od := other.int32s()
+		td := t.Int32s()
+		od := other.Int32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2042,8 +2042,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int64:
-		td := t.int64s()
-		od := other.int64s()
+		td := t.Int64s()
+		od := other.Int64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2135,8 +2135,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint:
-		td := t.uints()
-		od := other.uints()
+		td := t.Uints()
+		od := other.Uints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2228,8 +2228,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint8:
-		td := t.uint8s()
-		od := other.uint8s()
+		td := t.Uint8s()
+		od := other.Uint8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2321,8 +2321,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint16:
-		td := t.uint16s()
-		od := other.uint16s()
+		td := t.Uint16s()
+		od := other.Uint16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2414,8 +2414,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint32:
-		td := t.uint32s()
-		od := other.uint32s()
+		td := t.Uint32s()
+		od := other.Uint32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2507,8 +2507,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint64:
-		td := t.uint64s()
-		od := other.uint64s()
+		td := t.Uint64s()
+		od := other.Uint64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2600,8 +2600,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uintptr:
-		td := t.uintptrs()
-		od := other.uintptrs()
+		td := t.Uintptrs()
+		od := other.Uintptrs()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2647,8 +2647,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float32:
-		td := t.float32s()
-		od := other.float32s()
+		td := t.Float32s()
+		od := other.Float32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2740,8 +2740,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float64:
-		td := t.float64s()
-		od := other.float64s()
+		td := t.Float64s()
+		od := other.Float64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2833,8 +2833,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Complex64:
-		td := t.complex64s()
-		od := other.complex64s()
+		td := t.Complex64s()
+		od := other.Complex64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -2926,8 +2926,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Complex128:
-		td := t.complex128s()
-		od := other.complex128s()
+		td := t.Complex128s()
+		od := other.Complex128s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3019,8 +3019,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.String:
-		td := t.strings()
-		od := other.strings()
+		td := t.Strings()
+		od := other.Strings()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3066,8 +3066,8 @@ func (t *Dense) neDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.UnsafePointer:
-		td := t.unsafePointers()
-		od := other.unsafePointers()
+		td := t.UnsafePointers()
+		od := other.UnsafePointers()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3149,8 +3149,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		td := t.ints()
-		od := other.ints()
+		td := t.Ints()
+		od := other.Ints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3242,8 +3242,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int8:
-		td := t.int8s()
-		od := other.int8s()
+		td := t.Int8s()
+		od := other.Int8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3335,8 +3335,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int16:
-		td := t.int16s()
-		od := other.int16s()
+		td := t.Int16s()
+		od := other.Int16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3428,8 +3428,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int32:
-		td := t.int32s()
-		od := other.int32s()
+		td := t.Int32s()
+		od := other.Int32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3521,8 +3521,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int64:
-		td := t.int64s()
-		od := other.int64s()
+		td := t.Int64s()
+		od := other.Int64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3614,8 +3614,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint:
-		td := t.uints()
-		od := other.uints()
+		td := t.Uints()
+		od := other.Uints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3707,8 +3707,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint8:
-		td := t.uint8s()
-		od := other.uint8s()
+		td := t.Uint8s()
+		od := other.Uint8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3800,8 +3800,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint16:
-		td := t.uint16s()
-		od := other.uint16s()
+		td := t.Uint16s()
+		od := other.Uint16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3893,8 +3893,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint32:
-		td := t.uint32s()
-		od := other.uint32s()
+		td := t.Uint32s()
+		od := other.Uint32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -3986,8 +3986,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint64:
-		td := t.uint64s()
-		od := other.uint64s()
+		td := t.Uint64s()
+		od := other.Uint64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4079,8 +4079,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float32:
-		td := t.float32s()
-		od := other.float32s()
+		td := t.Float32s()
+		od := other.Float32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4172,8 +4172,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float64:
-		td := t.float64s()
-		od := other.float64s()
+		td := t.Float64s()
+		od := other.Float64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4265,8 +4265,8 @@ func (t *Dense) gtDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.String:
-		td := t.strings()
-		od := other.strings()
+		td := t.Strings()
+		od := other.Strings()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4348,8 +4348,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		td := t.ints()
-		od := other.ints()
+		td := t.Ints()
+		od := other.Ints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4441,8 +4441,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int8:
-		td := t.int8s()
-		od := other.int8s()
+		td := t.Int8s()
+		od := other.Int8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4534,8 +4534,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int16:
-		td := t.int16s()
-		od := other.int16s()
+		td := t.Int16s()
+		od := other.Int16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4627,8 +4627,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int32:
-		td := t.int32s()
-		od := other.int32s()
+		td := t.Int32s()
+		od := other.Int32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4720,8 +4720,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int64:
-		td := t.int64s()
-		od := other.int64s()
+		td := t.Int64s()
+		od := other.Int64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4813,8 +4813,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint:
-		td := t.uints()
-		od := other.uints()
+		td := t.Uints()
+		od := other.Uints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4906,8 +4906,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint8:
-		td := t.uint8s()
-		od := other.uint8s()
+		td := t.Uint8s()
+		od := other.Uint8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -4999,8 +4999,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint16:
-		td := t.uint16s()
-		od := other.uint16s()
+		td := t.Uint16s()
+		od := other.Uint16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5092,8 +5092,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint32:
-		td := t.uint32s()
-		od := other.uint32s()
+		td := t.Uint32s()
+		od := other.Uint32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5185,8 +5185,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint64:
-		td := t.uint64s()
-		od := other.uint64s()
+		td := t.Uint64s()
+		od := other.Uint64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5278,8 +5278,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Float32:
-		td := t.float32s()
-		od := other.float32s()
+		td := t.Float32s()
+		od := other.Float32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5371,8 +5371,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Float64:
-		td := t.float64s()
-		od := other.float64s()
+		td := t.Float64s()
+		od := other.Float64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5464,8 +5464,8 @@ func (t *Dense) gteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.String:
-		td := t.strings()
-		od := other.strings()
+		td := t.Strings()
+		od := other.Strings()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5547,8 +5547,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		td := t.ints()
-		od := other.ints()
+		td := t.Ints()
+		od := other.Ints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5640,8 +5640,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int8:
-		td := t.int8s()
-		od := other.int8s()
+		td := t.Int8s()
+		od := other.Int8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5733,8 +5733,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int16:
-		td := t.int16s()
-		od := other.int16s()
+		td := t.Int16s()
+		od := other.Int16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5826,8 +5826,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int32:
-		td := t.int32s()
-		od := other.int32s()
+		td := t.Int32s()
+		od := other.Int32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -5919,8 +5919,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Int64:
-		td := t.int64s()
-		od := other.int64s()
+		td := t.Int64s()
+		od := other.Int64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6012,8 +6012,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint:
-		td := t.uints()
-		od := other.uints()
+		td := t.Uints()
+		od := other.Uints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6105,8 +6105,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint8:
-		td := t.uint8s()
-		od := other.uint8s()
+		td := t.Uint8s()
+		od := other.Uint8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6198,8 +6198,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint16:
-		td := t.uint16s()
-		od := other.uint16s()
+		td := t.Uint16s()
+		od := other.Uint16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6291,8 +6291,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint32:
-		td := t.uint32s()
-		od := other.uint32s()
+		td := t.Uint32s()
+		od := other.Uint32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6384,8 +6384,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Uint64:
-		td := t.uint64s()
-		od := other.uint64s()
+		td := t.Uint64s()
+		od := other.Uint64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6477,8 +6477,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float32:
-		td := t.float32s()
-		od := other.float32s()
+		td := t.Float32s()
+		od := other.Float32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6570,8 +6570,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.Float64:
-		td := t.float64s()
-		od := other.float64s()
+		td := t.Float64s()
+		od := other.Float64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6663,8 +6663,8 @@ func (t *Dense) ltDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		}
 
 	case reflect.String:
-		td := t.strings()
-		od := other.strings()
+		td := t.Strings()
+		od := other.Strings()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6746,8 +6746,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		td := t.ints()
-		od := other.ints()
+		td := t.Ints()
+		od := other.Ints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6839,8 +6839,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int8:
-		td := t.int8s()
-		od := other.int8s()
+		td := t.Int8s()
+		od := other.Int8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -6932,8 +6932,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int16:
-		td := t.int16s()
-		od := other.int16s()
+		td := t.Int16s()
+		od := other.Int16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7025,8 +7025,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int32:
-		td := t.int32s()
-		od := other.int32s()
+		td := t.Int32s()
+		od := other.Int32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7118,8 +7118,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Int64:
-		td := t.int64s()
-		od := other.int64s()
+		td := t.Int64s()
+		od := other.Int64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7211,8 +7211,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint:
-		td := t.uints()
-		od := other.uints()
+		td := t.Uints()
+		od := other.Uints()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7304,8 +7304,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint8:
-		td := t.uint8s()
-		od := other.uint8s()
+		td := t.Uint8s()
+		od := other.Uint8s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7397,8 +7397,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint16:
-		td := t.uint16s()
-		od := other.uint16s()
+		td := t.Uint16s()
+		od := other.Uint16s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7490,8 +7490,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint32:
-		td := t.uint32s()
-		od := other.uint32s()
+		td := t.Uint32s()
+		od := other.Uint32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7583,8 +7583,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Uint64:
-		td := t.uint64s()
-		od := other.uint64s()
+		td := t.Uint64s()
+		od := other.Uint64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7676,8 +7676,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Float32:
-		td := t.float32s()
-		od := other.float32s()
+		td := t.Float32s()
+		od := other.Float32s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7769,8 +7769,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.Float64:
-		td := t.float64s()
-		od := other.float64s()
+		td := t.Float64s()
+		od := other.Float64s()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7862,8 +7862,8 @@ func (t *Dense) lteDD(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) 
 		}
 
 	case reflect.String:
-		td := t.strings()
-		od := other.strings()
+		td := t.Strings()
+		od := other.Strings()
 		var i, j, k int
 		switch {
 		case t.IsMaterializable() && other.IsMaterializable():
@@ -7944,7 +7944,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Bool:
-		data := t.bools()
+		data := t.Bools()
 		b := other.(bool)
 		switch {
 		case t.IsMaterializable():
@@ -7960,7 +7960,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			ret = eqDSBoolsB(data, b)
 		}
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		b := other.(int)
 		switch {
 		case t.IsMaterializable():
@@ -7995,7 +7995,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		b := other.(int8)
 		switch {
 		case t.IsMaterializable():
@@ -8030,7 +8030,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		b := other.(int16)
 		switch {
 		case t.IsMaterializable():
@@ -8065,7 +8065,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		b := other.(int32)
 		switch {
 		case t.IsMaterializable():
@@ -8100,7 +8100,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		b := other.(int64)
 		switch {
 		case t.IsMaterializable():
@@ -8135,7 +8135,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		b := other.(uint)
 		switch {
 		case t.IsMaterializable():
@@ -8170,7 +8170,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		b := other.(uint8)
 		switch {
 		case t.IsMaterializable():
@@ -8205,7 +8205,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		b := other.(uint16)
 		switch {
 		case t.IsMaterializable():
@@ -8240,7 +8240,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		b := other.(uint32)
 		switch {
 		case t.IsMaterializable():
@@ -8275,7 +8275,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		b := other.(uint64)
 		switch {
 		case t.IsMaterializable():
@@ -8310,7 +8310,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uintptr:
-		data := t.uintptrs()
+		data := t.Uintptrs()
 		b := other.(uintptr)
 		switch {
 		case t.IsMaterializable():
@@ -8326,7 +8326,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			ret = eqDSBoolsUintptr(data, b)
 		}
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		b := other.(float32)
 		switch {
 		case t.IsMaterializable():
@@ -8361,7 +8361,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		b := other.(float64)
 		switch {
 		case t.IsMaterializable():
@@ -8396,7 +8396,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Complex64:
-		data := t.complex64s()
+		data := t.Complex64s()
 		b := other.(complex64)
 		switch {
 		case t.IsMaterializable():
@@ -8431,7 +8431,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Complex128:
-		data := t.complex128s()
+		data := t.Complex128s()
 		b := other.(complex128)
 		switch {
 		case t.IsMaterializable():
@@ -8466,7 +8466,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		b := other.(string)
 		switch {
 		case t.IsMaterializable():
@@ -8482,7 +8482,7 @@ func (t *Dense) eqDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			ret = eqDSBoolsStr(data, b)
 		}
 	case reflect.UnsafePointer:
-		data := t.unsafePointers()
+		data := t.UnsafePointers()
 		b := other.(unsafe.Pointer)
 		switch {
 		case t.IsMaterializable():
@@ -8530,7 +8530,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Bool:
-		data := t.bools()
+		data := t.Bools()
 		b := other.(bool)
 		switch {
 		case t.IsMaterializable():
@@ -8546,7 +8546,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			ret = neDSBoolsB(data, b)
 		}
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		b := other.(int)
 		switch {
 		case t.IsMaterializable():
@@ -8581,7 +8581,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		b := other.(int8)
 		switch {
 		case t.IsMaterializable():
@@ -8616,7 +8616,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		b := other.(int16)
 		switch {
 		case t.IsMaterializable():
@@ -8651,7 +8651,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		b := other.(int32)
 		switch {
 		case t.IsMaterializable():
@@ -8686,7 +8686,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		b := other.(int64)
 		switch {
 		case t.IsMaterializable():
@@ -8721,7 +8721,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		b := other.(uint)
 		switch {
 		case t.IsMaterializable():
@@ -8756,7 +8756,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		b := other.(uint8)
 		switch {
 		case t.IsMaterializable():
@@ -8791,7 +8791,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		b := other.(uint16)
 		switch {
 		case t.IsMaterializable():
@@ -8826,7 +8826,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		b := other.(uint32)
 		switch {
 		case t.IsMaterializable():
@@ -8861,7 +8861,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		b := other.(uint64)
 		switch {
 		case t.IsMaterializable():
@@ -8896,7 +8896,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uintptr:
-		data := t.uintptrs()
+		data := t.Uintptrs()
 		b := other.(uintptr)
 		switch {
 		case t.IsMaterializable():
@@ -8912,7 +8912,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			ret = neDSBoolsUintptr(data, b)
 		}
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		b := other.(float32)
 		switch {
 		case t.IsMaterializable():
@@ -8947,7 +8947,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		b := other.(float64)
 		switch {
 		case t.IsMaterializable():
@@ -8982,7 +8982,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Complex64:
-		data := t.complex64s()
+		data := t.Complex64s()
 		b := other.(complex64)
 		switch {
 		case t.IsMaterializable():
@@ -9017,7 +9017,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Complex128:
-		data := t.complex128s()
+		data := t.Complex128s()
 		b := other.(complex128)
 		switch {
 		case t.IsMaterializable():
@@ -9052,7 +9052,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		b := other.(string)
 		switch {
 		case t.IsMaterializable():
@@ -9068,7 +9068,7 @@ func (t *Dense) neDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			ret = neDSBoolsStr(data, b)
 		}
 	case reflect.UnsafePointer:
-		data := t.unsafePointers()
+		data := t.UnsafePointers()
 		b := other.(unsafe.Pointer)
 		switch {
 		case t.IsMaterializable():
@@ -9116,7 +9116,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		b := other.(int)
 		switch {
 		case t.IsMaterializable():
@@ -9151,7 +9151,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		b := other.(int8)
 		switch {
 		case t.IsMaterializable():
@@ -9186,7 +9186,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		b := other.(int16)
 		switch {
 		case t.IsMaterializable():
@@ -9221,7 +9221,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		b := other.(int32)
 		switch {
 		case t.IsMaterializable():
@@ -9256,7 +9256,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		b := other.(int64)
 		switch {
 		case t.IsMaterializable():
@@ -9291,7 +9291,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		b := other.(uint)
 		switch {
 		case t.IsMaterializable():
@@ -9326,7 +9326,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		b := other.(uint8)
 		switch {
 		case t.IsMaterializable():
@@ -9361,7 +9361,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		b := other.(uint16)
 		switch {
 		case t.IsMaterializable():
@@ -9396,7 +9396,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		b := other.(uint32)
 		switch {
 		case t.IsMaterializable():
@@ -9431,7 +9431,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		b := other.(uint64)
 		switch {
 		case t.IsMaterializable():
@@ -9466,7 +9466,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		b := other.(float32)
 		switch {
 		case t.IsMaterializable():
@@ -9501,7 +9501,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		b := other.(float64)
 		switch {
 		case t.IsMaterializable():
@@ -9536,7 +9536,7 @@ func (t *Dense) gtDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		b := other.(string)
 		switch {
 		case t.IsMaterializable():
@@ -9584,7 +9584,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		b := other.(int)
 		switch {
 		case t.IsMaterializable():
@@ -9619,7 +9619,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		b := other.(int8)
 		switch {
 		case t.IsMaterializable():
@@ -9654,7 +9654,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		b := other.(int16)
 		switch {
 		case t.IsMaterializable():
@@ -9689,7 +9689,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		b := other.(int32)
 		switch {
 		case t.IsMaterializable():
@@ -9724,7 +9724,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		b := other.(int64)
 		switch {
 		case t.IsMaterializable():
@@ -9759,7 +9759,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		b := other.(uint)
 		switch {
 		case t.IsMaterializable():
@@ -9794,7 +9794,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		b := other.(uint8)
 		switch {
 		case t.IsMaterializable():
@@ -9829,7 +9829,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		b := other.(uint16)
 		switch {
 		case t.IsMaterializable():
@@ -9864,7 +9864,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		b := other.(uint32)
 		switch {
 		case t.IsMaterializable():
@@ -9899,7 +9899,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		b := other.(uint64)
 		switch {
 		case t.IsMaterializable():
@@ -9934,7 +9934,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		b := other.(float32)
 		switch {
 		case t.IsMaterializable():
@@ -9969,7 +9969,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		b := other.(float64)
 		switch {
 		case t.IsMaterializable():
@@ -10004,7 +10004,7 @@ func (t *Dense) gteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		b := other.(string)
 		switch {
 		case t.IsMaterializable():
@@ -10052,7 +10052,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		b := other.(int)
 		switch {
 		case t.IsMaterializable():
@@ -10087,7 +10087,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		b := other.(int8)
 		switch {
 		case t.IsMaterializable():
@@ -10122,7 +10122,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		b := other.(int16)
 		switch {
 		case t.IsMaterializable():
@@ -10157,7 +10157,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		b := other.(int32)
 		switch {
 		case t.IsMaterializable():
@@ -10192,7 +10192,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		b := other.(int64)
 		switch {
 		case t.IsMaterializable():
@@ -10227,7 +10227,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		b := other.(uint)
 		switch {
 		case t.IsMaterializable():
@@ -10262,7 +10262,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		b := other.(uint8)
 		switch {
 		case t.IsMaterializable():
@@ -10297,7 +10297,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		b := other.(uint16)
 		switch {
 		case t.IsMaterializable():
@@ -10332,7 +10332,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		b := other.(uint32)
 		switch {
 		case t.IsMaterializable():
@@ -10367,7 +10367,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		b := other.(uint64)
 		switch {
 		case t.IsMaterializable():
@@ -10402,7 +10402,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		b := other.(float32)
 		switch {
 		case t.IsMaterializable():
@@ -10437,7 +10437,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		b := other.(float64)
 		switch {
 		case t.IsMaterializable():
@@ -10472,7 +10472,7 @@ func (t *Dense) ltDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err err
 			}
 		}
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		b := other.(string)
 		switch {
 		case t.IsMaterializable():
@@ -10520,7 +10520,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 	retVal = recycledDenseNoFix(t.t, t.Shape().Clone())
 	switch t.t.Kind() {
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		b := other.(int)
 		switch {
 		case t.IsMaterializable():
@@ -10555,7 +10555,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		b := other.(int8)
 		switch {
 		case t.IsMaterializable():
@@ -10590,7 +10590,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		b := other.(int16)
 		switch {
 		case t.IsMaterializable():
@@ -10625,7 +10625,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		b := other.(int32)
 		switch {
 		case t.IsMaterializable():
@@ -10660,7 +10660,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		b := other.(int64)
 		switch {
 		case t.IsMaterializable():
@@ -10695,7 +10695,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		b := other.(uint)
 		switch {
 		case t.IsMaterializable():
@@ -10730,7 +10730,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		b := other.(uint8)
 		switch {
 		case t.IsMaterializable():
@@ -10765,7 +10765,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		b := other.(uint16)
 		switch {
 		case t.IsMaterializable():
@@ -10800,7 +10800,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		b := other.(uint32)
 		switch {
 		case t.IsMaterializable():
@@ -10835,7 +10835,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		b := other.(uint64)
 		switch {
 		case t.IsMaterializable():
@@ -10870,7 +10870,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		b := other.(float32)
 		switch {
 		case t.IsMaterializable():
@@ -10905,7 +10905,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		b := other.(float64)
 		switch {
 		case t.IsMaterializable():
@@ -10940,7 +10940,7 @@ func (t *Dense) lteDS(other interface{}, opts ...FuncOpt) (retVal *Dense, err er
 			}
 		}
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		b := other.(string)
 		switch {
 		case t.IsMaterializable():

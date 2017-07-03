@@ -54,7 +54,7 @@ func (t *Dense) SVD(uv, full bool) (s, u, v *Dense, err error) {
 	// extract values
 	var um, vm mat64.Dense
 	s = recycledDense(Float64, Shape{MinInt(t.Shape()[0], t.Shape()[1])})
-	svd.Values(s.float64s())
+	svd.Values(s.Float64s())
 	if uv {
 		um.UFromSVD(&svd)
 		vm.VFromSVD(&svd)

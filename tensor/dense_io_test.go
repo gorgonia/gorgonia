@@ -83,7 +83,7 @@ func TestSaveLoadNumpy(t *testing.T) {
 	}
 	assert.Equal(T.Shape(), T3.Shape())
 	assert.Equal(T.Strides(), T3.Strides())
-	data := T.float64s()
+	data := T.Float64s()
 	data[0] = T.FillValue().(float64)
 	assert.Equal(data, T3.Data())
 }

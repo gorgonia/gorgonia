@@ -90,9 +90,9 @@ func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			cloned := t.Clone().(*Dense)
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.Sqrt(cloned.float64s())
+				vecf64.Sqrt(cloned.Float64s())
 			case reflect.Float32:
-				vecf32.Sqrt(cloned.float32s())
+				vecf32.Sqrt(cloned.Float32s())
 			}
 			_, err = reuse.Add(cloned, UseUnsafe())
 			retVal = reuse
@@ -100,26 +100,26 @@ func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			copyDense(reuse, t)
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.Sqrt(reuse.float64s())
+				vecf64.Sqrt(reuse.Float64s())
 			case reflect.Float32:
-				vecf32.Sqrt(reuse.float32s())
+				vecf32.Sqrt(reuse.Float32s())
 			}
 			retVal = reuse
 		case safe:
 			cloned := t.Clone().(*Dense)
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.Sqrt(cloned.float64s())
+				vecf64.Sqrt(cloned.Float64s())
 			case reflect.Float32:
-				vecf32.Sqrt(cloned.float32s())
+				vecf32.Sqrt(cloned.Float32s())
 			}
 			retVal = cloned
 		case !safe:
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.Sqrt(t.float64s())
+				vecf64.Sqrt(t.Float64s())
 			case reflect.Float32:
-				vecf32.Sqrt(t.float32s())
+				vecf32.Sqrt(t.Float32s())
 			}
 			retVal = t
 		}
@@ -164,9 +164,9 @@ func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			cloned := t.Clone().(*Dense)
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.InvSqrt(cloned.float64s())
+				vecf64.InvSqrt(cloned.Float64s())
 			case reflect.Float32:
-				vecf32.InvSqrt(cloned.float32s())
+				vecf32.InvSqrt(cloned.Float32s())
 			}
 			_, err = reuse.Add(cloned, UseUnsafe())
 			retVal = reuse
@@ -174,26 +174,26 @@ func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			copyDense(reuse, t)
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.InvSqrt(reuse.float64s())
+				vecf64.InvSqrt(reuse.Float64s())
 			case reflect.Float32:
-				vecf32.InvSqrt(reuse.float32s())
+				vecf32.InvSqrt(reuse.Float32s())
 			}
 			retVal = reuse
 		case safe:
 			cloned := t.Clone().(*Dense)
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.InvSqrt(cloned.float64s())
+				vecf64.InvSqrt(cloned.Float64s())
 			case reflect.Float32:
-				vecf32.InvSqrt(cloned.float32s())
+				vecf32.InvSqrt(cloned.Float32s())
 			}
 			retVal = cloned
 		case !safe:
 			switch t.t.Kind() {
 			case reflect.Float64:
-				vecf64.InvSqrt(t.float64s())
+				vecf64.InvSqrt(t.Float64s())
 			case reflect.Float32:
-				vecf32.InvSqrt(t.float32s())
+				vecf32.InvSqrt(t.Float32s())
 			}
 			retVal = t
 		}

@@ -30,9 +30,9 @@ const testDDCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DD_Transitiv
 				return false
 			}
 
-			ab := axb.bools()
-			bc := bxc.bools()
-			ac := axc.bools()
+			ab := axb.Bools()
+			bc := bxc.Bools()
+			ac := axc.Bools()
 
 			for i, vab := range ab {
 				if vab && bc[i] {
@@ -70,9 +70,9 @@ const testDDCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DD_Transitiv
 			bxc, _ = b1.{{lower $op}}DD(c2)
 			axc, _ = a1.{{lower $op}}DD(c2)
 
-			abb = axb.bools()
-			bcb = bxc.bools()
-			acb = axc.bools()
+			abb = axb.Bools()
+			bcb = bxc.Bools()
+			acb = axc.Bools()
 
 			for i, vab := range abb {
 				if vab && bcb[i] {
@@ -106,9 +106,9 @@ const testDDCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DD_Transitiv
 			bxc, _ = b2.{{lower $op}}DD(c1)
 			axc, _ = a2.{{lower $op}}DD(c1)
 
-			abb = axb.bools()
-			bcb = bxc.bools()
-			acb = axc.bools()
+			abb = axb.Bools()
+			bcb = bxc.Bools()
+			acb = axc.Bools()
 
 			for i, vab := range abb {
 				if vab && bcb[i] {
@@ -142,9 +142,9 @@ const testDDCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DD_Transitiv
 			bxc, _ = b1.{{lower $op}}DD(c1)
 			axc, _ = a1.{{lower $op}}DD(c1)
 
-			abb = axb.bools()
-			bcb = bxc.bools()
-			acb = axc.bools()
+			abb = axb.Bools()
+			bcb = bxc.Bools()
+			acb = axc.Bools()
 
 			for i, vab := range abb {
 				if vab && bcb[i] {
@@ -276,9 +276,9 @@ const testDSCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DS_Transitiv
 				return false
 			}
 
-			ab := axb.bools()
-			bc := bxc.bools()
-			ac := axc.bools()
+			ab := axb.Bools()
+			bc := bxc.Bools()
+			ac := axc.Bools()
 
 			for i, vab := range ab {
 				if vab && bc[i] {
@@ -314,9 +314,9 @@ const testDSCmpOpTransitivityRaw = `func TestDense_{{lower .OpName}}DS_Transitiv
 			bxc, _ = c2.{{lower $inv}}DS(b)
 			axc, _ = a1.{{lower $op}}DD(c2)
 
-			abb = axb.bools()
-			bcb = bxc.bools()
-			acb = axc.bools()
+			abb = axb.Bools()
+			bcb = bxc.Bools()
+			acb = axc.Bools()
 
 			for i, vab := range abb {
 				if vab && bcb[i] {
@@ -368,8 +368,8 @@ const testDDCmpOpSymmetryRaw = `func TestDense_NeDD_Symmetry(t *testing.T) {
 				return false
 			}
 
-			ab := axb.bools()
-			ba := bxa.bools()
+			ab := axb.Bools()
+			ba := bxa.Bools()
 
 			for i, vab := range ab {
 				if vab != ba[i] {
@@ -401,8 +401,8 @@ const testDDCmpOpSymmetryRaw = `func TestDense_NeDD_Symmetry(t *testing.T) {
 			axb, _ = a1.{{lower $op}}DD(b2)
 			bxa, _ = b1.{{lower $op}}DD(a2)
 
-			abb = axb.bools()
-			bab = bxa.bools()
+			abb = axb.Bools()
+			bab = bxa.Bools()
 
 			for i, vab := range abb {
 				if vab != bab[i] {
@@ -429,8 +429,8 @@ const testDDCmpOpSymmetryRaw = `func TestDense_NeDD_Symmetry(t *testing.T) {
 			axb, _ = a2.{{lower $op}}DD(b1)
 			bxa, _ = b2.{{lower $op}}DD(a1)
 
-			abb = axb.bools()
-			bab = bxa.bools()
+			abb = axb.Bools()
+			bab = bxa.Bools()
 
 			for i, vab := range abb {
 				if vab != bab[i] {
@@ -457,8 +457,8 @@ const testDDCmpOpSymmetryRaw = `func TestDense_NeDD_Symmetry(t *testing.T) {
 			axb, _ = a1.{{lower $op}}DD(b1)
 			bxa, _ = b1.{{lower $op}}DD(a1)
 
-			abb = axb.bools()
-			bab = bxa.bools()
+			abb = axb.Bools()
+			bab = bxa.Bools()
 
 			for i, vab := range abb {
 				if vab != bab[i] {

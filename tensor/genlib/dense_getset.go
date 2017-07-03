@@ -156,7 +156,7 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 			{{if isParameterized . -}}
 			{{else -}}
 		case reflect.{{reflectKind .}}:
-			dest.set{{short .}}(i, src.get{{short .}}(j))
+			dest.{{setOne .}}(i, src.{{getOne .}}(j))
 			{{end -}}
 		{{end -}}
 		default:

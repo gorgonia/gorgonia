@@ -20,7 +20,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.bools()
+		data := t.Bools()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -30,7 +30,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.ints()
+		data := t.Ints()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -40,7 +40,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.int8s()
+		data := t.Int8s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -50,7 +50,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.int16s()
+		data := t.Int16s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -60,7 +60,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.int32s()
+		data := t.Int32s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -70,7 +70,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.int64s()
+		data := t.Int64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -80,7 +80,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.uints()
+		data := t.Uints()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -90,7 +90,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.uint8s()
+		data := t.Uint8s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -100,7 +100,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.uint16s()
+		data := t.Uint16s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -110,7 +110,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.uint32s()
+		data := t.Uint32s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -120,7 +120,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.uint64s()
+		data := t.Uint64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -130,7 +130,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.uintptrs()
+		data := t.Uintptrs()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -140,7 +140,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.float32s()
+		data := t.Float32s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -150,7 +150,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.float64s()
+		data := t.Float64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -160,7 +160,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.complex64s()
+		data := t.Complex64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -170,7 +170,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.complex128s()
+		data := t.Complex128s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -180,7 +180,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.strings()
+		data := t.Strings()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -190,7 +190,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
 		}
-		data := t.unsafePointers()
+		data := t.UnsafePointers()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = xv
 		}
@@ -214,111 +214,111 @@ func (t *Dense) zeroIter() (err error) {
 	var i int
 	switch t.t.Kind() {
 	case reflect.Bool:
-		data := t.bools()
+		data := t.Bools()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = false
 
 		}
 		err = handleNoOp(err)
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Uintptr:
-		data := t.uintptrs()
+		data := t.Uintptrs()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Complex64:
-		data := t.complex64s()
+		data := t.Complex64s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.Complex128:
-		data := t.complex128s()
+		data := t.Complex128s()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = 0
 		}
 		err = handleNoOp(err)
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = ""
 
 		}
 		err = handleNoOp(err)
 	case reflect.UnsafePointer:
-		data := t.unsafePointers()
+		data := t.UnsafePointers()
 		for i, err = it.Next(); err == nil; i, err = it.Next() {
 			data[i] = nil
 
@@ -353,43 +353,43 @@ func copySliced(dest *Dense, dstart, dend int, src *Dense, sstart, send int) int
 	}
 	switch dest.t.Kind() {
 	case reflect.Bool:
-		return copy(dest.bools()[dstart:dend], src.bools()[sstart:send])
+		return copy(dest.Bools()[dstart:dend], src.Bools()[sstart:send])
 	case reflect.Int:
-		return copy(dest.ints()[dstart:dend], src.ints()[sstart:send])
+		return copy(dest.Ints()[dstart:dend], src.Ints()[sstart:send])
 	case reflect.Int8:
-		return copy(dest.int8s()[dstart:dend], src.int8s()[sstart:send])
+		return copy(dest.Int8s()[dstart:dend], src.Int8s()[sstart:send])
 	case reflect.Int16:
-		return copy(dest.int16s()[dstart:dend], src.int16s()[sstart:send])
+		return copy(dest.Int16s()[dstart:dend], src.Int16s()[sstart:send])
 	case reflect.Int32:
-		return copy(dest.int32s()[dstart:dend], src.int32s()[sstart:send])
+		return copy(dest.Int32s()[dstart:dend], src.Int32s()[sstart:send])
 	case reflect.Int64:
-		return copy(dest.int64s()[dstart:dend], src.int64s()[sstart:send])
+		return copy(dest.Int64s()[dstart:dend], src.Int64s()[sstart:send])
 	case reflect.Uint:
-		return copy(dest.uints()[dstart:dend], src.uints()[sstart:send])
+		return copy(dest.Uints()[dstart:dend], src.Uints()[sstart:send])
 	case reflect.Uint8:
-		return copy(dest.uint8s()[dstart:dend], src.uint8s()[sstart:send])
+		return copy(dest.Uint8s()[dstart:dend], src.Uint8s()[sstart:send])
 	case reflect.Uint16:
-		return copy(dest.uint16s()[dstart:dend], src.uint16s()[sstart:send])
+		return copy(dest.Uint16s()[dstart:dend], src.Uint16s()[sstart:send])
 	case reflect.Uint32:
-		return copy(dest.uint32s()[dstart:dend], src.uint32s()[sstart:send])
+		return copy(dest.Uint32s()[dstart:dend], src.Uint32s()[sstart:send])
 	case reflect.Uint64:
-		return copy(dest.uint64s()[dstart:dend], src.uint64s()[sstart:send])
+		return copy(dest.Uint64s()[dstart:dend], src.Uint64s()[sstart:send])
 	case reflect.Uintptr:
-		return copy(dest.uintptrs()[dstart:dend], src.uintptrs()[sstart:send])
+		return copy(dest.Uintptrs()[dstart:dend], src.Uintptrs()[sstart:send])
 	case reflect.Float32:
-		return copy(dest.float32s()[dstart:dend], src.float32s()[sstart:send])
+		return copy(dest.Float32s()[dstart:dend], src.Float32s()[sstart:send])
 	case reflect.Float64:
-		return copy(dest.float64s()[dstart:dend], src.float64s()[sstart:send])
+		return copy(dest.Float64s()[dstart:dend], src.Float64s()[sstart:send])
 	case reflect.Complex64:
-		return copy(dest.complex64s()[dstart:dend], src.complex64s()[sstart:send])
+		return copy(dest.Complex64s()[dstart:dend], src.Complex64s()[sstart:send])
 	case reflect.Complex128:
-		return copy(dest.complex128s()[dstart:dend], src.complex128s()[sstart:send])
+		return copy(dest.Complex128s()[dstart:dend], src.Complex128s()[sstart:send])
 
 	case reflect.String:
-		return copy(dest.strings()[dstart:dend], src.strings()[sstart:send])
+		return copy(dest.Strings()[dstart:dend], src.Strings()[sstart:send])
 
 	case reflect.UnsafePointer:
-		return copy(dest.unsafePointers()[dstart:dend], src.unsafePointers()[sstart:send])
+		return copy(dest.UnsafePointers()[dstart:dend], src.UnsafePointers()[sstart:send])
 	default:
 		dv := reflect.ValueOf(dest.v)
 		dv = dv.Slice(dstart, dend)
@@ -445,41 +445,41 @@ func copyDenseIter(dest, src *Dense, diter, siter *FlatIterator) (int, error) {
 
 		switch k {
 		case reflect.Bool:
-			dest.setB(i, src.getB(j))
+			dest.SetB(i, src.GetB(j))
 		case reflect.Int:
-			dest.setI(i, src.getI(j))
+			dest.SetI(i, src.GetI(j))
 		case reflect.Int8:
-			dest.setI8(i, src.getI8(j))
+			dest.SetI8(i, src.GetI8(j))
 		case reflect.Int16:
-			dest.setI16(i, src.getI16(j))
+			dest.SetI16(i, src.GetI16(j))
 		case reflect.Int32:
-			dest.setI32(i, src.getI32(j))
+			dest.SetI32(i, src.GetI32(j))
 		case reflect.Int64:
-			dest.setI64(i, src.getI64(j))
+			dest.SetI64(i, src.GetI64(j))
 		case reflect.Uint:
-			dest.setU(i, src.getU(j))
+			dest.SetU(i, src.GetU(j))
 		case reflect.Uint8:
-			dest.setU8(i, src.getU8(j))
+			dest.SetU8(i, src.GetU8(j))
 		case reflect.Uint16:
-			dest.setU16(i, src.getU16(j))
+			dest.SetU16(i, src.GetU16(j))
 		case reflect.Uint32:
-			dest.setU32(i, src.getU32(j))
+			dest.SetU32(i, src.GetU32(j))
 		case reflect.Uint64:
-			dest.setU64(i, src.getU64(j))
+			dest.SetU64(i, src.GetU64(j))
 		case reflect.Uintptr:
-			dest.setUintptr(i, src.getUintptr(j))
+			dest.SetUintptr(i, src.GetUintptr(j))
 		case reflect.Float32:
-			dest.setF32(i, src.getF32(j))
+			dest.SetF32(i, src.GetF32(j))
 		case reflect.Float64:
-			dest.setF64(i, src.getF64(j))
+			dest.SetF64(i, src.GetF64(j))
 		case reflect.Complex64:
-			dest.setC64(i, src.getC64(j))
+			dest.SetC64(i, src.GetC64(j))
 		case reflect.Complex128:
-			dest.setC128(i, src.getC128(j))
+			dest.SetC128(i, src.GetC128(j))
 		case reflect.String:
-			dest.setStr(i, src.getStr(j))
+			dest.SetStr(i, src.GetStr(j))
 		case reflect.UnsafePointer:
-			dest.setUnsafePointer(i, src.getUnsafePointer(j))
+			dest.SetUnsafePointer(i, src.GetUnsafePointer(j))
 		default:
 			dest.Set(i, src.Get(j))
 		}
@@ -492,60 +492,60 @@ func copyDenseIter(dest, src *Dense, diter, siter *FlatIterator) (int, error) {
 func (t *Dense) slice(start, end int) {
 	switch t.t.Kind() {
 	case reflect.Bool:
-		data := t.bools()[start:end]
+		data := t.Bools()[start:end]
 		t.fromSlice(data)
 	case reflect.Int:
-		data := t.ints()[start:end]
+		data := t.Ints()[start:end]
 		t.fromSlice(data)
 	case reflect.Int8:
-		data := t.int8s()[start:end]
+		data := t.Int8s()[start:end]
 		t.fromSlice(data)
 	case reflect.Int16:
-		data := t.int16s()[start:end]
+		data := t.Int16s()[start:end]
 		t.fromSlice(data)
 	case reflect.Int32:
-		data := t.int32s()[start:end]
+		data := t.Int32s()[start:end]
 		t.fromSlice(data)
 	case reflect.Int64:
-		data := t.int64s()[start:end]
+		data := t.Int64s()[start:end]
 		t.fromSlice(data)
 	case reflect.Uint:
-		data := t.uints()[start:end]
+		data := t.Uints()[start:end]
 		t.fromSlice(data)
 	case reflect.Uint8:
-		data := t.uint8s()[start:end]
+		data := t.Uint8s()[start:end]
 		t.fromSlice(data)
 	case reflect.Uint16:
-		data := t.uint16s()[start:end]
+		data := t.Uint16s()[start:end]
 		t.fromSlice(data)
 	case reflect.Uint32:
-		data := t.uint32s()[start:end]
+		data := t.Uint32s()[start:end]
 		t.fromSlice(data)
 	case reflect.Uint64:
-		data := t.uint64s()[start:end]
+		data := t.Uint64s()[start:end]
 		t.fromSlice(data)
 	case reflect.Uintptr:
-		data := t.uintptrs()[start:end]
+		data := t.Uintptrs()[start:end]
 		t.fromSlice(data)
 	case reflect.Float32:
-		data := t.float32s()[start:end]
+		data := t.Float32s()[start:end]
 		t.fromSlice(data)
 	case reflect.Float64:
-		data := t.float64s()[start:end]
+		data := t.Float64s()[start:end]
 		t.fromSlice(data)
 	case reflect.Complex64:
-		data := t.complex64s()[start:end]
+		data := t.Complex64s()[start:end]
 		t.fromSlice(data)
 	case reflect.Complex128:
-		data := t.complex128s()[start:end]
+		data := t.Complex128s()[start:end]
 		t.fromSlice(data)
 
 	case reflect.String:
-		data := t.strings()[start:end]
+		data := t.Strings()[start:end]
 		t.fromSlice(data)
 
 	case reflect.UnsafePointer:
-		data := t.unsafePointers()[start:end]
+		data := t.UnsafePointers()[start:end]
 		t.fromSlice(data)
 	default:
 		v := reflect.ValueOf(t.v)

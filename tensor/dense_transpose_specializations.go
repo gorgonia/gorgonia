@@ -24,7 +24,7 @@ func (t *Dense) transposeB(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setB(i, saved)
+			t.SetB(i, saved)
 			saved = false
 			for i < size && track.IsSet(i) {
 				i++
@@ -37,8 +37,8 @@ func (t *Dense) transposeB(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getB(i)
-		t.setB(i, saved)
+		tmp = t.GetB(i)
+		t.SetB(i, saved)
 		saved = tmp
 
 		i = dest
@@ -63,7 +63,7 @@ func (t *Dense) transposeI(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setI(i, saved)
+			t.SetI(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -76,8 +76,8 @@ func (t *Dense) transposeI(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getI(i)
-		t.setI(i, saved)
+		tmp = t.GetI(i)
+		t.SetI(i, saved)
 		saved = tmp
 
 		i = dest
@@ -102,7 +102,7 @@ func (t *Dense) transposeI8(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setI8(i, saved)
+			t.SetI8(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -115,8 +115,8 @@ func (t *Dense) transposeI8(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getI8(i)
-		t.setI8(i, saved)
+		tmp = t.GetI8(i)
+		t.SetI8(i, saved)
 		saved = tmp
 
 		i = dest
@@ -141,7 +141,7 @@ func (t *Dense) transposeI16(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setI16(i, saved)
+			t.SetI16(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -154,8 +154,8 @@ func (t *Dense) transposeI16(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getI16(i)
-		t.setI16(i, saved)
+		tmp = t.GetI16(i)
+		t.SetI16(i, saved)
 		saved = tmp
 
 		i = dest
@@ -180,7 +180,7 @@ func (t *Dense) transposeI32(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setI32(i, saved)
+			t.SetI32(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -193,8 +193,8 @@ func (t *Dense) transposeI32(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getI32(i)
-		t.setI32(i, saved)
+		tmp = t.GetI32(i)
+		t.SetI32(i, saved)
 		saved = tmp
 
 		i = dest
@@ -219,7 +219,7 @@ func (t *Dense) transposeI64(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setI64(i, saved)
+			t.SetI64(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -232,8 +232,8 @@ func (t *Dense) transposeI64(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getI64(i)
-		t.setI64(i, saved)
+		tmp = t.GetI64(i)
+		t.SetI64(i, saved)
 		saved = tmp
 
 		i = dest
@@ -258,7 +258,7 @@ func (t *Dense) transposeU(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setU(i, saved)
+			t.SetU(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -271,8 +271,8 @@ func (t *Dense) transposeU(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getU(i)
-		t.setU(i, saved)
+		tmp = t.GetU(i)
+		t.SetU(i, saved)
 		saved = tmp
 
 		i = dest
@@ -297,7 +297,7 @@ func (t *Dense) transposeU8(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setU8(i, saved)
+			t.SetU8(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -310,8 +310,8 @@ func (t *Dense) transposeU8(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getU8(i)
-		t.setU8(i, saved)
+		tmp = t.GetU8(i)
+		t.SetU8(i, saved)
 		saved = tmp
 
 		i = dest
@@ -336,7 +336,7 @@ func (t *Dense) transposeU16(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setU16(i, saved)
+			t.SetU16(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -349,8 +349,8 @@ func (t *Dense) transposeU16(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getU16(i)
-		t.setU16(i, saved)
+		tmp = t.GetU16(i)
+		t.SetU16(i, saved)
 		saved = tmp
 
 		i = dest
@@ -375,7 +375,7 @@ func (t *Dense) transposeU32(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setU32(i, saved)
+			t.SetU32(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -388,8 +388,8 @@ func (t *Dense) transposeU32(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getU32(i)
-		t.setU32(i, saved)
+		tmp = t.GetU32(i)
+		t.SetU32(i, saved)
 		saved = tmp
 
 		i = dest
@@ -414,7 +414,7 @@ func (t *Dense) transposeU64(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setU64(i, saved)
+			t.SetU64(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -427,8 +427,8 @@ func (t *Dense) transposeU64(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getU64(i)
-		t.setU64(i, saved)
+		tmp = t.GetU64(i)
+		t.SetU64(i, saved)
 		saved = tmp
 
 		i = dest
@@ -453,7 +453,7 @@ func (t *Dense) transposeF32(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setF32(i, saved)
+			t.SetF32(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -466,8 +466,8 @@ func (t *Dense) transposeF32(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getF32(i)
-		t.setF32(i, saved)
+		tmp = t.GetF32(i)
+		t.SetF32(i, saved)
 		saved = tmp
 
 		i = dest
@@ -492,7 +492,7 @@ func (t *Dense) transposeF64(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setF64(i, saved)
+			t.SetF64(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -505,8 +505,8 @@ func (t *Dense) transposeF64(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getF64(i)
-		t.setF64(i, saved)
+		tmp = t.GetF64(i)
+		t.SetF64(i, saved)
 		saved = tmp
 
 		i = dest
@@ -531,7 +531,7 @@ func (t *Dense) transposeC64(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setC64(i, saved)
+			t.SetC64(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -544,8 +544,8 @@ func (t *Dense) transposeC64(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getC64(i)
-		t.setC64(i, saved)
+		tmp = t.GetC64(i)
+		t.SetC64(i, saved)
 		saved = tmp
 
 		i = dest
@@ -570,7 +570,7 @@ func (t *Dense) transposeC128(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setC128(i, saved)
+			t.SetC128(i, saved)
 			saved = 0
 			for i < size && track.IsSet(i) {
 				i++
@@ -583,8 +583,8 @@ func (t *Dense) transposeC128(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getC128(i)
-		t.setC128(i, saved)
+		tmp = t.GetC128(i)
+		t.SetC128(i, saved)
 		saved = tmp
 
 		i = dest
@@ -609,7 +609,7 @@ func (t *Dense) transposeStr(expStrides []int) {
 		dest := t.transposeIndex(i, axes, expStrides)
 
 		if track.IsSet(i) && track.IsSet(dest) {
-			t.setStr(i, saved)
+			t.SetStr(i, saved)
 			saved = ""
 			for i < size && track.IsSet(i) {
 				i++
@@ -622,8 +622,8 @@ func (t *Dense) transposeStr(expStrides []int) {
 		}
 
 		track.Set(i)
-		tmp = t.getStr(i)
-		t.setStr(i, saved)
+		tmp = t.GetStr(i)
+		t.SetStr(i, saved)
 		saved = tmp
 
 		i = dest

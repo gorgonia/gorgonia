@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"reflect"
 	"unsafe"
+
+	"github.com/chewxy/gorgonia/tensor/internal/stdeng"
 )
+
+var _ stdeng.Array = &header{}
 
 // header is runtime representation of a slice. It's a cleaner version of reflect.SliceHeader.
 // With this, we wouldn't need to keep the uintptr.
@@ -25,6 +29,9 @@ func makeHeader(t Dtype, length int) header {
 		c:   length,
 	}
 }
+
+func (h *header) Pointer() unsafe.Pointer { return h.ptr }
+func (h *header) Len() int                { return h.l }
 
 // array is the underlying generic array.
 type array struct {
@@ -163,7 +170,7 @@ func (a array) Zero() {
 		return
 	}
 	if a.t.Kind() == reflect.String {
-		ss := a.strings()
+		ss := a.Strings()
 		for i := range ss {
 			ss[i] = ""
 		}

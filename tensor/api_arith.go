@@ -163,9 +163,9 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		var res interface{}
 		switch a.t.Kind() {
 		case reflect.Float64:
-			res = a.getF64(0) * b.getF64(0)
+			res = a.GetF64(0) * b.GetF64(0)
 		case reflect.Float32:
-			res = a.getF32(0) * b.getF32(0)
+			res = a.GetF32(0) * b.GetF32(0)
 		}
 
 		switch {

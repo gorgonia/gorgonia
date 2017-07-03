@@ -84,7 +84,7 @@ func SampleIndex(in interface{}) int {
 		case reflect.Float64:
 			var sum float64
 			r := rand.Float64()
-			data := list.float64s()
+			data := list.Float64s()
 			l = len(data)
 			for {
 				datum := data[i]
@@ -101,7 +101,7 @@ func SampleIndex(in interface{}) int {
 		case reflect.Float32:
 			var sum float32
 			r := rand.Float32()
-			data := list.float32s()
+			data := list.Float32s()
 			l = len(data)
 			for {
 				datum := data[i]

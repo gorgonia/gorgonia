@@ -181,57 +181,57 @@ func convToFloat64s(t *Dense) (retVal []float64) {
 	retVal = make([]float64, t.len())
 	switch t.t.Kind() {
 	case reflect.Int:
-		for i, v := range t.ints() {
+		for i, v := range t.Ints() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Int8:
-		for i, v := range t.int8s() {
+		for i, v := range t.Int8s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Int16:
-		for i, v := range t.int16s() {
+		for i, v := range t.Int16s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Int32:
-		for i, v := range t.int32s() {
+		for i, v := range t.Int32s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Int64:
-		for i, v := range t.int64s() {
+		for i, v := range t.Int64s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Uint:
-		for i, v := range t.uints() {
+		for i, v := range t.Uints() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Uint8:
-		for i, v := range t.uint8s() {
+		for i, v := range t.Uint8s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Uint16:
-		for i, v := range t.uint16s() {
+		for i, v := range t.Uint16s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Uint32:
-		for i, v := range t.uint32s() {
+		for i, v := range t.Uint32s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Uint64:
-		for i, v := range t.uint64s() {
+		for i, v := range t.Uint64s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
 	case reflect.Float32:
-		for i, v := range t.float32s() {
+		for i, v := range t.Float32s() {
 			switch {
 			case math32.IsNaN(v):
 				retVal[i] = math.NaN()
@@ -245,10 +245,10 @@ func convToFloat64s(t *Dense) (retVal []float64) {
 		}
 		return retVal
 	case reflect.Float64:
-		return t.float64s()
+		return t.Float64s()
 		return retVal
 	case reflect.Complex64:
-		for i, v := range t.complex64s() {
+		for i, v := range t.Complex64s() {
 			switch {
 			case cmplx.IsNaN(complex128(v)):
 				retVal[i] = math.NaN()
@@ -260,7 +260,7 @@ func convToFloat64s(t *Dense) (retVal []float64) {
 		}
 		return retVal
 	case reflect.Complex128:
-		for i, v := range t.complex128s() {
+		for i, v := range t.Complex128s() {
 			switch {
 			case cmplx.IsNaN(v):
 				retVal[i] = math.NaN()
@@ -411,7 +411,7 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	switch {
 	case t.t.Kind() == reflect.Float64 && toCopy && !t.IsMaterializable():
 		data = make([]float64, t.len())
-		copy(data, t.float64s())
+		copy(data, t.Float64s())
 	case !t.IsMaterializable():
 		data = convToFloat64s(t)
 	default:

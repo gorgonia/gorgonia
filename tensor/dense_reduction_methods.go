@@ -18,33 +18,33 @@ func (t *Dense) Sum(along ...int) (retVal *Dense, err error) {
 		var ret interface{}
 		switch t.t.Kind() {
 		case reflect.Int:
-			ret = sumI(t.ints())
+			ret = sumI(t.Ints())
 		case reflect.Int8:
-			ret = sumI8(t.int8s())
+			ret = sumI8(t.Int8s())
 		case reflect.Int16:
-			ret = sumI16(t.int16s())
+			ret = sumI16(t.Int16s())
 		case reflect.Int32:
-			ret = sumI32(t.int32s())
+			ret = sumI32(t.Int32s())
 		case reflect.Int64:
-			ret = sumI64(t.int64s())
+			ret = sumI64(t.Int64s())
 		case reflect.Uint:
-			ret = sumU(t.uints())
+			ret = sumU(t.Uints())
 		case reflect.Uint8:
-			ret = sumU8(t.uint8s())
+			ret = sumU8(t.Uint8s())
 		case reflect.Uint16:
-			ret = sumU16(t.uint16s())
+			ret = sumU16(t.Uint16s())
 		case reflect.Uint32:
-			ret = sumU32(t.uint32s())
+			ret = sumU32(t.Uint32s())
 		case reflect.Uint64:
-			ret = sumU64(t.uint64s())
+			ret = sumU64(t.Uint64s())
 		case reflect.Float32:
-			ret = sumF32(t.float32s())
+			ret = sumF32(t.Float32s())
 		case reflect.Float64:
-			ret = sumF64(t.float64s())
+			ret = sumF64(t.Float64s())
 		case reflect.Complex64:
-			ret = sumC64(t.complex64s())
+			ret = sumC64(t.Complex64s())
 		case reflect.Complex128:
-			ret = sumC128(t.complex128s())
+			ret = sumC128(t.Complex128s())
 		}
 		retVal = New(FromScalar(ret))
 		return
@@ -113,29 +113,29 @@ func (t *Dense) Max(along ...int) (retVal *Dense, err error) {
 		var ret interface{}
 		switch t.t.Kind() {
 		case reflect.Int:
-			ret = sliceMaxI(t.ints())
+			ret = sliceMaxI(t.Ints())
 		case reflect.Int8:
-			ret = sliceMaxI8(t.int8s())
+			ret = sliceMaxI8(t.Int8s())
 		case reflect.Int16:
-			ret = sliceMaxI16(t.int16s())
+			ret = sliceMaxI16(t.Int16s())
 		case reflect.Int32:
-			ret = sliceMaxI32(t.int32s())
+			ret = sliceMaxI32(t.Int32s())
 		case reflect.Int64:
-			ret = sliceMaxI64(t.int64s())
+			ret = sliceMaxI64(t.Int64s())
 		case reflect.Uint:
-			ret = sliceMaxU(t.uints())
+			ret = sliceMaxU(t.Uints())
 		case reflect.Uint8:
-			ret = sliceMaxU8(t.uint8s())
+			ret = sliceMaxU8(t.Uint8s())
 		case reflect.Uint16:
-			ret = sliceMaxU16(t.uint16s())
+			ret = sliceMaxU16(t.Uint16s())
 		case reflect.Uint32:
-			ret = sliceMaxU32(t.uint32s())
+			ret = sliceMaxU32(t.Uint32s())
 		case reflect.Uint64:
-			ret = sliceMaxU64(t.uint64s())
+			ret = sliceMaxU64(t.Uint64s())
 		case reflect.Float32:
-			ret = sliceMaxF32(t.float32s())
+			ret = sliceMaxF32(t.Float32s())
 		case reflect.Float64:
-			ret = sliceMaxF64(t.float64s())
+			ret = sliceMaxF64(t.Float64s())
 		}
 		retVal = New(FromScalar(ret))
 		return
@@ -200,29 +200,29 @@ func (t *Dense) Min(along ...int) (retVal *Dense, err error) {
 		var ret interface{}
 		switch t.t.Kind() {
 		case reflect.Int:
-			ret = sliceMinI(t.ints())
+			ret = sliceMinI(t.Ints())
 		case reflect.Int8:
-			ret = sliceMinI8(t.int8s())
+			ret = sliceMinI8(t.Int8s())
 		case reflect.Int16:
-			ret = sliceMinI16(t.int16s())
+			ret = sliceMinI16(t.Int16s())
 		case reflect.Int32:
-			ret = sliceMinI32(t.int32s())
+			ret = sliceMinI32(t.Int32s())
 		case reflect.Int64:
-			ret = sliceMinI64(t.int64s())
+			ret = sliceMinI64(t.Int64s())
 		case reflect.Uint:
-			ret = sliceMinU(t.uints())
+			ret = sliceMinU(t.Uints())
 		case reflect.Uint8:
-			ret = sliceMinU8(t.uint8s())
+			ret = sliceMinU8(t.Uint8s())
 		case reflect.Uint16:
-			ret = sliceMinU16(t.uint16s())
+			ret = sliceMinU16(t.Uint16s())
 		case reflect.Uint32:
-			ret = sliceMinU32(t.uint32s())
+			ret = sliceMinU32(t.Uint32s())
 		case reflect.Uint64:
-			ret = sliceMinU64(t.uint64s())
+			ret = sliceMinU64(t.Uint64s())
 		case reflect.Float32:
-			ret = sliceMinF32(t.float32s())
+			ret = sliceMinF32(t.Float32s())
 		case reflect.Float64:
-			ret = sliceMinF64(t.float64s())
+			ret = sliceMinF64(t.Float64s())
 		}
 		retVal = New(FromScalar(ret))
 		return

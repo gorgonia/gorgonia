@@ -81,9 +81,9 @@ func convToFloat64s(t *Dense) (retVal []float64){
 	{{if isNumber . -}}
 	case reflect.{{reflectKind .}}:
 		{{if eq .String "float64" -}}
-			return t.float64s()
+			return t.{{sliceOf .}}
 		{{else if eq .String "float32" -}}
-			for i, v := range t.float32s() {
+			for i, v := range t.{{sliceOf .}} {
 				switch {
 				case math32.IsNaN(v):
 					retVal[i] = math.NaN()
@@ -96,7 +96,7 @@ func convToFloat64s(t *Dense) (retVal []float64){
 				}
 			}
 		{{else if eq .String "complex64" -}}
-			for i, v := range t.complex64s() {
+			for i, v := range t.{{sliceOf .}} {
 				switch {
 				case cmplx.IsNaN(complex128(v)):
 					retVal[i] = math.NaN()
@@ -107,7 +107,7 @@ func convToFloat64s(t *Dense) (retVal []float64){
 				}
 			}
 		{{else if eq .String "complex128" -}}
-			for i, v := range t.complex128s() {
+			for i, v := range t.{{sliceOf .}} {
 				switch {
 				case cmplx.IsNaN(v):
 					retVal[i] = math.NaN()
@@ -209,7 +209,7 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	switch {
 	case t.t.Kind() == reflect.Float64 && toCopy  && !t.IsMaterializable():
 		data = make([]float64, t.len())
-		copy(data, t.float64s())
+		copy(data, t.Float64s())
 	case !t.IsMaterializable():	
 		data = convToFloat64s(t)
 	default:

@@ -276,98 +276,98 @@ func (t *Dense) ReadNpy(r io.Reader) (err error) {
 
 	switch t.t.Kind() {
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Complex64:
-		data := t.complex64s()
+		data := t.Complex64s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return
 			}
 		}
 	case reflect.Complex128:
-		data := t.complex128s()
+		data := t.Complex128s()
 		for i := 0; i < size; i++ {
 			if err = binary.Read(r, binary.LittleEndian, &data[i]); err != nil {
 				return

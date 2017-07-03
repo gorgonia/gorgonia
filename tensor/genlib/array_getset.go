@@ -6,13 +6,13 @@ import (
 	"text/template"
 )
 
-const asSliceRaw = `func (h *header) {{asType . | strip}}s() []{{asType .}} { return *(*[]{{asType .}})(unsafe.Pointer(h)) }
+const asSliceRaw = `func (h *header) {{asType . | strip | title}}s() []{{asType .}} { return *(*[]{{asType .}})(unsafe.Pointer(h)) }
 `
 
-const setBasicRaw = `func (h *header) set{{short . }}(i int, x {{asType . }}) { h.{{sliceOf .}}[i] = x }
+const setBasicRaw = `func (h *header) Set{{short . }}(i int, x {{asType . }}) { h.{{sliceOf .}}[i] = x }
 `
 
-const getBasicRaw = `func (h *header) get{{short .}}(i int) {{asType .}} { return h.{{lower .String | clean | strip }}s()[i]}
+const getBasicRaw = `func (h *header) Get{{short .}}(i int) {{asType .}} { return h.{{lower .String | clean | strip | title }}s()[i]}
 `
 
 const getRaw = `// Get returns the ith element of the underlying array of the *Dense tensor.
@@ -22,7 +22,7 @@ func (a *array) Get(i int) interface{} {
 		{{if isParameterized . -}}
 		{{else -}}
 	case reflect.{{reflectKind .}}:
-		return a.get{{short .}}(i)
+		return a.{{getOne .}}(i)
 		{{end -}}
 	{{end -}}
 	default:
@@ -42,7 +42,7 @@ func (a *array) Set(i int, x interface{}) {
 		{{else -}}
 	case reflect.{{reflectKind .}}:
 		xv := x.({{asType .}})
-		a.set{{short .}}(i, xv)
+		a.{{setOne .}}(i, xv)
 		{{end -}}
 	{{end -}}
 	default:
@@ -114,7 +114,7 @@ func (a array) Eq(other interface{}) bool {
 			{{else -}}
 		case reflect.{{reflectKind .}}:
 			for i, v := range a.{{sliceOf .}} {
-				if oa.get{{short .}}(i) != v {
+				if oa.{{getOne .}}(i) != v {
 					return false
 				}
 			}

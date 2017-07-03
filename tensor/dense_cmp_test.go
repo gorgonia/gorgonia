@@ -29,9 +29,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -65,9 +65,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -82,9 +82,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -99,9 +99,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -132,9 +132,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -169,9 +169,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -186,9 +186,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -202,9 +202,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -219,9 +219,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -235,9 +235,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -252,9 +252,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -284,9 +284,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -321,9 +321,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -338,9 +338,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -354,9 +354,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -371,9 +371,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -387,9 +387,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -404,9 +404,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -436,9 +436,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -473,9 +473,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -490,9 +490,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -506,9 +506,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -523,9 +523,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -539,9 +539,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -556,9 +556,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -588,9 +588,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -625,9 +625,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -642,9 +642,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -658,9 +658,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -675,9 +675,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -691,9 +691,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -708,9 +708,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -740,9 +740,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -777,9 +777,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -794,9 +794,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -810,9 +810,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -827,9 +827,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -843,9 +843,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -860,9 +860,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -892,9 +892,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -929,9 +929,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -946,9 +946,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -962,9 +962,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -979,9 +979,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -995,9 +995,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1012,9 +1012,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1044,9 +1044,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -1081,9 +1081,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1098,9 +1098,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1114,9 +1114,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1131,9 +1131,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1147,9 +1147,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1164,9 +1164,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1196,9 +1196,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -1233,9 +1233,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1250,9 +1250,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1266,9 +1266,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1283,9 +1283,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1299,9 +1299,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1316,9 +1316,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1348,9 +1348,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -1385,9 +1385,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1402,9 +1402,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1418,9 +1418,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1435,9 +1435,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1451,9 +1451,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1468,9 +1468,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1500,9 +1500,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -1537,9 +1537,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1554,9 +1554,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1570,9 +1570,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1587,9 +1587,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1603,9 +1603,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1620,9 +1620,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1652,9 +1652,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -1688,9 +1688,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1705,9 +1705,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1722,9 +1722,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1755,9 +1755,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -1792,9 +1792,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1809,9 +1809,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1825,9 +1825,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1842,9 +1842,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1858,9 +1858,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1875,9 +1875,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1907,9 +1907,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -1944,9 +1944,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1961,9 +1961,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -1977,9 +1977,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -1994,9 +1994,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2010,9 +2010,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2027,9 +2027,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2059,9 +2059,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -2096,9 +2096,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2113,9 +2113,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.complex64s()
-		bcs = bxc.complex64s()
-		acs = axc.complex64s()
+		abs = axb.Complex64s()
+		bcs = bxc.Complex64s()
+		acs = axc.Complex64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2129,9 +2129,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2146,9 +2146,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.complex64s()
-		bcs = bxc.complex64s()
-		acs = axc.complex64s()
+		abs = axb.Complex64s()
+		bcs = bxc.Complex64s()
+		acs = axc.Complex64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2162,9 +2162,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2179,9 +2179,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.complex64s()
-		bcs = bxc.complex64s()
-		acs = axc.complex64s()
+		abs = axb.Complex64s()
+		bcs = bxc.Complex64s()
+		acs = axc.Complex64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2211,9 +2211,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -2248,9 +2248,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2265,9 +2265,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.complex128s()
-		bcs = bxc.complex128s()
-		acs = axc.complex128s()
+		abs = axb.Complex128s()
+		bcs = bxc.Complex128s()
+		acs = axc.Complex128s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2281,9 +2281,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2298,9 +2298,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1, AsSameType())
 		axc, _ = a2.eqDD(c1, AsSameType())
 
-		abs = axb.complex128s()
-		bcs = bxc.complex128s()
-		acs = axc.complex128s()
+		abs = axb.Complex128s()
+		bcs = bxc.Complex128s()
+		acs = axc.Complex128s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2314,9 +2314,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2331,9 +2331,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1, AsSameType())
 		axc, _ = a1.eqDD(c1, AsSameType())
 
-		abs = axb.complex128s()
-		bcs = bxc.complex128s()
-		acs = axc.complex128s()
+		abs = axb.Complex128s()
+		bcs = bxc.Complex128s()
+		acs = axc.Complex128s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -2363,9 +2363,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -2399,9 +2399,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2416,9 +2416,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2433,9 +2433,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2466,9 +2466,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -2502,9 +2502,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c2)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2519,9 +2519,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.eqDD(c1)
 		axc, _ = a2.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -2536,9 +2536,9 @@ func TestDense_eqDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.eqDD(c1)
 		axc, _ = a1.eqDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -3485,8 +3485,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -3514,8 +3514,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3527,8 +3527,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3540,8 +3540,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3566,8 +3566,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -3596,8 +3596,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3609,8 +3609,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.ints()
-		bas = bxa.ints()
+		abs = axb.Ints()
+		bas = bxa.Ints()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3621,8 +3621,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3634,8 +3634,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.ints()
-		bas = bxa.ints()
+		abs = axb.Ints()
+		bas = bxa.Ints()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3646,8 +3646,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3659,8 +3659,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.ints()
-		bas = bxa.ints()
+		abs = axb.Ints()
+		bas = bxa.Ints()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3684,8 +3684,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -3714,8 +3714,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3727,8 +3727,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.int8s()
-		bas = bxa.int8s()
+		abs = axb.Int8s()
+		bas = bxa.Int8s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3739,8 +3739,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3752,8 +3752,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.int8s()
-		bas = bxa.int8s()
+		abs = axb.Int8s()
+		bas = bxa.Int8s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3764,8 +3764,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3777,8 +3777,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.int8s()
-		bas = bxa.int8s()
+		abs = axb.Int8s()
+		bas = bxa.Int8s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3802,8 +3802,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -3832,8 +3832,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3845,8 +3845,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.int16s()
-		bas = bxa.int16s()
+		abs = axb.Int16s()
+		bas = bxa.Int16s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3857,8 +3857,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3870,8 +3870,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.int16s()
-		bas = bxa.int16s()
+		abs = axb.Int16s()
+		bas = bxa.Int16s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3882,8 +3882,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3895,8 +3895,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.int16s()
-		bas = bxa.int16s()
+		abs = axb.Int16s()
+		bas = bxa.Int16s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3920,8 +3920,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -3950,8 +3950,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3963,8 +3963,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.int32s()
-		bas = bxa.int32s()
+		abs = axb.Int32s()
+		bas = bxa.Int32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -3975,8 +3975,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -3988,8 +3988,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.int32s()
-		bas = bxa.int32s()
+		abs = axb.Int32s()
+		bas = bxa.Int32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4000,8 +4000,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4013,8 +4013,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.int32s()
-		bas = bxa.int32s()
+		abs = axb.Int32s()
+		bas = bxa.Int32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4038,8 +4038,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4068,8 +4068,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4081,8 +4081,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.int64s()
-		bas = bxa.int64s()
+		abs = axb.Int64s()
+		bas = bxa.Int64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4093,8 +4093,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4106,8 +4106,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.int64s()
-		bas = bxa.int64s()
+		abs = axb.Int64s()
+		bas = bxa.Int64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4118,8 +4118,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4131,8 +4131,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.int64s()
-		bas = bxa.int64s()
+		abs = axb.Int64s()
+		bas = bxa.Int64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4156,8 +4156,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4186,8 +4186,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4199,8 +4199,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.uints()
-		bas = bxa.uints()
+		abs = axb.Uints()
+		bas = bxa.Uints()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4211,8 +4211,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4224,8 +4224,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.uints()
-		bas = bxa.uints()
+		abs = axb.Uints()
+		bas = bxa.Uints()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4236,8 +4236,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4249,8 +4249,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.uints()
-		bas = bxa.uints()
+		abs = axb.Uints()
+		bas = bxa.Uints()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4274,8 +4274,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4304,8 +4304,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4317,8 +4317,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.uint8s()
-		bas = bxa.uint8s()
+		abs = axb.Uint8s()
+		bas = bxa.Uint8s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4329,8 +4329,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4342,8 +4342,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.uint8s()
-		bas = bxa.uint8s()
+		abs = axb.Uint8s()
+		bas = bxa.Uint8s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4354,8 +4354,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4367,8 +4367,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.uint8s()
-		bas = bxa.uint8s()
+		abs = axb.Uint8s()
+		bas = bxa.Uint8s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4392,8 +4392,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4422,8 +4422,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4435,8 +4435,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.uint16s()
-		bas = bxa.uint16s()
+		abs = axb.Uint16s()
+		bas = bxa.Uint16s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4447,8 +4447,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4460,8 +4460,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.uint16s()
-		bas = bxa.uint16s()
+		abs = axb.Uint16s()
+		bas = bxa.Uint16s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4472,8 +4472,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4485,8 +4485,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.uint16s()
-		bas = bxa.uint16s()
+		abs = axb.Uint16s()
+		bas = bxa.Uint16s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4510,8 +4510,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4540,8 +4540,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4553,8 +4553,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.uint32s()
-		bas = bxa.uint32s()
+		abs = axb.Uint32s()
+		bas = bxa.Uint32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4565,8 +4565,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4578,8 +4578,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.uint32s()
-		bas = bxa.uint32s()
+		abs = axb.Uint32s()
+		bas = bxa.Uint32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4590,8 +4590,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4603,8 +4603,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.uint32s()
-		bas = bxa.uint32s()
+		abs = axb.Uint32s()
+		bas = bxa.Uint32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4628,8 +4628,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4658,8 +4658,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4671,8 +4671,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.uint64s()
-		bas = bxa.uint64s()
+		abs = axb.Uint64s()
+		bas = bxa.Uint64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4683,8 +4683,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4696,8 +4696,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.uint64s()
-		bas = bxa.uint64s()
+		abs = axb.Uint64s()
+		bas = bxa.Uint64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4708,8 +4708,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4721,8 +4721,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.uint64s()
-		bas = bxa.uint64s()
+		abs = axb.Uint64s()
+		bas = bxa.Uint64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4746,8 +4746,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4775,8 +4775,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4788,8 +4788,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4801,8 +4801,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4827,8 +4827,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4857,8 +4857,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4870,8 +4870,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.float32s()
-		bas = bxa.float32s()
+		abs = axb.Float32s()
+		bas = bxa.Float32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4882,8 +4882,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4895,8 +4895,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.float32s()
-		bas = bxa.float32s()
+		abs = axb.Float32s()
+		bas = bxa.Float32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4907,8 +4907,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4920,8 +4920,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.float32s()
-		bas = bxa.float32s()
+		abs = axb.Float32s()
+		bas = bxa.Float32s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -4945,8 +4945,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -4975,8 +4975,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -4988,8 +4988,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.float64s()
-		bas = bxa.float64s()
+		abs = axb.Float64s()
+		bas = bxa.Float64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5000,8 +5000,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5013,8 +5013,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.float64s()
-		bas = bxa.float64s()
+		abs = axb.Float64s()
+		bas = bxa.Float64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5025,8 +5025,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5038,8 +5038,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.float64s()
-		bas = bxa.float64s()
+		abs = axb.Float64s()
+		bas = bxa.Float64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5063,8 +5063,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -5093,8 +5093,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5106,8 +5106,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.complex64s()
-		bas = bxa.complex64s()
+		abs = axb.Complex64s()
+		bas = bxa.Complex64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5118,8 +5118,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5131,8 +5131,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.complex64s()
-		bas = bxa.complex64s()
+		abs = axb.Complex64s()
+		bas = bxa.Complex64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5143,8 +5143,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5156,8 +5156,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.complex64s()
-		bas = bxa.complex64s()
+		abs = axb.Complex64s()
+		bas = bxa.Complex64s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5181,8 +5181,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -5211,8 +5211,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5224,8 +5224,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2, AsSameType())
 		bxa, _ = b1.neDD(a2, AsSameType())
 
-		abs = axb.complex128s()
-		bas = bxa.complex128s()
+		abs = axb.Complex128s()
+		bas = bxa.Complex128s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5236,8 +5236,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5249,8 +5249,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1, AsSameType())
 		bxa, _ = b2.neDD(a1, AsSameType())
 
-		abs = axb.complex128s()
-		bas = bxa.complex128s()
+		abs = axb.Complex128s()
+		bas = bxa.Complex128s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5261,8 +5261,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5274,8 +5274,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1, AsSameType())
 		bxa, _ = b1.neDD(a1, AsSameType())
 
-		abs = axb.complex128s()
-		bas = bxa.complex128s()
+		abs = axb.Complex128s()
+		bas = bxa.Complex128s()
 
 		for i, vab := range abs {
 			if vab != bas[i] {
@@ -5299,8 +5299,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -5328,8 +5328,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5341,8 +5341,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5354,8 +5354,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5380,8 +5380,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		ba := bxa.bools()
+		ab := axb.Bools()
+		ba := bxa.Bools()
 
 		for i, vab := range ab {
 			if vab != ba[i] {
@@ -5409,8 +5409,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b2)
 		bxa, _ = b1.neDD(a2)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5422,8 +5422,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a2.neDD(b1)
 		bxa, _ = b2.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5435,8 +5435,8 @@ func TestDense_NeDD_Symmetry(t *testing.T) {
 		axb, _ = a1.neDD(b1)
 		bxa, _ = b1.neDD(a1)
 
-		abb = axb.bools()
-		bab = bxa.bools()
+		abb = axb.Bools()
+		bab = bxa.Bools()
 
 		for i, vab := range abb {
 			if vab != bab[i] {
@@ -5470,9 +5470,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -5507,9 +5507,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5524,9 +5524,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5540,9 +5540,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5557,9 +5557,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5573,9 +5573,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5590,9 +5590,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5622,9 +5622,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -5659,9 +5659,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5676,9 +5676,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5692,9 +5692,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5709,9 +5709,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5725,9 +5725,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5742,9 +5742,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5774,9 +5774,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -5811,9 +5811,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5828,9 +5828,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5844,9 +5844,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5861,9 +5861,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5877,9 +5877,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5894,9 +5894,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5926,9 +5926,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -5963,9 +5963,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -5980,9 +5980,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -5996,9 +5996,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6013,9 +6013,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6029,9 +6029,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6046,9 +6046,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6078,9 +6078,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -6115,9 +6115,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6132,9 +6132,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6148,9 +6148,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6165,9 +6165,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6181,9 +6181,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6198,9 +6198,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6230,9 +6230,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -6267,9 +6267,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6284,9 +6284,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6300,9 +6300,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6317,9 +6317,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6333,9 +6333,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6350,9 +6350,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6382,9 +6382,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -6419,9 +6419,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6436,9 +6436,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6452,9 +6452,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6469,9 +6469,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6485,9 +6485,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6502,9 +6502,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6534,9 +6534,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -6571,9 +6571,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6588,9 +6588,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6604,9 +6604,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6621,9 +6621,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6637,9 +6637,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6654,9 +6654,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6686,9 +6686,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -6723,9 +6723,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6740,9 +6740,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6756,9 +6756,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6773,9 +6773,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6789,9 +6789,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6806,9 +6806,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6838,9 +6838,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -6875,9 +6875,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6892,9 +6892,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6908,9 +6908,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6925,9 +6925,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6941,9 +6941,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -6958,9 +6958,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -6990,9 +6990,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -7027,9 +7027,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7044,9 +7044,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -7060,9 +7060,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7077,9 +7077,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -7093,9 +7093,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7110,9 +7110,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -7142,9 +7142,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -7179,9 +7179,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7196,9 +7196,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -7212,9 +7212,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7229,9 +7229,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1, AsSameType())
 		axc, _ = a2.gtDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -7245,9 +7245,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7262,9 +7262,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1, AsSameType())
 		axc, _ = a1.gtDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -7294,9 +7294,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -7330,9 +7330,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c2)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7347,9 +7347,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gtDD(c1)
 		axc, _ = a2.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -7364,9 +7364,9 @@ func TestDense_gtDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gtDD(c1)
 		axc, _ = a1.gtDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8126,9 +8126,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -8163,9 +8163,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8180,9 +8180,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8196,9 +8196,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8213,9 +8213,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8229,9 +8229,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8246,9 +8246,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8278,9 +8278,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -8315,9 +8315,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8332,9 +8332,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8348,9 +8348,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8365,9 +8365,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8381,9 +8381,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8398,9 +8398,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8430,9 +8430,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -8467,9 +8467,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8484,9 +8484,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8500,9 +8500,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8517,9 +8517,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8533,9 +8533,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8550,9 +8550,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8582,9 +8582,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -8619,9 +8619,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8636,9 +8636,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8652,9 +8652,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8669,9 +8669,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8685,9 +8685,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8702,9 +8702,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8734,9 +8734,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -8771,9 +8771,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8788,9 +8788,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8804,9 +8804,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8821,9 +8821,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8837,9 +8837,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8854,9 +8854,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8886,9 +8886,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -8923,9 +8923,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8940,9 +8940,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8956,9 +8956,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -8973,9 +8973,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -8989,9 +8989,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9006,9 +9006,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9038,9 +9038,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -9075,9 +9075,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9092,9 +9092,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9108,9 +9108,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9125,9 +9125,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9141,9 +9141,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9158,9 +9158,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9190,9 +9190,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -9227,9 +9227,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9244,9 +9244,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9260,9 +9260,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9277,9 +9277,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9293,9 +9293,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9310,9 +9310,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9342,9 +9342,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -9379,9 +9379,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9396,9 +9396,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9412,9 +9412,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9429,9 +9429,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9445,9 +9445,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9462,9 +9462,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9494,9 +9494,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -9531,9 +9531,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9548,9 +9548,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9564,9 +9564,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9581,9 +9581,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9597,9 +9597,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9614,9 +9614,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9646,9 +9646,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -9683,9 +9683,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9700,9 +9700,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9716,9 +9716,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9733,9 +9733,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9749,9 +9749,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9766,9 +9766,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9798,9 +9798,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -9835,9 +9835,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9852,9 +9852,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9868,9 +9868,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9885,9 +9885,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1, AsSameType())
 		axc, _ = a2.gteDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9901,9 +9901,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -9918,9 +9918,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1, AsSameType())
 		axc, _ = a1.gteDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -9950,9 +9950,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -9986,9 +9986,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c2)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -10003,9 +10003,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.gteDD(c1)
 		axc, _ = a2.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -10020,9 +10020,9 @@ func TestDense_gteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.gteDD(c1)
 		axc, _ = a1.gteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -10782,9 +10782,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -10819,9 +10819,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -10836,9 +10836,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -10852,9 +10852,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -10869,9 +10869,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -10885,9 +10885,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -10902,9 +10902,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -10934,9 +10934,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -10971,9 +10971,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -10988,9 +10988,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11004,9 +11004,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11021,9 +11021,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11037,9 +11037,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11054,9 +11054,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11086,9 +11086,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -11123,9 +11123,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11140,9 +11140,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11156,9 +11156,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11173,9 +11173,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11189,9 +11189,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11206,9 +11206,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11238,9 +11238,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -11275,9 +11275,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11292,9 +11292,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11308,9 +11308,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11325,9 +11325,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11341,9 +11341,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11358,9 +11358,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11390,9 +11390,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -11427,9 +11427,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11444,9 +11444,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11460,9 +11460,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11477,9 +11477,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11493,9 +11493,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11510,9 +11510,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11542,9 +11542,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -11579,9 +11579,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11596,9 +11596,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11612,9 +11612,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11629,9 +11629,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11645,9 +11645,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11662,9 +11662,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11694,9 +11694,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -11731,9 +11731,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11748,9 +11748,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11764,9 +11764,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11781,9 +11781,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11797,9 +11797,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11814,9 +11814,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11846,9 +11846,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -11883,9 +11883,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11900,9 +11900,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11916,9 +11916,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11933,9 +11933,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11949,9 +11949,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -11966,9 +11966,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -11998,9 +11998,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -12035,9 +12035,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12052,9 +12052,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12068,9 +12068,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12085,9 +12085,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12101,9 +12101,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12118,9 +12118,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12150,9 +12150,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -12187,9 +12187,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12204,9 +12204,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12220,9 +12220,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12237,9 +12237,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12253,9 +12253,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12270,9 +12270,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12302,9 +12302,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -12339,9 +12339,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12356,9 +12356,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12372,9 +12372,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12389,9 +12389,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12405,9 +12405,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12422,9 +12422,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12454,9 +12454,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -12491,9 +12491,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12508,9 +12508,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12524,9 +12524,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12541,9 +12541,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1, AsSameType())
 		axc, _ = a2.ltDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12557,9 +12557,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12574,9 +12574,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1, AsSameType())
 		axc, _ = a1.ltDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -12606,9 +12606,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -12642,9 +12642,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c2)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12659,9 +12659,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.ltDD(c1)
 		axc, _ = a2.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -12676,9 +12676,9 @@ func TestDense_ltDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.ltDD(c1)
 		axc, _ = a1.ltDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13438,9 +13438,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -13475,9 +13475,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13492,9 +13492,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13508,9 +13508,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13525,9 +13525,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13541,9 +13541,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13558,9 +13558,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13590,9 +13590,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -13627,9 +13627,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13644,9 +13644,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13660,9 +13660,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13677,9 +13677,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13693,9 +13693,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13710,9 +13710,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13742,9 +13742,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -13779,9 +13779,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13796,9 +13796,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13812,9 +13812,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13829,9 +13829,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13845,9 +13845,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13862,9 +13862,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13894,9 +13894,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -13931,9 +13931,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13948,9 +13948,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13964,9 +13964,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -13981,9 +13981,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -13997,9 +13997,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14014,9 +14014,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14046,9 +14046,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -14083,9 +14083,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14100,9 +14100,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14116,9 +14116,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14133,9 +14133,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14149,9 +14149,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14166,9 +14166,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14198,9 +14198,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -14235,9 +14235,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14252,9 +14252,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14268,9 +14268,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14285,9 +14285,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14301,9 +14301,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14318,9 +14318,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14350,9 +14350,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -14387,9 +14387,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14404,9 +14404,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14420,9 +14420,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14437,9 +14437,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14453,9 +14453,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14470,9 +14470,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14502,9 +14502,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -14539,9 +14539,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14556,9 +14556,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14572,9 +14572,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14589,9 +14589,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14605,9 +14605,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14622,9 +14622,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14654,9 +14654,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -14691,9 +14691,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14708,9 +14708,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14724,9 +14724,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14741,9 +14741,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14757,9 +14757,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14774,9 +14774,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14806,9 +14806,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -14843,9 +14843,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14860,9 +14860,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14876,9 +14876,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14893,9 +14893,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14909,9 +14909,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -14926,9 +14926,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -14958,9 +14958,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -14995,9 +14995,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15012,9 +15012,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -15028,9 +15028,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15045,9 +15045,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -15061,9 +15061,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15078,9 +15078,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -15110,9 +15110,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -15147,9 +15147,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15164,9 +15164,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -15180,9 +15180,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15197,9 +15197,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1, AsSameType())
 		axc, _ = a2.lteDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -15213,9 +15213,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15230,9 +15230,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1, AsSameType())
 		axc, _ = a1.lteDD(c1, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -15262,9 +15262,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -15298,9 +15298,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c2)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15315,9 +15315,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b2.lteDD(c1)
 		axc, _ = a2.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -15332,9 +15332,9 @@ func TestDense_lteDD_Transitivity(t *testing.T) {
 		bxc, _ = b1.lteDD(c1)
 		axc, _ = a1.lteDD(c1)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16095,9 +16095,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16128,9 +16128,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16161,9 +16161,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16195,9 +16195,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16212,9 +16212,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16244,9 +16244,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16278,9 +16278,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16295,9 +16295,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16327,9 +16327,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16361,9 +16361,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16378,9 +16378,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16410,9 +16410,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16444,9 +16444,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16461,9 +16461,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16493,9 +16493,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16527,9 +16527,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16544,9 +16544,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16576,9 +16576,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16610,9 +16610,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16627,9 +16627,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16659,9 +16659,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16693,9 +16693,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16710,9 +16710,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16742,9 +16742,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16776,9 +16776,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16793,9 +16793,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16825,9 +16825,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16859,9 +16859,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16876,9 +16876,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16908,9 +16908,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -16942,9 +16942,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -16959,9 +16959,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -16991,9 +16991,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17024,9 +17024,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17057,9 +17057,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17091,9 +17091,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17108,9 +17108,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17140,9 +17140,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17174,9 +17174,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17191,9 +17191,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17223,9 +17223,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17257,9 +17257,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17274,9 +17274,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.complex64s()
-		bcs = bxc.complex64s()
-		acs = axc.complex64s()
+		abs = axb.Complex64s()
+		bcs = bxc.Complex64s()
+		acs = axc.Complex64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17306,9 +17306,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17340,9 +17340,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17357,9 +17357,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b, AsSameType())
 		axc, _ = a1.eqDD(c2, AsSameType())
 
-		abs = axb.complex128s()
-		bcs = bxc.complex128s()
-		acs = axc.complex128s()
+		abs = axb.Complex128s()
+		bcs = bxc.Complex128s()
+		acs = axc.Complex128s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17389,9 +17389,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17422,9 +17422,9 @@ func TestDense_eqDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.eqDS(b)
 		axc, _ = a1.eqDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17461,9 +17461,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17495,9 +17495,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17512,9 +17512,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17544,9 +17544,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17578,9 +17578,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17595,9 +17595,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17627,9 +17627,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17661,9 +17661,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17678,9 +17678,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17710,9 +17710,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17744,9 +17744,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17761,9 +17761,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17793,9 +17793,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17827,9 +17827,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17844,9 +17844,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17876,9 +17876,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17910,9 +17910,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -17927,9 +17927,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -17959,9 +17959,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -17993,9 +17993,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18010,9 +18010,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18042,9 +18042,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18076,9 +18076,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18093,9 +18093,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18125,9 +18125,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18159,9 +18159,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18176,9 +18176,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18208,9 +18208,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18242,9 +18242,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18259,9 +18259,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18291,9 +18291,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18325,9 +18325,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18342,9 +18342,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18374,9 +18374,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18408,9 +18408,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18425,9 +18425,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b, AsSameType())
 		axc, _ = a1.gtDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18457,9 +18457,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18490,9 +18490,9 @@ func TestDense_gtDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.ltDS(b)
 		axc, _ = a1.gtDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18529,9 +18529,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18563,9 +18563,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18580,9 +18580,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18612,9 +18612,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18646,9 +18646,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18663,9 +18663,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18695,9 +18695,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18729,9 +18729,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18746,9 +18746,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18778,9 +18778,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18812,9 +18812,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18829,9 +18829,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18861,9 +18861,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18895,9 +18895,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18912,9 +18912,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -18944,9 +18944,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -18978,9 +18978,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -18995,9 +18995,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19027,9 +19027,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19061,9 +19061,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19078,9 +19078,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19110,9 +19110,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19144,9 +19144,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19161,9 +19161,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19193,9 +19193,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19227,9 +19227,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19244,9 +19244,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19276,9 +19276,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19310,9 +19310,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19327,9 +19327,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19359,9 +19359,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19393,9 +19393,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19410,9 +19410,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19442,9 +19442,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19476,9 +19476,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19493,9 +19493,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b, AsSameType())
 		axc, _ = a1.gteDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19525,9 +19525,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19558,9 +19558,9 @@ func TestDense_gteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.lteDS(b)
 		axc, _ = a1.gteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19597,9 +19597,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19631,9 +19631,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19648,9 +19648,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19680,9 +19680,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19714,9 +19714,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19731,9 +19731,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19763,9 +19763,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19797,9 +19797,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19814,9 +19814,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19846,9 +19846,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19880,9 +19880,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19897,9 +19897,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -19929,9 +19929,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -19963,9 +19963,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -19980,9 +19980,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20012,9 +20012,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20046,9 +20046,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20063,9 +20063,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20095,9 +20095,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20129,9 +20129,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20146,9 +20146,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20178,9 +20178,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20212,9 +20212,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20229,9 +20229,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20261,9 +20261,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20295,9 +20295,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20312,9 +20312,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20344,9 +20344,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20378,9 +20378,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20395,9 +20395,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20427,9 +20427,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20461,9 +20461,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20478,9 +20478,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20510,9 +20510,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20544,9 +20544,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20561,9 +20561,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b, AsSameType())
 		axc, _ = a1.ltDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20593,9 +20593,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20626,9 +20626,9 @@ func TestDense_ltDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gtDS(b)
 		axc, _ = a1.ltDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20665,9 +20665,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20699,9 +20699,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20716,9 +20716,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.ints()
-		bcs = bxc.ints()
-		acs = axc.ints()
+		abs = axb.Ints()
+		bcs = bxc.Ints()
+		acs = axc.Ints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20748,9 +20748,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20782,9 +20782,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20799,9 +20799,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int8s()
-		bcs = bxc.int8s()
-		acs = axc.int8s()
+		abs = axb.Int8s()
+		bcs = bxc.Int8s()
+		acs = axc.Int8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20831,9 +20831,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20865,9 +20865,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20882,9 +20882,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int16s()
-		bcs = bxc.int16s()
-		acs = axc.int16s()
+		abs = axb.Int16s()
+		bcs = bxc.Int16s()
+		acs = axc.Int16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20914,9 +20914,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -20948,9 +20948,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -20965,9 +20965,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int32s()
-		bcs = bxc.int32s()
-		acs = axc.int32s()
+		abs = axb.Int32s()
+		bcs = bxc.Int32s()
+		acs = axc.Int32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -20997,9 +20997,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21031,9 +21031,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21048,9 +21048,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.int64s()
-		bcs = bxc.int64s()
-		acs = axc.int64s()
+		abs = axb.Int64s()
+		bcs = bxc.Int64s()
+		acs = axc.Int64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21080,9 +21080,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21114,9 +21114,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21131,9 +21131,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uints()
-		bcs = bxc.uints()
-		acs = axc.uints()
+		abs = axb.Uints()
+		bcs = bxc.Uints()
+		acs = axc.Uints()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21163,9 +21163,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21197,9 +21197,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21214,9 +21214,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint8s()
-		bcs = bxc.uint8s()
-		acs = axc.uint8s()
+		abs = axb.Uint8s()
+		bcs = bxc.Uint8s()
+		acs = axc.Uint8s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21246,9 +21246,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21280,9 +21280,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21297,9 +21297,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint16s()
-		bcs = bxc.uint16s()
-		acs = axc.uint16s()
+		abs = axb.Uint16s()
+		bcs = bxc.Uint16s()
+		acs = axc.Uint16s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21329,9 +21329,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21363,9 +21363,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21380,9 +21380,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint32s()
-		bcs = bxc.uint32s()
-		acs = axc.uint32s()
+		abs = axb.Uint32s()
+		bcs = bxc.Uint32s()
+		acs = axc.Uint32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21412,9 +21412,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21446,9 +21446,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21463,9 +21463,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.uint64s()
-		bcs = bxc.uint64s()
-		acs = axc.uint64s()
+		abs = axb.Uint64s()
+		bcs = bxc.Uint64s()
+		acs = axc.Uint64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21495,9 +21495,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21529,9 +21529,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21546,9 +21546,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.float32s()
-		bcs = bxc.float32s()
-		acs = axc.float32s()
+		abs = axb.Float32s()
+		bcs = bxc.Float32s()
+		acs = axc.Float32s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21578,9 +21578,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21612,9 +21612,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {
@@ -21629,9 +21629,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b, AsSameType())
 		axc, _ = a1.lteDD(c2, AsSameType())
 
-		abs = axb.float64s()
-		bcs = bxc.float64s()
-		acs = axc.float64s()
+		abs = axb.Float64s()
+		bcs = bxc.Float64s()
+		acs = axc.Float64s()
 
 		for i, vab := range abs {
 			if vab == 1 && bcs[i] == 1 {
@@ -21661,9 +21661,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 			return false
 		}
 
-		ab := axb.bools()
-		bc := bxc.bools()
-		ac := axc.bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 
 		for i, vab := range ab {
 			if vab && bc[i] {
@@ -21694,9 +21694,9 @@ func TestDense_lteDS_Transitivity(t *testing.T) {
 		bxc, _ = c2.gteDS(b)
 		axc, _ = a1.lteDD(c2)
 
-		abb = axb.bools()
-		bcb = bxc.bools()
-		acb = axc.bools()
+		abb = axb.Bools()
+		bcb = bxc.Bools()
+		acb = axc.Bools()
 
 		for i, vab := range abb {
 			if vab && bcb[i] {

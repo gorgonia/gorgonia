@@ -11,7 +11,7 @@ func TestDense_shallowClone(t *testing.T) {
 	T := New(Of(Float64), WithBacking([]float64{1, 2, 3, 4}))
 	T2 := T.shallowClone()
 	T2.slice(0, 2)
-	T2.float64s()[0] = 1000
+	T2.Float64s()[0] = 1000
 
 	assert.Equal(t, T.Data().([]float64)[0:2], T2.Data())
 }
@@ -26,7 +26,7 @@ func TestDenseMasked(t *testing.T) {
 
 func TestFromScalar(t *testing.T) {
 	T := New(FromScalar(3.14))
-	data := T.float64s()
+	data := T.Float64s()
 	assert.Equal(t, []float64{3.14}, data)
 }
 
@@ -38,8 +38,8 @@ func TestFromMemory(t *testing.T) {
 	size := uintptr(100 * 8)
 
 	T := New(Of(Float32), WithShape(50, 4), FromMemory(ptr, size))
-	if len(T.float32s()) != 200 {
-		t.Error("expected 200 float32s")
+	if len(T.Float32s()) != 200 {
+		t.Error("expected 200 Float32s")
 	}
 	assert.Equal(t, make([]float32, 200), T.Data())
 	assert.True(t, T.IsManuallyManaged(), "Unamanged %v |%v | q: %v", ManuallyManaged, T.flag, (T.flag>>ManuallyManaged)&MemoryFlag(1))

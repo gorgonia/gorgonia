@@ -232,7 +232,7 @@ attemptGo:
 					for incrI, iterStep, err = incrIter.NextValid(); err == nil; incrI, iterStep, err = incrIter.NextValid() {
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
-								if other.get{{short .}}(j) == 0 {
+								if other.{{getOne .}}(j) == 0 {
 									errs = append(errs, j)
 									continue
 								}
@@ -241,15 +241,15 @@ attemptGo:
 							data[incrI] += {{if $isFunc -}}
 								{{if eq $op "math.Pow" -}}
 									{{if eq .String "complex64" -}}
-										complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+										complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
 									{{else if isFloat . -}}
-										{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+										{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 									{{else -}}
-										{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+										{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
 									{{end -}}
 								{{end -}}
 							{{else -}}
-								t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
+								t.{{getOne .}}(i) {{$op}} other.{{getOne .}}(j)
 							{{end -}}
 					  
 						i += iterStep
@@ -273,7 +273,7 @@ attemptGo:
 						}
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
-								if other.get{{short .}}(j) == 0 {
+								if other.{{getOne .}}(j) == 0 {
 									errs = append(errs, j)
 									continue
 								}
@@ -282,15 +282,15 @@ attemptGo:
 						data[incrI] += {{if $isFunc -}}
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
-									complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
 								{{else if isFloat . -}}
-									{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
-									{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
 								{{end -}}
 							{{end -}}
 						{{else -}}
-							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
+							 t.{{getOne .}}(i) {{$op}} other.{{getOne .}}(j)
 						{{end -}}
 						j += iterStep
 					}
@@ -312,7 +312,7 @@ attemptGo:
 						}
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
-								if other.get{{short .}}(j) == 0 {
+								if other.{{getOne .}}(j) == 0 {
 									errs = append(errs, j)
 									continue
 								}
@@ -321,15 +321,15 @@ attemptGo:
 						data[incrI] += {{if $isFunc -}}
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
-									complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
 								{{else if isFloat . -}}
-									{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
-									{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
 								{{end -}}
 							{{end -}}
 						{{else -}}
-							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
+							 t.{{getOne .}}(i) {{$op}} other.{{getOne .}}(j)
 						{{end -}}
 						i += iterStep
 					}
@@ -356,7 +356,7 @@ attemptGo:
 
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
-								if other.get{{short .}}(j) == 0 {
+								if other.{{getOne .}}(j) == 0 {
 									errs = append(errs, j)
 									continue
 								}
@@ -366,15 +366,15 @@ attemptGo:
 						data[incrI] += {{if $isFunc -}}
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
-									complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
 								{{else if isFloat . -}}
-									{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
-									{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
 								{{end -}}
 							{{end -}}
 						{{else -}}
-							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
+							 t.{{getOne .}}(i) {{$op}} other.{{getOne .}}(j)
 						{{end -}}
 					}
 					{{if or $div $scaleInv -}}
@@ -397,7 +397,7 @@ attemptGo:
 					for i, iterStep, err = it.NextValid(); err == nil; i, iterStep, err = it.NextValid() {
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
-								if other.get{{short .}}(j) == 0 {
+								if other.{{getOne .}}(j) == 0 {
 									errs = append(errs, j)
 									continue
 								}
@@ -407,15 +407,15 @@ attemptGo:
 						data[incrI] +={{if $isFunc -}}
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
-									complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
 								{{else if isFloat . -}}
-									{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
-									{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
 								{{end -}}
 							{{end -}}
 						{{else -}}
-							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
+							 t.{{getOne .}}(i) {{$op}} other.{{getOne .}}(j)
 						{{end -}}
 						j += iterStep
 						incrI += iterStep
@@ -425,7 +425,7 @@ attemptGo:
 					for j, iterStep, err = ot.NextValid(); err == nil; j, iterStep, err = ot.NextValid() {
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
-								if other.get{{short .}}(j) == 0 {
+								if other.{{getOne .}}(j) == 0 {
 									errs = append(errs, j)
 									continue
 								}
@@ -435,15 +435,15 @@ attemptGo:
 						data[incrI] +={{if $isFunc -}}
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
-									complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
 								{{else if isFloat . -}}
-									{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
-									{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
 								{{end -}}
 							{{end -}}
 						{{else -}}
-							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
+							 t.{{getOne .}}(i) {{$op}} other.{{getOne .}}(j)
 						{{end -}}
 						i += iterStep
 						incrI += iterStep
@@ -461,7 +461,7 @@ attemptGo:
 						}
 						{{if or $div $scaleInv -}}
 							{{if isntFloat . -}}
-								if other.get{{short .}}(j) == 0 {
+								if other.{{getOne .}}(j) == 0 {
 									errs = append(errs, j)
 									continue
 								}
@@ -470,15 +470,15 @@ attemptGo:
 						data[incrI] +={{if $isFunc -}}
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
-									complex64(cmplx.Pow(complex128(t.getC64(i)), complex128(other.getC64(j))))
+									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
 								{{else if isFloat . -}}
-									{{mathPkg .}}Pow(t.get{{short .}}(i), other.get{{short .}}(j))
+									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
-									{{asType .}}({{$op}}(float64(t.get{{short .}}(i)), float64(other.get{{short .}}(j))))
+									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
 								{{end -}}
 							{{end -}}
 						{{else -}}
-							 t.get{{short .}}(i) {{$op}} other.get{{short .}}(j)
+							 t.{{getOne .}}(i) {{$op}} other.{{getOne .}}(j)
 						{{end -}}
 
 						incrI += iterStep
