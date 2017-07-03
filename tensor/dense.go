@@ -174,6 +174,22 @@ func (t *Dense) IsManuallyManaged() bool { return t.flag.manuallyManaged() }
 
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {
+	if t.e != nil {
+		retVal := new(Dense)
+		retVal.AP = t.AP.Clone()
+		retVal.t = t.t
+		retVal.e = t.e
+		retVal.flag = t.flag
+		retVal.makeArray(t.l)
+
+		if t.old != nil {
+			retVal.old = t.old.Clone()
+		}
+		copyDense(retVal, t)
+		retVal.lock()
+
+		return retVal
+	}
 	retVal := recycledDense(t.t, t.Shape().Clone())
 	ReturnAP(retVal.AP)
 	retVal.AP = t.AP.Clone()
@@ -203,7 +219,6 @@ func (t *Dense) IsMasked() bool { return len(t.mask) == t.len() }
 
 // MaskFromDense adds a mask slice to tensor by XORing dense arguments' masks
 func (t *Dense) MaskFromDense(tts ...*Dense) {
-
 	hasMask := BorrowBools(len(tts))
 	defer ReturnBools(hasMask)
 
@@ -518,6 +533,12 @@ func copyDense(dest, src *Dense) int {
 		}
 		copy(dest.mask, src.mask)
 		dest.mask = dest.mask[:len(src.mask)]
+	}
+	if src.e != nil {
+		if err := src.e.Memcpy(dest, src); err != nil {
+			panic(err)
+		}
+		return dest.l
 	}
 	return copyArray(dest.array, src.array)
 }

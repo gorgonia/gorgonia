@@ -42,7 +42,7 @@ func TestFromMemory(t *testing.T) {
 		t.Error("expected 200 float32s")
 	}
 	assert.Equal(t, make([]float32, 200), T.Data())
-	assert.True(t, T.IsManuallyManaged(), "Unamanged %v |%v | q: %v", ManuallyManaged, T.flag, (T.flag >> ManuallyManaged) & MemoryFlag(1))
+	assert.True(t, T.IsManuallyManaged(), "Unamanged %v |%v | q: %v", ManuallyManaged, T.flag, (T.flag>>ManuallyManaged)&MemoryFlag(1))
 
 	fail := func() { New(FromMemory(ptr, size), Of(Float32)) }
 	assert.Panics(t, fail, "Expected bad New() call to panic")
@@ -51,4 +51,11 @@ func TestFromMemory(t *testing.T) {
 func Test_recycledDense(t *testing.T) {
 	T := recycledDense(Float64, ScalarShape())
 	assert.Equal(t, float64(0), T.Data())
+}
+
+func TestDense_Clone(t *testing.T) {
+	assert := assert.New(t)
+	T := New(Of(Float64), WithBacking([]float64{1, 2, 3, 4}), WithEngine(dummyEngine(true)))
+	T2 := T.Clone().(*Dense)
+	assert.True(T.Eq(T2))
 }
