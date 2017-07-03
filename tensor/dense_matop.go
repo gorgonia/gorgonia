@@ -6,6 +6,10 @@ import (
 
 // Apply applies a function to all the values in the ndarray
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	if !t.isNativeAccessible() {
+		return nil, errors.Errorf(inaccessibleData, t)
+	}
+
 	fo := ParseFuncOpts(opts...)
 	reuseT, incr := fo.IncrReuse()
 	safe := fo.Safe()
@@ -160,6 +164,15 @@ func (t *Dense) Transpose() {
 		return // cannot transpose scalars
 	}
 
+	if !t.isNativeAccessible() {
+		transposer, ok := t.e.(UnsafeTransposer)
+		if !ok {
+			panic("Cannot transpose non natively accessible data")
+		}
+		transposer.UnsafeTranspose(t)
+		return
+	}
+
 	defer func() {
 		ReturnAP(t.old)
 		t.old = nil
@@ -192,6 +205,9 @@ func (t *Dense) Transpose() {
 
 // At returns the value at the given coordinate
 func (t *Dense) At(coords ...int) (interface{}, error) {
+	if !t.isNativeAccessible() {
+		return nil, errors.Errorf(inaccessibleData, t)
+	}
 	if len(coords) != t.Dims() {
 		return nil, errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -210,6 +226,9 @@ func (t *Dense) MaskAt(coords ...int) (bool, error) {
 	if !t.IsMasked() {
 		return false, nil
 	}
+	if !t.isNativeAccessible() {
+		return false, errors.Errorf(inaccessibleData, t)
+	}
 	if len(coords) != t.Dims() {
 		return true, errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -224,6 +243,10 @@ func (t *Dense) MaskAt(coords ...int) (bool, error) {
 
 // SetAt sets the value at the given coordinate
 func (t *Dense) SetAt(v interface{}, coords ...int) error {
+	if !t.isNativeAccessible() {
+		return errors.Errorf(inaccessibleData, t)
+	}
+
 	if len(coords) != t.Dims() {
 		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -249,6 +272,9 @@ func (t *Dense) SetMaskAtIndex(v bool, i int) error {
 func (t *Dense) SetMaskAt(v bool, coords ...int) error {
 	if !t.IsMasked() {
 		return nil
+	}
+	if !t.isNativeAccessible() {
+		return errors.Errorf(inaccessibleData, t)
 	}
 	if len(coords) != t.Dims() {
 		return errors.Errorf(dimMismatch, t.Dims(), len(coords))

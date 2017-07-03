@@ -85,6 +85,10 @@ type OuterProder interface {
 	Outer(a, b, preallocated Tensor) error
 }
 
+type UnsafeTransposer interface {
+	UnsafeTranspose(t Tensor) error
+}
+
 /* ORD INTERFACES */
 
 type Lter interface {
