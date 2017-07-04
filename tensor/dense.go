@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"fmt"
-	"unsafe"
 
 	"github.com/pkg/errors"
 )
@@ -64,6 +63,7 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 
 func newDense(dt Dtype, size int) *Dense {
 	d := new(Dense)
+	d.e = StdEng{}
 	d.t = dt
 	d.AP = new(AP)
 	d.setShape(size)
@@ -87,20 +87,23 @@ func (t *Dense) addMask(mask []bool) {
 }
 
 func (t *Dense) makeArray(size int) {
-	if t.e != nil {
-		mem, err := t.e.Alloc(calcMemSize(t.t, size))
-		if err != nil {
-			panic(err)
-		}
-
-		var hdr header
-		hdr.ptr = mem.Pointer()
-		hdr.l = size
-		hdr.c = size
-		t.array = makeArrayFromHeader(hdr, t.t)
+	if am, ok := t.e.(arrayMaker); ok {
+		t.array = am.makeArray(t.t, size)
 		return
 	}
-	t.array = makeArray(t.t, size)
+
+	mem, err := t.e.Alloc(calcMemSize(t.t, size))
+	if err != nil {
+		panic(err)
+	}
+
+	var hdr header
+	hdr.ptr = mem.Pointer()
+	hdr.l = size
+	hdr.c = size
+	t.array = makeArrayFromHeader(hdr, t.t)
+	return
+
 }
 
 // Info returns the access pattern which explains how the data in the underlying array is accessed. This is mostly used for debugging.
@@ -203,17 +206,6 @@ func (t *Dense) Clone() interface{} {
 	return retVal
 }
 
-/* *Dense is a Memory */
-
-// Uintptr returns the pointer of the first value of the slab
-func (t *Dense) Uintptr() uintptr { return uintptr(t.ptr) }
-
-// MemSize returns how big the slice is in bytes
-func (t *Dense) MemSize() uintptr { return uintptr(t.l) * t.t.Size() }
-
-// Pointer returns the pointer of the first value of the slab, as an unsafe.Pointer
-func (t *Dense) Pointer() unsafe.Pointer { return t.ptr }
-
 // IsMasked indicates whether tensor is masked
 func (t *Dense) IsMasked() bool { return len(t.mask) == t.len() }
 
@@ -272,9 +264,11 @@ func (t *Dense) fix() {
 	if t.AP == nil {
 		return
 	}
-	// if t.e == nil {
-	// 	t.flag |= MemoryFlag(1) << nativeAccessible
-	// }
+
+	if t.e == nil {
+		t.e = StdEng{}
+	}
+
 	switch {
 	case t.IsScalar() && t.ptr == nil:
 		t.makeArray(1)

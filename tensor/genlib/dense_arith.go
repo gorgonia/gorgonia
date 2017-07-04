@@ -242,7 +242,7 @@ attemptGo:
 								{{if eq $op "math.Pow" -}}
 									{{if eq .String "complex64" -}}
 										complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
-									{{else if isFloat . -}}
+									{{else if isFloatCmplx . -}}
 										{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 									{{else -}}
 										{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
@@ -283,7 +283,7 @@ attemptGo:
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
 									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
-								{{else if isFloat . -}}
+								{{else if isFloatCmplx . -}}
 									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
 									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
@@ -322,7 +322,7 @@ attemptGo:
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
 									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
-								{{else if isFloat . -}}
+								{{else if isFloatCmplx . -}}
 									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
 									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
@@ -367,7 +367,7 @@ attemptGo:
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
 									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
-								{{else if isFloat . -}}
+								{{else if isFloatCmplx . -}}
 									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
 									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
@@ -408,7 +408,7 @@ attemptGo:
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
 									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
-								{{else if isFloat . -}}
+								{{else if isFloatCmplx . -}}
 									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
 									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
@@ -436,7 +436,7 @@ attemptGo:
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
 									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
-								{{else if isFloat . -}}
+								{{else if isFloatCmplx . -}}
 									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
 									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
@@ -471,7 +471,7 @@ attemptGo:
 							{{if eq $op "math.Pow" -}}
 								{{if eq .String "complex64" -}}
 									complex64(cmplx.Pow(complex128(t.{{getOne .}}(i)), complex128(other.{{getOne .}}(j))))
-								{{else if isFloat . -}}
+								{{else if isFloatCmplx . -}}
 									{{mathPkg .}}Pow(t.{{getOne .}}(i), other.{{getOne .}}(j))
 								{{else -}}
 									{{asType .}}({{$op}}(float64(t.{{getOne .}}(i)), float64(other.{{getOne .}}(j))))
@@ -602,7 +602,7 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 					{{if eq $op "math.Pow" -}}
 						{{if eq .String "complex64" -}}
 							complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
-						{{else if isFloat . -}}
+						{{else if isFloatCmplx . -}}
 							{{mathPkg .}}Pow(tdata[i], odata[j])
 						{{else -}}
 							{{asType .}}({{$op}}(float64(tdata[i]), float64(odata[j])))
@@ -626,7 +626,7 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 					{{if eq $op "math.Pow" -}}
 						{{if eq .String "complex64" -}}
 							complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
-						{{else if isFloat . -}}
+						{{else if isFloatCmplx . -}}
 							{{mathPkg .}}Pow(tdata[i], odata[j])
 						{{else -}}
 							{{asType .}}({{$op}}(float64(tdata[i]), float64(odata[j])))
@@ -652,7 +652,7 @@ const denseDenseArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other *
 					{{if eq $op "math.Pow" -}}
 						{{if eq .String "complex64" -}}
 							complex64(cmplx.Pow(complex128(tdata[i]), complex128(odata[j])))
-						{{else if isFloat . -}}
+						{{else if isFloatCmplx . -}}
 							{{mathPkg .}}Pow(tdata[i], odata[j])
 						{{else -}}
 							{{asType .}}({{$op}}(float64(tdata[i]), float64(odata[j])))
@@ -774,7 +774,7 @@ const denseScalarArithSwitchTableRaw = `func (t *Dense) {{lower .OpName}}(other 
 					{{if eq $op "math.Pow" -}}
 						{{if eq .String "complex64" -}}
 							complex64(cmplx.Pow(complex128(data[i]), complex128(b)))
-						{{else if isFloat . -}}
+						{{else if isFloatCmplx . -}}
 							{{mathPkg .}}Pow(data[i], b)
 						{{else -}}
 							{{asType .}}({{$op}}(float64(data[i]), float64(b)))

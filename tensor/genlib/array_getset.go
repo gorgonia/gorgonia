@@ -172,16 +172,7 @@ func init() {
 }
 
 func arrayGetSet(f io.Writer, generic *ManyKinds) {
-	for _, k := range generic.Kinds {
-		if !isParameterized(k) {
-			fmt.Fprintf(f, "/* %v */\n\n", k)
-			AsSlice.Execute(f, k)
-			SimpleSet.Execute(f, k)
-			SimpleGet.Execute(f, k)
-			fmt.Fprint(f, "\n")
-		}
-	}
-
+	arrayHeaderGetSet(f, generic)
 	Set.Execute(f, generic)
 	fmt.Fprintf(f, "\n\n\n")
 	Get.Execute(f, generic)
@@ -192,4 +183,16 @@ func arrayGetSet(f io.Writer, generic *ManyKinds) {
 	fmt.Fprintf(f, "\n\n\n")
 	// Swap.Execute(f, generic)
 	// fmt.Fprintf(f, "\n\n\n")
+}
+
+func arrayHeaderGetSet(f io.Writer, generic *ManyKinds) {
+	for _, k := range generic.Kinds {
+		if !isParameterized(k) {
+			fmt.Fprintf(f, "/* %v */\n\n", k)
+			AsSlice.Execute(f, k)
+			SimpleSet.Execute(f, k)
+			SimpleGet.Execute(f, k)
+			fmt.Fprint(f, "\n")
+		}
+	}
 }

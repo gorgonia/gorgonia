@@ -308,6 +308,10 @@ func (t *Dense) ReadNpy(r io.Reader) (err error){
 	}
 
 	size := shape.TotalSize()
+	if t.e == nil {
+		t.e = StdEng{}
+	}
+	
 	t.makeArray(size)
 
 	switch t.t.Kind() {

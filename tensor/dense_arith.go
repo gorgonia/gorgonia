@@ -7663,6 +7663,10 @@ attemptGo:
 				switch {
 				case it == nil && ot == nil:
 					for incrI, iterStep, err = incrIter.NextValid(); err == nil; incrI, iterStep, err = incrIter.NextValid() {
+						if other.GetC64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC64(i) / other.GetC64(j)
 						i += iterStep
 						j += iterStep
@@ -7681,6 +7685,10 @@ attemptGo:
 							err = handleNoOp(err)
 							break
 						}
+						if other.GetC64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC64(i) / other.GetC64(j)
 						j += iterStep
 					}
@@ -7697,6 +7705,10 @@ attemptGo:
 						if incrI, iterStep, err = incrIter.NextValid(); err != nil {
 							err = handleNoOp(err)
 							break
+						}
+						if other.GetC64(j) == 0 {
+							errs = append(errs, j)
+							continue
 						}
 						data[incrI] += t.GetC64(i) / other.GetC64(j)
 						i += iterStep
@@ -7720,6 +7732,10 @@ attemptGo:
 							break
 						}
 
+						if other.GetC64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC64(i) / other.GetC64(j)
 					}
 					if err != nil {
@@ -7738,6 +7754,10 @@ attemptGo:
 					}
 				case it != nil && ot == nil:
 					for i, iterStep, err = it.NextValid(); err == nil; i, iterStep, err = it.NextValid() {
+						if other.GetC64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC64(i) / other.GetC64(j)
 						j += iterStep
 						incrI += iterStep
@@ -7745,6 +7765,10 @@ attemptGo:
 					err = handleNoOp(err)
 				case it == nil && ot != nil:
 					for j, iterStep, err = ot.NextValid(); err == nil; j, iterStep, err = ot.NextValid() {
+						if other.GetC64(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC64(i) / other.GetC64(j)
 						i += iterStep
 						incrI += iterStep
@@ -7759,6 +7783,10 @@ attemptGo:
 						if j, _, err = ot.NextValid(); err != nil {
 							err = handleNoOp(err)
 							break
+						}
+						if other.GetC64(j) == 0 {
+							errs = append(errs, j)
+							continue
 						}
 						data[incrI] += t.GetC64(i) / other.GetC64(j)
 						incrI += iterStep
@@ -7778,6 +7806,10 @@ attemptGo:
 				switch {
 				case it == nil && ot == nil:
 					for incrI, iterStep, err = incrIter.NextValid(); err == nil; incrI, iterStep, err = incrIter.NextValid() {
+						if other.GetC128(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC128(i) / other.GetC128(j)
 						i += iterStep
 						j += iterStep
@@ -7796,6 +7828,10 @@ attemptGo:
 							err = handleNoOp(err)
 							break
 						}
+						if other.GetC128(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC128(i) / other.GetC128(j)
 						j += iterStep
 					}
@@ -7812,6 +7848,10 @@ attemptGo:
 						if incrI, iterStep, err = incrIter.NextValid(); err != nil {
 							err = handleNoOp(err)
 							break
+						}
+						if other.GetC128(j) == 0 {
+							errs = append(errs, j)
+							continue
 						}
 						data[incrI] += t.GetC128(i) / other.GetC128(j)
 						i += iterStep
@@ -7835,6 +7875,10 @@ attemptGo:
 							break
 						}
 
+						if other.GetC128(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC128(i) / other.GetC128(j)
 					}
 					if err != nil {
@@ -7853,6 +7897,10 @@ attemptGo:
 					}
 				case it != nil && ot == nil:
 					for i, iterStep, err = it.NextValid(); err == nil; i, iterStep, err = it.NextValid() {
+						if other.GetC128(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC128(i) / other.GetC128(j)
 						j += iterStep
 						incrI += iterStep
@@ -7860,6 +7908,10 @@ attemptGo:
 					err = handleNoOp(err)
 				case it == nil && ot != nil:
 					for j, iterStep, err = ot.NextValid(); err == nil; j, iterStep, err = ot.NextValid() {
+						if other.GetC128(j) == 0 {
+							errs = append(errs, j)
+							continue
+						}
 						data[incrI] += t.GetC128(i) / other.GetC128(j)
 						i += iterStep
 						incrI += iterStep
@@ -7874,6 +7926,10 @@ attemptGo:
 						if j, _, err = ot.NextValid(); err != nil {
 							err = handleNoOp(err)
 							break
+						}
+						if other.GetC128(j) == 0 {
+							errs = append(errs, j)
+							continue
 						}
 						data[incrI] += t.GetC128(i) / other.GetC128(j)
 						incrI += iterStep
@@ -8508,16 +8564,28 @@ func (t *Dense) div(other *Dense, itt, ott Iterator) (err error) {
 					err = handleNoOp(err)
 					break
 				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
 				tdata[i] = tdata[i] / odata[j]
 			}
 		case it != nil && ot == nil:
 			for i, iterStep, err = it.NextValid(); err == nil; i, iterStep, err = it.NextValid() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
 				tdata[i] = tdata[i] / odata[j]
 				j += iterStep
 			}
 			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, iterStep, err = ot.NextValid(); err == nil; j, iterStep, err = ot.NextValid() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
 				tdata[i] = tdata[i] / odata[j]
 				i += iterStep
 			}
@@ -8543,16 +8611,28 @@ func (t *Dense) div(other *Dense, itt, ott Iterator) (err error) {
 					err = handleNoOp(err)
 					break
 				}
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
 				tdata[i] = tdata[i] / odata[j]
 			}
 		case it != nil && ot == nil:
 			for i, iterStep, err = it.NextValid(); err == nil; i, iterStep, err = it.NextValid() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
 				tdata[i] = tdata[i] / odata[j]
 				j += iterStep
 			}
 			err = handleNoOp(err)
 		case it == nil && ot != nil:
 			for j, iterStep, err = ot.NextValid(); err == nil; j, iterStep, err = ot.NextValid() {
+				if odata[j] == 0 {
+					errs = append(errs, j)
+					continue
+				}
 				tdata[i] = tdata[i] / odata[j]
 				i += iterStep
 			}

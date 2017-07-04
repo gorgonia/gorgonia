@@ -20,7 +20,7 @@ type ManyKinds struct {
 var (
 	gopath       string
 	tensorPkgLoc string
-	opsPkgLoc    string
+	stdEngPkgLoc string
 )
 
 const (
@@ -62,12 +62,15 @@ const (
 	denseIOTestsName              = "dense_io_test.go"
 
 	testTestName = "test_test.go"
+
+	stdengAdd  = "add.go"
+	stdengTest = "test_test.go"
 )
 
 func init() {
 	gopath = os.Getenv("GOPATH")
 	tensorPkgLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor")
-	opsPkgLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor/ops")
+	stdEngPkgLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor/internal/stdeng")
 }
 
 func main() {
@@ -107,6 +110,20 @@ func main() {
 	pipeline(tensorPkgLoc, denseIOName, mk, generateDenseIO)
 	pipeline(tensorPkgLoc, denseIOTestsName, mk, generateDenseIOTests)
 	// pipeline(blah, mk, maskcmpmethods)
+
+	pipeline(stdEngPkgLoc, stdengAdd, mk, generateStdEngAdd)
+	pipeline(stdEngPkgLoc, stdengTest, mk, arrayHeaderGetSet)
+}
+
+func writePkgName(f io.Writer, pkg string) {
+	switch pkg {
+	case tensorPkgLoc:
+		fmt.Fprintf(f, "package tensor\n/*\n%v\n*/\n\n", genmsg)
+	case stdEngPkgLoc:
+		fmt.Fprintf(f, "package stdeng\n/*\n%v\n*/\n\n", genmsg)
+	default:
+		panic("UNKNOWN")
+	}
 }
 
 func makeManyKinds() *ManyKinds {
@@ -125,7 +142,7 @@ func pipeline(pkg, filename string, generic *ManyKinds, fn func(io.Writer, *Many
 	}
 	defer f.Close()
 
-	fmt.Fprintf(f, "package tensor\n/*\n%v\n*/\n\n", genmsg)
+	writePkgName(f, pkg)
 	fn(f, generic)
 
 	// gofmt and goimports this stuff
@@ -134,10 +151,10 @@ func pipeline(pkg, filename string, generic *ManyKinds, fn func(io.Writer, *Many
 		log.Fatalf("Go imports failed with %v for %q", err, fullpath)
 	}
 
-	cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
-	if err = cmd.Run(); err != nil {
-		log.Fatalf("sed failed with %v for %q", err, fullpath)
-	}
+	// cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
+	// if err = cmd.Run(); err != nil {
+	// 	log.Fatalf("sed failed with %v for %q", err, fullpath)
+	// }
 
 	cmd = exec.Command("gofmt", "-s", "-w", fullpath)
 	if err = cmd.Run(); err != nil {
@@ -149,6 +166,24 @@ func pipeline(pkg, filename string, generic *ManyKinds, fn func(io.Writer, *Many
 func pregenerate() error {
 	pattern1 := path.Join(tensorPkgLoc, "*.go")
 	matches, err := filepath.Glob(pattern1)
+	if err != nil {
+		return err
+	}
+	for _, m := range matches {
+		b, err := ioutil.ReadFile(m)
+		if err != nil {
+			return err
+		}
+		s := string(b)
+		if strings.Contains(s, genmsg) {
+			if err := os.Remove(m); err != nil {
+				return err
+			}
+		}
+	}
+
+	pattern2 := path.Join(stdEngPkgLoc, "*.go")
+	matches, err = filepath.Glob(pattern2)
 	if err != nil {
 		return err
 	}

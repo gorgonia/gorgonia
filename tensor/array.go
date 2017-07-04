@@ -157,6 +157,17 @@ func (a array) swap(i, j int) {
 	copy(bs[js:je], tmp)
 }
 
+/* *Dense is a Memory */
+
+// Uintptr returns the pointer of the first value of the slab
+func (t array) Uintptr() uintptr { return uintptr(t.ptr) }
+
+// MemSize returns how big the slice is in bytes
+func (t array) MemSize() uintptr { return uintptr(t.l) * t.t.Size() }
+
+// Pointer returns the pointer of the first value of the slab, as an unsafe.Pointer
+func (t array) Pointer() unsafe.Pointer { return t.ptr }
+
 // Data returns the representation of a slice.
 func (a array) Data() interface{} { return a.v }
 

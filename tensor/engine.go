@@ -28,6 +28,10 @@ type Engine interface {
 	Accessible(mem Memory) (Memory, error)    // returns Go-accesible memory pointers
 }
 
+type arrayMaker interface {
+	makeArray(t Dtype, size int) array
+}
+
 /* NUMBER INTERFACES
 All these are expected to be unsafe on the first tensor
 */
@@ -44,6 +48,9 @@ type Adder interface {
 type Suber interface {
 	// Sub performs a - b
 	Sub(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Trans performs a + b. By convention, b hasthe same data type as a
+	Trans(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 	// TransInv performs a - b. By convention, b hasthe same data type as a
 	TransInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
@@ -58,9 +65,12 @@ type Muler interface {
 // Diver is any engine that can perform elementwise division.
 type Diver interface {
 	Div(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	Scale(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 	ScaleInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
+// Power is any engine that can perform elementwise pow()
 type Power interface {
 	Pow(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	PowOf(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
@@ -69,22 +79,27 @@ type Power interface {
 
 /* LINEAR ALGEBRA INTERFACES */
 
+// MatMuler is any engine that can perform matrix multiplication
 type MatMuler interface {
 	MatMul(a, b, preallocated Tensor) error
 }
 
+// MatVecMuler is any engine that can perform matrix vector multiplication
 type MatVecMuler interface {
 	MatVecMul(a, b, preallocated Tensor) error
 }
 
+// InnerProder is any engine that can perform inner product multiplication
 type InnerProder interface {
 	Inner(a, b Tensor) (interface{}, error) // Inner always returns a scalar value
 }
 
+// OuterProder is any engine that can perform outer product (kronecker) multiplication
 type OuterProder interface {
 	Outer(a, b, preallocated Tensor) error
 }
 
+// UnsafeTransposer is any engine that can perform an unsafe transpose of a tensor
 type UnsafeTransposer interface {
 	UnsafeTranspose(t Tensor) error
 }
@@ -92,27 +107,27 @@ type UnsafeTransposer interface {
 /* ORD INTERFACES */
 
 type Lter interface {
-	Lt(a, b Tensor) (Tensor, error)
-	LtTS(a Tensor, b interface{}) (Tensor, error)
-	LtST(a interface{}, b Tensor) (Tensor, error)
+	Lt(a, b Tensor, asSame bool) (Tensor, error)
+	LtTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	LtST(a interface{}, b Tensor, asSame bool) (Tensor, error)
 }
 
 type Lteer interface {
-	Lte(a, b Tensor) (Tensor, error)
-	LteTS(a Tensor, b interface{}) (Tensor, error)
-	LteST(a interface{}, b Tensor) (Tensor, error)
+	Lte(a, b Tensor, asSame bool) (Tensor, error)
+	LteTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	LteST(a interface{}, b Tensor, asSame bool) (Tensor, error)
 }
 
 type Gter interface {
-	Gt(a, b Tensor) (Tensor, error)
-	GtTS(a Tensor, b interface{}) (Tensor, error)
-	GtST(a interface{}, b Tensor) (Tensor, error)
+	Gt(a, b Tensor, asSame bool) (Tensor, error)
+	GtTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	GtST(a interface{}, b Tensor, asSame bool) (Tensor, error)
 }
 
 type Gteer interface {
-	Gte(a, b Tensor) (Tensor, error)
-	GteTS(a Tensor, b interface{}) (Tensor, error)
-	GteST(a interface{}, b Tensor) (Tensor, error)
+	Gte(a, b Tensor, asSame bool) (Tensor, error)
+	GteTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	GteST(a interface{}, b Tensor, asSame bool) (Tensor, error)
 }
 
 /* EQ INTERFACES
@@ -120,27 +135,43 @@ These return the same types
 */
 
 type ElEqer interface {
-	ElEq(a, b Tensor) (Tensor, error)
-	ElEqTS(a Tensor, b interface{}) (Tensor, error)
-	ElEqST(a interface{}, b Tensor) (Tensor, error)
+	ElEq(a, b Tensor, asSame bool) (Tensor, error)
+	ElEqTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	ElEqST(a interface{}, b Tensor, asSame bool) (Tensor, error)
 
-	ElNe(a, b Tensor) (Tensor, error)
-	ElNeTS(a Tensor, b interface{}) (Tensor, error)
-	ElNeST(a interface{}, b Tensor) (Tensor, error)
+	ElNe(a, b Tensor, asSame bool) (Tensor, error)
+	ElNeTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	ElNeST(a interface{}, b Tensor, asSame bool) (Tensor, error)
 }
 
 /* Unary Operators for Numbers */
 
 type Squarer interface {
-	Square(a Tensor) error
+	Square(a Tensor, opts ...FuncOpt) error
 }
 
 type Exper interface {
-	Exp(a Tensor) error
+	Exp(a Tensor, opts ...FuncOpt) error
 }
 
 type InvSqrter interface {
-	InvSqrt(a Tensor) error
+	InvSqrt(a Tensor, opts ...FuncOpt) error
+}
+
+type Inver interface {
+	Inv(a Tensor, opts ...FuncOpt) error
+}
+
+type Clamper interface {
+	Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (Tensor, error)
+}
+
+type Signer interface {
+	Sign(a Tensor, opts ...FuncOpt) (Tensor, error)
+}
+
+type Neger interface {
+	Neg(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
 func calcMemSize(dt Dtype, size int) int64 {

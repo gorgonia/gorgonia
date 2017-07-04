@@ -124,6 +124,27 @@ var div0panics = [...]reflect.Kind{
 	reflect.Uint64,
 }
 
+var stdTypes = [...]string{
+	"Bool",
+	"Int",
+	"Int8",
+	"Int16",
+	"Int32",
+	"Int64",
+	"Uint",
+	"Uint8",
+	"Uint16",
+	"Uint32",
+	"Uint64",
+	"Float32",
+	"Float64",
+	"Complex64",
+	"Complex128",
+	"String",
+	"Uintptr",
+	"UnsafePointer",
+}
+
 var funcs = template.FuncMap{
 	"lower":           strings.ToLower,
 	"title":           strings.Title,
@@ -133,7 +154,9 @@ var funcs = template.FuncMap{
 	"isRangeable":     isRangeable,
 	"isSpecialized":   isSpecialized,
 	"isNumber":        isNumber,
+	"isAddable":       isAddable,
 	"isFloat":         isFloat,
+	"isFloatCmplx":    isFloatCmplx,
 	"isEq":            isEq,
 	"isOrd":           isOrd,
 	"panicsDiv0":      panicsDiv0,
@@ -149,6 +172,7 @@ var funcs = template.FuncMap{
 	"setOne":      setOne,
 
 	"mathPkg":   mathPkg,
+	"vecPkg":    vecPkg,
 	"bitSizeOf": bitSizeOf,
 
 	"isntFloat": isntFloat,
@@ -190,6 +214,13 @@ func isNumber(a reflect.Kind) bool {
 		}
 	}
 	return false
+}
+
+func isAddable(a reflect.Kind) bool {
+	if a == reflect.String {
+		return true
+	}
+	return isNumber(a)
 }
 
 func isComplex(a reflect.Kind) bool {
@@ -239,6 +270,16 @@ func mathPkg(a reflect.Kind) string {
 	return ""
 }
 
+func vecPkg(a reflect.Kind) string {
+	if a == reflect.Float64 {
+		return "vecf64."
+	}
+	if a == reflect.Float32 {
+		return "vecf32."
+	}
+	return ""
+}
+
 func bitSizeOf(a reflect.Kind) string {
 	switch a {
 	case reflect.Int, reflect.Uint:
@@ -256,11 +297,17 @@ func bitSizeOf(a reflect.Kind) string {
 }
 
 func isFloat(a reflect.Kind) bool {
+	if a == reflect.Float32 || a == reflect.Float64 {
+		return true
+	}
+	return false
+}
+
+func isFloatCmplx(a reflect.Kind) bool {
 	if a == reflect.Float32 || a == reflect.Float64 || a == reflect.Complex64 || a == reflect.Complex128 {
 		return true
 	}
 	return false
-
 }
 
 func isntFloat(a reflect.Kind) bool { return !isFloat(a) }

@@ -324,7 +324,9 @@ func (t *CS) at(coord ...int) (int, bool) {
 
 // Dense creates a Dense tensor from the compressed one.
 func (t *CS) Dense() *Dense {
-	// if t.e != nil , use engine instead
+	if t.e != nil && t.e != (StdEng{}) {
+		// use
+	}
 
 	d := recycledDense(t.t, t.Shape().Clone())
 	if t.o.isColMajor() {
