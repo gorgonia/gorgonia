@@ -90,13 +90,7 @@ func arrayFromSlice(x interface{}) array {
 
 // byteSlice casts the underlying slice into a byte slice. Useful for copying and zeroing, but not much else
 func (a array) byteSlice() []byte {
-	size := a.l * int(a.t.Size())
-	hdr := reflect.SliceHeader{
-		Data: uintptr(a.ptr),
-		Len:  size,
-		Cap:  size,
-	}
-	return *(*[]byte)(unsafe.Pointer(&hdr))
+	return toByteSlice(&a.header, a.t.Type)
 }
 
 // sliceInto creates a slice. Instead of returning an array, which would cause a lot of reallocations, sliceInto expects a array to
@@ -204,7 +198,10 @@ func copyArray(dst, src array) int {
 	if dst.t != src.t {
 		panic("Cannot copy arrays of different types.")
 	}
+	return copyHeader(&dst.header, &src.header, dst.t.Type)
+}
 
+func copyHeader(dst, src *header, t reflect.Type) int{
 	if dst.l == 0 || src.l == 0 {
 		return 0
 	}
@@ -215,13 +212,24 @@ func copyArray(dst, src array) int {
 	}
 
 	// handle struct{} type
-	if dst.t.Size() == 0 {
+	if t.Size() == 0 {
 		return n
 	}
 
 	// otherwise, just copy bytes.
 	// FUTURE: implement memmove
-	dstBA := dst.byteSlice()
-	srcBA := src.byteSlice()
-	return copy(dstBA, srcBA)
+	dstBA := asByteSlice(dst, t)
+	srcBA := asByteSlice(src,t)
+	copied := copy(dstBA, srcBA)
+	return copied / t.Size()
+}
+
+func asByteSlice(a *header, t reflect.Type) []byte {
+	size := a.l * int(t.Size())
+	hdr := reflect.SliceHeader{
+		Data: uintptr(a.ptr),
+		Len:  size,
+		Cap:  size,
+	}
+	return *(*[]byte)(unsafe.Pointer(&hdr))
 }
