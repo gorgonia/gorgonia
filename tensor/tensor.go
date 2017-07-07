@@ -12,6 +12,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	_ Tensor = &Dense{}
+	_ Tensor = &CS{}
+)
+
 // Tensor represents a variety of n-dimensional arrays. The most commonly used tensor is the Dense tensor.
 // It can be used to represent a vector, matrix, 3D matrix and n-dimensional tensors.
 type Tensor interface {
@@ -22,7 +27,6 @@ type Tensor interface {
 	Dims() int
 	Size() int
 	DataSize() int
-	Engine() Engine // Engine can be nil
 
 	// ops
 	At(...int) (interface{}, error)
@@ -49,11 +53,15 @@ type Tensor interface {
 	IsView() bool
 	Materialize() Tensor
 
+	// engine/memory related stuff
 	// all Tensors should be able to be expressed of as a slab of memory
 	// Note: the size of each element can be acquired by T.Dtype().Size()
-	MemSize() uintptr        // the size in memory
-	Uintptr() uintptr        // the pointer to the first element, as a uintptr
-	Pointer() unsafe.Pointer // the pointer to the first elemment as a unsafe.Ponter
+	Engine() Engine             // Engine can be nil
+	MemSize() uintptr           // the size in memory
+	Uintptr() uintptr           // the pointer to the first element, as a uintptr
+	Pointer() unsafe.Pointer    // the pointer to the first elemment as a unsafe.Ponter
+	IsNativelyAccessible() bool // Can Go access the memory
+	IsManuallyManaged() bool    // Must Go manage the memory
 
 	// formatters
 	fmt.Formatter
@@ -64,12 +72,6 @@ type Tensor interface {
 	ReadNpy(io.Reader) error
 	gob.GobEncoder
 	gob.GobDecoder
-}
-
-// Dotter is used to implement sparse matrices
-type Dotter interface {
-	Tensor
-	Dot(Tensor, ...FuncOpt) (Tensor, error)
 }
 
 // New creates a new Dense Tensor. For sparse arrays use their relevant construction function
@@ -97,6 +99,9 @@ func getDense(t Tensor) (*Dense, error) {
 	}
 
 	// TODO: when sparse matrices are created, add a clause here to return early
+	if _, ok := t.(SparseTensor); ok {
+		return nil, errors.Errorf("Sparse Tensor %T is not a Dense Tensor", t)
+	}
 
 	if densor, ok := t.(Densor); ok {
 		return densor.Dense(), nil

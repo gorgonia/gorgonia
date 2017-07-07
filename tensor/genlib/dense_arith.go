@@ -181,17 +181,17 @@ attemptGo:
 	}
 
 	// check if the tensors are accessible
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, t)
 		return
 	}
 
-	if !other.isNativeAccessible() {
+	if !other.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
 
-	if reuse != nil && !reuse.isNativeAccessible() {
+	if reuse != nil && !reuse.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}

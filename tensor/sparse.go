@@ -372,3 +372,6 @@ func (t *CS) AsCSC() {
 	}
 	t.o.toggleColMajor()
 }
+
+func (t *CS) IsNativelyAccessible() bool {return t.f.nativelyAccessible()}
+func (t *CS) IsManuallyManaged() bool {return t.f.manuallyManaged()}

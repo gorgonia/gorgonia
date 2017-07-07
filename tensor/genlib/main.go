@@ -164,26 +164,15 @@ func pipeline(pkg, filename string, generic *ManyKinds, fn func(io.Writer, *Many
 
 // pregenerate cleans up all files that were previously generated.
 func pregenerate() error {
-	pattern1 := path.Join(tensorPkgLoc, "*.go")
-	matches, err := filepath.Glob(pattern1)
-	if err != nil {
+	if err := cleanup(tensorPkgLoc); err != nil {
 		return err
 	}
-	for _, m := range matches {
-		b, err := ioutil.ReadFile(m)
-		if err != nil {
-			return err
-		}
-		s := string(b)
-		if strings.Contains(s, genmsg) {
-			if err := os.Remove(m); err != nil {
-				return err
-			}
-		}
-	}
+	return cleanup(stdEngPkgLoc)
+}
 
-	pattern2 := path.Join(stdEngPkgLoc, "*.go")
-	matches, err = filepath.Glob(pattern2)
+func cleanup(loc string) error {
+	pattern := path.Join(loc, "*.go")
+	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return err
 	}

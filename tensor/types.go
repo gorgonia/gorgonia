@@ -175,7 +175,7 @@ var ordTypes = []Dtype{
 
 var unsignedTypes = [...]Dtype{Uint, Uint8, Uint16, Uint32, Uint64}
 
-func isSpecialized(dt Dtype) bool {
+func isSpecialized(dt Kinder) bool {
 	for _, s := range specializedTypes {
 		if s.Kind() == dt.Kind() {
 			return true
@@ -184,7 +184,7 @@ func isSpecialized(dt Dtype) bool {
 	return false
 }
 
-func isNumber(dt Dtype) bool {
+func isNumber(dt Kinder) bool {
 	for _, s := range numberTypes {
 		if s.Kind() == dt.Kind() {
 			return true
@@ -193,11 +193,11 @@ func isNumber(dt Dtype) bool {
 	return false
 }
 
-func isFloat(dt Dtype) bool {
+func isFloat(dt Kinder) bool {
 	return dt.Kind() == reflect.Float64 || dt.Kind() == reflect.Float32
 }
 
-func isUnsigned(dt Dtype) bool {
+func isUnsigned(dt Kinder) bool {
 	for _, s := range unsignedTypes {
 		if s.Kind() == dt.Kind() {
 			return true

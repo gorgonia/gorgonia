@@ -157,7 +157,7 @@ func (a array) swap(i, j int) {
 	copy(bs[js:je], tmp)
 }
 
-/* *Dense is a Memory */
+/* *Array is a Memory */
 
 // Uintptr returns the pointer of the first value of the slab
 func (t array) Uintptr() uintptr { return uintptr(t.ptr) }
@@ -195,6 +195,9 @@ func (a array) Zero() {
 		val.Set(reflect.Zero(a.t))
 	}
 }
+
+func (a array) hdr() *header        { return &a.header }
+func (a array) rtype() reflect.Type { return a.t.Type }
 
 // copyArray copies an array.
 func copyArray(dst, src array) int {

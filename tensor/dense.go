@@ -175,6 +175,9 @@ func (t *Dense) IsMaterializable() bool {
 // IsManuallyManaged returns true if the memory associated with this *Dense is manually managed (by the user)
 func (t *Dense) IsManuallyManaged() bool { return t.flag.manuallyManaged() }
 
+// IsNativelyAccessible checks if the pointers are accessible by Go
+func (t *Dense) IsNativelyAccessible() bool { return t.flag.nativelyAccessible() }
+
 // Clone clones a *Dense. It creates a copy of the data, and the underlying array will be allocated
 func (t *Dense) Clone() interface{} {
 	if t.e != nil {
@@ -302,9 +305,6 @@ func (t *Dense) makeMask() {
 	t.mask = t.mask[:size]
 	memsetBools(t.mask, false)
 }
-
-// isNativeAccessible checks if the pointers are accessible by Go
-func (t *Dense) isNativeAccessible() bool { return t.flag.nativelyAccessible() }
 
 // sanity is a function that sanity checks that a tensor is correct.
 func (t *Dense) sanity() error {

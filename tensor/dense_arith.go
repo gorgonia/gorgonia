@@ -13,46 +13,6 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
-func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
-	if !isNumber(a.t) && !isNumber(b.t) {
-		err = noopError{}
-		return
-	}
-	if a.t.Kind() != b.t.Kind() {
-		err = errors.Errorf(typeMismatch, a.t, b.t)
-		return
-	}
-	if !a.Shape().Eq(b.Shape()) {
-		err = errors.Errorf(shapeMismatch, b.Shape(), a.Shape())
-		return
-	}
-
-	fo := ParseFuncOpts(opts...)
-	reuseT, incr := fo.IncrReuse()
-	safe = fo.Safe()
-	toReuse = reuseT != nil
-
-	if toReuse {
-		if reuse, err = getDense(reuseT); err != nil {
-			err = errors.Wrapf(err, "Cannot reuse a different type of Tensor in a *Dense-Scalar operation")
-			return
-		}
-
-		if reuse.t.Kind() != a.t.Kind() {
-			err = errors.Errorf(typeMismatch, a.t, reuse.t)
-			err = errors.Wrapf(err, "Cannot use reuse")
-			return
-		}
-
-		if reuse.len() != a.Shape().TotalSize() {
-			err = errors.Errorf(shapeMismatch, reuse.Shape(), a.Shape())
-			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
-			return
-		}
-	}
-	return
-}
-
 func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
 	if !isNumber(a.t) {
 		err = noopError{}
@@ -108,17 +68,17 @@ attemptGo:
 	}
 
 	// check if the tensors are accessible
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, t)
 		return
 	}
 
-	if !other.isNativeAccessible() {
+	if !other.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
 
-	if reuse != nil && !reuse.isNativeAccessible() {
+	if reuse != nil && !reuse.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
@@ -2058,17 +2018,17 @@ attemptGo:
 	}
 
 	// check if the tensors are accessible
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, t)
 		return
 	}
 
-	if !other.isNativeAccessible() {
+	if !other.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
 
-	if reuse != nil && !reuse.isNativeAccessible() {
+	if reuse != nil && !reuse.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
@@ -4008,17 +3968,17 @@ attemptGo:
 	}
 
 	// check if the tensors are accessible
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, t)
 		return
 	}
 
-	if !other.isNativeAccessible() {
+	if !other.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
 
-	if reuse != nil && !reuse.isNativeAccessible() {
+	if reuse != nil && !reuse.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
@@ -5958,17 +5918,17 @@ attemptGo:
 	}
 
 	// check if the tensors are accessible
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, t)
 		return
 	}
 
-	if !other.isNativeAccessible() {
+	if !other.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
 
-	if reuse != nil && !reuse.isNativeAccessible() {
+	if reuse != nil && !reuse.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
@@ -8680,17 +8640,17 @@ attemptGo:
 	}
 
 	// check if the tensors are accessible
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, t)
 		return
 	}
 
-	if !other.isNativeAccessible() {
+	if !other.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}
 
-	if reuse != nil && !reuse.isNativeAccessible() {
+	if reuse != nil && !reuse.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, reuse)
 		return
 	}

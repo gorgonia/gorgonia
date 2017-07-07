@@ -6,7 +6,7 @@ import (
 
 // Apply applies a function to all the values in the ndarray
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, t)
 	}
 
@@ -191,7 +191,7 @@ func (t *Dense) Transpose() {
 		return
 	}
 
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		transposer, ok := t.e.(UnsafeTransposer)
 		if !ok {
 			panic("Cannot transpose non natively accessible data")
@@ -205,7 +205,7 @@ func (t *Dense) Transpose() {
 
 // At returns the value at the given coordinate
 func (t *Dense) At(coords ...int) (interface{}, error) {
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, t)
 	}
 	if len(coords) != t.Dims() {
@@ -226,7 +226,7 @@ func (t *Dense) MaskAt(coords ...int) (bool, error) {
 	if !t.IsMasked() {
 		return false, nil
 	}
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		return false, errors.Errorf(inaccessibleData, t)
 	}
 	if len(coords) != t.Dims() {
@@ -243,7 +243,7 @@ func (t *Dense) MaskAt(coords ...int) (bool, error) {
 
 // SetAt sets the value at the given coordinate
 func (t *Dense) SetAt(v interface{}, coords ...int) error {
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		return errors.Errorf(inaccessibleData, t)
 	}
 
@@ -273,7 +273,7 @@ func (t *Dense) SetMaskAt(v bool, coords ...int) error {
 	if !t.IsMasked() {
 		return nil
 	}
-	if !t.isNativeAccessible() {
+	if !t.IsNativelyAccessible() {
 		return errors.Errorf(inaccessibleData, t)
 	}
 	if len(coords) != t.Dims() {

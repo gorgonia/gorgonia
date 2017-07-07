@@ -20,6 +20,30 @@ import (
 //		Add(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	var adder Adder
+	var ok bool
+	switch at := a.(type){
+	case Tensor:
+		switch bt := b.(type) {
+		case Tensor:
+			if adder, ok = at.Engine().(Adder); !ok {
+				// error
+			}
+			return adder.Add(at, bt, opts...)
+		default:
+		}
+	default:
+		switch bt := b.(type){
+		case Tensor:
+			if adder, ok = bt.Engine().(Adder); !ok {
+				// error
+			}
+			return adder.Trans(bt, a, opts...)
+		default:
+			// error
+		}
+	}
+
 	ad, adok := a.(*Dense)
 	bd, bdok := b.(*Dense)
 

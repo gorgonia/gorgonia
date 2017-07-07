@@ -1,5 +1,7 @@
 package tensor
 
+import "reflect"
+
 // Eq is any type where you can perform an equality test
 type Eq interface {
 	Eq(interface{}) bool
@@ -59,4 +61,31 @@ type ScalarRep interface {
 type Viewable interface {
 	IsView() bool
 	Materialize() Tensor
+}
+
+// DenseTensor is the interface for any Dense tensor.
+type DenseTensor interface {
+	Tensor
+	Info() *AP
+	hdr() *header
+	rtype() reflect.Type
+}
+
+type SparseTensor interface {
+	Sparse
+	AsCSC()
+	AsCSR()
+	Indices() []int
+	Indptr() []int
+}
+
+// Kinder. Bueno.
+type Kinder interface {
+	Kind() reflect.Kind
+}
+
+// Dotter is used to implement sparse matrices
+type Dotter interface {
+	Tensor
+	Dot(Tensor, ...FuncOpt) (Tensor, error)
 }
