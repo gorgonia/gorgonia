@@ -119,7 +119,7 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 }
 
 // MultIteratorFromDense creates a new MultIterator from a list of dense tensors
-func MultIteratorFromDense(tts ...*Dense) *MultIterator {
+func MultIteratorFromDense(tts ...DenseTensor) *MultIterator {
 	aps := BorrowAPList(len(tts))
 	hasMask := BorrowBools(len(tts))
 	defer ReturnBools(hasMask)
@@ -128,7 +128,9 @@ func MultIteratorFromDense(tts ...*Dense) *MultIterator {
 	numMasked := 0
 	for i, tt := range tts {
 		aps[i] = tt.Info()
-		hasMask[i] = tt.IsMasked()
+		if mt, ok := tt.(MaskedTensor); ok {
+			hasMask[i] = mt.IsMasked()
+		}
 		masked = masked || hasMask[i]
 		if hasMask[i] {
 			numMasked++
@@ -146,7 +148,7 @@ func MultIteratorFromDense(tts ...*Dense) *MultIterator {
 			for i, err := it.Start(); err == nil; i, err = it.Next() {
 				for j, k := range it.lastIndexArr {
 					if hasMask[j] {
-						it.mask[i] = it.mask[i] || tts[j].mask[k]
+						it.mask[i] = it.mask[i] || tts[j].(MaskedTensor).Mask()[k]
 					}
 				}
 			}
@@ -226,6 +228,18 @@ func (it *MultIterator) Next() (int, error) {
 		it.lastIndexArr[i] = it.fitArr[j].lastIndex
 	}
 	return it.fit0.lastIndex, nil
+}
+
+func (it *MultIterator) NextValidity() (int, bool, error) {
+	i, err := it.Next()
+	if err != nil {
+		return i, false, err
+	}
+
+	if len(it.mask) == 0 {
+		return i, true, err
+	}
+	return i, it.mask[i], err
 }
 
 // NextValid returns the index of the next valid coordinate
@@ -317,3 +331,4 @@ func (it *FlatIterator) Chan() (retVal chan int) {
 	return
 }
 
+*/

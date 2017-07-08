@@ -295,7 +295,8 @@ func (t *Dense) fix() {
 
 // makeMask adds a mask slice to tensor if required
 func (t *Dense) makeMask() {
-	size := t.DataSize()
+	var size int
+	size = t.shape.TotalSize()
 	if len(t.mask) >= size {
 		t.mask = t.mask[:size]
 	}
@@ -570,3 +571,5 @@ func (t *Dense) Zero() {
 	}
 	t.array.Zero()
 }
+
+func (t *Dense) Mask() []bool { return t.mask }

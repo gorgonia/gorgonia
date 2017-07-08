@@ -1,6 +1,7 @@
 package stdeng
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/chewxy/vecf32"
@@ -1110,24 +1111,32 @@ func addIVS(a []int, b int) {
 
 func addIIter(a, b []int, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addIIterVS(a []int, b int, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1152,36 +1161,42 @@ func addIncrIVS(a []int, b int, incr []int) {
 
 func addIncrIIterVS(a []int, b int, incr []int, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrIIter(a, b, incr []int, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1203,24 +1218,32 @@ func addI8VS(a []int8, b int8) {
 
 func addI8Iter(a, b []int8, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addI8IterVS(a []int8, b int8, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1245,36 +1268,42 @@ func addIncrI8VS(a []int8, b int8, incr []int8) {
 
 func addIncrI8IterVS(a []int8, b int8, incr []int8, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrI8Iter(a, b, incr []int8, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1296,24 +1325,32 @@ func addI16VS(a []int16, b int16) {
 
 func addI16Iter(a, b []int16, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addI16IterVS(a []int16, b int16, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1338,36 +1375,42 @@ func addIncrI16VS(a []int16, b int16, incr []int16) {
 
 func addIncrI16IterVS(a []int16, b int16, incr []int16, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrI16Iter(a, b, incr []int16, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1389,24 +1432,32 @@ func addI32VS(a []int32, b int32) {
 
 func addI32Iter(a, b []int32, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addI32IterVS(a []int32, b int32, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1431,36 +1482,42 @@ func addIncrI32VS(a []int32, b int32, incr []int32) {
 
 func addIncrI32IterVS(a []int32, b int32, incr []int32, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrI32Iter(a, b, incr []int32, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1482,24 +1539,32 @@ func addI64VS(a []int64, b int64) {
 
 func addI64Iter(a, b []int64, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addI64IterVS(a []int64, b int64, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1524,36 +1589,42 @@ func addIncrI64VS(a []int64, b int64, incr []int64) {
 
 func addIncrI64IterVS(a []int64, b int64, incr []int64, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrI64Iter(a, b, incr []int64, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1575,24 +1646,32 @@ func addUVS(a []uint, b uint) {
 
 func addUIter(a, b []uint, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addUIterVS(a []uint, b uint, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1617,36 +1696,42 @@ func addIncrUVS(a []uint, b uint, incr []uint) {
 
 func addIncrUIterVS(a []uint, b uint, incr []uint, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrUIter(a, b, incr []uint, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1668,24 +1753,32 @@ func addU8VS(a []uint8, b uint8) {
 
 func addU8Iter(a, b []uint8, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addU8IterVS(a []uint8, b uint8, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1710,36 +1803,42 @@ func addIncrU8VS(a []uint8, b uint8, incr []uint8) {
 
 func addIncrU8IterVS(a []uint8, b uint8, incr []uint8, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrU8Iter(a, b, incr []uint8, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1761,24 +1860,32 @@ func addU16VS(a []uint16, b uint16) {
 
 func addU16Iter(a, b []uint16, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addU16IterVS(a []uint16, b uint16, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1803,36 +1910,42 @@ func addIncrU16VS(a []uint16, b uint16, incr []uint16) {
 
 func addIncrU16IterVS(a []uint16, b uint16, incr []uint16, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrU16Iter(a, b, incr []uint16, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1854,24 +1967,32 @@ func addU32VS(a []uint32, b uint32) {
 
 func addU32Iter(a, b []uint32, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addU32IterVS(a []uint32, b uint32, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1896,36 +2017,42 @@ func addIncrU32VS(a []uint32, b uint32, incr []uint32) {
 
 func addIncrU32IterVS(a []uint32, b uint32, incr []uint32, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrU32Iter(a, b, incr []uint32, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -1947,24 +2074,32 @@ func addU64VS(a []uint64, b uint64) {
 
 func addU64Iter(a, b []uint64, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addU64IterVS(a []uint64, b uint64, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -1989,36 +2124,42 @@ func addIncrU64VS(a []uint64, b uint64, incr []uint64) {
 
 func addIncrU64IterVS(a []uint64, b uint64, incr []uint64, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrU64Iter(a, b, incr []uint64, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -2033,24 +2174,32 @@ func addF32VS(a []float32, b float32) {
 
 func addF32Iter(a, b []float32, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addF32IterVS(a []float32, b float32, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -2066,36 +2215,42 @@ func addIncrF32VS(a []float32, b float32, incr []float32) {
 
 func addIncrF32IterVS(a []float32, b float32, incr []float32, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrF32Iter(a, b, incr []float32, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -2110,24 +2265,34 @@ func addF64VS(a []float64, b float64) {
 
 func addF64Iter(a, b []float64, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		log.Printf("i: %d, j %d", i, j)
+		log.Printf("validi: %v, validj %v", validi, validj)
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addF64IterVS(a []float64, b float64, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -2143,36 +2308,42 @@ func addIncrF64VS(a []float64, b float64, incr []float64) {
 
 func addIncrF64IterVS(a []float64, b float64, incr []float64, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrF64Iter(a, b, incr []float64, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -2194,24 +2365,32 @@ func addC64VS(a []complex64, b complex64) {
 
 func addC64Iter(a, b []complex64, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addC64IterVS(a []complex64, b complex64, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -2236,36 +2415,42 @@ func addIncrC64VS(a []complex64, b complex64, incr []complex64) {
 
 func addIncrC64IterVS(a []complex64, b complex64, incr []complex64, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrC64Iter(a, b, incr []complex64, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -2287,24 +2472,32 @@ func addC128VS(a []complex128, b complex128) {
 
 func addC128Iter(a, b []complex128, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addC128IterVS(a []complex128, b complex128, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -2329,36 +2522,42 @@ func addIncrC128VS(a []complex128, b complex128, incr []complex128) {
 
 func addIncrC128IterVS(a []complex128, b complex128, incr []complex128, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrC128Iter(a, b, incr []complex128, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }
@@ -2380,24 +2579,32 @@ func addStrVS(a []string, b string) {
 
 func addStrIter(a, b []string, ait, bit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if validi && validj {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func addStrIterVS(a []string, b string, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -2422,36 +2629,42 @@ func addIncrStrVS(a []string, b string, incr []string) {
 
 func addIncrStrIterVS(a []string, b string, incr []string, ait, iit Iterator) (err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if validi && validj {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncrStrIter(a, b, incr []string, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i] + b[j]
+		if validi && validj && validk {
+			incr[k] += a[i] + b[j]
+		}
 	}
 	return nil
 }

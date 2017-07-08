@@ -48,15 +48,14 @@ func prepBinaryDense(a, b DenseTensor, opts ...FuncOpt) (reuse *Dense, safe, toR
 
 // Add performs a + b. The FuncOpts determine what kind of operation it is
 func (e StdEng) Add(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	return nil, nil
 	// check if the tensors are accessible
 	if !a.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, t)
+		err = errors.Errorf(inaccessibleData, a)
 		return
 	}
 
 	if !b.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
+		err = errors.Errorf(inaccessibleData, b)
 		return
 	}
 
@@ -64,7 +63,9 @@ func (e StdEng) Add(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	case DenseTensor:
 		switch bt := b.(type) {
 		case DenseTensor:
-			reuse, safe, toReuse, incr, err := prepBinaryDense(a, b, opts...)
+			var reuse *Dense
+			var safe, toReuse, incr bool
+			reuse, safe, toReuse, incr, err = prepBinaryDense(at, bt, opts...)
 			if err != nil {
 				return nil, err
 			}
@@ -76,52 +77,57 @@ func (e StdEng) Add(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 
 			// TODO: check masked
 
-			if at.IsMaterializable() || bt.IsMaterializable() {
-				ait := NewFlatMaskedIterator(at.Info(), nil)
-				bit := NewFlatMaskedIterator(bt.Info(), nil)
+			if requiresIterator(at) || requiresIterator(bt) {
+				ait := IteratorFromDense(at)
+				bit := IteratorFromDense(bt)
 
 				switch {
 				case incr:
 					iit := NewFlatMaskedIterator(reuse.Info(), nil)
-					err = e.StdEng.AddIerIncr(at.rtype(), at.hdr(), bt.hdr(), ait, bit, iit)
-				case reuse:
-					copyHeader(reuse.hdr(), at.hdr())
-					err = e.StdEng.AddIter(at.rtype(), reuse.hdr(), bt.hdr(), ait, bit)
+					err = e.E.AddIterIncr(at.rtype(), at.hdr(), bt.hdr(), reuse.hdr(), ait, bit, iit)
+				case toReuse:
+					copyHeader(reuse.hdr(), at.hdr(), at.rtype())
+					err = e.E.AddIter(at.rtype(), reuse.hdr(), bt.hdr(), ait, bit)
 					retVal = reuse
 				case !safe:
-					err = e.StdEng.AddIter(at.rtype(), reuse.hdr(), bt.hdr(), ait, bit)
+					err = e.E.AddIter(at.rtype(), reuse.hdr(), bt.hdr(), ait, bit)
 					retVal = a
 				default:
-					retVal = at.Clone().(DenseTensor)
-					err = e.StdEng.AddIter(at.rtype(), retVal.hdr(), bt.hdr(), ait, bit)
+					ret := at.Clone().(DenseTensor)
+					err = e.E.AddIter(at.rtype(), ret.hdr(), bt.hdr(), ait, bit)
+					retVal = ret
 				}
 				return
 			}
 
 			switch {
 			case incr:
-				err = e.StdEng.AddIncr(at.rtype(), at.hdr(), bt.hdr(), reuse.hdr())
+				err = e.E.AddIncr(at.rtype(), at.hdr(), bt.hdr(), reuse.hdr())
 				retVal = reuse
 			case toReuse:
-				copyHeader(reuse.hdr(), at.hdr())
-				err = e.StdEng.Add(at.rtype(), reuse.hdr(), bt.hdr())
+				copyHeader(reuse.hdr(), at.hdr(), at.rtype())
+				err = e.E.Add(at.rtype(), reuse.hdr(), bt.hdr())
 				retVal = reuse
 			case !safe:
-				err = e.StdEng.Add(at.rtype(), at.hdr(), bt.hdr())
+				err = e.E.Add(at.rtype(), at.hdr(), bt.hdr())
 				retVal = a
 			default:
-				retVal = at.Clone().(DenseTensor)
-				err = e.StdEng.Add(at.rtype(), retVal.hdr(), bt.hdr())
+				ret := at.Clone().(DenseTensor)
+				err = e.E.Add(at.rtype(), ret.hdr(), bt.hdr())
+				retVal = ret
 			}
 			return
 
 		case *CS:
+			return nil, errors.Errorf("NYI")
 		default:
 			return nil, errors.Errorf("NYI")
 		}
 	case *CS:
+		return nil, errors.Errorf("NYI")
 	default:
 		return nil, errors.Errorf("NYI")
 
 	}
+	panic("Unreachable")
 }

@@ -4,10 +4,27 @@ import (
 	"runtime"
 )
 
+func requiresIterator(t Tensor) bool {
+	switch tt := t.(type) {
+	case DenseTensor:
+		if mt, ok := tt.(MaskedTensor); ok && mt.IsMasked() {
+			return true
+		}
+		if v, ok := tt.(View); ok && v.IsMaterializable() {
+			return true
+		}
+		return false
+	case SparseTensor:
+		return true
+	}
+	panic("Unreachable")
+}
+
 // Iterator is the generic iterator interface
 type Iterator interface {
 	Start() (int, error)
 	Next() (int, error)
+	NextValidity() (int, bool, error)
 	NextValid() (int, int, error)
 	NextInvalid() (int, int, error)
 	Reset()
@@ -32,13 +49,13 @@ func NewIterator(aps ...*AP) Iterator {
 }
 
 // IteratorFromDense creates a new Iterator from a list of dense tensors
-func IteratorFromDense(tts ...*Dense) Iterator {
+func IteratorFromDense(tts ...DenseTensor) Iterator {
 	switch len(tts) {
 	case 0:
 		return nil
 	case 1:
-		if tts[0].IsMasked() {
-			return FlatMaskedIteratorFromDense(tts[0])
+		if mt, ok := tts[0].(MaskedTensor); ok && mt.IsMasked() {
+			return FlatMaskedIteratorFromDense(mt)
 		}
 		return FlatIteratorFromDense(tts[0])
 	default:
@@ -99,7 +116,7 @@ func NewFlatIterator(ap *AP) *FlatIterator {
 }
 
 // FlatIteratorFromDense creates a new FlatIterator from a dense tensor
-func FlatIteratorFromDense(tt *Dense) *FlatIterator {
+func FlatIteratorFromDense(tt DenseTensor) *FlatIterator {
 	return NewFlatIterator(tt.Info())
 }
 
@@ -149,6 +166,12 @@ func (it *FlatIterator) Next() (int, error) {
 		}
 		return it.ndNext()
 	}
+}
+
+// NextValidity returns the index of the current coordinate, and whether or not it's valid. Identical to Next()
+func (it *FlatIterator) NextValidity() (int, bool, error) {
+	i, err := it.Next()
+	return i, true, err
 }
 
 // NextValid returns the index of the current coordinate. Identical to Next for FlatIterator
@@ -392,18 +415,31 @@ func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
 }
 
 // FlatMaskedIteratorFromDense creates a new FlatMaskedIterator from dense tensor
-func FlatMaskedIteratorFromDense(tt *Dense) *FlatMaskedIterator {
+func FlatMaskedIteratorFromDense(tt MaskedTensor) *FlatMaskedIterator {
 	it := new(FlatMaskedIterator)
 	runtime.SetFinalizer(it, destroyIterator)
 	it.FlatIterator = FlatIteratorFromDense(tt)
-	it.mask = tt.mask
+	it.mask = tt.Mask()
 	return it
+}
+
+func (it *FlatMaskedIterator) NextValidity() (int, bool, error) {
+	if len(it.mask) == 0 {
+		return it.FlatIterator.NextValidity()
+	}
+
+	var i int
+	var err error
+	if i, err = it.Next(); err == nil {
+		return i, !it.mask[i], err
+	}
+	return -1, false, err
 }
 
 // NextValid returns the index of the next valid element,
 // as well as the number of increments to get to next element
 func (it *FlatMaskedIterator) NextValid() (int, int, error) {
-	if it.mask == nil {
+	if len(it.mask) == 0 {
 		return it.FlatIterator.NextValid()
 	}
 	var count int

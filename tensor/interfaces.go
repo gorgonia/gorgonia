@@ -57,16 +57,24 @@ type ScalarRep interface {
 	ScalarValue() interface{}
 }
 
-// Viewable is any Tensor that can provide a view on memory
-type Viewable interface {
+// View is any Tensor that can provide a view on memory
+type View interface {
+	Tensor
 	IsView() bool
+	IsMaterializable() bool
 	Materialize() Tensor
+}
+
+type Slicer interface {
+	Slice(...Slice) (View, error)
 }
 
 // DenseTensor is the interface for any Dense tensor.
 type DenseTensor interface {
 	Tensor
+	Slicer
 	Info() *AP
+
 	hdr() *header
 	rtype() reflect.Type
 }
@@ -77,6 +85,12 @@ type SparseTensor interface {
 	AsCSR()
 	Indices() []int
 	Indptr() []int
+}
+
+type MaskedTensor interface {
+	DenseTensor
+	IsMasked() bool
+	Mask() []bool
 }
 
 // Kinder. Bueno.

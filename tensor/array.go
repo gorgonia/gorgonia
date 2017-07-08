@@ -90,7 +90,7 @@ func arrayFromSlice(x interface{}) array {
 
 // byteSlice casts the underlying slice into a byte slice. Useful for copying and zeroing, but not much else
 func (a array) byteSlice() []byte {
-	return toByteSlice(&a.header, a.t.Type)
+	return asByteSlice(&a.header, a.t.Type)
 }
 
 // sliceInto creates a slice. Instead of returning an array, which would cause a lot of reallocations, sliceInto expects a array to
@@ -201,7 +201,7 @@ func copyArray(dst, src array) int {
 	return copyHeader(&dst.header, &src.header, dst.t.Type)
 }
 
-func copyHeader(dst, src *header, t reflect.Type) int{
+func copyHeader(dst, src *header, t reflect.Type) int {
 	if dst.l == 0 || src.l == 0 {
 		return 0
 	}
@@ -219,9 +219,9 @@ func copyHeader(dst, src *header, t reflect.Type) int{
 	// otherwise, just copy bytes.
 	// FUTURE: implement memmove
 	dstBA := asByteSlice(dst, t)
-	srcBA := asByteSlice(src,t)
+	srcBA := asByteSlice(src, t)
 	copied := copy(dstBA, srcBA)
-	return copied / t.Size()
+	return copied / int(t.Size())
 }
 
 func asByteSlice(a *header, t reflect.Type) []byte {
