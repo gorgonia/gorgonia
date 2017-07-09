@@ -8,11 +8,11 @@ func ExampleDense_Slice() {
 	fmt.Printf("T:\n%v\n", T)
 
 	// T[0:2, 0:2]
-	T, _ = T.Slice(makeRS(0, 2), makeRS(0, 2)) // makeRS is an unexported function that creates a Slice.
+	T, _ = T.(Slicer).Slice(makeRS(0, 2), makeRS(0, 2)) // makeRS is an unexported function that creates a Slice.
 	fmt.Printf("T[0:2, 0:2]:\n%v\n", T)
 
 	// T[:, 1]
-	T, _ = T.Slice(nil, ss(1)) // ss is unexported
+	T, _ = T.(Slicer).Slice(nil, ss(1)) // ss is unexported
 	fmt.Printf("T[:, 1]:\n%v\n", T)
 
 	// Output:
@@ -35,7 +35,7 @@ func ExampleDense_Slice_oneDimension() {
 	T = New(WithBacking(Range(Float64, 0, 9)))
 	fmt.Printf("T:\n%v\n\n", T)
 
-	T, _ = T.Slice(makeRS(0, 5))
+	T, _ = T.(Slicer).Slice(makeRS(0, 5))
 	fmt.Printf("T[0:5]:\n%v\n", T)
 
 	// Output:
@@ -52,7 +52,7 @@ func ExampleDense_Slice_viewMutation() {
 	var T, V Tensor
 	T = New(WithBacking(Range(Int, 0, 16)), WithShape(4, 4))
 	fmt.Printf("T:\n%v\n", T)
-	V, _ = T.Slice(makeRS(1, 3), makeRS(1, 3))
+	V, _ = T.(Slicer).Slice(makeRS(1, 3), makeRS(1, 3))
 	fmt.Printf("V:\n%v\n", V)
 
 	// Now we modify V's 0th value

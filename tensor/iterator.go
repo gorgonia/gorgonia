@@ -1,8 +1,6 @@
 package tensor
 
-import (
-	"runtime"
-)
+import "runtime"
 
 func requiresIterator(t Tensor) bool {
 	switch tt := t.(type) {
@@ -475,6 +473,113 @@ func (it *FlatMaskedIterator) NextInvalid() (int, int, error) {
 		}
 	}
 	return -1, mult * count, noopError{}
+}
+
+// FlatSparseIterator is an iterator that works very much in the same way as flatiterator, except for sparse tensors
+type FlatSparseIterator struct {
+	*CS
+
+	//state
+	nextIndex int
+	lastIndex int
+	track     []int
+	done      bool
+	reverse   bool
+}
+
+func NewFlatSparseIterator(t *CS) *FlatSparseIterator {
+	it := new(FlatSparseIterator)
+	it.CS = t
+	it.track = BorrowInts(len(t.s))
+	return it
+}
+
+func (it *FlatSparseIterator) Start() (int, error) {
+	it.Reset()
+	return it.Next()
+}
+
+func (it *FlatSparseIterator) Next() (int, error) {
+	if it.done {
+		return -1, noopError{}
+	}
+
+	// var ok bool
+	it.lastIndex, _ = it.at(it.track...)
+
+	// increment the coordinates
+	for i := len(it.s) - 1; i >= 0; i-- {
+		it.track[i]++
+		if it.track[i] == it.s[i] {
+			if i == 0 {
+				it.done = true
+			}
+			it.track[i] = 0
+			continue
+		}
+		break
+	}
+
+	return it.lastIndex, nil
+}
+
+func (it *FlatSparseIterator) NextValidity() (int, bool, error) {
+	i, err := it.Next()
+	if i == -1 {
+		return i, false, err
+	}
+	return i, true, err
+}
+
+func (it *FlatSparseIterator) NextValid() (int, int, error) {
+	var i int
+	var err error
+	for i, err = it.Next(); err == nil && i == -1; i, err = it.Next() {
+
+	}
+	return i, -1, err
+}
+
+func (it *FlatSparseIterator) NextInvalid() (int, int, error) {
+	var i int
+	var err error
+	for i, err = it.Next(); err == nil && i != -1; i, err = it.Next() {
+
+	}
+	return i, -1, err
+}
+
+func (it *FlatSparseIterator) Reset() {
+	if it.reverse {
+		for i := range it.track {
+			it.track[i] = it.s[i] - 1
+		}
+
+	} else {
+		it.nextIndex = 0
+		for i := range it.track {
+			it.track[i] = 0
+		}
+	}
+	it.done = false
+}
+
+func (it *FlatSparseIterator) SetReverse() {
+	it.reverse = true
+	it.Reset()
+}
+
+func (it *FlatSparseIterator) SetForward() {
+	it.reverse = false
+	it.Reset()
+}
+
+func (it *FlatSparseIterator) Coord() []int {
+	return it.track
+}
+
+func (it *FlatSparseIterator) Done() bool {
+	return it.done
 }
 
 /* TEMPORARILY REMOVED

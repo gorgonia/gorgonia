@@ -65,6 +65,7 @@ type View interface {
 	Materialize() Tensor
 }
 
+// Slicer is any tensor that can slice
 type Slicer interface {
 	Slice(...Slice) (View, error)
 }
@@ -85,6 +86,8 @@ type SparseTensor interface {
 	AsCSR()
 	Indices() []int
 	Indptr() []int
+
+	hdr() *header
 }
 
 type MaskedTensor interface {
@@ -102,4 +105,8 @@ type Kinder interface {
 type Dotter interface {
 	Tensor
 	Dot(Tensor, ...FuncOpt) (Tensor, error)
+}
+
+type headerer interface {
+	hdr() *header
 }

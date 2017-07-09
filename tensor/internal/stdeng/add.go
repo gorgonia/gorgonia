@@ -1,7 +1,6 @@
 package stdeng
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/chewxy/vecf32"
@@ -2276,8 +2275,6 @@ func addF64Iter(a, b []float64, ait, bit Iterator) (err error) {
 			break
 		}
 
-		log.Printf("i: %d, j %d", i, j)
-		log.Printf("validi: %v, validj %v", validi, validj)
 		if validi && validj {
 			a[i] += b[j]
 		}

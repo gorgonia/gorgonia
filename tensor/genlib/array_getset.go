@@ -148,6 +148,51 @@ const arraySwapRaw = `func (a array) swap(i, j int) {
 	}
 }
 `
+const copyArrayIterRaw = `func copyArrayIter(dst, src array, diter, siter Iterator) (count int, err error){
+	if dst.t != src.t {
+		panic("Cannot copy arrays of different types")
+	}
+
+	if diter == nil && siter == nil {
+		return copyArray(dst, src), nil
+	}
+
+	if (diter != nil && siter == nil) || (diter == nil && siter != nil) {
+		return 0, errors.Errorf("Cannot copy array when only one iterator was passed in")
+	}
+
+	k := dest.t.Kind()
+	var i, j int
+	var validi, validj bool
+	for {
+		if i, validi, err = diter.NextValidity(); err != nil {
+			if err = handleNoOp(err); err != nil {
+				return count, err
+			}
+			break
+		}
+		if j, validj, err = siter.NextValidity(); err != nil {
+			if err = handleNoOp(err); err != nil {
+				return count, err
+			}
+			break
+		}
+		switch k {
+		{{range .Kinds -}}
+			{{if isParameterized . -}}
+			{{else -}}
+		case reflect.{{reflectKind .}}:
+			dest.{{setOne .}}(i, src.{{getOne .}}(j))
+			{{end -}}
+		{{end -}}
+		default:
+			dest.Set(i, src.Get(j))
+		}
+		count++
+	}
+
+}
+`
 
 var (
 	AsSlice   *template.Template
