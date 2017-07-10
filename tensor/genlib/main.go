@@ -63,8 +63,9 @@ const (
 
 	testTestName = "test_test.go"
 
-	stdengAdd  = "add.go"
-	stdengTest = "test_test.go"
+	stdengAddName  = "add.go"
+	stdengSubName = "sub.go"
+	stdengTestName = "test_test.go"
 )
 
 func init() {
@@ -111,8 +112,9 @@ func main() {
 	pipeline(tensorPkgLoc, denseIOTestsName, mk, generateDenseIOTests)
 	// pipeline(blah, mk, maskcmpmethods)
 
-	pipeline(stdEngPkgLoc, stdengAdd, mk, generateStdEngAdd)
-	pipeline(stdEngPkgLoc, stdengTest, mk, arrayHeaderGetSet)
+	pipeline(stdEngPkgLoc, stdengAddName, mk, generateStdEngAdd)
+	pipeline(stdEngPkgLoc, stdengSubName, mk, generateStdEngSub)
+	pipeline(stdEngPkgLoc, stdengTestName, mk, arrayHeaderGetSet)
 }
 
 func writePkgName(f io.Writer, pkg string) {
