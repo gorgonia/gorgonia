@@ -153,10 +153,10 @@ func pipeline(pkg, filename string, generic *ManyKinds, fn func(io.Writer, *Many
 		log.Fatalf("Go imports failed with %v for %q", err, fullpath)
 	}
 
-	// cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
-	// if err = cmd.Run(); err != nil {
-	// 	log.Fatalf("sed failed with %v for %q", err, fullpath)
-	// }
+	cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
+	if err = cmd.Run(); err != nil {
+		log.Fatalf("sed failed with %v for %q", err, fullpath)
+	}
 
 	cmd = exec.Command("gofmt", "-s", "-w", fullpath)
 	if err = cmd.Run(); err != nil {

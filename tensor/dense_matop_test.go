@@ -546,7 +546,7 @@ func TestDense_Slice(t *testing.T) {
 	assert.Nil(V.(*Dense).old)
 
 	// slice a sliced
-	V, err = V.Slice(makeRS(1, 2))
+	V, err = V.(Slicer).Slice(makeRS(1, 2))
 	assert.True(ScalarShape().Eq(V.Shape()))
 	assert.Equal(float32(3), V.Data())
 

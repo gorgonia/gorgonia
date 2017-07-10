@@ -204,7 +204,7 @@ func (t *CS) SetAt(v interface{}, coord ...int) error {
 		t.Set(i, v)
 		return nil
 	}
-	return errors.New("Cannot set value in a compressed sparse matrix")
+	return errors.Errorf("Cannot set value in a compressed sparse matrix: Coordinate %v not found", coord)
 }
 
 func (t *CS) Reshape(...int) error { return errors.New("compressed sparse matrix cannot be reshaped") }
@@ -232,11 +232,6 @@ func (t *CS) UT() { t.T() }
 
 // Transpose is a no-op. The data does not move
 func (t *CS) Transpose() {}
-
-// Slice is not supported
-func (t *CS) Slice(...Slice) (Tensor, error) {
-	return nil, errors.New("compressed sparse matrix cannot be sliced")
-}
 
 func (t *CS) Apply(fn interface{}, opts ...FuncOpt) (Tensor, error) {
 	return nil, errors.Errorf(methodNYI, "Apply")
@@ -291,10 +286,6 @@ func (t *CS) Clone() interface{} {
 
 func (t *CS) IsScalar() bool           { return false }
 func (t *CS) ScalarValue() interface{} { panic("Sparse Matrices cannot represent Scalar Values") }
-func (t *CS) IsView() bool             { return false }
-
-// Materialize creates a Dense tensor. (It's an alias for Dense())
-func (t *CS) Materialize() Tensor { return t.Dense() }
 
 func (t *CS) MemSize() uintptr        { return uintptr(calcMemSize(t.t, t.l)) }
 func (t *CS) Uintptr() uintptr        { return uintptr(t.ptr) }
@@ -302,7 +293,7 @@ func (t *CS) Pointer() unsafe.Pointer { return t.ptr }
 
 // NonZeroes returns the nonzeroes. In academic literature this is often written as NNZ.
 func (t *CS) NonZeroes() int     { return t.l }
-func (t *CS) Iterator() Iterator { return nil } // not yet created
+func (t *CS) Iterator() Iterator { return NewFlatSparseIterator(t) } // not yet created
 
 func (t *CS) at(coord ...int) (int, bool) {
 	var r, c int
@@ -373,5 +364,5 @@ func (t *CS) AsCSC() {
 	t.o.toggleColMajor()
 }
 
-func (t *CS) IsNativelyAccessible() bool {return t.f.nativelyAccessible()}
-func (t *CS) IsManuallyManaged() bool {return t.f.manuallyManaged()}
+func (t *CS) IsNativelyAccessible() bool { return t.f.nativelyAccessible() }
+func (t *CS) IsManuallyManaged() bool    { return t.f.manuallyManaged() }

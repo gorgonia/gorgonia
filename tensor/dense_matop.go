@@ -382,7 +382,7 @@ func (t *Dense) CopyTo(other *Dense) error {
 // Any modification to the values in V, will be reflected in T as well.
 //
 // The method treats <nil> as equivalent to a colon slice. T.Slice(nil) is equivalent to T[:] in Numpy syntax
-func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
+func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 	var newAP *AP
 	var ndStart, ndEnd int
 

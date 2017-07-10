@@ -273,7 +273,7 @@ func TestAddBasicProperties(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), check.Data()) {
-			t.Errorf("Failed close")
+			t.Errorf("Failed close \n%v\n%v", correct, check)
 			return false
 		}
 		if (ret.Get(0) != a.Get(0)) || (check.Get(0) != incr.Get(0)) || (correct.Get(0) != incr.Get(0)) {

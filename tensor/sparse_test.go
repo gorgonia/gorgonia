@@ -20,12 +20,12 @@ func TestCS_Basics(t *testing.T) {
 	var dp0, dp1 *Dense
 	var err error
 	fails := func() {
-		CSCFromCoord(Shape{7, 6}, xs0, ys0 , vals0)
+		CSCFromCoord(Shape{7, 6}, xs0, ys0, vals0)
 	}
 	assert.Panics(fails)
 
 	// Test CSC
-	T0 = CSCFromCoord(Shape{9, 7},xs0, ys0,  vals0)
+	T0 = CSCFromCoord(Shape{9, 7}, xs0, ys0, vals0)
 	d0 = T0.Dense()
 	T0.T()
 	dp0 = T0.Dense()
@@ -33,9 +33,9 @@ func TestCS_Basics(t *testing.T) {
 
 	// Test CSR
 	fails = func() {
-		CSRFromCoord(Shape{7, 6},xs1, ys1,  vals1)
+		CSRFromCoord(Shape{7, 6}, xs1, ys1, vals1)
 	}
-	T1 = CSRFromCoord(Shape{9, 7}, xs1, ys1,  vals1)
+	T1 = CSRFromCoord(Shape{9, 7}, xs1, ys1, vals1)
 	d1 = T1.Dense()
 	T1.T()
 	dp1 = T1.Dense()
@@ -90,10 +90,16 @@ func TestCS_Basics(t *testing.T) {
 		T0.ScalarValue()
 	}
 	assert.Panics(fails)
-
-	assert.False(T0.IsView())
-	assert.True(d0.Eq(T0.Materialize()), "d0: \n%+#v\nMat: \n%#+v\n", d0, T0.Materialize())
-
 	assert.Equal(len(vals0), T0.NonZeroes())
 
+	// Sparse Iterator
+	it := T0.Iterator()
+	var valids []int
+	correctValids := []int{0, 2, 1, 3}
+	for i, valid, err := it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			valids = append(valids, i)
+		}
+	}
+	assert.Equal(correctValids, valids)
 }

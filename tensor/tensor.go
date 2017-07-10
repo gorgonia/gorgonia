@@ -35,7 +35,6 @@ type Tensor interface {
 	T(axes ...int) error
 	UT()
 	Transpose() // Transpose actually moves the data
-	Slice(...Slice) (Tensor, error)
 	Apply(fn interface{}, opts ...FuncOpt) (Tensor, error)
 
 	// data related interface
@@ -48,10 +47,6 @@ type Tensor interface {
 	// type overloading methods
 	IsScalar() bool
 	ScalarValue() interface{}
-
-	// view related methods
-	IsView() bool
-	Materialize() Tensor
 
 	// engine/memory related stuff
 	// all Tensors should be able to be expressed of as a slab of memory

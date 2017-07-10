@@ -22,7 +22,7 @@ import (
 func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var adder Adder
 	var ok bool
-	switch at := a.(type){
+	switch at := a.(type) {
 	case Tensor:
 		switch bt := b.(type) {
 		case Tensor:
@@ -33,7 +33,7 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 		default:
 		}
 	default:
-		switch bt := b.(type){
+		switch bt := b.(type) {
 		case Tensor:
 			if adder, ok = bt.Engine().(Adder); !ok {
 				// error

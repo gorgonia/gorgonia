@@ -179,24 +179,32 @@ func add{{short .}}VS(a []{{asType .}}, b {{asType .}}) {
 
 func add{{short .}}Iter(a, b []{{asType .}}, ait, bit Iterator) (err error) {	
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		a[i] += b[j]
+
+		if (validi && validj) {
+			a[i] += b[j]
+		}
+
 	}
 	return
 }
 
 func add{{short .}}IterVS(a []{{asType .}}, b {{asType .}}, it Iterator) (err error) {
 	var i int
-	for i, _, err = it.NextValid(); err == nil; i, _, err = it.NextValid() {
-		a[i] += b
+	var valid bool
+	for i, valid, err = it.NextValidity(); err == nil; i, valid, err = it.NextValidity() {
+		if valid {
+			a[i] += b
+		}
 	}
 	err = handleNoOp(err)
 	return
@@ -229,36 +237,42 @@ func addIncr{{short .}}VS(a []{{asType .}}, b {{asType .}}, incr []{{asType .}})
 
 func addIncr{{short .}}IterVS(a []{{asType .}}, b {{asType .}}, incr []{{asType .}}, ait, iit Iterator)(err error) {
 	var i, j int
+	var validi, validj bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = iit.NextValid(); err != nil {
+		if j, validj, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[j] += a[i] + b
+		if (validi && validj) {
+			incr[j] += a[i] + b
+		}
 	}
 	return nil
 }
 
 func addIncr{{short .}}Iter(a, b, incr []{{asType .}}, ait, bit, iit Iterator) (err error) {
 	var i, j, k int
+	var validi, validj, validk bool
 	for {
-		if i, _, err = ait.NextValid(); err != nil {
+		if i, validi, err = ait.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, _, err = bit.NextValid(); err != nil {
+		if j, validj, err = bit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, _, err = iit.NextValid(); err != nil {
+		if k, validk, err = iit.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		incr[k] += a[i]+b[j]
+		if (validi && validj && validk){
+			incr[k] += a[i]+b[j]
+		}
 	}
 	return nil
 }

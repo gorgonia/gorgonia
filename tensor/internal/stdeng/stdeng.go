@@ -36,6 +36,7 @@ func isScalar(a Array) bool { return a.Len() == 1 }
 type Iterator interface {
 	Start() (int, error)
 	Next() (int, error)
+	NextValidity() (int, bool, error)
 	NextValid() (int, int, error)
 	NextInvalid() (int, int, error)
 	Reset()
