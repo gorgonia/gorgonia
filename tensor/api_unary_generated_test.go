@@ -3,7 +3,7 @@ package tensor
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/alecthomas/assert"
 )
 
 /*

@@ -52,7 +52,7 @@ type Suber interface {
 	// TransInv performs a - b. By convention, b has the same data type as a
 	TransInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 	// TransInvR performs b - a. By convention, b has the same data type as a
-	TransInvR(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+	TransInvR(a interface{}, b Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
 // Mul is any engine that can perform elementwise multiplication.

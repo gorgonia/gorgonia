@@ -19,7 +19,7 @@ func arrayFromSlice(x interface{}) *header {
 	if xT.Kind() != reflect.Slice {
 		panic("Expected a slice")
 	}
-	elT := xT.Elem()
+	// elT := xT.Elem()
 
 	xV := reflect.ValueOf(x)
 	ptr := xV.Pointer()

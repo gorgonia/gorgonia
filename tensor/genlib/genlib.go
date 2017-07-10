@@ -71,6 +71,18 @@ var number = [...]reflect.Kind{
 	reflect.Complex128,
 }
 
+var signedNumber = [...]reflect.Kind{
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
+}
+
 var elEq = [...]reflect.Kind{
 	reflect.Bool,
 	reflect.Int,
@@ -154,6 +166,7 @@ var funcs = template.FuncMap{
 	"isRangeable":     isRangeable,
 	"isSpecialized":   isSpecialized,
 	"isNumber":        isNumber,
+	"isSignedNumber":  isSignedNumber,
 	"isAddable":       isAddable,
 	"isFloat":         isFloat,
 	"isFloatCmplx":    isFloatCmplx,
@@ -209,6 +222,15 @@ func isSpecialized(a reflect.Kind) bool {
 
 func isNumber(a reflect.Kind) bool {
 	for _, v := range number {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
+func isSignedNumber(a reflect.Kind) bool {
+	for _, v := range signedNumber {
 		if v == a {
 			return true
 		}
