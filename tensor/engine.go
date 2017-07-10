@@ -49,10 +49,10 @@ type Suber interface {
 	// Sub performs a - b
 	Sub(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 
-	// Trans performs a + b. By convention, b hasthe same data type as a
-	Trans(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
-	// TransInv performs a - b. By convention, b hasthe same data type as a
+	// TransInv performs a - b. By convention, b has the same data type as a
 	TransInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+	// TransInvR performs b - a. By convention, b has the same data type as a
+	TransInvR(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 // Mul is any engine that can perform elementwise multiplication.
@@ -66,14 +66,20 @@ type Muler interface {
 type Diver interface {
 	Div(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 
-	Scale(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+	// ScaleInv performs a / b. By convention, b has the same data type as a
 	ScaleInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+	// ScaleInv performs b / a. By convention, b has the same data type as a
+	ScaleInvR(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 // Power is any engine that can perform elementwise pow()
 type Power interface {
 	Pow(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// PowOf performs a ^ b. By convention, b has the same data type as a
 	PowOf(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+
+	// PowOfR performs b ^ a. By convention, b has the same data type as a
 	PowOfR(a interface{}, b Tensor, opts ...FuncOpt) (Tensor, error)
 }
 

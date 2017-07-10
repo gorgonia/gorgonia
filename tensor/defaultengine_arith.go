@@ -70,34 +70,8 @@ func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *D
 	return
 }
 
-// Add performs a + b. The FuncOpts determine what kind of operation it is.
-//
-//		a :: DenseTensor, a :: DenseTensor -> DenseTensor
-//			unsafe overwrites a
-//		a :: SparseTensor, b :: DenseTensor -> DenseTensor
-//			unsafe overwrites b
-//		a :: DenseTensor, b :: SparseTensor -> DenseTensor
-//			unsafe overwrites a
-//		a :: SparseTEnsor, b :: SparseTensor -> SparseTensor
-//			unsafe unsupported
-func (e StdEng) Add(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var reuse *Dense
-	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryTensor(a, b, opts...); err != nil {
-		return
-	}
-
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
-	}
-
+func prepData(a, b Tensor, reuse *Dense) (dataA, dataB, dataReuse *header, ait, bit, iit Iterator, useIter bool, err error) {
 	// prep actual data
-	var dataA, dataB, dataReuse *header
-	var ait, bit, iit Iterator
-	var useIter bool
-	typ := a.Dtype().Type
-
 	switch at := a.(type) {
 	case DenseTensor:
 		switch bt := b.(type) {
@@ -130,7 +104,7 @@ func (e StdEng) Add(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				iit = IteratorFromDense(reuse)
 			}
 		default:
-			err = errors.Errorf(typeNYI, "e.Add", b)
+			err = errors.Errorf(typeNYI, "prepData", b)
 		}
 	case *CS:
 		switch bt := b.(type) {
@@ -144,12 +118,48 @@ func (e StdEng) Add(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				iit = IteratorFromDense(reuse)
 			}
 		case *CS:
-			err = errors.Errorf(methodNYI, "Add", "CS-CS")
+			err = errors.Errorf(methodNYI, "prepData", "CS-CS")
 		default:
-			err = errors.Errorf(typeNYI, "e.Add", b)
+			err = errors.Errorf(typeNYI, "prepData", b)
 		}
 	default:
-		err = errors.Errorf(typeNYI, "e.Add", a)
+		err = errors.Errorf(typeNYI, "prepData", a)
+	}
+	return
+
+	
+}
+
+
+// Add performs a + b. The FuncOpts determine what kind of operation it is.
+//
+//		a :: DenseTensor, a :: DenseTensor -> DenseTensor
+//			unsafe overwrites a
+//		a :: SparseTensor, b :: DenseTensor -> DenseTensor
+//			unsafe overwrites b
+//		a :: DenseTensor, b :: SparseTensor -> DenseTensor
+//			unsafe overwrites a
+//		a :: SparseTEnsor, b :: SparseTensor -> SparseTensor
+//			unsafe unsupported
+func (e StdEng) Add(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	var reuse *Dense
+	var safe, toReuse, incr bool
+	if reuse, safe, toReuse, incr, err = prepBinaryTensor(a, b, opts...); err != nil {
+		return
+	}
+
+	if reuse != nil && !reuse.IsNativelyAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	typ := a.Dtype().Type
+	var dataA, dataB, dataReuse *header
+	var ait, bit, iit Iterator
+	var useIter bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepData(a, b, reuse); err != nil{
+		err = errors.Wrapf(err, "StdEng.Add")
+		return
 	}
 
 	if useIter {
@@ -260,3 +270,63 @@ func (e StdEng) Trans(a Tensor, b interface{}, opts ...FuncOpt) (retVal Tensor, 
 	return
 }
 */
+
+func (e StdEng) Sub(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	var reuse *Dense
+	var safe, toReuse, incr bool
+	if reuse, safe, toReuse, incr, err = prepBinaryTensor(a, b, opts...); err != nil {
+		return
+	}
+
+	if reuse != nil && !reuse.IsNativelyAccessible() {
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	}
+
+	
+	typ := a.Dtype().Type
+	var dataA, dataB, dataReuse *header
+	var ait, bit, iit Iterator
+	var useIter bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepData(a, b, reuse); err != nil{
+		err = errors.Wrapf(err, "StdEng.Add")
+		return
+	}
+
+	if useIter {
+		switch {
+		case incr:
+			err = e.E.SubIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
+			retVal = reuse
+		case toReuse:
+			copyHeader(dataReuse, dataA, typ)
+			err = e.E.SubIter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case !safe:
+			err = e.E.SubIter(typ, dataA, dataB, ait, bit)
+			retVal = a
+		default:
+			ret := a.Clone().(headerer)
+			err = e.E.SubIter(typ, ret.hdr(), dataB, ait, bit)
+			retVal = ret.(Tensor)
+		}
+		return
+	}
+	switch {
+	case incr:
+		err = e.E.SubIncr(typ, dataA, dataB, dataReuse)
+		retVal = reuse
+	case toReuse:
+		copyHeader(dataReuse, dataA, typ)
+		err = e.E.Sub(typ, dataReuse, dataB)
+		retVal = reuse
+	case !safe:
+		err = e.E.Sub(typ, dataA, dataB)
+		retVal = a
+	default:
+		ret := a.Clone().(headerer)
+		err = e.E.Sub(typ, ret.hdr(), dataB)
+		retVal = ret.(Tensor)
+	}
+	return
+}
