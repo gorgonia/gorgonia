@@ -29,6 +29,7 @@ type Tensor interface {
 	DataSize() int
 
 	// ops
+	Slicer
 	At(...int) (interface{}, error)
 	SetAt(v interface{}, coord ...int) error
 	Reshape(...int) error

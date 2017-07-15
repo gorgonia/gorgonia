@@ -186,6 +186,10 @@ func (t *CS) Size() int      { return t.s.TotalSize() }
 func (t *CS) DataSize() int  { return t.l }
 func (t *CS) Engine() Engine { return t.e }
 
+func (t *CS) Slice(...Slice) (View, error) {
+	return nil, errors.Errorf("Slice for sparse tensors not implemented yet")
+}
+
 func (t *CS) At(coord ...int) (interface{}, error) {
 	if len(coord) != t.Dims() {
 		return nil, errors.Errorf("Expected coordinates to be of %d-dimensions. Got %v instead", t.Dims(), coord)

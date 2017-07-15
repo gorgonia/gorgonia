@@ -73,7 +73,6 @@ type Slicer interface {
 // DenseTensor is the interface for any Dense tensor.
 type DenseTensor interface {
 	Tensor
-	Slicer
 	Info() *AP
 
 	hdr() *header
