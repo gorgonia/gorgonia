@@ -26,6 +26,7 @@ type Engine interface {
 	Memclr(mem Memory)                        // Memclear
 	Memcpy(dst, src Memory) error             // Memcpy
 	Accessible(mem Memory) (Memory, error)    // returns Go-accesible memory pointers
+	DataOrder() DataOrder                     // operations this engine has uses this data order (col or row major)
 }
 
 type arrayMaker interface {

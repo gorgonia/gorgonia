@@ -47,6 +47,9 @@ func copyHeader(dst, src *header, t reflect.Type) int {
 		return n
 	}
 
+	// memmove(dst.Pointer(), src.Pointer(), t.Size())
+	// return n
+
 	// otherwise, just copy bytes.
 	// FUTURE: implement memmove
 	dstBA := asByteSlice(dst, t)
@@ -82,3 +85,8 @@ func scalarToHeader(a interface{}) *header {
 		c:   1,
 	}
 }
+
+/* REALLY REALLY UNSAFE STUFF. */
+
+//go:linkname memmove runtime.memmove
+func memmove(to, from unsafe.Pointer, n uintptr)

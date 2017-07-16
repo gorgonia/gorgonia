@@ -77,6 +77,7 @@ type DenseTensor interface {
 
 	hdr() *header
 	rtype() reflect.Type
+	DataOrder() DataOrder
 }
 
 type SparseTensor interface {

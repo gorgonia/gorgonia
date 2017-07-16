@@ -1,6 +1,7 @@
 package tensor
 
-// DataOrder is a flag that indicates the order of data
+// DataOrder is a flag that indicates the order of data. The default DataOrder (0)
+// is what this package uses by default.
 type DataOrder byte
 
 const (
@@ -9,11 +10,16 @@ const (
 	// The way the DataOrder was designed causes the default to be RowMajor
 	ColMajor DataOrder = 1 << iota
 	// NonContiguous indicates that the data is not contiguous.
-	// A data can either be Contiguous (0) or NonContiguous (1).
+	// A data can either be Contiguous (0) or NonContiguous (2).
 	// The way DataOrder was designed causes the default to be Contiguous.
 	NonContiguous
 )
 
+// MakeDataOrder makes a data order. Typical examples:
+//		MakeDataOrder(DataOrder(0))            // Row Major, contiguous
+//		MakeDataOrder(NonContiguous            // Row Major, non-contiguous
+// 		MakeDataOrder(ColMajor)                // Col Major, contiguous
+//		MakeDataOrder(ColMajor, NonContiguous) // what it says on the tin
 func MakeDataOrder(fs ...DataOrder) (retVal DataOrder) {
 	if len(fs) == 1 {
 		return fs[0]
@@ -29,6 +35,9 @@ func (f DataOrder) isRowMajor() bool          { return !f.isColMajor() }
 func (f DataOrder) isContiguous() bool        { return !f.isNotContiguous() }
 func (f DataOrder) isNotContiguous() bool     { return (f & NonContiguous) != 0 }
 func (f DataOrder) toggleColMajor() DataOrder { return f ^ (ColMajor) }
+func (f DataOrder) hasSameOrder(other DataOrder) bool {
+	return (f.isColMajor() && other.isColMajor()) || (f.isRowMajor() && other.isRowMajor())
+}
 
 // Triangle is a flag representing the "triangle"ness of a matrix
 type Triangle byte

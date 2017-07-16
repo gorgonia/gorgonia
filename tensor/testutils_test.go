@@ -85,3 +85,4 @@ func (e dummyEngine) Memcpy(dst, src Memory) error {
 	return errors.New("Unable to copy ")
 }
 func (e dummyEngine) Accessible(mem Memory) (Memory, error) { return mem, nil }
+func (e dummyEngine) DataOrder() DataOrder                  { return DataOrder(0) }

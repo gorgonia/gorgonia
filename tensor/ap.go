@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 )
@@ -115,6 +116,9 @@ func (ap *AP) Clone() (retVal *AP) {
 	return
 }
 
+// DataOrder returns the data order of the AP.
+func (ap *AP) DataOrder() DataOrder { return ap.o }
+
 // C returns true if the access pattern is C-contiguous array
 func (ap *AP) C() bool {
 	return ap.o.isRowMajor() && ap.o.isContiguous()
@@ -138,6 +142,14 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 	newShape := ap.shape.Clone()    // the new shape
 	dims := ap.Dims()               // reported dimensions
 	newStrides := make([]int, dims) // the new strides
+
+	var outerDim int
+	order := ap.o
+	if ap.o.isRowMajor() || ap.IsVector() {
+		outerDim = 0
+	} else {
+		outerDim = len(ap.shape) - 1
+	}
 
 	for i := 0; i < dims; i++ {
 		var sl Slice
@@ -176,6 +188,11 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 			newShape[i] = (end - start)
 			newStrides[i] = stride
 		}
+
+		if (sl != nil && (!ap.IsVector() && i != outerDim)) || step > 1 {
+			log.Printf("AP %v isVector %v - Not Contiguous. i: %d outerdim %d sl: %v step %v", ap, ap.IsVector(), i, outerDim, sl, step)
+			order = MakeDataOrder(order, NonContiguous)
+		}
 	}
 
 	if ndEnd-ndStart == 1 {
@@ -201,7 +218,7 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		}
 
 		newAP = NewAP(newShape, newStrides)
-		newAP.o = MakeDataOrder(ap.o, NonContiguous)
+		newAP.o = order
 	}
 	return
 }

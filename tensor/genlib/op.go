@@ -1,21 +1,46 @@
 package main
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type BinOp struct {
-	Name      string
-	MixedName string
-	Symbol    string
+	Name   string
+	Symbol string
+	IsFunc bool
 
-	VecTemplate   string
-	MixedTemplate string
-	Commutative   bool
-	Identity      int                     // yes it's an int
-	Is            func(reflect.Kind) bool // type class
-
-	Specialized    []func(reflect.Kind) bool // generate code using specialized
-	Specialization []string                  // templates
+	Template    string
+	Commutative bool
+	Identity    int                     // yes it's an int
+	Is          func(reflect.Kind) bool // type class
+	Check       func(reflect.Kind) string
 }
+
+func (op BinOp) BuildVV(t reflect.Kind) string {
+	if op.Name == "Mod" {
+		goto def
+	}
+
+	if isFloat(t) {
+		return fmt.Printf("return %s.%s(a, b)", vecPkg(t), op.Name)
+	}
+def:
+	if op.IsFunc {
+		return fmt.Sprintf(funcLoop, op.RangeableVV(), op.RangeableVV(), op.Symbol, short(t), op.LeftVV(), op.RightVV())
+	}
+	return fmt.Sprintf(opLoop, op.RangeableVV(), op.RangeableVV(), op.Symbol, op.RightVV())
+}
+
+func (op BinOp) RangeableVV() string { return "at" }
+func (op BinOp) LeftVV() string      { return "at[i]" }
+func (op BinOp) RightVV() string     { return "bt[i]" }
+func (op BinOp) RangeableSV() string { return "bt" }
+func (op BinOp) LeftSV() string      { return "bt[i]" }
+func (op BinOp) RightSV() string     { return "at" }
+func (op BinOp) RangeableVS() string { return "bt" }
+func (op BinOp) LeftVS() string      { return "at[i]" }
+func (op BinOp) RightVS() string     { return "bt" }
 
 type UnaryOp struct {
 	Name     string
@@ -24,18 +49,18 @@ type UnaryOp struct {
 }
 
 var arithBinOps = [...]BinOp{
-	{"Add", "Trans", "+",
-		"{{$left}} += {{$right}}", "{{$left}} += {{$right}}", false, true, 0, isAddable},
-	{"Sub", "TransInv", "-",
-		"{{$left}} -= {{$right}}", "{{$left}} -= {{$right}}", false, false, 0, isAddable},
-	{"Mul", "Scale", "*",
-		"{{$left}} *= {{$right}}", "{{$left}} *= {{$right}}", false, true, 1, isNumber},
-	{"Div", "ScaleInv", "/",
-		"{{$left}} /= {{$right}}", "{{$left}} /= {{$right}}", false, false, 1, isNumber},
-	{"Pow", "PowOf", "{{.mathPkg}}Pow",
-		"{{$left}} = math.Pow({{$right0}}, {{$right1}})", "{{$left}} = math.Pow({{$right0}}, {{$right1}})", true, false, 1, isFloatCmplx},
+	{"Add", "+",
+		"{{$left}} += {{$right}}", false, true, 0, isAddable},
+	{"Sub", "-",
+		"{{$left}} -= {{$right}}", false, false, 0, isAddable},
+	{"Mul", "*",
+		"{{$left}} *= {{$right}}", false, true, 1, isNumber},
+	{"Div", "/",
+		"{{$left}} /= {{$right}}", false, false, 1, isNumber},
+	{"Pow", "{{.mathPkg}}Pow",
+		"{{$left}} = {{.mathPkg}}.Pow({{$right}})", true, false, 1, isFloatCmplx},
 
-	// {"Mod", "%", "Mod_", "", false, false, 0, isNumber},
+	{"Mod", "%", "{{$left}} %= {{$right}}", false, false, 0, isNumber},
 }
 
 var unaryBinOps = [...]UnaryOp{
@@ -52,3 +77,18 @@ var unaryBinOps = [...]UnaryOp{
 	// {"Inv", "1/", isNumber},
 	// {"Square", "x*x", isNumber},
 }
+
+const opLoop = `for i := range %s {
+	%s[i] %s= %s
+}
+`
+
+const opIncrLoop = `for i := range %s {
+	%s[i] += %s[i] %s %s
+}
+`
+
+const funcLoop = `for i := range %s {
+	%s[i] = %s%s(%s, %s)
+}
+`

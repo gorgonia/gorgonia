@@ -2,7 +2,7 @@ package tensor
 
 import "runtime"
 
-func requiresIterator(t Tensor) bool {
+func requiresIterator(e Engine, t Tensor) bool {
 	switch tt := t.(type) {
 	case DenseTensor:
 		if mt, ok := tt.(MaskedTensor); ok && mt.IsMasked() {
@@ -11,7 +11,10 @@ func requiresIterator(t Tensor) bool {
 		if v, ok := tt.(View); ok && v.IsMaterializable() {
 			return true
 		}
-		return false
+		if tt.DataOrder().isNotContiguous() {
+			return true
+		}
+		return !e.DataOrder().hasSameOrder(tt.DataOrder())
 	case SparseTensor:
 		return true
 	}
