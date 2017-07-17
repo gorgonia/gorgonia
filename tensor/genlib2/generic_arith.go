@@ -140,28 +140,51 @@ func (fn *GenericMixed) Signature() *Signature {
 
 	switch {
 	case fn.RequiresIterator && fn.Incr:
+		paramNames = []string{"a", "b", "incr", "ait", "iit"}
+		paramTemplates = []*template.Template{sliceType, sliceType, sliceType, iteratorType, iteratorType}
 		if fn.LeftVec {
-
+			nameTemplate = vsNameIncrIter
+			paramTemplates[1] = scalarType
 		} else {
-
+			nameTemplate = svNameIncrIter
+			paramTemplates[0] = scalarType
+			paramNames[3] = "bit"
 		}
-		nameTemplate = vvNameIncrIter
-		paramNames = []string{"a", "b", "incr", "ait", "bit", "iit"}
-		paramTemplates = []*template.Template{sliceType, sliceType, sliceType, iteratorType, iteratorType, iteratorType}
 		err = true
 	case fn.RequiresIterator && !fn.Incr:
-		nameTemplate = vvNameIter
-		paramNames = []string{"a", "b", "ait", "bit"}
-		paramTemplates = []*template.Template{sliceType, sliceType, iteratorType, iteratorType}
+		paramNames = []string{"a", "b", "ait"}
+		paramTemplates = []*template.Template{sliceType, sliceType, iteratorType}
+		if fn.LeftVec {
+			nameTemplate = vsNameIter
+			paramTemplates[1] = scalarType
+		} else {
+			nameTemplate = svNameIter
+			paramTemplates[0] = scalarType
+			paramNames[2] = "bit"
+		}
+
 		err = true
 	case !fn.RequiresIterator && fn.Incr:
-		nameTemplate = vvNameIncr
 		paramNames = []string{"a", "b", "incr"}
 		paramTemplates = []*template.Template{sliceType, sliceType, sliceType}
+		if fn.LeftVec {
+			nameTemplate = vsNameIncr
+			paramTemplates[1] = scalarType
+		} else {
+			nameTemplate = vsNameIncr
+			paramTemplates[0] = scalarType
+		}
+
 	default:
-		nameTemplate = vvName
 		paramNames = []string{"a", "b"}
 		paramTemplates = []*template.Template{sliceType, sliceType}
+		if fn.LeftVec {
+			nameTemplate = vsName
+			paramTemplates[1] = scalarType
+		} else {
+			nameTemplate = vsName
+			paramTemplates[0] = scalarType
+		}
 	}
 
 	if fn.Check != nil {
@@ -177,6 +200,37 @@ func (fn *GenericMixed) Signature() *Signature {
 		Kind: fn.Kind,
 		Err:  err,
 	}
+}
+
+func (fn *GenericMixed) Write(w io.Writer) {
+	sig := fn.Signature()
+	if !fn.RequiresIterator && isFloat(fn.Kind) {
+		golinkPragma.Execute(w, fn)
+		w.Write([]byte("func "))
+		sig.Write(w)
+		w.Write([]byte("\n\n"))
+		return
+	}
+
+	w.Write([]byte("func "))
+	sig.Write(w)
+
+	switch {
+	case !fn.RequiresIterator && fn.Incr:
+		w.Write([]byte("{\na = a[:len(a)]; b = b[:len(a)]; incr = incr[:len(a)]\n"))
+	case !fn.RequiresIterator && !fn.Incr:
+		w.Write([]byte("{\na = a[:len(a)]; b = b[:len(a)]\n"))
+	default:
+		w.Write([]byte("{"))
+	}
+	fn.WriteBody(w)
+	if sig.Err {
+		if fn.Check != nil {
+			w.Write([]byte("\nif err != nil {\n return\n}\nerr = errs"))
+		}
+		w.Write([]byte("\nreturn\n"))
+	}
+	w.Write([]byte("}\n\n"))
 }
 
 func makeGenericVecVecs(tbo []TypedBinOp) (retVal []*GenericVecVec) {
@@ -196,4 +250,49 @@ func makeGenericVecVecs(tbo []TypedBinOp) (retVal []*GenericVecVec) {
 	}
 
 	return retVal
+}
+
+func makeGenericMixeds(tbo []TypedBinOp) (retVal []*GenericMixed) {
+	for _, tb := range tbo {
+		if tc := tb.TypeClass(); tc != nil && tc(tb.Kind) {
+			continue
+		}
+		fn := &GenericMixed{
+			GenericVecVec: GenericVecVec{
+				TypedBinOp: tb,
+			},
+		}
+		if tb.Name() == "Div" && !isFloatCmplx(tb.Kind) {
+			fn.Check = panicsDiv0
+			fn.CheckTemplate = check0
+		}
+		retVal = append(retVal, fn)
+	}
+	return
+}
+
+func generateGenericVecVec(w io.Writer, ak Kinds) {
+	gen := makeGenericVecVecs(typedBinOps)
+
+	for _, g := range gen {
+		g.Write(f)
+		g.Incr = true
+	}
+	for _, g := range gen {
+		g.Write(f)
+		g.Incr = false
+		g.RequiresIterator = true
+	}
+	for _, g := range gen {
+		g.Write(f)
+		g.Incr = true
+	}
+	for _, g := range gen {
+		g.Write(f)
+	}
+}
+
+func generateGenericMixed(w io.Writer, ak Kinds) {
+	gen := makeGenericMixeds(typedBinOps)
+
 }

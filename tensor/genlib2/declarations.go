@@ -243,9 +243,10 @@ var funcs = template.FuncMap{
 	"getOne":      getOne,
 	"setOne":      setOne,
 
-	"mathPkg":   mathPkg,
-	"vecPkg":    vecPkg,
-	"bitSizeOf": bitSizeOf,
+	"mathPkg":        mathPkg,
+	"vecPkg":         vecPkg,
+	"bitSizeOf":      bitSizeOf,
+	"externalFnName": externalFnName,
 
 	"isntFloat": isntFloat,
 }

@@ -128,6 +128,10 @@ func vecPkg(a reflect.Kind) string {
 	return ""
 }
 
+func externalFnName(a reflect.Kind, name string) string {
+	return ""
+}
+
 func bitSizeOf(a reflect.Kind) string {
 	switch a {
 	case reflect.Int, reflect.Uint:
