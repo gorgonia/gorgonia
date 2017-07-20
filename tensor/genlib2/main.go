@@ -26,35 +26,16 @@ func init() {
 }
 
 func main() {
-	log.Printf("allKinds %d", len(allKinds))
-	log.Printf("arithBinOps %d", len(arithBinOps))
-	gen := makeGenericVecVecs(typedBinOps)
-	log.Printf("gen %d", len(gen))
-	f, _ := os.Create("test/BLAH.go")
-	for _, g := range gen {
-		g.Write(f)
-		g.Incr = true
-	}
-	for _, g := range gen {
-		g.Write(f)
-		g.Incr = false
-		g.RequiresIterator = true
-	}
-	for _, g := range gen {
-		g.Write(f)
-		g.Incr = true
-	}
-	for _, g := range gen {
-		g.Write(f)
-	}
-
-	f.Close()
+	pipeline("test", "BLAH_1.go", Kinds{allKinds}, generateGenericVecVecArith)
+	pipeline("test", "BLAH_2.go", Kinds{allKinds}, generateGenericMixedArith)
+	pipeline("test", "BLAH_3.go", Kinds{allKinds}, generateEArith)
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {
 	fullpath := path.Join(pkg, filename)
 	f, err := os.Create(fullpath)
 	if err != nil {
+		log.Printf("fullpath %q", fullpath)
 		log.Fatal(err)
 	}
 	defer f.Close()

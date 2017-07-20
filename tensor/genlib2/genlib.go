@@ -128,8 +128,11 @@ func vecPkg(a reflect.Kind) string {
 	return ""
 }
 
-func externalFnName(a reflect.Kind, name string) string {
-	return ""
+func getalias(name string) string {
+	if nice, ok := nameMaps[name]; ok {
+		return nice
+	}
+	return name
 }
 
 func bitSizeOf(a reflect.Kind) string {

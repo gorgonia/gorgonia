@@ -243,10 +243,10 @@ var funcs = template.FuncMap{
 	"getOne":      getOne,
 	"setOne":      setOne,
 
-	"mathPkg":        mathPkg,
-	"vecPkg":         vecPkg,
-	"bitSizeOf":      bitSizeOf,
-	"externalFnName": externalFnName,
+	"mathPkg":   mathPkg,
+	"vecPkg":    vecPkg,
+	"bitSizeOf": bitSizeOf,
+	"getalias":  getalias,
 
 	"isntFloat": isntFloat,
 }
@@ -279,6 +279,24 @@ var shortNames = map[reflect.Kind]string{
 	reflect.String:        "Str",
 	reflect.Struct:        "Struct",
 	reflect.UnsafePointer: "UnsafePointer",
+}
+
+var nameMaps = map[string]string{
+	"AddVS": "Trans",
+	"AddSV": "TransR",
+	"SubVS": "TransInv",
+	"SubSV": "TransInvR",
+	"MulVS": "Scale",
+	"MulSV": "ScaleR",
+	"DivVS": "ScaleInv",
+	"DivSV": "ScaleInvR",
+	"PowVS": "PowOf",
+	"PowSV": "PowOfR",
+
+	"AddIncrVS": "IncrTrans",
+	"AddIncrSV": "IncrTransR",
+	"SubIncrVS": "IncrTransInv",
+	"SubIncrSV": "IncrTransInvR",
 }
 
 var arithBinOps []basicBinOp

@@ -12,6 +12,6 @@ func writePkgName(f io.Writer, pkg string) {
 	case stdEngPkgLoc:
 		fmt.Fprintf(f, "package stdeng\n/*\n%v\n*/\n\n", genmsg)
 	default:
-		panic("UNKNOWN")
+		fmt.Fprintf(f, "package unknown\n/*\n%v\n*/\n\n")
 	}
 }
