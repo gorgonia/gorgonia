@@ -112,7 +112,7 @@ func (fn *GenericVecVec) Write(w io.Writer) {
 		golinkPragma.Execute(w, fn)
 		w.Write([]byte("func "))
 		sig.Write(w)
-		w.Write([]byte("{}\n\n"))
+		w.Write([]byte("\n\n"))
 		return
 	}
 

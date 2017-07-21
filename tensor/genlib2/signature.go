@@ -35,7 +35,7 @@ func (s *Signature) Write(w io.Writer) {
 }
 
 const (
-	golinkPragmaRaw = "//go:linkname {{.Name}}{{short .Kind}} {{vecPkg .Kind}}{{getalias .Name}}\n"
+	golinkPragmaRaw = "//go:linkname {{.Name}}{{short .Kind}} github.com/chewxy/{{vecPkg .Kind}}{{getalias .Name}}\n"
 
 	typeAnnotatedNameRaw = `{{.Name}}{{short .Kind}}`
 	plainNameRaw         = `{{.Name}}`
