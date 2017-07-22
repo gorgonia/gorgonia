@@ -135,6 +135,63 @@ func (fn *GenericVecVecCmp) Write(w io.Writer) {
 	w.Write([]byte("}\n\n"))
 }
 
+type GenericMixedCmp struct {
+	GenericVecVecCmp
+	LeftVec bool
+}
+
+func (fn *GenericMixedCmp) Name() string {
+	n := fn.GenericVecVecCmp.Name()
+	if fn.LeftVec {
+		n += "VS"
+	} else {
+		n += "SV"
+	}
+	return
+}
+
+func (fn *GenericMixedCmp) Signature() *Signature {
+	var paramNames []string
+	var paramTemplates []*template.Template
+	var err bool
+
+	switch {
+	case fn.Iter && !fn.RetSame:
+		paramNames = []string{"a", "b", "retVal", "ait", "rit"}
+		paramTemplates = []*template.Template{sliceType, sliceType, bools, iteratorType, iteratorType}
+		err = true
+	case fn.Iter && fn.RetSame:
+		paramNames = []string{"a", "b", "ait"}
+		paramTemplates = []*template.Template{sliceType, sliceType, iteratorType}
+		err = true
+	case !fn.Iter && fn.RetSame:
+		paramNames = []string{"a", "b"}
+		paramTemplates = []*template.Template{sliceType, sliceType}
+	default:
+		paramName = []string{"a", "b", "retVal"}
+		paramTemplates = []*template.Template{sliceType, sliceType, bools}
+	}
+	if fn.LeftVec {
+		paramTemplates[1] = scalarType
+	} else {
+		paramTemplates[0] = scalarType
+		if fn.iter && !fn.RetSame {
+			paramNames[3] = "bit"
+		} else if fn.Iter && fn.RetSame {
+			paramNames[2] = "bit"
+		}
+	}
+	return &Signature{
+		Name:           fn.Name(),
+		NameTemplate:   typeAnnotatedName,
+		ParamNames:     paramNames,
+		ParamTemplates: paramTemplates,
+
+		Kind: fn.Kind(),
+		Err:  err,
+	}
+}
+
 func makeGenericVecVecCmps(tbo []TypedBinOp) (retVal []*GenericVecVecCmp) {
 	for _, tb := range tbo {
 		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind()) {
