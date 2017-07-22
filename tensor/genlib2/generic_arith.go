@@ -73,11 +73,11 @@ func (fn *GenericVecVecArith) WriteBody(w io.Writer) {
 	Range = "a"
 	Index0 = "i"
 	Index1 = "j"
+	Left = "a[i]"
+	Right = "b[j]"
 	switch {
 	case fn.Iter && fn.Incr:
 		Range = "incr"
-		Left = "a[i]"
-		Right = "b[j]"
 		Index2 = "k"
 		IterName0 = "ait"
 		IterName1 = "bit"
@@ -85,20 +85,16 @@ func (fn *GenericVecVecArith) WriteBody(w io.Writer) {
 		T = template.Must(template.New("vvIterIncrLoop").Funcs(funcs).Parse(genericTernaryIterLoopRaw))
 		template.Must(T.New("loopbody").Funcs(funcs).Parse(iterIncrLoopBody))
 	case fn.Iter && !fn.Incr:
-		Left = "a[i]"
-		Right = "b[j]"
 		IterName0 = "ait"
 		IterName1 = "bit"
 		T = template.Must(template.New("vvIterLoop").Funcs(funcs).Parse(genericBinaryIterLoopRaw))
 		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
 	case !fn.Iter && fn.Incr:
 		Range = "incr"
-		Left = "a[i]"
 		Right = "b[i]"
 		T = template.Must(template.New("vvIncrLoop").Funcs(funcs).Parse(genericLoopRaw))
 		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicIncr))
 	default:
-		Left = "a[i]"
 		Right = "b[i]"
 		T = template.Must(template.New("vvLoop").Funcs(funcs).Parse(genericLoopRaw))
 		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
@@ -368,7 +364,7 @@ func makeGenericMixedAriths(tbo []TypedBinOp) (retVal []*GenericMixedArith) {
 }
 
 func generateGenericVecVecArith(f io.Writer, ak Kinds) {
-	gen := makeGenericVecVecAriths(typedBinOps)
+	gen := makeGenericVecVecAriths(typedAriths)
 
 	for _, g := range gen {
 		g.Write(f)
@@ -389,7 +385,7 @@ func generateGenericVecVecArith(f io.Writer, ak Kinds) {
 }
 
 func generateGenericMixedArith(f io.Writer, ak Kinds) {
-	gen := makeGenericMixedAriths(typedBinOps)
+	gen := makeGenericMixedAriths(typedAriths)
 
 	// SV first
 	for _, g := range gen {

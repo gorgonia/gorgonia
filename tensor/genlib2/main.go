@@ -26,11 +26,12 @@ func init() {
 }
 
 func main() {
-	pipeline("test", "BLAH_1.go", Kinds{allKinds}, generateGenericVecVecArith)
-	pipeline("test", "BLAH_2.go", Kinds{allKinds}, generateGenericMixedArith)
-	pipeline("test", "BLAH_3.go", Kinds{allKinds}, generateEArith)
-	pipeline("test", "BLAH_4.go", Kinds{allKinds}, generateGenericMap)
-	pipeline("test", "BLAH_5.go", Kinds{allKinds}, generateMap)
+	// pipeline("test", "BLAH_1.go", Kinds{allKinds}, generateGenericVecVecArith)
+	// pipeline("test", "BLAH_2.go", Kinds{allKinds}, generateGenericMixedArith)
+	// pipeline("test", "BLAH_3.go", Kinds{allKinds}, generateEArith)
+	// pipeline("test", "BLAH_4.go", Kinds{allKinds}, generateGenericMap)
+	// pipeline("test", "BLAH_5.go", Kinds{allKinds}, generateMap)
+	pipeline("test", "BLAH_6.go", Kinds{allKinds}, generateGenericVecVecCmp)
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {

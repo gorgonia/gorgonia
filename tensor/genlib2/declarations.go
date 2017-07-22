@@ -202,6 +202,26 @@ var elOrd = [...]reflect.Kind{
 	reflect.String, // strings are orderable and the assumption is lexicographic sorting
 }
 
+var boolRepr = [...]reflect.Kind{
+	reflect.Bool,
+	reflect.Int,
+	reflect.Int8,
+	reflect.Int16,
+	reflect.Int32,
+	reflect.Int64,
+	reflect.Uint,
+	reflect.Uint8,
+	reflect.Uint16,
+	reflect.Uint32,
+	reflect.Uint64,
+	reflect.Uintptr,
+	reflect.Float32,
+	reflect.Float64,
+	reflect.Complex64,
+	reflect.Complex128,
+	reflect.String,
+}
+
 var div0panics = [...]reflect.Kind{
 	reflect.Int,
 	reflect.Int8,
@@ -242,6 +262,8 @@ var funcs = template.FuncMap{
 	"sliceOf":     sliceOf,
 	"getOne":      getOne,
 	"setOne":      setOne,
+	"trueValue":   trueValue,
+	"falseValue":  falseValue,
 
 	"mathPkg":   mathPkg,
 	"vecPkg":    vecPkg,
@@ -308,7 +330,8 @@ var nameMaps = map[string]string{
 
 var arithBinOps []basicBinOp
 var cmpBinOps []basicBinOp
-var typedBinOps []TypedBinOp
+var typedAriths []TypedBinOp
+var typedCmps []TypedBinOp
 var allKinds []reflect.Kind
 
 func init() {
@@ -346,7 +369,17 @@ func init() {
 				BinOp: bo,
 				k:     k,
 			}
-			typedBinOps = append(typedBinOps, tb)
+			typedAriths = append(typedAriths, tb)
+		}
+	}
+
+	for _, bo := range cmpBinOps {
+		for _, k := range allKinds {
+			tb := TypedBinOp{
+				BinOp: bo,
+				k:     k,
+			}
+			typedCmps = append(typedCmps, tb)
 		}
 	}
 }

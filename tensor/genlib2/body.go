@@ -91,6 +91,15 @@ const (
 			{{.Range}}[k] += {{template "opDo" . -}}
 		{{end -}}`
 
+	sameSet = `if {{template "opDo" . }} {
+		{{.Range}}[i] = {{trueValue .Kind}}
+	}else{
+		{{.Range}}[i] = {{falseValue .Kind}}
+	}
+	`
+
+	ternaryIterSet = `{{.Range}}[k] = {{template "opDo" . -}}`
+
 	binOpCallFunc = `{{if eq "complex64" .Kind.String -}}
 		complex64({{template "symbol" .Kind}}(complex128({{.Left}}), complex128({{.Right}})))
 		{{else -}}

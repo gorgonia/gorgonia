@@ -105,6 +105,15 @@ func isOrd(a reflect.Kind) bool {
 	return false
 }
 
+func isBoolRepr(a reflect.Kind) bool {
+	for _, v := range boolRepr {
+		if v == a {
+			return true
+		}
+	}
+	return false
+}
+
 func mathPkg(a reflect.Kind) string {
 	if a == reflect.Float64 {
 		return "math."
@@ -149,6 +158,28 @@ func bitSizeOf(a reflect.Kind) string {
 		return "64"
 	}
 	return "UNKNOWN BIT SIZE"
+}
+
+func trueValue(a reflect.Kind) string {
+	switch a {
+	case reflect.String:
+		return `"true"`
+	case reflect.Bool:
+		return "true"
+	default:
+		return "1"
+	}
+}
+
+func falseValue(a reflect.Kind) string {
+	switch a {
+	case reflect.String:
+		return `"false"`
+	case reflect.Bool:
+		return "false"
+	default:
+		return "0"
+	}
 }
 
 func isFloat(a reflect.Kind) bool {
