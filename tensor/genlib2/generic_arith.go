@@ -59,7 +59,7 @@ func (fn *GenericVecVec) Signature() *Signature {
 		ParamNames:     paramNames,
 		ParamTemplates: paramTemplates,
 
-		Kind: fn.Kind,
+		Kind: fn.Kind(),
 		Err:  err,
 	}
 }
@@ -75,40 +75,45 @@ func (fn *GenericVecVec) WriteBody(w io.Writer) {
 		Left = "a[i]"
 		Right = "b[j]"
 		T = template.Must(template.New("vvIterIncrLoop").Funcs(funcs).Parse(vvIterIncrLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(iterIncrLoopBody))
 	case fn.RequiresIterator && !fn.Incr:
 		Left = "a[i]"
 		Right = "b[j]"
 		T = template.Must(template.New("vvIterLoop").Funcs(funcs).Parse(vvIterLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
 	case !fn.RequiresIterator && fn.Incr:
 		Range = "incr"
 		Left = "a[i]"
 		Right = "b[i]"
 		T = template.Must(template.New("vvIncrLoop").Funcs(funcs).Parse(vvIncrLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicIncr))
 	default:
 		Left = "a[i]"
 		Right = "b[i]"
 		T = template.Must(template.New("vvLoop").Funcs(funcs).Parse(vvLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
 	}
-	template.Must(T.New("callFunc").Funcs(funcs).Parse(callFunc))
+	template.Must(T.New("callFunc").Funcs(funcs).Parse(binOpCallFunc))
+	template.Must(T.New("opDo").Funcs(funcs).Parse(binOpDo))
 	template.Must(T.New("symbol").Funcs(funcs).Parse(fn.SymbolTemplate()))
 
-	if fn.Check != nil && fn.Check(fn.Kind) {
+	if fn.Check != nil && fn.Check(fn.Kind()) {
 		w.Write([]byte("var errs errorIndices\n"))
 	}
 	template.Must(T.New("check").Funcs(funcs).Parse(fn.CheckTemplate))
 
 	lb := LoopBody{
-		TypedBinOp: fn.TypedBinOp,
-		Range:      Range,
-		Left:       Left,
-		Right:      Right,
+		TypedOp: fn.TypedBinOp,
+		Range:   Range,
+		Left:    Left,
+		Right:   Right,
 	}
 	T.Execute(w, lb)
 }
 
 func (fn *GenericVecVec) Write(w io.Writer) {
 	sig := fn.Signature()
-	if !fn.RequiresIterator && isFloat(fn.Kind) {
+	if !fn.RequiresIterator && isFloat(fn.Kind()) {
 		golinkPragma.Execute(w, fn)
 		w.Write([]byte("func "))
 		sig.Write(w)
@@ -208,7 +213,7 @@ func (fn *GenericMixed) Signature() *Signature {
 		ParamNames:     paramNames,
 		ParamTemplates: paramTemplates,
 
-		Kind: fn.Kind,
+		Kind: fn.Kind(),
 		Err:  err,
 	}
 }
@@ -224,13 +229,17 @@ func (fn *GenericMixed) WriteBody(w io.Writer) {
 	case fn.RequiresIterator && fn.Incr:
 		Range = "incr"
 		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(mixedIterIncrLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(iterIncrLoopBody))
 	case fn.RequiresIterator && !fn.Incr:
 		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(mixedIterLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
 	case !fn.RequiresIterator && fn.Incr:
 		Range = "incr"
 		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(mixedIncrLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicIncr))
 	default:
 		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(mixedLoopRaw))
+		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
 	}
 
 	if fn.LeftVec {
@@ -253,20 +262,21 @@ func (fn *GenericMixed) WriteBody(w io.Writer) {
 		IterName = "bit"
 	}
 
-	template.Must(T.New("callFunc").Funcs(funcs).Parse(callFunc))
+	template.Must(T.New("callFunc").Funcs(funcs).Parse(binOpCallFunc))
+	template.Must(T.New("opDo").Funcs(funcs).Parse(binOpDo))
 	template.Must(T.New("symbol").Funcs(funcs).Parse(fn.SymbolTemplate()))
 
-	if fn.Check != nil && fn.Check(fn.Kind) {
+	if fn.Check != nil && fn.Check(fn.Kind()) {
 		w.Write([]byte("var errs errorIndices\n"))
 	}
 	template.Must(T.New("check").Funcs(funcs).Parse(fn.CheckTemplate))
 
 	lb := LoopBody{
-		TypedBinOp: fn.TypedBinOp,
-		Range:      Range,
-		Left:       Left,
-		Right:      Right,
-		IterName:   IterName,
+		TypedOp:  fn.TypedBinOp,
+		Range:    Range,
+		Left:     Left,
+		Right:    Right,
+		IterName: IterName,
 	}
 	T.Execute(w, lb)
 }
@@ -291,13 +301,13 @@ func (fn *GenericMixed) Write(w io.Writer) {
 
 func makeGenericVecVecs(tbo []TypedBinOp) (retVal []*GenericVecVec) {
 	for _, tb := range tbo {
-		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind) {
+		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind()) {
 			continue
 		}
 		fn := &GenericVecVec{
 			TypedBinOp: tb,
 		}
-		if tb.Name() == "Div" && !isFloatCmplx(tb.Kind) {
+		if tb.Name() == "Div" && !isFloatCmplx(tb.Kind()) {
 			fn.Check = panicsDiv0
 			fn.CheckTemplate = check0
 		}
@@ -310,7 +320,7 @@ func makeGenericVecVecs(tbo []TypedBinOp) (retVal []*GenericVecVec) {
 
 func makeGenericMixeds(tbo []TypedBinOp) (retVal []*GenericMixed) {
 	for _, tb := range tbo {
-		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind) {
+		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind()) {
 			continue
 		}
 		fn := &GenericMixed{
@@ -318,7 +328,7 @@ func makeGenericMixeds(tbo []TypedBinOp) (retVal []*GenericMixed) {
 				TypedBinOp: tb,
 			},
 		}
-		if tb.Name() == "Div" && !isFloatCmplx(tb.Kind) {
+		if tb.Name() == "Div" && !isFloatCmplx(tb.Kind()) {
 			fn.Check = panicsDiv0
 			fn.CheckTemplate = check0
 		}

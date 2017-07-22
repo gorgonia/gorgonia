@@ -7,11 +7,16 @@ type Op interface {
 	Arity() int
 	SymbolTemplate() string
 	TypeClass() TypeClass
+	IsFunc() bool
+}
+
+type TypedOp interface {
+	Op
+	Kind() reflect.Kind
 }
 
 type BinOp interface {
 	Op
-	IsFunc() bool
 	IsBinOp()
 }
 
@@ -40,16 +45,18 @@ func (op basicBinOp) IsBinOp()               {}
 
 type TypedBinOp struct {
 	BinOp
-	Kind reflect.Kind
+	k reflect.Kind
 }
 
 // IsFunc contains special conditions
 func (op TypedBinOp) IsFunc() bool {
-	if op.Name() == "Mod" && isFloatCmplx(op.Kind) {
+	if op.Name() == "Mod" && isFloatCmplx(op.k) {
 		return true
 	}
 	return op.BinOp.IsFunc()
 }
+
+func (op TypedBinOp) Kind() reflect.Kind { return op.k }
 
 type TypedCmpBinOp struct {
 	TypedBinOp
@@ -61,6 +68,7 @@ func (op TypedCmpBinOp) RetSame() bool { return op.retSame }
 type unaryOp struct {
 	symbol string
 	name   string
+	isfunc bool
 	is     TypeClass
 }
 
@@ -68,4 +76,5 @@ func (op unaryOp) Name() string           { return op.name }
 func (op unaryOp) Arity() int             { return 1 }
 func (op unaryOp) SymbolTemplate() string { return op.symbol }
 func (op unaryOp) TypeClass() TypeClass   { return op.is }
+func (op unaryOp) IsFunc() bool           { return op.isfunc }
 func (op unaryOp) IsUnaryOp()             {}

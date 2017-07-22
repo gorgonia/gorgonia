@@ -293,6 +293,13 @@ var nameMaps = map[string]string{
 	"PowVS": "PowOf",
 	"PowSV": "PowOfR",
 
+	"AddIncr": "IncrAdd",
+	"SubIncr": "IncrSub",
+	"MulIncr": "IncrMul",
+	"DivIncr": "IncrDiv",
+	"PowIncr": "IncrPow",
+	"ModIncr": "IncrMod",
+
 	"AddIncrVS": "IncrTrans",
 	"AddIncrSV": "IncrTransR",
 	"SubIncrVS": "IncrTransInv",
@@ -337,7 +344,7 @@ func init() {
 		for _, k := range allKinds {
 			tb := TypedBinOp{
 				BinOp: bo,
-				Kind:  k,
+				k:     k,
 			}
 			typedBinOps = append(typedBinOps, tb)
 		}
