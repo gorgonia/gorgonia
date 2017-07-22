@@ -4,10 +4,13 @@ package main
 
 type LoopBody struct {
 	TypedOp
-	Range    string
-	Left     string
-	Right    string
-	IterName string
+	Range string
+	Left  string
+	Right string
+
+	Index0, Index1, Index2 string
+
+	IterName0, IterName1, IterName2 string
 }
 
 const (
@@ -16,79 +19,56 @@ const (
 		{{template "loopbody" .}}
 	}`
 
-	genericIncrLoopRaw = `for i := range {{.Range}}{
-		{{template "check" . -}}
-		{{template "loopbody" . -}}
-	}`
-
-	genericBinaryIterLoopRaw = `var i, j int
-	var validi, validj bool
+	genericUnaryIterLoopRaw = `var {{.Index0}} int
+	var valid{{.Index0}} bool
 	for {
-		if i, validi, err = ait.NextValidity(); err != nil {
+		if {{.Index0}}, valid{{.Index0}}, err = {{.IterName0}}.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, validj, err = bit.NextValidity(); err != nil {
-			err = handleNoOp(err)
-			break
-		}
-		if validi && validj {
+		if valid{{.Index0}} {
 			{{template "check" . -}}
 			{{template "loopbody" . -}}
 		}
 	}`
 
-	genericBinaryIncrIterLoopRaw = `var i, j, k int
-	var validi, validj, validk bool
+	genericBinaryIterLoopRaw = `var {{.Index0}}, {{.Index1}} int
+	var valid{{.Index0}}, valid{{.Index1}} bool
 	for {
-		if i, validi, err = ait.NextValidity(); err != nil {
+		if {{.Index0}}, valid{{.Index0}}, err = {{.IterName0}}.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if j, validj, err = bit.NextValidity(); err != nil {
+		if {{.Index1}}, valid{{.Index1}}, err = {{.IterName1}}.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if k, validk, err = iit.NextValidity(); err != nil {
-			err = handleNoOp(err)
-			break
-		}
-		if validi && validj && validk {
+		if valid{{.Index0}} && valid{{.Index1}} {
 			{{template "check" . -}}
 			{{template "loopbody" . -}}
 		}
 	}`
 
-	genericUnaryIterLoopRaw = `var i int
-	var validi bool
+	genericTernaryIterLoopRaw = `var {{.Index0}}, {{.Index1}}, {{.Index2}} int
+	var valid{{.Index0}}, valid{{.Index1}}, valid{{.Index2}} bool
 	for {
-		if i, validi, err = {{.IterName}}.NextValidity(); err != nil {
+		if {{.Index0}}, valid{{.Index0}}, err = {{.IterName0}}.NextValidity(); err != nil {
 			err = handleNoOp(err)
 			break
 		}
-		if validi {
+		if {{.Index1}}, valid{{.Index1}}, err = {{.IterName1}}.NextValidity(); err != nil {
+			err = handleNoOp(err)
+			break
+		}
+		if {{.Index2}}, valid{{.Index2}}, err = {{.IterName2}}.NextValidity(); err != nil {
+			err = handleNoOp(err)
+			break
+		}
+		if valid{{.Index0}} && valid{{.Index1}} && valid{{.Index2}} {
 			{{template "check" . -}}
 			{{template "loopbody" . -}}
 		}
 	}`
-
-	genericUnaryIterIncrLoopRaw = `var i, k int
-	var validi, validk bool
-	for {
-		if i, validi, err = {{.IterName}}.NextValidity(); err != nil {
-			err = handleNoOp(err)
-			break
-		}
-		if k, validk, err = iit.NextValidity(); err != nil {
-			err = handleNoOp(err)
-			break
-		}
-		if validi && validk {
-			{{template "check" . -}}
-			{{template "loopbody" . -}}
-		}
-	}
-	`
 
 	// ALL THE SYNTACTIC ABSTRACTIONS!
 	// did I mention how much I hate C-style macros? Now I'm doing them instead
@@ -134,12 +114,12 @@ const (
 // renamed
 const (
 	vvLoopRaw         = genericLoopRaw
-	vvIncrLoopRaw     = genericIncrLoopRaw
+	vvIncrLoopRaw     = genericLoopRaw
 	vvIterLoopRaw     = genericBinaryIterLoopRaw
-	vvIterIncrLoopRaw = genericBinaryIncrIterLoopRaw
+	vvIterIncrLoopRaw = genericTernaryIterLoopRaw
 
 	mixedLoopRaw         = genericLoopRaw
-	mixedIncrLoopRaw     = genericIncrLoopRaw
+	mixedIncrLoopRaw     = genericLoopRaw
 	mixedIterLoopRaw     = genericUnaryIterLoopRaw
-	mixedIterIncrLoopRaw = genericUnaryIterIncrLoopRaw
+	mixedIterIncrLoopRaw = genericBinaryIterLoopRaw
 )

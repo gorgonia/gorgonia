@@ -58,13 +58,6 @@ func (op TypedBinOp) IsFunc() bool {
 
 func (op TypedBinOp) Kind() reflect.Kind { return op.k }
 
-type TypedCmpBinOp struct {
-	TypedBinOp
-	retSame bool
-}
-
-func (op TypedCmpBinOp) RetSame() bool { return op.retSame }
-
 type unaryOp struct {
 	symbol string
 	name   string

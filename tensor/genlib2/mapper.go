@@ -83,10 +83,10 @@ func (fn *Map) WriteBody(w io.Writer) {
 	Left := "a[i]"
 
 	var T *template.Template
-	var IterName string
+	var IterName0 string
 	if fn.Iter {
 		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(genericUnaryIterLoopRaw))
-		IterName = "ait"
+		IterName0 = "ait"
 	} else {
 		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(genericLoopRaw))
 	}
@@ -107,10 +107,11 @@ func (fn *Map) WriteBody(w io.Writer) {
 	template.Must(T.New("check").Funcs(funcs).Parse(""))
 
 	lb := LoopBody{
-		TypedOp:  fn,
-		Range:    Range,
-		Left:     Left,
-		IterName: IterName,
+		TypedOp:   fn,
+		Range:     Range,
+		Left:      Left,
+		Index0:    "i",
+		IterName0: IterName0,
 	}
 	T.Execute(w, lb)
 }
