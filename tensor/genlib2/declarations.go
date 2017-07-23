@@ -25,30 +25,31 @@ var cmpSymbolTemplates = [...]string{
 }
 
 var nonFloatConditionalUnarySymbolTemplates = [...]*template.Template{
-	template.Must(template.New("abs").Funcs(funcs).Parse(`if a[i] < 0 {
+	`if a[i] < 0 {
 		a[i] = -a[i]
-	}`)),
-	template.Must(template.New("sign").Funcs(funcs).Parse(`if a[i] < 0 {
+	}`, // abs
+	`if a[i] < 0 {
 		a[i] = -1
 	} else if a[i] > 0 {
 		a[i] = 1
-	}`)),
+	}`, // sign
 }
 
 var unconditionalNumUnarySymbolTemplates = [...]*template.Template{
-	template.Must(template.New("Neg").Funcs(funcs).Parse("-")),
-	template.Must(template.New("Inv").Funcs(funcs).Parse("1/")),
-	template.Must(template.New("Square").Funcs(funcs).Parse("a[i]*")),
-	template.Must(template.New("Cube").Funcs(funcs).Parse("a[i]*a[i]*")),
+	"-",          // neg
+	"1/",         // inv
+	"a[i]*",      // square
+	"a[i]*a[i]*", // cube
 }
 
 var unconditionalFloatUnarySymbolTemplates = [...]*template.Template{
-	template.Must(template.New("Exp").Funcs(funcs).Parse("{{mathPkg .}}.Exp")),
-	template.Must(template.New("Log").Funcs(funcs).Parse("{{mathPkg .}}.Log")),
-	template.Must(template.New("Log2").Funcs(funcs).Parse("{{mathPkg .}}.Log2")),
-	template.Must(template.New("Log10").Funcs(funcs).Parse("{{mathPkg .}}.Log10")),
-	template.Must(template.New("Sqrt").Funcs(funcs).Parse("{{mathPkg .}}.Sqrt")),
-	template.Must(template.New("Cbrt").Funcs(funcs).Parse("{{mathPkg .}}.Cbrt")),
+	"{{mathPkg .}}.Exp",
+	"{{mathPkg .}}.Log",
+	"{{mathPkg .}}.Log2",
+	"{{mathPkg .}}.Log10",
+	"{{mathPkg .}}.Sqrt",
+	"{{mathPkg .}}.Cbrt",
+	"1/{{mathPkg .}}",
 }
 
 var stdTypes = [...]string{
@@ -332,6 +333,11 @@ var arithBinOps []basicBinOp
 var cmpBinOps []basicBinOp
 var typedAriths []TypedBinOp
 var typedCmps []TypedBinOp
+
+var conditionalUnaries []unaryOp
+var unconditionalUnaries []unaryOp
+var unconditionalUnariesF []unaryOp
+
 var allKinds []reflect.Kind
 
 func init() {
@@ -357,6 +363,14 @@ func init() {
 	}
 	for i := range cmpBinOps {
 		cmpBinOps[i].symbol = cmpSymbolTemplates[i]
+	}
+
+	conditionalUnaries = []unaryOp{
+		{"", "Abs", false, isNumber},
+		{"", "Sign", false, isNumber},
+	}
+	for i := range conditionalUnaries {
+		conditionalUnaries[i] = nonFloatConditionalUnarySymbolTemplates[i]
 	}
 
 	for k := reflect.Invalid + 1; k < reflect.UnsafePointer+1; k++ {
