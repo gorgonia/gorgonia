@@ -199,7 +199,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			if retVal, err = retVal.Sum(axes...); err != nil {
 				return
 			}
-			retVal, err = retVal.PowOf(oneOverOrd)
+			retVal, err = retVal.PowScalar(oneOverOrd, true)
 			return
 		}
 	case 2:

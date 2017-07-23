@@ -39,7 +39,12 @@ func TestAddBasicProperties(t *testing.T) {
 		correct = newDense(Int, 5)
 		copyDense(correct, a.Dense)
 
-		ret, _ = a1.Add(identity, UseUnsafe())
+		var err error
+		ret, err = a1.Add(identity, UseUnsafe())
+		if err != nil {
+			t.Logf("ERROR: %v", err)
+			return false
+		}
 		if !allClose(correct.Data(), ret.Data()) {
 			return false
 		}

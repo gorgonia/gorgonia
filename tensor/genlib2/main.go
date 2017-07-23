@@ -36,17 +36,25 @@ func main() {
 	// pipeline("test", "BLAH_7.go", Kinds{allKinds}, generateGenericMixedCmp)
 	// pipeline("test", "BLAH_8.go", Kinds{allKinds}, generateMinMax)
 	// pipeline("test", "BLAH_9.go", Kinds{allKinds}, generateStdEngArith)
+	// pipeline("test", "BLAH_10.go", Kinds{allKinds}, generateDenseArith)
+
+	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
 	pipeline(tensorPkgLoc, "array_getset.go", Kinds{allKinds}, generateArrayMethods)
 	pipeline(tensorPkgLoc, "dense_getset.go", Kinds{allKinds}, generateDenseGetSet)
 
+	// execution
 	pipeline(execLoc, "generic_arith_vv.go", Kinds{allKinds}, generateGenericVecVecArith)
 	pipeline(execLoc, "generic_arith_mixed.go", Kinds{allKinds}, generateGenericMixedArith)
 	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
 	pipeline(execLoc, "eng_arith.go", Kinds{allKinds}, generateEArith)
 	pipeline(execLoc, "eng_map.go", Kinds{allKinds}, generateMap)
 
+	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)
+
+	// level 3 eaggregation
+	pipeline(tensorPkgLoc, "dense_arith.go", Kinds{allKinds}, generateDenseArith)
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {

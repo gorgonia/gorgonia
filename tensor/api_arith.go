@@ -24,13 +24,14 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
+		if adder, ok = at.Engine().(Adder); !ok {
+			// error
+		}
 		switch bt := b.(type) {
 		case Tensor:
-			if adder, ok = at.Engine().(Adder); !ok {
-				// error
-			}
 			return adder.Add(at, bt, opts...)
 		default:
+			return adder.AddScalar(at, b, true, opts...)
 		}
 	default:
 		switch bt := b.(type) {
@@ -43,18 +44,6 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			// error
 		}
 	}
-
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
-
-	switch {
-	case adok && bdok:
-		return ad.Add(bd, opts...)
-	case adok && !bdok:
-		return ad.Trans(b, opts...)
-	case !adok && bdok:
-		return bd.Trans(a, opts...)
-	}
 	panic("Unreachable")
 }
 
@@ -64,16 +53,29 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Sub(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
-
-	switch {
-	case adok && bdok:
-		return ad.Sub(bd, opts...)
-	case adok && !bdok:
-		return ad.TransInv(b, opts...)
-	case !adok && bdok:
-		return bd.TransInvR(a, opts...)
+	var suber Suber
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		if suber, ok = at.Engine().(Suber); !ok {
+			// error
+		}
+		switch bt := b.(type) {
+		case Tensor:
+			return suber.Sub(at, bt, opts...)
+		default:
+			return suber.SubScalar(at, b, true, opts...)
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if suber, ok = bt.Engine().(Suber); !ok {
+				// error
+			}
+			return suber.SubScalar(bt, a, false, opts...)
+		default:
+			// error
+		}
 	}
 	panic("Unreachable")
 }
@@ -84,16 +86,29 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Mul(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
-
-	switch {
-	case adok && bdok:
-		return ad.Mul(bd, opts...)
-	case adok && !bdok:
-		return ad.Scale(b, opts...)
-	case !adok && bdok:
-		return bd.Scale(a, opts...)
+	var muler Muler
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		if muler, ok = at.Engine().(Muler); !ok {
+			// error
+		}
+		switch bt := b.(type) {
+		case Tensor:
+			return muler.Mul(at, bt, opts...)
+		default:
+			return muler.MulScalar(at, b, true, opts...)
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if muler, ok = bt.Engine().(Muler); !ok {
+				// error
+			}
+			return muler.MulScalar(bt, a, false, opts...)
+		default:
+			// error
+		}
 	}
 	panic("Unreachable")
 }
@@ -104,16 +119,29 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Div(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
-
-	switch {
-	case adok && bdok:
-		return ad.Div(bd, opts...)
-	case adok && !bdok:
-		return ad.ScaleInv(b, opts...)
-	case !adok && bdok:
-		return bd.ScaleInvR(a, opts...)
+	var diver Diver
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		if diver, ok = at.Engine().(Diver); !ok {
+			// error
+		}
+		switch bt := b.(type) {
+		case Tensor:
+			return diver.Div(at, bt, opts...)
+		default:
+			return diver.DivScalar(at, b, true, opts...)
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if diver, ok = bt.Engine().(Diver); !ok {
+				// error
+			}
+			return diver.DivScalar(bt, a, false, opts...)
+		default:
+			// error
+		}
 	}
 	panic("Unreachable")
 }
@@ -124,16 +152,29 @@ func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Pow(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
-
-	switch {
-	case adok && bdok:
-		return ad.Pow(bd, opts...)
-	case adok && !bdok:
-		return ad.PowOf(b, opts...)
-	case !adok && bdok:
-		return bd.PowOfR(a, opts...)
+	var power Power
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		if power, ok = at.Engine().(Power); !ok {
+			// error
+		}
+		switch bt := b.(type) {
+		case Tensor:
+			return power.Pow(at, bt, opts...)
+		default:
+			return power.PowScalar(at, b, true, opts...)
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if power, ok = bt.Engine().(Power); !ok {
+				// error
+			}
+			return power.PowScalar(bt, a, false, opts...)
+		default:
+			// error
+		}
 	}
 	panic("Unreachable")
 }
@@ -198,7 +239,7 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				err = errors.Errorf(shapeMismatch, ScalarShape(), incr.Shape())
 				return
 			}
-			if _, err = incr.Trans(res, UseUnsafe()); err != nil {
+			if _, err = incr.AddScalar(res, true, UseUnsafe()); err != nil {
 				err = errors.Wrapf(err, opFail, "Dot scalar incr")
 				return
 			}
