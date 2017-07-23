@@ -30,9 +30,9 @@ type Map struct {
 func (fn *Map) Name() string {
 	switch {
 	case fn.Iter && fn.Incr && fn.Err:
-		return "MapIncrIterErr"
+		return "MapIterIncrErr"
 	case fn.Iter && fn.Incr && !fn.Err:
-		return "MapIncrIter"
+		return "MapIterIncr"
 	case fn.Iter && !fn.Incr && fn.Err:
 		return "MapIterErr"
 	case fn.Iter && !fn.Incr && !fn.Err:

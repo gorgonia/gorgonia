@@ -17,7 +17,7 @@ type GenericVecVecArith struct {
 func (fn *GenericVecVecArith) Name() string {
 	switch {
 	case fn.Iter && fn.Incr:
-		return fmt.Sprintf("%sIncrIter", fn.TypedBinOp.Name())
+		return fmt.Sprintf("%sIterIncr", fn.TypedBinOp.Name())
 	case fn.Iter && !fn.Incr:
 		return fmt.Sprintf("%sIter", fn.TypedBinOp.Name())
 	case !fn.Iter && fn.Incr:
@@ -368,6 +368,15 @@ func makeGenericMixedAriths(tbo []TypedBinOp) (retVal []*GenericMixedArith) {
 
 func generateGenericVecVecArith(f io.Writer, ak Kinds) {
 	gen := makeGenericVecVecAriths(typedAriths)
+
+	importStmt := `
+	import (
+		_ "unsafe"
+
+	_ "github.com/chewxy/vecf32"
+	_ "github.com/chewxy/vecf64")
+	`
+	f.Write([]byte(importStmt))
 
 	for _, g := range gen {
 		g.Write(f)

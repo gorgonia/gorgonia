@@ -26,7 +26,7 @@ func (a *array) Get(i int) interface{} {
 		{{end -}}
 	{{end -}}
 	default:
-		at := uintptr(a.ptr) + uintptr(i) * a.t.Size()
+		at := uintptr(a.Ptr) + uintptr(i) * a.t.Size()
 		val := reflect.NewAt(a.t, unsafe.Pointer(at))
 		val = reflect.Indirect(val)
 		return val.Interface()
@@ -47,7 +47,7 @@ func (a *array) Set(i int, x interface{}) {
 	{{end -}}
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(a.ptr)
+		ptr := uintptr(a.Ptr)
 		want := ptr + uintptr(i)*a.t.Size()
 		val := reflect.NewAt(a.t, unsafe.Pointer(want))
 		val = reflect.Indirect(val)
@@ -76,8 +76,8 @@ func (a *array) Memset(x interface{}) error {
 	{{end -}}
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(a.ptr)
-		for i := 0; i < a.l; i++ {
+		ptr := uintptr(a.Ptr)
+		for i := 0; i < a.L; i++ {
 			want := ptr + uintptr(i)*a.t.Size()
 			val := reflect.NewAt(a.t, unsafe.Pointer(want))
 			val = reflect.Indirect(val)
@@ -104,7 +104,7 @@ func (a array) Eq(other interface{}) bool {
 		}
 
 		// same exact thing
-		if uintptr(oa.ptr) == uintptr(a.ptr){
+		if uintptr(oa.Ptr) == uintptr(a.Ptr){
 			return true
 		}
 
@@ -121,7 +121,7 @@ func (a array) Eq(other interface{}) bool {
 			{{end -}}
 		{{end -}}
 		default:
-			for i := 0; i < a.l; i++{
+			for i := 0; i < a.L; i++{
 				if !reflect.DeepEqual(a.Get(i), oa.Get(i)){
 					return false
 				}

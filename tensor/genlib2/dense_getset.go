@@ -28,7 +28,7 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 	{{end -}}
 	default:
 		xv := reflect.ValueOf(x)
-		ptr := uintptr(t.ptr)
+		ptr := uintptr(t.array.Ptr)
 		for i, err = it.Next(); err == nil; i, err = it.Next(){
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))
@@ -62,7 +62,7 @@ const zeroRaw = `func (t *Dense) zeroIter() (err error){
 		{{end -}}
 	{{end -}}
 	default:
-		ptr := uintptr(t.ptr)
+		ptr := uintptr(t.array.Ptr)
 		for i, err = it.Next(); err == nil; i, err = it.Next(){
 			want := ptr + uintptr(i)*t.t.Size()
 			val := reflect.NewAt(t.t, unsafe.Pointer(want))

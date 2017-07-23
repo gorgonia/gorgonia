@@ -91,7 +91,7 @@ const (
 	}
 	`
 
-	eArithIncrIterRaw = `as :=isScalar(a)
+	eArithIterIncrRaw = `as :=isScalar(a)
 	bs := isScalar(b)
 	is := isScalar(incr)
 
@@ -114,11 +114,11 @@ const (
 			it[0] += at[0]
 			return
 		case as && !bs:
-			return {{$name}}IncrIterSV{{short .}}(at[0], bt, it, bit, iit)
+			return {{$name}}IterIncrSV{{short .}}(at[0], bt, it, bit, iit)
 		case !as && bs:
-			return {{$name}}IncrIterVS{{short .}}(at, bt[0], it, ait, iit)
+			return {{$name}}IterIncrVS{{short .}}(at, bt[0], it, ait, iit)
 		default:
-			return {{$name}}IncrIter{{short .}}(at, bt, it, ait, bit, iit)
+			return {{$name}}IterIncr{{short .}}(at, bt, it, ait, bit, iit)
 		}
 		{{end -}}
 	default:
@@ -190,9 +190,9 @@ const (
 
 		switch {
 		case incr && f0 != nil:
-			MapIncrIter{{short .}}(f0, at, ait)
+			MapIterIncr{{short .}}(f0, at, ait)
 		case incr && f0 == nil:
-			err = MapIncrIterErr{{short .}}(f1, at, ait)
+			err = MapIterIncrErr{{short .}}(f1, at, ait)
 		case !incr && f0 == nil:
 			err = MapIterErr{{short .}}(f1, at, ait)
 		default:
@@ -209,7 +209,7 @@ var (
 	eArith         *template.Template
 	eArithIncr     *template.Template
 	eArithIter     *template.Template
-	eArithIncrIter *template.Template
+	eArithIterIncr *template.Template
 	eMap           *template.Template
 	eMapIter       *template.Template
 )
@@ -218,7 +218,7 @@ func init() {
 	eArith = template.Must(template.New("eArith").Funcs(funcs).Parse(eArithRaw))
 	eArithIncr = template.Must(template.New("eArithIncr").Funcs(funcs).Parse(eArithIncrRaw))
 	eArithIter = template.Must(template.New("eArithIter").Funcs(funcs).Parse(eArithIterRaw))
-	eArithIncrIter = template.Must(template.New("eArithIncrIter").Funcs(funcs).Parse(eArithIncrIterRaw))
+	eArithIterIncr = template.Must(template.New("eArithIterIncr").Funcs(funcs).Parse(eArithIterIncrRaw))
 
 	eMap = template.Must(template.New("eMap").Funcs(funcs).Parse(eMapRaw))
 	eMapIter = template.Must(template.New("eMapIter").Funcs(funcs).Parse(eMapIterRaw))

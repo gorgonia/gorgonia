@@ -24,7 +24,7 @@ type eLoopBody struct {
 func (fn *InternalEngArithMethod) Name() string {
 	switch {
 	case fn.Incr && fn.Iter:
-		return fmt.Sprintf("%sIncrIter", fn.BinOp.Name())
+		return fmt.Sprintf("%sIterIncr", fn.BinOp.Name())
 	case fn.Incr && !fn.Iter:
 		return fmt.Sprintf("%sIncr", fn.BinOp.Name())
 	case !fn.Incr && fn.Iter:
@@ -118,6 +118,7 @@ func generateEArith(f io.Writer, kinds Kinds) {
 		meth.Write(f)
 		meth.Incr = true
 	}
+
 	for _, meth := range methods {
 		meth.Write(f)
 	}

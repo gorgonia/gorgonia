@@ -42,14 +42,16 @@ const (
 )
 
 const (
-	scalarTypeRaw       = `{{asType .}}`
-	sliceTypeRaw        = `[]{{asType .}}`
-	iteratorTypeRaw     = `Iterator`
-	interfaceTypeRaw    = "interface{}"
-	boolsTypeRaw        = `[]bool`
-	boolTypeRaw         = `bool`
-	reflectTypeRaw      = `reflect.Type`
-	arrayTypeRaw        = `Array`
+	scalarTypeRaw    = `{{asType .}}`
+	sliceTypeRaw     = `[]{{asType .}}`
+	iteratorTypeRaw  = `Iterator`
+	interfaceTypeRaw = "interface{}"
+	boolsTypeRaw     = `[]bool`
+	boolTypeRaw      = `bool`
+	reflectTypeRaw   = `reflect.Type`
+
+	// arrayTypeRaw        = `Array`
+	arrayTypeRaw        = `*storage.Header`
 	unaryFuncTypeRaw    = `func({{asType .}}){{asType .}} `
 	unaryFuncErrTypeRaw = `func({{asType .}}) ({{asType .}}, error)`
 	tensorTypeRaw       = `Tensor`

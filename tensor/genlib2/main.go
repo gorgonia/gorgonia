@@ -33,9 +33,20 @@ func main() {
 	// pipeline("test", "BLAH_4.go", Kinds{allKinds}, generateGenericMap)
 	// pipeline("test", "BLAH_5.go", Kinds{allKinds}, generateMap)
 	// pipeline("test", "BLAH_6.go", Kinds{allKinds}, generateGenericVecVecCmp)
-	pipeline("test", "BLAH_7.go", Kinds{allKinds}, generateGenericMixedCmp)
-	pipeline("test", "BLAH_8.go", Kinds{allKinds}, generateMinMax)
-	pipeline("test", "BLAH_9.go", Kinds{allKinds}, generateStdEngArith)
+	// pipeline("test", "BLAH_7.go", Kinds{allKinds}, generateGenericMixedCmp)
+	// pipeline("test", "BLAH_8.go", Kinds{allKinds}, generateMinMax)
+	// pipeline("test", "BLAH_9.go", Kinds{allKinds}, generateStdEngArith)
+	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
+	pipeline(tensorPkgLoc, "array_getset.go", Kinds{allKinds}, generateArrayMethods)
+	pipeline(tensorPkgLoc, "dense_getset.go", Kinds{allKinds}, generateDenseGetSet)
+
+	pipeline(execLoc, "generic_arith_vv.go", Kinds{allKinds}, generateGenericVecVecArith)
+	pipeline(execLoc, "generic_arith_mixed.go", Kinds{allKinds}, generateGenericMixedArith)
+	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
+	pipeline(execLoc, "eng_arith.go", Kinds{allKinds}, generateEArith)
+	pipeline(execLoc, "eng_map.go", Kinds{allKinds}, generateMap)
+
+	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {

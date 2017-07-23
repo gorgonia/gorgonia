@@ -8,7 +8,7 @@ import (
 // level 2 aggregation (tensor.StdEng) templates
 
 type EngineArith struct {
-	name     string
+	Name     string
 	VecVar   string
 	PrepData string
 
@@ -16,12 +16,12 @@ type EngineArith struct {
 	LeftVec bool
 }
 
-func (fn *EngineArith) Name() string {
+func (fn *EngineArith) methName() string {
 	switch {
 	case fn.VV:
-		return fn.name
+		return fn.Name
 	default:
-		return fn.name + "Scalar"
+		return fn.Name + "Scalar"
 	}
 }
 
@@ -38,7 +38,7 @@ func (fn *EngineArith) Signature() *Signature {
 		paramTemplates = []*template.Template{tensorType, interfaceType, boolType, splatFuncOptType}
 	}
 	return &Signature{
-		Name:           fn.Name(),
+		Name:           fn.methName(),
 		NameTemplate:   plainName,
 		ParamNames:     paramNames,
 		ParamTemplates: paramTemplates,
@@ -96,11 +96,12 @@ const prepVVRaw = `var reuse *Dense
 
 const prepMixedRaw = `var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
 		return
 	}
 
-	typ := a.Dtype().Type
+	a := t
+	typ := t.Dtype().Type
 	var ait, bit,  iit Iterator
 	var dataA, dataB, dataReuse *storage.Header
 	var useIter bool
@@ -110,7 +111,6 @@ const prepMixedRaw = `var reuse *Dense
 			err = errors.Wrapf(err, "StdEng.{{.Name}}")
 			return
 		}
-		ait = tit
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
 			err = errors.Wrapf(err, "StdEng.{{.Name}}")
@@ -174,7 +174,7 @@ func generateStdEngArith(f io.Writer, ak Kinds) {
 	var methods []*EngineArith
 	for _, abo := range arithBinOps {
 		meth := &EngineArith{
-			name: abo.Name(),
+			Name: abo.Name(),
 			VV:   true,
 		}
 		methods = append(methods, meth)
@@ -186,15 +186,10 @@ func generateStdEngArith(f io.Writer, ak Kinds) {
 		meth.VV = false
 	}
 
-	// SV
+	// Scalar
 	for _, meth := range methods {
 		meth.Write(f)
 		meth.LeftVec = true
-	}
-
-	// VS
-	for _, meth := range methods {
-		meth.Write(f)
 	}
 
 }
