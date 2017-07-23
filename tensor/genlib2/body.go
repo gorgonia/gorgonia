@@ -95,8 +95,7 @@ const (
 		{{.Range}}[i] = {{trueValue .Kind}}
 	}else{
 		{{.Range}}[i] = {{falseValue .Kind}}
-	}
-	`
+	}`
 
 	ternaryIterSet = `{{.Range}}[k] = {{template "opDo" . -}}`
 

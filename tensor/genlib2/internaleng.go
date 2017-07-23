@@ -123,6 +123,8 @@ func generateEArith(f io.Writer, kinds Kinds) {
 	}
 }
 
+/* MAP */
+
 type InternalEngMap struct {
 	Kinds []reflect.Kind
 	Iter  bool

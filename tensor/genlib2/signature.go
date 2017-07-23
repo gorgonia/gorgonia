@@ -52,6 +52,8 @@ const (
 	arrayTypeRaw        = `Array`
 	unaryFuncTypeRaw    = `func({{asType .}}){{asType .}} `
 	unaryFuncErrTypeRaw = `func({{asType .}}) ({{asType .}}, error)`
+	tensorTypeRaw       = `Tensor`
+	splatFuncOptTypeRaw = `...FuncOpt`
 )
 
 var (
@@ -69,6 +71,8 @@ var (
 	arrayType        *template.Template
 	unaryFuncType    *template.Template
 	unaryFuncErrType *template.Template
+	tensorType       *template.Template
+	splatFuncOptType *template.Template
 )
 
 func init() {
@@ -86,4 +90,6 @@ func init() {
 	arrayType = template.Must(template.New("arrayType").Funcs(funcs).Parse(arrayTypeRaw))
 	unaryFuncType = template.Must(template.New("unaryFuncType").Funcs(funcs).Parse(unaryFuncTypeRaw))
 	unaryFuncErrType = template.Must(template.New("unaryFuncErrType").Funcs(funcs).Parse(unaryFuncErrTypeRaw))
+	tensorType = template.Must(template.New("tensorType").Funcs(funcs).Parse(tensorTypeRaw))
+	splatFuncOptType = template.Must(template.New("splatFuncOpt").Funcs(funcs).Parse(splatFuncOptTypeRaw))
 }

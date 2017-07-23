@@ -75,6 +75,8 @@ func (fn *GenericVecVecArith) WriteBody(w io.Writer) {
 	Index1 = "j"
 	Left = "a[i]"
 	Right = "b[j]"
+
+	T = template.New(fn.Name()).Funcs(funcs)
 	switch {
 	case fn.Iter && fn.Incr:
 		Range = "incr"
@@ -82,31 +84,31 @@ func (fn *GenericVecVecArith) WriteBody(w io.Writer) {
 		IterName0 = "ait"
 		IterName1 = "bit"
 		IterName2 = "iit"
-		T = template.Must(template.New("vvIterIncrLoop").Funcs(funcs).Parse(genericTernaryIterLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(iterIncrLoopBody))
+		T = template.Must(T.Parse(genericTernaryIterLoopRaw))
+		template.Must(T.New("loopbody").Parse(iterIncrLoopBody))
 	case fn.Iter && !fn.Incr:
 		IterName0 = "ait"
 		IterName1 = "bit"
-		T = template.Must(template.New("vvIterLoop").Funcs(funcs).Parse(genericBinaryIterLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
+		T = template.Must(T.Parse(genericBinaryIterLoopRaw))
+		template.Must(T.New("loopbody").Parse(basicSet))
 	case !fn.Iter && fn.Incr:
 		Range = "incr"
 		Right = "b[i]"
-		T = template.Must(template.New("vvIncrLoop").Funcs(funcs).Parse(genericLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicIncr))
+		T = template.Must(T.Parse(genericLoopRaw))
+		template.Must(T.New("loopbody").Parse(basicIncr))
 	default:
 		Right = "b[i]"
-		T = template.Must(template.New("vvLoop").Funcs(funcs).Parse(genericLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
+		T = template.Must(T.Parse(genericLoopRaw))
+		template.Must(T.New("loopbody").Parse(basicSet))
 	}
-	template.Must(T.New("callFunc").Funcs(funcs).Parse(binOpCallFunc))
-	template.Must(T.New("opDo").Funcs(funcs).Parse(binOpDo))
-	template.Must(T.New("symbol").Funcs(funcs).Parse(fn.SymbolTemplate()))
+	template.Must(T.New("callFunc").Parse(binOpCallFunc))
+	template.Must(T.New("opDo").Parse(binOpDo))
+	template.Must(T.New("symbol").Parse(fn.SymbolTemplate()))
 
 	if fn.Check != nil && fn.Check(fn.Kind()) {
 		w.Write([]byte("var errs errorIndices\n"))
 	}
-	template.Must(T.New("check").Funcs(funcs).Parse(fn.CheckTemplate))
+	template.Must(T.New("check").Parse(fn.CheckTemplate))
 
 	lb := LoopBody{
 		TypedOp: fn.TypedBinOp,
@@ -236,27 +238,28 @@ func (fn *GenericMixedArith) WriteBody(w io.Writer) {
 	var Range, Left, Right string
 	var Index0, Index1 string
 	var IterName0, IterName1 string
-	var T *template.Template
 
 	Range = "a"
 	Left = "a[i]"
 	Right = "b[i]"
 	Index0 = "i"
+
+	T := template.New(fn.Name()).Funcs(funcs)
 	switch {
 	case fn.Iter && fn.Incr:
 		Range = "incr"
-		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(genericBinaryIterLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(iterIncrLoopBody))
+		T = template.Must(T.Parse(genericBinaryIterLoopRaw))
+		template.Must(T.New("loopbody").Parse(iterIncrLoopBody))
 	case fn.Iter && !fn.Incr:
-		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(mixedIterLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
+		T = template.Must(T.Parse(genericUnaryIterLoopRaw))
+		template.Must(T.New("loopbody").Parse(basicSet))
 	case !fn.Iter && fn.Incr:
 		Range = "incr"
-		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(mixedIncrLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicIncr))
+		T = template.Must(T.Parse(genericLoopRaw))
+		template.Must(T.New("loopbody").Parse(basicIncr))
 	default:
-		T = template.Must(template.New(fn.Name()).Funcs(funcs).Parse(mixedLoopRaw))
-		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
+		T = template.Must(T.Parse(genericLoopRaw))
+		template.Must(T.New("loopbody").Parse(basicSet))
 	}
 
 	if fn.LeftVec {
@@ -284,14 +287,14 @@ func (fn *GenericMixedArith) WriteBody(w io.Writer) {
 		IterName0 = "bit"
 	}
 
-	template.Must(T.New("callFunc").Funcs(funcs).Parse(binOpCallFunc))
-	template.Must(T.New("opDo").Funcs(funcs).Parse(binOpDo))
-	template.Must(T.New("symbol").Funcs(funcs).Parse(fn.SymbolTemplate()))
+	template.Must(T.New("callFunc").Parse(binOpCallFunc))
+	template.Must(T.New("opDo").Parse(binOpDo))
+	template.Must(T.New("symbol").Parse(fn.SymbolTemplate()))
 
 	if fn.Check != nil && fn.Check(fn.Kind()) {
 		w.Write([]byte("var errs errorIndices\n"))
 	}
-	template.Must(T.New("check").Funcs(funcs).Parse(fn.CheckTemplate))
+	template.Must(T.New("check").Parse(fn.CheckTemplate))
 
 	lb := LoopBody{
 		TypedOp: fn.TypedBinOp,

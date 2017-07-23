@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
 	"text/template"
 )
 
@@ -147,7 +146,7 @@ func (fn *GenericMixedCmp) Name() string {
 	} else {
 		n += "SV"
 	}
-	return
+	return n
 }
 
 func (fn *GenericMixedCmp) Signature() *Signature {
@@ -158,7 +157,7 @@ func (fn *GenericMixedCmp) Signature() *Signature {
 	switch {
 	case fn.Iter && !fn.RetSame:
 		paramNames = []string{"a", "b", "retVal", "ait", "rit"}
-		paramTemplates = []*template.Template{sliceType, sliceType, bools, iteratorType, iteratorType}
+		paramTemplates = []*template.Template{sliceType, sliceType, boolsType, iteratorType, iteratorType}
 		err = true
 	case fn.Iter && fn.RetSame:
 		paramNames = []string{"a", "b", "ait"}
@@ -168,14 +167,14 @@ func (fn *GenericMixedCmp) Signature() *Signature {
 		paramNames = []string{"a", "b"}
 		paramTemplates = []*template.Template{sliceType, sliceType}
 	default:
-		paramName = []string{"a", "b", "retVal"}
-		paramTemplates = []*template.Template{sliceType, sliceType, bools}
+		paramNames = []string{"a", "b", "retVal"}
+		paramTemplates = []*template.Template{sliceType, sliceType, boolsType}
 	}
 	if fn.LeftVec {
 		paramTemplates[1] = scalarType
 	} else {
 		paramTemplates[0] = scalarType
-		if fn.iter && !fn.RetSame {
+		if fn.Iter && !fn.RetSame {
 			paramNames[3] = "bit"
 		} else if fn.Iter && fn.RetSame {
 			paramNames[2] = "bit"
@@ -192,6 +191,93 @@ func (fn *GenericMixedCmp) Signature() *Signature {
 	}
 }
 
+func (fn *GenericMixedCmp) WriteBody(w io.Writer) {
+	var Range, Left, Right string
+	var Index0, Index1 string
+	var IterName0, IterName1 string
+	var T *template.Template
+
+	Range = "a"
+	Left = "a[i]"
+	Right = "b[i]"
+	Index0 = "i"
+
+	T = template.New(fn.Name()).Funcs(funcs)
+	switch {
+	case fn.Iter && !fn.RetSame:
+		Range = "retVal"
+		T = template.Must(T.Parse(genericBinaryIterLoopRaw))
+		template.Must(T.New("loopbody").Parse(ternaryIterSet))
+	case fn.Iter && fn.RetSame:
+		T = template.Must(T.Parse(genericUnaryIterLoopRaw))
+		template.Must(T.New("loopbody").Parse(sameSet))
+	case !fn.Iter && fn.RetSame:
+		T = template.Must(T.Parse(genericLoopRaw))
+		template.Must(T.New("loopbody").Parse(sameSet))
+	default:
+		T = template.Must(T.Parse(genericLoopRaw))
+		template.Must(T.New("loopbody").Parse(basicSet))
+	}
+
+	if fn.LeftVec {
+		Right = "b"
+	} else {
+		Left = "a"
+	}
+	if !fn.RetSame {
+		Range = "retVal"
+	} else {
+		if !fn.LeftVec {
+			Range = "b"
+		}
+	}
+
+	switch {
+	case fn.Iter && !fn.RetSame && fn.LeftVec:
+		IterName0 = "ait"
+		IterName1 = "rit"
+		Index1 = "k"
+	case fn.Iter && fn.RetSame && fn.LeftVec:
+		IterName0 = "ait"
+	case fn.Iter && !fn.RetSame && !fn.LeftVec:
+		IterName0 = "bit"
+		IterName1 = "rit"
+		Index1 = "k"
+	case fn.Iter && fn.RetSame && !fn.LeftVec:
+		IterName0 = "bit"
+	}
+
+	template.Must(T.New("callFunc").Parse(""))
+	template.Must(T.New("opDo").Parse(binOpDo))
+	template.Must(T.New("symbol").Parse(fn.SymbolTemplate()))
+	template.Must(T.New("check").Parse(""))
+
+	lb := LoopBody{
+		TypedOp: fn.TypedBinOp,
+		Range:   Range,
+		Left:    Left,
+		Right:   Right,
+
+		Index0:    Index0,
+		Index1:    Index1,
+		IterName0: IterName0,
+		IterName1: IterName1,
+	}
+	T.Execute(w, lb)
+}
+
+func (fn *GenericMixedCmp) Write(w io.Writer) {
+	sig := fn.Signature()
+	w.Write([]byte("func "))
+	sig.Write(w)
+	w.Write([]byte("{ \n"))
+	fn.WriteBody(w)
+	if sig.Err {
+		w.Write([]byte("\nreturn\n"))
+	}
+	w.Write([]byte("}\n\n"))
+}
+
 func makeGenericVecVecCmps(tbo []TypedBinOp) (retVal []*GenericVecVecCmp) {
 	for _, tb := range tbo {
 		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind()) {
@@ -205,6 +291,21 @@ func makeGenericVecVecCmps(tbo []TypedBinOp) (retVal []*GenericVecVecCmp) {
 	return
 }
 
+func makeGenericMixedCmps(tbo []TypedBinOp) (retVal []*GenericMixedCmp) {
+	for _, tb := range tbo {
+		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind()) {
+			continue
+		}
+		fn := &GenericMixedCmp{
+			GenericVecVecCmp: GenericVecVecCmp{
+				TypedBinOp: tb,
+			},
+		}
+		retVal = append(retVal, fn)
+	}
+	return
+}
+
 func generateGenericVecVecCmp(f io.Writer, ak Kinds) {
 	gen := makeGenericVecVecCmps(typedCmps)
 	for _, g := range gen {
@@ -212,7 +313,6 @@ func generateGenericVecVecCmp(f io.Writer, ak Kinds) {
 		g.RetSame = true
 
 	}
-	fmt.Fprintln(os.Stderr, "Writing RETSAME = true")
 	for _, g := range gen {
 		if isBoolRepr(g.Kind()) {
 			g.Write(f)
@@ -220,15 +320,130 @@ func generateGenericVecVecCmp(f io.Writer, ak Kinds) {
 		g.RetSame = false
 		g.Iter = true
 	}
-	fmt.Fprintln(os.Stderr, "Writing RETSAME = false, Iter = true")
 	for _, g := range gen {
 		g.Write(f)
 		g.RetSame = true
 	}
-	fmt.Fprintln(os.Stderr, "Writing RETSAME = true")
 	for _, g := range gen {
 		if isBoolRepr(g.Kind()) {
 			g.Write(f)
 		}
+	}
+}
+
+func generateGenericMixedCmp(f io.Writer, ak Kinds) {
+	gen := makeGenericMixedCmps(typedCmps)
+	for _, g := range gen {
+		g.Write(f)
+		g.RetSame = true
+	}
+	for _, g := range gen {
+		if isBoolRepr(g.Kind()) {
+			g.Write(f)
+		}
+		g.RetSame = false
+		g.Iter = true
+	}
+	for _, g := range gen {
+		g.Write(f)
+		g.RetSame = true
+	}
+	for _, g := range gen {
+		if isBoolRepr(g.Kind()) {
+			g.Write(f)
+		}
+		g.LeftVec = true
+		g.RetSame = false
+		g.Iter = false
+	}
+
+	// VS
+
+	for _, g := range gen {
+		g.Write(f)
+		g.RetSame = true
+	}
+	for _, g := range gen {
+		if isBoolRepr(g.Kind()) {
+			g.Write(f)
+		}
+		g.RetSame = false
+		g.Iter = true
+	}
+	for _, g := range gen {
+		g.Write(f)
+		g.RetSame = true
+	}
+	for _, g := range gen {
+		if isBoolRepr(g.Kind()) {
+			g.Write(f)
+		}
+	}
+}
+
+/* OTHER */
+
+// element wise Min/Max
+const genericElMinMaxRaw = `func VecMin{{short . | title}}(a, b []{{asType .}}) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv < v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+func VecMax{{short . | title}}(a, b []{{asType .}}) error {
+	if len(a) != len(b) {
+		return errors.Errorf(lenMismatch, len(a), len(b))
+	}
+	a = a[:len(a)]
+	b = b[:len(a)]
+	for i, v := range a {
+		bv := b[i]
+		if bv > v {
+			a[i] = bv
+		}
+	}
+	return nil
+}
+`
+
+// scalar Min/Max
+const genericScalarMinMaxRaw = `func Min{{short .}}(a, b {{asType .}}) (c {{asType .}}) {if a < b {
+	return a
+	}
+	return b
+}
+
+func Max{{short .}}(a, b {{asType .}}) (c {{asType .}}) {if a > b {
+	return a
+	}
+	return b
+}
+`
+
+var (
+	genericElMinMax *template.Template
+	genericMinMax   *template.Template
+)
+
+func init() {
+	genericElMinMax = template.Must(template.New("genericVecVecMinMax").Funcs(funcs).Parse(genericElMinMaxRaw))
+	genericMinMax = template.Must(template.New("genericMinMax").Funcs(funcs).Parse(genericScalarMinMaxRaw))
+}
+
+func generateMinMax(f io.Writer, ak Kinds) {
+	for _, k := range filter(ak.Kinds, isOrd) {
+		genericElMinMax.Execute(f, k)
+	}
+
+	for _, k := range filter(ak.Kinds, isOrd) {
+		genericMinMax.Execute(f, k)
 	}
 }

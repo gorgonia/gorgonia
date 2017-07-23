@@ -12,7 +12,7 @@ import (
 const genmsg = "GENERATED FILE. DO NOT EDIT"
 
 var (
-	gopath, tensorPkgLoc, stdEngPkgLoc string
+	gopath, tensorPkgLoc, execLoc, storageLoc string
 )
 
 type Kinds struct {
@@ -22,7 +22,8 @@ type Kinds struct {
 func init() {
 	gopath = os.Getenv("GOPATH")
 	tensorPkgLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor")
-	stdEngPkgLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor/internal/stdeng")
+	execLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor/internal/execution")
+	storageLoc = path.Join(gopath, "src/github.com/chewxy/gorgonia/tensor/internal/storage")
 }
 
 func main() {
@@ -31,7 +32,10 @@ func main() {
 	// pipeline("test", "BLAH_3.go", Kinds{allKinds}, generateEArith)
 	// pipeline("test", "BLAH_4.go", Kinds{allKinds}, generateGenericMap)
 	// pipeline("test", "BLAH_5.go", Kinds{allKinds}, generateMap)
-	pipeline("test", "BLAH_6.go", Kinds{allKinds}, generateGenericVecVecCmp)
+	// pipeline("test", "BLAH_6.go", Kinds{allKinds}, generateGenericVecVecCmp)
+	pipeline("test", "BLAH_7.go", Kinds{allKinds}, generateGenericMixedCmp)
+	pipeline("test", "BLAH_8.go", Kinds{allKinds}, generateMinMax)
+	pipeline("test", "BLAH_9.go", Kinds{allKinds}, generateStdEngArith)
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {

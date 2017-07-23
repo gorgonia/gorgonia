@@ -235,3 +235,12 @@ func getOne(a reflect.Kind) string {
 func setOne(a reflect.Kind) string {
 	return fmt.Sprintf("Set%s", short(a))
 }
+
+func filter(a []reflect.Kind, is func(reflect.Kind) bool) (retVal []reflect.Kind) {
+	for _, k := range a {
+		if is(k) {
+			retVal = append(retVal, k)
+		}
+	}
+	return
+}
