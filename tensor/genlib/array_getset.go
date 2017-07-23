@@ -95,11 +95,11 @@ func (a array) Eq(other interface{}) bool {
 			return false
 		}
 
-		if oa.l != a.l {
+		if oa.L != a.L {
 			return false
 		}
 
-		if oa.c != a.c {
+		if oa.C != a.C {
 			return false
 		}
 

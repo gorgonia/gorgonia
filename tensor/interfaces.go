@@ -1,6 +1,10 @@
 package tensor
 
-import "reflect"
+import (
+	"reflect"
+
+	"github.com/chewxy/gorgonia/tensor/internal/storage"
+)
 
 // Eq is any type where you can perform an equality test
 type Eq interface {
@@ -75,7 +79,7 @@ type DenseTensor interface {
 	Tensor
 	Info() *AP
 
-	hdr() *header
+	headerer
 	rtype() reflect.Type
 	DataOrder() DataOrder
 }
@@ -87,7 +91,7 @@ type SparseTensor interface {
 	Indices() []int
 	Indptr() []int
 
-	hdr() *header
+	headerer
 }
 
 type MaskedTensor interface {
@@ -108,5 +112,5 @@ type Dotter interface {
 }
 
 type headerer interface {
-	hdr() *header
+	hdr() *storage.Header
 }

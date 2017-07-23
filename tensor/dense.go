@@ -3,6 +3,7 @@ package tensor
 import (
 	"fmt"
 
+	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
 )
 
@@ -97,10 +98,10 @@ func (t *Dense) makeArray(size int) {
 		panic(err)
 	}
 
-	var hdr header
-	hdr.ptr = mem.Pointer()
-	hdr.l = size
-	hdr.c = size
+	var hdr storage.Header
+	hdr.Ptr = mem.Pointer()
+	hdr.L = size
+	hdr.C = size
 	t.array = makeArrayFromHeader(hdr, t.t)
 	return
 
@@ -125,7 +126,7 @@ func (t *Dense) DataSize() int {
 	if t.IsScalar() {
 		return 0
 	}
-	return t.l
+	return t.L
 }
 
 // Engine returns the execution engine associated with this Tensor
@@ -186,7 +187,7 @@ func (t *Dense) Clone() interface{} {
 		retVal.t = t.t
 		retVal.e = t.e
 		retVal.flag = t.flag
-		retVal.makeArray(t.l)
+		retVal.makeArray(t.L)
 
 		if t.old != nil {
 			retVal.old = t.old.Clone()
@@ -253,8 +254,8 @@ func (t *Dense) MaskFromDense(tts ...*Dense) {
 
 // Private methods
 
-func (t *Dense) cap() int { return t.c }
-func (t *Dense) len() int { return t.l } // exactly the same as DataSize
+func (t *Dense) cap() int { return t.array.C }
+func (t *Dense) len() int { return t.array.L } // exactly the same as DataSize
 
 func (t *Dense) setShape(s ...int) {
 	t.unlock()
@@ -273,16 +274,16 @@ func (t *Dense) fix() {
 	}
 
 	switch {
-	case t.IsScalar() && t.ptr == nil:
+	case t.IsScalar() && t.array.Ptr == nil:
 		t.makeArray(1)
-	case t.Shape() == nil && t.ptr != nil:
-		size := t.l
+	case t.Shape() == nil && t.array.Ptr != nil:
+		size := t.L
 		if size == 1 {
 			t.SetShape() // scalar
 		} else {
 			t.SetShape(size) // vector
 		}
-	case t.ptr == nil && t.t != Dtype{}:
+	case t.array.Ptr == nil && t.t != Dtype{}:
 		size := t.Shape().TotalSize()
 		t.makeArray(size)
 
@@ -290,7 +291,7 @@ func (t *Dense) fix() {
 	if len(t.mask) != t.len() {
 		t.mask = t.mask[:0]
 	}
-	t.lock() // don't put this in a defer - if t.ptr == nil and t.Shape() == nil. then leave it unlocked
+	t.lock() // don't put this in a defer - if t.array.Ptr == nil and t.Shape() == nil. then leave it unlocked
 }
 
 // makeMask adds a mask slice to tensor if required
@@ -309,11 +310,11 @@ func (t *Dense) makeMask() {
 
 // sanity is a function that sanity checks that a tensor is correct.
 func (t *Dense) sanity() error {
-	if t.AP != nil && t.Shape() == nil && t.ptr == nil {
+	if t.AP != nil && t.Shape() == nil && t.array.Ptr == nil {
 		return errors.New(emptyTensor)
 	}
 
-	size := t.l
+	size := t.L
 	expected := t.Size()
 	if t.viewOf == nil && size != expected && !t.IsScalar() {
 		return errors.Errorf(shapeMismatch, t.Shape(), size)
@@ -533,7 +534,7 @@ func copyDense(dest, src *Dense) int {
 		if err := src.e.Memcpy(dest, src); err != nil {
 			panic(err)
 		}
-		return dest.l
+		return dest.L
 	}
 	return copyArray(dest.array, src.array)
 }

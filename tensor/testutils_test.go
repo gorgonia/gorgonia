@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"testing"
 	"unsafe"
+
+	"github.com/chewxy/gorgonia/tensor/internal/storage"
 )
 
 func checkErr(t *testing.T, expected bool, err error, name string, id interface{}) (cont bool) {
@@ -68,14 +70,14 @@ func (e dummyEngine) Memset(mem Memory, val interface{}) error { return nil }
 func (e dummyEngine) Memclr(mem Memory)                        {}
 func (e dummyEngine) Memcpy(dst, src Memory) error {
 	if e {
-		var a, b header
-		a.ptr = src.Pointer()
-		a.l = int(src.MemSize())
-		a.c = int(src.MemSize())
+		var a, b storage.Header
+		a.Ptr = src.Pointer()
+		a.L = int(src.MemSize())
+		a.C = int(src.MemSize())
 
-		b.ptr = dst.Pointer()
-		b.l = int(dst.MemSize())
-		b.c = int(dst.MemSize())
+		b.Ptr = dst.Pointer()
+		b.L = int(dst.MemSize())
+		b.C = int(dst.MemSize())
 
 		abs := *(*[]byte)(unsafe.Pointer(&a))
 		bbs := *(*[]byte)(unsafe.Pointer(&b))

@@ -97,9 +97,9 @@ func ReturnTensor(t Tensor) {
 	switch tt := t.(type) {
 	case *Dense:
 		if tt.IsManuallyManaged() {
-			tt.ptr = nil
-			tt.l = 0
-			tt.c = 0
+			tt.array.Ptr = nil
+			tt.array.L = 0
+			tt.array.C = 0
 			return
 		}
 
@@ -119,7 +119,7 @@ func ReturnTensor(t Tensor) {
 				ReturnInts(tt.transposeWith)
 				tt.transposeWith = nil
 			}
-			tt.ptr = nil
+			tt.array.Ptr = nil
 			return // yes, we're not putting it back into the pool
 		}
 

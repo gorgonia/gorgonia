@@ -29,7 +29,7 @@ type coo struct {
 	data   array
 }
 
-func (c *coo) Len() int { return c.data.l }
+func (c *coo) Len() int { return c.data.L }
 func (c *coo) Less(i, j int) bool {
 	if c.o.isColMajor() {
 		return c.colMajorLess(i, j)
@@ -183,7 +183,7 @@ func (t *CS) Strides() []int { return nil }
 func (t *CS) Dtype() Dtype   { return t.t }
 func (t *CS) Dims() int      { return 2 }
 func (t *CS) Size() int      { return t.s.TotalSize() }
-func (t *CS) DataSize() int  { return t.l }
+func (t *CS) DataSize() int  { return t.L }
 func (t *CS) Engine() Engine { return t.e }
 
 func (t *CS) Slice(...Slice) (View, error) {
@@ -282,7 +282,7 @@ func (t *CS) Clone() interface{} {
 	retVal.indptr = make([]int, len(t.indptr))
 	copy(retVal.indices, t.indices)
 	copy(retVal.indptr, t.indptr)
-	retVal.array = makeArray(t.t, t.l)
+	retVal.array = makeArray(t.t, t.array.L)
 	copyArray(retVal.array, t.array)
 	retVal.e = t.e
 	return retVal
@@ -291,12 +291,12 @@ func (t *CS) Clone() interface{} {
 func (t *CS) IsScalar() bool           { return false }
 func (t *CS) ScalarValue() interface{} { panic("Sparse Matrices cannot represent Scalar Values") }
 
-func (t *CS) MemSize() uintptr        { return uintptr(calcMemSize(t.t, t.l)) }
-func (t *CS) Uintptr() uintptr        { return uintptr(t.ptr) }
-func (t *CS) Pointer() unsafe.Pointer { return t.ptr }
+func (t *CS) MemSize() uintptr        { return uintptr(calcMemSize(t.t, t.array.L)) }
+func (t *CS) Uintptr() uintptr        { return uintptr(t.array.Ptr) }
+func (t *CS) Pointer() unsafe.Pointer { return t.array.Ptr }
 
 // NonZeroes returns the nonzeroes. In academic literature this is often written as NNZ.
-func (t *CS) NonZeroes() int     { return t.l }
+func (t *CS) NonZeroes() int     { return t.L }
 func (t *CS) Iterator() Iterator { return NewFlatSparseIterator(t) } // not yet created
 
 func (t *CS) at(coord ...int) (int, bool) {

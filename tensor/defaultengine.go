@@ -1,13 +1,13 @@
 package tensor
 
 import (
-	"github.com/chewxy/gorgonia/tensor/internal/stdeng"
+	"github.com/chewxy/gorgonia/tensor/internal/execution"
 	"github.com/pkg/errors"
 )
 
 // StdEng is the default execution engine that comes with the tensors. To use other execution engines, use the WithEngine construction option.
 type StdEng struct {
-	stdeng.E
+	execution.E
 }
 
 func (e StdEng) makeArray(t Dtype, size int) array { return makeArray(t, size) }

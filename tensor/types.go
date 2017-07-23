@@ -206,6 +206,33 @@ func isUnsigned(dt Kinder) bool {
 	return false
 }
 
+// RegisterNumber is a function required to register a new numerical Dtype.
+// This package provides the following Dtype:
+//		Int
+//		Int8
+//		Int16
+//		Int32
+//		Int64
+//		Uint
+//		Uint8
+//		Uint16
+//		Uint32
+//		Uint64
+//		Float32
+//		Float64
+//		Complex64
+//		Complex128
+//
+// If a Dtype that is registered already exists on the list, it will not be added to the list.
+func RegisterNumber(a Dtype) {
+	for _, dt := range numberTypes {
+		if dt == a {
+			return
+		}
+	}
+	numberTypes = append(numberTypes, a)
+}
+
 // NormOrder represents the order of the norm. Ideally, we'd only represent norms with a uint/byte.
 // But there are norm types that are outside numerical types, such as nuclear norm and fobenius norm.
 // So it is internally represented by a float. If Go could use NaN and Inf as consts, it would have been best,

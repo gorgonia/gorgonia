@@ -7,14 +7,14 @@ func overlaps(a, b *Dense) bool {
 		return false
 	}
 
-	if a.ptr == b.ptr {
+	if a.array.Ptr == b.array.Ptr {
 		return true
 	}
-	aptr := uintptr(a.ptr)
-	bptr := uintptr(b.ptr)
+	aptr := uintptr(a.array.Ptr)
+	bptr := uintptr(b.array.Ptr)
 
-	capA := aptr + uintptr(a.c)*a.t.Size()
-	capB := bptr + uintptr(b.c)*b.t.Size()
+	capA := aptr + uintptr(a.array.C)*a.t.Size()
+	capB := bptr + uintptr(b.array.C)*b.t.Size()
 
 	switch {
 	case aptr < bptr:

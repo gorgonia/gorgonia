@@ -136,7 +136,7 @@ func getFloatDense(t Tensor) (retVal *Dense, err error) {
 		return
 	}
 	if !isFloat(retVal.t) {
-		err = errors.Errorf(dtypeMismatch, retVal.t, retVal.ptr)
+		err = errors.Errorf(dtypeMismatch, retVal.t, retVal.array.Ptr)
 		return
 	}
 	return

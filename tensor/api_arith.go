@@ -38,7 +38,7 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			if adder, ok = bt.Engine().(Adder); !ok {
 				// error
 			}
-			return adder.Trans(bt, a, opts...)
+			return adder.AddScalar(bt, a, false, opts...)
 		default:
 			// error
 		}

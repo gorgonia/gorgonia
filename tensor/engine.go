@@ -41,8 +41,10 @@ All these are expected to be unsafe on the first tensor
 type Adder interface {
 	// Add performs a + b
 	Add(a, b Tensor, opts ...FuncOpt) (Tensor, error)
-	// Trans performs a + b. By convention, b hasthe same data type as a
-	Trans(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+
+	// AddScalar adds a scalar to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	AddScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 // Subber is any engine that can perform elementwise subtraction.
@@ -50,38 +52,45 @@ type Suber interface {
 	// Sub performs a - b
 	Sub(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 
-	// TransInv performs a - b. By convention, b has the same data type as a
-	TransInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
-	// TransInvR performs b - a. By convention, b has the same data type as a
-	TransInvR(a interface{}, b Tensor, opts ...FuncOpt) (Tensor, error)
+	// SubScalar subtracts a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	SubScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 // Mul is any engine that can perform elementwise multiplication.
 // For matrix multiplication, an engine should implement MatMul() or MatVecMul() or Inner()
 type Muler interface {
+	// Mul performs a * b
 	Mul(a, b Tensor, opts ...FuncOpt) (Tensor, error)
-	Scale(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+
+	// MulScalar multiplies a scalar to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	MulScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 // Diver is any engine that can perform elementwise division.
 type Diver interface {
+	// Div performs a / b
 	Div(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 
-	// ScaleInv performs a / b. By convention, b has the same data type as a
-	ScaleInv(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
-	// ScaleInv performs b / a. By convention, b has the same data type as a
-	ScaleInvR(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+	// DivScalar divides a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	DivScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 // Power is any engine that can perform elementwise pow()
 type Power interface {
+	// Pow performs a ^ b
 	Pow(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 
-	// PowOf performs a ^ b. By convention, b has the same data type as a
-	PowOf(a Tensor, b interface{}, opts ...FuncOpt) (Tensor, error)
+	// PowScalar exponentiates a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	PowScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
 
-	// PowOfR performs b ^ a. By convention, b has the same data type as a
-	PowOfR(a interface{}, b Tensor, opts ...FuncOpt) (Tensor, error)
+type Moder interface {
+	Mod(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	ModScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 /* LINEAR ALGEBRA INTERFACES */
@@ -115,26 +124,22 @@ type UnsafeTransposer interface {
 
 type Lter interface {
 	Lt(a, b Tensor, asSame bool) (Tensor, error)
-	LtTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
-	LtST(a interface{}, b Tensor, asSame bool) (Tensor, error)
+	LtScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
 }
 
 type Lteer interface {
 	Lte(a, b Tensor, asSame bool) (Tensor, error)
-	LteTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
-	LteST(a interface{}, b Tensor, asSame bool) (Tensor, error)
+	LteScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
 }
 
 type Gter interface {
 	Gt(a, b Tensor, asSame bool) (Tensor, error)
-	GtTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
-	GtST(a interface{}, b Tensor, asSame bool) (Tensor, error)
+	GtScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
 }
 
 type Gteer interface {
 	Gte(a, b Tensor, asSame bool) (Tensor, error)
-	GteTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
-	GteST(a interface{}, b Tensor, asSame bool) (Tensor, error)
+	GteScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
 }
 
 /* EQ INTERFACES
@@ -143,15 +148,17 @@ These return the same types
 
 type ElEqer interface {
 	ElEq(a, b Tensor, asSame bool) (Tensor, error)
-	ElEqTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
-	ElEqST(a interface{}, b Tensor, asSame bool) (Tensor, error)
+	ElEqScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
 
 	ElNe(a, b Tensor, asSame bool) (Tensor, error)
-	ElNeTS(a Tensor, b interface{}, asSame bool) (Tensor, error)
-	ElNeST(a interface{}, b Tensor, asSame bool) (Tensor, error)
+	ElNeScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
 }
 
 /* Unary Operators for Numbers */
+
+type Mapper interface {
+	Map(a Tensor, opts ...FuncOpt) error
+}
 
 type Squarer interface {
 	Square(a Tensor, opts ...FuncOpt) error
