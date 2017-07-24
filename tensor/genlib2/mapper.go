@@ -18,6 +18,7 @@ const (
 	}
 	{{.Range}}[i] = x
 	`
+	simpleUnaryCallFunc = `{{template "symbol" .}}({{.Left}}[{{.Index0}}])`
 )
 
 type Map struct {
@@ -80,7 +81,7 @@ func (fn *Map) Signature() *Signature {
 
 func (fn *Map) WriteBody(w io.Writer) {
 	Range := "a"
-	Left := "a[i]"
+	Left := "a"
 
 	var T *template.Template
 	var IterName0 string
@@ -101,7 +102,7 @@ func (fn *Map) WriteBody(w io.Writer) {
 	default:
 		template.Must(T.New("loopbody").Funcs(funcs).Parse(basicSet))
 	}
-	template.Must(T.New("callFunc").Funcs(funcs).Parse(unaryOpCallFunc))
+	template.Must(T.New("callFunc").Funcs(funcs).Parse(simpleUnaryCallFunc))
 	template.Must(T.New("symbol").Funcs(funcs).Parse("fn"))
 	template.Must(T.New("opDo").Funcs(funcs).Parse(""))
 	template.Must(T.New("check").Funcs(funcs).Parse(""))

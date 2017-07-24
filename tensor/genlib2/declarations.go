@@ -44,6 +44,7 @@ var unconditionalNumUnarySymbolTemplates = [...]string{
 
 var unconditionalFloatUnarySymbolTemplates = [...]string{
 	"{{mathPkg .Kind}}Exp",
+	"{{mathPkg .Kind}}Tanh",
 	"{{mathPkg .Kind}}Log",
 	"{{mathPkg .Kind}}Log2",
 	"{{mathPkg .Kind}}Log10",
@@ -389,20 +390,19 @@ func init() {
 		{"", "Cube", false, isNumber},
 
 		{"", "Exp", true, isFloatCmplx},
+		{"", "Tanh", true, isFloatCmplx},
 		{"", "Log", true, isFloatCmplx},
 		{"", "Log2", true, isFloat},
 		{"", "Log10", true, isFloatCmplx},
 		{"", "Sqrt", true, isFloatCmplx},
 		{"", "Cbrt", true, isFloat},
+		{"", "InvSqrt", true, isFloatCmplx},
 	}
 	nonF := len(unconditionalNumUnarySymbolTemplates)
 	for i := range unconditionalNumUnarySymbolTemplates {
 		unconditionalUnaries[i].symbol = unconditionalNumUnarySymbolTemplates[i]
 	}
 	for i := range unconditionalFloatUnarySymbolTemplates {
-		if i+nonF >= len(unconditionalUnaries) {
-			break
-		}
 		unconditionalUnaries[i+nonF].symbol = unconditionalFloatUnarySymbolTemplates[i]
 	}
 

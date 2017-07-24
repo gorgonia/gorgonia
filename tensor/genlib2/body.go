@@ -100,20 +100,16 @@ const (
 	ternaryIterSet = `{{.Range}}[k] = {{template "opDo" . -}}`
 
 	binOpCallFunc = `{{if eq "complex64" .Kind.String -}}
-		complex64({{template "symbol" .Kind}}(complex128({{.Left}}), complex128({{.Right}})))
-		{{else -}}
-		{{template "symbol" .Kind}}({{.Left}}, {{.Right}})
-		{{end -}}`
+		complex64({{template "symbol" .Kind}}(complex128({{.Left}}), complex128({{.Right}}))){{else -}}
+		{{template "symbol" .Kind}}({{.Left}}, {{.Right}}){{end -}}`
 
 	binOpDo = `{{.Left}} {{template "symbol" .Kind}} {{.Right}}`
 
 	unaryOpDo = `{{template "symbol" .}}{{.Left}}[{{.Index0}}]`
 
 	unaryOpCallFunc = `{{if eq "complex64" .Kind.String -}}
-		complex64({{template "symbol" .}}(complex128({{.Left}}[{{.Index0}}])))
-		{{else -}}
-		{{template "symbol" .}}({{.Left}}[{{.Index0}}])
-		{{end -}}
+		complex64({{template "symbol" .}}(complex128({{.Left}}[{{.Index0}}]))){{else -}}
+		{{template "symbol" .}}({{.Left}}[{{.Index0}}]){{end -}}
 		`
 
 	check0 = `if {{.Right}} == 0 {
