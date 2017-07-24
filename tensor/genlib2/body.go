@@ -107,9 +107,14 @@ const (
 
 	binOpDo = `{{.Left}} {{template "symbol" .Kind}} {{.Right}}`
 
-	unaryOpDo = `{{template "symbol" .Kind}}{{.Left}}`
+	unaryOpDo = `{{template "symbol" .}}{{.Left}}[{{.Index0}}]`
 
-	unaryOpCallFunc = `{{template "symbol" .Kind}}({{.Left}})`
+	unaryOpCallFunc = `{{if eq "complex64" .Kind.String -}}
+		complex64({{template "symbol" .}}(complex128({{.Left}}[{{.Index0}}])))
+		{{else -}}
+		{{template "symbol" .}}({{.Left}}[{{.Index0}}])
+		{{end -}}
+		`
 
 	check0 = `if {{.Right}} == 0 {
 		errs = append(errs, i)

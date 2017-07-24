@@ -37,6 +37,7 @@ func main() {
 	// pipeline("test", "BLAH_8.go", Kinds{allKinds}, generateMinMax)
 	// pipeline("test", "BLAH_9.go", Kinds{allKinds}, generateStdEngArith)
 	// pipeline("test", "BLAH_10.go", Kinds{allKinds}, generateDenseArith)
+	// pipeline("test", "BLAH_11.go", Kinds{allKinds}, generateGenericUncondUnary)
 
 	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
@@ -49,12 +50,14 @@ func main() {
 	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
 	pipeline(execLoc, "eng_arith.go", Kinds{allKinds}, generateEArith)
 	pipeline(execLoc, "eng_map.go", Kinds{allKinds}, generateMap)
+	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary)
 
 	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)
 
 	// level 3 eaggregation
 	pipeline(tensorPkgLoc, "dense_arith.go", Kinds{allKinds}, generateDenseArith)
+
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {

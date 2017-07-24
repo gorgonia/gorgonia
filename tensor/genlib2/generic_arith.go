@@ -146,7 +146,7 @@ func (fn *GenericVecVecArith) Write(w io.Writer) {
 	case !fn.Iter && !fn.Incr:
 		w.Write([]byte("{\na = a[:len(a)]; b = b[:len(a)]\n"))
 	default:
-		w.Write([]byte("{"))
+		w.Write([]byte("{\n"))
 	}
 	fn.WriteBody(w)
 	if sig.Err {

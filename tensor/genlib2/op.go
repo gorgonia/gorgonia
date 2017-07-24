@@ -71,3 +71,10 @@ func (op unaryOp) SymbolTemplate() string { return op.symbol }
 func (op unaryOp) TypeClass() TypeClass   { return op.is }
 func (op unaryOp) IsFunc() bool           { return op.isfunc }
 func (op unaryOp) IsUnaryOp()             {}
+
+type TypedUnaryOp struct {
+	UnaryOp
+	k reflect.Kind
+}
+
+func (op TypedUnaryOp) Kind() reflect.Kind { return op.k }

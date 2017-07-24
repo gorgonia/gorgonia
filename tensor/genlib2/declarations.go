@@ -24,32 +24,32 @@ var cmpSymbolTemplates = [...]string{
 	"!=",
 }
 
-var nonFloatConditionalUnarySymbolTemplates = [...]*template.Template{
-	`if a[i] < 0 {
-		a[i] = -a[i]
+var nonFloatConditionalUnarySymbolTemplates = [...]string{
+	`if {{.Range}}[{{.Index0}}] < 0 {
+		{{.Range}}[{{.Index0}}] = -{{.Range}}[{{.Index0}}]
 	}`, // abs
-	`if a[i] < 0 {
-		a[i] = -1
-	} else if a[i] > 0 {
-		a[i] = 1
+	`if {{.Range}}[{{.Index0}}] < 0 {
+		{{.Range}}[{{.Index0}}] = -1
+	} else if {{.Range}}[{{.Index0}}] > 0 {
+		{{.Range}}[{{.Index0}}] = 1
 	}`, // sign
 }
 
-var unconditionalNumUnarySymbolTemplates = [...]*template.Template{
-	"-",          // neg
-	"1/",         // inv
-	"a[i]*",      // square
-	"a[i]*a[i]*", // cube
+var unconditionalNumUnarySymbolTemplates = [...]string{
+	"-",                            // neg
+	"1/",                           // inv
+	"{{.Range}}[i]*",               // square
+	"{{.Range}}[i]*{{.Range}}[i]*", // cube
 }
 
-var unconditionalFloatUnarySymbolTemplates = [...]*template.Template{
-	"{{mathPkg .}}.Exp",
-	"{{mathPkg .}}.Log",
-	"{{mathPkg .}}.Log2",
-	"{{mathPkg .}}.Log10",
-	"{{mathPkg .}}.Sqrt",
-	"{{mathPkg .}}.Cbrt",
-	"1/{{mathPkg .}}",
+var unconditionalFloatUnarySymbolTemplates = [...]string{
+	"{{mathPkg .Kind}}Exp",
+	"{{mathPkg .Kind}}Log",
+	"{{mathPkg .Kind}}Log2",
+	"{{mathPkg .Kind}}Log10",
+	"{{mathPkg .Kind}}Sqrt",
+	"{{mathPkg .Kind}}Cbrt",
+	"{{asType .Kind}}(1)/{{mathPkg .Kind}}Sqrt",
 }
 
 var stdTypes = [...]string{
@@ -336,11 +336,20 @@ var typedCmps []TypedBinOp
 
 var conditionalUnaries []unaryOp
 var unconditionalUnaries []unaryOp
-var unconditionalUnariesF []unaryOp
+var typedCondUnaries []TypedUnaryOp
+var typedUncondUnaries []TypedUnaryOp
 
 var allKinds []reflect.Kind
 
 func init() {
+	// kinds
+
+	for k := reflect.Invalid + 1; k < reflect.UnsafePointer+1; k++ {
+		allKinds = append(allKinds, k)
+	}
+
+	// ops
+
 	arithBinOps = []basicBinOp{
 		{"", "Add", false, isAddable},
 		{"", "Sub", false, isNumber},
@@ -370,12 +379,34 @@ func init() {
 		{"", "Sign", false, isNumber},
 	}
 	for i := range conditionalUnaries {
-		conditionalUnaries[i] = nonFloatConditionalUnarySymbolTemplates[i]
+		conditionalUnaries[i].symbol = nonFloatConditionalUnarySymbolTemplates[i]
 	}
 
-	for k := reflect.Invalid + 1; k < reflect.UnsafePointer+1; k++ {
-		allKinds = append(allKinds, k)
+	unconditionalUnaries = []unaryOp{
+		{"", "Neg", false, isNumber},
+		{"", "Inv", false, isNumber},
+		{"", "Square", false, isNumber},
+		{"", "Cube", false, isNumber},
+
+		{"", "Exp", true, isFloatCmplx},
+		{"", "Log", true, isFloatCmplx},
+		{"", "Log2", true, isFloat},
+		{"", "Log10", true, isFloatCmplx},
+		{"", "Sqrt", true, isFloatCmplx},
+		{"", "Cbrt", true, isFloat},
 	}
+	nonF := len(unconditionalNumUnarySymbolTemplates)
+	for i := range unconditionalNumUnarySymbolTemplates {
+		unconditionalUnaries[i].symbol = unconditionalNumUnarySymbolTemplates[i]
+	}
+	for i := range unconditionalFloatUnarySymbolTemplates {
+		if i+nonF >= len(unconditionalUnaries) {
+			break
+		}
+		unconditionalUnaries[i+nonF].symbol = unconditionalFloatUnarySymbolTemplates[i]
+	}
+
+	// typed operations
 
 	for _, bo := range arithBinOps {
 		for _, k := range allKinds {
@@ -396,4 +427,25 @@ func init() {
 			typedCmps = append(typedCmps, tb)
 		}
 	}
+
+	for _, uo := range conditionalUnaries {
+		for _, k := range allKinds {
+			tu := TypedUnaryOp{
+				UnaryOp: uo,
+				k:       k,
+			}
+			typedCondUnaries = append(typedCondUnaries, tu)
+		}
+	}
+
+	for _, uo := range unconditionalUnaries {
+		for _, k := range allKinds {
+			tu := TypedUnaryOp{
+				UnaryOp: uo,
+				k:       k,
+			}
+			typedUncondUnaries = append(typedUncondUnaries, tu)
+		}
+	}
+
 }
