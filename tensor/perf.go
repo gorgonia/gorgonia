@@ -3,6 +3,8 @@ package tensor
 import (
 	"reflect"
 	"sync"
+
+	_ "unsafe"
 )
 
 var habbo sync.Mutex
@@ -179,13 +181,6 @@ func ReturnAP(ap *AP) {
 /* ----------------------------------------------------------------
 ------------------ Create Pools
 ------------------------------------------------------------------*/
-/* INTS POOL */
-
-var intsPool [8]sync.Pool
-
-/* BOOLS POOL */
-
-var boolsPool [8]sync.Pool
 
 /* APLIST POOL */
 
@@ -193,16 +188,6 @@ var apListPool [maxAPDims]sync.Pool
 
 // Init function
 func init() {
-	for i := range intsPool {
-		size := i
-		intsPool[i].New = func() interface{} { return make([]int, size) }
-	}
-
-	for i := range boolsPool {
-		size := i
-		boolsPool[i].New = func() interface{} { return make([]bool, size) }
-	}
-
 	for i := range apListPool {
 		size := i
 		apListPool[i].New = func() interface{} { return make([]*AP, size) }
@@ -219,65 +204,17 @@ func init() {
 	}
 }
 
-// BorrowInts borrows a slice of ints from the pool. USE WITH CAUTION.
-func BorrowInts(size int) []int {
-	if size >= 8 {
-		return make([]int, size)
-	}
+//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.BorrowInts
+func BorrowInts(size int) []int
 
-	retVal := intsPool[size].Get()
-	if retVal == nil {
-		return make([]int, size)
-	}
-	return retVal.([]int)
-}
+//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.ReturnInts
+func ReturnInts(is []int)
 
-// ReturnInts returns a slice from the pool. USE WITH CAUTION.
-func ReturnInts(is []int) {
-	if is == nil {
-		return
-	}
-	size := cap(is)
-	if size >= 8 {
-		return
-	}
-	is = is[:cap(is)]
-	for i := range is {
-		is[i] = 0
-	}
+//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.BorrowBool
+func BorrowBools(size int) []bool
 
-	intsPool[size].Put(is)
-}
-
-// BorrowBools borrows a slice of bools from the pool. USE WITH CAUTION.
-func BorrowBools(size int) []bool {
-	if size >= 8 {
-		return make([]bool, size)
-	}
-
-	retVal := boolsPool[size].Get()
-	if retVal == nil {
-		return make([]bool, size)
-	}
-	return retVal.([]bool)
-}
-
-// ReturnBools returns a slice from the pool. USE WITH CAUTION.
-func ReturnBools(is []bool) {
-	if is == nil {
-		return
-	}
-	size := cap(is)
-	if size >= 8 {
-		return
-	}
-	is = is[:cap(is)]
-	for i := range is {
-		is[i] = false
-	}
-
-	boolsPool[size].Put(is)
-}
+//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.ReturnBools
+func ReturnBools(is []bool)
 
 // BorrowAPList gets an APList from the pool. USE WITH CAUTION.
 func BorrowAPList(size int) []*AP {
