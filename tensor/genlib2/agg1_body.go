@@ -321,6 +321,11 @@ const (
 		return errors.Errorf("Unsupported type %v for {{$name}}", t)
 	}
 	`
+
+	complexAbs = `{{if eq .Kind.String "complex64" -}}
+	{{else if eq .Kind.String "complex128" -}}
+	{{end -}}
+	`
 )
 
 var (

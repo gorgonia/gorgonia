@@ -3,8 +3,8 @@ package tensor
 import (
 	"testing"
 
-	"github.com/alecthomas/assert"
 	"github.com/gonum/matrix/mat64"
+	"github.com/stretchr/testify/assert"
 )
 
 /*
