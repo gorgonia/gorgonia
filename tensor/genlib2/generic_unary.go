@@ -5,19 +5,20 @@ import (
 	"text/template"
 )
 
-type GenericUncondUnary struct {
+type GenericUnary struct {
 	TypedUnaryOp
 	Iter bool
+	Cond bool
 }
 
-func (fn *GenericUncondUnary) Name() string {
+func (fn *GenericUnary) Name() string {
 	if fn.Iter {
 		return fn.TypedUnaryOp.Name() + "Iter"
 	}
 	return fn.TypedUnaryOp.Name()
 }
 
-func (fn *GenericUncondUnary) Signature() *Signature {
+func (fn *GenericUnary) Signature() *Signature {
 	paramNames := []string{"a"}
 	paramTemplates := []*template.Template{sliceType}
 	var err bool
@@ -37,7 +38,7 @@ func (fn *GenericUncondUnary) Signature() *Signature {
 	}
 }
 
-func (fn *GenericUncondUnary) WriteBody(w io.Writer) {
+func (fn *GenericUnary) WriteBody(w io.Writer) {
 	var IterName0 string
 	T := template.New(fn.Name()).Funcs(funcs)
 
@@ -47,10 +48,14 @@ func (fn *GenericUncondUnary) WriteBody(w io.Writer) {
 	} else {
 		T = template.Must(T.Parse(genericLoopRaw))
 	}
-	template.Must(T.New("loopbody").Parse(basicSet))
+	if fn.Cond {
+		template.Must(T.New("loopbody").Parse(fn.SymbolTemplate()))
+	} else {
+		template.Must(T.New("loopbody").Parse(basicSet))
+		template.Must(T.New("symbol").Parse(fn.SymbolTemplate()))
+	}
 	template.Must(T.New("opDo").Parse(unaryOpDo))
 	template.Must(T.New("callFunc").Parse(unaryOpCallFunc))
-	template.Must(T.New("symbol").Parse(fn.SymbolTemplate()))
 	template.Must(T.New("check").Parse(""))
 
 	lb := LoopBody{
@@ -63,7 +68,7 @@ func (fn *GenericUncondUnary) WriteBody(w io.Writer) {
 	T.Execute(w, lb)
 }
 
-func (fn *GenericUncondUnary) Write(w io.Writer) {
+func (fn *GenericUnary) Write(w io.Writer) {
 	sig := fn.Signature()
 	w.Write([]byte("func "))
 	sig.Write(w)
@@ -76,17 +81,43 @@ func (fn *GenericUncondUnary) Write(w io.Writer) {
 }
 
 func generateGenericUncondUnary(f io.Writer, ak Kinds) {
-	var gen []*GenericUncondUnary
+	var gen []*GenericUnary
 	for _, tu := range typedUncondUnaries {
 		if tc := tu.TypeClass(); tc != nil && !tc(tu.Kind()) {
 			continue
 		}
-		fn := &GenericUncondUnary{
+		fn := &GenericUnary{
 			TypedUnaryOp: tu,
 		}
 		gen = append(gen, fn)
 	}
 
+	for _, g := range gen {
+		g.Write(f)
+		g.Iter = true
+	}
+	for _, g := range gen {
+		g.Write(f)
+	}
+}
+
+func generateGenericCondUnary(f io.Writer, ak Kinds) {
+	var gen []*GenericUnary
+	for _, tu := range typedCondUnaries {
+		if tc := tu.TypeClass(); tc != nil && !tc(tu.Kind()) {
+			continue
+		}
+		// special case for cmplx
+		if isComplex(tu.Kind()){
+			continue
+		}
+
+		fn := &GenericUnary{
+			TypedUnaryOp: tu,
+			Cond:         true,
+		}
+		gen = append(gen, fn)
+	}
 	for _, g := range gen {
 		g.Write(f)
 		g.Iter = true

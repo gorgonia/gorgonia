@@ -174,7 +174,7 @@ func (fn *InternalEngMap) Write(w io.Writer) {
 	w.Write([]byte("\nreturn\n}\n\n"))
 }
 
-func generateMap(f io.Writer, kinds Kinds) {
+func generateEMap(f io.Writer, kinds Kinds) {
 	m := new(InternalEngMap)
 	for _, k := range kinds.Kinds {
 		if !isAddable(k) {
@@ -185,4 +185,122 @@ func generateMap(f io.Writer, kinds Kinds) {
 	m.Write(f)
 	m.Iter = true
 	m.Write(f)
+}
+
+/* Cmp */
+
+// InternalEngCmpMethod is exactly the same structure as the arith one, except it's Same instead of Incr.
+// Some copy and paste leads to more clarity, rather than reusing the structure.
+type InternalEngCmp struct {
+	BinOp
+	Kinds   []reflect.Kind
+	RetSame bool
+	Iter    bool
+}
+
+func (fn *InternalEngCmp) Name() string {
+	switch {
+	case fn.Iter && fn.RetSame:
+		return fmt.Sprintf("%sSameIter", fn.BinOp.Name())
+	case fn.Iter && !fn.RetSame:
+		return fmt.Sprintf("%sIter", fn.BinOp.Name())
+	case !fn.Iter && fn.RetSame:
+		return fmt.Sprintf("%sSame", fn.BinOp.Name())
+	default:
+		return fn.BinOp.Name()
+	}
+}
+
+func (fn *InternalEngCmp) Signature() *Signature {
+	var paramNames []string
+	var paramTemplates []*template.Template
+
+	switch {
+	case fn.Iter && fn.RetSame:
+		paramNames = []string{"t", "a", "b", "ait", "bit"}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, iteratorType, iteratorType}
+	case fn.Iter && !fn.RetSame:
+		paramNames = []string{"t", "a", "b", "retVal", "ait", "bit", "rit"}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, boolsType, iteratorType, iteratorType, iteratorType}
+	case !fn.Iter && fn.RetSame:
+		paramNames = []string{"t", "a", "b"}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType}
+	default:
+		paramNames = []string{"t", "a", "b", "retVal"}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, boolsType}
+	}
+
+	return &Signature{
+		Name:           fn.Name(),
+		NameTemplate:   plainName,
+		ParamNames:     paramNames,
+		ParamTemplates: paramTemplates,
+
+		Err: true,
+	}
+}
+
+func (fn *InternalEngCmp) WriteBody(w io.Writer) {
+	var T *template.Template
+	switch {
+	case fn.Iter && fn.RetSame:
+		T = eCmpSameIter
+	case fn.Iter && !fn.RetSame:
+		T = eCmpBoolIter
+	case !fn.Iter && fn.RetSame:
+		T = eCmpSame
+	default:
+		T = eCmpBool
+	}
+
+	lb := eLoopBody{
+		BinOp: fn.BinOp,
+		Kinds: fn.Kinds,
+	}
+	T.Execute(w, lb)
+}
+
+func (fn *InternalEngCmp) Write(w io.Writer) {
+	w.Write([]byte("func (e E) "))
+	sig := fn.Signature()
+	sig.Write(w)
+	w.Write([]byte("{ \n"))
+	fn.WriteBody(w)
+	w.Write([]byte("}\n\n"))
+}
+
+func generateECmp(f io.Writer, kinds Kinds) {
+	var methods []*InternalEngCmp
+	for _, bo := range cmpBinOps {
+		var ks []reflect.Kind
+		for _, k := range kinds.Kinds {
+			if tc := bo.TypeClass(); tc != nil && tc(k) {
+				ks = append(ks, k)
+			}
+		}
+		meth := &InternalEngCmp{
+			BinOp: bo,
+			Kinds: ks,
+		}
+		methods = append(methods, meth)
+	}
+
+	for _, meth := range methods {
+		meth.Write(f)
+		meth.RetSame = true
+	}
+
+	for _, meth := range methods {
+		meth.Write(f)
+		meth.RetSame = false
+		meth.Iter = true
+	}
+	for _, meth := range methods {
+		meth.Write(f)
+		meth.RetSame = true
+	}
+
+	for _, meth := range methods {
+		meth.Write(f)
+	}
 }

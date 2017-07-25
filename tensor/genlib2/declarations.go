@@ -25,9 +25,12 @@ var cmpSymbolTemplates = [...]string{
 }
 
 var nonFloatConditionalUnarySymbolTemplates = [...]string{
-	`if {{.Range}}[{{.Index0}}] < 0 {
+	`{{if isFloat .Kind -}} 
+	{{.Range}}[{{.Index0}}] = {{mathPkg .Kind}}Abs({{.Range}}[{{.Index0}}]) {{else -}}
+	if {{.Range}}[{{.Index0}}] < 0 {
 		{{.Range}}[{{.Index0}}] = -{{.Range}}[{{.Index0}}]
-	}`, // abs
+	}{{end -}}`, // abs
+
 	`if {{.Range}}[{{.Index0}}] < 0 {
 		{{.Range}}[{{.Index0}}] = -1
 	} else if {{.Range}}[{{.Index0}}] > 0 {
@@ -50,7 +53,7 @@ var unconditionalFloatUnarySymbolTemplates = [...]string{
 	"{{mathPkg .Kind}}Log10",
 	"{{mathPkg .Kind}}Sqrt",
 	"{{mathPkg .Kind}}Cbrt",
-	"{{asType .Kind}}(1)/{{mathPkg .Kind}}Sqrt",
+	`{{asType .Kind}}(1)/{{mathPkg .Kind}}Sqrt`,
 }
 
 var stdTypes = [...]string{
@@ -253,6 +256,7 @@ var funcs = template.FuncMap{
 	"isFloatCmplx":       isFloatCmplx,
 	"isEq":               isEq,
 	"isOrd":              isOrd,
+	"isBoolRepr":         isBoolRepr,
 	"panicsDiv0":         panicsDiv0,
 
 	"short": short,
@@ -376,8 +380,8 @@ func init() {
 	}
 
 	conditionalUnaries = []unaryOp{
-		{"", "Abs", false, isNumber},
-		{"", "Sign", false, isNumber},
+		{"", "Abs", false, isSignedNumber},
+		{"", "Sign", false, isSignedNumber},
 	}
 	for i := range conditionalUnaries {
 		conditionalUnaries[i].symbol = nonFloatConditionalUnarySymbolTemplates[i]
@@ -396,7 +400,7 @@ func init() {
 		{"", "Log10", true, isFloatCmplx},
 		{"", "Sqrt", true, isFloatCmplx},
 		{"", "Cbrt", true, isFloat},
-		{"", "InvSqrt", true, isFloatCmplx},
+		{"", "InvSqrt", true, isFloat}, // TODO: cmplx requires to much finagling to the template. Come back to it later
 	}
 	nonF := len(unconditionalNumUnarySymbolTemplates)
 	for i := range unconditionalNumUnarySymbolTemplates {

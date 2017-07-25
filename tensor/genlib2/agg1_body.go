@@ -17,7 +17,7 @@ const (
 			{{$p := panicsDiv0 . -}}
 			switch {
 			case as && bs:
-				at[0] += bt[0]
+				{{$name}}{{short .}}(at, bt)
 			case as && !bs:
 				{{if and $isDiv $p}} err = {{end}} {{$name}}SV{{short .}}(at[0], bt)
 			case !as && bs:
@@ -203,6 +203,124 @@ const (
 			return errors.Errorf("Cannot map t of %v", t)
 	}
 	`
+
+	eCmpSameRaw = `as := isScalar(a)
+	bs := isScalar(b)
+	{{$name := .Name}}
+	switch t {
+		{{range .Kinds -}}
+		{{if isBoolRepr . -}}
+		case {{reflectKind .}}:
+			at := a.{{sliceOf .}}
+			bt := b.{{sliceOf .}}
+			switch {
+			case as && bs:
+				{{$name}}Same{{short .}}(at, bt)
+			case as && !bs:
+				{{$name}}SameSV{{short .}}(at[0], bt)
+			case !as && bs:
+				{{$name}}SameVS{{short .}}(at, bt[0])
+			default:
+				{{$name}}Same{{short .}}(at, bt)
+			}
+			return 
+		{{end -}}
+		{{end -}}
+		default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}`
+
+	eCmpBoolRaw = `as := isScalar(a)
+	bs := isScalar(b)
+	rs := len(retVal) == 1
+	rt := retVal
+
+	if (as && !bs) || (bs && !as) && rs {
+		return errors.Errorf("retVal is a scalar. a: %d, b %d", a.Len(), b.Len())
+	}
+
+	{{$name := .Name}}
+	switch t {
+		{{range .Kinds -}}
+		case {{reflectKind .}}:
+			at := a.{{sliceOf .}}
+			bt := b.{{sliceOf .}}
+
+			switch {
+			case as && bs:
+				{{$name}}{{short .}}(at, bt, rt)
+			case as && !bs:
+				{{$name}}SV{{short .}}(at[0], bt, rt)
+			case !as && bs :
+				{{$name}}VS{{short .}}(at, bt[0], rt)
+			default:
+				{{$name}}{{short .}}(at, bt, rt)
+			}
+			return 
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
+
+	eCmpSameIterRaw = `as := isScalar(a)
+	bs := isScalar(b)
+	{{$name := .Name}}
+	switch t {
+		{{range .Kinds -}}
+		{{if isBoolRepr . -}}
+	case {{reflectKind .}}:
+		at := a.{{sliceOf .}}
+		bt := b.{{sliceOf .}}
+		switch {
+		case as && bs :
+			{{$name}}Same{{short .}}(at, bt)
+		case as && !bs:
+			{{$name}}SameIterSV{{short .}}(at[0], bt, bit)
+		case !as && bs:
+			{{$name}}SameIterVS{{short .}}(at, bt[0], ait)
+		default:
+			{{$name}}SameIter{{short .}}(at, bt, ait, bit)
+		}
+		return
+		{{end -}}
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
+
+	eCmpBoolIterRaw = `as :=isScalar(a)
+	bs := isScalar(b)
+	rs := len(retVal) == 1
+	rt := retVal
+
+	if (as && !bs) || (bs && !as) && rs {
+		return errors.Errorf("retVal is scalar while len(a): %d, len(b) %d", a.Len(), b.Len())
+	}
+
+	{{$name := .Name}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		at := a.{{sliceOf .}}
+		bt := b.{{sliceOf .}}
+		switch {
+		case as && bs:
+			{{$name}}{{short .}}(at, bt, rt)
+			return
+		case as && !bs:
+			return {{$name}}IterSV{{short .}}(at[0], bt, rt, bit, rit)
+		case !as && bs:
+			return {{$name}}IterVS{{short .}}(at, bt[0], rt, ait, rit)
+		default:
+			return {{$name}}Iter{{short .}}(at, bt, rt, ait, bit, rit)
+		}
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
 )
 
 var (
@@ -212,6 +330,10 @@ var (
 	eArithIterIncr *template.Template
 	eMap           *template.Template
 	eMapIter       *template.Template
+	eCmpBool       *template.Template
+	eCmpSame       *template.Template
+	eCmpBoolIter   *template.Template
+	eCmpSameIter   *template.Template
 )
 
 func init() {
@@ -222,4 +344,9 @@ func init() {
 
 	eMap = template.Must(template.New("eMap").Funcs(funcs).Parse(eMapRaw))
 	eMapIter = template.Must(template.New("eMapIter").Funcs(funcs).Parse(eMapIterRaw))
+
+	eCmpBool = template.Must(template.New("eCmpBool").Funcs(funcs).Parse(eCmpBoolRaw))
+	eCmpSame = template.Must(template.New("eCmpSame").Funcs(funcs).Parse(eCmpSameRaw))
+	eCmpBoolIter = template.Must(template.New("eCmpBoolIter").Funcs(funcs).Parse(eCmpBoolIterRaw))
+	eCmpSameIter = template.Must(template.New("eCmpSameIter").Funcs(funcs).Parse(eCmpSameIterRaw))
 }

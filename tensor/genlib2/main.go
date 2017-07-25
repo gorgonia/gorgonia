@@ -47,20 +47,25 @@ func main() {
 	// execution
 	pipeline(execLoc, "generic_arith_vv.go", Kinds{allKinds}, generateGenericVecVecArith)
 	pipeline(execLoc, "generic_arith_mixed.go", Kinds{allKinds}, generateGenericMixedArith)
+	pipeline(execLoc, "generic_cmp_vv.go", Kinds{allKinds}, generateGenericVecVecCmp)
+	pipeline(execLoc, "generic_cmp_mixed.go", Kinds{allKinds}, generateGenericMixedCmp)
 	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
+	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary, generateGenericCondUnary)
+
+	// level 1 aggregation
 	pipeline(execLoc, "eng_arith.go", Kinds{allKinds}, generateEArith)
-	pipeline(execLoc, "eng_map.go", Kinds{allKinds}, generateMap)
-	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary)
+	pipeline(execLoc, "eng_map.go", Kinds{allKinds}, generateEMap)
+	pipeline(execLoc, "eng_cmp.go", Kinds{allKinds}, generateECmp)
 
 	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)
 
-	// level 3 eaggregation
+	// level 3 aggregation
 	pipeline(tensorPkgLoc, "dense_arith.go", Kinds{allKinds}, generateDenseArith)
 
 }
 
-func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {
+func pipeline(pkg, filename string, kinds Kinds, fns ...func(io.Writer, Kinds)) {
 	fullpath := path.Join(pkg, filename)
 	f, err := os.Create(fullpath)
 	if err != nil {
@@ -69,7 +74,10 @@ func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {
 	}
 	defer f.Close()
 	writePkgName(f, pkg)
-	fn(f, kinds)
+
+	for _, fn := range fns {
+		fn(f, kinds)
+	}
 
 	// gofmt and goimports this stuff
 	cmd := exec.Command("goimports", "-w", fullpath)
@@ -79,7 +87,9 @@ func pipeline(pkg, filename string, kinds Kinds, fn func(io.Writer, Kinds)) {
 
 	cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
 	if err = cmd.Run(); err != nil {
-		log.Fatalf("sed failed with %v for %q", err, fullpath)
+		if err.Error() != "exit status 4" { // exit status 4 == not found
+			log.Fatalf("sed failed with %v for %q", err, fullpath)
+		}
 	}
 
 	cmd = exec.Command("gofmt", "-s", "-w", fullpath)
