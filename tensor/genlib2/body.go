@@ -16,7 +16,7 @@ type LoopBody struct {
 const (
 	genericLoopRaw = `for i := range {{.Range}} {
 		{{template "check" . -}}
-		{{template "loopbody" .}}
+		{{template "loopbody" . -}}
 	}`
 
 	genericUnaryIterLoopRaw = `var {{.Index0}} int
@@ -115,6 +115,11 @@ const (
 	check0 = `if {{.Right}} == 0 {
 		errs = append(errs, i)
 		{{.Range}}[i] = 0
+		continue
+	}
+	`
+
+	maskCheck = `if mask[i] {
 		continue
 	}
 	`

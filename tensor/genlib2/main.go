@@ -38,6 +38,7 @@ func main() {
 	// pipeline("test", "BLAH_9.go", Kinds{allKinds}, generateStdEngArith)
 	// pipeline("test", "BLAH_10.go", Kinds{allKinds}, generateDenseArith)
 	// pipeline("test", "BLAH_11.go", Kinds{allKinds}, generateGenericUncondUnary)
+	// pipeline("test", "BLAH_12.go", Kinds{allKinds}, generateGenericArgMethods)
 
 	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
@@ -49,6 +50,7 @@ func main() {
 	pipeline(execLoc, "generic_arith_mixed.go", Kinds{allKinds}, generateGenericMixedArith)
 	pipeline(execLoc, "generic_cmp_vv.go", Kinds{allKinds}, generateGenericVecVecCmp)
 	pipeline(execLoc, "generic_cmp_mixed.go", Kinds{allKinds}, generateGenericMixedCmp)
+	pipeline(execLoc, "generic_minmax.go", Kinds{allKinds}, generateMinMax)
 	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
 	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary, generateGenericCondUnary)
 
