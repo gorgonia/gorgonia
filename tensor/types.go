@@ -173,6 +173,10 @@ var ordTypes = []Dtype{
 	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
 }
 
+var eqTypes = []Dtype{
+	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+}
+
 var unsignedTypes = [...]Dtype{Uint, Uint8, Uint16, Uint32, Uint64}
 
 func isSpecialized(dt Kinder) bool {
@@ -196,6 +200,7 @@ func isNumber(dt Kinder) bool {
 func isFloat(dt Kinder) bool {
 	return dt.Kind() == reflect.Float64 || dt.Kind() == reflect.Float32
 }
+
 
 func isUnsigned(dt Kinder) bool {
 	for _, s := range unsignedTypes {
@@ -231,6 +236,24 @@ func RegisterNumber(a Dtype) {
 		}
 	}
 	numberTypes = append(numberTypes, a)
+}
+
+func RegisterOrd(a Dtype){
+	for _, dt := range ordTypes {
+		if dt == a {
+			return
+		}
+	}
+	ordTypes = append(ordTypes, a)
+}
+
+func RegisterEq(a Dtype){
+	for _, dt := range eqTypes {
+		if dt == a {
+			return
+		}
+	}
+	eqTypes = append(eqTypes, a)
 }
 
 // NormOrder represents the order of the norm. Ideally, we'd only represent norms with a uint/byte.
