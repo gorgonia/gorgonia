@@ -39,7 +39,7 @@ func main() {
 	// pipeline("test", "BLAH_10.go", Kinds{allKinds}, generateDenseArith)
 	// pipeline("test", "BLAH_11.go", Kinds{allKinds}, generateGenericUncondUnary)
 	// pipeline("test", "BLAH_12.go", Kinds{allKinds}, generateGenericArgMethods)
-	// pipeline("test","BLAH_14.go", Kinds{allKinds}, generateStdEngCmp)
+	// pipeline("test", "BLAH_14.go", Kinds{allKinds}, generateStdEngCmp)
 
 	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
@@ -67,6 +67,11 @@ func main() {
 	// level 3 aggregation
 	pipeline(tensorPkgLoc, "dense_arith.go", Kinds{allKinds}, generateDenseArith)
 	pipeline(tensorPkgLoc, "dense_cmp.go", Kinds{allKinds}, generateDenseCmp)
+
+	// dense methods
+	pipeline(tensorPkgLoc, "dense_generated.go", Kinds{allKinds}, generateDenseConstructionFns)
+	pipeline(tensorPkgLoc, "dense_io.go", Kinds{allKinds}, generateDenseIO)
+	pipeline(tensorPkgLoc, "dense_compat.go", Kinds{allKinds}, generateDenseCompat)
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fns ...func(io.Writer, Kinds)) {

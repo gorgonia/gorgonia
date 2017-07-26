@@ -193,5 +193,4 @@ func generateStdEngCmp(f io.Writer, ak Kinds) {
 		meth.Write(f)
 		meth.LeftVec = true
 	}
-
 }
