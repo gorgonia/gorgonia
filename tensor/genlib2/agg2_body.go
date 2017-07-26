@@ -6,7 +6,7 @@ import "text/template"
 
 const prepVVRaw = `var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryNumberTensor(a, b, opts...); err != nil {
+	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepBinaryTensor(a, b, is{{.TypeClassCheck}}, opts...); err != nil {
 		return
 	}
 
@@ -27,7 +27,7 @@ const prepVVRaw = `var reuse *Dense
 
 const prepMixedRaw = `var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepUnaryTensor(t, is{{.TypeClassCheck}}, opts...); err != nil {
 		return
 	}
 
@@ -89,14 +89,66 @@ const agg2BodyRaw = `if useIter {
 	return
 `
 
+const agg2CmpBodyRaw = `
+	if !same && !toReuse{
+		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
+		dataReuse = &reuse.array.hdr
+		iit = IteratorFromDense(reuse)
+	}
+
+	if useIter {
+		switch {
+			case !toReuse && same:
+				err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
+				retVal = dataA
+			case toReuse && same:
+				storage.Copy(dataReuse,dataA, typ)
+				err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, ait, bit)
+				retVal = reuse
+			case toRuse && !same:
+				err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
+				retVal = reuse
+			case !safe:
+				err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
+				retVal = dataA
+			default:
+				err = e.E.{{.Name}}Iter(typ, data, dataB, dataReuse, ait, bit, iit)
+				retVal = reuse
+		}
+		return
+	}
+	switch {
+			case !toReuse && same:
+				err = e.E.{{.Name}}Same(typ, dataA, dataB)
+				retVal = dataA
+			case toReuse && same:
+				storage.Copy(dataReuse,dataA, typ)
+				err = e.E.{{.Name}}Same(typ, dataReuse, dataB)
+				retVal = reuse
+			case toReuse && !same:
+				err = e.E.{{.Name}}(typ, dataA, dataB, dataReuse)
+				retVal = reuse
+			case !safe:
+				err = e.E.{{.Name}}Same(typ, dataA, dataB)
+				retVal = dataA
+			default:
+				err = e.E.{{.Name}}(typ, data, dataB, dataReuse)
+				retVal = reuse
+	}
+	return
+`
+
+
 var (
 	prepVV    *template.Template
 	prepMixed *template.Template
 	agg2Body  *template.Template
+	agg2CmpBody * template.Template
 )
 
 func init() {
 	prepVV = template.Must(template.New("prepVV").Funcs(funcs).Parse(prepVVRaw))
 	prepMixed = template.Must(template.New("prepMixed").Funcs(funcs).Parse(prepMixedRaw))
 	agg2Body = template.Must(template.New("agg2body").Funcs(funcs).Parse(agg2BodyRaw))
+	agg2CmpBody = template.Must(template.New("agg2CmpBody").Funcs(funcs).Parse(agg2CmpBodyRaw))
 }

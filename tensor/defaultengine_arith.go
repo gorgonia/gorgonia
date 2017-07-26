@@ -12,7 +12,7 @@ GENERATED FILE. DO NOT EDIT
 func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryNumberTensor(a, b, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -70,7 +70,7 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryNumberTensor(a, b, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -128,7 +128,7 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryNumberTensor(a, b, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -186,7 +186,7 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryNumberTensor(a, b, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -244,7 +244,7 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryNumberTensor(a, b, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -302,7 +302,7 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepBinaryNumberTensor(a, b, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -360,7 +360,7 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -423,7 +423,7 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -486,7 +486,7 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -549,7 +549,7 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -612,7 +612,7 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, isNumber, opts...); err != nil {
 		return
 	}
 
@@ -675,7 +675,7 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, err = prepUnaryNumberTensor(t, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, isNumber, opts...); err != nil {
 		return
 	}
 

@@ -232,8 +232,8 @@ const (
 
 	eCmpBoolRaw = `as := isScalar(a)
 	bs := isScalar(b)
-	rs := len(retVal) == 1
-	rt := retVal
+	rs := isScalar(retVal)
+	rt := retVal.Bools()
 
 	if (as && !bs) || (bs && !as) && rs {
 		return errors.Errorf("retVal is a scalar. a: %d, b %d", a.Len(), b.Len())
@@ -292,8 +292,8 @@ const (
 
 	eCmpBoolIterRaw = `as :=isScalar(a)
 	bs := isScalar(b)
-	rs := len(retVal) == 1
-	rt := retVal
+	rs := isScalar(retVal)
+	rt := retVal.Bools()
 
 	if (as && !bs) || (bs && !as) && rs {
 		return errors.Errorf("retVal is scalar while len(a): %d, len(b) %d", a.Len(), b.Len())

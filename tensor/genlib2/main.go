@@ -39,6 +39,7 @@ func main() {
 	// pipeline("test", "BLAH_10.go", Kinds{allKinds}, generateDenseArith)
 	// pipeline("test", "BLAH_11.go", Kinds{allKinds}, generateGenericUncondUnary)
 	// pipeline("test", "BLAH_12.go", Kinds{allKinds}, generateGenericArgMethods)
+	// pipeline("test","BLAH_14.go", Kinds{allKinds}, generateStdEngCmp)
 
 	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
@@ -61,6 +62,7 @@ func main() {
 
 	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)
+	pipeline(tensorPkgLoc, "defaultengine_cmp.go", Kinds{allKinds}, generateStdEngCmp)
 
 	// level 3 aggregation
 	pipeline(tensorPkgLoc, "dense_arith.go", Kinds{allKinds}, generateDenseArith)

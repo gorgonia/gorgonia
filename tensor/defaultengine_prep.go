@@ -5,10 +5,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
+func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
 	fo := ParseFuncOpts(opts...)
 	reuseT, incr := fo.IncrReuse()
 	safe = fo.Safe()
+	same = fo.Same()
 	toReuse = reuseT != nil
 
 	if toReuse {
@@ -32,7 +33,7 @@ func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *D
 	return
 }
 
-func prepBinaryNumberTensor(a, b Tensor, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
+func prepBinaryTensor(a,b Tensor, typeclass func(Dtype) bool,  opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error)  {
 	// check if the tensors are accessible
 	if !a.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, a)
@@ -46,16 +47,15 @@ func prepBinaryNumberTensor(a, b Tensor, opts ...FuncOpt) (reuse *Dense, safe, t
 
 	at := a.Dtype()
 	bt := b.Dtype()
-	if !isNumber(at) && !isNumber(bt) {
+	
+	if !typeclass(at) && !typeclass(bt) {
 		err = noopError{}
 		return
 	}
-
 	if at.Kind() != bt.Kind() {
 		err = errors.Errorf(typeMismatch, at, bt)
 		return
 	}
-
 	if !a.Shape().Eq(b.Shape()) {
 		err = errors.Errorf(shapeMismatch, b.Shape(), a.Shape())
 		return
@@ -63,9 +63,9 @@ func prepBinaryNumberTensor(a, b Tensor, opts ...FuncOpt) (reuse *Dense, safe, t
 	return denseFromFuncOpts(a.Shape(), at, opts...)
 }
 
-func prepUnaryNumberTensor(a Tensor, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
+func prepUnaryTensor(a Tensor, typeclass func(Dtype)bool , opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
 	at := a.Dtype()
-	if !isNumber(at) {
+	if !typeclass(at) {
 		err = noopError{}
 		return
 	}

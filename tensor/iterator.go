@@ -23,7 +23,9 @@ func requiresIterator(e Engine, t Tensor) bool {
 
 // Iterator is the generic iterator interface
 type Iterator interface {
+	// Start 
 	Start() (int, error)
+
 	Next() (int, error)
 	NextValidity() (int, bool, error)
 	NextValid() (int, int, error)

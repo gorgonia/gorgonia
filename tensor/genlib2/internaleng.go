@@ -221,13 +221,13 @@ func (fn *InternalEngCmp) Signature() *Signature {
 		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, iteratorType, iteratorType}
 	case fn.Iter && !fn.RetSame:
 		paramNames = []string{"t", "a", "b", "retVal", "ait", "bit", "rit"}
-		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, boolsType, iteratorType, iteratorType, iteratorType}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, arrayType, iteratorType, iteratorType, iteratorType}
 	case !fn.Iter && fn.RetSame:
 		paramNames = []string{"t", "a", "b"}
 		paramTemplates = []*template.Template{reflectType, arrayType, arrayType}
 	default:
 		paramNames = []string{"t", "a", "b", "retVal"}
-		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, boolsType}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, arrayType}
 	}
 
 	return &Signature{

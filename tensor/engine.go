@@ -78,7 +78,7 @@ type Diver interface {
 	DivScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
-// Power is any engine that can perform elementwise pow()
+// Power is any engine that can perform elementwise Pow()
 type Power interface {
 	// Pow performs a ^ b
 	Pow(a, b Tensor, opts ...FuncOpt) (Tensor, error)
@@ -88,8 +88,13 @@ type Power interface {
 	PowScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
+// Moder is any engine that can perform elementwise Mod()
 type Moder interface {
+	// Mod performs a % b
 	Mod(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// ModScalar performs a % b where one of the operands is scalar. leftTensor indicates if the tensor is the left operand.
+	// Whether or not hte input tensor is clobbered is left to the implementation
 	ModScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
@@ -124,34 +129,32 @@ type UnsafeTransposer interface {
 
 type Lter interface {
 	Lt(a, b Tensor, asSame bool) (Tensor, error)
-	LtScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	LtScalar(a Tensor, b interface{}, leftTensor,  asSame bool) (Tensor, error)
 }
 
 type Lteer interface {
 	Lte(a, b Tensor, asSame bool) (Tensor, error)
-	LteScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	LteScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
 }
 
 type Gter interface {
 	Gt(a, b Tensor, asSame bool) (Tensor, error)
-	GtScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	GtScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
 }
 
 type Gteer interface {
 	Gte(a, b Tensor, asSame bool) (Tensor, error)
-	GteScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	GteScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
 }
 
-/* EQ INTERFACES
-These return the same types
-*/
+/* EQ INTERFACES */
 
 type ElEqer interface {
 	ElEq(a, b Tensor, asSame bool) (Tensor, error)
-	ElEqScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	ElEqScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
 
 	ElNe(a, b Tensor, asSame bool) (Tensor, error)
-	ElNeScalar(a Tensor, b interface{}, asSame bool) (Tensor, error)
+	ElNeScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
 }
 
 /* Unary Operators for Numbers */
