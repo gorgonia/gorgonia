@@ -8,8 +8,11 @@ const denseArithBodyRaw = `e := t.e
 if e == nil {
 	e = StdEng{}
 }
+{{$elne := eq .Name "Ne"}}
+{{$eleq := eq .Name "Eq"}}
+{{$eleqne := or $eleq $elne}}
 
-if {{lower .Name}}er, ok := e.({{.Name}}er); ok {
+if {{lower .Name}}er, ok := e.({{if $eleqne }}ElEqer{{else}}{{.Name}}{{end}}er); ok {
 	var ret Tensor
 	if ret, err = {{lower .Name}}er.{{.Name}}(t, other, opts...); err != nil {
 		err = errors.Wrapf(err, "Unable to do {{.Name}}()")
@@ -28,7 +31,10 @@ const denseArithScalarBodyRaw = `e := t.e
 		e = StdEng{}
 	}
 
-	if {{lower .Name}}er, ok := e.({{.Name}}er); ok {
+{{$elne := eq .Name "Ne"}}
+{{$eleq := eq .Name "Eq"}}
+{{$eleqne := or $eleq $elne}}
+	if {{lower .Name}}er, ok := e.({{if $eleqne }}El{{end}}{{.Name}}er); ok {
 		var ret Tensor
 		if ret, err = {{lower .Name}}er.{{.Name}}Scalar(t, other, leftTensor, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do {{.Name}}Scalar()")
