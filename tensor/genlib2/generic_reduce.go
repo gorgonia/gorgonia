@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"text/template"
 )
@@ -48,14 +47,14 @@ const genericSliceMinMaxRaw = `func SliceMin{{short .}}(a []{{asType .}}) {{asTy
 	if len(a) < 1 {
 		panic("Max of empty slice is meaningless")
 	}
-	return reduce{{short .}}(min{{short .}}, a[0], a[1:]...)
+	return Reduce{{short .}}(Min{{short .}}, a[0], a[1:]...)
 }
 
 func SliceMax{{short .}}(a []{{asType .}}) {{asType .}}{
 	if len(a) < 1 {
 		panic("Max of empty slice is meaningless")
 	}
-	return reduce{{short .}}(max{{short .}}, a[0], a[1:]...)
+	return Reduce{{short .}}(Max{{short .}}, a[0], a[1:]...)
 }
 
 `
@@ -90,7 +89,7 @@ const genericReduce0ParRaw = `func reduceFirst{{short .}}(data, retVal []{{asTyp
 
 const genericReduceLastRaw = `func reduceLast{{short .}}(a, retVal []{{asType .}}, dimSize int, defaultValue {{asType .}}, fn func(a, b {{asType .}}){{asType .}}) {
 	var at int
-	for start := 0; start <= len(a) - dimSize; start += size {
+	for start := 0; start <= len(a) - dimSize; start += dimSize {
 		r := Reduce{{short .}}(fn, defaultValue, a[start:start+dimSize]...)
 		retVal[at] = r
 		at++
@@ -144,21 +143,21 @@ func init() {
 }
 
 func generateGenericReduce(f io.Writer, generic Kinds) {
-	fmt.Fprintln(f, reflectBasedReduceRaw)
+	// fmt.Fprintln(f, reflectBasedReduceRaw)
 	for _, k := range generic.Kinds {
 		if !isParameterized(k) {
 			genericReduce.Execute(f, k)
 		}
 	}
 
-	for _, k := range filter(generic.Kinds, isNumber) {
-		genericSum.Execute(f, k)
+	// for _, k := range filter(generic.Kinds, isNumber) {
+	// 	genericSum.Execute(f, k)
 
-	}
-	for _, k := range filter(generic.Kinds, isNumber) {
-		genericProd.Execute(f, k)
-	}
-	fmt.Fprintf(f, "\n")
+	// }
+	// for _, k := range filter(generic.Kinds, isNumber) {
+	// 	genericProd.Execute(f, k)
+	// }
+	// fmt.Fprintf(f, "\n")
 
 	for _, k := range filter(generic.Kinds, isOrd) {
 		if isNumber(k) {

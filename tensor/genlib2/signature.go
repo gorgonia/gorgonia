@@ -7,11 +7,13 @@ import (
 )
 
 type Signature struct {
-	DocString      string
-	Name           string
-	NameTemplate   *template.Template
-	ParamNames     []string
-	ParamTemplates []*template.Template
+	DocString       string
+	Name            string
+	NameTemplate    *template.Template
+	ParamNames      []string
+	ParamTemplates  []*template.Template
+	RetVals         []string
+	RetValTemplates []*template.Template
 
 	Kind reflect.Kind
 	Err  bool
@@ -30,6 +32,25 @@ func (s *Signature) Write(w io.Writer) {
 		}
 	}
 	w.Write([]byte(")"))
+	if len(s.RetVals) > 0 {
+		w.Write([]byte("("))
+		for i, r := range s.RetValTemplates {
+			w.Write([]byte(s.RetVals[i]))
+			w.Write([]byte(" "))
+			r.Execute(w, s.Kind)
+
+			if i < len(s.RetVals) {
+				w.Write([]byte(", "))
+			}
+		}
+
+		if s.Err {
+			w.Write([]byte("err error"))
+		}
+		w.Write([]byte(")"))
+		return
+	}
+
 	if s.Err {
 		w.Write([]byte("(err error)"))
 	}

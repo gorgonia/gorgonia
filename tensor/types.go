@@ -188,23 +188,31 @@ func isSpecialized(dt Kinder) bool {
 	return false
 }
 
-func isNumber(dt Kinder) bool {
+func isNumber(dt Dtype) bool {
 	for _, s := range numberTypes {
-		if s.Kind() == dt.Kind() {
+		if s == dt {
 			return true
 		}
 	}
 	return false
 }
 
-func isFloat(dt Kinder) bool {
-	return dt.Kind() == reflect.Float64 || dt.Kind() == reflect.Float32
+func isFloat(dt v) bool {
+	return dt == Float64 || dt == Float32
 }
-
 
 func isUnsigned(dt Kinder) bool {
 	for _, s := range unsignedTypes {
-		if s.Kind() == dt.Kind() {
+		if s == dt {
+			return true
+		}
+	}
+	return false
+}
+
+func typeclassCheck(a Dtype, set []Dtype) bool {
+	for _, s := range set {
+		if s == a {
 			return true
 		}
 	}
@@ -238,7 +246,7 @@ func RegisterNumber(a Dtype) {
 	numberTypes = append(numberTypes, a)
 }
 
-func RegisterOrd(a Dtype){
+func RegisterOrd(a Dtype) {
 	for _, dt := range ordTypes {
 		if dt == a {
 			return
@@ -247,7 +255,7 @@ func RegisterOrd(a Dtype){
 	ordTypes = append(ordTypes, a)
 }
 
-func RegisterEq(a Dtype){
+func RegisterEq(a Dtype) {
 	for _, dt := range eqTypes {
 		if dt == a {
 			return

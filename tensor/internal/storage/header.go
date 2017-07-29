@@ -51,7 +51,8 @@ func CopySliced(dst *Header, dstart, dend int, src *Header, sstart, send int, t 
 	de := dend * size
 	ss := sstart * size
 	se := send * size
-	copied := copy(dstBA[ds:dc], srcBA[ss:se])
+	copied := copy(dstBA[ds:de], srcBA[ss:se])
+	return copied / size
 }
 
 func AsByteSlice(a *Header, t reflect.Type) []byte {

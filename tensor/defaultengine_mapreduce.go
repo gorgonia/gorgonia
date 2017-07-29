@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (e StdEng) Map(a Tensor, fn interface{}, opts ...FuncOpt) error {
+func (e StdEng) Map(a Tensor, fn interface{}, opts ...FuncOpt) (err error) {
 	var reuse *Dense
 	var _, toReuse, incr bool // safe has been commented out
 	if reuse, _, toReuse, _, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
@@ -17,22 +17,22 @@ func (e StdEng) Map(a Tensor, fn interface{}, opts ...FuncOpt) error {
 	}
 	typ := a.Dtype().Type
 	var dataA, dataReuse *storage.Header
-	var ait, iit Iterator
+	var ait, rit Iterator
 	var useIter bool
-	if dataA, dataReuse, ait, iit, useIter, err = prepDataUnary(a, reuse); err != nil {
+	if dataA, dataReuse, ait, rit, useIter, err = prepDataUnary(a, reuse); err != nil {
 		return errors.Wrapf(err, "StdEng.Map")
 	}
 	if toReuse {
-		storage.Copy(dataReuse, dataA)
+		storage.Copy(dataReuse, dataA, typ)
 		ait = rit
 	}
 	if useIter {
-		return e.E.MapIter(typ, fn, a, false, ait)
+		return e.E.MapIter(typ, fn, dataA, false, ait)
 	}
-	return e.E.Map(typ, fn, a, false)
+	return e.E.Map(typ, fn, dataA, false)
 }
 
-func (e StdEng) Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ...FuncOpt) error {
+func (e StdEng) Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ...FuncOpt) (err error) {
 	if axis >= a.Dims() {
 		err = errors.Errorf(dimMismatch, axis, a.Dims())
 		return

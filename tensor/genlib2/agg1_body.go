@@ -338,7 +338,7 @@ const (
 		}
 		dt := data.{{sliceOf .}}
 		rt := retVal.{{sliceOf .}}
-		{{$name | unexport}}{{short .}}(dt, rt, split, f)
+		{{$name | unexport}}{{short .}}(dt, rt, split, size, f)
 		return nil
 		{{end -}}
 	default:
@@ -393,15 +393,18 @@ const (
 		{{range .Kinds -}}
 	case {{reflectKind .}}:
 		var f func({{asType .}}, {{asType .}}) {{asType .}}
+		var def {{asType .}}
 		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
-			return errors.Errorf(reductionErrMsg, f, fn)
+			return nil, errors.Errorf(reductionErrMsg, f, fn)
 		}
 		if def, ok  = defaultValue.({{asType .}}); !ok {
-			return errors.Errorf(defaultValueErrMsg, def, defaultValue, defaultValue)
+			return nil, errors.Errorf(defaultValueErrMsg, def, defaultValue, defaultValue)
 		}
-		return Reduce{{short .}}(fn, def, a.{{sliceOf .}}...)
+		retVal = Reduce{{short .}}(f, def, a.{{sliceOf .}}...)
+		return
 		{{end -}}
-	
+	default:
+		return nil, errors.Errorf("Unsupported type %v for Reduce", t)
 	}`
 )
 

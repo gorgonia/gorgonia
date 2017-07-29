@@ -33,7 +33,7 @@ func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *D
 	return
 }
 
-func prepBinaryTensor(a, b Tensor, typeclass func(Dtype) bool, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
+func prepBinaryTensor(a, b Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
 	// check if the tensors are accessible
 	if !a.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, a)
@@ -48,7 +48,7 @@ func prepBinaryTensor(a, b Tensor, typeclass func(Dtype) bool, opts ...FuncOpt) 
 	at := a.Dtype()
 	bt := b.Dtype()
 
-	if typeclass != nil && !typeclass(at) && !typeclass(bt) {
+	if typeclass != nil && !typeclassCheck(at, typeclass) && !typeclassCheck(bt, typeclass) {
 		err = noopError{}
 		return
 	}
@@ -63,9 +63,9 @@ func prepBinaryTensor(a, b Tensor, typeclass func(Dtype) bool, opts ...FuncOpt) 
 	return denseFromFuncOpts(a.Shape(), at, opts...)
 }
 
-func prepUnaryTensor(a Tensor, typeclass func(Dtype) bool, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr bool, err error) {
+func prepUnaryTensor(a Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
 	at := a.Dtype()
-	if typeclass != nil && !typeclass(at) {
+	if typeclass != nil && !typeclassCheck(at, typeclass) {
 		err = noopError{}
 		return
 	}
@@ -171,7 +171,7 @@ func prepDataSV(a interface{}, b Tensor, reuse *Dense) (dataA, dataB, dataReuse 
 	return
 }
 
-func prepDataUnary(a Tensor, reuse *Dense) (dataA, dataReuse *storageHeader, ait, rit Iterator, useIter bool, err error) {
+func prepDataUnary(a Tensor, reuse *Dense) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
 	switch at := a.(type) {
 	case DenseTensor:
 		dataA = at.hdr()

@@ -5,8 +5,8 @@ import "text/template"
 // level 2 aggregation (tensor.StdEng) templates
 
 const prepVVRaw = `var reuse *Dense
-	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepBinaryTensor(a, b, is{{.TypeClassCheck}}, opts...); err != nil {
+	var safe, toReuse, incr {{if ne .TypeClassCheck "Number"}}, same{{end}} bool
+	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepBinaryTensor(a, b, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
 		return
 	}
 
@@ -26,8 +26,8 @@ const prepVVRaw = `var reuse *Dense
 `
 
 const prepMixedRaw = `var reuse *Dense
-	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepUnaryTensor(t, is{{.TypeClassCheck}}, opts...); err != nil {
+	var safe, toReuse, incr {{if ne .TypeClassCheck "Number"}}, same{{end}} bool
+	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepUnaryTensor(t, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
 		return
 	}
 
@@ -92,7 +92,7 @@ const agg2BodyRaw = `if useIter {
 const agg2CmpBodyRaw = `
 	if !same && !toReuse{
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = &reuse.array.hdr
+		dataReuse = reuse.array.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -100,19 +100,19 @@ const agg2CmpBodyRaw = `
 		switch {
 			case !toReuse && same:
 				err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
-				retVal = dataA
+				retVal = a
 			case toReuse && same:
 				storage.Copy(dataReuse,dataA, typ)
 				err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, ait, bit)
 				retVal = reuse
-			case toRuse && !same:
+			case toReuse && !same:
 				err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
 				retVal = reuse
 			case !safe:
 				err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
-				retVal = dataA
+				retVal = a
 			default:
-				err = e.E.{{.Name}}Iter(typ, data, dataB, dataReuse, ait, bit, iit)
+				err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
 				retVal = reuse
 		}
 		return
@@ -120,7 +120,7 @@ const agg2CmpBodyRaw = `
 	switch {
 			case !toReuse && same:
 				err = e.E.{{.Name}}Same(typ, dataA, dataB)
-				retVal = dataA
+				retVal = a
 			case toReuse && same:
 				storage.Copy(dataReuse,dataA, typ)
 				err = e.E.{{.Name}}Same(typ, dataReuse, dataB)
@@ -130,20 +130,19 @@ const agg2CmpBodyRaw = `
 				retVal = reuse
 			case !safe:
 				err = e.E.{{.Name}}Same(typ, dataA, dataB)
-				retVal = dataA
+				retVal = a
 			default:
-				err = e.E.{{.Name}}(typ, data, dataB, dataReuse)
+				err = e.E.{{.Name}}(typ, dataA, dataB, dataReuse)
 				retVal = reuse
 	}
 	return
 `
 
-
 var (
-	prepVV    *template.Template
-	prepMixed *template.Template
-	agg2Body  *template.Template
-	agg2CmpBody * template.Template
+	prepVV      *template.Template
+	prepMixed   *template.Template
+	agg2Body    *template.Template
+	agg2CmpBody *template.Template
 )
 
 func init() {

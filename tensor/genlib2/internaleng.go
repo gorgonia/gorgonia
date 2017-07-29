@@ -329,13 +329,15 @@ func (fn *InternalEngReduce) Name() string {
 }
 
 func (fn *InternalEngReduce) Signature() *Signature {
-	var paramNames []string
-	var paramTemplates []*template.Template
+	var paramNames, retVals []string
+	var paramTemplates, retValTemplates []*template.Template
 
 	switch {
 	case fn.Flat:
-		paramNames = []string{"t", "data", "defaultValue", "fn"}
+		paramNames = []string{"t", "a", "defaultValue", "fn"}
 		paramTemplates = []*template.Template{reflectType, arrayType, interfaceType, interfaceType}
+		retVals = []string{"retVal"}
+		retValTemplates = []*template.Template{interfaceType}
 	case fn.Dim == 0:
 		paramNames = []string{"t", "data", "retVal", "split", "size", "fn"}
 		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, intType, intType, interfaceType}
@@ -347,11 +349,13 @@ func (fn *InternalEngReduce) Signature() *Signature {
 		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, intType, intType, intType, intType, intType, interfaceType}
 	}
 	return &Signature{
-		Name:           fn.Name(),
-		NameTemplate:   plainName,
-		ParamNames:     paramNames,
-		ParamTemplates: paramTemplates,
-		Err:            true,
+		Name:            fn.Name(),
+		NameTemplate:    plainName,
+		ParamNames:      paramNames,
+		ParamTemplates:  paramTemplates,
+		RetVals:         retVals,
+		RetValTemplates: retValTemplates,
+		Err:             true,
 	}
 }
 
