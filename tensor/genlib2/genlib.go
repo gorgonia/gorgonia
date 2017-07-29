@@ -211,6 +211,10 @@ func clean(a string) string {
 	return a
 }
 
+func unexport(a string) string {
+	return strings.ToLower(string(a[0])) + a[1:]
+}
+
 func strip(a string) string {
 	return strings.Replace(a, ".", "", -1)
 }

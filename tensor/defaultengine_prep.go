@@ -174,12 +174,13 @@ func prepDataSV(a interface{}, b Tensor, reuse *Dense) (dataA, dataB, dataReuse 
 func prepDataUnary(a Tensor, reuse *Dense) (dataA, dataReuse *storageHeader, ait, rit Iterator, useIter bool, err error) {
 	switch at := a.(type) {
 	case DenseTensor:
+		dataA = at.hdr()
 		if requiresIterator(a.Engine(), at) {
 			ait = IteratorFromDense(at)
+			useIter = true
 			if reuse != nil {
+				dataReuse = reuse.hdr()
 				rit = IteratorFromDense(reuse)
-				dataA = at.hdr()
-				useIter = true
 			}
 		}
 	case *CS:

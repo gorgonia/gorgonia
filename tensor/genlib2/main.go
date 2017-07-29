@@ -54,11 +54,13 @@ func main() {
 	pipeline(execLoc, "generic_minmax.go", Kinds{allKinds}, generateMinMax)
 	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
 	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary, generateGenericCondUnary)
+	pipeline(execLoc, "generic_reduce.go", Kinds{allKinds}, generateGenericReduce)
 
 	// level 1 aggregation
 	pipeline(execLoc, "eng_arith.go", Kinds{allKinds}, generateEArith)
 	pipeline(execLoc, "eng_map.go", Kinds{allKinds}, generateEMap)
 	pipeline(execLoc, "eng_cmp.go", Kinds{allKinds}, generateECmp)
+	pipeline(execLoc, "eng_reduce.go", Kinds{allKinds}, generateEReduce)
 
 	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)

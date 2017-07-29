@@ -326,6 +326,83 @@ const (
 	{{else if eq .Kind.String "complex128" -}}
 	{{end -}}
 	`
+
+	eReduceFirstRaw = `var ok bool
+	{{$name := .Name -}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		var f func({{asType .}}, {{asType .}}) {{asType .}}
+		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
+			return errors.Errorf(reductionErrMsg, f, fn)
+		}
+		dt := data.{{sliceOf .}}
+		rt := retVal.{{sliceOf .}}
+		{{$name | unexport}}{{short .}}(dt, rt, split, f)
+		return nil
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
+
+	eReduceLastRaw = `var ok bool
+	{{$name := .Name -}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		var f func({{asType .}}, {{asType .}}) {{asType .}}
+		var def {{asType .}}
+		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
+			return errors.Errorf(reductionErrMsg, f, fn)
+		}
+		if def, ok  = defaultValue.({{asType .}}); !ok {
+			return errors.Errorf(defaultValueErrMsg, def, defaultValue, defaultValue)
+		}
+		dt := data.{{sliceOf .}}
+		rt := retVal.{{sliceOf .}}
+		{{$name | unexport}}{{short .}}(dt, rt, dimSize, def, f)
+		return nil
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
+
+	eReduceDefaultRaw = `var ok bool
+	{{$name := .Name -}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		var f func({{asType .}}, {{asType .}}) {{asType .}}
+		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
+			return errors.Errorf(reductionErrMsg, f, fn)
+		}
+		dt := data.{{sliceOf .}}
+		rt := retVal.{{sliceOf .}}
+		{{$name | unexport}}{{short .}}(dt, rt, dim0, dimSize, outerStride, stride, expected, f)
+		return nil
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
+
+	eReduceRaw = `var ok bool
+	switch t{
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		var f func({{asType .}}, {{asType .}}) {{asType .}}
+		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
+			return errors.Errorf(reductionErrMsg, f, fn)
+		}
+		if def, ok  = defaultValue.({{asType .}}); !ok {
+			return errors.Errorf(defaultValueErrMsg, def, defaultValue, defaultValue)
+		}
+		return Reduce{{short .}}(fn, def, a.{{sliceOf .}}...)
+		{{end -}}
+	
+	}`
 )
 
 var (
@@ -339,6 +416,10 @@ var (
 	eCmpSame       *template.Template
 	eCmpBoolIter   *template.Template
 	eCmpSameIter   *template.Template
+	eReduce        *template.Template
+	eReduceFirst   *template.Template
+	eReduceLast    *template.Template
+	eReduceDefault *template.Template
 )
 
 func init() {
@@ -354,4 +435,9 @@ func init() {
 	eCmpSame = template.Must(template.New("eCmpSame").Funcs(funcs).Parse(eCmpSameRaw))
 	eCmpBoolIter = template.Must(template.New("eCmpBoolIter").Funcs(funcs).Parse(eCmpBoolIterRaw))
 	eCmpSameIter = template.Must(template.New("eCmpSameIter").Funcs(funcs).Parse(eCmpSameIterRaw))
+
+	eReduce = template.Must(template.New("eReduce").Funcs(funcs).Parse(eReduceRaw))
+	eReduceFirst = template.Must(template.New("eReduceFirst").Funcs(funcs).Parse(eReduceFirstRaw))
+	eReduceLast = template.Must(template.New("eReduceLast").Funcs(funcs).Parse(eReduceLastRaw))
+	eReduceDefault = template.Must(template.New("eReduceDefault").Funcs(funcs).Parse(eReduceDefaultRaw))
 }

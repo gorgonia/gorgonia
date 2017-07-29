@@ -33,6 +33,17 @@ type arrayMaker interface {
 	makeArray(t Dtype, size int) array
 }
 
+/* Data Agnostic Execution Engine Methods */
+
+// Transposer is any engine that can perform an unsafe transpose of a tensor.
+type Transposer interface {
+	Transpose(t Tensor) error
+}
+
+type Materializer interface {
+	Materialize(t Tensor) (Tensor, error)
+}
+
 /* NUMBER INTERFACES
 All these are expected to be unsafe on the first tensor
 */
@@ -120,16 +131,11 @@ type OuterProder interface {
 	Outer(a, b, preallocated Tensor) error
 }
 
-// UnsafeTransposer is any engine that can perform an unsafe transpose of a tensor
-type UnsafeTransposer interface {
-	UnsafeTranspose(t Tensor) error
-}
-
 /* ORD INTERFACES */
 
 type Lter interface {
 	Lt(a, b Tensor, asSame bool) (Tensor, error)
-	LtScalar(a Tensor, b interface{}, leftTensor,  asSame bool) (Tensor, error)
+	LtScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
 }
 
 type Lteer interface {
@@ -191,6 +197,22 @@ type Neger interface {
 	Neg(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
-func calcMemSize(dt Dtype, size int) int64 {
-	return int64(dt.Size()) * int64(size)
+/* Reduction */
+
+type Reducer interface {
+	Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ...FuncOpt) error
+}
+
+type Sumer interface {
+	Sum(a Tensor, along ...int) (Tensor, error)
+}
+
+type Proder interface {
+	Prod(a Tensor, along ...int) (Tensor, error)
+}
+
+type Miner interface {
+}
+
+type Maxer interface {
 }

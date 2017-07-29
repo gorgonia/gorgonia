@@ -7,6 +7,7 @@ import (
 )
 
 type Signature struct {
+	DocString      string
 	Name           string
 	NameTemplate   *template.Template
 	ParamNames     []string
@@ -48,15 +49,18 @@ const (
 	interfaceTypeRaw = "interface{}"
 	boolsTypeRaw     = `[]bool`
 	boolTypeRaw      = `bool`
+	intTypeRaw       = `int`
 	reflectTypeRaw   = `reflect.Type`
 
 	// arrayTypeRaw        = `Array`
-	arrayTypeRaw        = `*storage.Header`
-	unaryFuncTypeRaw    = `func({{asType .}}){{asType .}} `
-	unaryFuncErrTypeRaw = `func({{asType .}}) ({{asType .}}, error)`
-	tensorTypeRaw       = `Tensor`
-	splatFuncOptTypeRaw = `...FuncOpt`
-	denseTypeRaw        = `*Dense`
+	arrayTypeRaw            = `*storage.Header`
+	unaryFuncTypeRaw        = `func({{asType .}}){{asType .}} `
+	unaryFuncErrTypeRaw     = `func({{asType .}}) ({{asType .}}, error)`
+	reductionFuncTypeRaw    = `func(a, b {{asType .}}) {{asType .}}`
+	reductionFuncTypeErrRaw = `func(a, b {{asType .}}) ({{asType .}}, error)`
+	tensorTypeRaw           = `Tensor`
+	splatFuncOptTypeRaw     = `...FuncOpt`
+	denseTypeRaw            = `*Dense`
 )
 
 var (
@@ -70,6 +74,7 @@ var (
 	interfaceType    *template.Template
 	boolsType        *template.Template
 	boolType         *template.Template
+	intType          *template.Template
 	reflectType      *template.Template
 	arrayType        *template.Template
 	unaryFuncType    *template.Template
@@ -90,6 +95,7 @@ func init() {
 	interfaceType = template.Must(template.New("interfaceType").Funcs(funcs).Parse(interfaceTypeRaw))
 	boolsType = template.Must(template.New("boolsType").Funcs(funcs).Parse(boolsTypeRaw))
 	boolType = template.Must(template.New("boolType").Funcs(funcs).Parse(boolTypeRaw))
+	intType = template.Must(template.New("intTYpe").Funcs(funcs).Parse(intTypeRaw))
 	reflectType = template.Must(template.New("reflectType").Funcs(funcs).Parse(reflectTypeRaw))
 	arrayType = template.Must(template.New("arrayType").Funcs(funcs).Parse(arrayTypeRaw))
 	unaryFuncType = template.Must(template.New("unaryFuncType").Funcs(funcs).Parse(unaryFuncTypeRaw))

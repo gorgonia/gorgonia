@@ -243,6 +243,7 @@ var div0panics = [...]reflect.Kind{
 var funcs = template.FuncMap{
 	"lower":              strings.ToLower,
 	"title":              strings.Title,
+	"unexport":           unexport,
 	"hasPrefix":          strings.HasPrefix,
 	"hasSuffix":          strings.HasSuffix,
 	"isParameterized":    isParameterized,

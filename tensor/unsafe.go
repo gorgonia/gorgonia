@@ -17,6 +17,10 @@ func makeHeader(t Dtype, length int) storage.Header {
 	}
 }
 
+func calcMemSize(dt Dtype, size int) int64 {
+	return int64(dt.Size()) * int64(size)
+}
+
 // var _ stdeng.Array = &header{}
 
 // // header is runtime representation of a slice. It's a cleaner version of reflect.SliceHeader.

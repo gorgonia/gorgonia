@@ -1388,7 +1388,7 @@ func (t *Dense) sReduceI16(axis int, zeroFn func(a, b []int16) error, lastFn fun
 	return retVal
 }
 
-// sReduceI32 is a specialization for int32 reductions, used in methods such as Sum, Prod, Max etc
+// sReduce;I32 is a specialization for int32 reductions, used in methods such as Sum, Prod, Max etc
 func (t *Dense) sReduceI32(axis int, zeroFn func(a, b []int32) error, lastFn func([]int32) int32, defFn func(a, b int32) int32) (retVal *Dense) {
 	if t.IsScalar() {
 		return t

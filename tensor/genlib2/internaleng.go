@@ -304,3 +304,93 @@ func generateECmp(f io.Writer, kinds Kinds) {
 		meth.Write(f)
 	}
 }
+
+/* REDUCTION */
+
+type InternalEngReduce struct {
+	Kinds []reflect.Kind
+
+	Dim  int // 0 == first dim, -1 == last dim
+	Flat bool
+}
+
+func (fn *InternalEngReduce) Name() string {
+	switch {
+	case fn.Flat:
+		return "Reduce"
+	case fn.Dim == 0:
+		return "ReduceFirst"
+	case fn.Dim < 0:
+		return "ReduceLast"
+	case fn.Dim > 0:
+		return "ReduceDefault"
+	}
+	panic("unreachable")
+}
+
+func (fn *InternalEngReduce) Signature() *Signature {
+	var paramNames []string
+	var paramTemplates []*template.Template
+
+	switch {
+	case fn.Flat:
+		paramNames = []string{"t", "data", "defaultValue", "fn"}
+		paramTemplates = []*template.Template{reflectType, arrayType, interfaceType, interfaceType}
+	case fn.Dim == 0:
+		paramNames = []string{"t", "data", "retVal", "split", "size", "fn"}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, intType, intType, interfaceType}
+	case fn.Dim < 0:
+		paramNames = []string{"t", "data", "retVal", "dimSize", "defaultValue", "fn"}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, intType, interfaceType, interfaceType}
+	case fn.Dim > 0:
+		paramNames = []string{"t", "data", "retVal", "dim0", "dimSize", "outerStride", "stride", "expected", "fn"}
+		paramTemplates = []*template.Template{reflectType, arrayType, arrayType, intType, intType, intType, intType, intType, interfaceType}
+	}
+	return &Signature{
+		Name:           fn.Name(),
+		NameTemplate:   plainName,
+		ParamNames:     paramNames,
+		ParamTemplates: paramTemplates,
+		Err:            true,
+	}
+}
+
+func (fn *InternalEngReduce) WriteBody(w io.Writer) {
+	var T *template.Template
+	switch {
+	case fn.Flat:
+		T = eReduce
+	case fn.Dim == 0:
+		T = eReduceFirst
+	case fn.Dim < 0:
+		T = eReduceLast
+	case fn.Dim > 0:
+		T = eReduceDefault
+	}
+
+	T.Execute(w, fn)
+}
+
+func (fn *InternalEngReduce) Write(w io.Writer) {
+	w.Write([]byte("func (e E) "))
+	sig := fn.Signature()
+	sig.Write(w)
+	w.Write([]byte("{ \n"))
+	fn.WriteBody(w)
+	w.Write([]byte("}\n\n"))
+}
+
+func generateEReduce(f io.Writer, kinds Kinds) {
+	ks := filter(kinds.Kinds, isNotParameterized)
+
+	fn := &InternalEngReduce{
+		Kinds: ks,
+	}
+	fn.Write(f)
+	fn.Dim = -1
+	fn.Write(f)
+	fn.Dim = 1
+	fn.Write(f)
+	fn.Flat = true
+	fn.Write(f)
+}

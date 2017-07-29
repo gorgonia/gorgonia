@@ -67,5 +67,7 @@ func (e errorIndices) Indices() []int { return []int(e) }
 func (e errorIndices) Error() string  { return fmt.Sprintf("Error in indices %v", []int(e)) }
 
 const (
-	lenMismatch = `Cannot compare with differing lengths: %d and %d`
+	lenMismatch        = `Cannot compare with differing lengths: %d and %d`
+	reductionErrMsg    = `Expected reduction function to be %T. Got %T instead`
+	defaultValueErrMsg = `Expected default value of type %T. Got %v of %T instead`
 )
