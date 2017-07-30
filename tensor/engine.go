@@ -134,33 +134,33 @@ type OuterProder interface {
 /* ORD INTERFACES */
 
 type Lter interface {
-	Lt(a, b Tensor, asSame bool) (Tensor, error)
-	LtScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
+	Lt(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	LtScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 type Lteer interface {
-	Lte(a, b Tensor, asSame bool) (Tensor, error)
-	LteScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
+	Lte(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	LteScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 type Gter interface {
-	Gt(a, b Tensor, asSame bool) (Tensor, error)
-	GtScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
+	Gt(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	GtScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 type Gteer interface {
-	Gte(a, b Tensor, asSame bool) (Tensor, error)
-	GteScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
+	Gte(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	GteScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 /* EQ INTERFACES */
 
 type ElEqer interface {
-	ElEq(a, b Tensor, asSame bool) (Tensor, error)
-	ElEqScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
+	ElEq(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	ElEqScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 
-	ElNe(a, b Tensor, asSame bool) (Tensor, error)
-	ElNeScalar(a Tensor, b interface{}, leftTensor, asSame bool) (Tensor, error)
+	ElNe(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+	ElNeScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 /* Unary Operators for Numbers */

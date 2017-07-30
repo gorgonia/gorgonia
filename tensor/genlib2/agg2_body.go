@@ -74,7 +74,7 @@ const agg2BodyRaw = `if useIter {
 			err = e.E.{{.Name}}IterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
 		case toReuse:
-			storage.Copy(typ,dataReuse, dataA)
+			storage.CopyIter(typ,dataReuse, dataA, iit, ait)
 			err = e.E.{{.Name}}Iter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
 		case !safe:
@@ -119,7 +119,7 @@ const agg2CmpBodyRaw = `
 				err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
 				retVal = a
 			case toReuse && same:
-				storage.Copy(typ,dataReuse,dataA)
+				storage.CopyIter(typ,dataReuse,dataA, iit, ait)
 				err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, ait, bit)
 				retVal = reuse
 			case toReuse && !same:
