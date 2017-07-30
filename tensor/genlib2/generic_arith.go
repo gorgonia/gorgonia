@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 	"text/template"
 )
 
@@ -23,7 +24,7 @@ func (fn *GenericVecVecArith) Name() string {
 	case !fn.Iter && fn.Incr:
 		return fmt.Sprintf("%sIncr", fn.TypedBinOp.Name())
 	default:
-		return fn.TypedBinOp.Name()
+		return fmt.Sprintf("Vec%s", fn.TypedBinOp.Name())
 	}
 }
 
@@ -165,6 +166,7 @@ type GenericMixedArith struct {
 
 func (fn *GenericMixedArith) Name() string {
 	n := fn.GenericVecVecArith.Name()
+	n = strings.TrimPrefix(n, "Vec")
 	if fn.LeftVec {
 		n += "VS"
 	} else {
@@ -328,6 +330,48 @@ func (fn *GenericMixedArith) Write(w io.Writer) {
 	w.Write([]byte("}\n\n"))
 }
 
+type GenericScalarScalarArith struct {
+	TypedBinOp
+}
+
+func (fn *GenericScalarScalarArith) Signature() *Signature {
+	return &Signature{
+		Name:            fn.Name(),
+		NameTemplate:    typeAnnotatedName,
+		ParamNames:      []string{"a", "b"},
+		ParamTemplates:  []*template.Template{scalarType, scalarType},
+		RetVals:         []string{""},
+		RetValTemplates: []*template.Template{scalarType},
+		Kind:            fn.Kind(),
+	}
+}
+
+func (fn *GenericScalarScalarArith) WriteBody(w io.Writer) {
+	tmpl := `return {{if .IsFunc -}}
+			{{ template "callFunc" . -}}
+		{{else -}}
+			{{template "opDo" . -}}
+		{{end -}}`
+	opDo := `a {{template "symbol" .Kind}} b`
+	callFunc := `{{template "symbol" .Kind}}(a, b)`
+
+	T := template.Must(template.New(fn.Name()).Funcs(funcs).Parse(tmpl))
+	template.Must(T.New("opDo").Parse(opDo))
+	template.Must(T.New("callFunc").Parse(callFunc))
+	template.Must(T.New("symbol").Parse(fn.SymbolTemplate()))
+
+	T.Execute(w, fn)
+}
+
+func (fn *GenericScalarScalarArith) Write(w io.Writer) {
+	w.Write([]byte("func "))
+	sig := fn.Signature()
+	sig.Write(w)
+	w.Write([]byte("{"))
+	fn.WriteBody(w)
+	w.Write([]byte("}\n"))
+}
+
 func makeGenericVecVecAriths(tbo []TypedBinOp) (retVal []*GenericVecVecArith) {
 	for _, tb := range tbo {
 		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind()) {
@@ -360,6 +404,19 @@ func makeGenericMixedAriths(tbo []TypedBinOp) (retVal []*GenericMixedArith) {
 		if tb.Name() == "Div" && !isFloatCmplx(tb.Kind()) {
 			fn.Check = panicsDiv0
 			fn.CheckTemplate = check0
+		}
+		retVal = append(retVal, fn)
+	}
+	return
+}
+
+func makeGenericScalarScalarAriths(tbo []TypedBinOp) (retVal []*GenericScalarScalarArith) {
+	for _, tb := range tbo {
+		if tc := tb.TypeClass(); tc != nil && !tc(tb.Kind()) {
+			continue
+		}
+		fn := &GenericScalarScalarArith{
+			TypedBinOp: tb,
 		}
 		retVal = append(retVal, fn)
 	}
@@ -436,6 +493,13 @@ func generateGenericMixedArith(f io.Writer, ak Kinds) {
 		g.Write(f)
 		g.Incr = true
 	}
+	for _, g := range gen {
+		g.Write(f)
+	}
+}
+
+func generateGenericScalarScalarArith(f io.Writer, ak Kinds) {
+	gen := makeGenericScalarScalarAriths(typedAriths)
 	for _, g := range gen {
 		g.Write(f)
 	}

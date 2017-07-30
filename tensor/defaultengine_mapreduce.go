@@ -145,5 +145,4 @@ func (e StdEng) Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ..
 	}
 	retVal = reuse
 	return
-
 }

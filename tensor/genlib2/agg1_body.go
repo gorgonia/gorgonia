@@ -17,13 +17,13 @@ const (
 			{{$p := panicsDiv0 . -}}
 			switch {
 			case as && bs:
-				{{$name}}{{short .}}(at, bt)
+				Vec{{$name}}{{short .}}(at, bt)
 			case as && !bs:
 				{{if and $isDiv $p}} err = {{end}} {{$name}}SV{{short .}}(at[0], bt)
 			case !as && bs:
 				{{if and $isDiv $p}} err = {{end}} {{$name}}VS{{short .}}(at, bt[0])
 			default:
-				{{if and $isDiv $p}} err = {{end}} {{$name}}{{short .}}(at, bt)
+				{{if and $isDiv $p}} err = {{end}} Vec{{$name}}{{short .}}(at, bt)
 			}
 			return 
 		{{end -}}
@@ -48,7 +48,7 @@ const (
 
 			switch {
 			case as && bs:
-				{{$name}}{{short .}}(at, bt)
+				Vec{{$name}}{{short .}}(at, bt)
 				if !is {
 					return e.Add(t, incr, a)
 				}
@@ -76,7 +76,7 @@ const (
 		bt := b.{{sliceOf .}}
 		switch {
 		case as && bs :
-			{{$name}}{{short .}}(at, bt)
+			Vec{{$name}}{{short .}}(at, bt)
 		case as && !bs:
 			{{$name}}IterSV{{short .}}(at[0], bt, bit)
 		case !as && bs:
@@ -107,7 +107,7 @@ const (
 		it := incr.{{sliceOf .}}
 		switch {
 		case as && bs:
-			{{$name}}{{short .}}(at, bt)
+			Vec{{$name}}{{short .}}(at, bt)
 			if !is {
 				return e.{{$name}}Iter{{short .}}(t, incr, a, iit, ait)
 			}

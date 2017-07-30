@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"text/template"
 )
@@ -150,14 +151,14 @@ func generateGenericReduce(f io.Writer, generic Kinds) {
 		}
 	}
 
-	// for _, k := range filter(generic.Kinds, isNumber) {
-	// 	genericSum.Execute(f, k)
+	for _, k := range filter(generic.Kinds, isNumber) {
+		genericSum.Execute(f, k)
 
-	// }
-	// for _, k := range filter(generic.Kinds, isNumber) {
-	// 	genericProd.Execute(f, k)
-	// }
-	// fmt.Fprintf(f, "\n")
+	}
+	for _, k := range filter(generic.Kinds, isNumber) {
+		genericProd.Execute(f, k)
+	}
+	fmt.Fprintf(f, "\n")
 
 	for _, k := range filter(generic.Kinds, isOrd) {
 		if isNumber(k) {
