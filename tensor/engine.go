@@ -166,7 +166,7 @@ type ElEqer interface {
 /* Unary Operators for Numbers */
 
 type Mapper interface {
-	Map(a Tensor, opts ...FuncOpt) error
+	Map(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
 type Squarer interface {
@@ -200,7 +200,7 @@ type Neger interface {
 /* Reduction */
 
 type Reducer interface {
-	Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ...FuncOpt) error
+	Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 type Sumer interface {
