@@ -7,7 +7,7 @@ import (
 )
 
 type Signature struct {
-	DocString       string
+	DocString       *template.Template
 	Name            string
 	NameTemplate    *template.Template
 	ParamNames      []string

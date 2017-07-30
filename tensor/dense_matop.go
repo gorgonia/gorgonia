@@ -10,10 +10,10 @@ func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error
 	if e == nil {
 		e = StdEng{}
 	}
-	if m, ok := e.(Mapper); !ok {
-		return nil, errors.Errorf("Execution engine for %v not a mapper", t)
+	if m, ok := e.(Mapper); ok {
+		return m.Map(fn, t, opts...)
 	}
-	return m.Map(t, fn, opt...)
+	return nil, errors.Errorf("Execution engine for %v not a mapper", t)
 
 	/*
 		if !t.IsNativelyAccessible() {

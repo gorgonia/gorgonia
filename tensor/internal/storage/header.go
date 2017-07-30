@@ -17,7 +17,7 @@ type Header struct {
 func (h *Header) Pointer() unsafe.Pointer { return h.Ptr }
 func (h *Header) Len() int                { return h.L }
 
-func Copy(dst, src *Header, t reflect.Type) int {
+func Copy(t reflect.Type, dst, src *Header) int {
 	if dst.L == 0 || src.L == 0 {
 		return 0
 	}
@@ -43,16 +43,45 @@ func Copy(dst, src *Header, t reflect.Type) int {
 	return copied / int(t.Size())
 }
 
-func CopySliced(dst *Header, dstart, dend int, src *Header, sstart, send int, t reflect.Type) int {
+func CopySliced(t reflect.Type, dst *Header, dstart, dend int, src *Header, sstart, send int) int {
 	dstBA := AsByteSlice(dst, t)
 	srcBA := AsByteSlice(src, t)
 	size := int(t.Size())
+
 	ds := dstart * size
 	de := dend * size
 	ss := sstart * size
 	se := send * size
 	copied := copy(dstBA[ds:de], srcBA[ss:se])
 	return copied / size
+}
+
+func CopyIter(t reflect.Type, dst, src *Header, diter, siter Iterator) int {
+	dstBA := AsByteSlice(dst, t)
+	srcBA := AsByteSlice(src, t)
+	size := int(t.Size())
+
+	var idx, jdx, i, j, count int
+	var err error
+	for {
+		if idx, err = diter.Next(); err != nil {
+			if err = handleNoOp(err); err != nil {
+				panic(err)
+			}
+			break
+		}
+		if jdx, err = siter.Next(); err != nil {
+			if err = handleNoOp(err); err != nil {
+				panic(err)
+			}
+			break
+		}
+		i = idx * size
+		j = jdx * size
+		dstBA[i] = srcBA[j]
+		count++
+	}
+	return count
 }
 
 func AsByteSlice(a *Header, t reflect.Type) []byte {

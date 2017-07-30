@@ -166,35 +166,67 @@ type ElEqer interface {
 /* Unary Operators for Numbers */
 
 type Mapper interface {
-	Map(a Tensor, opts ...FuncOpt) (Tensor, error)
+	Map(fn interface{}, a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
-type Squarer interface {
-	Square(a Tensor, opts ...FuncOpt) error
-}
-
-type Exper interface {
-	Exp(a Tensor, opts ...FuncOpt) error
-}
-
-type InvSqrter interface {
-	InvSqrt(a Tensor, opts ...FuncOpt) error
+type Neger interface {
+	Neg(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
 type Inver interface {
-	Inv(a Tensor, opts ...FuncOpt) error
+	Inv(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
-type Clamper interface {
-	Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (Tensor, error)
+type Squarer interface {
+	Square(a Tensor, opts ...FuncOpt) (Tensor, error)
+}
+
+type Cuber interface {
+	Cube(a Tensor, opts ...FuncOpt) (Tensor, error)
+}
+
+type Exper interface {
+	Exp(a Tensor, opts ...FuncOpt) (Tensor, error)
+}
+
+type Tanher interface {
+	Tanh(a Tensor, opts ...FuncOpt) (Tensor, error)
+}
+
+type Loger interface {
+	Log(a Tensor, opt ...FuncOpt) (Tensor, error)
+}
+
+type Log2er interface {
+	Log2(a Tensor, opt ...FuncOpt) (Tensor, error)
+}
+
+type Log10er interface {
+	Log10(a Tensor, opt ...FuncOpt) (Tensor, error)
+}
+
+type Sqrter interface {
+	Sqrt(a Tensor, opt ...FuncOpt) (Tensor, error)
+}
+
+type Cbrter interface {
+	Cbrt(a Tensor, opt ...FuncOpt) (Tensor, error)
+}
+
+type InvSqrter interface {
+	InvSqrt(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
 type Signer interface {
 	Sign(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
-type Neger interface {
-	Neg(a Tensor, opts ...FuncOpt) (Tensor, error)
+type Abser interface {
+	Abs(a Tensor, opts ...FuncOpt) (Tensor, error)
+}
+
+type Clamper interface {
+	Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 /* Reduction */
@@ -212,7 +244,9 @@ type Proder interface {
 }
 
 type Miner interface {
+	Min(a Tensor, along ...int) (Tensor, error)
 }
 
 type Maxer interface {
+	Max(a Tensor, along ...int) (Tensor, error)
 }

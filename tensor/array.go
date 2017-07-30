@@ -173,5 +173,5 @@ func copyArray(dst, src array) int {
 	if dst.t != src.t {
 		panic("Cannot copy arrays of different types.")
 	}
-	return storage.Copy(&dst.Header, &src.Header, dst.t.Type)
+	return storage.Copy(dst.t.Type, &dst.Header, &src.Header)
 }

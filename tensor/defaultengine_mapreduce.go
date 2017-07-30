@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (e StdEng) Map(a Tensor, fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
@@ -126,7 +126,7 @@ func (e StdEng) Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ..
 		}
 		size = a.Shape()[0]
 		split = a.DataSize() / size
-		storage.CopySliced(dataReuse, 0, split, dataA, 0, split, typ)
+		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
 		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, fn)
 	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
 		var dimSize int

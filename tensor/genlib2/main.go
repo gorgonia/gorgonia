@@ -61,14 +61,15 @@ func main() {
 	pipeline(execLoc, "eng_map.go", Kinds{allKinds}, generateEMap)
 	pipeline(execLoc, "eng_cmp.go", Kinds{allKinds}, generateECmp)
 	pipeline(execLoc, "eng_reduce.go", Kinds{allKinds}, generateEReduce)
+	pipeline(execLoc, "eng_unary.go", Kinds{allKinds}, generateUncondEUnary, generateCondEUnary)
 
 	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)
 	pipeline(tensorPkgLoc, "defaultengine_cmp.go", Kinds{allKinds}, generateStdEngCmp)
 
-	// level 3 aggregation
+	// level 3 and 4 aggregation
 	pipeline(tensorPkgLoc, "dense_arith.go", Kinds{allKinds}, generateDenseArith)
-	pipeline(tensorPkgLoc, "dense_cmp.go", Kinds{allKinds}, generateDenseCmp)
+	// pipeline(tensorPkgLoc, "dense_cmp.go", Kinds{allKinds}, generateDenseCmp) // generate once, manually edit later
 
 	// dense methods
 	pipeline(tensorPkgLoc, "dense_generated.go", Kinds{allKinds}, generateDenseConstructionFns)

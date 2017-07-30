@@ -398,3 +398,111 @@ func generateEReduce(f io.Writer, kinds Kinds) {
 	fn.Flat = true
 	fn.Write(f)
 }
+
+type InternalEngUnary struct {
+	UnaryOp
+	Kinds []reflect.Kind
+	Iter  bool
+}
+
+func (fn *InternalEngUnary) Signature() *Signature {
+	paramNames := []string{"t", "a"}
+	paramTemplates := []*template.Template{reflectType, arrayType}
+
+	if fn.Iter {
+		paramNames = append(paramNames, "ait")
+		paramTemplates = append(paramTemplates, iteratorType)
+	}
+
+	return &Signature{
+		Name:           fn.Name(),
+		NameTemplate:   plainName,
+		ParamNames:     paramNames,
+		ParamTemplates: paramTemplates,
+		Err:            true,
+	}
+}
+
+func (fn *InternalEngUnary) Name() string {
+	n := fn.UnaryOp.Name()
+	if fn.Iter {
+		n += "Iter"
+	}
+	return n
+}
+
+func (fn *InternalEngUnary) WriteBody(w io.Writer) {
+	T := eUnary
+	if fn.Iter {
+		T = eUnaryIter
+	}
+
+	T.Execute(w, fn)
+}
+
+func (fn *InternalEngUnary) Write(w io.Writer) {
+	w.Write([]byte("func (e E) "))
+	sig := fn.Signature()
+	sig.Write(w)
+	w.Write([]byte("{ \n"))
+	fn.WriteBody(w)
+	w.Write([]byte("}\n\n"))
+}
+
+func generateUncondEUnary(f io.Writer, kinds Kinds) {
+	var unaries []*InternalEngUnary
+	for _, u := range unconditionalUnaries {
+		var ks []reflect.Kind
+		for _, k := range kinds.Kinds {
+			if tc := u.TypeClass(); tc != nil && !tc(k) {
+				continue
+			}
+			ks = append(ks, k)
+		}
+		ieu := &InternalEngUnary{
+			UnaryOp: u,
+			Kinds:   ks,
+		}
+		unaries = append(unaries, ieu)
+	}
+
+	for _, u := range unaries {
+		u.Write(f)
+		u.Iter = true
+	}
+
+	for _, u := range unaries {
+		u.Write(f)
+	}
+}
+
+func generateCondEUnary(f io.Writer, kinds Kinds) {
+	var unaries []*InternalEngUnary
+	for _, u := range conditionalUnaries {
+		var ks []reflect.Kind
+		for _, k := range kinds.Kinds {
+			if tc := u.TypeClass(); tc != nil && !tc(k) {
+				continue
+			}
+			// special case for complex
+			if isComplex(k) {
+				continue
+			}
+			ks = append(ks, k)
+		}
+		ieu := &InternalEngUnary{
+			UnaryOp: u,
+			Kinds:   ks,
+		}
+		unaries = append(unaries, ieu)
+	}
+
+	for _, u := range unaries {
+		u.Write(f)
+		u.Iter = true
+	}
+
+	for _, u := range unaries {
+		u.Write(f)
+	}
+}

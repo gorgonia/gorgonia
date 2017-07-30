@@ -197,7 +197,7 @@ func isNumber(dt Dtype) bool {
 	return false
 }
 
-func isFloat(dt v) bool {
+func isFloat(dt Dtype) bool {
 	return dt == Float64 || dt == Float32
 }
 

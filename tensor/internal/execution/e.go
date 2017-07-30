@@ -40,27 +40,6 @@ var (
 
 func isScalar(a *storage.Header) bool { return a.L == 1 }
 
-// NoOpError is a useful for operations that have no op.
-type NoOpError interface {
-	NoOp() bool
-}
-
-type noopError struct{}
-
-func (e noopError) NoOp() bool    { return true }
-func (e noopError) Error() string { return "NoOp" }
-
-func handleNoOp(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	if _, ok := err.(NoOpError); !ok {
-		return err
-	}
-	return nil
-}
-
 type errorIndices []int
 
 func (e errorIndices) Indices() []int { return []int(e) }

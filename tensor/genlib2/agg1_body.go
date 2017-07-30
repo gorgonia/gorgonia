@@ -405,7 +405,31 @@ const (
 		{{end -}}
 	default:
 		return nil, errors.Errorf("Unsupported type %v for Reduce", t)
-	}`
+	}
+	`
+
+	eUnaryRaw = `{{$name := .Name -}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		{{$name}}{{short .}}(a.{{sliceOf .}})
+		return nil
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
+
+	eUnaryIterRaw = `{{$name := .Name -}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		return {{$name}}{{short .}}(a.{{sliceOf .}}, ait)
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for {{$name}}", t)
+	}
+	`
 )
 
 var (
@@ -413,16 +437,22 @@ var (
 	eArithIncr     *template.Template
 	eArithIter     *template.Template
 	eArithIterIncr *template.Template
-	eMap           *template.Template
-	eMapIter       *template.Template
-	eCmpBool       *template.Template
-	eCmpSame       *template.Template
-	eCmpBoolIter   *template.Template
-	eCmpSameIter   *template.Template
+
+	eMap     *template.Template
+	eMapIter *template.Template
+
+	eCmpBool     *template.Template
+	eCmpSame     *template.Template
+	eCmpBoolIter *template.Template
+	eCmpSameIter *template.Template
+
 	eReduce        *template.Template
 	eReduceFirst   *template.Template
 	eReduceLast    *template.Template
 	eReduceDefault *template.Template
+
+	eUnary     *template.Template
+	eUnaryIter *template.Template
 )
 
 func init() {
@@ -443,4 +473,7 @@ func init() {
 	eReduceFirst = template.Must(template.New("eReduceFirst").Funcs(funcs).Parse(eReduceFirstRaw))
 	eReduceLast = template.Must(template.New("eReduceLast").Funcs(funcs).Parse(eReduceLastRaw))
 	eReduceDefault = template.Must(template.New("eReduceDefault").Funcs(funcs).Parse(eReduceDefaultRaw))
+
+	eUnary = template.Must(template.New("eUnary").Funcs(funcs).Parse(eUnaryRaw))
+	eUnaryIter = template.Must(template.New("eUnaryIter").Funcs(funcs).Parse(eUnaryIterRaw))
 }

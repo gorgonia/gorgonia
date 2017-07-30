@@ -108,7 +108,7 @@ func generateGenericCondUnary(f io.Writer, ak Kinds) {
 			continue
 		}
 		// special case for cmplx
-		if isComplex(tu.Kind()){
+		if isComplex(tu.Kind()) {
 			continue
 		}
 
@@ -126,3 +126,7 @@ func generateGenericCondUnary(f io.Writer, ak Kinds) {
 		g.Write(f)
 	}
 }
+
+/*
+SPECIAL CASES
+*/
