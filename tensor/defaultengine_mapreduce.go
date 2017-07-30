@@ -74,7 +74,69 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 	return
 }
 
-func (e StdEng) Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, opts ...FuncOpt) (retVal Tensor, err error) {
+	var at DenseTensor
+	var reuse *Dense
+	var dataA, dataReuse *storage.Header
+	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
+		err = errors.Wrap(err, "Prep Reduce failed")
+		return
+	}
+
+	typ := a.Dtype().Type
+	dim0 := a.Shape()[0]
+	dimSize := a.Shape()[axis]
+	outerStride := a.Strides()[0]
+	stride := a.Strides()[axis]
+	expected := reuse.Strides()[0]
+	err = e.E.ReduceDefault(typ, dataA, dataReuse, dim0, dimSize, outerStride, stride, expected, fn)
+	retVal = reuse
+	return
+}
+
+func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, defaultValue interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	var at DenseTensor
+	var reuse *Dense
+	var dataA, dataReuse *storage.Header
+	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
+		err = errors.Wrap(err, "Prep Reduce failed")
+		return
+	}
+
+	lastAxis := a.Dims() - 1
+	typ := a.Dtype().Type
+
+	// actual call out to the internal engine
+	switch {
+	case (axis == 0 && at.DataOrder().isRowMajor()) || ((axis == lastAxis || axis == len(a.Shape())-1) && at.DataOrder().isColMajor()):
+		var size, split int
+		if at.DataOrder().isColMajor() {
+			return nil, errors.Errorf("NYI: colmajor")
+		}
+		size = a.Shape()[0]
+		split = a.DataSize() / size
+		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
+		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, firstFn)
+	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
+		var dimSize int
+		if at.DataOrder().isColMajor() {
+			return nil, errors.Errorf("NYI: colmajor")
+		}
+		dimSize = a.Shape()[axis]
+		err = e.E.ReduceLast(typ, dataA, dataReuse, dimSize, defaultValue, lastFn)
+	default:
+		dim0 := a.Shape()[0]
+		dimSize := a.Shape()[axis]
+		outerStride := a.Strides()[0]
+		stride := a.Strides()[axis]
+		expected := reuse.Strides()[0]
+		err = e.E.ReduceDefault(typ, dataA, dataReuse, dim0, dimSize, outerStride, stride, expected, defaultFn)
+	}
+	retVal = reuse
+	return
+}
+
+func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at DenseTensor, reuse *Dense, dataA, dataReuse *storage.Header, err error) {
 	if axis >= a.Dims() {
 		err = errors.Errorf(dimMismatch, axis, a.Dims())
 		return
@@ -87,62 +149,36 @@ func (e StdEng) Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ..
 		}
 		newShape = append(newShape, s)
 	}
-	lastAxis := a.Dims() - 1
 
 	// FUNC PREP
-	var reuse *Dense
-	var safe, toReuse, _ bool // incr is not supported
-	if reuse, safe, toReuse, _, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to prep unary tensor")
+	var safe bool
+	if reuse, safe, _, _, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
+		err = errors.Wrap(err, "Unable to prep unary tensor")
+		return
 	}
 
 	switch {
 	case !safe:
-		return nil, errors.New("Reduce only supports safe operations.")
+		err = errors.New("Reduce only supports safe operations.")
+		return
 	case reuse != nil && !reuse.IsNativelyAccessible():
-		return nil, errors.Errorf(inaccessibleData, reuse)
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
 	case safe && reuse == nil:
 		reuse = New(Of(a.Dtype()), WithShape(newShape...))
 	}
 
 	// DATA PREP
-	typ := a.Dtype().Type
-	var dataA, dataReuse *storage.Header
 	var useIter bool
 	if dataA, dataReuse, _, _, useIter, err = prepDataUnary(a, reuse); err != nil {
-		return nil, errors.Wrapf(err, "StdEng.Reduce data prep")
-	}
-	at, ok := a.(DenseTensor)
-	if useIter || !ok {
-		return nil, errors.Errorf("Reduce does not (yet) support iterable tensors")
+		err = errors.Wrapf(err, "StdEng.Reduce data prep")
+		return
 	}
 
-	// actual call out to the internal engine
-	switch {
-	case (axis == 0 && at.DataOrder().isRowMajor()) || ((axis == lastAxis || axis == len(a.Shape())-1) && at.DataOrder().isColMajor()):
-		var size, split int
-		if at.DataOrder().isColMajor() {
-			return nil, errors.Errorf("NYI: colmajor")
-		}
-		size = a.Shape()[0]
-		split = a.DataSize() / size
-		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
-		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, fn)
-	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
-		var dimSize int
-		if at.DataOrder().isColMajor() {
-			return nil, errors.Errorf("NYI: colmajor")
-		}
-		dimSize = a.Shape()[axis]
-		err = e.E.ReduceLast(typ, dataA, dataReuse, dimSize, defaultValue, fn)
-	default:
-		dim0 := a.Shape()[0]
-		dimSize := a.Shape()[axis]
-		outerStride := a.Strides()[0]
-		stride := a.Strides()[axis]
-		expected := reuse.Strides()[0]
-		err = e.E.ReduceDefault(typ, dataA, dataReuse, dim0, dimSize, outerStride, stride, expected, fn)
+	var ok bool
+	if at, ok = a.(DenseTensor); !ok || useIter {
+		err = errors.Errorf("Reduce does not (yet) support iterable tensors")
+		return
 	}
-	retVal = reuse
 	return
 }

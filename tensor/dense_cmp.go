@@ -92,9 +92,9 @@ func (t *Dense) ElEq(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		e = StdEng{}
 	}
 
-	if eqer, ok := e.(ElEqerer); ok {
+	if eqer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = eqer.Eq(t, other, opts...); err != nil {
+		if ret, err = eqer.ElEq(t, other, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do Eq()")
 			return
 		}
@@ -112,9 +112,9 @@ func (t *Dense) ElNe(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		e = StdEng{}
 	}
 
-	if neer, ok := e.(ElEqerer); ok {
+	if neer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = neer.Ne(t, other, opts...); err != nil {
+		if ret, err = neer.ElNe(t, other, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do Ne()")
 			return
 		}
@@ -214,7 +214,7 @@ func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 
 	if eqer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = eqer.EqScalar(t, other, leftTensor, opts...); err != nil {
+		if ret, err = eqer.ElEqScalar(t, other, leftTensor, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do EqScalar()")
 			return
 		}
@@ -232,9 +232,9 @@ func (t *Dense) ElNeScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 		e = StdEng{}
 	}
 
-	if neer, ok := e.(ElNeer); ok {
+	if neer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = neer.NeScalar(t, other, leftTensor, opts...); err != nil {
+		if ret, err = neer.ElNeScalar(t, other, leftTensor, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do NeScalar()")
 			return
 		}

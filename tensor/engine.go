@@ -232,7 +232,11 @@ type Clamper interface {
 /* Reduction */
 
 type Reducer interface {
-	Reduce(a Tensor, axis int, fn, defaultValue interface{}, opts ...FuncOpt) (Tensor, error)
+	Reduce(fn interface{}, a Tensor, axis int, opts ...FuncOpt) (Tensor, error)
+}
+
+type OptimizedReducer interface {
+	OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, defaultValue interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 type Sumer interface {

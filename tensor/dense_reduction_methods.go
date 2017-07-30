@@ -3,6 +3,7 @@ package tensor
 import (
 	"reflect"
 
+	"github.com/chewxy/gorgonia/tensor/internal/execution"
 	"github.com/pkg/errors"
 )
 
