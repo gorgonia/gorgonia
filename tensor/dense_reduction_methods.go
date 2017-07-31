@@ -51,29 +51,33 @@ func (t *Dense) Sum(along ...int) (retVal *Dense, err error) {
 		return
 	}
 
+	switch reducer := e.(type) {
+	case OptimizedReducer:
+		retVal = t
+		typ := t.t.Type
+		prev := -1
+		dims := len(retVal.Shape())
+		for _, axis := range along {
+			if prev == -1 {
+				prev = axis
+			}
+			if axis > prev {
+				axis--
+			}
+
+			if axis >= dims {
+				err = errors.Errorf(dimMismatch, retVal.Dims(), axis)
+				return
+			}
+			retVal = reducer.Reduce(retVal, axis, fn, reflect.Zero(typ).Interface())
+		}
+
+	}
 	var reducer Reducer
 	var ok bool
 	if reducer, ok = e.(Reducer); !ok {
 		return nil, errors.Errorf("Execution Engine for %v does not support Reduce", t)
 	}
 
-	retVal = t
-	typ := t.t.Type
-	prev := -1
-	dims := len(retVal.Shape())
-	for _, axis := range along {
-		if prev == -1 {
-			prev = axis
-		}
-		if axis > prev {
-			axis--
-		}
-
-		if axis >= dims {
-			err = errors.Errorf(dimMismatch, retVal.Dims(), axis)
-			return
-		}
-		retVal = reducer.Reduce(retVal, axis, fn, reflect.Zero(typ).Interface())
-	}
 	return
 }
