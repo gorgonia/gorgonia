@@ -175,3 +175,45 @@ func copyArray(dst, src array) int {
 	}
 	return storage.Copy(dst.t.Type, &dst.Header, &src.Header)
 }
+
+// copyDense copies a DenseTensor
+func copyDense(dest, src DenseTensor) int {
+	e := src.Engine()
+	switch s := src.(type) {
+	// case *MaskedDense:
+	// var d *MaskedDense
+	// var ok bool
+	// if d, ok = dest.(*MaskedDense); !ok {
+	// 	panic("Copy can only copy from *MaskedDense to *MaskedDense")
+	// }
+
+	// if s.IsMasked() {
+	// 	if cap(d.mask) < len(s.mask) {
+	// 		d.mask = make([]bool, len(s.mask))
+	// 	}
+	// 	copy(d.mask, s.mask)
+	// 	d.mask = d.mask[:len(s.mask)]
+	// }
+	// if e != nil {
+	// 	if err := e.Memcpy(d.array, s.array); err != nil {
+	// 		panic(err)
+	// 	}
+	// 	return d.L
+	// }
+	// return copyArray(d.array, s.array)
+
+	case *Dense:
+		var d *Dense
+		var ok bool
+		if d, ok = dest.(*Dense); !ok {
+			panic("Copy can only copy from *Dense to *Dense")
+		}
+		if e != nil {
+			if err := e.Memcpy(d.array, s.array); err != nil {
+				panic(err)
+			}
+			return d.L
+		}
+		return copyArray(d.array, s.array)
+	}
+}

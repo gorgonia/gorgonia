@@ -16,8 +16,8 @@ GENERATED FILE. DO NOT EDIT
 */
 
 func convFromFloat64s(to Dtype, data []float64) interface{} {
-	switch to.Kind() {
-	case reflect.Int:
+	switch to {
+	case Int:
 		retVal := make([]int, len(data))
 		for i, v := range data {
 			switch {
@@ -28,7 +28,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Int8:
+	case Int8:
 		retVal := make([]int8, len(data))
 		for i, v := range data {
 			switch {
@@ -39,7 +39,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Int16:
+	case Int16:
 		retVal := make([]int16, len(data))
 		for i, v := range data {
 			switch {
@@ -50,7 +50,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Int32:
+	case Int32:
 		retVal := make([]int32, len(data))
 		for i, v := range data {
 			switch {
@@ -61,7 +61,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Int64:
+	case Int64:
 		retVal := make([]int64, len(data))
 		for i, v := range data {
 			switch {
@@ -72,7 +72,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Uint:
+	case Uint:
 		retVal := make([]uint, len(data))
 		for i, v := range data {
 			switch {
@@ -83,7 +83,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Uint8:
+	case Uint8:
 		retVal := make([]uint8, len(data))
 		for i, v := range data {
 			switch {
@@ -94,7 +94,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Uint16:
+	case Uint16:
 		retVal := make([]uint16, len(data))
 		for i, v := range data {
 			switch {
@@ -105,7 +105,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Uint32:
+	case Uint32:
 		retVal := make([]uint32, len(data))
 		for i, v := range data {
 			switch {
@@ -116,7 +116,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Uint64:
+	case Uint64:
 		retVal := make([]uint64, len(data))
 		for i, v := range data {
 			switch {
@@ -127,7 +127,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Float32:
+	case Float32:
 		retVal := make([]float32, len(data))
 		for i, v := range data {
 			switch {
@@ -142,11 +142,11 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Float64:
+	case Float64:
 		retVal := make([]float64, len(data))
 		copy(retVal, data)
 		return retVal
-	case reflect.Complex64:
+	case Complex64:
 		retVal := make([]complex64, len(data))
 		for i, v := range data {
 			switch {
@@ -159,7 +159,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 			}
 		}
 		return retVal
-	case reflect.Complex128:
+	case Complex128:
 		retVal := make([]complex128, len(data))
 		for i, v := range data {
 			switch {
@@ -179,58 +179,58 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 
 func convToFloat64s(t *Dense) (retVal []float64) {
 	retVal = make([]float64, t.len())
-	switch t.t.Kind() {
-	case reflect.Int:
+	switch t.t {
+	case Int:
 		for i, v := range t.Ints() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Int8:
+	case Int8:
 		for i, v := range t.Int8s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Int16:
+	case Int16:
 		for i, v := range t.Int16s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Int32:
+	case Int32:
 		for i, v := range t.Int32s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Int64:
+	case Int64:
 		for i, v := range t.Int64s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Uint:
+	case Uint:
 		for i, v := range t.Uints() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Uint8:
+	case Uint8:
 		for i, v := range t.Uint8s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Uint16:
+	case Uint16:
 		for i, v := range t.Uint16s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Uint32:
+	case Uint32:
 		for i, v := range t.Uint32s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Uint64:
+	case Uint64:
 		for i, v := range t.Uint64s() {
 			retVal[i] = float64(v)
 		}
 		return retVal
-	case reflect.Float32:
+	case Float32:
 		for i, v := range t.Float32s() {
 			switch {
 			case math32.IsNaN(v):
@@ -244,10 +244,10 @@ func convToFloat64s(t *Dense) (retVal []float64) {
 			}
 		}
 		return retVal
-	case reflect.Float64:
+	case Float64:
 		return t.Float64s()
 		return retVal
-	case reflect.Complex64:
+	case Complex64:
 		for i, v := range t.Complex64s() {
 			switch {
 			case cmplx.IsNaN(complex128(v)):
@@ -259,7 +259,7 @@ func convToFloat64s(t *Dense) (retVal []float64) {
 			}
 		}
 		return retVal
-	case reflect.Complex128:
+	case Complex128:
 		for i, v := range t.Complex128s() {
 			switch {
 			case cmplx.IsNaN(v):
@@ -394,6 +394,11 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 // This function will only convert matrices. Anything *Dense with dimensions larger than 2 will cause an error.
 func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	// checks:
+	if !t.IsNativelyAccessible() {
+		err = errors.Errorf("Cannot convert *Dense to *mat64.Dense. Data is inaccessible")
+		return
+	}
+
 	if !t.IsMatrix() {
 		// error
 		err = errors.Errorf("Cannot convert *Dense to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())
@@ -409,7 +414,7 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 
 	var data []float64
 	switch {
-	case t.t.Kind() == reflect.Float64 && toCopy && !t.IsMaterializable():
+	case t.t == Float64 && toCopy && !t.IsMaterializable():
 		data = make([]float64, t.len())
 		copy(data, t.Float64s())
 	case !t.IsMaterializable():

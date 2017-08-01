@@ -170,11 +170,11 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 
 const sliceRaw = `// the method assumes the AP and metadata has already been set and this is simply slicing the values
 func (t *Dense) slice(start, end int) {
-	switch t.t.Kind() {
+	switch t.t {
 	{{range .Kinds -}}
 		{{if isParameterized .}}
 		{{else -}}
-	case reflect.{{reflectKind .}}:
+	case {{reflectKind .}}:
 		data := t.{{sliceOf .}}[start:end]
 		t.fromSlice(data)
 		{{end -}}

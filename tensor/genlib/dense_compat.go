@@ -192,6 +192,11 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 // This function will only convert matrices. Anything *Dense with dimensions larger than 2 will cause an error.
 func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	// checks:
+	if !t.IsNativelyAccessible() {
+		err = errors.Errorf("Cannot convert *Dense to *mat64.Dense. Data is inaccessible")
+		return
+	}
+	
 	if !t.IsMatrix() {
 		// error
 		err = errors.Errorf("Cannot convert *Dense to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())

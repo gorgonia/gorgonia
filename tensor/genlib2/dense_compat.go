@@ -6,10 +6,10 @@ import (
 )
 
 const conversionsRaw = `func convFromFloat64s(to Dtype, data []float64) interface{} {
-	switch to.Kind(){
+	switch to {
 	{{range .Kinds -}}
 	{{if isNumber . -}}
-	case reflect.{{reflectKind .}}:
+	case {{reflectKind .}}:
 		{{if eq .String "float64" -}}
 			retVal := make([]float64, len(data))
 			copy(retVal, data)
@@ -76,10 +76,10 @@ const conversionsRaw = `func convFromFloat64s(to Dtype, data []float64) interfac
 
 func convToFloat64s(t *Dense) (retVal []float64){
 	retVal = make([]float64, t.len())
-	switch t.t.Kind() {
+	switch t.t{
 	{{range .Kinds -}}
 	{{if isNumber . -}}
-	case reflect.{{reflectKind .}}:
+	case {{reflectKind .}}:
 		{{if eq .String "float64" -}}
 			return t.{{sliceOf .}}
 		{{else if eq .String "float32" -}}
@@ -192,6 +192,11 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 // This function will only convert matrices. Anything *Dense with dimensions larger than 2 will cause an error.
 func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	// checks:
+	if !t.IsNativelyAccessible() {
+		err = errors.Errorf("Cannot convert *Dense to *mat64.Dense. Data is inaccessible")
+		return
+	}
+
 	if !t.IsMatrix() {
 		// error
 		err = errors.Errorf("Cannot convert *Dense to *mat64.Dense. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())
@@ -207,7 +212,7 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 
 	var data []float64
 	switch {
-	case t.t.Kind() == reflect.Float64 && toCopy  && !t.IsMaterializable():
+	case t.t == Float64 && toCopy  && !t.IsMaterializable():
 		data = make([]float64, t.len())
 		copy(data, t.Float64s())
 	case !t.IsMaterializable():	

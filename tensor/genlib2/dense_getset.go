@@ -10,11 +10,11 @@ const memsetIterRaw = `
 func (t *Dense) memsetIter(x interface{}) (err error) {
 	it := NewFlatIterator(t.AP)
 	var i int
-	switch t.t.Kind() {
+	switch t.t{
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
 		{{else -}}
-	case reflect.{{reflectKind .}}:
+	case {{reflectKind .}}:
 		xv, ok := x.({{asType .}})
 		if !ok {
 			return errors.Errorf(dtypeMismatch, t.t, x)
@@ -45,11 +45,11 @@ func (t *Dense) memsetIter(x interface{}) (err error) {
 const zeroRaw = `func (t *Dense) zeroIter() (err error){
 	it := NewFlatIterator(t.AP)
 	var i int
-	switch t.t.Kind() {
+	switch t.t {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
 		{{else -}}
-	case reflect.{{reflectKind .}}:
+	case {{reflectKind .}}:
 		data := t.{{sliceOf .}}
 		for i, err = it.Next(); err == nil; i, err = it.Next(){
 			data[i] = {{if eq .String "bool" -}}
@@ -89,11 +89,11 @@ const copySlicedRaw = `func copySliced(dest *Dense, dstart, dend int, src *Dense
 		dest.mask=mask
 		copy(dest.mask[dstart:dend], src.mask[sstart:send])
 	}
-	switch dest.t.Kind() {
+	switch dest.t {
 	{{range .Kinds -}}
 		{{if isParameterized .}}
 		{{else -}}
-	case reflect.{{reflectKind .}}:
+	case {{reflectKind .}}:
 		return copy(dest.{{sliceOf .}}[dstart:dend], src.{{sliceOf .}}[sstart:send])
 		{{end -}}
 	{{end -}}
@@ -131,7 +131,7 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 		dest.mask=dest.mask[:dest.DataSize()]
 	}
 
-	k := dest.t.Kind()
+	dt := dest.t
 	var i, j, count int
 	var err error
 	for {
@@ -151,11 +151,11 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 			dest.mask[i]=src.mask[j]
 		}
 		
-		switch k {
+		switch dt {
 		{{range .Kinds -}}
 			{{if isParameterized . -}}
 			{{else -}}
-		case reflect.{{reflectKind .}}:
+		case {{reflectKind .}}:
 			dest.{{setOne .}}(i, src.{{getOne .}}(j))
 			{{end -}}
 		{{end -}}
@@ -170,11 +170,11 @@ const copyIterRaw = `func copyDenseIter(dest, src *Dense, diter, siter *FlatIter
 
 const sliceRaw = `// the method assumes the AP and metadata has already been set and this is simply slicing the values
 func (t *Dense) slice(start, end int) {
-	switch t.t.Kind() {
+	switch t.t {
 	{{range .Kinds -}}
 		{{if isParameterized .}}
 		{{else -}}
-	case reflect.{{reflectKind .}}:
+	case {{reflectKind .}}:
 		data := t.{{sliceOf .}}[start:end]
 		t.fromSlice(data)
 		{{end -}}

@@ -338,7 +338,7 @@ func (t *Dense) ostrides() []int {
 	return t.Strides()
 }
 
-func (t *Dense) transposeAxes() []int {return t.transposeWith}
+func (t *Dense) transposeAxes() []int { return t.transposeWith }
 
 // Shallow clone clones the *Dense without making a copy of the underlying array
 func (t *Dense) shallowClone() *Dense {
@@ -522,23 +522,6 @@ func (t *Dense) MaskFromSlice(x interface{}) {
 	default:
 		return
 	}
-}
-
-func copyDense(dest, src *Dense) int {
-	if src.IsMasked() {
-		if cap(dest.mask) < len(src.mask) {
-			dest.mask = make([]bool, len(src.mask))
-		}
-		copy(dest.mask, src.mask)
-		dest.mask = dest.mask[:len(src.mask)]
-	}
-	if src.e != nil {
-		if err := src.e.Memcpy(dest, src); err != nil {
-			panic(err)
-		}
-		return dest.L
-	}
-	return copyArray(dest.array, src.array)
 }
 
 // Memset sets all the values in the *Dense tensor.

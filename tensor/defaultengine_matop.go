@@ -13,7 +13,7 @@ func (e StdEng) Transpose(a Tensor, expStrides []int) error {
 	return errors.Errorf("Tranpose for tensor of %T not supported", a)
 }
 
-func (e StdEng) denseTranspose(a DenseTensor, expStrids []int) {
+func (e StdEng) denseTranspose(a DenseTensor, expStrides []int) {
 	switch a.rtype().Size() {
 	case 1:
 		e.denseTranspose1(a, expStrides)
@@ -193,7 +193,9 @@ func (e StdEng) denseTransposeArbitrary(a DenseTensor, expStrides []int) {
 
 		if track.IsSet(i) && track.IsSet(dest) {
 			copy(data[start:start+typeSize], saved)
-			saved = 0
+			for i := range saved {
+				saved[i] = 0
+			}
 			for i < size && track.IsSet(i) {
 				i++
 			}
