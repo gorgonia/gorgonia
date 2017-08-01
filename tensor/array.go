@@ -215,5 +215,7 @@ func copyDense(dest, src DenseTensor) int {
 			return d.L
 		}
 		return copyArray(d.array, s.array)
+	default:
+		return 0
 	}
 }

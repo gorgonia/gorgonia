@@ -168,11 +168,11 @@ func (t *Dense) SafeT(axes ...int) (retVal *Dense, err error) {
 func (t *Dense) Transpose() error {
 	// if there is no oldinfo, that means the current info is the latest, and not the transpose
 	if t.old == nil {
-		return
+		return nil
 	}
 
 	if t.IsScalar() {
-		return // cannot transpose scalars - no data movement
+		return nil // cannot transpose scalars - no data movement
 	}
 
 	defer func() {
