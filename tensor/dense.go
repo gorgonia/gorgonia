@@ -338,6 +338,8 @@ func (t *Dense) ostrides() []int {
 	return t.Strides()
 }
 
+func (t *Dense) transposeAxes() []int {return t.transposeWith}
+
 // Shallow clone clones the *Dense without making a copy of the underlying array
 func (t *Dense) shallowClone() *Dense {
 	retVal := new(Dense)

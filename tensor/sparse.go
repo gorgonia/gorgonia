@@ -235,7 +235,7 @@ func (t *CS) T(axes ...int) error {
 func (t *CS) UT() { t.T() }
 
 // Transpose is a no-op. The data does not move
-func (t *CS) Transpose() {}
+func (t *CS) Transpose() error { return nil }
 
 func (t *CS) Apply(fn interface{}, opts ...FuncOpt) (Tensor, error) {
 	return nil, errors.Errorf(methodNYI, "Apply")

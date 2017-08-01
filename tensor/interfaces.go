@@ -82,6 +82,11 @@ type DenseTensor interface {
 	headerer
 	rtype() reflect.Type
 	DataOrder() DataOrder
+	
+	
+	transposeAxes() []int
+	transposeIndex(i int, transposePat, strides []int) int
+	len() int
 }
 
 type SparseTensor interface {

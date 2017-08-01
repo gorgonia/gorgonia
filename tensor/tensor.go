@@ -35,7 +35,7 @@ type Tensor interface {
 	Reshape(...int) error
 	T(axes ...int) error
 	UT()
-	Transpose() // Transpose actually moves the data
+	Transpose() error // Transpose actually moves the data
 	Apply(fn interface{}, opts ...FuncOpt) (Tensor, error)
 
 	// data related interface

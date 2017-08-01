@@ -165,14 +165,14 @@ func (t *Dense) SafeT(axes ...int) (retVal *Dense, err error) {
 // Transpose() actually transposes the data.
 // This is a generalized version of the inplace matrix transposition algorithm from Wikipedia:
 // https://en.wikipedia.org/wiki/In-place_matrix_transposition
-func (t *Dense) Transpose() {
+func (t *Dense) Transpose() error {
 	// if there is no oldinfo, that means the current info is the latest, and not the transpose
 	if t.old == nil {
 		return
 	}
 
 	if t.IsScalar() {
-		return // cannot transpose scalars
+		return // cannot transpose scalars - no data movement
 	}
 
 	defer func() {
@@ -188,7 +188,6 @@ func (t *Dense) Transpose() {
 	if t.AP.o.isColMajor() {
 		expStrides = expShape.calcStridesColMajor()
 	} else {
-
 		expStrides = expShape.calcStrides()
 	}
 	defer ReturnInts(expStrides)
@@ -198,20 +197,20 @@ func (t *Dense) Transpose() {
 	}()
 
 	if t.IsVector() {
-		// no change of strides.
-		return
+		// no data movement
+		return nil
 	}
 
-	if !t.IsNativelyAccessible() {
-		transposer, ok := t.e.(UnsafeTransposer)
-		if !ok {
-			panic("Cannot transpose non natively accessible data")
-		}
-		transposer.UnsafeTranspose(t)
-		return
+	// actually move data
+	var e Engine = t.e
+	if e == nil {
+		e = StdEng{}
 	}
-
-	t.transpose(expStrides)
+	transposer, ok := e.(Transposer)
+	if !ok {
+		return errors.Errorf("Engine does not support Transpose()")
+	}
+	return transposer.Transpose(t, expStrides)
 }
 
 // At returns the value at the given coordinate

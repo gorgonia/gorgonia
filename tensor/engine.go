@@ -37,12 +37,21 @@ type arrayMaker interface {
 
 // Transposer is any engine that can perform an unsafe transpose of a tensor.
 type Transposer interface {
-	Transpose(t Tensor) error
+	Transpose(t Tensor, expStrides []int) error
 }
 
 type Materializer interface {
 	Materialize(t Tensor) (Tensor, error)
 }
+
+type Concater interface {
+	Concat(t Tensor, axis int, others ...Tensor) (Tensor, error)
+}
+
+type Stacker interface {
+	Stack(t Tensor, axis int, others ...Tensor )(Tensor, error)
+}
+
 
 /* NUMBER INTERFACES
 All these are expected to be unsafe on the first tensor
@@ -254,3 +263,5 @@ type Miner interface {
 type Maxer interface {
 	Max(a Tensor, along ...int) (Tensor, error)
 }
+
+

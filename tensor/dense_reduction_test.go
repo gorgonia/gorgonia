@@ -3,7 +3,6 @@ package tensor
 import (
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor/internal/execution"
 	"github.com/stretchr/testify/assert"
 )
 
