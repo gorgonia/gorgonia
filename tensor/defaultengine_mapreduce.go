@@ -10,8 +10,8 @@ import (
 
 func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
+	var safe, _, incr bool
+	if reuse, safe, _, incr, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
 		return
 	}
 	switch {
@@ -78,10 +78,9 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 }
 
 func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, opts ...FuncOpt) (retVal Tensor, err error) {
-	var at DenseTensor
 	var reuse *Dense
 	var dataA, dataReuse *storage.Header
-	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
+	if _, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
 		err = errors.Wrap(err, "Prep Reduce failed")
 		return
 	}
@@ -196,7 +195,7 @@ func (e StdEng) Sum(a Tensor, along ...int) (retVal Tensor, err error) {
 			if ret, err = execution.MonotonicSum(typ, hdr); err != nil {
 				return
 			}
-
+			return New(FromScalar(ret)), nil
 		}
 		var firstFn, lastFn, defaultFn interface{}
 		if firstFn, lastFn, defaultFn, err = execution.SumMethods(typ); err != nil {
@@ -243,7 +242,7 @@ func (e StdEng) Min(a Tensor, along ...int) (retVal Tensor, err error) {
 			if ret, err = execution.MonotonicMin(typ, hdr); err != nil {
 				return
 			}
-
+			return New(FromScalar(ret)), nil
 		}
 		var firstFn, lastFn, defaultFn interface{}
 		if firstFn, lastFn, defaultFn, err = execution.MinMethods(typ); err != nil {
@@ -290,7 +289,7 @@ func (e StdEng) Max(a Tensor, along ...int) (retVal Tensor, err error) {
 			if ret, err = execution.MonotonicMax(typ, hdr); err != nil {
 				return
 			}
-
+			return New(FromScalar(ret)), nil
 		}
 		var firstFn, lastFn, defaultFn interface{}
 		if firstFn, lastFn, defaultFn, err = execution.MaxMethods(typ); err != nil {

@@ -11,7 +11,7 @@ GENERATED FILE. DO NOT EDIT
 
 func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
 		return
 	}
@@ -80,7 +80,7 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
 		return
 	}
@@ -149,7 +149,7 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 
 func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
 		return
 	}
@@ -218,7 +218,7 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
 		return
 	}
@@ -287,7 +287,7 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 
 func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
 		return
 	}
@@ -356,7 +356,7 @@ func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
 		return
 	}
@@ -425,7 +425,7 @@ func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
 		return
 	}
@@ -498,7 +498,7 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
 		return
 	}
@@ -571,7 +571,7 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
 		return
 	}
@@ -644,7 +644,7 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
 		return
 	}
@@ -717,7 +717,7 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
 		return
 	}
@@ -790,7 +790,7 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	var reuse *Dense
-	var safe, toReuse, incr, same bool
+	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
 		return
 	}

@@ -5,7 +5,7 @@ import "text/template"
 // level 2 aggregation (tensor.StdEng) templates
 
 const prepVVRaw = `var reuse *Dense
-	var safe, toReuse, incr {{if ne .TypeClassCheck "Number"}}, same{{end}} bool
+	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
 	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepBinaryTensor(a, b, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
 		return
 	}
@@ -26,7 +26,7 @@ const prepVVRaw = `var reuse *Dense
 `
 
 const prepMixedRaw = `var reuse *Dense
-	var safe, toReuse, incr {{if ne .TypeClassCheck "Number"}}, same{{end}} bool
+	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
 	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepUnaryTensor(t, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
 		return
 	}
