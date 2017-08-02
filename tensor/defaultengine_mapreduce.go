@@ -1,6 +1,9 @@
 package tensor
 
 import (
+	"reflect"
+
+	"github.com/chewxy/gorgonia/tensor/internal/execution"
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
 )
@@ -95,8 +98,7 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, opts ...FuncOpt) (ret
 }
 
 func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, defaultValue interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	var at DenseTensor
-	var reuse *Dense
+	var at, reuse *Dense
 	var dataA, dataReuse *storage.Header
 	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
 		err = errors.Wrap(err, "Prep Reduce failed")
@@ -136,7 +138,7 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 	return
 }
 
-func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at DenseTensor, reuse *Dense, dataA, dataReuse *storage.Header, err error) {
+func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse *Dense, dataA, dataReuse *storage.Header, err error) {
 	if axis >= a.Dims() {
 		err = errors.Errorf(dimMismatch, axis, a.Dims())
 		return
@@ -176,9 +178,150 @@ func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at DenseTensor, r
 	}
 
 	var ok bool
-	if at, ok = a.(DenseTensor); !ok || useIter {
+	if at, ok = a.(*Dense); !ok || useIter {
 		err = errors.Errorf("Reduce does not (yet) support iterable tensors")
 		return
 	}
 	return
+}
+
+func (e StdEng) Sum(a Tensor, along ...int) (retVal Tensor, err error) {
+	switch at := a.(type) {
+	case *Dense:
+		hdr := at.hdr()
+		typ := at.t.Type
+		monotonic, incr1 := IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
+		if (monotonic && incr1 && len(along) == a.Dims()) || len(along) == 0 {
+			var ret interface{}
+			if ret, err = execution.MonotonicSum(typ, hdr); err != nil {
+				return
+			}
+
+		}
+		var firstFn, lastFn, defaultFn interface{}
+		if firstFn, lastFn, defaultFn, err = execution.SumMethods(typ); err != nil {
+			return
+		}
+		defaultVal := reflect.Zero(typ).Interface()
+
+		retVal = a
+		prev := -1
+		dims := len(retVal.Shape())
+
+		for _, axis := range along {
+			if prev == -1 {
+				prev = axis
+			}
+			if axis > prev {
+				axis--
+			}
+
+			if axis >= dims {
+				err = errors.Errorf(dimMismatch, retVal.Dims(), axis)
+				return
+			}
+
+			if retVal, err = e.OptimizedReduce(a, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
+				return
+			}
+		}
+		return
+
+	default:
+		return nil, errors.Errorf("Cannot perform Sum on %T", a)
+	}
+}
+
+func (e StdEng) Min(a Tensor, along ...int) (retVal Tensor, err error) {
+	switch at := a.(type) {
+	case *Dense:
+		hdr := at.hdr()
+		typ := at.t.Type
+		monotonic, incr1 := IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
+		if (monotonic && incr1 && len(along) == a.Dims()) || len(along) == 0 {
+			var ret interface{}
+			if ret, err = execution.MonotonicMin(typ, hdr); err != nil {
+				return
+			}
+
+		}
+		var firstFn, lastFn, defaultFn interface{}
+		if firstFn, lastFn, defaultFn, err = execution.MinMethods(typ); err != nil {
+			return
+		}
+		defaultVal := reflect.Zero(typ).Interface()
+
+		retVal = a
+		prev := -1
+		dims := len(retVal.Shape())
+
+		for _, axis := range along {
+			if prev == -1 {
+				prev = axis
+			}
+			if axis > prev {
+				axis--
+			}
+
+			if axis >= dims {
+				err = errors.Errorf(dimMismatch, retVal.Dims(), axis)
+				return
+			}
+
+			if retVal, err = e.OptimizedReduce(a, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
+				return
+			}
+		}
+		return
+
+	default:
+		return nil, errors.Errorf("Cannot perform Min on %T", a)
+	}
+}
+
+func (e StdEng) Max(a Tensor, along ...int) (retVal Tensor, err error) {
+	switch at := a.(type) {
+	case *Dense:
+		hdr := at.hdr()
+		typ := at.t.Type
+		monotonic, incr1 := IsMonotonicInts(along) // if both are true, then it means all axes are accounted for, then it'll return a scalar value
+		if (monotonic && incr1 && len(along) == a.Dims()) || len(along) == 0 {
+			var ret interface{}
+			if ret, err = execution.MonotonicMax(typ, hdr); err != nil {
+				return
+			}
+
+		}
+		var firstFn, lastFn, defaultFn interface{}
+		if firstFn, lastFn, defaultFn, err = execution.MaxMethods(typ); err != nil {
+			return
+		}
+		defaultVal := reflect.Zero(typ).Interface()
+
+		retVal = a
+		prev := -1
+		dims := len(retVal.Shape())
+
+		for _, axis := range along {
+			if prev == -1 {
+				prev = axis
+			}
+			if axis > prev {
+				axis--
+			}
+
+			if axis >= dims {
+				err = errors.Errorf(dimMismatch, retVal.Dims(), axis)
+				return
+			}
+
+			if retVal, err = e.OptimizedReduce(a, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
+				return
+			}
+		}
+		return
+
+	default:
+		return nil, errors.Errorf("Cannot perform Max on %T", a)
+	}
 }

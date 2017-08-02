@@ -63,6 +63,7 @@ func main() {
 	pipeline(execLoc, "eng_cmp.go", Kinds{allKinds}, generateECmp)
 	pipeline(execLoc, "eng_reduce.go", Kinds{allKinds}, generateEReduce)
 	pipeline(execLoc, "eng_unary.go", Kinds{allKinds}, generateUncondEUnary, generateCondEUnary)
+	pipeline(execLoc, "reduction_specialization.go", Kinds{allKinds}, generateReductionSpecialization)
 
 	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)
