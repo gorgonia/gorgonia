@@ -534,6 +534,7 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		err = e.E.MulIncr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
 	case toReuse:
+		log.Printf("dataReuse %v", dataReuse)
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.Mul(typ, dataReuse, dataB)
 		retVal = reuse
@@ -542,7 +543,6 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		log.Printf("%v %v left %v", ret == nil, dataB, leftTensor)
 		err = e.E.Mul(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}

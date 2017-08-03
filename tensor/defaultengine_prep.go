@@ -135,12 +135,15 @@ func prepDataVS(a Tensor, b interface{}, reuse *Dense) (dataA, dataB, dataReuse 
 	dataB = scalarToHeader(b)
 	switch at := a.(type) {
 	case DenseTensor:
+		dataA = at.hdr()
+		if reuse != nil {
+			dataReuse = reuse.hdr()
+		}
 		if requiresIterator(a.Engine(), at) {
 			ait = IteratorFromDense(at)
 			if reuse != nil {
 				iit = IteratorFromDense(reuse)
 			}
-			dataA = at.hdr()
 			useIter = true
 		}
 	case *CS:
@@ -155,12 +158,15 @@ func prepDataSV(a interface{}, b Tensor, reuse *Dense) (dataA, dataB, dataReuse 
 	dataA = scalarToHeader(a)
 	switch bt := b.(type) {
 	case DenseTensor:
+		dataB = bt.hdr()
+		if reuse != nil {
+			dataReuse = reuse.hdr()
+		}
 		if requiresIterator(b.Engine(), bt) {
 			bit = IteratorFromDense(bt)
 			if reuse != nil {
 				iit = IteratorFromDense(reuse)
 			}
-			dataB = bt.hdr()
 			useIter = true
 		}
 	case *CS:
