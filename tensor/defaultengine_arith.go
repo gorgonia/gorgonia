@@ -1,6 +1,8 @@
 package tensor
 
 import (
+	"log"
+
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
 )
@@ -540,6 +542,7 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
+		log.Printf("%v %v left %v", ret == nil, dataB, leftTensor)
 		err = e.E.Mul(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}

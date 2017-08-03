@@ -311,6 +311,13 @@ var shortNames = map[reflect.Kind]string{
 }
 
 var nameMaps = map[string]string{
+	"VecAdd": "Add",
+	"VecSub": "Sub",
+	"VecMul": "Mul",
+	"VecDiv": "Div",
+	"VecPow": "Pow",
+	"VecMod": "Mod",
+
 	"AddVS": "Trans",
 	"AddSV": "TransR",
 	"SubVS": "TransInv",

@@ -175,11 +175,13 @@ func prepDataUnary(a Tensor, reuse *Dense) (dataA, dataReuse *storage.Header, ai
 	switch at := a.(type) {
 	case DenseTensor:
 		dataA = at.hdr()
+		if reuse != nil {
+			dataReuse = reuse.hdr()
+		}
 		if requiresIterator(a.Engine(), at) {
 			ait = IteratorFromDense(at)
 			useIter = true
 			if reuse != nil {
-				dataReuse = reuse.hdr()
 				rit = IteratorFromDense(reuse)
 			}
 		}

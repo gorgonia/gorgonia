@@ -16,6 +16,7 @@ var densePool = make(map[reflect.Kind]map[int]*sync.Pool)
 
 const (
 	maxAPDims = 8
+	PoolSize  = 16
 )
 
 // UsePool enables the use of a pool of *Tensors as provided in the package. This is the default option
@@ -202,19 +203,85 @@ func init() {
 			return ap
 		}
 	}
+
+	for i := range intsPool {
+		size := i
+		intsPool[i].New = func() interface{} { return make([]int, size) }
+	}
+
+	for i := range boolsPool {
+		size := i
+		boolsPool[i].New = func() interface{} { return make([]bool, size) }
+	}
 }
 
-//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.BorrowInts
-func BorrowInts(size int) []int
+/* INTS POOL */
 
-//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.ReturnInts
-func ReturnInts(is []int)
+var intsPool [PoolSize]sync.Pool
 
-//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.BorrowBool
-func BorrowBools(size int) []bool
+/* BOOLS POOL */
 
-//go:linkname BorrowInts github.com/chewxy/gorgonia/tensor/internal/perf.ReturnBools
-func ReturnBools(is []bool)
+var boolsPool [PoolSize]sync.Pool
+
+// BorrowInts borrows a slice of ints from the pool. USE WITH CAUTION.
+func BorrowInts(size int) []int {
+	if size >= 8 {
+		return make([]int, size)
+	}
+
+	retVal := intsPool[size].Get()
+	if retVal == nil {
+		return make([]int, size)
+	}
+	return retVal.([]int)
+}
+
+// ReturnInts returns a slice from the pool. USE WITH CAUTION.
+func ReturnInts(is []int) {
+	if is == nil {
+		return
+	}
+	size := cap(is)
+	if size >= 8 {
+		return
+	}
+	is = is[:cap(is)]
+	for i := range is {
+		is[i] = 0
+	}
+
+	intsPool[size].Put(is)
+}
+
+// BorrowBools borrows a slice of bools from the pool. USE WITH CAUTION.
+func BorrowBools(size int) []bool {
+	if size >= 8 {
+		return make([]bool, size)
+	}
+
+	retVal := boolsPool[size].Get()
+	if retVal == nil {
+		return make([]bool, size)
+	}
+	return retVal.([]bool)
+}
+
+// ReturnBools returns a slice from the pool. USE WITH CAUTION.
+func ReturnBools(is []bool) {
+	if is == nil {
+		return
+	}
+	size := cap(is)
+	if size >= 8 {
+		return
+	}
+	is = is[:cap(is)]
+	for i := range is {
+		is[i] = false
+	}
+
+	boolsPool[size].Put(is)
+}
 
 // BorrowAPList gets an APList from the pool. USE WITH CAUTION.
 func BorrowAPList(size int) []*AP {

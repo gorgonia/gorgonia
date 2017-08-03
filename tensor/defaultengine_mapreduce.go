@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/chewxy/gorgonia/tensor/internal/execution"
@@ -58,6 +59,9 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 	if useIter {
 		err = e.E.MapIter(typ, fn, used, incr, uit)
 	} else {
+		if used == nil {
+			log.Printf("used == nil - %v, %v", safe, dataReuse)
+		}
 		err = e.E.Map(typ, fn, used, incr)
 	}
 
