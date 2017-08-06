@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"reflect"
 	"text/template"
 )
 
@@ -192,5 +193,72 @@ func generateStdEngCmp(f io.Writer, ak Kinds) {
 	for _, meth := range methods {
 		meth.Write(f)
 		meth.LeftVec = true
+	}
+}
+
+type EngineUnary struct {
+	Name           string
+	TypeClassCheck string
+	Kinds          []reflect.Kind
+}
+
+func (fn *EngineUnary) Signature() *Signature {
+	return &Signature{
+		Name:           fn.Name,
+		NameTemplate:   plainName,
+		ParamNames:     []string{"a", "opts"},
+		ParamTemplates: []*template.Template{tensorType, splatFuncOptType},
+		Err:            true,
+	}
+}
+
+func (fn *EngineUnary) WriteBody(w io.Writer) {
+	prepUnary.Execute(w, fn)
+	agg2UnaryBody.Execute(w, fn)
+}
+
+func (fn *EngineUnary) Write(w io.Writer) {
+	sig := fn.Signature()
+	w.Write([]byte("func (e StdEng) "))
+	sig.Write(w)
+	w.Write([]byte("{\n"))
+	fn.WriteBody(w)
+	w.Write([]byte("\n}\n"))
+}
+
+func generateStdEngUncondUnary(f io.Writer, ak Kinds) {
+	tcc := []string{
+		"Number",     // Neg
+		"Number",     // Inv
+		"Number",     // Square
+		"Number",     // Cube
+		"FloatCmplx", // Exp
+		"FloatCmplx", // Tanhh
+		"FloatCmplx", // Log
+		"Float",      // Log2
+		"FloatCmplx", // Log10
+		"FloatCmplx", // Sqrt
+		"Float",      // Cbrt
+		"Float",      // InvSqrt
+	}
+	var gen []*EngineUnary
+	for i, u := range unconditionalUnaries {
+		var ks []reflect.Kind
+		for _, k := range ak.Kinds {
+			if tc := u.TypeClass(); tc != nil && !tc(k) {
+				continue
+			}
+			ks = append(ks, k)
+		}
+		fn := &EngineUnary{
+			Name:           u.Name(),
+			TypeClassCheck: tcc[i],
+			Kinds:          ks,
+		}
+		gen = append(gen, fn)
+	}
+
+	for _, fn := range gen {
+		fn.Write(f)
 	}
 }

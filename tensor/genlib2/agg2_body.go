@@ -53,7 +53,7 @@ const prepMixedRaw = `var reuse *Dense
 
 const prepUnaryRaw = `var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, {{.TypeClassCheck | lower}}, opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(a, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
 		return
 	}
 
@@ -207,12 +207,12 @@ const agg2UnaryBodyRaw = `
 		case incr:
 			cloned := a.Clone().(Tensor)
 			var dataCloned *storage.Header
-			if dataCloned, _, _, _, err = prepDataUnary(cloned, nil); err != nil{
-				err = errors.Wrapf("Unable to clone")
+			if dataCloned, _, _, _,_, err = prepDataUnary(cloned, nil); err != nil{
+				err = errors.Wrap(err, "Unable to clone a")
 				return
 			}
 			if err = e.E.{{.Name}}Iter(typ, dataCloned, ait); err != nil {
-				err = errors.Wrapf("Unable to perform {{.Name}}")
+				err = errors.Wrap(err, "Unable to perform {{.Name}}")
 				return
 			}
 			err = e.E.AddIter(typ, dataReuse, dataCloned, rit, ait)
@@ -225,8 +225,8 @@ const agg2UnaryBodyRaw = `
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
 			var dataCloned *storage.Header
-			if dataCloned, _, _, _, err = prepDataUnary(cloned, nil); err != nil{
-				err = errors.Wrapf("Unable to clone")
+			if dataCloned, _, _, _, _, err = prepDataUnary(cloned, nil); err != nil{
+				err = errors.Wrapf(err,"Unable to clone")
 				return
 			}
 			err = e.E.{{.Name}}Iter(typ, dataCloned, ait)
@@ -237,12 +237,12 @@ const agg2UnaryBodyRaw = `
 		case incr:
 			cloned := a.Clone().(Tensor)
 			var dataCloned *storage.Header
-			if dataCloned, _, _, _, err = prepDataUnary(cloned, nil); err != nil{
-				err = errors.Wrapf("Unable to clone")
+			if dataCloned, _, _, _, _, err = prepDataUnary(cloned, nil); err != nil{
+				err = errors.Wrap(err, "Unable to clone")
 				return
 			}
 			if err = e.E.{{.Name}}(typ, dataCloned); err != nil {
-				err = errors.Wrapf("Unable to perform {{.Name}}")
+				err = errors.Wrap(err, "Unable to perform {{.Name}}")
 				return
 			}
 			err = e.E.Add(typ, dataReuse, dataCloned)
@@ -254,26 +254,30 @@ const agg2UnaryBodyRaw = `
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
 			var dataCloned *storage.Header
-			if dataCloned, _, _,_, err = prepDataUnary(cloned, nil); err != nil{
-				err = errors.Wrapf("Unable to clone")
+			if dataCloned, _, _,_, _,err = prepDataUnary(cloned, nil); err != nil{
+				err = errors.Wrapf(err, "Unable to clone")
 				return
 			}
 			err = e.E.{{.Name}}(typ, dataCloned)
 		}
-		
+		return
 	}
 `
 
 var (
-	prepVV      *template.Template
-	prepMixed   *template.Template
-	agg2Body    *template.Template
-	agg2CmpBody *template.Template
+	prepVV        *template.Template
+	prepMixed     *template.Template
+	prepUnary     *template.Template
+	agg2Body      *template.Template
+	agg2CmpBody   *template.Template
+	agg2UnaryBody *template.Template
 )
 
 func init() {
 	prepVV = template.Must(template.New("prepVV").Funcs(funcs).Parse(prepVVRaw))
 	prepMixed = template.Must(template.New("prepMixed").Funcs(funcs).Parse(prepMixedRaw))
+	prepUnary = template.Must(template.New("prepUnary").Funcs(funcs).Parse(prepUnaryRaw))
 	agg2Body = template.Must(template.New("agg2body").Funcs(funcs).Parse(agg2BodyRaw))
 	agg2CmpBody = template.Must(template.New("agg2CmpBody").Funcs(funcs).Parse(agg2CmpBodyRaw))
+	agg2UnaryBody = template.Must(template.New("agg2UnaryBody").Funcs(funcs).Parse(agg2UnaryBodyRaw))
 }

@@ -179,6 +179,14 @@ var eqTypes = []Dtype{
 
 var unsignedTypes = [...]Dtype{Uint, Uint8, Uint16, Uint32, Uint64}
 
+var floatTypes = []Dtype{
+	Float32, Float64,
+}
+
+var floatcmplxTypes = []Dtype{
+	Float32, Float64, Complex64, Complex128,
+}
+
 func isSpecialized(dt Kinder) bool {
 	for _, s := range specializedTypes {
 		if s.Kind() == dt.Kind() {
