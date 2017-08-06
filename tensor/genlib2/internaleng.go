@@ -177,7 +177,7 @@ func (fn *InternalEngMap) Write(w io.Writer) {
 func generateEMap(f io.Writer, kinds Kinds) {
 	m := new(InternalEngMap)
 	for _, k := range kinds.Kinds {
-		if !isAddable(k) {
+		if isParameterized(k) {
 			continue
 		}
 		m.Kinds = append(m.Kinds, k)

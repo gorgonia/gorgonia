@@ -143,6 +143,7 @@ const (
 		}
 
 		at := a.{{sliceOf .}}
+		{{if isAddable . -}}
 		switch{
 		case as && incr && f0 != nil:
 			at[0] += f0(at[0])
@@ -165,6 +166,22 @@ const (
 		default:
 			Map{{short .}}(f0, at)
 		}
+		{{else -}}
+		if incr {
+			return errors.Errorf("Cannot perform increment on t of %v", t)
+		}
+		switch {
+		case as && f0 != nil:
+			at[0] = f0(at[0])
+		case as && f0 == nil:
+			at[0], err = f1(at[0])
+		case !as && f0 == nil:
+			err = MapErr{{short .}}(f1, at)
+		default:
+			Map{{short .}}(f0, at)
+		}
+		{{end -}}
+		
 		{{end -}}
 	default:
 		return errors.Errorf("Cannot map t of %v", t)
@@ -188,6 +205,7 @@ const (
 			return errors.Errorf("Cannot map fn of %T to array", fn)
 		}
 
+		{{if isAddable . -}}
 		switch {
 		case incr && f0 != nil:
 			MapIterIncr{{short .}}(f0, at, ait)
@@ -198,6 +216,17 @@ const (
 		default:
 			MapIter{{short .}}(f0, at, ait)
 		}
+		{{else -}}
+			if incr {
+				return errors.Errorf("Cannot perform increment on t of %v", t)
+			}
+			switch {
+			case f0 == nil:
+				err = MapIterErr{{short .}}(f1, at, ait)
+			default:
+				MapIter{{short .}}(f0, at, ait)
+			}
+		{{end -}}
 		{{end -}}
 	default:
 			return errors.Errorf("Cannot map t of %v", t)

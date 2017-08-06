@@ -64,6 +64,10 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 		}
 		err = e.E.Map(typ, fn, used, incr)
 	}
+	if err != nil {
+		err = errors.Wrapf(err, "Unable to apply function %v to tensor of %v", fn, typ)
+		return
+	}
 
 	// SET RETVAL
 	switch {

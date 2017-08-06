@@ -54,12 +54,12 @@ func TestDense_Apply(t *testing.T) {
 
 		correct = newDense(Bool, a.len())
 		correct.Memset(true)
-		if ret, err = a.Apply(mutateB); err != nil {
+		if ret, err = a.Apply(mutateB, UseUnsafe()); err != nil {
 			t.Error(err)
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
-			t.Logf("ret.Data() %v || %v", ret.Data(), correct.Data())
+			t.Logf("ret.Data() %v ||\n%v", ret.Data(), correct.Data())
 			return false
 		}
 
