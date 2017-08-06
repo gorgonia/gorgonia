@@ -65,6 +65,8 @@ func (fn *InternalEngArithMethod) Signature() *Signature {
 func (fn *InternalEngArithMethod) WriteBody(w io.Writer) {
 	var T *template.Template
 	switch {
+	case fn.Incr && fn.Iter:
+		T = eArithIterIncr
 	case fn.Incr && !fn.Iter:
 		T = eArithIncr
 	case fn.Iter && !fn.Incr:

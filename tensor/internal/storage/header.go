@@ -78,7 +78,8 @@ func CopyIter(t reflect.Type, dst, src *Header, diter, siter Iterator) int {
 		}
 		i = idx * size
 		j = jdx * size
-		dstBA[i] = srcBA[j]
+		copy(dstBA[i:i+size], srcBA[j:j+size])
+		// dstBA[i : i+size] = srcBA[j : j+size]
 		count++
 	}
 	return count

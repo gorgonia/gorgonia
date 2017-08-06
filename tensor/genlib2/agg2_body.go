@@ -75,17 +75,23 @@ const agg2BodyRaw = `if useIter {
 			retVal = reuse
 		{{if .VV -}}
 		case toReuse:
-			storage.Copy(typ,dataReuse, dataA)
-			err = e.E.{{.Name}}Iter(typ, dataReuse, dataB, ait, bit)
+			storage.CopyIter(typ,dataReuse, dataA, iit, ait)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.{{.Name}}Iter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		{{else -}}
 		case toReuse && leftTensor:
-			storage.Copy(typ, dataReuse, dataA)
-			err = e.E.{{.Name}}Iter(typ, dataReuse, dataB, ait, bit)
+			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.{{.Name}}Iter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !leftTensor:
-			storage.Copy(typ, dataReuse, dataB)
-			err = e.E.{{.Name}}Iter(typ, dataA, dataReuse, ait, bit)
+			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.{{.Name}}Iter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		{{end -}}
 		case !safe:
@@ -158,7 +164,9 @@ const agg2CmpBodyRaw = `
 				retVal = a
 			case toReuse && same:
 				storage.CopyIter(typ,dataReuse,dataA, iit, ait)
-				err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, ait, bit)
+				ait.Reset()
+				iit.Reset()
+				err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, iit, bit)
 				retVal = reuse
 			case toReuse && !same:
 				err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -210,6 +218,7 @@ const agg2UnaryBodyRaw = `
 			err = e.E.AddIter(typ, dataReuse, dataCloned, rit, ait)
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
+			rit.Reset()
 			err = e.E.{{.Name}}Iter(typ, dataReuse, rit)
 		case !safe:
 			err = e.E.{{.Name}}Iter(typ, dataA, ait)

@@ -109,7 +109,7 @@ const (
 		case as && bs:
 			Vec{{$name}}{{short .}}(at, bt)
 			if !is {
-				return e.{{$name}}Iter{{short .}}(t, incr, a, iit, ait)
+				return e.{{$name}}Iter(t, incr, a, iit, ait)
 			}
 			it[0] += at[0]
 			return

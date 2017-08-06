@@ -402,6 +402,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 
 	view := new(Dense)
 	view.t = t.t
+	view.e = t.e
 	view.flag = t.flag
 	view.viewOf = t
 	view.AP = newAP

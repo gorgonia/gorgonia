@@ -70,3 +70,26 @@ func ExampleDense_Add_reuse() {
 	// ⎡10  12⎤
 	// ⎣15  17⎦
 }
+
+func ExampleDense_Add_incr() {
+	var T1, V, T2, Incr, T3 *Dense
+	var sliced Tensor
+
+	T1 = New(WithBacking(Range(Float64, 0, 9)), WithShape(3, 3))
+	Incr = New(WithBacking([]float64{100, 100, 100, 100}), WithShape(2, 2))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T2 = New(WithBacking(Range(Float64, 10, 14)), WithShape(2, 2))
+
+	var err error
+	T3, err = V.Add(T2, WithIncr(Incr))
+	if err != nil {
+		fmt.Printf("Err %v", err)
+	}
+	fmt.Printf("Incr is incremented and reused - %t:\n%v", T3 == Incr, T3)
+
+	// Output:
+	// Incr is incremented and reused - true:
+	// ⎡110  112⎤
+	// ⎣115  117⎦
+}

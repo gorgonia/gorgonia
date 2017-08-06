@@ -43,7 +43,9 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.GtSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.GtSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.GtIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -112,7 +114,9 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.GteSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.GteSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.GteIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -181,7 +185,9 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.LtSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.LtSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.LtIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -250,7 +256,9 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.LteSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.LteSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.LteIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -319,7 +327,9 @@ func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.EqSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.EqSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.EqIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -388,7 +398,9 @@ func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.NeSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.NeSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.NeIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -461,7 +473,9 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.GtSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.GtSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.GtIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -534,7 +548,9 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.GteSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.GteSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.GteIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -607,7 +623,9 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.LtSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.LtSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.LtIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -680,7 +698,9 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.LteSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.LteSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.LteIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -753,7 +773,9 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.EqSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.EqSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.EqIter(typ, dataA, dataB, dataReuse, ait, bit, iit)
@@ -826,7 +848,9 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 			retVal = a
 		case toReuse && same:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			err = e.E.NeSameIter(typ, dataReuse, dataB, ait, bit)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.NeSameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
 		case toReuse && !same:
 			err = e.E.NeIter(typ, dataA, dataB, dataReuse, ait, bit, iit)

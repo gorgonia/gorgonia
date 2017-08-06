@@ -197,17 +197,7 @@ func (t *Dense) Clone() interface{} {
 
 		return retVal
 	}
-	retVal := recycledDense(t.t, t.Shape().Clone())
-	ReturnAP(retVal.AP)
-	retVal.AP = t.AP.Clone()
-
-	if t.old != nil {
-		retVal.old = t.old.Clone()
-	}
-
-	copyDense(retVal, t)
-	retVal.lock()
-	return retVal
+	panic("Unreachable: No engine")
 }
 
 // IsMasked indicates whether tensor is masked
