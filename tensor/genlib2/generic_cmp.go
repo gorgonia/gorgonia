@@ -384,10 +384,7 @@ func generateGenericMixedCmp(f io.Writer, ak Kinds) {
 /* OTHER */
 
 // element wise Min/Max
-const genericElMinMaxRaw = `func VecMin{{short . | title}}(a, b []{{asType .}}) error {
-	if len(a) != len(b) {
-		return errors.Errorf(lenMismatch, len(a), len(b))
-	}
+const genericElMinMaxRaw = `func VecMin{{short . | title}}(a, b []{{asType .}}) {
 	a = a[:len(a)]
 	b = b[:len(a)]
 	for i, v := range a {
@@ -396,12 +393,8 @@ const genericElMinMaxRaw = `func VecMin{{short . | title}}(a, b []{{asType .}}) 
 			a[i] = bv
 		}
 	}
-	return nil
 }
-func VecMax{{short . | title}}(a, b []{{asType .}}) error {
-	if len(a) != len(b) {
-		return errors.Errorf(lenMismatch, len(a), len(b))
-	}
+func VecMax{{short . | title}}(a, b []{{asType .}}) {
 	a = a[:len(a)]
 	b = b[:len(a)]
 	for i, v := range a {
@@ -410,7 +403,6 @@ func VecMax{{short . | title}}(a, b []{{asType .}}) error {
 			a[i] = bv
 		}
 	}
-	return nil
 }
 `
 
