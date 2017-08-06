@@ -1,8 +1,6 @@
 package tensor
 
 import (
-	"log"
-
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
 )
@@ -37,7 +35,7 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.AddIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
 		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.AddIter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
 		case !safe:
@@ -95,7 +93,7 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.SubIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
 		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.SubIter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
 		case !safe:
@@ -153,7 +151,7 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.MulIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
 		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.MulIter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
 		case !safe:
@@ -211,7 +209,7 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.DivIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
 		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.DivIter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
 		case !safe:
@@ -269,7 +267,7 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.PowIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
 		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.PowIter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
 		case !safe:
@@ -327,7 +325,7 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.ModIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
 		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.ModIter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
 		case !safe:
@@ -389,16 +387,24 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case incr:
 			err = e.E.AddIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
-		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+		case toReuse && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.AddIter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case toReuse && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.AddIter(typ, dataA, dataReuse, ait, bit)
 			retVal = reuse
 		case !safe:
 			err = e.E.AddIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
 			ret := a.Clone().(headerer)
-			err = e.E.AddIter(typ, ret.hdr(), dataB, ait, bit)
+			if leftTensor {
+				err = e.E.AddIter(typ, ret.hdr(), dataB, ait, bit)
+			} else {
+				err = e.E.AddIter(typ, dataA, ret.hdr(), ait, bit)
+			}
 			retVal = ret.(Tensor)
 		}
 		return
@@ -407,16 +413,24 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case incr:
 		err = e.E.AddIncr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
-	case toReuse:
+	case toReuse && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.Add(typ, dataReuse, dataB)
+		retVal = reuse
+	case toReuse && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.Add(typ, dataA, dataReuse)
 		retVal = reuse
 	case !safe:
 		err = e.E.Add(typ, dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		err = e.E.Add(typ, ret.hdr(), dataB)
+		if leftTensor {
+			err = e.E.Add(typ, ret.hdr(), dataB)
+		} else {
+			err = e.E.Add(typ, dataA, ret.hdr())
+		}
 		retVal = ret.(Tensor)
 	}
 	return
@@ -452,16 +466,24 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case incr:
 			err = e.E.SubIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
-		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+		case toReuse && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.SubIter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case toReuse && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.SubIter(typ, dataA, dataReuse, ait, bit)
 			retVal = reuse
 		case !safe:
 			err = e.E.SubIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
 			ret := a.Clone().(headerer)
-			err = e.E.SubIter(typ, ret.hdr(), dataB, ait, bit)
+			if leftTensor {
+				err = e.E.SubIter(typ, ret.hdr(), dataB, ait, bit)
+			} else {
+				err = e.E.SubIter(typ, dataA, ret.hdr(), ait, bit)
+			}
 			retVal = ret.(Tensor)
 		}
 		return
@@ -470,16 +492,24 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case incr:
 		err = e.E.SubIncr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
-	case toReuse:
+	case toReuse && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.Sub(typ, dataReuse, dataB)
+		retVal = reuse
+	case toReuse && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.Sub(typ, dataA, dataReuse)
 		retVal = reuse
 	case !safe:
 		err = e.E.Sub(typ, dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		err = e.E.Sub(typ, ret.hdr(), dataB)
+		if leftTensor {
+			err = e.E.Sub(typ, ret.hdr(), dataB)
+		} else {
+			err = e.E.Sub(typ, dataA, ret.hdr())
+		}
 		retVal = ret.(Tensor)
 	}
 	return
@@ -515,16 +545,24 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case incr:
 			err = e.E.MulIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
-		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+		case toReuse && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.MulIter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case toReuse && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.MulIter(typ, dataA, dataReuse, ait, bit)
 			retVal = reuse
 		case !safe:
 			err = e.E.MulIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
 			ret := a.Clone().(headerer)
-			err = e.E.MulIter(typ, ret.hdr(), dataB, ait, bit)
+			if leftTensor {
+				err = e.E.MulIter(typ, ret.hdr(), dataB, ait, bit)
+			} else {
+				err = e.E.MulIter(typ, dataA, ret.hdr(), ait, bit)
+			}
 			retVal = ret.(Tensor)
 		}
 		return
@@ -533,17 +571,24 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case incr:
 		err = e.E.MulIncr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
-	case toReuse:
-		log.Printf("dataReuse %v", dataReuse)
+	case toReuse && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.Mul(typ, dataReuse, dataB)
+		retVal = reuse
+	case toReuse && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.Mul(typ, dataA, dataReuse)
 		retVal = reuse
 	case !safe:
 		err = e.E.Mul(typ, dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		err = e.E.Mul(typ, ret.hdr(), dataB)
+		if leftTensor {
+			err = e.E.Mul(typ, ret.hdr(), dataB)
+		} else {
+			err = e.E.Mul(typ, dataA, ret.hdr())
+		}
 		retVal = ret.(Tensor)
 	}
 	return
@@ -579,16 +624,24 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case incr:
 			err = e.E.DivIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
-		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+		case toReuse && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.DivIter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case toReuse && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.DivIter(typ, dataA, dataReuse, ait, bit)
 			retVal = reuse
 		case !safe:
 			err = e.E.DivIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
 			ret := a.Clone().(headerer)
-			err = e.E.DivIter(typ, ret.hdr(), dataB, ait, bit)
+			if leftTensor {
+				err = e.E.DivIter(typ, ret.hdr(), dataB, ait, bit)
+			} else {
+				err = e.E.DivIter(typ, dataA, ret.hdr(), ait, bit)
+			}
 			retVal = ret.(Tensor)
 		}
 		return
@@ -597,16 +650,24 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case incr:
 		err = e.E.DivIncr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
-	case toReuse:
+	case toReuse && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.Div(typ, dataReuse, dataB)
+		retVal = reuse
+	case toReuse && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.Div(typ, dataA, dataReuse)
 		retVal = reuse
 	case !safe:
 		err = e.E.Div(typ, dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		err = e.E.Div(typ, ret.hdr(), dataB)
+		if leftTensor {
+			err = e.E.Div(typ, ret.hdr(), dataB)
+		} else {
+			err = e.E.Div(typ, dataA, ret.hdr())
+		}
 		retVal = ret.(Tensor)
 	}
 	return
@@ -642,16 +703,24 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case incr:
 			err = e.E.PowIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
-		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+		case toReuse && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.PowIter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case toReuse && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.PowIter(typ, dataA, dataReuse, ait, bit)
 			retVal = reuse
 		case !safe:
 			err = e.E.PowIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
 			ret := a.Clone().(headerer)
-			err = e.E.PowIter(typ, ret.hdr(), dataB, ait, bit)
+			if leftTensor {
+				err = e.E.PowIter(typ, ret.hdr(), dataB, ait, bit)
+			} else {
+				err = e.E.PowIter(typ, dataA, ret.hdr(), ait, bit)
+			}
 			retVal = ret.(Tensor)
 		}
 		return
@@ -660,16 +729,24 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case incr:
 		err = e.E.PowIncr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
-	case toReuse:
+	case toReuse && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.Pow(typ, dataReuse, dataB)
+		retVal = reuse
+	case toReuse && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.Pow(typ, dataA, dataReuse)
 		retVal = reuse
 	case !safe:
 		err = e.E.Pow(typ, dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		err = e.E.Pow(typ, ret.hdr(), dataB)
+		if leftTensor {
+			err = e.E.Pow(typ, ret.hdr(), dataB)
+		} else {
+			err = e.E.Pow(typ, dataA, ret.hdr())
+		}
 		retVal = ret.(Tensor)
 	}
 	return
@@ -705,16 +782,24 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case incr:
 			err = e.E.ModIterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
-		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
+		case toReuse && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.ModIter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case toReuse && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.ModIter(typ, dataA, dataReuse, ait, bit)
 			retVal = reuse
 		case !safe:
 			err = e.E.ModIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
 			ret := a.Clone().(headerer)
-			err = e.E.ModIter(typ, ret.hdr(), dataB, ait, bit)
+			if leftTensor {
+				err = e.E.ModIter(typ, ret.hdr(), dataB, ait, bit)
+			} else {
+				err = e.E.ModIter(typ, dataA, ret.hdr(), ait, bit)
+			}
 			retVal = ret.(Tensor)
 		}
 		return
@@ -723,16 +808,24 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case incr:
 		err = e.E.ModIncr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
-	case toReuse:
+	case toReuse && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.Mod(typ, dataReuse, dataB)
+		retVal = reuse
+	case toReuse && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.Mod(typ, dataA, dataReuse)
 		retVal = reuse
 	case !safe:
 		err = e.E.Mod(typ, dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		err = e.E.Mod(typ, ret.hdr(), dataB)
+		if leftTensor {
+			err = e.E.Mod(typ, ret.hdr(), dataB)
+		} else {
+			err = e.E.Mod(typ, dataA, ret.hdr())
+		}
 		retVal = ret.(Tensor)
 	}
 	return

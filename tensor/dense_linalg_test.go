@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"testing"
 
 	"github.com/chewxy/vecf64"
@@ -695,15 +694,9 @@ func TestDot(t *testing.T) {
 	assert.True(R2.IsScalar())
 	assert.Equal(float64(50), R2.Data())
 
-	log.Printf("START LOG")
-	log.Printf("s %v, A %v %v", s, A, R)
 	R, err = Dot(s, A)
-	log.Printf("R %v, err %v", R, err)
 	expectedData = vecf64.Range(0, 24)
-	log.Printf("ExpectedData %v", expectedData)
 	vecf64.Scale(expectedData, 5)
-	log.Printf("ExpectedData %v", expectedData)
-	log.Printf("ENDLOG")
 	assert.Nil(err)
 	assert.Equal(A.Shape(), R.Shape())
 	assert.Equal(expectedData, R.Data())

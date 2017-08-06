@@ -73,16 +73,35 @@ const agg2BodyRaw = `if useIter {
 		case incr:
 			err = e.E.{{.Name}}IterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
+		{{if .VV -}}
 		case toReuse:
-			storage.CopyIter(typ,dataReuse, dataA, iit, ait)
+			storage.Copy(typ,dataReuse, dataA)
 			err = e.E.{{.Name}}Iter(typ, dataReuse, dataB, ait, bit)
 			retVal = reuse
+		{{else -}}
+		case toReuse && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
+			err = e.E.{{.Name}}Iter(typ, dataReuse, dataB, ait, bit)
+			retVal = reuse
+		case toReuse && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.{{.Name}}Iter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		{{end -}}
 		case !safe:
 			err = e.E.{{.Name}}Iter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
 			ret := a.Clone().(headerer)
+		{{if .VV -}}
 			err = e.E.{{.Name}}Iter(typ, ret.hdr(), dataB, ait, bit)
+		{{else -}}
+			if leftTensor {
+				err = e.E.{{.Name}}Iter(typ, ret.hdr(), dataB, ait, bit)
+			}else {
+				err = e.E.{{.Name}}Iter(typ, dataA, ret.hdr(), ait, bit)
+			}
+		{{end -}}
 			retVal = ret.(Tensor)
 		}
 		return
@@ -91,16 +110,35 @@ const agg2BodyRaw = `if useIter {
 	case incr:
 		err = e.E.{{.Name}}Incr(typ, dataA, dataB, dataReuse)
 		retVal = reuse
+	{{if .VV -}}
 	case toReuse:
 		storage.Copy(typ,dataReuse, dataA)
 		err = e.E.{{.Name}}(typ, dataReuse, dataB)
 		retVal = reuse
+	{{else -}}
+	case toReuse && leftTensor:
+		storage.Copy(typ, dataReuse, dataA)
+		err = e.E.{{.Name}}(typ, dataReuse, dataB)
+		retVal = reuse
+	case toReuse && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.{{.Name}}(typ, dataA, dataReuse)
+		retVal = reuse
+	{{end -}}
 	case !safe:
 		err = e.E.{{.Name}}(typ, dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
+		{{if .VV -}}
 		err = e.E.{{.Name}}(typ, ret.hdr(), dataB)
+		{{else -}}
+		if leftTensor {
+			err = e.E.{{.Name}}(typ, ret.hdr(), dataB)
+		}else {
+			err = e.E.{{.Name}}(typ, dataA, ret.hdr())	
+		}
+		{{end -}}
 		retVal = ret.(Tensor)
 	}
 	return

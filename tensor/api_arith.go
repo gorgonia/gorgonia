@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -254,7 +253,6 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		}
 		return
 	case a.IsScalar():
-		log.Printf("THIS CASE")
 		switch {
 		case incr != nil:
 			return Mul(a.ScalarValue(), b, WithIncr(incr))
