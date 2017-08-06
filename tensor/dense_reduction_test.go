@@ -82,8 +82,7 @@ func TestDense_Reduce(t *testing.T) {
 	assert := assert.New(t)
 	for _, drt := range denseReductionTests {
 		T := New(WithShape(2, 3, 2), WithBacking(Range(drt.of, 0, 2*3*2)))
-		// T2, err := T.Reduce(drt.fn, drt.def, drt.axis)
-		T2, err := T.Reduce(drt.fn, drt.axis)
+		T2, err := T.Reduce(drt.fn, drt.axis, drt.def)
 		if err != nil {
 			t.Error(err)
 			continue
@@ -92,8 +91,7 @@ func TestDense_Reduce(t *testing.T) {
 		assert.Equal(drt.correct, T2.Data())
 
 		// stupids:
-		// _, err = T.Reduce(drt.fn, drt.def, 1000)
-		_, err = T.Reduce(drt.fn, 1000)
+		_, err = T.Reduce(drt.fn, 1000, drt.def)
 		assert.NotNil(err)
 
 		// wrong function type
@@ -103,19 +101,17 @@ func TestDense_Reduce(t *testing.T) {
 			f = func(a, b int) int { return 0 }
 		}
 
-		// _, err = T.Reduce(f, drt.correct, 0)
-		_, err = T.Reduce(f, 0)
+		_, err = T.Reduce(f, 0, drt.correct)
 		assert.NotNil(err)
 
 		// wrong default value type
-		// var def2 interface{}
-		// def2 = 3.14
-		// if drt.of == Float64 {
-		// 	def2 = int(1)
-		// }
+		var def2 interface{}
+		def2 = 3.14
+		if drt.of == Float64 {
+			def2 = int(1)
+		}
 
-		// _, err = T.Reduce(drt.fn, def2, 3) // only last axis requires a default value
-		_, err = T.Reduce(drt.fn, 3)
+		_, err = T.Reduce(drt.fn, 3, def2) // only last axis requires a default value
 		assert.NotNil(err)
 	}
 }

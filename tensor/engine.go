@@ -245,7 +245,7 @@ type Clamper interface {
 /* Reduction */
 
 type Reducer interface {
-	Reduce(fn interface{}, a Tensor, axis int, opts ...FuncOpt) (Tensor, error)
+	Reduce(fn interface{}, a Tensor, axis int, defaultValue interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 type OptimizedReducer interface {

@@ -356,18 +356,20 @@ const (
 	{{end -}}
 	`
 
-	eReduceFirstRaw = `var ok bool
-	{{$name := .Name -}}
+	eReduceFirstRaw = `{{$name := .Name -}}
 	switch t {
 		{{range .Kinds -}}
 	case {{reflectKind .}}:
-		var f func({{asType .}}, {{asType .}}) {{asType .}}
-		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
-			return errors.Errorf(reductionErrMsg, f, fn)
-		}
 		dt := data.{{sliceOf .}}
 		rt := retVal.{{sliceOf .}}
-		{{$name | unexport}}{{short .}}(dt, rt, split, size, f)
+		switch f := fn.(type){
+			case func([]{{asType .}}, []{{asType .}}):
+				{{$name | unexport}}{{short .}}(dt, rt, split, size, f)
+			case func({{asType .}}, {{asType .}}) {{asType .}}:
+				generic{{$name}}{{short .}}(dt, rt, split, size, f)
+			default:
+				return errors.Errorf(reductionErrMsg, fn)
+		}
 		return nil
 		{{end -}}
 	default:
@@ -380,17 +382,21 @@ const (
 	switch t {
 		{{range .Kinds -}}
 	case {{reflectKind .}}:
-		var f func({{asType .}}, {{asType .}}) {{asType .}}
 		var def {{asType .}}
-		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
-			return errors.Errorf(reductionErrMsg, f, fn)
-		}
-		if def, ok  = defaultValue.({{asType .}}); !ok {
+
+		if def, ok = defaultValue.({{asType .}}); !ok {
 			return errors.Errorf(defaultValueErrMsg, def, defaultValue, defaultValue)
 		}
 		dt := data.{{sliceOf .}}
 		rt := retVal.{{sliceOf .}}
-		{{$name | unexport}}{{short .}}(dt, rt, dimSize, def, f)
+		switch f := fn.(type){
+		case func([]{{asType .}}) {{asType .}}:
+			{{$name | unexport}}{{short .}}(dt, rt, dimSize, def, f)
+		case func({{asType .}}, {{asType .}}) {{asType .}}:
+			generic{{$name}}{{short .}}(dt, rt, dimSize, def, f)
+		default:
+			return errors.Errorf(reductionErrMsg, fn)
+		}
 		return nil
 		{{end -}}
 	default:
@@ -405,7 +411,7 @@ const (
 	case {{reflectKind .}}:
 		var f func({{asType .}}, {{asType .}}) {{asType .}}
 		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
-			return errors.Errorf(reductionErrMsg, f, fn)
+			return errors.Errorf(reductionErrMsg, fn)
 		}
 		dt := data.{{sliceOf .}}
 		rt := retVal.{{sliceOf .}}
@@ -424,7 +430,7 @@ const (
 		var f func({{asType .}}, {{asType .}}) {{asType .}}
 		var def {{asType .}}
 		if f, ok = fn.(func({{asType .}}, {{asType .}}) {{asType .}}); !ok {
-			return nil, errors.Errorf(reductionErrMsg, f, fn)
+			return nil, errors.Errorf(reductionErrMsg, fn)
 		}
 		if def, ok  = defaultValue.({{asType .}}); !ok {
 			return nil, errors.Errorf(defaultValueErrMsg, def, defaultValue, defaultValue)

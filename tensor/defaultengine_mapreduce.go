@@ -85,26 +85,11 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 	return
 }
 
-func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, opts ...FuncOpt) (retVal Tensor, err error) {
-	var reuse *Dense
-	var dataA, dataReuse *storage.Header
-	if _, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
-		err = errors.Wrap(err, "Prep Reduce failed")
-		return
+func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	if !a.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, a)
 	}
 
-	typ := a.Dtype().Type
-	dim0 := a.Shape()[0]
-	dimSize := a.Shape()[axis]
-	outerStride := a.Strides()[0]
-	stride := a.Strides()[axis]
-	expected := reuse.Strides()[0]
-	err = e.E.ReduceDefault(typ, dataA, dataReuse, dim0, dimSize, outerStride, stride, expected, fn)
-	retVal = reuse
-	return
-}
-
-func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, defaultValue interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var at, reuse *Dense
 	var dataA, dataReuse *storage.Header
 	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
@@ -125,8 +110,55 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 		size = a.Shape()[0]
 		split = a.DataSize() / size
 		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
+		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, fn)
+	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
+		var dimSize int
+		if at.DataOrder().isColMajor() {
+			return nil, errors.Errorf("NYI: colmajor")
+		}
+		dimSize = a.Shape()[axis]
+		err = e.E.ReduceLast(typ, dataA, dataReuse, dimSize, defaultValue, fn)
+	default:
+		dim0 := a.Shape()[0]
+		dimSize := a.Shape()[axis]
+		outerStride := a.Strides()[0]
+		stride := a.Strides()[axis]
+		expected := reuse.Strides()[0]
+		err = e.E.ReduceDefault(typ, dataA, dataReuse, dim0, dimSize, outerStride, stride, expected, fn)
+	}
+	retVal = reuse
+	return
+}
+
+func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, defaultValue interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	if !a.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, a)
+	}
+
+	var at, reuse *Dense
+	var dataA, dataReuse *storage.Header
+	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
+		err = errors.Wrap(err, "Prep Reduce failed")
+		return
+	}
+
+	lastAxis := a.Dims() - 1
+	typ := a.Dtype().Type
+
+	// actual call out to the internal engine
+	switch {
+	case (axis == 0 && at.DataOrder().isRowMajor()) || ((axis == lastAxis || axis == len(a.Shape())-1) && at.DataOrder().isColMajor()):
+		log.Printf("FIRS")
+		var size, split int
+		if at.DataOrder().isColMajor() {
+			return nil, errors.Errorf("NYI: colmajor")
+		}
+		size = a.Shape()[0]
+		split = a.DataSize() / size
+		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
 		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, firstFn)
 	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
+		log.Printf("LAST")
 		var dimSize int
 		if at.DataOrder().isColMajor() {
 			return nil, errors.Errorf("NYI: colmajor")
@@ -142,53 +174,6 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 		err = e.E.ReduceDefault(typ, dataA, dataReuse, dim0, dimSize, outerStride, stride, expected, defaultFn)
 	}
 	retVal = reuse
-	return
-}
-
-func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse *Dense, dataA, dataReuse *storage.Header, err error) {
-	if axis >= a.Dims() {
-		err = errors.Errorf(dimMismatch, axis, a.Dims())
-		return
-	}
-
-	var newShape Shape
-	for i, s := range a.Shape() {
-		if i == axis {
-			continue
-		}
-		newShape = append(newShape, s)
-	}
-
-	// FUNC PREP
-	var safe bool
-	if reuse, safe, _, _, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
-		err = errors.Wrap(err, "Unable to prep unary tensor")
-		return
-	}
-
-	switch {
-	case !safe:
-		err = errors.New("Reduce only supports safe operations.")
-		return
-	case reuse != nil && !reuse.IsNativelyAccessible():
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
-	case safe && reuse == nil:
-		reuse = New(Of(a.Dtype()), WithShape(newShape...))
-	}
-
-	// DATA PREP
-	var useIter bool
-	if dataA, dataReuse, _, _, useIter, err = prepDataUnary(a, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Reduce data prep")
-		return
-	}
-
-	var ok bool
-	if at, ok = a.(*Dense); !ok || useIter {
-		err = errors.Errorf("Reduce does not (yet) support iterable tensors")
-		return
-	}
 	return
 }
 
@@ -227,10 +212,11 @@ func (e StdEng) Sum(a Tensor, along ...int) (retVal Tensor, err error) {
 				err = errors.Errorf(dimMismatch, retVal.Dims(), axis)
 				return
 			}
-
-			if retVal, err = e.OptimizedReduce(a, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
+			log.Printf("%d RetVal Before\n%v", axis, retVal)
+			if retVal, err = e.OptimizedReduce(retVal, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
 				return
 			}
+			log.Printf("%d RetVal After\n%v", axis, retVal)
 		}
 		return
 
@@ -275,7 +261,7 @@ func (e StdEng) Min(a Tensor, along ...int) (retVal Tensor, err error) {
 				return
 			}
 
-			if retVal, err = e.OptimizedReduce(a, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
+			if retVal, err = e.OptimizedReduce(retVal, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
 				return
 			}
 		}
@@ -322,7 +308,7 @@ func (e StdEng) Max(a Tensor, along ...int) (retVal Tensor, err error) {
 				return
 			}
 
-			if retVal, err = e.OptimizedReduce(a, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
+			if retVal, err = e.OptimizedReduce(retVal, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
 				return
 			}
 		}
@@ -331,4 +317,57 @@ func (e StdEng) Max(a Tensor, along ...int) (retVal Tensor, err error) {
 	default:
 		return nil, errors.Errorf("Cannot perform Max on %T", a)
 	}
+}
+
+func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse *Dense, dataA, dataReuse *storage.Header, err error) {
+	if axis >= a.Dims() {
+		err = errors.Errorf(dimMismatch, axis, a.Dims())
+		return
+	}
+
+	var newShape Shape
+	for i, s := range a.Shape() {
+		if i == axis {
+			continue
+		}
+		newShape = append(newShape, s)
+	}
+
+	// FUNC PREP
+	var safe bool
+	if reuse, safe, _, _, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
+		err = errors.Wrap(err, "Unable to prep unary tensor")
+		return
+	}
+
+	switch {
+	case !safe:
+		err = errors.New("Reduce only supports safe operations.")
+		return
+	case reuse != nil && !reuse.IsNativelyAccessible():
+		err = errors.Errorf(inaccessibleData, reuse)
+		return
+	case reuse != nil:
+		if reuse.Shape().TotalSize() != newShape.TotalSize() {
+			err = errors.Errorf(shapeMismatch, reuse.Shape(), newShape)
+			return
+		}
+		reuse.Reshape(newShape...)
+	case safe && reuse == nil:
+		reuse = New(Of(a.Dtype()), WithShape(newShape...))
+	}
+
+	// DATA PREP
+	var useIter bool
+	if dataA, dataReuse, _, _, useIter, err = prepDataUnary(a, reuse); err != nil {
+		err = errors.Wrapf(err, "StdEng.Reduce data prep")
+		return
+	}
+
+	var ok bool
+	if at, ok = a.(*Dense); !ok || useIter {
+		err = errors.Errorf("Reduce does not (yet) support iterable tensors")
+		return
+	}
+	return
 }

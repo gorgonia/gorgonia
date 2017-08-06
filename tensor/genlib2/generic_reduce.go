@@ -60,8 +60,18 @@ func SliceMax{{short .}}(a []{{asType .}}) {{asType .}}{
 
 `
 
-const genericReduce0Raw = `func reduceFirst{{short .}}(data, retVal []{{asType .}}, split, size int, fn func(a, b {{asType .}}){{asType .}}) {
+const genericReduce0Raw = `func reduceFirst{{short .}}(data, retVal []{{asType .}}, split, size int, fn func(a, b []{{asType .}})) {
 	start := split
+	copy(retVal[0:split], data[0:split])
+	for i := 0; i < size - 1; i++ {
+		fn(retVal, data[start:start+split])
+		start += split
+	}
+}
+
+func genericReduceFirst{{short .}}(data, retVal []{{asType .}}, split, size int, fn func(a, b {{asType .}}){{asType .}} ){
+	start := split
+	copy(retVal[0:split], data[0:split])
 	for i := 0; i < size - 1; i++ {
 		for j := 0; j < split; j++ {
 			retVal[j] = fn(retVal[j], data[j+start])
@@ -69,7 +79,6 @@ const genericReduce0Raw = `func reduceFirst{{short .}}(data, retVal []{{asType .
 		start += split
 	}
 }
-
 `
 
 const genericReduce0ParRaw = `func reduceFirst{{short .}}(data, retVal []{{asType .}}, split, size int, fn func(a, b {{asType .}}){{asType .}}) {
@@ -88,9 +97,18 @@ const genericReduce0ParRaw = `func reduceFirst{{short .}}(data, retVal []{{asTyp
 
 `
 
-const genericReduceLastRaw = `func reduceLast{{short .}}(a, retVal []{{asType .}}, dimSize int, defaultValue {{asType .}}, fn func(a, b {{asType .}}){{asType .}}) {
+const genericReduceLastRaw = `func reduceLast{{short .}}(a, retVal []{{asType .}}, dimSize int, defaultValue {{asType .}}, fn func(a []{{asType .}}){{asType .}}) {
 	var at int
 	for start := 0; start <= len(a) - dimSize; start += dimSize {
+		r := fn(a[start:start+dimSize])
+		retVal[at] = r
+		at++
+	}
+}
+
+func genericReduceLast{{short .}}(a, retVal []{{asType .}}, dimSize int, defaultValue {{asType .}}, fn func({{asType .}}, {{asType .}}){{asType .}}) {
+	var at int 
+	for start := 0; start < len(a) - dimSize; start += dimSize {
 		r := Reduce{{short .}}(fn, defaultValue, a[start:start+dimSize]...)
 		retVal[at] = r
 		at++

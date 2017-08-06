@@ -117,7 +117,7 @@ func TestDense_Sum(t *testing.T) {
 			continue
 		}
 		assert.True(sts.correctShape.Eq(T2.Shape()))
-		assert.Equal(sts.correct, T2.Data())
+		assert.Equal(sts.correct, T2.Data(), "%v failed", sts.name)
 	}
 
 	// idiots
