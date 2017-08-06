@@ -82,8 +82,7 @@ type DenseTensor interface {
 	headerer
 	rtype() reflect.Type
 	DataOrder() DataOrder
-	
-	
+
 	transposeAxes() []int
 	transposeIndex(i int, transposePat, strides []int) int
 	len() int
@@ -108,12 +107,6 @@ type MaskedTensor interface {
 // Kinder. Bueno.
 type Kinder interface {
 	Kind() reflect.Kind
-}
-
-// Dotter is used to implement sparse matrices
-type Dotter interface {
-	Tensor
-	Dot(Tensor, ...FuncOpt) (Tensor, error)
 }
 
 type headerer interface {

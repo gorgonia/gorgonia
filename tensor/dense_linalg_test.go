@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"log"
 	"testing"
 
 	"github.com/chewxy/vecf64"
@@ -681,6 +682,7 @@ func TestDot(t *testing.T) {
 	assert.Equal(incr, R)
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
+
 	// The Nearly Stupids
 	s = New(FromScalar(5.0))
 	s2 = New(FromScalar(10.0))
@@ -726,6 +728,7 @@ func TestDot(t *testing.T) {
 	assert.Equal(A.Shape(), R.Shape())
 	assert.Equal(expectedData, R.Data())
 	incr = incr2
+
 	R, err = Dot(s, A, WithIncr(incr))
 	assert.Nil(err)
 	assert.Equal(incr, R)
@@ -733,6 +736,7 @@ func TestDot(t *testing.T) {
 	assert.Equal(expectedData, R.Data())
 	incr = New(Of(Float64), FromScalar(float64(50)))
 
+	log.Printf("s %v, \ns2 %v\nincr %v", s, s2, incr)
 	R, err = Dot(s, s2, WithIncr(incr))
 	assert.Nil(err)
 	assert.Equal(R, incr)

@@ -35,7 +35,7 @@ const (
 	eArithIncrRaw = `as := isScalar(a)
 	bs := isScalar(b)
 	is := isScalar(incr)
-	if (as && !bs) || (bs && !as) && is {
+	if ((as && !bs) || (bs && !as)) && is {
 		return errors.Errorf("Cannot increment on scalar increment. a: %d, b %d", a.Len(), b.Len())
 	}
 	{{$name := .Name}}
@@ -95,7 +95,7 @@ const (
 	bs := isScalar(b)
 	is := isScalar(incr)
 
-	if (as && !bs) || (bs && !as) && is {
+	if ((as && !bs) || (bs && !as)) && is {
 		return errors.Errorf("Cannot increment on a scalar increment. len(a): %d, len(b) %d", a.Len(), b.Len())
 	}
 	{{$name := .Name}}

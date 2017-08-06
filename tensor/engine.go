@@ -49,9 +49,8 @@ type Concater interface {
 }
 
 type Stacker interface {
-	Stack(t Tensor, axis int, others ...Tensor )(Tensor, error)
+	Stack(t Tensor, axis int, others ...Tensor) (Tensor, error)
 }
-
 
 /* NUMBER INTERFACES
 All these are expected to be unsafe on the first tensor
@@ -138,6 +137,11 @@ type InnerProder interface {
 // OuterProder is any engine that can perform outer product (kronecker) multiplication
 type OuterProder interface {
 	Outer(a, b, preallocated Tensor) error
+}
+
+// Dotter is used to implement sparse matrices
+type Dotter interface {
+	Dot(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
 /* ORD INTERFACES */
@@ -263,5 +267,3 @@ type Miner interface {
 type Maxer interface {
 	Max(a Tensor, along ...int) (Tensor, error)
 }
-
-
