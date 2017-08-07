@@ -216,7 +216,7 @@ const agg2UnaryBodyRaw = `
 				return
 			}
 			err = e.E.AddIter(typ, dataReuse, dataCloned, rit, ait)
-			retVal = cloned
+			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
 			rit.Reset()
@@ -250,7 +250,7 @@ const agg2UnaryBodyRaw = `
 				return
 			}
 			err = e.E.Add(typ, dataReuse, dataCloned)
-			retVal = cloned
+			retVal = reuse
 		case toReuse:
 			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.{{.Name}}(typ, dataReuse)

@@ -322,7 +322,7 @@ func TestDense_Min(t *testing.T) {
 			continue
 		}
 		assert.True(mts.correctShape.Eq(T2.Shape()))
-		assert.Equal(mts.correct, T2.Data())
+		assert.Equal(mts.correct, T2.Data(), "%q failed", mts.name)
 	}
 
 	/* IDIOT TESTING TIME */

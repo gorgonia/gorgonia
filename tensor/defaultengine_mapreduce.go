@@ -261,9 +261,11 @@ func (e StdEng) Min(a Tensor, along ...int) (retVal Tensor, err error) {
 				return
 			}
 
+			log.Printf("%d %v", axis, retVal.Data())
 			if retVal, err = e.OptimizedReduce(retVal, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
 				return
 			}
+			log.Printf("%d: %v", axis, retVal.Data())
 		}
 		return
 

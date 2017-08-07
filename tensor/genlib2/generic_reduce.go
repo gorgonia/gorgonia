@@ -123,9 +123,10 @@ const genericReduceDefaultRaw = `func reduceDefault{{short .}}(data, retVal []{{
 		sliced := data[start : start+outerStride]
 		var innerStart, strideTrack int 
 		for j := 0; j < expected; j++ {
-			for k := 0; k < dimSize; k++ {
+			writeTo := i * expected + j
+			retVal[writeTo] = sliced[innerStart]
+			for k := 1; k < dimSize; k++ {
 				readFrom := innerStart + k * stride
-				writeTo := i * expected + j
 				retVal[writeTo] = fn(retVal[writeTo], sliced[readFrom])
 			}
 			strideTrack++
