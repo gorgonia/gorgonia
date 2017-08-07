@@ -216,12 +216,15 @@ const agg2UnaryBodyRaw = `
 				return
 			}
 			err = e.E.AddIter(typ, dataReuse, dataCloned, rit, ait)
+			retVal = cloned
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
 			rit.Reset()
 			err = e.E.{{.Name}}Iter(typ, dataReuse, rit)
+			retVal = reuse
 		case !safe:
 			err = e.E.{{.Name}}Iter(typ, dataA, ait)
+			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
 			var dataCloned *storage.Header
@@ -230,6 +233,7 @@ const agg2UnaryBodyRaw = `
 				return
 			}
 			err = e.E.{{.Name}}Iter(typ, dataCloned, ait)
+			retVal = cloned
 		}
 		return
 	}else {
@@ -246,11 +250,14 @@ const agg2UnaryBodyRaw = `
 				return
 			}
 			err = e.E.Add(typ, dataReuse, dataCloned)
+			retVal = cloned
 		case toReuse:
 			storage.Copy(typ, dataReuse, dataA)
 			err = e.E.{{.Name}}(typ, dataReuse)
+			retVal = reuse
 		case !safe:
 			err = e.E.{{.Name}}(typ, dataA)
+			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
 			var dataCloned *storage.Header
@@ -259,6 +266,7 @@ const agg2UnaryBodyRaw = `
 				return
 			}
 			err = e.E.{{.Name}}(typ, dataCloned)
+			retVal = cloned
 		}
 		return
 	}

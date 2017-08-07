@@ -208,6 +208,9 @@ func (fn *EngineUnary) Signature() *Signature {
 		NameTemplate:   plainName,
 		ParamNames:     []string{"a", "opts"},
 		ParamTemplates: []*template.Template{tensorType, splatFuncOptType},
+		RetVals: []string{"retVal"},
+		RetValTemplates: []*template.Template{tensorType},
+
 		Err:            true,
 	}
 }
