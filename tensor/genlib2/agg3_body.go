@@ -19,7 +19,7 @@ if {{lower .Name}}er, ok := e.({{if $eleqne }}ElEqer{{else}}{{.Name}}{{end}}er);
 		return
 	}
 	if retVal, ok = ret.(*Dense); !ok {
-		err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		err = errors.Errorf("Unable to do {{.Name}} - Expected a %T. Got %T instead", retVal, ret)
 	}
 	return
 }
@@ -40,8 +40,8 @@ const denseArithScalarBodyRaw = `e := t.e
 			err = errors.Wrapf(err, "Unable to do {{.Name}}Scalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do {{.Name}} - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
