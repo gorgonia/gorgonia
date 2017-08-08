@@ -19,7 +19,7 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Add - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -39,7 +39,7 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Sub - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -59,7 +59,7 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Mul - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -79,7 +79,7 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Div - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -99,7 +99,7 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Pow - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -119,7 +119,7 @@ func (t *Dense) Mod(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Mod - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -138,8 +138,8 @@ func (t *Dense) AddScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do AddScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Add - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -158,8 +158,8 @@ func (t *Dense) SubScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do SubScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Sub - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -178,8 +178,8 @@ func (t *Dense) MulScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do MulScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Mul - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -198,8 +198,8 @@ func (t *Dense) DivScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do DivScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Div - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -218,8 +218,8 @@ func (t *Dense) PowScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do PowScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Pow - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -238,8 +238,8 @@ func (t *Dense) ModScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do ModScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Mod - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}

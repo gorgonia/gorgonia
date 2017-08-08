@@ -1,11 +1,12 @@
 package tensor_test
 
 import (
-	"errors"
+	//"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/chewxy/gorgonia/tensor"
+	"github.com/pkg/errors"
 )
 
 // In this example, we want to create and handle a tensor of *MyType
@@ -43,6 +44,7 @@ func (e MyEngine) Add(a, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor
 				v.x += datb[i].x
 				v.y += datb[i].y
 			}
+			return a, nil
 		case tensor.Int:
 			data := a.Data().([]*MyType)
 			datb := b.Data().([]int)
@@ -50,6 +52,7 @@ func (e MyEngine) Add(a, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor
 				v.x += datb[i]
 				v.y += datb[i]
 			}
+			return a, nil
 		}
 	case tensor.Int:
 		switch b.Dtype() {
@@ -81,13 +84,17 @@ func Example_extension() {
 			&MyType{1, 0}, &MyType{1, 1},
 		}))
 	ones := tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]int{1, 1, 1, 1}), tensor.WithEngine(MyEngine{}))
-	T2, err := T.Add(ones)
+	T2, _ := T.Add(ones)
 
-	fmt.Printf("%v", err)
 	fmt.Printf("T:\n%+v", T)
 	fmt.Printf("T2:\n%+v", T2)
 
 	// output:
+	//T:
+	// Matrix (2, 2) [2 1]
+	// ⎡(1, 1)  (1, 2)⎤
+	// ⎣(2, 1)  (2, 2)⎦
+	// T2:
 	// Matrix (2, 2) [2 1]
 	// ⎡(1, 1)  (1, 2)⎤
 	// ⎣(2, 1)  (2, 2)⎦
