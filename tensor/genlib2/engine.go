@@ -265,3 +265,30 @@ func generateStdEngUncondUnary(f io.Writer, ak Kinds) {
 		fn.Write(f)
 	}
 }
+
+func generateStdEngCondUnary(f io.Writer, ak Kinds) {
+	tcc := []string{
+		"Signed", // Abs
+		"Signed", // Sign
+	}
+	var gen []*EngineUnary
+	for i, u := range conditionalUnaries {
+		var ks []reflect.Kind
+		for _, k := range ak.Kinds {
+			if tc := u.TypeClass(); tc != nil && !tc(k) {
+				continue
+			}
+			ks = append(ks, k)
+		}
+		fn := &EngineUnary{
+			Name:           u.Name(),
+			TypeClassCheck: tcc[i],
+			Kinds:          ks,
+		}
+		gen = append(gen, fn)
+	}
+
+	for _, fn := range gen {
+		fn.Write(f)
+	}
+}

@@ -179,6 +179,10 @@ var eqTypes = []Dtype{
 
 var unsignedTypes = [...]Dtype{Uint, Uint8, Uint16, Uint32, Uint64}
 
+var signedTypes = []Dtype{
+	Int, Int8, Int16, Int32, Int64, Float32, Float64, Complex64, Complex128,
+}
+
 var floatTypes = []Dtype{
 	Float32, Float64,
 }

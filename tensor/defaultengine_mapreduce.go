@@ -89,7 +89,7 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 	if !a.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, a)
 	}
-
+	log.Printf("REDUCE on %d", axis)
 	var at, reuse *Dense
 	var dataA, dataReuse *storage.Header
 	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
@@ -103,6 +103,7 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 	// actual call out to the internal engine
 	switch {
 	case (axis == 0 && at.DataOrder().isRowMajor()) || ((axis == lastAxis || axis == len(a.Shape())-1) && at.DataOrder().isColMajor()):
+		log.Printf("REDUCE FIRST")
 		var size, split int
 		if at.DataOrder().isColMajor() {
 			return nil, errors.Errorf("NYI: colmajor")
@@ -112,6 +113,7 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
 		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, fn)
 	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
+		log.Printf("REDUCE LAST")
 		var dimSize int
 		if at.DataOrder().isColMajor() {
 			return nil, errors.Errorf("NYI: colmajor")
@@ -119,6 +121,7 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 		dimSize = a.Shape()[axis]
 		err = e.E.ReduceLast(typ, dataA, dataReuse, dimSize, defaultValue, fn)
 	default:
+		log.Printf("REDUCE DEFAULT")
 		dim0 := a.Shape()[0]
 		dimSize := a.Shape()[axis]
 		outerStride := a.Strides()[0]
@@ -166,6 +169,7 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 		dimSize = a.Shape()[axis]
 		err = e.E.ReduceLast(typ, dataA, dataReuse, dimSize, defaultValue, lastFn)
 	default:
+		log.Printf("DEFAULT")
 		dim0 := a.Shape()[0]
 		dimSize := a.Shape()[axis]
 		outerStride := a.Strides()[0]

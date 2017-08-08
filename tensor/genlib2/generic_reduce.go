@@ -108,7 +108,7 @@ const genericReduceLastRaw = `func reduceLast{{short .}}(a, retVal []{{asType .}
 
 func genericReduceLast{{short .}}(a, retVal []{{asType .}}, dimSize int, defaultValue {{asType .}}, fn func({{asType .}}, {{asType .}}){{asType .}}) {
 	var at int 
-	for start := 0; start < len(a) - dimSize; start += dimSize {
+	for start := 0; start <= len(a) - dimSize; start += dimSize {
 		r := Reduce{{short .}}(fn, defaultValue, a[start:start+dimSize]...)
 		retVal[at] = r
 		at++
