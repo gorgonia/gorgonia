@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/pkg/errors"
 )
@@ -190,7 +189,6 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		}
 
 		if (sl != nil && (!ap.IsVector() && i != outerDim)) || step > 1 {
-			log.Printf("AP %v isVector %v - Not Contiguous. i: %d outerdim %d sl: %v step %v", ap, ap.IsVector(), i, outerDim, sl, step)
 			order = MakeDataOrder(order, NonContiguous)
 		}
 	}

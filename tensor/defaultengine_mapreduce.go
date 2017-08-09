@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"reflect"
 
 	"github.com/chewxy/gorgonia/tensor/internal/execution"
@@ -59,9 +58,6 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 	if useIter {
 		err = e.E.MapIter(typ, fn, used, incr, uit)
 	} else {
-		if used == nil {
-			log.Printf("used == nil - %v, %v", safe, dataReuse)
-		}
 		err = e.E.Map(typ, fn, used, incr)
 	}
 	if err != nil {
@@ -89,7 +85,6 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 	if !a.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, a)
 	}
-	log.Printf("REDUCE on %d", axis)
 	var at, reuse *Dense
 	var dataA, dataReuse *storage.Header
 	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
@@ -103,7 +98,6 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 	// actual call out to the internal engine
 	switch {
 	case (axis == 0 && at.DataOrder().isRowMajor()) || ((axis == lastAxis || axis == len(a.Shape())-1) && at.DataOrder().isColMajor()):
-		log.Printf("REDUCE FIRST")
 		var size, split int
 		if at.DataOrder().isColMajor() {
 			return nil, errors.Errorf("NYI: colmajor")
@@ -113,7 +107,6 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
 		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, fn)
 	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
-		log.Printf("REDUCE LAST")
 		var dimSize int
 		if at.DataOrder().isColMajor() {
 			return nil, errors.Errorf("NYI: colmajor")
@@ -121,7 +114,6 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 		dimSize = a.Shape()[axis]
 		err = e.E.ReduceLast(typ, dataA, dataReuse, dimSize, defaultValue, fn)
 	default:
-		log.Printf("REDUCE DEFAULT")
 		dim0 := a.Shape()[0]
 		dimSize := a.Shape()[axis]
 		outerStride := a.Strides()[0]
@@ -151,7 +143,6 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 	// actual call out to the internal engine
 	switch {
 	case (axis == 0 && at.DataOrder().isRowMajor()) || ((axis == lastAxis || axis == len(a.Shape())-1) && at.DataOrder().isColMajor()):
-		log.Printf("FIRS")
 		var size, split int
 		if at.DataOrder().isColMajor() {
 			return nil, errors.Errorf("NYI: colmajor")
@@ -161,7 +152,6 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 		storage.CopySliced(typ, dataReuse, 0, split, dataA, 0, split)
 		err = e.E.ReduceFirst(typ, dataA, dataReuse, split, size, firstFn)
 	case (axis == lastAxis && at.DataOrder().isRowMajor()) || (axis == 0 && at.DataOrder().isColMajor()):
-		log.Printf("LAST")
 		var dimSize int
 		if at.DataOrder().isColMajor() {
 			return nil, errors.Errorf("NYI: colmajor")
@@ -169,7 +159,6 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 		dimSize = a.Shape()[axis]
 		err = e.E.ReduceLast(typ, dataA, dataReuse, dimSize, defaultValue, lastFn)
 	default:
-		log.Printf("DEFAULT")
 		dim0 := a.Shape()[0]
 		dimSize := a.Shape()[axis]
 		outerStride := a.Strides()[0]
@@ -216,11 +205,9 @@ func (e StdEng) Sum(a Tensor, along ...int) (retVal Tensor, err error) {
 				err = errors.Errorf(dimMismatch, retVal.Dims(), axis)
 				return
 			}
-			log.Printf("%d RetVal Before\n%v", axis, retVal)
 			if retVal, err = e.OptimizedReduce(retVal, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
 				return
 			}
-			log.Printf("%d RetVal After\n%v", axis, retVal)
 		}
 		return
 
@@ -265,11 +252,9 @@ func (e StdEng) Min(a Tensor, along ...int) (retVal Tensor, err error) {
 				return
 			}
 
-			log.Printf("%d %v", axis, retVal.Data())
 			if retVal, err = e.OptimizedReduce(retVal, axis, firstFn, lastFn, defaultFn, defaultVal); err != nil {
 				return
 			}
-			log.Printf("%d: %v", axis, retVal.Data())
 		}
 		return
 
