@@ -466,37 +466,40 @@ const (
 	}
 	`
 
-	eUnaryClamp = `switch t {
-		{{range .Kinds -}}
-	case {{reflectKind .}}:
-		var min, max {{asType .}}
-		var ok bool
-		if min, ok = minVal.({{asType .}}); !ok {
-			err = errors.Wrap(errors.Errorf(typeMismatch, min, minVal), "Clamp() min")
-			return
-		}
-		if max, ok = maxVal.({{asType .}}); !ok {
-			err = errors.Wrap(errors.Erorrf(typeMismatch, max, maxVal), "Clamp() max")
-			return
-		}
-		clamp(a.{{sliceOf .}}, min, max)
-
-	}
-	`
-
-	eUnaryClampIter = `
+	eUnaryClampRaw = `var ok bool
 	switch t {
 		{{range .Kinds -}}
 	case {{reflectKind .}}:
+		var min, max {{asType .}}
 		if min, ok = minVal.({{asType .}}); !ok {
-			err = errors.Wrap(errors.Errorf(typeMismatch, min, minVal), "Clamp() min")
-			return
+			return errors.Wrap(errors.Errorf(typeMismatch, min, minVal), "Clamp() min")
 		}
 		if max, ok = maxVal.({{asType .}}); !ok {
-			err = errors.Wrap(errors.Erorrf(typeMismatch, max, maxVal), "Clamp() max")
-			return
+			return errors.Wrap(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
 		}
-		clampIter(a.{{sliceOf .}}, min, max)
+		Clamp{{short .}}(a.{{sliceOf .}}, min, max)
+		return nil 
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for Clamp", t)
+	}
+	`
+
+	eUnaryClampIterRaw = `var ok bool
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		var min, max {{asType .}}
+		if min, ok = minVal.({{asType .}}); !ok {
+			return errors.Wrap(errors.Errorf(typeMismatch, min, minVal), "Clamp() min")
+		}
+		if max, ok = maxVal.({{asType .}}); !ok {
+			return errors.Wrap(errors.Errorf(typeMismatch, max, maxVal), "Clamp() max")
+		}
+		return ClampIter{{short .}}(a.{{sliceOf .}}, ait, min, max)
+		{{end -}}
+	default:
+		return errors.Errorf("Unsupported type %v for Clamp", t)
 	}
 	`
 )
@@ -520,8 +523,10 @@ var (
 	eReduceLast    *template.Template
 	eReduceDefault *template.Template
 
-	eUnary     *template.Template
-	eUnaryIter *template.Template
+	eUnary          *template.Template
+	eUnaryIter      *template.Template
+	eUnaryClamp     *template.Template
+	eUnaryClampIter *template.Template
 )
 
 func init() {
@@ -545,4 +550,6 @@ func init() {
 
 	eUnary = template.Must(template.New("eUnary").Funcs(funcs).Parse(eUnaryRaw))
 	eUnaryIter = template.Must(template.New("eUnaryIter").Funcs(funcs).Parse(eUnaryIterRaw))
+	eUnaryClamp = template.Must(template.New("eUnaryClamp").Funcs(funcs).Parse(eUnaryClampRaw))
+	eUnaryClampIter = template.Must(template.New("eUnaryClampIter").Funcs(funcs).Parse(eUnaryClampIterRaw))
 }

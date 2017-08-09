@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"strings"
 	"text/template"
 )
 
@@ -416,6 +417,11 @@ func (fn *InternalEngUnary) Signature() *Signature {
 		paramTemplates = append(paramTemplates, iteratorType)
 	}
 
+	if strings.HasPrefix(fn.Name(), "Clamp") {
+		paramNames = append(paramNames, "minVal", "maxVal")
+		paramTemplates = append(paramTemplates, interfaceType, interfaceType)
+	}
+
 	return &Signature{
 		Name:           fn.Name(),
 		NameTemplate:   plainName,
@@ -434,10 +440,18 @@ func (fn *InternalEngUnary) Name() string {
 }
 
 func (fn *InternalEngUnary) WriteBody(w io.Writer) {
-	T := eUnary
-	if fn.Iter {
-		T = eUnaryIter
+	var T *template.Template
+	switch {
+		case fn.Name() == "Clamp":
+		T = eUnaryClamp
+	case fn.Name() == "ClampIter":
+		T = eUnaryClampIter
+	case fn.Iter:
+		T= eUnaryIter
+	default:
+		T = eUnary
 	}
+
 
 	T.Execute(w, fn)
 }
@@ -492,6 +506,35 @@ func generateCondEUnary(f io.Writer, kinds Kinds) {
 			}
 			ks = append(ks, k)
 		}
+		ieu := &InternalEngUnary{
+			UnaryOp: u,
+			Kinds:   ks,
+		}
+		unaries = append(unaries, ieu)
+	}
+
+	for _, u := range unaries {
+		u.Write(f)
+		u.Iter = true
+	}
+
+	for _, u := range unaries {
+		u.Write(f)
+	}
+}
+
+func generateSpecialEUnaries(f io.Writer, kinds Kinds) {
+	var unaries []*InternalEngUnary
+	for _, u := range specialUnaries {
+		var ks []reflect.Kind
+		for _, k := range kinds.Kinds {
+			if tc := u.TypeClass(); tc != nil && !tc(k) {
+				continue
+			}
+
+			ks = append(ks, k)
+		}
+
 		ieu := &InternalEngUnary{
 			UnaryOp: u,
 			Kinds:   ks,
