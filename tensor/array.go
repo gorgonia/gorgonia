@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
+	"github.com/pkg/errors"
 )
 
 // array is the underlying generic array.
@@ -86,6 +87,23 @@ func (a array) sliceInto(i, j int, res *array) {
 	} else {
 		// don't adviance
 		res.Ptr = unsafe.Pointer(base)
+	}
+}
+
+func (a array) slice(start, end int) array {
+	size := int(a.t.Size())
+	if end > a.L {
+		panic("Index out of range")
+	}
+	startptr := unsafe.Pointer(uintptr(a.Pointer()) + uintptr(start*size))
+
+	return array{
+		Header: storage.Header{
+			Ptr: startptr,
+			L:   end - start + 1,
+			C:   end - start + 1,
+		},
+		t: a.t,
 	}
 }
 
@@ -176,46 +194,99 @@ func copyArray(dst, src array) int {
 	return storage.Copy(dst.t.Type, &dst.Header, &src.Header)
 }
 
-// copyDense copies a DenseTensor
-func copyDense(dest, src DenseTensor) int {
-	e := src.Engine()
-	switch s := src.(type) {
-	// case *MaskedDense:
-	// var d *MaskedDense
-	// var ok bool
-	// if d, ok = dest.(*MaskedDense); !ok {
-	// 	panic("Copy can only copy from *MaskedDense to *MaskedDense")
-	// }
-
-	// if s.IsMasked() {
-	// 	if cap(d.mask) < len(s.mask) {
-	// 		d.mask = make([]bool, len(s.mask))
-	// 	}
-	// 	copy(d.mask, s.mask)
-	// 	d.mask = d.mask[:len(s.mask)]
-	// }
-	// if e != nil {
-	// 	if err := e.Memcpy(d.array, s.array); err != nil {
-	// 		panic(err)
-	// 	}
-	// 	return d.L
-	// }
-	// return copyArray(d.array, s.array)
-
-	case *Dense:
-		var d *Dense
-		var ok bool
-		if d, ok = dest.(*Dense); !ok {
-			panic("Copy can only copy from *Dense to *Dense")
-		}
-		if e != nil {
-			if err := e.Memcpy(d.array, s.array); err != nil {
-				panic(err)
-			}
-			return d.L
-		}
-		return copyArray(d.array, s.array)
-	default:
-		return 0
+func copyArraySliced(dst array, dstart, dend int, src array, sstart, send int) int {
+	if dst.t != src.t {
+		panic("Cannot copy arrays of different types.")
 	}
+	return storage.CopySliced(dst.t.Type, &dst.Header, dstart, dend, &src.Header, sstart, send)
+}
+
+// copyDense copies a DenseTensor
+func copyDense(dst, src DenseTensor) int {
+	if dst.Dtype() != src.Dtype() {
+		panic("Cannot dopy DenseTensors of different types")
+	}
+
+	if ms, ok := src.(MaskedTensor); ok && ms.IsMasked() {
+		if md, ok := dst.(MaskedTensor); ok {
+			dmask := md.Mask()
+			smask := ms.Mask()
+			if cap(dmask) < len(smask) {
+				dmask = make([]bool, len(smask))
+				copy(dmask, md.Mask())
+				md.SetMask(dmask)
+			}
+			copy(dmask, smask)
+		}
+	}
+
+	e := src.Engine()
+	if e != nil {
+		if err := e.Memcpy(dst.arr(), src.arr()); err != nil {
+			panic(err)
+		}
+		return dst.len()
+	}
+	return copyArray(dst.arr(), src.arr())
+}
+
+func copyDenseSliced(dst DenseTensor, dstart, dend int, src DenseTensor, sstart, send int) int {
+	if dst.Dtype() != src.Dtype() {
+		panic("Cannot copy DenseTensors of different types")
+	}
+
+	if ms, ok := src.(MaskedTensor); ok && ms.IsMasked() {
+		if md, ok := dst.(MaskedTensor); ok {
+			dmask := md.Mask()
+			smask := ms.Mask()
+			if cap(dmask) < dend {
+				dmask = make([]bool, dend)
+				copy(dmask, md.Mask())
+				md.SetMask(dmask)
+			}
+			copy(dmask[dstart:dend], smask[sstart:send])
+		}
+	}
+	if e := src.Engine(); e != nil {
+		d := dst.arr().slice(dstart, dend)
+		s := src.arr().slice(sstart, send)
+		if err := e.Memcpy(d, s); err != nil {
+			panic(err)
+		}
+		return d.Len()
+	}
+	return copyArraySliced(dst.arr(), dstart, dend, src.arr(), sstart, send)
+}
+
+func copyDenseIter(dst, src DenseTensor, diter, siter Iterator) (int, error) {
+	if dst.Dtype() != src.Dtype() {
+		panic("Cannot copy Dense arrays of different types")
+	}
+	if !requiresIterator(dst) && !requiresIterator(src) {
+		return copyDense(dst, src), nil
+	}
+	if !dst.IsNativelyAccessible() || !src.IsNativelyAccessible() {
+		return 0, errors.Errorf(inaccessibleData, "copy")
+	}
+
+	if diter == nil {
+		diter = FlatIteratorFromDense(dst)
+	}
+	if siter == nil {
+		siter = FlatIteratorFromDense(src)
+	}
+
+	if ms, ok := src.(MaskedTensor); ok && ms.IsMasked() {
+		if md, ok := dst.(MaskedTensor); ok {
+			dmask := md.Mask()
+			smask := ms.Mask()
+			if cap(dmask) < len(smask) {
+				dmask = make([]bool, len(smask))
+				copy(dmask, md.Mask())
+				md.SetMask(dmask)
+			}
+			copy(dmask, smask)
+		}
+	}
+	return storage.CopyIter(dst.rtype(), dst.hdr(), src.hdr(), diter, siter), nil
 }

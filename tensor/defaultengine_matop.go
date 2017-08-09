@@ -257,3 +257,21 @@ func (e StdEng) denseTransposeArbitrary(a DenseTensor, expStrides []int) {
 		i = dest
 	}
 }
+
+func (StdEng) DenseRepeat(dst, src DenseTensor, repeats []int, outers, size, stride, newStride int) {
+	var destStart, srcStart int
+	for i := 0; i < outers; i++ {
+		for j := 0; j < size; j++ {
+			var tmp int
+			tmp = repeats[j]
+
+			for k := 0; k < tmp; k++ {
+				if srcStart >= dst.DataSize() || destStart+stride > src.DataSize() {
+					break
+				}
+				copyDenseSliced(dst, destStart, dst.DataSize(), src, srcStart, src.DataSize())
+				destStart += newStride
+			}
+		}
+	}
+}

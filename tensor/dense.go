@@ -244,8 +244,9 @@ func (t *Dense) MaskFromDense(tts ...*Dense) {
 
 // Private methods
 
-func (t *Dense) cap() int { return t.array.C }
-func (t *Dense) len() int { return t.array.L } // exactly the same as DataSize
+func (t *Dense) cap() int   { return t.array.C }
+func (t *Dense) len() int   { return t.array.L } // exactly the same as DataSize
+func (t *Dense) arr() array { return t.array }
 
 func (t *Dense) setShape(s ...int) {
 	t.unlock()
@@ -516,7 +517,7 @@ func (t *Dense) MaskFromSlice(x interface{}) {
 
 // Memset sets all the values in the *Dense tensor.
 func (t *Dense) Memset(x interface{}) error {
-	if !t.IsNativelyAccessible(){
+	if !t.IsNativelyAccessible() {
 		return errors.Errorf(inaccessibleData, t)
 	}
 	if t.IsMaterializable() {
@@ -552,3 +553,10 @@ func (t *Dense) Zero() {
 }
 
 func (t *Dense) Mask() []bool { return t.mask }
+
+func (t *Dense) SetMask(mask []bool) {
+	if len(mask) != t.len() {
+		panic("Cannot set mask")
+	}
+	t.mask = mask
+}

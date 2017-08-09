@@ -50,10 +50,6 @@ func (w binaryWriter) Error() string {
 // This method does not close the writer. Closing (if needed) is deferred to the caller
 // If tensor is masked, invalid values are replaced by the default fill value.
 func (t *Dense) WriteNpy(w io.Writer) (err error) {
-	if !t.IsNativelyAccessible(){
-		return errors.Errorf(inaccessibleData, t)
-	}
-
 	var npdt string
 	if npdt, err = t.t.numpyDtype(); err != nil {
 		return
@@ -102,11 +98,10 @@ func (t *Dense) WriteNpy(w io.Writer) (err error) {
 // If tensor is masked, invalid values are replaced by the default fill value.
 func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 	// checks:
-	if !t.IsNativelyAccessible(){
-		return errors.Errorf(inaccessibleData, t)
-	}
 	if !t.IsMatrix() {
-		return errors.Errorf("Cannot write *Dense to CSV. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())
+		// error
+		err = errors.Errorf("Cannot write *Dense to CSV. Expected number of dimensions: <=2, T has got %d dimensions (Shape: %v)", t.Dims(), t.Shape())
+		return
 	}
 	format := "%v"
 	if len(formats) > 0 {
@@ -161,10 +156,6 @@ func (t *Dense) WriteCSV(w io.Writer, formats ...string) (err error) {
 
 // GobEncode implements gob.GobEncoder
 func (t *Dense) GobEncode() (p []byte, err error) {
-	if !t.IsNativelyAccessible(){
-		return nil,  errors.Errorf(inaccessibleData, t)
-	}
-	
 	var buf bytes.Buffer
 	encoder := gob.NewEncoder(&buf)
 

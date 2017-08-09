@@ -36,17 +36,17 @@ func (e StdEng) Memcpy(dst, src Memory) error {
 		case array:
 			copyArray(dt, st)
 			return nil
-		case *Dense:
-			copyArray(dt, st.array)
+		case arrayer:
+			copyArray(dt, st.arr())
 			return nil
 		}
-	case *Dense:
+	case arrayer:
 		switch st := src.(type) {
 		case array:
-			copyArray(dt.array, st)
+			copyArray(dt.arr(), st)
 			return nil
-		case *Dense:
-			copyArray(dt.array, st.array)
+		case arrayer:
+			copyArray(dt.arr(), st.arr())
 			return nil
 		}
 	}

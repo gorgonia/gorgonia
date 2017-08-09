@@ -80,6 +80,7 @@ type DenseTensor interface {
 	Info() *AP
 
 	headerer
+	arrayer
 	rtype() reflect.Type
 	DataOrder() DataOrder
 
@@ -101,6 +102,7 @@ type SparseTensor interface {
 type MaskedTensor interface {
 	DenseTensor
 	IsMasked() bool
+	SetMask([]bool)
 	Mask() []bool
 }
 
@@ -111,4 +113,8 @@ type Kinder interface {
 
 type headerer interface {
 	hdr() *storage.Header
+}
+
+type arrayer interface {
+	arr() array
 }

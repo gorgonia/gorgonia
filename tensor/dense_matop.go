@@ -286,7 +286,7 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 				if srcStart >= t.len() || destStart+stride > d.len() {
 					break
 				}
-				copySliced(d, destStart, d.len(), t, srcStart, t.len())
+				copyDenseSliced(d, destStart, d.len(), t, srcStart, t.len())
 				destStart += newStride
 			}
 			srcStart += stride
@@ -582,7 +582,7 @@ func (t *Dense) simpleStack(retVal *Dense, axis int, others ...*Dense) *Dense {
 		copyDense(retVal, t)
 		next := t.len()
 		for _, ot := range others {
-			copySliced(retVal, next, retVal.len(), ot, 0, ot.len())
+			copyDenseSliced(retVal, next, retVal.len(), ot, 0, ot.len())
 			next += ot.len()
 		}
 	default:
@@ -594,10 +594,10 @@ func (t *Dense) simpleStack(retVal *Dense, axis int, others ...*Dense) *Dense {
 		end := start + axisStride
 
 		for i := 0; i < batches; i++ {
-			copySliced(retVal, destStart, retVal.len(), t, start, end)
+			copyDenseSliced(retVal, destStart, retVal.len(), t, start, end)
 			for _, ot := range others {
 				destStart += axisStride
-				copySliced(retVal, destStart, retVal.len(), ot, start, end)
+				copyDenseSliced(retVal, destStart, retVal.len(), ot, start, end)
 				i++
 			}
 			destStart += axisStride
