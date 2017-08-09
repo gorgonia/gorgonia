@@ -19,7 +19,7 @@ func (t *Dense) Gt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Gt - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -39,7 +39,7 @@ func (t *Dense) Gte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Gte - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -59,7 +59,7 @@ func (t *Dense) Lt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Lt - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -79,7 +79,7 @@ func (t *Dense) Lte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Lte - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -92,14 +92,14 @@ func (t *Dense) ElEq(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		e = StdEng{}
 	}
 
-	if eqer, ok := e.(ElEqer); ok {
+	if eleqer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = eqer.ElEq(t, other, opts...); err != nil {
+		if ret, err = eleqer.ElEq(t, other, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do Eq()")
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Eq - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -112,14 +112,14 @@ func (t *Dense) ElNe(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 		e = StdEng{}
 	}
 
-	if neer, ok := e.(ElEqer); ok {
+	if eleqer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = neer.ElNe(t, other, opts...); err != nil {
+		if ret, err = eleqer.ElNe(t, other, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do Ne()")
 			return
 		}
 		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+			err = errors.Errorf("Unable to do Ne - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -138,8 +138,8 @@ func (t *Dense) GtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 			err = errors.Wrapf(err, "Unable to do GtScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Gt - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -158,8 +158,8 @@ func (t *Dense) GteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do GteScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Gte - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -178,8 +178,8 @@ func (t *Dense) LtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 			err = errors.Wrapf(err, "Unable to do LtScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Lt - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -198,8 +198,8 @@ func (t *Dense) LteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do LteScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Lte - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -212,14 +212,14 @@ func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 		e = StdEng{}
 	}
 
-	if eqer, ok := e.(ElEqer); ok {
+	if eleqer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = eqer.ElEqScalar(t, other, leftTensor, opts...); err != nil {
+		if ret, err = eleqer.ElEqScalar(t, other, leftTensor, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do EqScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Eq - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}
@@ -232,14 +232,14 @@ func (t *Dense) ElNeScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 		e = StdEng{}
 	}
 
-	if neer, ok := e.(ElEqer); ok {
+	if eleqer, ok := e.(ElEqer); ok {
 		var ret Tensor
-		if ret, err = neer.ElNeScalar(t, other, leftTensor, opts...); err != nil {
+		if ret, err = eleqer.ElNeScalar(t, other, leftTensor, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do NeScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); ok {
-			err = errors.Errorf("Expected a *Dense. Got %T instead", ret)
+		if retVal, ok = ret.(*Dense); !ok {
+			err = errors.Errorf("Unable to do Ne - Expected a %T. Got %T instead", retVal, ret)
 		}
 		return
 	}

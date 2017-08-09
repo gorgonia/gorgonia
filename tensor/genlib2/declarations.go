@@ -276,6 +276,7 @@ var funcs = template.FuncMap{
 	"vecPkg":    vecPkg,
 	"bitSizeOf": bitSizeOf,
 	"getalias":  getalias,
+	"interfaceName": interfaceName,
 
 	"isntFloat": isntFloat,
 }

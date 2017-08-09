@@ -49,7 +49,7 @@ func prepBinaryTensor(a, b Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *D
 	bt := b.Dtype()
 
 	if typeclass != nil && !typeclassCheck(at, typeclass) && !typeclassCheck(bt, typeclass) {
-		err = noopError{}
+		err = errors.Errorf("failed type class check")
 		return
 	}
 	if at.Kind() != bt.Kind() {
@@ -64,9 +64,13 @@ func prepBinaryTensor(a, b Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *D
 }
 
 func prepUnaryTensor(a Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
+	if !a.IsNativelyAccessible() {
+		err = errors.Errorf(inaccessibleData, a)
+		return
+	}
 	at := a.Dtype()
 	if typeclass != nil && !typeclassCheck(at, typeclass) {
-		err = noopError{}
+		err = errors.Errorf("failed type class check")
 		return
 	}
 
@@ -79,7 +83,7 @@ func prepDataVV(a, b Tensor, reuse *Dense) (dataA, dataB, dataReuse *storage.Hea
 	case DenseTensor:
 		switch bt := b.(type) {
 		case DenseTensor:
-			if requiresIterator(a.Engine(), at) || requiresIterator(a.Engine(), bt) {
+			if requiresOrderedIterator(a.Engine(), at) || requiresOrderedIterator(a.Engine(), bt) {
 				dataA = at.hdr()
 				dataB = bt.hdr()
 				ait = IteratorFromDense(at)
@@ -139,7 +143,7 @@ func prepDataVS(a Tensor, b interface{}, reuse *Dense) (dataA, dataB, dataReuse 
 		if reuse != nil {
 			dataReuse = reuse.hdr()
 		}
-		if requiresIterator(a.Engine(), at) {
+		if requiresOrderedIterator(a.Engine(), at) {
 			ait = IteratorFromDense(at)
 			if reuse != nil {
 				iit = IteratorFromDense(reuse)
@@ -162,7 +166,7 @@ func prepDataSV(a interface{}, b Tensor, reuse *Dense) (dataA, dataB, dataReuse 
 		if reuse != nil {
 			dataReuse = reuse.hdr()
 		}
-		if requiresIterator(b.Engine(), bt) {
+		if requiresOrderedIterator(b.Engine(), bt) {
 			bit = IteratorFromDense(bt)
 			if reuse != nil {
 				iit = IteratorFromDense(reuse)
@@ -184,7 +188,7 @@ func prepDataUnary(a Tensor, reuse *Dense) (dataA, dataReuse *storage.Header, ai
 		if reuse != nil {
 			dataReuse = reuse.hdr()
 		}
-		if requiresIterator(a.Engine(), at) {
+		if requiresOrderedIterator(a.Engine(), at) {
 			ait = IteratorFromDense(at)
 			useIter = true
 			if reuse != nil {

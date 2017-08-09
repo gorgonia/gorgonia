@@ -12,9 +12,9 @@ if e == nil {
 {{$eleq := eq .Name "Eq"}}
 {{$eleqne := or $eleq $elne}}
 
-if {{lower .Name}}er, ok := e.({{if $eleqne }}ElEqer{{else}}{{.Name}}{{end}}er); ok {
+if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
 	var ret Tensor
-	if ret, err = {{lower .Name}}er.{{.Name}}(t, other, opts...); err != nil {
+	if ret, err = {{interfaceName .Name | lower}}.{{if $eleqne}}El{{end}}{{.Name}}(t, other, opts...); err != nil {
 		err = errors.Wrapf(err, "Unable to do {{.Name}}()")
 		return
 	}
@@ -34,9 +34,9 @@ const denseArithScalarBodyRaw = `e := t.e
 {{$elne := eq .Name "Ne"}}
 {{$eleq := eq .Name "Eq"}}
 {{$eleqne := or $eleq $elne}}
-	if {{lower .Name}}er, ok := e.({{if $eleqne }}El{{end}}{{.Name}}er); ok {
+	if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
 		var ret Tensor
-		if ret, err = {{lower .Name}}er.{{.Name}}Scalar(t, other, leftTensor, opts...); err != nil {
+		if ret, err = {{interfaceName .Name | lower}}.{{if $eleqne}}El{{end}}{{.Name}}Scalar(t, other, leftTensor, opts...); err != nil {
 			err = errors.Wrapf(err, "Unable to do {{.Name}}Scalar()")
 			return
 		}

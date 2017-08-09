@@ -2,8 +2,8 @@ package tensor
 
 import "runtime"
 
-func requiresIterator(e Engine, t Tensor) bool {
-	switch tt := t.(type) {
+func requiresIterator(a Tensor) bool {
+	switch tt := a.(type) {
 	case DenseTensor:
 		if mt, ok := tt.(MaskedTensor); ok && mt.IsMasked() {
 			return true
@@ -14,6 +14,19 @@ func requiresIterator(e Engine, t Tensor) bool {
 		if tt.DataOrder().isNotContiguous() {
 			return true
 		}
+		return false
+	case SparseTensor:
+		return true
+	}
+	panic("Unreachable")
+}
+
+func requiresOrderedIterator(e Engine, t Tensor) bool {
+	if requiresIterator(t) {
+		return true
+	}
+	switch tt := t.(type) {
+	case DenseTensor:
 		return !e.DataOrder().hasSameOrder(tt.DataOrder())
 	case SparseTensor:
 		return true
@@ -29,8 +42,8 @@ type Iterator interface {
 
 	// Next returns the next index. Next is defined as the next value in the coordinates
 	// For example: let x be a (5,5) matrix that is row-major. Current index is for the coordinate (3,3).
-	// Next() returns the index of (3,4). 
-	// 
+	// Next() returns the index of (3,4).
+	//
 	// If there is no underlying data store for (3,4) - say for example, the matrix is a sparse matrix, it return an error.
 	// If however, there is an underlying data store for (3,4), but it's not valid (for example, masked tensors), it will not return an error.
 	//
@@ -56,7 +69,7 @@ type Iterator interface {
 	// SetForward tells the iterator to iterate forwards
 	SetForward()
 
-	// Coord returns the coordinates 
+	// Coord returns the coordinates
 	Coord() []int
 
 	// Done returns true when the iterator is done iterating.
@@ -92,6 +105,16 @@ func IteratorFromDense(tts ...DenseTensor) Iterator {
 	default:
 		return MultIteratorFromDense(tts...)
 	}
+}
+
+func IteratorFromTensor(a Tensor) Iterator {
+	switch at := a.(type) {
+	case DenseTensor:
+		return IteratorFromDense(at)
+	case *CS:
+		return NewFlatSparseIterator(at)
+	}
+	panic("Unreachable")
 }
 
 func destroyIterator(it Iterator) {
@@ -312,7 +335,7 @@ func (it *FlatIterator) ndNext() (int, error) {
 	return it.lastIndex, nil
 }
 
-func (it *FlatIterator) colMajorNDNext() (int, error){
+func (it *FlatIterator) colMajorNDNext() (int, error) {
 	return 0, nil
 }
 

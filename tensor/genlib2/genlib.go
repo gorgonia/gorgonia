@@ -144,6 +144,21 @@ func getalias(name string) string {
 	return name
 }
 
+func interfaceName(name string) string {
+	switch name {
+	case "Square":
+		return "Squarer"
+	case "Cube":
+		return "Cuber"
+	case "Eq":
+		return "ElEqer"
+	case "Ne":
+		return "ElEqer"
+	default:
+		return name + "er"
+	}
+}
+
 func bitSizeOf(a reflect.Kind) string {
 	switch a {
 	case reflect.Int, reflect.Uint:

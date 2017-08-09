@@ -35,8 +35,8 @@ func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if e == nil {
 		e = StdEng{}
 	}
-	if squareer, ok := e.(Squarer); ok {
-		return squareer.Square(a, opts...)
+	if squarer, ok := e.(Squarer); ok {
+		return squarer.Square(a, opts...)
 	}
 	err = errors.Errorf("Engine does not perform Square")
 	return
@@ -47,8 +47,8 @@ func Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if e == nil {
 		e = StdEng{}
 	}
-	if cubeer, ok := e.(Cuber); ok {
-		return cubeer.Cube(a, opts...)
+	if cuber, ok := e.(Cuber); ok {
+		return cuber.Cube(a, opts...)
 	}
 	err = errors.Errorf("Engine does not perform Cube")
 	return
@@ -171,5 +171,17 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		return signer.Sign(a, opts...)
 	}
 	err = errors.Errorf("Engine does not perform Sign")
+	return
+}
+
+func Clamp(a Tensor, min interface{}, max interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	var e Engine = a.Engine()
+	if e == nil {
+		e = StdEng{}
+	}
+	if clamper, ok := e.(Clamper); ok {
+		return clamper.Clamp(a, min, max, opts...)
+	}
+	err = errors.Errorf("Engine does not perform Clamp")
 	return
 }
