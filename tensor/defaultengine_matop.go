@@ -1,6 +1,9 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"github.com/chewxy/gorgonia/tensor/internal/storage"
+	"github.com/pkg/errors"
+)
 
 func (e StdEng) Transpose(a Tensor, expStrides []int) error {
 	if !a.IsNativelyAccessible() {
@@ -14,6 +17,11 @@ func (e StdEng) Transpose(a Tensor, expStrides []int) error {
 }
 
 func (e StdEng) denseTranspose(a DenseTensor, expStrides []int) {
+	if a.rtype() == String.Type {
+		e.denseTransposeString(a, expStrides)
+		return
+	}
+
 	switch a.rtype().Size() {
 	case 1:
 		e.denseTranspose1(a, expStrides)
@@ -172,10 +180,47 @@ func (e StdEng) denseTranspose8(a DenseTensor, expStrides []int) {
 	}
 }
 
+func (e StdEng) denseTransposeString(a DenseTensor, expStrides []int) {
+	axes := a.transposeAxes()
+	size := a.len()
+
+	// first we'll create a bit-map to track which elements have been moved to their correct places
+	track := NewBitMap(size)
+	track.Set(0)
+	track.Set(size - 1) // first and last element of a transposedon't change
+
+	var saved, tmp string
+	var i int
+
+	data := a.hdr().Strings()
+	for i = 1; ; {
+		dest := a.transposeIndex(i, axes, expStrides)
+
+		if track.IsSet(i) && track.IsSet(dest) {
+			data[i] = saved
+			saved = ""
+			for i < size && track.IsSet(i) {
+				i++
+			}
+			if i >= size {
+				break
+			}
+			continue
+		}
+		track.Set(i)
+		tmp = data[i]
+		data[i] = saved
+		saved = tmp
+
+		i = dest
+	}
+}
+
 func (e StdEng) denseTransposeArbitrary(a DenseTensor, expStrides []int) {
 	axes := a.transposeAxes()
 	size := a.len()
-	typeSize := int(a.rtype().Size())
+	rtype := a.rtype()
+	typeSize := int(rtype.Size())
 
 	// first we'll create a bit-map to track which elements have been moved to their correct places
 	track := NewBitMap(size)
@@ -186,7 +231,7 @@ func (e StdEng) denseTransposeArbitrary(a DenseTensor, expStrides []int) {
 	tmp := make([]byte, typeSize, typeSize)
 	var i int
 
-	data := a.hdr().Uint8s()
+	data := storage.AsByteSlice(a.hdr(), rtype)
 	for i = 1; ; {
 		dest := a.transposeIndex(i, axes, expStrides)
 		start := typeSize * i

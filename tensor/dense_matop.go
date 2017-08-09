@@ -14,68 +14,6 @@ func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error
 		return m.Map(fn, t, opts...)
 	}
 	return nil, errors.Errorf("Execution engine for %v not a mapper", t)
-
-	/*
-		if !t.IsNativelyAccessible() {
-			return nil, errors.Errorf(inaccessibleData, t)
-		}
-
-		fo := ParseFuncOpts(opts...)
-		reuseT, incr := fo.IncrReuse()
-		safe := fo.Safe()
-
-		var reuse *Dense
-		if reuse, err = getDense(reuseT); err != nil {
-			return
-		}
-
-		// check reuse and stuff
-		var res *Dense
-		switch {
-		case reuse != nil:
-			res = reuse
-			if res.len() != t.Size() {
-				err = errors.Errorf(shapeMismatch, t.Shape(), reuse.Shape())
-				return
-			}
-		case !safe:
-			res = t
-		default:
-			if t.IsMaterializable() {
-				res = t.Materialize().(*Dense)
-			} else {
-				res = t.Clone().(*Dense)
-			}
-		}
-		// do
-		switch {
-		case t.viewOf == nil:
-			err = res.mapFn(fn, incr)
-		case t.viewOf != nil:
-			it := IteratorFromDense(t)
-			if err = res.iterMap(fn, it, incr); err != nil {
-				return
-			}
-
-		default:
-			err = errors.Errorf("Apply not implemented for this state: isView: %t and incr: %t", t.viewOf == nil, incr)
-			return
-		}
-		// set retVal
-		switch {
-		case reuse != nil:
-			if err = reuseCheckShape(reuse, t.Shape()); err != nil {
-				return
-			}
-			retVal = reuse
-		case !safe:
-			retVal = t
-		default:
-			retVal = res
-			// retVal = New(Of(t.t), WithBacking(res), WithShape(t.Shape()...))
-		}
-		return
-	*/
 }
 
 // T performs a thunked transpose. It doesn't actually do anything, except store extra information about the post-transposed shapes and strides
