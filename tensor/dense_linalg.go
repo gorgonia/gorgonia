@@ -14,10 +14,10 @@ func (t *Dense) Trace() (retVal interface{}, err error) {
 		return
 	}
 
-	if !isNumber(t.t) {
-		err = noopError{}
-		return
+	if err = typeclassCheck(t.t, numberTypes); err != nil {
+		return nil, errors.Wrap(err, "Trace")
 	}
+
 
 	rstride := t.Strides()[0]
 	cstride := t.Strides()[1]
@@ -612,8 +612,8 @@ func handleIncr(res *Dense, reuse, incr Tensor, expectedShape Shape) (retVal *De
 			return
 		}
 
-		if !isNumber(incrD.t) {
-			err = errors.Errorf(unsupportedDtype, incrD.t, "MatVecMul as incr")
+		if err = typeclassCheck(incrD.t, numberTypes); err != nil {
+			err = errors.Wrapf(err, "handleIncr only handles Number types. Got %v instead", incrD.t)
 			return
 		}
 

@@ -108,6 +108,11 @@ func fromNumpyDtype(t string) (Dtype, error) {
 	return Dtype{}, errors.Errorf("Unsupported Dtype conversion from %q to Dtype", t)
 }
 
+type typeclass struct {
+	name string
+	set  []Dtype
+}
+
 var parameterizedKinds = [...]reflect.Kind{
 	reflect.Array,
 	reflect.Chan,
@@ -156,43 +161,70 @@ var (
 )
 
 // allTypes for indexing
-var allTypes = []Dtype{
-	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+var allTypes = &typeclass{
+	name: "τ",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+	},
 }
 
 // specialized types indicate that there are specialized code generated for these types
-var specializedTypes = []Dtype{
-	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+var specializedTypes = &typeclass{
+	name: "Specialized",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+	},
 }
 
-var numberTypes = []Dtype{
-	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128,
+var numberTypes = &typeclass{
+	name: "Number",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128,
+	},
 }
 
-var ordTypes = []Dtype{
-	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+var ordTypes = &typeclass{
+	name: "Ord",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+	},
 }
 
-var eqTypes = []Dtype{
-	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+var eqTypes = &typeclass{
+	name: "Eq",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+	},
 }
 
-var unsignedTypes = [...]Dtype{Uint, Uint8, Uint16, Uint32, Uint64}
-
-var signedTypes = []Dtype{
-	Int, Int8, Int16, Int32, Int64, Float32, Float64, Complex64, Complex128,
+var unsignedTypes = &typeclass{
+	name: "Unsigned",
+	set:  []Dtype{Uint, Uint8, Uint16, Uint32, Uint64},
 }
 
-var floatTypes = []Dtype{
-	Float32, Float64,
+var signedTypes = &typeclass{
+	name: "Signed",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Float32, Float64, Complex64, Complex128,
+	},
 }
 
-var floatcmplxTypes = []Dtype{
-	Float32, Float64, Complex64, Complex128,
+var floatTypes = &typeclass{
+	name: "Float",
+	set: []Dtype{
+		Float32, Float64,
+	},
+}
+
+var floatcmplxTypes = &typeclass{
+	name: "Real",
+	set: []Dtype{
+		Float32, Float64, Complex64, Complex128,
+	},
 }
 
 func isSpecialized(dt Kinder) bool {
-	for _, s := range specializedTypes {
+	for _, s := range specializedTypes.set {
 		if s.Kind() == dt.Kind() {
 			return true
 		}
@@ -201,7 +233,7 @@ func isSpecialized(dt Kinder) bool {
 }
 
 func isNumber(dt Dtype) bool {
-	for _, s := range numberTypes {
+	for _, s := range numberTypes.set {
 		if s == dt {
 			return true
 		}
@@ -214,7 +246,7 @@ func isFloat(dt Dtype) bool {
 }
 
 func isUnsigned(dt Kinder) bool {
-	for _, s := range unsignedTypes {
+	for _, s := range unsignedTypes.set {
 		if s == dt {
 			return true
 		}
@@ -222,13 +254,13 @@ func isUnsigned(dt Kinder) bool {
 	return false
 }
 
-func typeclassCheck(a Dtype, set []Dtype) bool {
-	for _, s := range set {
+func typeclassCheck(a Dtype, tc *typeclass) error {
+	for _, s := range tc.set {
 		if s == a {
-			return true
+			return nil
 		}
 	}
-	return false
+	return errors.Errorf("Type %v is not a member of %v", a, tc.name)
 }
 
 // RegisterNumber is a function required to register a new numerical Dtype.
@@ -250,30 +282,30 @@ func typeclassCheck(a Dtype, set []Dtype) bool {
 //
 // If a Dtype that is registered already exists on the list, it will not be added to the list.
 func RegisterNumber(a Dtype) {
-	for _, dt := range numberTypes {
+	for _, dt := range numberTypes.set {
 		if dt == a {
 			return
 		}
 	}
-	numberTypes = append(numberTypes, a)
+	numberTypes.set = append(numberTypes.set, a)
 }
 
 func RegisterOrd(a Dtype) {
-	for _, dt := range ordTypes {
+	for _, dt := range ordTypes.set {
 		if dt == a {
 			return
 		}
 	}
-	ordTypes = append(ordTypes, a)
+	ordTypes.set = append(ordTypes.set, a)
 }
 
 func RegisterEq(a Dtype) {
-	for _, dt := range eqTypes {
+	for _, dt := range eqTypes.set {
 		if dt == a {
 			return
 		}
 	}
-	eqTypes = append(eqTypes, a)
+	eqTypes.set = append(eqTypes.set, a)
 }
 
 // NormOrder represents the order of the norm. Ideally, we'd only represent norms with a uint/byte.

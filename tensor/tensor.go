@@ -135,8 +135,9 @@ func getFloatDense(t Tensor) (retVal *Dense, err error) {
 	if retVal == nil {
 		return
 	}
-	if !isFloat(retVal.t) {
-		err = errors.Errorf(dtypeMismatch, retVal.t, retVal.array.Ptr)
+
+	if err= typeclassCheck(retVal.t, floatTypes); err != nil {
+		err = errors.Wrapf(err, "getFloatDense only handles floats. Got %v instead", retVal.t)
 		return
 	}
 	return

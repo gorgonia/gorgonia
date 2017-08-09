@@ -33,7 +33,7 @@ func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *D
 	return
 }
 
-func prepBinaryTensor(a, b Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
+func prepBinaryTensor(a, b Tensor, tc *typeclass, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
 	// check if the tensors are accessible
 	if !a.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, a)
@@ -47,11 +47,17 @@ func prepBinaryTensor(a, b Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *D
 
 	at := a.Dtype()
 	bt := b.Dtype()
-
-	if typeclass != nil && !typeclassCheck(at, typeclass) && !typeclassCheck(bt, typeclass) {
-		err = errors.Errorf("failed type class check")
-		return
+	if tc != nil {
+		if err = typeclassCheck(at, tc); err != nil {
+			err = errors.Wrapf(err, typeclassMismatch, "a")
+			return
+		}
+		if err = typeclassCheck(bt, tc); err != nil {
+			err = errors.Wrapf(err, typeclassMismatch, "b")
+			return
+		}
 	}
+
 	if at.Kind() != bt.Kind() {
 		err = errors.Errorf(typeMismatch, at, bt)
 		return
@@ -63,15 +69,17 @@ func prepBinaryTensor(a, b Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *D
 	return denseFromFuncOpts(a.Shape(), at, opts...)
 }
 
-func prepUnaryTensor(a Tensor, typeclass []Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
+func prepUnaryTensor(a Tensor, tc *typeclass, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
 	if !a.IsNativelyAccessible() {
 		err = errors.Errorf(inaccessibleData, a)
 		return
 	}
 	at := a.Dtype()
-	if typeclass != nil && !typeclassCheck(at, typeclass) {
-		err = errors.Errorf("failed type class check")
-		return
+	if tc != nil {
+		if err = typeclassCheck(at, tc); err != nil {
+			err = errors.Wrapf(err, typeclassMismatch, "a")
+			return
+		}
 	}
 
 	return denseFromFuncOpts(a.Shape(), at, opts...)
