@@ -54,7 +54,7 @@ func main() {
 	pipeline(execLoc, "generic_cmp_mixed.go", Kinds{allKinds}, generateGenericMixedCmp)
 	pipeline(execLoc, "generic_minmax.go", Kinds{allKinds}, generateMinMax)
 	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
-	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary, generateGenericCondUnary)
+	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary, generateGenericCondUnary, generateSpecialGenericUnaries)
 	pipeline(execLoc, "generic_reduce.go", Kinds{allKinds}, generateGenericReduce)
 
 	// level 1 aggregation

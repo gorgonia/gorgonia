@@ -130,3 +130,85 @@ func generateGenericCondUnary(f io.Writer, ak Kinds) {
 /*
 SPECIAL CASES
 */
+
+type GenericUnarySpecial struct {
+	*GenericUnary
+	AdditionalParams         []string
+	AdditionalParamTemplates []*template.Template
+}
+
+func (fn *GenericUnarySpecial) Signature() *Signature {
+	sig := fn.GenericUnary.Signature()
+	sig.ParamNames = append(sig.ParamNames, fn.AdditionalParams...)
+	sig.ParamTemplates = append(sig.ParamTemplates, fn.AdditionalParamTemplates...)
+	return sig
+}
+
+func (fn *GenericUnarySpecial) Write(w io.Writer) {
+	sig := fn.Signature()
+	w.Write([]byte("func "))
+	sig.Write(w)
+	w.Write([]byte("{\n"))
+	fn.WriteBody(w)
+	if sig.Err {
+		w.Write([]byte("\nreturn\n"))
+	}
+	w.Write([]byte("}\n\n"))
+}
+
+func (fn *GenericUnarySpecial) WriteBody(w io.Writer) {
+	var IterName0 string
+	T := template.New(fn.Name()).Funcs(funcs)
+
+	if fn.Iter {
+		T = template.Must(T.Parse(genericUnaryIterLoopRaw))
+		IterName0 = "ait"
+	} else {
+		T = template.Must(T.Parse(genericLoopRaw))
+	}
+	template.Must(T.New("loopbody").Parse(clampBody))
+	template.Must(T.New("opDo").Parse(unaryOpDo))
+	template.Must(T.New("callFunc").Parse(unaryOpCallFunc))
+	template.Must(T.New("check").Parse(""))
+
+	lb := LoopBody{
+		TypedOp:   fn.TypedUnaryOp,
+		Range:     "a",
+		Left:      "a",
+		Index0:    "i",
+		IterName0: IterName0,
+	}
+	T.Execute(w, lb)
+}
+
+func generateSpecialGenericUnaries(f io.Writer, ak Kinds) {
+	var gen []*GenericUnarySpecial
+	for _, tu := range typedSpecialUnaries {
+		if tc := tu.TypeClass(); tc != nil && !tc(tu.Kind()) {
+			continue
+		}
+
+		additional := tu.UnaryOp.(specialUnaryOp).additionalParams
+		tmpls := make([]*template.Template, len(additional))
+		for i := range tmpls {
+			tmpls[i] = scalarType
+		}
+		fn := &GenericUnarySpecial{
+			GenericUnary: &GenericUnary{
+				TypedUnaryOp: tu,
+			},
+			AdditionalParams:         additional,
+			AdditionalParamTemplates: tmpls,
+		}
+		gen = append(gen, fn)
+	}
+
+	for _, fn := range gen {
+		fn.Write(f)
+		fn.Iter = true
+	}
+
+	for _, fn := range gen {
+		fn.Write(f)
+	}
+}

@@ -97,6 +97,15 @@ const (
 		{{.Range}}[i] = {{falseValue .Kind}}
 	}`
 
+	clampBody = `if {{.Range}}[i] < min {{if eq .Kind.String "float64"}}|| math.IsInf({{.Range}}[i], -1){{else if eq .Kind.String "float32"}}|| math32.IsInf({{.Range}}[i], -1){{end}}  {
+		{{.Range}}[i] = min
+		continue
+	}
+	if {{.Range}}[i] > max {{if eq .Kind.String "float64"}}|| math.IsInf({{.Range}}[i], 1){{else if eq .Kind.String "float32"}}|| math32.IsInf({{.Range}}[i], 1){{end}} {
+		{{.Range}}[i] = max
+	}
+	`
+
 	ternaryIterSet = `{{.Range}}[k] = {{template "opDo" . -}}`
 
 	binOpCallFunc = `{{if eq "complex64" .Kind.String -}}

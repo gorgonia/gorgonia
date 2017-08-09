@@ -465,6 +465,40 @@ const (
 		return errors.Errorf("Unsupported type %v for {{$name}}", t)
 	}
 	`
+
+	eUnaryClamp = `switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		var min, max {{asType .}}
+		var ok bool
+		if min, ok = minVal.({{asType .}}); !ok {
+			err = errors.Wrap(errors.Errorf(typeMismatch, min, minVal), "Clamp() min")
+			return
+		}
+		if max, ok = maxVal.({{asType .}}); !ok {
+			err = errors.Wrap(errors.Erorrf(typeMismatch, max, maxVal), "Clamp() max")
+			return
+		}
+		clamp(a.{{sliceOf .}}, min, max)
+
+	}
+	`
+
+	eUnaryClampIter = `
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		if min, ok = minVal.({{asType .}}); !ok {
+			err = errors.Wrap(errors.Errorf(typeMismatch, min, minVal), "Clamp() min")
+			return
+		}
+		if max, ok = maxVal.({{asType .}}); !ok {
+			err = errors.Wrap(errors.Erorrf(typeMismatch, max, maxVal), "Clamp() max")
+			return
+		}
+		clampIter(a.{{sliceOf .}}, min, max)
+	}
+	`
 )
 
 var (

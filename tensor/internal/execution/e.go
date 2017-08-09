@@ -49,4 +49,5 @@ const (
 	lenMismatch        = `Cannot compare with differing lengths: %d and %d`
 	reductionErrMsg    = `Cannot reduce with function of type %T`
 	defaultValueErrMsg = `Expected default value of type %T. Got %v of %T instead`
+	typeMismatch = `TypeMismatch: a %T and b %T
 )

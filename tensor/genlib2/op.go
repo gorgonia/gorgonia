@@ -78,3 +78,9 @@ type TypedUnaryOp struct {
 }
 
 func (op TypedUnaryOp) Kind() reflect.Kind { return op.k }
+
+
+type specialUnaryOp struct {
+	unaryOp
+	additionalParams []string
+}

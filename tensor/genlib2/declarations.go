@@ -349,8 +349,10 @@ var typedCmps []TypedBinOp
 
 var conditionalUnaries []unaryOp
 var unconditionalUnaries []unaryOp
+var specialUnaries []UnaryOp
 var typedCondUnaries []TypedUnaryOp
 var typedUncondUnaries []TypedUnaryOp
+var typedSpecialUnaries []TypedUnaryOp
 
 var allKinds []reflect.Kind
 
@@ -418,6 +420,10 @@ func init() {
 		unconditionalUnaries[i+nonF].symbol = unconditionalFloatUnarySymbolTemplates[i]
 	}
 
+	specialUnaries = []UnaryOp{
+		specialUnaryOp{unaryOp{clampBody, "Clamp", false, isNonComplexNumber}, []string{"min", "max"}},
+	}
+
 	// typed operations
 
 	for _, bo := range arithBinOps {
@@ -460,4 +466,13 @@ func init() {
 		}
 	}
 
+	for _, uo := range specialUnaries {
+		for _, k := range allKinds {
+			tu := TypedUnaryOp{
+				UnaryOp: uo,
+				k:       k,
+			}
+			typedSpecialUnaries = append(typedSpecialUnaries, tu)
+		}
+	}
 }
