@@ -1,23 +1,90 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"github.com/chewxy/gorgonia/tensor/internal/storage"
+	"github.com/pkg/errors"
+)
 
 func (e StdEng) Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	if !a.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, a)
-	}
-	h, ok := a.(headerer)
-	if !ok {
-		return nil, errors.Errorf(inaccessibleData, a)
+	if err = unaryCheck(a, nonComplexNumberTypes); err != nil {
+		return nil, errors.Wrap(err, "Clamp failed")
 	}
 
-	if requiresIterator(a) {
-		ait := IteratorFromTensor(a)
-		err = e.E.ClampIter(a.Dtype().Type, h.hdr(), ait, min, max)
-		retVal = a
+	var reuse *Dense
+	var safe, toReuse, incr bool
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+
+	typ := a.Dtype().Type
+	var ait, rit Iterator
+	var dataA, dataReuse *storage.Header
+	var useIter bool
+
+	if dataA, dataReuse, ait, rit, useIter, err = prepDataUnary(a, reuse); err != nil {
+		return nil, errors.Wrapf(err, opFail, "StdEng.Neg")
+	}
+
+	if useIter {
+		switch {
+		case incr:
+			cloned := a.Clone().(Tensor)
+			h, ok := cloned.(headerer)
+			if !ok {
+				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
+			}
+			if err = e.E.ClampIter(typ, h.hdr(), ait, min, max); err != nil {
+				return nil, errors.Wrapf(err, "Unable to perform Clamp")
+			}
+			ait.Reset()
+			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			retVal = reuse
+		case toReuse:
+			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
+			rit.Reset()
+			err = e.E.ClampIter(typ, dataReuse, rit, min, max)
+			retVal = reuse
+		case !safe:
+			err = e.E.ClampIter(typ, dataA, ait, min, max)
+			retVal = a
+		default:
+			cloned := a.Clone().(Tensor)
+			h, ok := cloned.(headerer)
+			if !ok {
+				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
+			}
+			err = e.E.ClampIter(typ, h.hdr(), ait, min, max)
+			retVal = cloned
+		}
 		return
 	}
-	err = e.E.Clamp(a.Dtype().Type, h.hdr(), min, max)
-	retVal = a
+	switch {
+	case incr:
+		cloned := a.Clone().(Tensor)
+		h, ok := cloned.(headerer)
+		if !ok {
+			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
+		}
+		if err = e.E.Clamp(typ, h.hdr(), min, max); err != nil {
+			return nil, errors.Wrapf(err, "Unable to perform Clamp")
+		}
+		err = e.E.Add(typ, dataReuse, h.hdr())
+		retVal = reuse
+	case toReuse:
+		storage.Copy(typ, dataReuse, dataA)
+		err = e.E.Clamp(typ, dataReuse, min, max)
+		retVal = reuse
+	case !safe:
+		err = e.E.Clamp(typ, dataA, min, max)
+		retVal = a
+	default:
+		cloned := a.Clone().(Tensor)
+		h, ok := cloned.(headerer)
+		if !ok {
+			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
+		}
+		err = e.E.Clamp(typ, h.hdr(), min, max)
+		retVal = cloned
+	}
 	return
 }

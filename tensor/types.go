@@ -223,6 +223,13 @@ var floatcmplxTypes = &typeclass{
 	},
 }
 
+var nonComplexNumberTypes = &typeclass{
+	name:"Non complex numbers",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64,
+	},
+}
+
 func isSpecialized(dt Kinder) bool {
 	for _, s := range specializedTypes.set {
 		if s.Kind() == dt.Kind() {
