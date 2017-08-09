@@ -84,6 +84,9 @@ type DenseTensor interface {
 	rtype() reflect.Type
 	DataOrder() DataOrder
 
+	IsVector() bool
+	ostrides() []int
+	oshape() Shape
 	transposeAxes() []int
 	transposeIndex(i int, transposePat, strides []int) int
 	len() int

@@ -240,60 +240,14 @@ func (t *Dense) SetMaskAt(v bool, coords ...int) error {
 // The repeats param defines how many times each element in the axis is repeated.
 // Just like NumPy, the repeats param is broadcasted to fit the size of the given axis.
 func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
-	var newShape Shape
-	var size int
-	if newShape, repeats, size, err = t.Shape().Repeat(axis, repeats...); err != nil {
-		return nil, errors.Wrap(err, "Unable to get repeated shape")
+	e := t.Engine()
+	if e == nil {
+		e = StdEng{}
 	}
-
-	if axis == AllAxes {
-		axis = 0
+	if rp, ok := e.(Repeater); ok {
+		return rp.Repeat(t, axis, repeats...)
 	}
-
-	d := recycledDense(t.t, newShape)
-	// d := New(Of(t.t), WithShape(newShape...))
-
-	var outers int
-	if t.IsScalar() {
-		outers = 1
-	} else {
-		outers = ProdInts(t.Shape()[0:axis])
-		if outers == 0 {
-			outers = 1
-		}
-	}
-
-	var stride, newStride int
-	if newShape.IsVector() || t.IsVector() {
-		stride = 1 // special case because CalcStrides() will return []int{1} as the strides for a vector
-	} else {
-		stride = t.ostrides()[axis]
-	}
-
-	if newShape.IsVector() {
-		newStride = 1
-	} else {
-		newStride = d.ostrides()[axis]
-	}
-
-	var destStart, srcStart int
-	for i := 0; i < outers; i++ {
-		for j := 0; j < size; j++ {
-			var tmp int
-			tmp = repeats[j]
-
-			for k := 0; k < tmp; k++ {
-				if srcStart >= t.len() || destStart+stride > d.len() {
-					break
-				}
-				copyDenseSliced(d, destStart, d.len(), t, srcStart, t.len())
-				destStart += newStride
-			}
-			srcStart += stride
-		}
-	}
-
-	return d, nil
+	return nil, errors.New("Engine does not support Repeat")
 }
 
 // CopyTo copies the underlying data to the destination *Dense. The original data is untouched.

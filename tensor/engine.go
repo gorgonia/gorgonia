@@ -52,6 +52,10 @@ type Stacker interface {
 	Stack(t Tensor, axis int, others ...Tensor) (Tensor, error)
 }
 
+type Repeater interface {
+	Repeat(t Tensor, axis int, repeats ...int) (Tensor, error)
+}
+
 /* NUMBER INTERFACES
 All these are expected to be unsafe on the first tensor
 */
@@ -119,7 +123,7 @@ type Moder interface {
 
 /* LINEAR ALGEBRA INTERFACES */
 
-// Tracer is any engine that can return the trace (aka the sum of the diagonal elements). 
+// Tracer is any engine that can return the trace (aka the sum of the diagonal elements).
 type Tracer interface {
 	Trace(a Tensor) (interface{}, error)
 }
