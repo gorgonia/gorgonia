@@ -9,9 +9,14 @@ import (
 )
 
 func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(a, nil); err != nil{
+		err = errors.Wrap(err, "Failed Map()")
+		return
+	}
+
 	var reuse *Dense
 	var safe, _, incr bool
-	if reuse, safe, _, incr, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
+	if reuse, safe, _, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return
 	}
 	switch {
@@ -316,6 +321,18 @@ func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse *Dense,
 		return
 	}
 
+	if err = unaryCheck(a, nil);err != nil {
+		err = errors.Wrap(err, "prepReduce failed")
+		return
+	}
+
+	// FUNC PREP
+	var safe bool
+	if reuse, safe, _, _, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		err = errors.Wrap(err, "Unable to prep unary tensor")
+		return
+	}
+
 	var newShape Shape
 	for i, s := range a.Shape() {
 		if i == axis {
@@ -323,14 +340,7 @@ func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse *Dense,
 		}
 		newShape = append(newShape, s)
 	}
-
-	// FUNC PREP
-	var safe bool
-	if reuse, safe, _, _, _, err = prepUnaryTensor(a, nil, opts...); err != nil {
-		err = errors.Wrap(err, "Unable to prep unary tensor")
-		return
-	}
-
+	
 	switch {
 	case !safe:
 		err = errors.New("Reduce only supports safe operations.")

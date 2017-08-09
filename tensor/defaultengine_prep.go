@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
+func handleFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
 	fo := ParseFuncOpts(opts...)
 	reuseT, incr := fo.IncrReuse()
 	safe = fo.Safe()
@@ -33,56 +33,47 @@ func denseFromFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *D
 	return
 }
 
-func prepBinaryTensor(a, b Tensor, tc *typeclass, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
+func binaryCheck(a, b Tensor, tc *typeclass) (err error) {
 	// check if the tensors are accessible
 	if !a.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, a)
-		return
+		return errors.Errorf(inaccessibleData, a)
 	}
 
 	if !b.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, b)
-		return
+		return errors.Errorf(inaccessibleData, b)
 	}
 
 	at := a.Dtype()
 	bt := b.Dtype()
 	if tc != nil {
 		if err = typeclassCheck(at, tc); err != nil {
-			err = errors.Wrapf(err, typeclassMismatch, "a")
-			return
+			return errors.Wrapf(err, typeclassMismatch, "a")
 		}
 		if err = typeclassCheck(bt, tc); err != nil {
-			err = errors.Wrapf(err, typeclassMismatch, "b")
-			return
+			return errors.Wrapf(err, typeclassMismatch, "b")
 		}
 	}
 
 	if at.Kind() != bt.Kind() {
-		err = errors.Errorf(typeMismatch, at, bt)
-		return
+		return errors.Errorf(typeMismatch, at, bt)
 	}
 	if !a.Shape().Eq(b.Shape()) {
-		err = errors.Errorf(shapeMismatch, b.Shape(), a.Shape())
-		return
+		return errors.Errorf(shapeMismatch, b.Shape(), a.Shape())
 	}
-	return denseFromFuncOpts(a.Shape(), at, opts...)
+	return nil
 }
 
-func prepUnaryTensor(a Tensor, tc *typeclass, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
+func unaryCheck(a Tensor, tc *typeclass) error {
 	if !a.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, a)
-		return
+		return errors.Errorf(inaccessibleData, a)
 	}
 	at := a.Dtype()
 	if tc != nil {
-		if err = typeclassCheck(at, tc); err != nil {
-			err = errors.Wrapf(err, typeclassMismatch, "a")
-			return
+		if err := typeclassCheck(at, tc); err != nil {
+			return errors.Wrapf(err, typeclassMismatch, "a")
 		}
 	}
-
-	return denseFromFuncOpts(a.Shape(), at, opts...)
+	return nil
 }
 
 func prepDataVV(a, b Tensor, reuse *Dense) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter bool, err error) {

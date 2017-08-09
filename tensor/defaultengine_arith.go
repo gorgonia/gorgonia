@@ -10,15 +10,18 @@ GENERATED FILE. DO NOT EDIT
 */
 
 func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Add failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -26,8 +29,7 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Add")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Add")
 	}
 	if useIter {
 		switch {
@@ -70,15 +72,18 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Sub failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -86,8 +91,7 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Sub")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Sub")
 	}
 	if useIter {
 		switch {
@@ -130,15 +134,18 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Mul failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -146,8 +153,7 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Mul")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Mul")
 	}
 	if useIter {
 		switch {
@@ -190,15 +196,18 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Div failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -206,8 +215,7 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Div")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Div")
 	}
 	if useIter {
 		switch {
@@ -250,15 +258,18 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Pow failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -266,8 +277,7 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Pow")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Pow")
 	}
 	if useIter {
 		switch {
@@ -310,15 +320,18 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Mod failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepBinaryTensor(a, b, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -326,8 +339,7 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Mod")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Mod")
 	}
 	if useIter {
 		switch {
@@ -370,10 +382,14 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Add failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -384,13 +400,11 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Add")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Add")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Add")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Add")
 		}
 	}
 
@@ -453,10 +467,14 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Sub failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -467,13 +485,11 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Sub")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Sub")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Sub")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Sub")
 		}
 	}
 
@@ -536,10 +552,14 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Mul failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -550,13 +570,11 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Mul")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Mul")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Mul")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Mul")
 		}
 	}
 
@@ -619,10 +637,14 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Div failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -633,13 +655,11 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Div")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Div")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Div")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Div")
 		}
 	}
 
@@ -702,10 +722,14 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Pow failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -716,13 +740,11 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Pow")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Pow")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Pow")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Pow")
 		}
 	}
 
@@ -785,10 +807,14 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, numberTypes); err != nil {
+		return nil, errors.Wrapf(err, "Mod failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(t, numberTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -799,13 +825,11 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Mod")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Mod")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Mod")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Mod")
 		}
 	}
 

@@ -10,15 +10,18 @@ GENERATED FILE. DO NOT EDIT
 */
 
 func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Gt failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -26,8 +29,7 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Gt")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Gt")
 	}
 
 	if !same && !toReuse {
@@ -81,15 +83,18 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 }
 
 func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Gte failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -97,8 +102,7 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Gte")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Gte")
 	}
 
 	if !same && !toReuse {
@@ -152,15 +156,18 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Lt failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -168,8 +175,7 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Lt")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Lt")
 	}
 
 	if !same && !toReuse {
@@ -223,15 +229,18 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 }
 
 func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Lte failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -239,8 +248,7 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Lte")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Lte")
 	}
 
 	if !same && !toReuse {
@@ -294,15 +302,18 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Eq failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -310,8 +321,7 @@ func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Eq")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Eq")
 	}
 
 	if !same && !toReuse {
@@ -365,15 +375,18 @@ func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 }
 
 func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = binaryCheck(a, b, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Ne failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepBinaryTensor(a, b, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -381,8 +394,7 @@ func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.Ne")
-		return
+		return nil, errors.Wrapf(err, "StdEng.Ne")
 	}
 
 	if !same && !toReuse {
@@ -436,10 +448,14 @@ func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 }
 
 func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Gt failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -450,13 +466,11 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Gt")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Gt")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Gt")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Gt")
 		}
 	}
 
@@ -511,10 +525,14 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 }
 
 func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Gte failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -525,13 +543,11 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Gte")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Gte")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Gte")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Gte")
 		}
 	}
 
@@ -586,10 +602,14 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Lt failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -600,13 +620,11 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Lt")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Lt")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Lt")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Lt")
 		}
 	}
 
@@ -661,10 +679,14 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 }
 
 func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Lte failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -675,13 +697,11 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Lte")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Lte")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Lte")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Lte")
 		}
 	}
 
@@ -736,10 +756,14 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Eq failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -750,13 +774,11 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Eq")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Eq")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Eq")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Eq")
 		}
 	}
 
@@ -811,10 +833,14 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 }
 
 func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+	if err = unaryCheck(t, ordTypes); err != nil {
+		return nil, errors.Wrapf(err, "Ne failed")
+	}
+
 	var reuse *Dense
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = prepUnaryTensor(t, ordTypes, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -825,13 +851,11 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Ne")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Ne")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.Ne")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.Ne")
 		}
 	}
 

@@ -4,15 +4,18 @@ import "text/template"
 
 // level 2 aggregation (tensor.StdEng) templates
 
-const prepVVRaw = `var reuse *Dense
+const prepVVRaw = `if err = binaryCheck(a, b, {{.TypeClassCheck | lower}}Types); err != nil {
+		return nil, errors.Wrapf(err, "{{.Name}} failed")
+	}
+
+	var reuse *Dense
 	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
-	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepBinaryTensor(a, b, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
-		err = errors.Errorf(inaccessibleData, reuse)
-		return
+		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
 
 	typ := a.Dtype().Type
@@ -20,15 +23,18 @@ const prepVVRaw = `var reuse *Dense
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
-		err = errors.Wrapf(err, "StdEng.{{.Name}}")
-		return
+		return nil, errors.Wrapf(err, "StdEng.{{.Name}}")
 	}
 `
 
-const prepMixedRaw = `var reuse *Dense
+const prepMixedRaw = `if err = unaryCheck(t, {{.TypeClassCheck | lower}}Types); err != nil {
+		return nil, errors.Wrapf(err, "{{.Name}} failed")
+	}
+
+	var reuse *Dense
 	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
-	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = prepUnaryTensor(t, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
-		return
+	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	a := t
@@ -39,22 +45,24 @@ const prepMixedRaw = `var reuse *Dense
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.{{.Name}}")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.{{.Name}}")
 		}
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
-			err = errors.Wrapf(err, opFail, "StdEng.{{.Name}}")
-			return
+			return nil, errors.Wrapf(err, opFail, "StdEng.{{.Name}}")
 		}	
 	}
 
 `
 
-const prepUnaryRaw = `var reuse *Dense
-	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = prepUnaryTensor(a, {{.TypeClassCheck | lower}}Types, opts...); err != nil {
+const prepUnaryRaw = `if err = unaryCheck(a, {{.TypeClassCheck | lower}}Types); err != nil {
+		err = errors.Wrapf(err, "{{.Name}} failed")
 		return
+	}
+	var reuse *Dense
+	var safe, toReuse, incr bool
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
 	typ := a.Dtype().Type
@@ -63,8 +71,7 @@ const prepUnaryRaw = `var reuse *Dense
 	var useIter bool
 
 	if dataA, dataReuse, ait, rit, useIter, err = prepDataUnary(a, reuse); err != nil{
-		err = errors.Wrapf(err, opFail, "StdEng.{{.Name}}")
-		return
+		return nil, errors.Wrapf(err, opFail, "StdEng.{{.Name}}")
 	}
 	`
 
