@@ -9,65 +9,14 @@ import (
 
 // Trace returns the trace of the matrix (i.e. the sum of the diagonal elements). It only works for matrices
 func (t *Dense) Trace() (retVal interface{}, err error) {
-	if t.Dims() != 2 {
-		err = errors.Errorf(dimMismatch, 2, t.Dims())
-		return
+	e := t.e
+	if e == nil {
+		e = StdEng{}
 	}
-
-	if err = typeclassCheck(t.t, numberTypes); err != nil {
-		return nil, errors.Wrap(err, "Trace")
+	if tracer, ok := e.(Tracer); ok {
+		return tracer.Trace(t)
 	}
-
-
-	rstride := t.Strides()[0]
-	cstride := t.Strides()[1]
-
-	r := t.Shape()[0]
-	c := t.Shape()[1]
-
-	m := MinInt(r, c)
-	stride := rstride + cstride
-
-	switch data := t.Data().(type) {
-	case []float64:
-		var trace float64
-		for i := 0; i < m; i++ {
-			trace += data[i*stride]
-		}
-		retVal = trace
-
-	case []float32:
-		var trace float32
-		for i := 0; i < m; i++ {
-			trace += data[i*stride]
-		}
-		retVal = trace
-	case []int:
-		var trace int
-		for i := 0; i < m; i++ {
-			trace += data[i*stride]
-		}
-		retVal = trace
-	case []int64:
-		var trace int64
-		for i := 0; i < m; i++ {
-			trace += data[i*stride]
-		}
-		retVal = trace
-	case []int32:
-		var trace int32
-		for i := 0; i < m; i++ {
-			trace += data[i*stride]
-		}
-		retVal = trace
-	case []byte:
-		var trace byte
-		for i := 0; i < m; i++ {
-			trace += data[i*stride]
-		}
-		retVal = trace
-	}
-	return
+	return nil, errors.Errorf("Engine %T does not support Trace", e)
 }
 
 // Inner performs a dot product on two vectors. If t or other are not vectors, it will return an error.

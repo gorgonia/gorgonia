@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"testing"
 
 	"github.com/chewxy/vecf64"
@@ -30,12 +29,20 @@ var traceTests = []struct {
 	correct interface{}
 	err     bool
 }{
-	{[]float64{0, 1, 2, 3, 4, 5}, float64(4), false},
-	{[]float32{0, 1, 2, 3, 4, 5}, float32(4), false},
-	{[]int{0, 1, 2, 3, 4, 5}, int(4), false},
-	{[]int64{0, 1, 2, 3, 4, 5}, int64(4), false},
-	{[]int32{0, 1, 2, 3, 4, 5}, int32(4), false},
-	{[]byte{0, 1, 2, 3, 4, 5}, byte(4), false},
+	{[]int{0,1,2,3,4,5}, int(4), false},
+{[]int8{0,1,2,3,4,5}, int8(4), false},
+{[]int16{0,1,2,3,4,5}, int16(4), false},
+{[]int32{0,1,2,3,4,5}, int32(4), false},
+{[]int64{0,1,2,3,4,5}, int64(4), false},
+{[]uint{0,1,2,3,4,5}, uint(4), false},
+{[]uint8{0,1,2,3,4,5}, uint8(4), false},
+{[]uint16{0,1,2,3,4,5}, uint16(4), false},
+{[]uint32{0,1,2,3,4,5}, uint32(4), false},
+{[]uint64{0,1,2,3,4,5}, uint64(4), false},
+{[]float32{0,1,2,3,4,5}, float32(4), false},
+{[]float64{0,1,2,3,4,5}, float64(4), false},
+{[]complex64{0,1,2,3,4,5}, complex64(4), false},
+{[]complex128{0,1,2,3,4,5}, complex128(4), false},
 	{[]bool{true, false, true, false, true, false}, nil, true},
 }
 
@@ -736,7 +743,6 @@ func TestDot(t *testing.T) {
 	assert.Equal(expectedData, R.Data())
 	incr = New(Of(Float64), FromScalar(float64(50)))
 
-	log.Printf("s %v, \ns2 %v\nincr %v", s, s2, incr)
 	R, err = Dot(s, s2, WithIncr(incr))
 	assert.Nil(err)
 	assert.Equal(R, incr)

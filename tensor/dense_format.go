@@ -273,6 +273,11 @@ func (t *Dense) Format(s fmt.State, c rune) {
 		fmt.Fprintf(f, " %v %v\n", t.Shape(), t.Strides())
 	}
 
+	if !t.IsNativelyAccessible(){
+		fmt.Fprintf(f, "Inaccesible data")
+		return
+	}
+
 	format := f.cleanFmt()
 
 	if f.flat {

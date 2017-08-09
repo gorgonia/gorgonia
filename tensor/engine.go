@@ -119,6 +119,11 @@ type Moder interface {
 
 /* LINEAR ALGEBRA INTERFACES */
 
+// Tracer is any engine that can return the trace (aka the sum of the diagonal elements). 
+type Tracer interface {
+	Trace(a Tensor) (interface{}, error)
+}
+
 // MatMuler is any engine that can perform matrix multiplication
 type MatMuler interface {
 	MatMul(a, b, preallocated Tensor) error

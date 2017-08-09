@@ -516,6 +516,9 @@ func (t *Dense) MaskFromSlice(x interface{}) {
 
 // Memset sets all the values in the *Dense tensor.
 func (t *Dense) Memset(x interface{}) error {
+	if !t.IsNativelyAccessible(){
+		return errors.Errorf(inaccessibleData, t)
+	}
 	if t.IsMaterializable() {
 		return t.memsetIter(x)
 	}

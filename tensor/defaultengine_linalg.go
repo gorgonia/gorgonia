@@ -6,6 +6,114 @@ import (
 	"github.com/pkg/errors"
 )
 
+func (e StdEng) Trace(t Tensor) (retVal interface{}, err error) {
+	if t.Dims() != 2 {
+		err = errors.Errorf(dimMismatch, 2, t.Dims())
+		return
+	}
+
+	if err = typeclassCheck(t.Dtype(), numberTypes); err != nil {
+		return nil, errors.Wrap(err, "Trace")
+	}
+
+	rstride := t.Strides()[0]
+	cstride := t.Strides()[1]
+
+	r := t.Shape()[0]
+	c := t.Shape()[1]
+
+	m := MinInt(r, c)
+	stride := rstride + cstride
+
+	switch data := t.Data().(type) {
+	case []int:
+		var trace int
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []int8:
+		var trace int8
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []int16:
+		var trace int16
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []int32:
+		var trace int32
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []int64:
+		var trace int64
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []uint:
+		var trace uint
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []uint8:
+		var trace uint8
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []uint16:
+		var trace uint16
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []uint32:
+		var trace uint32
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []uint64:
+		var trace uint64
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []float32:
+		var trace float32
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []float64:
+		var trace float64
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []complex64:
+		var trace complex64
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	case []complex128:
+		var trace complex128
+		for i := 0; i < m; i++ {
+			trace += data[i*stride]
+		}
+		retVal = trace
+	}
+	return
+}
+
 func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if _, ok := x.(DenseTensor); !ok {
 		err = errors.Errorf("Engine only supports working on x that is a DenseTensor. Got %T instead", x)

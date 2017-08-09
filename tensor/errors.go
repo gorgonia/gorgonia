@@ -59,7 +59,7 @@ const (
 	unknownState      = "Unknown state reached: Safe %t, Incr %t, Reuse %t"
 	unsupportedDtype  = "Array of %v is unsupported for %v"
 	maskRequired      = "Masked array type required for %v"
-	inaccessibleData = "Data in %v inaccessble"
+	inaccessibleData = "Data in %p inaccessble"
 
 	methodNYI = "%q not yet implemented for %v"
 	typeNYI   = "%q not yet implemented for interactions with %T"
