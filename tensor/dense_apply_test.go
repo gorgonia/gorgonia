@@ -10,42 +10,6 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
-func identityB(a bool) bool                                 { return a }
-func identityI(a int) int                                   { return a }
-func identityI8(a int8) int8                                { return a }
-func identityI16(a int16) int16                             { return a }
-func identityI32(a int32) int32                             { return a }
-func identityI64(a int64) int64                             { return a }
-func identityU(a uint) uint                                 { return a }
-func identityU8(a uint8) uint8                              { return a }
-func identityU16(a uint16) uint16                           { return a }
-func identityU32(a uint32) uint32                           { return a }
-func identityU64(a uint64) uint64                           { return a }
-func identityUintptr(a uintptr) uintptr                     { return a }
-func identityF32(a float32) float32                         { return a }
-func identityF64(a float64) float64                         { return a }
-func identityC64(a complex64) complex64                     { return a }
-func identityC128(a complex128) complex128                  { return a }
-func identityStr(a string) string                           { return a }
-func identityUnsafePointer(a unsafe.Pointer) unsafe.Pointer { return a }
-func mutateB(a bool) bool                                   { return true }
-func mutateI(a int) int                                     { return 1 }
-func mutateI8(a int8) int8                                  { return 1 }
-func mutateI16(a int16) int16                               { return 1 }
-func mutateI32(a int32) int32                               { return 1 }
-func mutateI64(a int64) int64                               { return 1 }
-func mutateU(a uint) uint                                   { return 1 }
-func mutateU8(a uint8) uint8                                { return 1 }
-func mutateU16(a uint16) uint16                             { return 1 }
-func mutateU32(a uint32) uint32                             { return 1 }
-func mutateU64(a uint64) uint64                             { return 1 }
-func mutateUintptr(a uintptr) uintptr                       { return 0xdeadbeef }
-func mutateF32(a float32) float32                           { return 1 }
-func mutateF64(a float64) float64                           { return 1 }
-func mutateC64(a complex64) complex64                       { return 1 }
-func mutateC128(a complex128) complex128                    { return 1 }
-func mutateStr(a string) string                             { return "Hello World" }
-func mutateUnsafePointer(a unsafe.Pointer) unsafe.Pointer   { return unsafe.Pointer(uintptr(0xdeadbeef)) }
 func TestDense_Apply(t *testing.T) {
 	idenB := func(a *QCDenseB) bool {
 		var correct *Dense
@@ -54,12 +18,12 @@ func TestDense_Apply(t *testing.T) {
 
 		correct = newDense(Bool, a.len())
 		correct.Memset(true)
-		if ret, err = a.Apply(mutateB, UseUnsafe()); err != nil {
+		if ret, err = a.Apply(mutateB); err != nil {
 			t.Error(err)
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
-			t.Logf("ret.Data() %v ||\n%v", ret.Data(), correct.Data())
+			t.Logf("ret.Data() %v || %v", ret.Data(), correct.Data())
 			return false
 		}
 

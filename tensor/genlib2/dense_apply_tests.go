@@ -5,15 +5,6 @@ import (
 	"text/template"
 )
 
-const identityFnsRaw = `func identity{{short .}}(a {{asType .}}) {{asType .}}{return a}
-`
-const mutateFnsRaw = `func mutate{{short .}}(a {{asType . }}){{asType .}} { {{if isNumber . -}}return 1}
-{{else if eq .String "bool" -}}return true }
-{{else if eq .String "string" -}}return "Hello World"}
-{{else if eq .String "uintptr" -}}return 0xdeadbeef}
-{{else if eq .String "unsafe.Pointer" -}}return unsafe.Pointer(uintptr(0xdeadbeef))} 
-{{end -}} 
-`
 const testDenseApplyRaw = `func TestDense_Apply(t *testing.T){
 {{range .Kinds -}}
 {{if isParameterized . -}}
@@ -137,26 +128,12 @@ const testDenseApplyRaw = `func TestDense_Apply(t *testing.T){
 
 var (
 	testDenseApply *template.Template
-	identityFns    *template.Template
-	mutateFns      *template.Template
 )
 
 func init() {
-	identityFns = template.Must(template.New("identityFn").Funcs(funcs).Parse(identityFnsRaw))
-	mutateFns = template.Must(template.New("mutateFn").Funcs(funcs).Parse(mutateFnsRaw))
-	testDenseApply = template.Must(template.New("testdenseapply").Funcs(funcs).Parse(testDenseApplyRaw))
+	testDenseApply = template.Must(template.New("testDenseApply").Funcs(funcs).Parse(testDenseApplyRaw))
 }
 
 func generateDenseApplyTests(f io.Writer, generic Kinds) {
-	for _, k := range generic.Kinds {
-		if !isParameterized(k) {
-			identityFns.Execute(f, k)
-		}
-	}
-	for _, k := range generic.Kinds {
-		if !isParameterized(k) {
-			mutateFns.Execute(f, k)
-		}
-	}
 	testDenseApply.Execute(f, generic)
 }

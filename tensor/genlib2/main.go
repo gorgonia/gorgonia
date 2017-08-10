@@ -83,7 +83,10 @@ func main() {
 	pipeline(tensorPkgLoc, "dense_compat.go", Kinds{allKinds}, generateDenseCompat)
 
 	// tests
+	pipeline(tensorPkgLoc, "test_test.go", Kinds{allKinds}, generateTestUtils)
 	pipeline(tensorPkgLoc, "dense_reduction_test.go", Kinds{allKinds}, generateDenseReductionTests)
+	pipeline(tensorPkgLoc, "dense_apply_test.go", Kinds{allKinds}, generateDenseApplyTests)
+
 }
 
 func pipeline(pkg, filename string, kinds Kinds, fns ...func(io.Writer, Kinds)) {
@@ -106,12 +109,12 @@ func pipeline(pkg, filename string, kinds Kinds, fns ...func(io.Writer, Kinds)) 
 		log.Fatalf("Go imports failed with %v for %q", err, fullpath)
 	}
 
-	cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
-	if err = cmd.Run(); err != nil {
-		if err.Error() != "exit status 4" { // exit status 4 == not found
-			log.Fatalf("sed failed with %v for %q", err, fullpath)
-		}
-	}
+	// cmd = exec.Command("sed", "-i", `s/github.com\/alecthomas\/assert/github.com\/stretchr\/testify\/assert/g`, fullpath)
+	// if err = cmd.Run(); err != nil {
+	// 	if err.Error() != "exit status 4" { // exit status 4 == not found
+	// 		log.Fatalf("sed failed with %v for %q", err.Error(), fullpath)
+	// 	}
+	// }
 
 	cmd = exec.Command("gofmt", "-s", "-w", fullpath)
 	if err = cmd.Run(); err != nil {
