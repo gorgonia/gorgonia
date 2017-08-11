@@ -1,6 +1,9 @@
 package tensor
 
-import "runtime"
+import (
+	"log"
+	"runtime"
+)
 
 func requiresIterator(a Tensor) bool {
 	switch tt := a.(type) {
@@ -447,15 +450,17 @@ func (it *FlatIterator) Reset() {
 
 // Chan returns a channel of ints. This is useful for iterating multiple Tensors at the same time.
 func (it *FlatIterator) Chan() (retVal chan int) {
+	log.Printf("flatIterator b4 make chan %d, %d", len(retVal), cap(retVal))
 	retVal = make(chan int)
+	log.Printf("flatIterator make chan %d, %d", len(retVal), cap(retVal))
 
-	go func() {
+	go func(retVal chan int) {
 		for next, err := it.Next(); err == nil; next, err = it.Next() {
 			retVal <- next
 		}
 		close(retVal)
-	}()
-
+	}(retVal)
+	log.Printf("flatIterator return chan %d, %d", len(retVal), cap(retVal))
 	return
 }
 

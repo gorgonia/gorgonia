@@ -1,6 +1,8 @@
 package tensor
 
 import (
+	"log"
+
 	"github.com/pkg/errors"
 )
 
@@ -576,6 +578,7 @@ func (t *Dense) viewStack(retVal *Dense, axis int, others ...*Dense) *Dense {
 		chs = append(chs, oter.Chan())
 	}
 
+	log.Printf("Chan %d, %d", len(ch), cap(ch))
 	t.doViewStack(retVal, axisStride, batches, ch, others, chs)
 	return retVal
 }

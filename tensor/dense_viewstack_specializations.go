@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 )
 
@@ -624,11 +625,20 @@ func (t *Dense) doViewStackF32(retVal *Dense, axisStride, batches int, ch chan i
 /* float64 */
 
 func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
+	log.Printf("retVal %v", retVal.Float64s())
+	log.Printf("Ch: %d, %d", len(ch), cap(ch))
 	data := retVal.Float64s()[:0]
+	log.Printf("data %v", data)
 	mask := retVal.mask[:0]
 	if t.IsMasked() {
 		fmt.Println("do this")
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("dat %v | %v", data, t.Float64s())
+			log.Printf("%#v", r)
+		}
+	}()
 	retIsMasked := t.IsMasked()
 	for _, ot := range others {
 		retIsMasked = retIsMasked || ot.IsMasked()
@@ -641,6 +651,7 @@ func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan i
 			if !ok {
 				break
 			}
+			log.Printf("id %d %x  (%d, %d) | %d ", id, id, len(ch), cap(ch), len(t.Float64s()))
 			data = append(data, t.Float64s()[id])
 			if isMasked {
 				mask = append(mask, t.mask[id])

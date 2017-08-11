@@ -826,7 +826,7 @@ func TestDense_Stack(t *testing.T) {
 			continue
 		}
 		assert.True(sts.correctShape.Eq(T2.Shape()))
-		assert.Equal(sts.correctData, T2.Data())
+		assert.Equal(sts.correctData, T2.Data(), "%q failed", sts.name)
 	}
 
 	// Repeat tests with masks
@@ -899,7 +899,7 @@ func TestDense_Stack(t *testing.T) {
 		T3.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
 
 		assert.True(sts.correctShape.Eq(T2.Shape()))
-		assert.Equal(sts.correctData, T2.Data())
+		assert.Equal(sts.correctData, T2.Data(), "%q failed", sts.name)
 		assert.Equal(T3.mask, T2.mask)
 	}
 
