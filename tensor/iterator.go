@@ -3,6 +3,7 @@ package tensor
 import (
 	"log"
 	"runtime"
+	"unsafe"
 )
 
 func requiresIterator(a Tensor) bool {
@@ -448,11 +449,129 @@ func (it *FlatIterator) Reset() {
 	}
 }
 
+type waitq struct {
+	first *sudog
+
+	last *sudog
+}
+
+type mutex struct {
+	// Futex-based impl treats it as uint32 key,
+	// while sema-based impl as M* waitm.
+	// Used to be a union, but unions break precise GC.
+	key uintptr
+}
+
+// sudog represents a g in a wait list, such as for sending/receiving
+// on a channel.
+//
+// sudog is necessary because the g ↔ synchronization object relation
+// is many-to-many. A g can be on many wait lists, so there may be
+// many sudogs for one g; and many gs may be waiting on the same
+// synchronization object, so there may be many sudogs for one object.
+//
+// sudogs are allocated from a special pool. Use acquireSudog and
+// releaseSudog to allocate and free them.
+type sudog struct {
+	// The following fields are protected by the hchan.lock of the
+	// channel this sudog is blocking on. shrinkstack depends on
+	// this.
+
+	g          unsafe.Pointer // stack info, called type g
+	selectdone *uint32        // CAS to 1 to win select race (may point to stack)
+	next       *sudog
+	prev       *sudog
+	elem       unsafe.Pointer // data element (may point to stack)
+
+	// The following fields are never accessed concurrently.
+	// waitlink is only accessed by g.
+
+	releasetime int64
+	ticket      uint32
+	waitlink    *sudog // g.waiting list
+	c           *hchan // channel
+}
+
+type hchan struct {
+	qcount uint // total data in the queue
+
+	dataqsiz uint // size of the circular queue
+
+	buf unsafe.Pointer // points to an array of dataqsiz elements
+
+	elemsize uint16
+
+	closed uint32
+
+	elemtype unsafe.Pointer // element type - in the runtime, it's a *_type.  I'm not interested in the type
+
+	sendx uint // send index
+
+	recvx uint // receive index
+
+	recvq waitq // list of recv waiters
+
+	sendq waitq // list of send waiters
+
+	// lock protects all fields in hchan, as well as several
+
+	// fields in sudogs blocked on this channel.
+
+	//
+
+	// Do not change another G's status while holding this lock
+
+	// (in particular, do not ready a G), as this can deadlock
+
+	// with stack shrinking.
+
+	lock mutex
+}
+
+// Needs to be in sync with ../cmd/compile/internal/ld/decodesym.go:/^func.commonsize,
+// ../cmd/compile/internal/gc/reflect.go:/^func.dcommontype and
+// ../reflect/type.go:/^type.rtype.
+type _type struct {
+	size       uintptr
+	ptrdata    uintptr // size of memory prefix holding all pointers
+	hash       uint32
+	tflag      tflag
+	align      uint8
+	fieldalign uint8
+	kind       uint8
+	alg        *typeAlg
+	// gcdata stores the GC type data for the garbage collector.
+	// If the KindGCProg bit is set in kind, gcdata is a GC program.
+	// Otherwise it is a ptrmask bitmap. See mbitmap.go for details.
+	gcdata *byte
+	str    nameOff
+	_      int32
+}
+
+type nameOff int32
+type tflag uint8
+
+// typeAlg is also copied/used in reflect/type.go.
+// keep them in sync.
+type typeAlg struct {
+	// function for hashing objects of this type
+	// (ptr to object, seed) -> hash
+	hash func(unsafe.Pointer, uintptr) uintptr
+	// function for comparing objects of this type
+	// (ptr to object A, ptr to object B) -> ==?
+	equal func(unsafe.Pointer, unsafe.Pointer) bool
+}
+
 // Chan returns a channel of ints. This is useful for iterating multiple Tensors at the same time.
 func (it *FlatIterator) Chan() (retVal chan int) {
-	log.Printf("flatIterator b4 make chan %d, %d", len(retVal), cap(retVal))
+	log.Printf("flatIterator b4 make chan %d, %d | %#v ", len(retVal), cap(retVal), retVal)
 	retVal = make(chan int)
 	log.Printf("flatIterator make chan %d, %d", len(retVal), cap(retVal))
+	if len(retVal) > 0 {
+		log.Printf("BAD %#+v", *(*hchan)(unsafe.Pointer(&retVal)))
+	} else {
+		log.Printf("GOOD %#+v", *(*hchan)(unsafe.Pointer(&retVal)))
+	}
 
 	go func(retVal chan int) {
 		for next, err := it.Next(); err == nil; next, err = it.Next() {
