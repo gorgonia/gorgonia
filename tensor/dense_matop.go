@@ -2,18 +2,6 @@ package tensor
 
 import "github.com/pkg/errors"
 
-// Apply applies a function to all the values in the ndarray
-func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = t.e
-	if e == nil {
-		e = StdEng{}
-	}
-	if m, ok := e.(Mapper); ok {
-		return m.Map(fn, t, opts...)
-	}
-	return nil, errors.Errorf("Execution engine for %v not a mapper", t)
-}
-
 // T performs a thunked transpose. It doesn't actually do anything, except store extra information about the post-transposed shapes and strides
 // Usually this is more than enough, as BLAS will handle the rest of the transpose
 func (t *Dense) T(axes ...int) (err error) {
@@ -96,57 +84,6 @@ func (t *Dense) SafeT(axes ...int) (retVal *Dense, err error) {
 	retVal.transposeWith = axes
 
 	return
-}
-
-// Transpose() actually transposes the data.
-// This is a generalized version of the inplace matrix transposition algorithm from Wikipedia:
-// https://en.wikipedia.org/wiki/In-place_matrix_transposition
-func (t *Dense) Transpose() error {
-	// if there is no oldinfo, that means the current info is the latest, and not the transpose
-	if t.old == nil {
-		return nil
-	}
-
-	if t.IsScalar() {
-		return nil // cannot transpose scalars - no data movement
-	}
-
-	defer func() {
-		ReturnAP(t.old)
-		t.old = nil
-		t.transposeWith = nil
-	}()
-
-	expShape := t.Shape()
-
-	// important! because the strides would have changed once the underlying data changed
-	var expStrides []int
-	if t.AP.o.isColMajor() {
-		expStrides = expShape.calcStridesColMajor()
-	} else {
-		expStrides = expShape.calcStrides()
-	}
-	defer ReturnInts(expStrides)
-	defer func() {
-		t.setShape(expShape...)
-		t.sanity()
-	}()
-
-	if t.IsVector() {
-		// no data movement
-		return nil
-	}
-
-	// actually move data
-	var e Engine = t.e
-	if e == nil {
-		e = StdEng{}
-	}
-	transposer, ok := e.(Transposer)
-	if !ok {
-		return errors.Errorf("Engine does not support Transpose()")
-	}
-	return transposer.Transpose(t, expStrides)
 }
 
 // At returns the value at the given coordinate
@@ -232,20 +169,6 @@ func (t *Dense) SetMaskAt(v bool, coords ...int) error {
 	}
 	t.mask[at] = v
 	return nil
-}
-
-// Repeat is like Numpy's repeat. It repeats the elements of an array.
-// The repeats param defines how many times each element in the axis is repeated.
-// Just like NumPy, the repeats param is broadcasted to fit the size of the given axis.
-func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
-	e := t.Engine()
-	if e == nil {
-		e = StdEng{}
-	}
-	if rp, ok := e.(Repeater); ok {
-		return rp.Repeat(t, axis, repeats...)
-	}
-	return nil, errors.New("Engine does not support Repeat")
 }
 
 // CopyTo copies the underlying data to the destination *Dense. The original data is untouched.
@@ -350,110 +273,6 @@ func (t *Dense) RollAxis(axis, start int, safe bool) (retVal *Dense, err error) 
 	return
 }
 
-// Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
-func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
-	ss := make([]Shape, len(Ts))
-
-	var isMasked = false
-	for i, T := range Ts {
-		ss[i] = T.Shape()
-		isMasked = isMasked || T.IsMasked()
-	}
-
-	var newShape Shape
-	if newShape, err = t.Shape().Concat(axis, ss...); err != nil {
-		return
-	}
-	retVal = recycledDense(t.t, newShape)
-	if isMasked {
-		retVal.makeMask()
-	}
-
-	all := make([]*Dense, len(Ts)+1)
-	all[0] = t
-	copy(all[1:], Ts)
-
-	// special case
-	var start, end int
-
-	for _, T := range all {
-		end += T.Shape()[axis]
-		slices := make([]Slice, axis+1)
-		slices[axis] = makeRS(start, end)
-
-		var v *Dense
-		if v, err = sliceDense(retVal, slices...); err != nil {
-			return
-		}
-
-		if v.IsVector() && T.IsMatrix() && axis == 0 {
-			v.reshape(v.shape[0], 1)
-		}
-
-		if err = assignArray(v, T); err != nil {
-			return
-		}
-		start = end
-	}
-
-	return
-}
-
-// Hstack stacks other tensors columnwise (horizontal stacking)
-func (t *Dense) Hstack(others ...*Dense) (*Dense, error) {
-	// check that everything is at least 1D
-	if t.Dims() == 0 {
-		return nil, errors.Errorf(atleastDims, 1)
-	}
-
-	for _, d := range others {
-		if d.Dims() < 1 {
-			return nil, errors.Errorf(atleastDims, 1)
-		}
-	}
-
-	if t.Dims() == 1 {
-		return t.Concat(0, others...)
-	}
-	return t.Concat(1, others...)
-}
-
-// Vstack stacks other tensors rowwise (vertical stacking). Vertical stacking requires all involved Tensors to have at least 2 dimensions
-func (t *Dense) Vstack(others ...*Dense) (*Dense, error) {
-	// check that everything is at least 2D
-	if t.Dims() < 2 {
-		return nil, errors.Errorf(atleastDims, 2)
-	}
-
-	for _, d := range others {
-		if d.Dims() < 2 {
-			return nil, errors.Errorf(atleastDims, 2)
-		}
-	}
-	return t.Concat(0, others...)
-}
-
-// Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
-func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
-	e := t.Engine()
-	if e == nil {
-		e = StdEng{}
-	}
-
-	if ds, ok := e.(DenseStacker); ok {
-		var ret DenseTensor
-		ots := make([]DenseTensor, len(others))
-		for i, ot := range others {
-			ots[i] = ot
-		}
-		if ret, err = ds.StackDense(t, axis, ots...); err != nil {
-			return
-		}
-		return ret.(*Dense), err
-	}
-	return nil, errors.Errorf("Engine does not support DenseStacker")
-}
-
 /* Private Methods */
 
 // returns the new index given the old index
@@ -493,54 +312,3 @@ func (t *Dense) maskAt(coords ...int) (at int, err error) {
 	//TODO: Add check for non-masked tensor
 	return t.at(coords...)
 }
-
-// // simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
-// func (t *Dense) simpleStack(retVal *Dense, axis int, others ...*Dense) *Dense {
-// 	switch axis {
-// 	case 0:
-// 		copyDense(retVal, t)
-// 		next := t.len()
-// 		for _, ot := range others {
-// 			copyDenseSliced(retVal, next, retVal.len(), ot, 0, ot.len())
-// 			next += ot.len()
-// 		}
-// 	default:
-// 		axisStride := retVal.AP.Strides()[axis]
-// 		batches := retVal.len() / axisStride
-
-// 		destStart := 0
-// 		start := 0
-// 		end := start + axisStride
-
-// 		for i := 0; i < batches; i++ {
-// 			copyDenseSliced(retVal, destStart, retVal.len(), t, start, end)
-// 			for _, ot := range others {
-// 				destStart += axisStride
-// 				copyDenseSliced(retVal, destStart, retVal.len(), ot, start, end)
-// 				i++
-// 			}
-// 			destStart += axisStride
-// 			start += axisStride
-// 			end += axisStride
-// 		}
-// 	}
-// 	return retVal
-// }
-
-// // viewStack is the data movement function for Stack(), applied on views
-// func (t *Dense) viewStack(retVal *Dense, axis int, others ...*Dense) *Dense {
-// 	axisStride := retVal.AP.Strides()[axis]
-// 	batches := retVal.len() / axisStride
-
-// 	it := NewFlatIterator(t.AP)
-// 	ch := it.Chan()
-// 	chs := make([]chan int, len(others))
-// 	chs = chs[:0]
-// 	for _, ot := range others {
-// 		oter := NewFlatIterator(ot.AP)
-// 		chs = append(chs, oter.Chan())
-// 	}
-
-// 	t.doViewStack(retVal, axisStride, batches, ch, others, chs)
-// 	return retVal
-// }

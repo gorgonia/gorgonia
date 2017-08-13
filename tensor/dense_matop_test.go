@@ -731,26 +731,58 @@ func TestDense_Concat(t *testing.T) {
 
 var simpleStackTests = []struct {
 	name       string
+	dt         Dtype
 	shape      Shape
 	axis       int
 	stackCount int
 
 	correctShape Shape
-	correctData  []float64
+	correctData  interface{}
 }{
-	{"vector, axis 0, stack 2", Shape{2}, 0, 2, Shape{2, 2}, []float64{0, 1, 100, 101}},
-	{"vector, axis 1, stack 2", Shape{2}, 1, 2, Shape{2, 2}, []float64{0, 100, 1, 101}},
+	// Size 8
+	{"vector, axis 0, stack 2", Float64, Shape{2}, 0, 2, Shape{2, 2}, []float64{0, 1, 100, 101}},
+	{"vector, axis 1, stack 2", Float64, Shape{2}, 1, 2, Shape{2, 2}, []float64{0, 100, 1, 101}},
+	{"matrix, axis 0, stack 2", Float64, Shape{2, 3}, 0, 2, Shape{2, 2, 3}, []float64{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
+	{"matrix, axis 1, stack 2", Float64, Shape{2, 3}, 1, 2, Shape{2, 2, 3}, []float64{0, 1, 2, 100, 101, 102, 3, 4, 5, 103, 104, 105}},
+	{"matrix, axis 2, stack 2", Float64, Shape{2, 3}, 2, 2, Shape{2, 3, 2}, []float64{0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105}},
+	{"matrix, axis 0, stack 3", Float64, Shape{2, 3}, 0, 3, Shape{3, 2, 3}, []float64{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205}},
+	{"matrix, axis 1, stack 3", Float64, Shape{2, 3}, 1, 3, Shape{2, 3, 3}, []float64{0, 1, 2, 100, 101, 102, 200, 201, 202, 3, 4, 5, 103, 104, 105, 203, 204, 205}},
+	{"matrix, axis 2, stack 3", Float64, Shape{2, 3}, 2, 3, Shape{2, 3, 3}, []float64{0, 100, 200, 1, 101, 201, 2, 102, 202, 3, 103, 203, 4, 104, 204, 5, 105, 205}},
 
-	{"matrix, axis 0, stack 2", Shape{2, 3}, 0, 2, Shape{2, 2, 3}, []float64{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
-	{"matrix, axis 1, stack 2", Shape{2, 3}, 1, 2, Shape{2, 2, 3}, []float64{0, 1, 2, 100, 101, 102, 3, 4, 5, 103, 104, 105}},
-	{"matrix, axis 2, stack 2", Shape{2, 3}, 2, 2, Shape{2, 3, 2}, []float64{0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105}},
-	{"matrix, axis 0, stack 3", Shape{2, 3}, 0, 3, Shape{3, 2, 3}, []float64{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205}},
-	{"matrix, axis 1, stack 3", Shape{2, 3}, 1, 3, Shape{2, 3, 3}, []float64{0, 1, 2, 100, 101, 102, 200, 201, 202, 3, 4, 5, 103, 104, 105, 203, 204, 205}},
-	{"matrix, axis 2, stack 3", Shape{2, 3}, 2, 3, Shape{2, 3, 3}, []float64{0, 100, 200, 1, 101, 201, 2, 102, 202, 3, 103, 203, 4, 104, 204, 5, 105, 205}},
+	// Size 4
+	{"vector, axis 0, stack 2 (f32)", Float32, Shape{2}, 0, 2, Shape{2, 2}, []float32{0, 1, 100, 101}},
+	{"vector, axis 1, stack 2 (f32)", Float32, Shape{2}, 1, 2, Shape{2, 2}, []float32{0, 100, 1, 101}},
+	{"matrix, axis 0, stack 2 (f32)", Float32, Shape{2, 3}, 0, 2, Shape{2, 2, 3}, []float32{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
+	{"matrix, axis 1, stack 2 (f32)", Float32, Shape{2, 3}, 1, 2, Shape{2, 2, 3}, []float32{0, 1, 2, 100, 101, 102, 3, 4, 5, 103, 104, 105}},
+	{"matrix, axis 2, stack 2 (f32)", Float32, Shape{2, 3}, 2, 2, Shape{2, 3, 2}, []float32{0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105}},
+	{"matrix, axis 0, stack 3 (f32)", Float32, Shape{2, 3}, 0, 3, Shape{3, 2, 3}, []float32{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205}},
+	{"matrix, axis 1, stack 3 (f32)", Float32, Shape{2, 3}, 1, 3, Shape{2, 3, 3}, []float32{0, 1, 2, 100, 101, 102, 200, 201, 202, 3, 4, 5, 103, 104, 105, 203, 204, 205}},
+	{"matrix, axis 2, stack 3 (f32)", Float32, Shape{2, 3}, 2, 3, Shape{2, 3, 3}, []float32{0, 100, 200, 1, 101, 201, 2, 102, 202, 3, 103, 203, 4, 104, 204, 5, 105, 205}},
+
+	// Size 2
+	{"vector, axis 0, stack 2 (i16)", Int16, Shape{2}, 0, 2, Shape{2, 2}, []int16{0, 1, 100, 101}},
+	{"vector, axis 1, stack 2 (i16)", Int16, Shape{2}, 1, 2, Shape{2, 2}, []int16{0, 100, 1, 101}},
+	{"matrix, axis 0, stack 2 (i16)", Int16, Shape{2, 3}, 0, 2, Shape{2, 2, 3}, []int16{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
+	{"matrix, axis 1, stack 2 (i16)", Int16, Shape{2, 3}, 1, 2, Shape{2, 2, 3}, []int16{0, 1, 2, 100, 101, 102, 3, 4, 5, 103, 104, 105}},
+	{"matrix, axis 2, stack 2 (i16)", Int16, Shape{2, 3}, 2, 2, Shape{2, 3, 2}, []int16{0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105}},
+	{"matrix, axis 0, stack 3 (i16)", Int16, Shape{2, 3}, 0, 3, Shape{3, 2, 3}, []int16{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205}},
+	{"matrix, axis 1, stack 3 (i16)", Int16, Shape{2, 3}, 1, 3, Shape{2, 3, 3}, []int16{0, 1, 2, 100, 101, 102, 200, 201, 202, 3, 4, 5, 103, 104, 105, 203, 204, 205}},
+	{"matrix, axis 2, stack 3 (i16)", Int16, Shape{2, 3}, 2, 3, Shape{2, 3, 3}, []int16{0, 100, 200, 1, 101, 201, 2, 102, 202, 3, 103, 203, 4, 104, 204, 5, 105, 205}},
+
+	// Size 1
+	{"vector, axis 0, stack 2 (u8)", Byte, Shape{2}, 0, 2, Shape{2, 2}, []byte{0, 1, 100, 101}},
+	{"vector, axis 1, stack 2 (u8)", Byte, Shape{2}, 1, 2, Shape{2, 2}, []byte{0, 100, 1, 101}},
+	{"matrix, axis 0, stack 2 (u8)", Byte, Shape{2, 3}, 0, 2, Shape{2, 2, 3}, []byte{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105}},
+	{"matrix, axis 1, stack 2 (u8)", Byte, Shape{2, 3}, 1, 2, Shape{2, 2, 3}, []byte{0, 1, 2, 100, 101, 102, 3, 4, 5, 103, 104, 105}},
+	{"matrix, axis 2, stack 2 (u8)", Byte, Shape{2, 3}, 2, 2, Shape{2, 3, 2}, []byte{0, 100, 1, 101, 2, 102, 3, 103, 4, 104, 5, 105}},
+	{"matrix, axis 0, stack 3 (u8)", Byte, Shape{2, 3}, 0, 3, Shape{3, 2, 3}, []byte{0, 1, 2, 3, 4, 5, 100, 101, 102, 103, 104, 105, 200, 201, 202, 203, 204, 205}},
+	{"matrix, axis 1, stack 3 (u8)", Byte, Shape{2, 3}, 1, 3, Shape{2, 3, 3}, []byte{0, 1, 2, 100, 101, 102, 200, 201, 202, 3, 4, 5, 103, 104, 105, 203, 204, 205}},
+	{"matrix, axis 2, stack 3 (u8)", Byte, Shape{2, 3}, 2, 3, Shape{2, 3, 3}, []byte{0, 100, 200, 1, 101, 201, 2, 102, 202, 3, 103, 203, 4, 104, 204, 5, 105, 205}},
 }
 
 var viewStackTests = []struct {
 	name       string
+	dt         Dtype
 	shape      Shape
 	transform  []int
 	slices     []Slice
@@ -758,23 +790,39 @@ var viewStackTests = []struct {
 	stackCount int
 
 	correctShape Shape
-	correctData  []float64
+	correctData  interface{}
 }{
-	{"matrix(4x4)[1:3, 1:3] axis 0", Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 0, 2, Shape{2, 2, 2}, []float64{5, 6, 9, 10, 105, 106, 109, 110}},
-	{"matrix(4x4)[1:3, 1:3] axis 1", Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 1, 2, Shape{2, 2, 2}, []float64{5, 6, 105, 106, 9, 10, 109, 110}},
-	{"matrix(4x4)[1:3, 1:3] axis 2", Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, Shape{2, 2, 2}, []float64{5, 105, 6, 106, 9, 109, 10, 110}},
+	// Size 8
+	{"matrix(4x4)[1:3, 1:3] axis 0", Float64, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 0, 2, Shape{2, 2, 2}, []float64{5, 6, 9, 10, 105, 106, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 1", Float64, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 1, 2, Shape{2, 2, 2}, []float64{5, 6, 105, 106, 9, 10, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 2", Float64, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, Shape{2, 2, 2}, []float64{5, 105, 6, 106, 9, 109, 10, 110}},
+
+	// Size 4
+	{"matrix(4x4)[1:3, 1:3] axis 0 (u32)", Uint32, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 0, 2, Shape{2, 2, 2}, []uint32{5, 6, 9, 10, 105, 106, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 1 (u32)", Uint32, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 1, 2, Shape{2, 2, 2}, []uint32{5, 6, 105, 106, 9, 10, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 2 (u32)", Uint32, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, Shape{2, 2, 2}, []uint32{5, 105, 6, 106, 9, 109, 10, 110}},
+
+	// Size 2
+	{"matrix(4x4)[1:3, 1:3] axis 0 (u16)", Uint16, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 0, 2, Shape{2, 2, 2}, []uint16{5, 6, 9, 10, 105, 106, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 1 (u16)", Uint16, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 1, 2, Shape{2, 2, 2}, []uint16{5, 6, 105, 106, 9, 10, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 2 (u16)", Uint16, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, Shape{2, 2, 2}, []uint16{5, 105, 6, 106, 9, 109, 10, 110}},
+
+	// Size 1
+	{"matrix(4x4)[1:3, 1:3] axis 0 (u8)", Byte, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 0, 2, Shape{2, 2, 2}, []byte{5, 6, 9, 10, 105, 106, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 1 (u8)", Byte, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 1, 2, Shape{2, 2, 2}, []byte{5, 6, 105, 106, 9, 10, 109, 110}},
+	{"matrix(4x4)[1:3, 1:3] axis 2 (u8)", Byte, Shape{4, 4}, nil, []Slice{makeRS(1, 3), makeRS(1, 3)}, 2, 2, Shape{2, 2, 2}, []byte{5, 105, 6, 106, 9, 109, 10, 110}},
 }
 
 func TestDense_Stack(t *testing.T) {
 	assert := assert.New(t)
 	var err error
 	for _, sts := range simpleStackTests {
-		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+		T := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, 0, sts.shape.TotalSize())))
 
 		var stacked []*Dense
 		for i := 0; i < sts.stackCount-1; i++ {
 			offset := (i + 1) * 100
-			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, offset, sts.shape.TotalSize()+offset)))
 			stacked = append(stacked, T1)
 		}
 
@@ -788,7 +836,7 @@ func TestDense_Stack(t *testing.T) {
 	}
 
 	for _, sts := range viewStackTests {
-		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+		T := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, 0, sts.shape.TotalSize())))
 		switch {
 		case sts.slices != nil && sts.transform == nil:
 			var sliced Tensor
@@ -804,7 +852,7 @@ func TestDense_Stack(t *testing.T) {
 		var stacked []*Dense
 		for i := 0; i < sts.stackCount-1; i++ {
 			offset := (i + 1) * 100
-			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, offset, sts.shape.TotalSize()+offset)))
 			switch {
 			case sts.slices != nil && sts.transform == nil:
 				var sliced Tensor
@@ -830,13 +878,13 @@ func TestDense_Stack(t *testing.T) {
 
 	// Repeat tests with masks
 	for _, sts := range simpleStackTests {
-		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+		T := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, 0, sts.shape.TotalSize())))
 
 		var stacked []*Dense
 		for i := 0; i < sts.stackCount-1; i++ {
 			offset := (i + 1) * 100
-			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
-			T1.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, offset, sts.shape.TotalSize()+offset)))
+			T1.MaskedInside(castToDt(102.0, sts.dt), castToDt(225.0, sts.dt))
 			stacked = append(stacked, T1)
 		}
 
@@ -847,7 +895,7 @@ func TestDense_Stack(t *testing.T) {
 		}
 
 		T3 := New(WithShape(sts.correctShape...), WithBacking(sts.correctData))
-		T3.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+		T3.MaskedInside(castToDt(102.0, sts.dt), castToDt(225.0, sts.dt))
 
 		assert.True(sts.correctShape.Eq(T2.Shape()))
 		assert.Equal(sts.correctData, T2.Data())
@@ -855,7 +903,7 @@ func TestDense_Stack(t *testing.T) {
 	}
 
 	for _, sts := range viewStackTests {
-		T := New(WithShape(sts.shape...), WithBacking(Range(Float64, 0, sts.shape.TotalSize())))
+		T := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, 0, sts.shape.TotalSize())))
 		switch {
 		case sts.slices != nil && sts.transform == nil:
 			var sliced Tensor
@@ -871,8 +919,8 @@ func TestDense_Stack(t *testing.T) {
 		var stacked []*Dense
 		for i := 0; i < sts.stackCount-1; i++ {
 			offset := (i + 1) * 100
-			T1 := New(WithShape(sts.shape...), WithBacking(Range(Float64, offset, sts.shape.TotalSize()+offset)))
-			T1.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+			T1 := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, offset, sts.shape.TotalSize()+offset)))
+			T1.MaskedInside(castToDt(102.0, sts.dt), castToDt(225.0, sts.dt))
 			switch {
 			case sts.slices != nil && sts.transform == nil:
 				var sliced Tensor
@@ -895,11 +943,39 @@ func TestDense_Stack(t *testing.T) {
 		}
 
 		T3 := New(WithShape(sts.correctShape...), WithBacking(sts.correctData))
-		T3.MaskedInside(castToDt(102.0, Float64), castToDt(225.0, Float64))
+		T3.MaskedInside(castToDt(102.0, sts.dt), castToDt(225.0, sts.dt))
 
 		assert.True(sts.correctShape.Eq(T2.Shape()))
 		assert.Equal(sts.correctData, T2.Data())
 		assert.Equal(T3.mask, T2.mask)
 	}
 
+	// arbitrary view slices
+
+	// T := New(WithShape(2, 2), WithBacking([]string{"hello", "world", "nihao", "sekai"}))
+	// var stacked []*Dense
+	// for i := 0; i < sts.stackCount-1; i++ {
+	// 	offset := (i + 1) * 100
+	// 	T1 := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, offset, sts.shape.TotalSize()+offset)))
+	// 	switch {
+	// 	case sts.slices != nil && sts.transform == nil:
+	// 		var sliced Tensor
+	// 		if sliced, err = T1.Slice(sts.slices...); err != nil {
+	// 			t.Error(err)
+	// 			continue
+	// 		}
+	// 		T1 = sliced.(*Dense)
+	// 	case sts.transform != nil && sts.slices == nil:
+	// 		T1.T(sts.transform...)
+	// 	}
+
+	// 	stacked = append(stacked, T1)
+	// }
+	// T2, err := T.Stack(sts.axis, stacked...)
+	// if err != nil {
+	// 	t.Error(err)
+	// 	continue
+	// }
+	// assert.True(sts.correctShape.Eq(T2.Shape()))
+	// assert.Equal(sts.correctData, T2.Data(), "%q failed", sts.name)
 }
