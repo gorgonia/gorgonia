@@ -1,908 +1,451 @@
 package tensor
 
-import (
-	"fmt"
-	"reflect"
-)
+import "github.com/pkg/errors"
 
-/*
-GENERATED FILE. DO NOT EDIT
-*/
+// func (e StdEng) Stack(t Tensor, axis int, others ...Tensor) (retVal Tensor, err error) {
+// 	// checks
 
-/* bool */
+// }
 
-func (t *Dense) doViewStackB(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Bools()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
+func (e StdEng) StackDense(t DenseTensor, axis int, others ...DenseTensor) (retVal DenseTensor, err error) {
+	opdims := t.Dims()
+	if axis >= opdims+1 {
+		err = errors.Errorf(dimMismatch, opdims+1, axis)
+		return
 	}
-	retIsMasked := t.IsMasked()
+
+	newShape := Shape(BorrowInts(opdims + 1))
+	newShape[axis] = len(others) + 1
+	shape := t.Shape()
+	var cur int
+	for i, s := range shape {
+		if i == axis {
+			cur++
+		}
+		newShape[cur] = s
+		cur++
+	}
+
+	info := t.Info()
+	var newStrides []int
+	if info.o.isColMajor() {
+		newStrides = newShape.calcStridesColMajor()
+	} else {
+		newStrides = newShape.calcStrides()
+
+	}
+	ap := NewAP(newShape, newStrides)
+	ap.o = info.o
+	ap.Δ = info.Δ
+
+	allNoMat := !requiresIterator(t)
 	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
+		if allNoMat && requiresIterator(ot) {
+			allNoMat = false
+		}
 	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Bools()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
 
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Bools()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
+	retVal = recycledDense(t.Dtype(), ap.Shape(), WithEngine(e))
+	ReturnAP(retVal.Info())
+	retVal.setAP(ap)
+
+	// the "viewStack" method is the more generalized method
+	// and will work for all Tensors, regardless of whether it's a view
+	// But the simpleStack is faster, and is an optimization
+
+	if allNoMat {
+		retVal = e.denseSimpleStack(t, retVal, axis, others)
+	} else {
+		retVal, err = e.denseViewStack(t, retVal, axis, others)
 	}
-	retVal.mask = mask
+	return
 }
 
-/* int */
-
-func (t *Dense) doViewStackI(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Ints()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Ints()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Ints()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* int8 */
-
-func (t *Dense) doViewStackI8(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Int8s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Int8s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Int8s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* int16 */
-
-func (t *Dense) doViewStackI16(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Int16s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Int16s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Int16s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* int32 */
-
-func (t *Dense) doViewStackI32(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Int32s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Int32s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Int32s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* int64 */
-
-func (t *Dense) doViewStackI64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Int64s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Int64s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Int64s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* uint */
-
-func (t *Dense) doViewStackU(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Uints()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Uints()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Uints()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* uint8 */
-
-func (t *Dense) doViewStackU8(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Uint8s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Uint8s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Uint8s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* uint16 */
-
-func (t *Dense) doViewStackU16(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Uint16s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Uint16s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Uint16s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* uint32 */
-
-func (t *Dense) doViewStackU32(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Uint32s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Uint32s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Uint32s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* uint64 */
-
-func (t *Dense) doViewStackU64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Uint64s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Uint64s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Uint64s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* float32 */
-
-func (t *Dense) doViewStackF32(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Float32s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Float32s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Float32s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* float64 */
-
-func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Float64s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Float64s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Float64s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* complex64 */
-
-func (t *Dense) doViewStackC64(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Complex64s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Complex64s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Complex64s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* complex128 */
-
-func (t *Dense) doViewStackC128(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Complex128s()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Complex128s()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Complex128s()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-/* string */
-
-func (t *Dense) doViewStackStr(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	data := retVal.Strings()[:0]
-	mask := retVal.mask[:0]
-	if t.IsMasked() {
-		fmt.Println("do this")
-	}
-	retIsMasked := t.IsMasked()
-	for _, ot := range others {
-		retIsMasked = retIsMasked || ot.IsMasked()
-	}
-	for i := 0; i < batches; i++ {
-		isMasked := t.IsMasked()
-		var j int
-		for j = 0; j < axisStride; j++ {
-			id, ok := <-ch
-			if !ok {
-				break
-			}
-			data = append(data, t.Strings()[id])
-			if isMasked {
-				mask = append(mask, t.mask[id])
-			}
-		}
-		if retIsMasked && (!isMasked) {
-			mask = append(mask, make([]bool, j)...)
-		}
-
-		var ot *Dense
-		for j, ot = range others {
-			isMasked = ot.IsMasked()
-			var k int
-			for k = 0; k < axisStride; k++ {
-				id, ok := <-chs[j]
-				if !ok {
-					break
-				}
-				data = append(data, ot.Strings()[id])
-				if isMasked {
-					mask = append(mask, ot.mask[id])
-				}
-			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, k)...)
-			}
-		}
-	}
-	retVal.mask = mask
-}
-
-func (t *Dense) doViewStack(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
-	switch t.t.Kind() {
-	case reflect.Bool:
-		t.doViewStackB(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Int:
-		t.doViewStackI(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Int8:
-		t.doViewStackI8(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Int16:
-		t.doViewStackI16(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Int32:
-		t.doViewStackI32(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Int64:
-		t.doViewStackI64(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Uint:
-		t.doViewStackU(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Uint8:
-		t.doViewStackU8(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Uint16:
-		t.doViewStackU16(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Uint32:
-		t.doViewStackU32(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Uint64:
-		t.doViewStackU64(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Float32:
-		t.doViewStackF32(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Float64:
-		t.doViewStackF64(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Complex64:
-		t.doViewStackC64(retVal, axisStride, batches, ch, others, chs)
-	case reflect.Complex128:
-		t.doViewStackC128(retVal, axisStride, batches, ch, others, chs)
-	case reflect.String:
-		t.doViewStackStr(retVal, axisStride, batches, ch, others, chs)
-	default:
-		var index int
-		retIsMasked := t.IsMasked()
-		mask := retVal.mask[:0]
+func (e StdEng) denseSimpleStack(t, retVal DenseTensor, axis int, others []DenseTensor) DenseTensor {
+	switch axis {
+	case 0:
+		copyDense(retVal, t)
+		next := t.len()
 		for _, ot := range others {
-			retIsMasked = retIsMasked || ot.IsMasked()
+			copyDenseSliced(retVal, next, retVal.len(), ot, 0, ot.len())
+			next += ot.len()
 		}
+	default:
+		axisStride := retVal.Info().Strides()[axis]
+		batches := retVal.len() / axisStride
+
+		destStart := 0
+		start := 0
+		end := start + axisStride
+
 		for i := 0; i < batches; i++ {
-			isMasked := t.IsMasked()
-			var j int
-			for j = 0; j < axisStride; j++ {
-				id, ok := <-ch
-				if !ok {
-					break
-				}
-				retVal.Set(index, t.Get(id))
-				index++
-				if isMasked {
-					mask = append(mask, t.mask[id])
-				}
+			copyDenseSliced(retVal, destStart, retVal.len(), t, start, end)
+			for _, ot := range others {
+				destStart += axisStride
+				copyDenseSliced(retVal, destStart, retVal.len(), ot, start, end)
+				i++
 			}
-			if retIsMasked && (!isMasked) {
-				mask = append(mask, make([]bool, j)...)
-			}
-			var ot *Dense
-			for j, ot = range others {
-				isMasked = ot.IsMasked()
-				var k int
-				for k = 0; k < axisStride; k++ {
-					id, ok := <-chs[j]
-					if !ok {
-						break
-					}
-					retVal.Set(index, ot.Get(id))
-					index++
-					if isMasked {
-						mask = append(mask, ot.mask[id])
-					}
-				}
-				if retIsMasked && (!isMasked) {
-					mask = append(mask, make([]bool, k)...)
-				}
-			}
+			destStart += axisStride
+			start += axisStride
+			end += axisStride
 		}
-		retVal.mask = mask
+	}
+	return retVal
+}
+
+func (e StdEng) denseViewStack(t, retVal DenseTensor, axis int, others []DenseTensor) (DenseTensor, error) {
+	axisStride := retVal.Info().Strides()[axis]
+	batches := retVal.len() / axisStride
+
+	it := IteratorFromDense(t)
+	its := make([]Iterator, 0, len(others))
+	for _, ot := range others {
+		oter := IteratorFromDense(ot)
+		its = append(its, oter)
+	}
+
+	err := e.doViewStack(t, retVal, axisStride, batches, it, others, its)
+	return retVal, err
+}
+
+func (e StdEng) doViewStack(t, retVal DenseTensor, axisStride, batches int, it Iterator, others []DenseTensor, its []Iterator) error {
+	switch int(t.Dtype().Size()) {
+	case 1:
+		return e.doViewStack1(t, retVal, axisStride, batches, it, others, its)
+	case 2:
+		return e.doViewStack2(t, retVal, axisStride, batches, it, others, its)
+	case 4:
+		return e.doViewStack4(t, retVal, axisStride, batches, it, others, its)
+	case 8:
+		return e.doViewStack8(t, retVal, axisStride, batches, it, others, its)
+	default:
+		return errors.Errorf(methodNYI, "doviewStack")
 	}
 }
+
+func (e StdEng) doViewStack1(t, retVal DenseTensor, axisStride, batches int, it Iterator, others []DenseTensor, its []Iterator) (err error) {
+	data := retVal.hdr().Uint8s()[:0]
+	var mask []bool
+	var retIsMasked bool
+	if mt, ok := t.(MaskedTensor); ok {
+		retIsMasked = mt.IsMasked()
+	}
+	for _, ot := range others {
+		if mt, ok := ot.(MaskedTensor); ok {
+			retIsMasked = retIsMasked || mt.IsMasked()
+		}
+	}
+
+	f := func(t DenseTensor, it Iterator) (last int, isMasked bool, err error) {
+		var tmask []bool
+		if mt, ok := t.(MaskedTensor); ok {
+			tmask = mt.Mask()
+			isMasked = mt.IsMasked()
+		}
+
+		for last = 0; last < axisStride; last++ {
+			id, err := it.Next()
+			if handleNoOp(err) != nil {
+				return -1, isMasked, errors.Wrap(err, "doviewStackfailed")
+			}
+			if err != nil {
+				break
+			}
+			data = append(data, t.hdr().Uint8s()[id])
+			if isMasked {
+				mask = append(mask, tmask[id])
+			}
+		}
+		return
+	}
+
+	for i := 0; i < batches; i++ {
+		var last int
+		var isMasked bool
+		if last, isMasked, err = f(t, it); err != nil {
+			return
+		}
+		if retIsMasked && (!isMasked) {
+			mask = append(mask, make([]bool, last)...)
+		}
+		for j, ot := range others {
+			if last, isMasked, err = f(ot, its[j]); err != nil {
+				return
+			}
+			if retIsMasked && (!isMasked) {
+				mask = append(mask, make([]bool, last)...)
+			}
+		}
+	}
+
+	if mt, ok := retVal.(MaskedTensor); ok {
+		mt.SetMask(mask)
+	}
+	return nil
+}
+
+func (e StdEng) doViewStack2(t, retVal DenseTensor, axisStride, batches int, it Iterator, others []DenseTensor, its []Iterator) (err error) {
+	data := retVal.hdr().Uint16s()[:0]
+	var mask []bool
+	var retIsMasked bool
+	if mt, ok := t.(MaskedTensor); ok {
+		retIsMasked = mt.IsMasked()
+	}
+	for _, ot := range others {
+		if mt, ok := ot.(MaskedTensor); ok {
+			retIsMasked = retIsMasked || mt.IsMasked()
+		}
+	}
+
+	f := func(t DenseTensor, it Iterator) (last int, isMasked bool, err error) {
+		var tmask []bool
+		if mt, ok := t.(MaskedTensor); ok {
+			tmask = mt.Mask()
+			isMasked = mt.IsMasked()
+		}
+
+		for last = 0; last < axisStride; last++ {
+			id, err := it.Next()
+			if handleNoOp(err) != nil {
+				return -1, isMasked, errors.Wrap(err, "doviewStackfailed")
+			}
+			if err != nil {
+				break
+			}
+			data = append(data, t.hdr().Uint16s()[id])
+			if isMasked {
+				mask = append(mask, tmask[id])
+			}
+		}
+		return
+	}
+
+	for i := 0; i < batches; i++ {
+		var last int
+		var isMasked bool
+		if last, isMasked, err = f(t, it); err != nil {
+			return
+		}
+		if retIsMasked && (!isMasked) {
+			mask = append(mask, make([]bool, last)...)
+		}
+		for j, ot := range others {
+			if last, isMasked, err = f(ot, its[j]); err != nil {
+				return
+			}
+			if retIsMasked && (!isMasked) {
+				mask = append(mask, make([]bool, last)...)
+			}
+		}
+	}
+
+	if mt, ok := retVal.(MaskedTensor); ok {
+		mt.SetMask(mask)
+	}
+	return nil
+}
+
+func (e StdEng) doViewStack4(t, retVal DenseTensor, axisStride, batches int, it Iterator, others []DenseTensor, its []Iterator) (err error) {
+	data := retVal.hdr().Uint32s()[:0]
+	var mask []bool
+	var retIsMasked bool
+	if mt, ok := t.(MaskedTensor); ok {
+		retIsMasked = mt.IsMasked()
+	}
+	for _, ot := range others {
+		if mt, ok := ot.(MaskedTensor); ok {
+			retIsMasked = retIsMasked || mt.IsMasked()
+		}
+	}
+
+	f := func(t DenseTensor, it Iterator) (last int, isMasked bool, err error) {
+		var tmask []bool
+		if mt, ok := t.(MaskedTensor); ok {
+			tmask = mt.Mask()
+			isMasked = mt.IsMasked()
+		}
+
+		for last = 0; last < axisStride; last++ {
+			id, err := it.Next()
+			if handleNoOp(err) != nil {
+				return -1, isMasked, errors.Wrap(err, "doviewStackfailed")
+			}
+			if err != nil {
+				break
+			}
+			data = append(data, t.hdr().Uint32s()[id])
+			if isMasked {
+				mask = append(mask, tmask[id])
+			}
+		}
+		return
+	}
+
+	for i := 0; i < batches; i++ {
+		var last int
+		var isMasked bool
+		if last, isMasked, err = f(t, it); err != nil {
+			return
+		}
+		if retIsMasked && (!isMasked) {
+			mask = append(mask, make([]bool, last)...)
+		}
+		for j, ot := range others {
+			if last, isMasked, err = f(ot, its[j]); err != nil {
+				return
+			}
+			if retIsMasked && (!isMasked) {
+				mask = append(mask, make([]bool, last)...)
+			}
+		}
+	}
+
+	if mt, ok := retVal.(MaskedTensor); ok {
+		mt.SetMask(mask)
+	}
+	return nil
+}
+
+func (e StdEng) doViewStack8(t, retVal DenseTensor, axisStride, batches int, it Iterator, others []DenseTensor, its []Iterator) (err error) {
+	data := retVal.hdr().Uint64s()[:0]
+	var mask []bool
+	var retIsMasked bool
+	if mt, ok := t.(MaskedTensor); ok {
+		retIsMasked = mt.IsMasked()
+	}
+	for _, ot := range others {
+		if mt, ok := ot.(MaskedTensor); ok {
+			retIsMasked = retIsMasked || mt.IsMasked()
+		}
+	}
+
+	f := func(t DenseTensor, it Iterator) (last int, isMasked bool, err error) {
+		var tmask []bool
+		if mt, ok := t.(MaskedTensor); ok {
+			tmask = mt.Mask()
+			isMasked = mt.IsMasked()
+		}
+
+		for last = 0; last < axisStride; last++ {
+			id, err := it.Next()
+			if handleNoOp(err) != nil {
+				return -1, isMasked, errors.Wrap(err, "doviewStackfailed")
+			}
+			if err != nil {
+				break
+			}
+			data = append(data, t.hdr().Uint64s()[id])
+			if isMasked {
+				mask = append(mask, tmask[id])
+			}
+		}
+		return
+	}
+
+	for i := 0; i < batches; i++ {
+		var last int
+		var isMasked bool
+		if last, isMasked, err = f(t, it); err != nil {
+			return
+		}
+		if retIsMasked && (!isMasked) {
+			mask = append(mask, make([]bool, last)...)
+		}
+		for j, ot := range others {
+			if last, isMasked, err = f(ot, its[j]); err != nil {
+				return
+			}
+			if retIsMasked && (!isMasked) {
+				mask = append(mask, make([]bool, last)...)
+			}
+		}
+	}
+
+	if mt, ok := retVal.(MaskedTensor); ok {
+		mt.SetMask(mask)
+	}
+	return nil
+}
+
+// func (t *Dense) doViewStack(retVal *Dense, axisStride, batches int, ch chan int, others []*Dense, chs []chan int) {
+
+// 	switch t.t.Kind() {
+// 	case reflect.Bool:
+// 		t.doViewStackB(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Int:
+// 		t.doViewStackI(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Int8:
+// 		t.doViewStackI8(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Int16:
+// 		t.doViewStackI16(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Int32:
+// 		t.doViewStackI32(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Int64:
+// 		t.doViewStackI64(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Uint:
+// 		t.doViewStackU(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Uint8:
+// 		t.doViewStackU8(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Uint16:
+// 		t.doViewStackU16(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Uint32:
+// 		t.doViewStackU32(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Uint64:
+// 		t.doViewStackU64(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Float32:
+// 		t.doViewStackF32(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Float64:
+// 		t.doViewStackF64(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Complex64:
+// 		t.doViewStackC64(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.Complex128:
+// 		t.doViewStackC128(retVal, axisStride, batches, ch, others, chs)
+// 	case reflect.String:
+// 		t.doViewStackStr(retVal, axisStride, batches, ch, others, chs)
+// 	default:
+// 		var index int
+// 		retIsMasked := t.IsMasked()
+// 		mask := retVal.mask[:0]
+// 		for _, ot := range others {
+// 			retIsMasked = retIsMasked || ot.IsMasked()
+// 		}
+// 		for i := 0; i < batches; i++ {
+// 			isMasked := t.IsMasked()
+// 			var j int
+// 			for j = 0; j < axisStride; j++ {
+// 				id, ok := <-ch
+// 				if !ok {
+// 					break
+// 				}
+// 				retVal.Set(index, t.Get(id))
+// 				index++
+// 				if isMasked {
+// 					mask = append(mask, t.mask[id])
+// 				}
+// 			}
+// 			if retIsMasked && (!isMasked) {
+// 				mask = append(mask, make([]bool, j)...)
+// 			}
+// 			var ot *Dense
+// 			for j, ot = range others {
+// 				isMasked = ot.IsMasked()
+// 				var k int
+// 				for k = 0; k < axisStride; k++ {
+// 					id, ok := <-chs[j]
+// 					if !ok {
+// 						break
+// 					}
+// 					retVal.Set(index, ot.Get(id))
+// 					index++
+// 					if isMasked {
+// 						mask = append(mask, ot.mask[id])
+// 					}
+// 				}
+// 				if retIsMasked && (!isMasked) {
+// 					mask = append(mask, make([]bool, k)...)
+// 				}
+// 			}
+// 		}
+// 		retVal.mask = mask
+// 	}
+// }

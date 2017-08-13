@@ -819,14 +819,13 @@ func TestDense_Stack(t *testing.T) {
 
 			stacked = append(stacked, T1)
 		}
-
 		T2, err := T.Stack(sts.axis, stacked...)
 		if err != nil {
 			t.Error(err)
 			continue
 		}
 		assert.True(sts.correctShape.Eq(T2.Shape()))
-		assert.Equal(sts.correctData, T2.Data())
+		assert.Equal(sts.correctData, T2.Data(), "%q failed", sts.name)
 	}
 
 	// Repeat tests with masks

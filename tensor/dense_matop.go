@@ -1,8 +1,6 @@
 package tensor
 
-import (
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // Apply applies a function to all the values in the ndarray
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
@@ -437,56 +435,23 @@ func (t *Dense) Vstack(others ...*Dense) (*Dense, error) {
 
 // Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
 func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
-	opdims := t.Dims()
-	if axis >= opdims+1 {
-		err = errors.Errorf(dimMismatch, opdims+1, axis)
-		return
+	e := t.Engine()
+	if e == nil {
+		e = StdEng{}
 	}
 
-	newShape := Shape(BorrowInts(opdims + 1))
-	newShape[axis] = len(others) + 1
-	shape := t.Shape()
-	var cur int
-	for i, s := range shape {
-		if i == axis {
-			cur++
+	if ds, ok := e.(DenseStacker); ok {
+		var ret DenseTensor
+		ots := make([]DenseTensor, len(others))
+		for i, ot := range others {
+			ots[i] = ot
 		}
-		newShape[cur] = s
-		cur++
-	}
-
-	var newStrides []int
-	if t.AP.o.isColMajor() {
-		newStrides = newShape.calcStridesColMajor()
-	} else {
-		newStrides = newShape.calcStrides()
-
-	}
-	ap := NewAP(newShape, newStrides)
-	ap.o = t.AP.o
-	ap.Δ = t.AP.Δ
-
-	allNoMat := !t.IsMaterializable()
-	for _, ot := range others {
-		if allNoMat && ot.IsMaterializable() {
-			allNoMat = false
+		if ret, err = ds.StackDense(t, axis, ots...); err != nil {
+			return
 		}
+		return ret.(*Dense), err
 	}
-
-	retVal = recycledDense(t.t, ap.Shape())
-	ReturnAP(retVal.AP)
-	retVal.AP = ap
-
-	// the "viewStack" method is the more generalized method
-	// and will work for all Tensors, regardless of whether it's a view
-	// But the simpleStack is faster, and is an optimization
-
-	if allNoMat {
-		retVal = t.simpleStack(retVal, axis, others...)
-	} else {
-		retVal = t.viewStack(retVal, axis, others...)
-	}
-	return
+	return nil, errors.Errorf("Engine does not support DenseStacker")
 }
 
 /* Private Methods */
@@ -529,53 +494,53 @@ func (t *Dense) maskAt(coords ...int) (at int, err error) {
 	return t.at(coords...)
 }
 
-// simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
-func (t *Dense) simpleStack(retVal *Dense, axis int, others ...*Dense) *Dense {
-	switch axis {
-	case 0:
-		copyDense(retVal, t)
-		next := t.len()
-		for _, ot := range others {
-			copyDenseSliced(retVal, next, retVal.len(), ot, 0, ot.len())
-			next += ot.len()
-		}
-	default:
-		axisStride := retVal.AP.Strides()[axis]
-		batches := retVal.len() / axisStride
+// // simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
+// func (t *Dense) simpleStack(retVal *Dense, axis int, others ...*Dense) *Dense {
+// 	switch axis {
+// 	case 0:
+// 		copyDense(retVal, t)
+// 		next := t.len()
+// 		for _, ot := range others {
+// 			copyDenseSliced(retVal, next, retVal.len(), ot, 0, ot.len())
+// 			next += ot.len()
+// 		}
+// 	default:
+// 		axisStride := retVal.AP.Strides()[axis]
+// 		batches := retVal.len() / axisStride
 
-		destStart := 0
-		start := 0
-		end := start + axisStride
+// 		destStart := 0
+// 		start := 0
+// 		end := start + axisStride
 
-		for i := 0; i < batches; i++ {
-			copyDenseSliced(retVal, destStart, retVal.len(), t, start, end)
-			for _, ot := range others {
-				destStart += axisStride
-				copyDenseSliced(retVal, destStart, retVal.len(), ot, start, end)
-				i++
-			}
-			destStart += axisStride
-			start += axisStride
-			end += axisStride
-		}
-	}
-	return retVal
-}
+// 		for i := 0; i < batches; i++ {
+// 			copyDenseSliced(retVal, destStart, retVal.len(), t, start, end)
+// 			for _, ot := range others {
+// 				destStart += axisStride
+// 				copyDenseSliced(retVal, destStart, retVal.len(), ot, start, end)
+// 				i++
+// 			}
+// 			destStart += axisStride
+// 			start += axisStride
+// 			end += axisStride
+// 		}
+// 	}
+// 	return retVal
+// }
 
-// viewStack is the data movement function for Stack(), applied on views
-func (t *Dense) viewStack(retVal *Dense, axis int, others ...*Dense) *Dense {
-	axisStride := retVal.AP.Strides()[axis]
-	batches := retVal.len() / axisStride
+// // viewStack is the data movement function for Stack(), applied on views
+// func (t *Dense) viewStack(retVal *Dense, axis int, others ...*Dense) *Dense {
+// 	axisStride := retVal.AP.Strides()[axis]
+// 	batches := retVal.len() / axisStride
 
-	it := NewFlatIterator(t.AP)
-	ch := it.Chan()
-	chs := make([]chan int, len(others))
-	chs = chs[:0]
-	for _, ot := range others {
-		oter := NewFlatIterator(ot.AP)
-		chs = append(chs, oter.Chan())
-	}
+// 	it := NewFlatIterator(t.AP)
+// 	ch := it.Chan()
+// 	chs := make([]chan int, len(others))
+// 	chs = chs[:0]
+// 	for _, ot := range others {
+// 		oter := NewFlatIterator(ot.AP)
+// 		chs = append(chs, oter.Chan())
+// 	}
 
-	t.doViewStack(retVal, axisStride, batches, ch, others, chs)
-	return retVal
-}
+// 	t.doViewStack(retVal, axisStride, batches, ch, others, chs)
+// 	return retVal
+// }

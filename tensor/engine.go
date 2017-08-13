@@ -52,6 +52,10 @@ type Stacker interface {
 	Stack(t Tensor, axis int, others ...Tensor) (Tensor, error)
 }
 
+type DenseStacker interface {
+	StackDense(t DenseTensor, axis int, others ...DenseTensor) (retVal DenseTensor, err error)
+}
+
 type Repeater interface {
 	Repeat(t Tensor, axis int, repeats ...int) (Tensor, error)
 }

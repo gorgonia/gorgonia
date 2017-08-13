@@ -255,6 +255,8 @@ func (t *Dense) setShape(s ...int) {
 	return
 }
 
+func (t *Dense) setAP(ap *AP) { t.AP = ap }
+
 func (t *Dense) fix() {
 	if t.AP == nil {
 		return
@@ -555,8 +557,8 @@ func (t *Dense) Zero() {
 func (t *Dense) Mask() []bool { return t.mask }
 
 func (t *Dense) SetMask(mask []bool) {
-	if len(mask) != t.len() {
-		panic("Cannot set mask")
-	}
+	// if len(mask) != t.len() {
+	// 	panic("Cannot set mask")
+	// }
 	t.mask = mask
 }

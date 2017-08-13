@@ -79,12 +79,13 @@ type DenseTensor interface {
 	Tensor
 	Info() *AP
 
+	DataOrder() DataOrder
+	IsVector() bool
+
 	headerer
 	arrayer
+	setAP(*AP)
 	rtype() reflect.Type
-	DataOrder() DataOrder
-
-	IsVector() bool
 	ostrides() []int
 	oshape() Shape
 	transposeAxes() []int
