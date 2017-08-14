@@ -71,51 +71,15 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 
 // Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
 func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
-	ss := make([]Shape, len(Ts))
-
-	var isMasked = false
-	for i, T := range Ts {
-		ss[i] = T.Shape()
-		isMasked = isMasked || T.IsMasked()
+	e := t.Engine()
+	if e == nil {
+		e = StdEng{}
 	}
-
-	var newShape Shape
-	if newShape, err = t.Shape().Concat(axis, ss...); err != nil {
-		return
+	if c, ok := e.(Concater); ok {
+		others := densesToTensors(Ts)
+		return c.Concat(t, axis, others...)
 	}
-	retVal = recycledDense(t.t, newShape)
-	if isMasked {
-		retVal.makeMask()
-	}
-
-	all := make([]*Dense, len(Ts)+1)
-	all[0] = t
-	copy(all[1:], Ts)
-
-	// special case
-	var start, end int
-
-	for _, T := range all {
-		end += T.Shape()[axis]
-		slices := make([]Slice, axis+1)
-		slices[axis] = makeRS(start, end)
-
-		var v *Dense
-		if v, err = sliceDense(retVal, slices...); err != nil {
-			return
-		}
-
-		if v.IsVector() && T.IsMatrix() && axis == 0 {
-			v.reshape(v.shape[0], 1)
-		}
-
-		if err = assignArray(v, T); err != nil {
-			return
-		}
-		start = end
-	}
-
-	return
+	return nil, errors.New("Engine does not support Concat")
 }
 
 // Hstack stacks other tensors columnwise (horizontal stacking)
