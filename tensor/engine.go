@@ -157,6 +157,11 @@ type Dotter interface {
 	Dot(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// SVDer is any engine that can perform SVD
+type SVDer interface {
+	SVD(a Tensor, uv, full bool)(s, u, v Tensor, err error)
+}
+
 /* ORD INTERFACES */
 
 type Lter interface {

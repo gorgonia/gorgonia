@@ -296,5 +296,67 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = rd
 	}
 	return
+}
 
+// TODO: make it take DenseTensor
+func (e StdEng) SVD(a Tensor, uv, full bool)(s, u, v Tensor, err error) {
+	var t *Dense
+	var ok bool
+	if t, ok := a.(*Dense); !ok {
+		return nil, nil, nil, errors.Errorf("StdEng only performs SVDs for DenseTensors. Got %T instead", a)
+	}
+	if !isFloat(t.Dtype()) {
+		return nil, nil, nil, errors.Errorf("StdEng can only perform SVDs for float64 and float32 type. Got tensor of %v instead", t.Dtype())
+	}
+
+	if !t.IsNativelyAccessible() {
+		return nil, nil, nil, errors.New("StdEng can only perform SVDs for natively accessible tensors")
+	}
+
+	if !t.IsMatrix() {
+		return nil, nil, nil, errors.Errorf(dimMismatch, 2, t.Dims())
+	}
+
+	var mat *mat64.Dense
+	var svd mat64.SVD
+	var ok bool
+	if mat, err = ToMat64(t, UseUnsafe()); err != nil {
+		return
+	}
+
+	
+	switch {
+	case full && uv:
+		ok = svd.Factorize(mat, matrix.SVDFull)
+	case !full && uv:
+		ok = svd.Factorize(mat, matrix.SVDThin)
+	case full && !uv:
+		// illogical state - if you specify "full", you WANT the UV matrices
+		// error
+		err = errors.Errorf("SVD requires computation of `u` and `v` matrices if `full` was specified.")
+		return
+	default:
+		// by default, we return only the singular values
+		ok = svd.Factorize(mat, matrix.SVDNone)
+	}
+
+	if !ok {
+		// error
+		err = errors.Errorf("Unable to compute SVD")
+		return
+	}
+
+	// extract values
+	var um, vm mat64.Dense
+	s = recycledDense(Float64, Shape{MinInt(t.Shape()[0], t.Shape()[1])})
+	svd.Values(s.Float64s())
+	if uv {
+		um.UFromSVD(&svd)
+		vm.VFromSVD(&svd)
+
+		u = FromMat64(&um, UseUnsafe(), As(t.t))
+		v = FromMat64(&vm, UseUnsafe(), As(t.t))
+	}
+
+	return
 }

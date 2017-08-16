@@ -125,10 +125,7 @@ func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 
 	if ds, ok := e.(DenseStacker); ok {
 		var ret DenseTensor
-		ots := make([]DenseTensor, len(others))
-		for i, ot := range others {
-			ots[i] = ot
-		}
+		ots := densesToDenseTensors(others)
 		if ret, err = ds.StackDense(t, axis, ots...); err != nil {
 			return
 		}
