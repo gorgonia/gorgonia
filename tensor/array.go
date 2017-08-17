@@ -19,11 +19,14 @@ type array struct {
 // makeArray makes an array. The memory allocation is handled by Go
 func makeArray(t Dtype, length int) array {
 	hdr := makeHeader(t, length)
+	hdr.Check()
 	return makeArrayFromHeader(hdr, t)
 }
 
 // makeArrayFromHeader makes an array given a header
 func makeArrayFromHeader(hdr storage.Header, t Dtype) array {
+	hdr.Check()
+
 	// build a type of []T
 	shdr := reflect.SliceHeader{
 		Data: uintptr(hdr.Ptr),
@@ -53,7 +56,7 @@ func arrayFromSlice(x interface{}) array {
 	ptr := xV.Pointer()
 	uptr := unsafe.Pointer(ptr)
 
-	return array{
+	arr := array{
 		Header: storage.Header{
 			Ptr: uptr,
 			L:   xV.Len(),
@@ -62,16 +65,22 @@ func arrayFromSlice(x interface{}) array {
 		t: Dtype{elT},
 		v: x,
 	}
+	arr.Check()
+	return arr
 }
 
 // byteSlice casts the underlying slice into a byte slice. Useful for copying and zeroing, but not much else
 func (a array) byteSlice() []byte {
+	a.Check()
 	return storage.AsByteSlice(&a.Header, a.t.Type)
 }
 
 // sliceInto creates a slice. Instead of returning an array, which would cause a lot of reallocations, sliceInto expects a array to
 // already have been created. This allows repetitive actions to be done without having to have many pointless allocation
 func (a array) sliceInto(i, j int, res *array) {
+	a.Check()
+	res.Check()
+
 	base := uintptr(a.Ptr)
 	c := a.C
 
@@ -97,7 +106,7 @@ func (a array) slice(start, end int) array {
 	}
 	startptr := unsafe.Pointer(uintptr(a.Pointer()) + uintptr(start*size))
 
-	return array{
+	arr := array{
 		Header: storage.Header{
 			Ptr: startptr,
 			L:   end - start + 1,
@@ -105,10 +114,13 @@ func (a array) slice(start, end int) array {
 		},
 		t: a.t,
 	}
+	arr.Check()
+	return arr
 }
 
 // swap swaps the elements i and j in the array
 func (a array) swap(i, j int) {
+	a.Check()
 	if a.t == String {
 		ss := *(*[]string)(a.Ptr)
 		ss[i], ss[j] = ss[j], ss[i]
@@ -117,16 +129,16 @@ func (a array) swap(i, j int) {
 	if !isParameterizedKind(a.t.Kind()) {
 		switch a.t.Size() {
 		case 8:
-			us := *(*[]uint64)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint64)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		case 4:
-			us := *(*[]uint32)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint32)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		case 2:
-			us := *(*[]uint16)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint16)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		case 1:
-			us := *(*[]uint8)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint8)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		}
 		return
@@ -147,19 +159,20 @@ func (a array) swap(i, j int) {
 /* *Array is a Memory */
 
 // Uintptr returns the pointer of the first value of the slab
-func (t array) Uintptr() uintptr { return uintptr(t.Ptr) }
+func (t array) Uintptr() uintptr { t.Check(); return uintptr(t.Ptr) }
 
 // MemSize returns how big the slice is in bytes
-func (t array) MemSize() uintptr { return uintptr(t.L) * t.t.Size() }
+func (t array) MemSize() uintptr { t.Check(); return uintptr(t.L) * t.t.Size() }
 
 // Pointer returns the pointer of the first value of the slab, as an unsafe.Pointer
-func (t array) Pointer() unsafe.Pointer { return t.Ptr }
+func (t array) Pointer() unsafe.Pointer { t.Check(); return t.Ptr }
 
 // Data returns the representation of a slice.
-func (a array) Data() interface{} { return a.v }
+func (a array) Data() interface{} { a.Check(); return a.v }
 
 // Zero zeroes out the underlying array of the *Dense tensor.
 func (a array) Zero() {
+	a.Check()
 	if !isParameterizedKind(a.t.Kind()) {
 		ba := a.byteSlice()
 		for i := range ba {
@@ -183,11 +196,13 @@ func (a array) Zero() {
 	}
 }
 
-func (a array) hdr() *storage.Header { return &a.Header }
+func (a array) hdr() *storage.Header { a.Header.Check(); return &a.Header }
 func (a array) rtype() reflect.Type  { return a.t.Type }
 
 // copyArray copies an array.
 func copyArray(dst, src array) int {
+	src.Check()
+	dst.Check()
 	if dst.t != src.t {
 		panic("Cannot copy arrays of different types.")
 	}
@@ -195,6 +210,8 @@ func copyArray(dst, src array) int {
 }
 
 func copyArraySliced(dst array, dstart, dend int, src array, sstart, send int) int {
+	src.Check()
+	dst.Check()
 	if dst.t != src.t {
 		panic("Cannot copy arrays of different types.")
 	}

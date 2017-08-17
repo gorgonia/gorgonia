@@ -9,15 +9,44 @@ import (
 // With this, we wouldn't need to keep the uintptr.
 // This usually means additional pressure for the GC though, especially when passing around Headers
 type Header struct {
-	Ptr unsafe.Pointer
-	L   int
-	C   int
+	Before [256]byte
+	Ptr    unsafe.Pointer
+	L      int
+	C      int
+	After  [256]byte
 }
 
-func (h *Header) Pointer() unsafe.Pointer { return h.Ptr }
-func (h *Header) Len() int                { return h.L }
+func (h *Header) SlicePtr() unsafe.Pointer { h.Check(); return unsafe.Pointer(&h.Ptr) }
+func (h *Header) Pointer() unsafe.Pointer  { h.Check(); return h.Ptr }
+func (h *Header) Len() int                 { h.Check(); return h.L }
+
+func check(i int) byte { return byte((i + 1) * 125) }
+
+func (h *Header) Check() {
+	if h.Before[0] == 0 {
+		for i := range h.Before {
+			h.Before[i] = check(i)
+			h.After[i] = check(i)
+		}
+	}
+
+	for i, x := range h.Before {
+		if x != check(i) {
+			panic("Before smashed")
+		}
+	}
+
+	for i, x := range h.After {
+		if x != check(i) {
+			panic("After smashed")
+		}
+	}
+}
 
 func Copy(t reflect.Type, dst, src *Header) int {
+	src.Check()
+	dst.Check()
+
 	if dst.L == 0 || src.L == 0 {
 		return 0
 	}
@@ -44,6 +73,9 @@ func Copy(t reflect.Type, dst, src *Header) int {
 }
 
 func CopySliced(t reflect.Type, dst *Header, dstart, dend int, src *Header, sstart, send int) int {
+	src.Check()
+	dst.Check()
+
 	dstBA := AsByteSlice(dst, t)
 	srcBA := AsByteSlice(src, t)
 	size := int(t.Size())
@@ -57,6 +89,9 @@ func CopySliced(t reflect.Type, dst *Header, dstart, dend int, src *Header, ssta
 }
 
 func CopyIter(t reflect.Type, dst, src *Header, diter, siter Iterator) int {
+	src.Check()
+	dst.Check()
+
 	dstBA := AsByteSlice(dst, t)
 	srcBA := AsByteSlice(src, t)
 	size := int(t.Size())
@@ -86,11 +121,12 @@ func CopyIter(t reflect.Type, dst, src *Header, diter, siter Iterator) int {
 }
 
 func AsByteSlice(a *Header, t reflect.Type) []byte {
+	a.Check()
+
 	size := a.L * int(t.Size())
-	hdr := reflect.SliceHeader{
+	return *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
 		Data: uintptr(a.Ptr),
 		Len:  size,
 		Cap:  size,
-	}
-	return *(*[]byte)(unsafe.Pointer(&hdr))
+	}))
 }

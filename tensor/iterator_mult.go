@@ -1,9 +1,5 @@
 package tensor
 
-import (
-	"runtime"
-)
-
 // MultIterator is an iterator that iterates over multiple tensors, including masked tensors.
 //  It utilizes the *AP of a Tensor to determine what the next index is.
 // This data structure is similar to Numpy's flatiter, with some standard Go based restrictions of course
@@ -138,7 +134,7 @@ func MultIteratorFromDense(tts ...DenseTensor) *MultIterator {
 	}
 
 	it := NewMultIterator(aps...)
-	runtime.SetFinalizer(it, destroyIterator)
+	//runtime.SetFinalizer(it, destroyIterator)
 
 	if masked {
 		// create new mask slice if more than tensor is masked

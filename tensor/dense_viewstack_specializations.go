@@ -633,12 +633,12 @@ func (t *Dense) doViewStackF64(retVal *Dense, axisStride, batches int, ch chan i
 	if t.IsMasked() {
 		fmt.Println("do this")
 	}
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("dat %v | %v", data, t.Float64s())
-			log.Printf("%#v", r)
-		}
-	}()
+	//defer func() {
+	//	if r := recover(); r != nil {
+	//		log.Printf("dat %v | %v", data, t.Float64s())
+	//		log.Printf("%#v", r)
+	//	}
+	//}()
 	retIsMasked := t.IsMasked()
 	for _, ot := range others {
 		retIsMasked = retIsMasked || ot.IsMasked()
