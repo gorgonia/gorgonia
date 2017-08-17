@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"log"
-	"runtime"
 	"unsafe"
 )
 
@@ -596,7 +595,7 @@ type FlatMaskedIterator struct {
 // NewFlatMaskedIterator creates a new flat masked iterator
 func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
 	it := new(FlatMaskedIterator)
-	runtime.SetFinalizer(it, destroyIterator)
+	//runtime.SetFinalizer(it, destroyIterator)
 	it.FlatIterator = NewFlatIterator(ap)
 	it.mask = mask
 	return it
@@ -605,7 +604,7 @@ func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
 // FlatMaskedIteratorFromDense creates a new FlatMaskedIterator from dense tensor
 func FlatMaskedIteratorFromDense(tt MaskedTensor) *FlatMaskedIterator {
 	it := new(FlatMaskedIterator)
-	runtime.SetFinalizer(it, destroyIterator)
+	//runtime.SetFinalizer(it, destroyIterator)
 	it.FlatIterator = FlatIteratorFromDense(tt)
 	it.mask = tt.Mask()
 	return it
