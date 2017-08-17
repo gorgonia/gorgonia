@@ -117,16 +117,16 @@ func (a array) swap(i, j int) {
 	if !isParameterizedKind(a.t.Kind()) {
 		switch a.t.Size() {
 		case 8:
-			us := *(*[]uint64)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint64)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		case 4:
-			us := *(*[]uint32)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint32)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		case 2:
-			us := *(*[]uint16)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint16)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		case 1:
-			us := *(*[]uint8)(unsafe.Pointer(&a.Header))
+			us := *(*[]uint8)(a.SlicePtr())
 			us[i], us[j] = us[j], us[i]
 		}
 		return
