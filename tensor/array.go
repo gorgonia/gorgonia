@@ -110,7 +110,7 @@ func (a array) slice(start, end int) array {
 // swap swaps the elements i and j in the array
 func (a array) swap(i, j int) {
 	if a.t == String {
-		ss := *(*[]string)(a.Ptr)
+		ss := *(*[]string)(unsafe.Pointer(&a.Header))
 		ss[i], ss[j] = ss[j], ss[i]
 		return
 	}
