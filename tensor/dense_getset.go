@@ -339,20 +339,6 @@ func (t *Dense) zeroIter() (err error) {
 
 // the method assumes the AP and metadata has already been set and this is simply slicing the values
 func (t *Dense) slice(start, end int) {
-	if !t.IsNativelyAccessible() {
-		t.sliceInaccessible(start, end)
-		return
-	}
-
-	switch t.t.Size() {
-	case 0:
-	case 1:
-	case 2:
-	case 4:
-	case 8:
-	default:
-	}
-
 	switch t.t {
 	case Bool:
 		data := t.Bools()[start:end]
@@ -415,8 +401,4 @@ func (t *Dense) slice(start, end int) {
 		v = v.Slice(start, end)
 		t.fromSlice(v.Interface())
 	}
-}
-
-func (t *Dense) sliceInaccessible(start, end int) {
-
 }

@@ -14,7 +14,7 @@ func (e StdEng) Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Neg failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -98,7 +98,7 @@ func (e StdEng) Inv(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Inv failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -182,7 +182,7 @@ func (e StdEng) Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Square failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -266,7 +266,7 @@ func (e StdEng) Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Cube failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -350,7 +350,7 @@ func (e StdEng) Exp(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Exp failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -434,7 +434,7 @@ func (e StdEng) Tanh(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Tanh failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -518,7 +518,7 @@ func (e StdEng) Log(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Log failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -602,7 +602,7 @@ func (e StdEng) Log2(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Log2 failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -686,7 +686,7 @@ func (e StdEng) Log10(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Log10 failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -770,7 +770,7 @@ func (e StdEng) Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Sqrt failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -854,7 +854,7 @@ func (e StdEng) Cbrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Cbrt failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -938,7 +938,7 @@ func (e StdEng) InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "InvSqrt failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -1022,7 +1022,7 @@ func (e StdEng) Abs(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Abs failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -1106,7 +1106,7 @@ func (e StdEng) Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		err = errors.Wrapf(err, "Sign failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")

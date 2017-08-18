@@ -8,7 +8,7 @@ const prepVVRaw = `if err = binaryCheck(a, b, {{.TypeClassCheck | lower}}Types);
 		return nil, errors.Wrapf(err, "{{.Name}} failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
 	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -31,7 +31,7 @@ const prepMixedRaw = `if err = unaryCheck(t, {{.TypeClassCheck | lower}}Types); 
 		return nil, errors.Wrapf(err, "{{.Name}} failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
 	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -59,7 +59,7 @@ const prepUnaryRaw = `if err = unaryCheck(a, {{.TypeClassCheck | lower}}Types); 
 		err = errors.Wrapf(err, "{{.Name}} failed")
 		return
 	}
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -160,7 +160,7 @@ const agg2BodyRaw = `if useIter {
 const agg2CmpBodyRaw = `
 	if !same && !toReuse{
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 

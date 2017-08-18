@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"reflect"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -85,46 +84,19 @@ func New(opts ...ConsOpt) *Dense {
 	return d
 }
 
-func getDense(t Tensor) (*Dense, error) {
-	if t == nil {
-		return nil, nil
-	}
-
-	if retVal, ok := t.(*Dense); ok {
-		return retVal, nil
-	}
-
-	// TODO: when sparse matrices are created, add a clause here to return early
-	if _, ok := t.(SparseTensor); ok {
-		return nil, errors.Errorf("Sparse Tensor %T is not a Dense Tensor", t)
-	}
-
-	if densor, ok := t.(Densor); ok {
+func getDense(t Tensor) (DenseTensor, error) {
+	switch tt := t.(type) {
+	case DenseTensor:
+		return tt, nil
+	case Densor:
 		return densor.Dense(), nil
+	default:
+		return nil, errors.Errorf("Tensor %T is not a DenseTensor", t)
 	}
-
-	v := reflect.ValueOf(t)
-	tt := reflect.TypeOf(t)
-	var s, zero reflect.Value
-	if tt.Kind() == reflect.Ptr {
-		of := tt.Elem()
-		if of.Kind() != reflect.Struct {
-			return nil, errors.Errorf("Cannot extract *Dense from %v of %T", t, t)
-		}
-		s = v.Elem()
-	} else if tt.Kind() == reflect.Struct {
-		s = v
-	}
-	d := s.FieldByName("Dense")
-	if d != zero {
-		return d.Interface().(*Dense), nil
-	}
-
-	return nil, errors.Errorf(extractionFail, "*Dense", t)
 }
 
 // getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
-func getFloatDense(t Tensor) (retVal *Dense, err error) {
+func getFloatDense(t Tensor) (retVal DenseTensor, err error) {
 	if t == nil {
 		return
 	}
@@ -136,8 +108,8 @@ func getFloatDense(t Tensor) (retVal *Dense, err error) {
 		return
 	}
 
-	if err= typeclassCheck(retVal.t, floatTypes); err != nil {
-		err = errors.Wrapf(err, "getFloatDense only handles floats. Got %v instead", retVal.t)
+	if err = typeclassCheck(retVal.Dtype(), floatTypes); err != nil {
+		err = errors.Wrapf(err, "getFloatDense only handles floats. Got %v instead", retVal.Dtype())
 		return
 	}
 	return

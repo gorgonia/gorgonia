@@ -87,6 +87,8 @@ type DenseTensor interface {
 	arrayer
 	setAP(*AP)
 	rtype() reflect.Type
+	
+	isTransposed() bool
 	ostrides() []int
 	oshape() Shape
 	transposeAxes() []int

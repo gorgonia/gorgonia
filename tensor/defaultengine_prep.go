@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func handleFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse *Dense, safe, toReuse, incr, same bool, err error) {
+func handleFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr, same bool, err error) {
 	fo := ParseFuncOpts(opts...)
 	reuseT, incr := fo.IncrReuse()
 	safe = fo.Safe()
@@ -76,7 +76,7 @@ func unaryCheck(a Tensor, tc *typeclass) error {
 	return nil
 }
 
-func prepDataVV(a, b Tensor, reuse *Dense) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter bool, err error) {
+func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter bool, err error) {
 	// prep actual data
 	switch at := a.(type) {
 	case DenseTensor:
@@ -134,7 +134,7 @@ func prepDataVV(a, b Tensor, reuse *Dense) (dataA, dataB, dataReuse *storage.Hea
 	return
 }
 
-func prepDataVS(a Tensor, b interface{}, reuse *Dense) (dataA, dataB, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
+func prepDataVS(a Tensor, b interface{}, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
 	dataB = scalarToHeader(b)
 	switch at := a.(type) {
 	case DenseTensor:
@@ -157,7 +157,7 @@ func prepDataVS(a Tensor, b interface{}, reuse *Dense) (dataA, dataB, dataReuse 
 	return
 }
 
-func prepDataSV(a interface{}, b Tensor, reuse *Dense) (dataA, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
+func prepDataSV(a interface{}, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
 	dataA = scalarToHeader(a)
 	switch bt := b.(type) {
 	case DenseTensor:
@@ -180,7 +180,7 @@ func prepDataSV(a interface{}, b Tensor, reuse *Dense) (dataA, dataB, dataReuse 
 	return
 }
 
-func prepDataUnary(a Tensor, reuse *Dense) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
+func prepDataUnary(a Tensor, reuse DenseTensor) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
 	switch at := a.(type) {
 	case DenseTensor:
 		dataA = at.hdr()

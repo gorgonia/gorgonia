@@ -14,7 +14,7 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 		return nil, errors.Wrapf(err, "Gt failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -34,7 +34,7 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -87,7 +87,7 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		return nil, errors.Wrapf(err, "Gte failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -107,7 +107,7 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -160,7 +160,7 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 		return nil, errors.Wrapf(err, "Lt failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -180,7 +180,7 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -233,7 +233,7 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		return nil, errors.Wrapf(err, "Lte failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -253,7 +253,7 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -306,7 +306,7 @@ func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 		return nil, errors.Wrapf(err, "Eq failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -326,7 +326,7 @@ func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -379,7 +379,7 @@ func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 		return nil, errors.Wrapf(err, "Ne failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -399,7 +399,7 @@ func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -452,7 +452,7 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		return nil, errors.Wrapf(err, "Gt failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -476,7 +476,7 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -529,7 +529,7 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		return nil, errors.Wrapf(err, "Gte failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -553,7 +553,7 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -606,7 +606,7 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		return nil, errors.Wrapf(err, "Lt failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -630,7 +630,7 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -683,7 +683,7 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		return nil, errors.Wrapf(err, "Lte failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -707,7 +707,7 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -760,7 +760,7 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		return nil, errors.Wrapf(err, "Eq failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -784,7 +784,7 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
@@ -837,7 +837,7 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		return nil, errors.Wrapf(err, "Ne failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, same bool
 	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
@@ -861,7 +861,7 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 
 	if !same && !toReuse {
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
-		dataReuse = reuse.array.hdr()
+		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 

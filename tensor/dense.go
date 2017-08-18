@@ -316,6 +316,8 @@ func (t *Dense) sanity() error {
 	return nil
 }
 
+func (t *Dense) isTransposed() bool { return t.old == nil }
+
 // oshape returns the original shape
 func (t *Dense) oshape() Shape {
 	if t.old != nil {
