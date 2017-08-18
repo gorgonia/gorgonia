@@ -13,7 +13,7 @@ func handleFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse Dense
 	toReuse = reuseT != nil
 
 	if toReuse {
-		if reuse, err = getDense(reuseT); err != nil {
+		if reuse, err = getDenseTensor(reuseT); err != nil {
 			err = errors.Wrapf(err, "Cannot reuse a different type of Tensor in a *Dense-Scalar operation")
 			return
 		}

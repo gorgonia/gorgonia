@@ -148,7 +148,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 				return
 			}
 
-			retVal, err = getDense(ret)
+			retVal, err = assertDense(ret)
 			return
 		case ord.IsInf(1):
 			if ret, err = cloned.Apply(abs); err != nil {
@@ -310,7 +310,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			if ret, err = Sqrt(retVal); err != nil {
 				return
 			}
-			return getDense(ret)
+			return assertDense(ret)
 		case ord.IsNuclear():
 			// svd norm
 			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {

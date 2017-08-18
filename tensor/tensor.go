@@ -84,7 +84,17 @@ func New(opts ...ConsOpt) *Dense {
 	return d
 }
 
-func getDense(t Tensor) (DenseTensor, error) {
+func assertDense(t Tensor) (*Dense, error) {
+	if t == nil {
+		return nil, errors.New("nil is not a *Dense")
+	}
+	if retVal, ok := t.(*Dense); ok {
+		return retVal, nil
+	}
+	return nil, errors.Errorf("%T is not *Dense", t)
+}
+
+func getDenseTensor(t Tensor) (DenseTensor, error) {
 	switch tt := t.(type) {
 	case DenseTensor:
 		return tt, nil
@@ -96,7 +106,7 @@ func getDense(t Tensor) (DenseTensor, error) {
 }
 
 // getFloatDense extracts a *Dense from a Tensor and ensures that the .data is a Array that implements Float
-func getFloatDense(t Tensor) (retVal DenseTensor, err error) {
+func getFloatDenseTensor(t Tensor) (retVal DenseTensor, err error) {
 	if t == nil {
 		return
 	}
@@ -104,8 +114,8 @@ func getFloatDense(t Tensor) (retVal DenseTensor, err error) {
 		err = errors.Wrapf(err, "getFloatDense only handles floats. Got %v instead", t.Dtype())
 		return
 	}
-	
-	if retVal, err = getDense(t); err != nil {
+
+	if retVal, err = getDenseTensor(t); err != nil {
 		err = errors.Wrapf(err, opFail, "getFloatDense")
 		return
 	}

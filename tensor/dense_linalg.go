@@ -198,7 +198,6 @@ func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) 
 	return nil, errors.New("engine does not support Outer")
 }
 
-
 // TensorMul is for multiplying Tensors with more than 2 dimensions.
 //
 // The algorithm is conceptually simple (but tricky to get right):
@@ -355,7 +354,8 @@ func (t *Dense) TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err 
 // handleReuse extracts a *Dense from Tensor, and checks the shape of the reuse Tensor
 func handleReuse(reuse Tensor, expectedShape Shape) (retVal *Dense, err error) {
 	if reuse != nil {
-		if retVal, err = getDense(reuse); err != nil {
+
+		if retVal, err = assertDense(reuse); err != nil {
 			err = errors.Wrapf(err, opFail, "handling reuse")
 			return
 		}

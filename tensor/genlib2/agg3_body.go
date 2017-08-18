@@ -18,8 +18,8 @@ if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
 		err = errors.Wrapf(err, "Unable to do {{.Name}}()")
 		return
 	}
-	if retVal, ok = ret.(*Dense); !ok {
-		err = errors.Errorf("Unable to do {{.Name}} - Expected a %T. Got %T instead", retVal, ret)
+	if retVal, err = assertDense(ret); err != nil {
+		return nil, errors.Wrapf(err, opFail, "{{.Name}}")
 	}
 	return
 }
@@ -40,12 +40,12 @@ const denseArithScalarBodyRaw = `e := t.e
 			err = errors.Wrapf(err, "Unable to do {{.Name}}Scalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do {{.Name}} - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "{{.Name}}Scalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support {{.Name}}()")
+	return nil, errors.Errorf("Engine does not support {{.Name}}Scalar()")
 `
 
 var (

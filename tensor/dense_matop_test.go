@@ -435,7 +435,7 @@ func TestDense_Repeat(t *testing.T) {
 		}
 
 		var D DenseTensor
-		if D, err = getDense(T); err != nil {
+		if D, err = getDenseTensor(T); err != nil {
 			t.Errorf("Expected Repeat to return a *Dense. got %v of %T instead", T, T)
 			continue
 		}

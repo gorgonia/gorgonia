@@ -100,7 +100,7 @@ const prepArithRaw = `func prepBinaryDense(a, b *Dense, opts ...FuncOpt) (reuse 
 	toReuse = reuseT != nil
 
 	if toReuse {
-		if reuse, err = getDense(reuseT); err != nil {
+		if reuse, err = getDenseTensor(reuseT); err != nil {
 			err = errors.Wrapf(err, "Cannot reuse a different type of Tensor in a *Dense-Scalar operation")
 			return
 		}
@@ -132,7 +132,7 @@ func prepUnaryDense(a *Dense, opts ...FuncOpt) (reuse *Dense, safe, toReuse, inc
 	toReuse = reuseT != nil
 
 	if toReuse {
-		if reuse, err = getDense(reuseT); err != nil {
+		if reuse, err = getDenseTensor(reuseT); err != nil {
 			err = errors.Wrapf(err, "Cannot reuse a different type of Tensor in a *Dense-Scalar operation")
 			return
 		}

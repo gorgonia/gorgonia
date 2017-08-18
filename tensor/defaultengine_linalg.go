@@ -129,11 +129,11 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	}
 
 	var a, b DenseTensor
-	if a, err = getFloatDense(x); err != nil {
+	if a, err = getFloatDenseTensor(x); err != nil {
 		err = errors.Wrapf(err, opFail, "Dot")
 		return
 	}
-	if b, err = getFloatDense(y); err != nil {
+	if b, err = getFloatDenseTensor(y); err != nil {
 		err = errors.Wrapf(err, opFail, "Dot")
 		return
 	}
@@ -141,13 +141,13 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	fo := ParseFuncOpts(opts...)
 
 	var reuse, incr DenseTensor
-	if reuse, err = getFloatDense(fo.reuse); err != nil {
+	if reuse, err = getFloatDenseTensor(fo.reuse); err != nil {
 		err = errors.Wrapf(err, opFail, "Dot - reuse")
 		return
 
 	}
 
-	if incr, err = getFloatDense(fo.incr); err != nil {
+	if incr, err = getFloatDenseTensor(fo.incr); err != nil {
 		err = errors.Wrapf(err, opFail, "Dot - incr")
 		return
 	}
@@ -309,7 +309,7 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 	var t *Dense
 	var ok bool
-	if t, ok := a.(*Dense); !ok {
+	if t, ok = a.(*Dense); !ok {
 		return nil, nil, nil, errors.Errorf("StdEng only performs SVDs for DenseTensors. Got %T instead", a)
 	}
 	if !isFloat(t.Dtype()) {
@@ -370,7 +370,7 @@ func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 // Inner is a thin layer over BLAS's D/Sdot.
 func (e StdEng) Inner(t, other Tensor) (retVal interface{}, err error) {
 	var ot DenseTensor
-	if ot, err = getFloatDense(other); err != nil {
+	if ot, err = getFloatDenseTensor(other); err != nil {
 		return nil, errors.Wrapf(err, opFail, "inner")
 	}
 	if ot.Dtype() != t.Dtype() {

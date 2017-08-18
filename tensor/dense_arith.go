@@ -18,8 +18,8 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Add()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Add - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Add")
 		}
 		return
 	}
@@ -38,8 +38,8 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Sub()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Sub - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Sub")
 		}
 		return
 	}
@@ -58,8 +58,8 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Mul()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Mul - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Mul")
 		}
 		return
 	}
@@ -78,8 +78,8 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Div()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Div - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Div")
 		}
 		return
 	}
@@ -98,8 +98,8 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Pow()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Pow - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Pow")
 		}
 		return
 	}
@@ -118,8 +118,8 @@ func (t *Dense) Mod(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Mod()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Mod - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Mod")
 		}
 		return
 	}
@@ -138,12 +138,12 @@ func (t *Dense) AddScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do AddScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Add - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "AddScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Add()")
+	return nil, errors.Errorf("Engine does not support AddScalar()")
 }
 
 func (t *Dense) SubScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -158,12 +158,12 @@ func (t *Dense) SubScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do SubScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Sub - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "SubScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Sub()")
+	return nil, errors.Errorf("Engine does not support SubScalar()")
 }
 
 func (t *Dense) MulScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -178,12 +178,12 @@ func (t *Dense) MulScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do MulScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Mul - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "MulScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Mul()")
+	return nil, errors.Errorf("Engine does not support MulScalar()")
 }
 
 func (t *Dense) DivScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -198,12 +198,12 @@ func (t *Dense) DivScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do DivScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Div - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "DivScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Div()")
+	return nil, errors.Errorf("Engine does not support DivScalar()")
 }
 
 func (t *Dense) PowScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -218,12 +218,12 @@ func (t *Dense) PowScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do PowScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Pow - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "PowScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Pow()")
+	return nil, errors.Errorf("Engine does not support PowScalar()")
 }
 
 func (t *Dense) ModScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -238,10 +238,10 @@ func (t *Dense) ModScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do ModScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Mod - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "ModScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Mod()")
+	return nil, errors.Errorf("Engine does not support ModScalar()")
 }

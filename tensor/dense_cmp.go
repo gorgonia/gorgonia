@@ -18,8 +18,8 @@ func (t *Dense) Gt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Gt()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Gt - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Gt")
 		}
 		return
 	}
@@ -38,8 +38,8 @@ func (t *Dense) Gte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Gte()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Gte - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Gte")
 		}
 		return
 	}
@@ -58,8 +58,8 @@ func (t *Dense) Lt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Lt()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Lt - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Lt")
 		}
 		return
 	}
@@ -78,8 +78,8 @@ func (t *Dense) Lte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Lte()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Lte - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Lte")
 		}
 		return
 	}
@@ -98,8 +98,8 @@ func (t *Dense) ElEq(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Eq()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Eq - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Eq")
 		}
 		return
 	}
@@ -118,8 +118,8 @@ func (t *Dense) ElNe(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 			err = errors.Wrapf(err, "Unable to do Ne()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Ne - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Ne")
 		}
 		return
 	}
@@ -138,12 +138,12 @@ func (t *Dense) GtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 			err = errors.Wrapf(err, "Unable to do GtScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Gt - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "GtScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Gt()")
+	return nil, errors.Errorf("Engine does not support GtScalar()")
 }
 
 func (t *Dense) GteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -158,12 +158,12 @@ func (t *Dense) GteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do GteScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Gte - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "GteScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Gte()")
+	return nil, errors.Errorf("Engine does not support GteScalar()")
 }
 
 func (t *Dense) LtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -178,12 +178,12 @@ func (t *Dense) LtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 			err = errors.Wrapf(err, "Unable to do LtScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Lt - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "LtScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Lt()")
+	return nil, errors.Errorf("Engine does not support LtScalar()")
 }
 
 func (t *Dense) LteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -198,12 +198,12 @@ func (t *Dense) LteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 			err = errors.Wrapf(err, "Unable to do LteScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Lte - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "LteScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Lte()")
+	return nil, errors.Errorf("Engine does not support LteScalar()")
 }
 
 func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -218,12 +218,12 @@ func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 			err = errors.Wrapf(err, "Unable to do EqScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Eq - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "EqScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Eq()")
+	return nil, errors.Errorf("Engine does not support EqScalar()")
 }
 
 func (t *Dense) ElNeScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
@@ -238,10 +238,10 @@ func (t *Dense) ElNeScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 			err = errors.Wrapf(err, "Unable to do NeScalar()")
 			return
 		}
-		if retVal, ok = ret.(*Dense); !ok {
-			err = errors.Errorf("Unable to do Ne - Expected a %T. Got %T instead", retVal, ret)
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "NeScalar")
 		}
 		return
 	}
-	return nil, errors.Errorf("Engine does not support Ne()")
+	return nil, errors.Errorf("Engine does not support NeScalar()")
 }
