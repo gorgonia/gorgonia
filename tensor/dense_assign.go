@@ -2,19 +2,20 @@ package tensor
 
 import "github.com/pkg/errors"
 
-func overlaps(a, b *Dense) bool {
+func overlaps(a, b DenseTensor) bool {
 	if a.cap() == 0 || b.cap() == 0 {
 		return false
 	}
-
-	if a.array.Ptr == b.array.Ptr {
+	aarr := a.arr()
+	barr := b.arr()
+	if aarr.Ptr == barr.Ptr {
 		return true
 	}
-	aptr := uintptr(a.array.Ptr)
-	bptr := uintptr(b.array.Ptr)
+	aptr := uintptr(aarr.Ptr)
+	bptr := uintptr(barr.Ptr)
 
-	capA := aptr + uintptr(a.array.C)*a.t.Size()
-	capB := bptr + uintptr(b.array.C)*b.t.Size()
+	capA := aptr + uintptr(aarr.C)*a.Dtype().Size()
+	capB := bptr + uintptr(barr.C)*b.Dtype().Size()
 
 	switch {
 	case aptr < bptr:
@@ -29,7 +30,7 @@ func overlaps(a, b *Dense) bool {
 	return false
 }
 
-func assignArray(dest, src *Dense) (err error) {
+func assignArray(dest, src DenseTensor) (err error) {
 	// var copiedSrc bool
 
 	if src.IsScalar() {
@@ -82,9 +83,9 @@ func assignArray(dest, src *Dense) (err error) {
 		err = errors.Wrapf(err, "BroadcastStrides failed")
 		return
 	}
-	dap := dest.AP
+	dap := dest.Info()
 	sap := NewAP(tmpShape, newStrides)
-	sap.o = src.AP.o
+	sap.o = src.Info().o
 
 	diter := NewFlatIterator(dap)
 	siter := NewFlatIterator(sap)

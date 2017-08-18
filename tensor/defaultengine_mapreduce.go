@@ -14,7 +14,7 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 		return
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, _, incr bool
 	if reuse, safe, _, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return
@@ -24,9 +24,9 @@ func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, e
 		// create reuse
 		if v, ok := a.(View); ok {
 			if v.IsMaterializable() {
-				reuse = v.Materialize().(*Dense)
+				reuse = v.Materialize().(DenseTensor)
 			} else {
-				reuse = v.Clone().(*Dense)
+				reuse = v.Clone().(DenseTensor)
 			}
 		} else {
 			reuse = New(Of(a.Dtype()), WithShape(a.Shape().Clone()...))
@@ -90,7 +90,7 @@ func (e StdEng) Reduce(fn interface{}, a Tensor, axis int, defaultValue interfac
 	if !a.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, a)
 	}
-	var at, reuse *Dense
+	var at, reuse DenseTensor
 	var dataA, dataReuse *storage.Header
 	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
 		err = errors.Wrap(err, "Prep Reduce failed")
@@ -135,7 +135,7 @@ func (e StdEng) OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, 
 		return nil, errors.Errorf(inaccessibleData, a)
 	}
 
-	var at, reuse *Dense
+	var at, reuse DenseTensor
 	var dataA, dataReuse *storage.Header
 	if at, reuse, dataA, dataReuse, err = e.prepReduce(a, axis, opts...); err != nil {
 		err = errors.Wrap(err, "Prep Reduce failed")
@@ -315,7 +315,7 @@ func (e StdEng) Max(a Tensor, along ...int) (retVal Tensor, err error) {
 	}
 }
 
-func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse *Dense, dataA, dataReuse *storage.Header, err error) {
+func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse DenseTensor, dataA, dataReuse *storage.Header, err error) {
 	if axis >= a.Dims() {
 		err = errors.Errorf(dimMismatch, axis, a.Dims())
 		return
@@ -366,7 +366,7 @@ func (StdEng) prepReduce(a Tensor, axis int, opts ...FuncOpt) (at, reuse *Dense,
 	}
 
 	var ok bool
-	if at, ok = a.(*Dense); !ok || useIter {
+	if at, ok = a.(DenseTensor); !ok || useIter {
 		err = errors.Errorf("Reduce does not (yet) support iterable tensors")
 		return
 	}

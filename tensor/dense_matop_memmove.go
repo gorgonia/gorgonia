@@ -76,8 +76,12 @@ func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 		e = StdEng{}
 	}
 	if c, ok := e.(Concater); ok {
+		var ret Tensor
 		others := densesToTensors(Ts)
-		return c.Concat(t, axis, others...)
+		if ret, err = c.Concat(t, axis, others...); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Concat")
+		}
+		return ret.(*Dense), nil
 	}
 	return nil, errors.New("Engine does not support Concat")
 }

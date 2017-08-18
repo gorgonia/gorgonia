@@ -18,8 +18,8 @@ func handleFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse Dense
 			return
 		}
 
-		if reuse.t.Kind() != expType.Kind() {
-			err = errors.Errorf(typeMismatch, expType, reuse.t)
+		if reuse.Dtype() != expType {
+			err = errors.Errorf(typeMismatch, expType, reuse.Dtype())
 			err = errors.Wrapf(err, "Cannot use reuse")
 			return
 		}

@@ -89,7 +89,7 @@ func getDense(t Tensor) (DenseTensor, error) {
 	case DenseTensor:
 		return tt, nil
 	case Densor:
-		return densor.Dense(), nil
+		return tt.Dense(), nil
 	default:
 		return nil, errors.Errorf("Tensor %T is not a DenseTensor", t)
 	}
@@ -100,6 +100,11 @@ func getFloatDense(t Tensor) (retVal DenseTensor, err error) {
 	if t == nil {
 		return
 	}
+	if err = typeclassCheck(t.Dtype(), floatTypes); err != nil {
+		err = errors.Wrapf(err, "getFloatDense only handles floats. Got %v instead", t.Dtype())
+		return
+	}
+	
 	if retVal, err = getDense(t); err != nil {
 		err = errors.Wrapf(err, opFail, "getFloatDense")
 		return
@@ -108,10 +113,6 @@ func getFloatDense(t Tensor) (retVal DenseTensor, err error) {
 		return
 	}
 
-	if err = typeclassCheck(retVal.Dtype(), floatTypes); err != nil {
-		err = errors.Wrapf(err, "getFloatDense only handles floats. Got %v instead", retVal.Dtype())
-		return
-	}
 	return
 }
 

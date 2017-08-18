@@ -331,7 +331,7 @@ func SliceDetails(s Slice, size int) (start, end, step int, err error) {
 }
 
 // reuseDenseCheck checks a reuse tensor, and reshapes it to be the correct one
-func reuseDenseCheck(reuse *Dense, as *Dense) (err error) {
+func reuseDenseCheck(reuse DenseTensor, as DenseTensor) (err error) {
 	if reuse.DataSize() != as.Size() {
 		err = errors.Errorf("Reused Tensor %p does not have expected shape %v. Got %v instead. Reuse Size: %v, as Size %v (real: %d)", reuse, as.Shape(), reuse.Shape(), reuse.DataSize(), as.Size(), as.DataSize())
 		return
@@ -341,7 +341,7 @@ func reuseDenseCheck(reuse *Dense, as *Dense) (err error) {
 }
 
 // reuseCheckShape  checks the shape and reshapes it to be correct if the size fits but the shape doesn't.
-func reuseCheckShape(reuse *Dense, s Shape) (err error) {
+func reuseCheckShape(reuse DenseTensor, s Shape) (err error) {
 	throw := BorrowInts(len(s))
 	copy(throw, s)
 
@@ -351,17 +351,17 @@ func reuseCheckShape(reuse *Dense, s Shape) (err error) {
 	}
 
 	// clean up any funny things that may be in the reuse
-	if reuse.old != nil {
-		ReturnAP(reuse.old)
-		reuse.old = nil
+	if oldAP :=  reuse.oldAP(); oldAP != nil {
+		ReturnAP(oldAP)
+		reuse.setOldAP(nil)
 	}
 
-	if reuse.transposeWith != nil {
-		ReturnInts(reuse.transposeWith)
+	if axes := reuse.transposeAxes(); axes != nil {
+		ReturnInts(axes)
 	}
 
-	if reuse.viewOf != nil {
-		reuse.viewOf = nil
+	if viewOf := reuse.parentTensor(); viewOf != nil {
+		reuse.setParentTensor(nil)
 	}
 	return nil
 }

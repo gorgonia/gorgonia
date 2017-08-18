@@ -85,15 +85,27 @@ type DenseTensor interface {
 
 	headerer
 	arrayer
+	unsafeMem
 	setAP(*AP)
 	rtype() reflect.Type
-	
+	reshape(dims ...int) error
+
 	isTransposed() bool
 	ostrides() []int
 	oshape() Shape
 	transposeAxes() []int
 	transposeIndex(i int, transposePat, strides []int) int
+	oldAP() *AP
+	setOldAP(ap *AP)
+	parentTensor() *Dense
+	setParentTensor(*Dense)
 	len() int
+
+	// operations
+	Inner(other Tensor) (retVal *Dense, err error)
+	MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
+	MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
+	TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err error)
 }
 
 type SparseTensor interface {
@@ -124,4 +136,10 @@ type headerer interface {
 
 type arrayer interface {
 	arr() array
+}
+
+type unsafeMem interface {
+	Set(i int, x interface{})
+	GetF64(i int) float64
+	GetF32(i int) float32
 }

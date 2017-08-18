@@ -10,7 +10,7 @@ func (e StdEng) Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal T
 		return nil, errors.Wrap(err, "Clamp failed")
 	}
 
-	var reuse *Dense
+	var reuse DenseTensor
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")

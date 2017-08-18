@@ -333,8 +333,6 @@ func (t *Dense) ostrides() []int {
 	return t.Strides()
 }
 
-func (t *Dense) transposeAxes() []int { return t.transposeWith }
-
 // Shallow clone clones the *Dense without making a copy of the underlying array
 func (t *Dense) shallowClone() *Dense {
 	retVal := new(Dense)
@@ -343,6 +341,12 @@ func (t *Dense) shallowClone() *Dense {
 	retVal.array = t.array
 	return retVal
 }
+
+func (t *Dense) oldAP() *AP               { return t.old }
+func (t *Dense) setOldAP(ap *AP)          { t.old = ap }
+func (t *Dense) transposeAxes() []int     { return t.transposeWith }
+func (t *Dense) parentTensor() *Dense     { return t.viewOf }
+func (t *Dense) setParentTensor(d *Dense) { t.viewOf = d }
 
 /* ------ Mask operations */
 
