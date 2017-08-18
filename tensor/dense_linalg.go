@@ -1,9 +1,6 @@
 package tensor
 
 import (
-	"reflect"
-
-	"github.com/gonum/blas"
 	"github.com/pkg/errors"
 )
 
@@ -24,53 +21,34 @@ func (t *Dense) Trace() (retVal interface{}, err error) {
 func (t *Dense) Inner(other Tensor) (retVal *Dense, err error) {
 	// check that the data is a float
 	if !isFloat(t.t) {
-		err = errors.Errorf(unsupportedDtype, t.t, "Inner")
-		return
+		return nil, errors.Errorf(unsupportedDtype, t.t, "Inner")
 	}
 
 	// check both are vectors
 	if !t.Shape().IsVector() || !other.Shape().IsVector() {
-		err = errors.Errorf("Inner only works when there are two vectors. t's Shape: %v; other's Shape %v", t.Shape(), other.Shape())
-		return
+		return nil, errors.Errorf("Inner only works when there are two vectors. t's Shape: %v; other's Shape %v", t.Shape(), other.Shape())
 	}
 
 	// we do this check instead of the more common t.Shape()[1] != other.Shape()[0],
 	// basically to ensure a similarity with numpy's dot and vectors.
 	if t.len() != other.DataSize() {
-		err = errors.Errorf(shapeMismatch, t.Shape(), other.Shape())
-		return
+		return nil, errors.Errorf(shapeMismatch, t.Shape(), other.Shape())
 	}
 
-	return t.inner(other)
-}
-
-// inner is a thin layer over BLAS's Ddot.
-// There is a slight difference in terms of API (you'll note that inner() returns a tensor and error)
-// This is because the actual result of a  dot product is a scalar.
-func (t *Dense) inner(other Tensor) (retVal *Dense, err error) {
-	var ot *Dense
-	if ot, err = getFloatDense(other); err != nil {
-		err = errors.Wrapf(err, opFail, "inner")
-		return
-	}
-	if ot.t.Kind() != t.t.Kind() {
-		err = errors.Errorf(typeMismatch, t.t, ot.t)
-		return
+	e := t.e
+	if e == nil {
+		e = StdEng{}
 	}
 
-	switch t.t.Kind() {
-	case reflect.Float32:
-		a := t.Float32s()
-		b := ot.Float32s()
-		ret := whichblas.Sdot(t.len(), a, 1, b, 1)
+	if ip, ok := e.(InnerProder); ok {
+		var ret interface{}
+		if ret, err = ip.Inner(t, other); err != nil {
+			return nil, errors.Wrap(err, "Failed to perform Inner()")
+		}
 		retVal = New(FromScalar(ret))
-	case reflect.Float64:
-		a := t.Float64s()
-		b := ot.Float64s()
-		ret := whichblas.Ddot(t.len(), a, 1, b, 1)
-		retVal = New(FromScalar(ret))
+		return
 	}
-	return
+	return nil, errors.Errorf("Engine does not support Inner()")
 }
 
 // MatVecMul performs a matrix-vector multiplication.
@@ -118,71 +96,18 @@ func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err err
 		retVal = recycledDense(t.t, expectedShape)
 	}
 
-	var od *Dense
-	if od, err = getFloatDense(other); err != nil {
-		err = errors.Wrapf(err, typeNYI, "MatVecMul", other)
-		return
+	e := t.e
+	if e == nil {
+		e = StdEng{}
 	}
 
-	if err = t.matVecMul(od, retVal); err != nil {
-		return
+	if mvm, ok := e.(MatVecMuler); ok {
+		if err = mvm.MatVecMul(t, other, retVal); err != nil {
+			return nil, errors.Wrapf(err, opFail, "MatVecMul")
+		}
+		return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
 	}
-
-	return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
-}
-
-// matVecMul is a thin layer over BLAS' DGEMV
-// Because DGEMV computes:
-// 		y = αA * x + βy
-// we set beta to 0, so we don't have to manually zero out the reused/retval tensor data
-func (t *Dense) matVecMul(other *Dense, retVal *Dense) (err error) {
-	// we use the pre-transpose shpes and strides, because BLAS handles the rest
-	m := t.oshape()[0]
-	n := t.oshape()[1]
-
-	tA := blas.NoTrans
-	if t.old != nil {
-		tA = blas.Trans
-	}
-	lda := t.ostrides()[0]
-	incX, incY := 1, 1 // step size
-
-	switch A := t.Data().(type) {
-	case []float64:
-		var x, y []float64
-		var ok bool
-		if x, ok = other.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, A, x)
-			return
-		}
-
-		if y, ok = retVal.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, A, y)
-			return
-		}
-
-		alpha, beta := float64(1), float64(0)
-		whichblas.Dgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
-	case []float32:
-		var x, y []float32
-		var ok bool
-		if x, ok = other.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, A, x)
-			return
-		}
-
-		if y, ok = retVal.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, A, y)
-			return
-		}
-
-		alpha, beta := float32(1), float32(0)
-		whichblas.Sgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
-	default:
-		return errors.Errorf(typeNYI, "matVecMul", other.Data())
-	}
-
-	return nil
+	return nil, errors.New("engine does not support MatVecMul")
 }
 
 // MatMul is the basic matrix multiplication that you learned in high school. It takes an optional reuse ndarray, where the ndarray is reused as the result.
@@ -219,77 +144,19 @@ func (t *Dense) MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 		retVal = recycledDense(t.t, expectedShape)
 	}
 
-	var od *Dense
-	if od, err = getFloatDense(other); err != nil {
-		err = errors.Wrapf(err, typeNYI, "MatMul", other)
-		return
+	e := t.e
+	if e == nil {
+		e = StdEng{}
 	}
 
-	if err = t.matMul(od, retVal); err != nil {
-		return
-	}
-
-	return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
-}
-
-// matMul is a thin layer over DGEMM.
-// DGEMM computes:
-//		C = αA * B +  βC
-// To prevent needless zeroing out of the slice, we just set β to 0
-func (t *Dense) matMul(other, retVal *Dense) (err error) {
-	tA, tB := blas.NoTrans, blas.NoTrans
-	if t.old != nil {
-		tA = blas.Trans
-	}
-
-	if other.old != nil {
-		tB = blas.Trans
-	}
-
-	var m, n, k int
-	m = t.Shape()[0]
-	k = t.Shape()[1]
-	n = other.Shape()[1]
-
-	// wrt the strides, we use the original strides, because that's what BLAS needs, instead of calling .Strides()
-	lda := t.ostrides()[0]
-	ldb := other.ostrides()[0]
-	ldc := retVal.ostrides()[0]
-
-	var ok bool
-	switch a := t.Data().(type) {
-	case []float64:
-		var b, c []float64
-		if b, ok = other.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, a, b)
+	if mm, ok := e.(MatMuler); ok {
+		if err = mm.MatMul(t, other, retVal); err != nil {
 			return
 		}
-
-		if c, ok = retVal.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, a, c)
-			return
-		}
-
-		alpha, beta := float64(1), float64(0)
-		whichblas.Dgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-	case []float32:
-		var b, c []float32
-		if b, ok = other.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, a, b)
-			return
-		}
-
-		if c, ok = retVal.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, a, c)
-			return
-		}
-
-		alpha, beta := float32(1), float32(0)
-		whichblas.Sgemm(tA, tB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
-	default:
-		return errors.Errorf(typeNYI, "matVecMul", other.Data())
+		return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
 	}
-	return
+
+	return nil, errors.New("engine does not support MatMul")
 }
 
 // Outer finds the outer product of two vectors
@@ -316,65 +183,21 @@ func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) 
 		retVal = recycledDense(t.t, expectedShape)
 	}
 
-	var od *Dense
-	if od, err = getFloatDense(other); err != nil {
-		err = errors.Wrapf(err, typeNYI, "Outer", other)
-		return
+	e := t.e
+	if e == nil {
+		e = StdEng{}
 	}
-
 	// DGER does not have any beta. So the values have to be zeroed first if the tensor is to be reused
 	retVal.Zero()
-	if err = t.outer(od, retVal); err != nil {
-		return
+	if op, ok := e.(OuterProder); ok {
+		if err = op.Outer(t, other, retVal); err != nil {
+			return nil, errors.Wrapf(err, opFail, "engine.uter")
+		}
+		return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
 	}
-	return handleIncr(retVal, fo.Reuse(), fo.Incr(), expectedShape)
+	return nil, errors.New("engine does not support Outer")
 }
 
-func (t *Dense) outer(other, retVal *Dense) (err error) {
-	m := t.Size()
-	n := other.Size()
-
-	// the stride of a Vector is always going to be [1],
-	// incX := t.Strides()[0]
-	// incY := other.Strides()[0]
-	incX, incY := 1, 1
-	lda := retVal.Strides()[0]
-
-	var ok bool
-	switch x := t.Data().(type) {
-	case []float64:
-		var y, A []float64
-		if y, ok = other.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, x, y)
-			return
-		}
-
-		if A, ok = retVal.Data().([]float64); !ok {
-			err = errors.Errorf(dtypeMismatch, x, A)
-			return
-		}
-
-		alpha := float64(1)
-		whichblas.Dger(m, n, alpha, x, incX, y, incY, A, lda)
-	case []float32:
-		var y, A []float32
-		if y, ok = other.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, x, y)
-			return
-		}
-
-		if A, ok = retVal.Data().([]float32); !ok {
-			err = errors.Errorf(dtypeMismatch, x, A)
-			return
-		}
-
-		alpha := float32(1)
-		whichblas.Sger(m, n, alpha, x, incX, y, incY, A, lda)
-	default:
-		return errors.Errorf(typeNYI, "outer", other.Data())
-	}
-	return
-}
 
 // TensorMul is for multiplying Tensors with more than 2 dimensions.
 //

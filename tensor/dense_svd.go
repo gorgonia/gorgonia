@@ -1,8 +1,6 @@
 package tensor
 
 import (
-	"github.com/gonum/matrix"
-	"github.com/gonum/matrix/mat64"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +15,7 @@ func (t *Dense) SVD(uv, full bool) (s, u, v *Dense, err error) {
 	}
 	if svder, ok := e.(SVDer); ok {
 		var sT, uT, vT Tensor
-		if sT, uT, vT, er = svder.SVD(t, uv, full);err != nil {
+		if sT, uT, vT, err = svder.SVD(t, uv, full); err != nil {
 			return nil, nil, nil, errors.Wrap(err, "Error while performing *Dense.SVD")
 		}
 		return sT.(*Dense), uT.(*Dense), vT.(*Dense), nil

@@ -3,6 +3,9 @@ package tensor
 import (
 	"reflect"
 
+	"github.com/gonum/blas"
+	"github.com/gonum/matrix"
+	"github.com/gonum/matrix/mat64"
 	"github.com/pkg/errors"
 )
 
@@ -125,7 +128,7 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		return
 	}
 
-	var a, b *Dense
+	var a, b DenseTensor
 	if a, err = getFloatDense(x); err != nil {
 		err = errors.Wrapf(err, opFail, "Dot")
 		return
@@ -137,7 +140,7 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 
 	fo := ParseFuncOpts(opts...)
 
-	var reuse, incr *Dense
+	var reuse, incr DenseTensor
 	if reuse, err = getFloatDense(fo.reuse); err != nil {
 		err = errors.Wrapf(err, opFail, "Dot - reuse")
 		return
@@ -152,7 +155,7 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case a.IsScalar() && b.IsScalar():
 		var res interface{}
-		switch a.t.Kind() {
+		switch a.Dtype().Kind() {
 		case reflect.Float64:
 			res = a.GetF64(0) * b.GetF64(0)
 		case reflect.Float32:
@@ -207,7 +210,11 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 				err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
 				return
 			}
-			return a.inner(b)
+			var ret interface{}
+			if ret, err = e.Inner(a, b); err != nil {
+				return nil, errors.Wrapf(err, opFail, "Dot")
+			}
+			return New(FromScalar(ret)), nil
 		case b.IsMatrix():
 			b.T()
 			defer b.UT()
@@ -283,8 +290,8 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 
 	if reuse != nil {
 		copyDense(reuse, rd)
-		ReturnAP(reuse.AP)
-		reuse.AP = rd.AP.Clone()
+		ReturnAP(reuse.Info())
+		reuse.setAP(rd.Info().Clone())
 		defer ReturnTensor(rd)
 		// swap out the underlying data and metadata
 		// reuse.data, rd.data = rd.data, reuse.data
@@ -299,7 +306,7 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // TODO: make it take DenseTensor
-func (e StdEng) SVD(a Tensor, uv, full bool)(s, u, v Tensor, err error) {
+func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 	var t *Dense
 	var ok bool
 	if t, ok := a.(*Dense); !ok {
@@ -319,12 +326,11 @@ func (e StdEng) SVD(a Tensor, uv, full bool)(s, u, v Tensor, err error) {
 
 	var mat *mat64.Dense
 	var svd mat64.SVD
-	var ok bool
+
 	if mat, err = ToMat64(t, UseUnsafe()); err != nil {
 		return
 	}
 
-	
 	switch {
 	case full && uv:
 		ok = svd.Factorize(mat, matrix.SVDFull)
@@ -349,7 +355,7 @@ func (e StdEng) SVD(a Tensor, uv, full bool)(s, u, v Tensor, err error) {
 	// extract values
 	var um, vm mat64.Dense
 	s = recycledDense(Float64, Shape{MinInt(t.Shape()[0], t.Shape()[1])})
-	svd.Values(s.Float64s())
+	svd.Values(s.Data().([]float64))
 	if uv {
 		um.UFromSVD(&svd)
 		vm.VFromSVD(&svd)
@@ -359,4 +365,202 @@ func (e StdEng) SVD(a Tensor, uv, full bool)(s, u, v Tensor, err error) {
 	}
 
 	return
+}
+
+// Inner is a thin layer over BLAS's D/Sdot.
+func (e StdEng) Inner(t, other Tensor) (retVal interface{}, err error) {
+	var ot DenseTensor
+	if ot, err = getFloatDense(other); err != nil {
+		return nil, errors.Wrapf(err, opFail, "inner")
+	}
+	if ot.Dtype() != t.Dtype() {
+		return nil, errors.Errorf(typeMismatch, t.Dtype(), ot.Dtype())
+	}
+
+	switch a := t.Data().(type) {
+	case []float32:
+		b := ot.hdr().Float32s()
+		retVal = whichblas.Sdot(len(a), a, 1, b, 1)
+	case []float64:
+		b := ot.hdr().Float64s()
+		retVal = whichblas.Ddot(len(a), a, 1, b, 1)
+	}
+	return
+}
+
+// MatVecMul is a thin layer over BLAS' DGEMV
+// Because DGEMV computes:
+// 		y = αA * x + βy
+// we set beta to 0, so we don't have to manually zero out the reused/retval tensor data
+func (e StdEng) MatVecMul(a, b, prealloc Tensor) error {
+	// check all are DenseTensors
+	var ad, bd, pd DenseTensor
+	var ok bool
+	if ad, ok = a.(DenseTensor); !ok {
+		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. a is not a %T", a)
+	}
+
+	if bd, ok = b.(DenseTensor); !ok {
+		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. b is not a %T", b)
+	}
+
+	if pd, ok = prealloc.(DenseTensor); !ok {
+		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. prealloc is not a %T", prealloc)
+	}
+
+	m := ad.oshape()[0]
+	n := ad.oshape()[1]
+
+	tA := blas.NoTrans
+	if ad.isTransposed() {
+		tA = blas.Trans
+	}
+	lda := ad.ostrides()[0]
+	incX, incY := 1, 1 // step size
+
+	switch A := ad.Data().(type) {
+	case []float64:
+		var x, y []float64
+		var ok bool
+		if x, ok = bd.Data().([]float64); !ok {
+			return errors.Errorf(dtypeMismatch, A, x)
+		}
+
+		if y, ok = pd.Data().([]float64); !ok {
+			return errors.Errorf(dtypeMismatch, A, y)
+		}
+
+		alpha, beta := float64(1), float64(0)
+		whichblas.Dgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
+	case []float32:
+		var x, y []float32
+		var ok bool
+		if x, ok = bd.Data().([]float32); !ok {
+			return errors.Errorf(dtypeMismatch, A, x)
+		}
+
+		if y, ok = pd.Data().([]float32); !ok {
+			return errors.Errorf(dtypeMismatch, A, y)
+		}
+
+		alpha, beta := float32(1), float32(0)
+		whichblas.Sgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
+	default:
+		return errors.Errorf(typeNYI, "matVecMul", bd.Data())
+	}
+
+	return nil
+}
+
+// MatMul is a thin layer over DGEMM.
+// DGEMM computes:
+//		C = αA * B +  βC
+// To prevent needless zeroing out of the slice, we just set β to 0
+func (e StdEng) MatMul(a, b, prealloc Tensor) (err error) {
+	// check all are DenseTensors
+	var ad, bd, pd DenseTensor
+	var ok bool
+	if ad, ok = a.(DenseTensor); !ok {
+		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. a is not a %T", a)
+	}
+
+	if bd, ok = b.(DenseTensor); !ok {
+		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. b is not a %T", b)
+	}
+
+	if pd, ok = prealloc.(DenseTensor); !ok {
+		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. prealloc is not a %T", prealloc)
+	}
+
+	tA, tB := blas.NoTrans, blas.NoTrans
+	if ad.oldAP() != nil {
+		tA = blas.Trans
+	}
+
+	if bd.oldAP() != nil {
+		tB = blas.Trans
+	}
+
+	var m, n, k int
+	m = ad.Shape()[0]
+	k = ad.Shape()[1]
+	n = bd.Shape()[1]
+
+	// wrt the strides, we use the original strides, because that's what BLAS needs, instead of calling .Strides()
+	lda := ad.ostrides()[0]
+	ldb := bd.ostrides()[0]
+	ldc := pd.ostrides()[0]
+
+	switch A := ad.Data().(type) {
+	case []float64:
+		var B, C []float64
+		if B, ok = bd.Data().([]float64); !ok {
+			return errors.Errorf(dtypeMismatch, A, B)
+		}
+
+		if C, ok = pd.Data().([]float64); !ok {
+			return errors.Errorf(dtypeMismatch, A, C)
+		}
+
+		alpha, beta := float64(1), float64(0)
+		whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
+	case []float32:
+		var B, C []float32
+		if B, ok = bd.Data().([]float32); !ok {
+			return errors.Errorf(dtypeMismatch, A, B)
+		}
+
+		if C, ok = pd.Data().([]float32); !ok {
+			return errors.Errorf(dtypeMismatch, A, C)
+		}
+
+		alpha, beta := float32(1), float32(0)
+		whichblas.Sgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
+	default:
+		return errors.Errorf(typeNYI, "matVecMul", bd.Data())
+	}
+	return
+}
+
+// Outer is a thin wrapper over S/Dger
+func (e StdEng) Outer(a, b, prealloc Tensor) error {
+	m := a.Size()
+	n := b.Size()
+
+	// the stride of a Vector is always going to be [1],
+	// incX := t.Strides()[0]
+	// incY := other.Strides()[0]
+	incX, incY := 1, 1
+	lda := prealloc.Strides()[0]
+
+	var ok bool
+	switch x := a.Data().(type) {
+	case []float64:
+		var y, A []float64
+		if y, ok = b.Data().([]float64); !ok {
+			return errors.Errorf(dtypeMismatch, x, y)
+		}
+
+		if A, ok = prealloc.Data().([]float64); !ok {
+			return errors.Errorf(dtypeMismatch, x, A)
+		}
+
+		alpha := float64(1)
+		whichblas.Dger(m, n, alpha, x, incX, y, incY, A, lda)
+	case []float32:
+		var y, A []float32
+		if y, ok = b.Data().([]float32); !ok {
+			return errors.Errorf(dtypeMismatch, x, y)
+		}
+
+		if A, ok = prealloc.Data().([]float32); !ok {
+			return errors.Errorf(dtypeMismatch, x, A)
+		}
+
+		alpha := float32(1)
+		whichblas.Sger(m, n, alpha, x, incX, y, incY, A, lda)
+	default:
+		return errors.Errorf(typeNYI, "outer", b.Data())
+	}
+	return nil
 }

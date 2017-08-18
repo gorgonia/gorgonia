@@ -100,6 +100,7 @@ type DenseTensor interface {
 	parentTensor() *Dense
 	setParentTensor(*Dense)
 	len() int
+	cap() int
 
 	// operations
 	Inner(other Tensor) (retVal *Dense, err error)
