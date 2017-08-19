@@ -113,6 +113,9 @@ type EngineCmp struct {
 func (fn *EngineCmp) methName() string {
 	switch {
 	case fn.VV:
+		if fn.Name == "Eq" || fn.Name == "Ne" {
+			return "El" + fn.Name
+		}
 		return fn.Name
 	default:
 		return fn.Name + "Scalar"

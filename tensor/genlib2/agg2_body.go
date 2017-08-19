@@ -4,15 +4,16 @@ import "text/template"
 
 // level 2 aggregation (tensor.StdEng) templates
 
-const cmpPrepRaw = `
-	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts({{.VecVar}}.Shape(), {{.VecVar}}.Dtype(), false, opts...); err != nil{
+const cmpPrepRaw = `var safe, same bool
+	if reuse, safe, _, _, same, err = handleFuncOpts({{.VecVar}}.Shape(), {{.VecVar}}.Dtype(), false, opts...); err != nil{
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if !safe {
+		same = true
 	}
 `
 
-const arithPrepRaw = `
-	var safe, toReuse, incr bool
+const arithPrepRaw = `var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts({{.VecVar}}.Shape(), {{.VecVar}}.Dtype(), true, opts...); err != nil{
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}	
@@ -23,7 +24,7 @@ const prepVVRaw = `if err = binaryCheck(a, b, {{.TypeClassCheck | lower}}Types);
 	}
 
 	var reuse DenseTensor
-	{{template "prep" .}}
+	{{template "prep" . -}}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
@@ -43,7 +44,7 @@ const prepMixedRaw = `if err = unaryCheck(t, {{.TypeClassCheck | lower}}Types); 
 	}
 
 	var reuse DenseTensor
-	{{template "prep" .}}
+	{{template "prep" . -}}
 
 	a := t
 	typ := t.Dtype().Type
@@ -88,7 +89,7 @@ const agg2BodyRaw = `if useIter {
 		case incr:
 			err = e.E.{{.Name}}IterIncr(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
-		{{if .VV -}}
+		{{if .VV -}}	
 		case toReuse:
 			storage.CopyIter(typ,dataReuse, dataA, iit, ait)
 			ait.Reset()
@@ -165,53 +166,46 @@ const agg2BodyRaw = `if useIter {
 	return
 `
 
-const agg2CmpBodyRaw = `
-	if !same && !toReuse{
-		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
+const agg2CmpBodyRaw = `// check to see if anything needs to be created
+	switch {
+	case same && safe && reuse == nil:
+		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
+		iit = IteratorFromDense(reuse)
+	case !same && safe && reuse == nil:
+		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
+		dataReuse =  reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	}
 
 	if useIter {
 		switch {
-			case !toReuse && same:
-				err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
-				retVal = a
-			case toReuse && same:
-				storage.CopyIter(typ,dataReuse,dataA, iit, ait)
-				ait.Reset()
-				iit.Reset()
-				err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, iit, bit)
-				retVal = reuse
-			case toReuse && !same:
-				err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
-				retVal = reuse
-			case !safe:
-				err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
-				retVal = a
-			default:
-				err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
-				retVal = reuse
+		case !safe && same && reuse == nil:
+			err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
+			retVal = a
+		case same && safe && reuse != nil:
+			storage.CopyIter(typ,dataReuse,dataA, iit, ait)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, iit, bit)
+			retVal = reuse
+		default: // safe && bool
+			err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
+			retVal = reuse
 		}
 		return
 	}
 	switch {
-			case !toReuse && same:
-				err = e.E.{{.Name}}Same(typ, dataA, dataB)
-				retVal = a
-			case toReuse && same:
-				storage.Copy(typ,dataReuse,dataA)
-				err = e.E.{{.Name}}Same(typ, dataReuse, dataB)
-				retVal = reuse
-			case toReuse && !same:
-				err = e.E.{{.Name}}(typ, dataA, dataB, dataReuse)
-				retVal = reuse
-			case !safe:
-				err = e.E.{{.Name}}Same(typ, dataA, dataB)
-				retVal = a
-			default:
-				err = e.E.{{.Name}}(typ, dataA, dataB, dataReuse)
-				retVal = reuse
+		case !safe && same && reuse == nil:
+			err = e.E.{{.Name}}Same(typ, dataA, dataB)
+			retVal = a
+		case same && safe && reuse != nil:
+			storage.Copy(typ,dataReuse,dataA)
+			err = e.E.{{.Name}}Same(typ, dataReuse, dataB)
+			retVal = reuse
+		default:
+			err = e.E.{{.Name}}(typ, dataA, dataB, dataReuse)
+			retVal = reuse
 	}
 	return
 `

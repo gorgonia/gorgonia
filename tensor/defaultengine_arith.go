@@ -15,12 +15,10 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
@@ -78,12 +76,10 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
@@ -141,12 +137,10 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
@@ -204,12 +198,10 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
@@ -267,12 +259,10 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
@@ -330,12 +320,10 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
 	}
@@ -393,12 +381,10 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
@@ -479,12 +465,10 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
@@ -565,12 +549,10 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
@@ -651,12 +633,10 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
@@ -737,12 +717,10 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
@@ -823,12 +801,10 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
-
 	var safe, toReuse, incr bool
 	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
-
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator

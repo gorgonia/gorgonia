@@ -159,7 +159,7 @@ type Dotter interface {
 
 // SVDer is any engine that can perform SVD
 type SVDer interface {
-	SVD(a Tensor, uv, full bool)(s, u, v Tensor, err error)
+	SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error)
 }
 
 /* ORD INTERFACES */
@@ -188,10 +188,10 @@ type Gteer interface {
 
 type ElEqer interface {
 	ElEq(a, b Tensor, opts ...FuncOpt) (Tensor, error)
-	ElEqScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+	EqScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 
 	ElNe(a, b Tensor, opts ...FuncOpt) (Tensor, error)
-	ElNeScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+	NeScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
 /* Unary Operators for Numbers */
