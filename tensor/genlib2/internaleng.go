@@ -402,6 +402,8 @@ func generateEReduce(f io.Writer, kinds Kinds) {
 	fn.Write(f)
 }
 
+/* UNARY */
+
 type InternalEngUnary struct {
 	UnaryOp
 	Kinds []reflect.Kind
@@ -442,16 +444,15 @@ func (fn *InternalEngUnary) Name() string {
 func (fn *InternalEngUnary) WriteBody(w io.Writer) {
 	var T *template.Template
 	switch {
-		case fn.Name() == "Clamp":
+	case fn.Name() == "Clamp":
 		T = eUnaryClamp
 	case fn.Name() == "ClampIter":
 		T = eUnaryClampIter
 	case fn.Iter:
-		T= eUnaryIter
+		T = eUnaryIter
 	default:
 		T = eUnary
 	}
-
 
 	T.Execute(w, fn)
 }
@@ -549,5 +550,114 @@ func generateSpecialEUnaries(f io.Writer, kinds Kinds) {
 
 	for _, u := range unaries {
 		u.Write(f)
+	}
+}
+
+/* Argmethods */
+
+type InternalEngArgMethod struct {
+	Name   string
+	Masked bool
+	Flat   bool
+	Kinds  []reflect.Kind
+}
+
+func (fn *InternalEngArgMethod) Signature() *Signature {
+	var name string
+	var paramNames []string
+	var paramTemplates []*template.Template
+	var retVals []string
+	var retValTemplates []*template.Template
+	var err bool
+	switch {
+	case fn.Masked && fn.Flat:
+		name = fmt.Sprintf("Arg%sFlatMasked", fn.Name)
+		paramNames = []string{"t", "a", "mask"}
+		paramTemplates = []*template.Template{reflectType, arrayType, boolsType}
+		retVals = []string{"retVal"}
+		retValTemplates = []*template.Template{intType}
+		err = false
+	case fn.Masked && !fn.Flat:
+		name = fmt.Sprintf("Arg%sIterMasked", fn.Name)
+		paramNames = []string{"t", "a", "mask", "it", "lastSize"}
+		paramTemplates = []*template.Template{reflectType, arrayType, boolsType, iteratorType, intType}
+		retVals = []string{"indices"}
+		retValTemplates = []*template.Template{intsType}
+		err = true
+	case !fn.Masked && fn.Flat:
+		name = fmt.Sprintf("Arg%sFlat", fn.Name)
+		paramNames = []string{"t", "a"}
+		paramTemplates = []*template.Template{reflectType, arrayType}
+		retVals = []string{"retVal"}
+		retValTemplates = []*template.Template{intType}
+		err = false
+	default:
+		name = fmt.Sprintf("Arg%sIter", fn.Name)
+		paramNames = []string{"t", "a", "it", "lastSize"}
+		paramTemplates = []*template.Template{reflectType, arrayType, iteratorType, intType}
+		retVals = []string{"indices"}
+		retValTemplates = []*template.Template{intsType}
+		err = true
+	}
+
+	return &Signature{
+		Name:            name,
+		NameTemplate:    plainName,
+		ParamNames:      paramNames,
+		ParamTemplates:  paramTemplates,
+		RetVals:         retVals,
+		RetValTemplates: retValTemplates,
+		Err:             err,
+	}
+}
+
+func (fn *InternalEngArgMethod) WriteBody(w io.Writer) {
+	switch {
+	case fn.Masked && fn.Flat:
+		eArgmaxFlatMasked.Execute(w, fn)
+	case fn.Masked && !fn.Flat:
+		eArgmaxMasked.Execute(w, fn)
+	case !fn.Masked && fn.Flat:
+		eArgmaxFlat.Execute(w, fn)
+	default:
+		eArgmax.Execute(w, fn)
+	}
+}
+
+func (fn *InternalEngArgMethod) Write(w io.Writer) {
+	sig := fn.Signature()
+	w.Write([]byte("func (e E) "))
+	sig.Write(w)
+	w.Write([]byte("{\n"))
+	fn.WriteBody(w)
+	w.Write([]byte("}\n"))
+}
+
+func generateInternalEngArgmethods(f io.Writer, ak Kinds) {
+	ks := filter(ak.Kinds, isOrd)
+	meths := []*InternalEngArgMethod{
+		&InternalEngArgMethod{Name: "max", Kinds: ks},
+		&InternalEngArgMethod{Name: "min", Kinds: ks},
+	}
+
+	// default
+	for _, fn := range meths {
+		fn.Write(f)
+		fn.Masked = true
+	}
+	// masked
+	for _, fn := range meths {
+		fn.Write(f)
+		fn.Flat = true
+	}
+	// flat masked
+	for _, fn := range meths {
+		fn.Write(f)
+		fn.Flat = true
+		fn.Masked = false
+	}
+	// flat
+	for _, fn := range meths {
+		fn.Write(f)
 	}
 }

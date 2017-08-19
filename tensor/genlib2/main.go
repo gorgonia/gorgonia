@@ -56,6 +56,7 @@ func main() {
 	pipeline(execLoc, "generic_map.go", Kinds{allKinds}, generateGenericMap)
 	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary, generateGenericCondUnary, generateSpecialGenericUnaries)
 	pipeline(execLoc, "generic_reduce.go", Kinds{allKinds}, generateGenericReduce)
+	pipeline(execLoc, "generic_argmethods.go", Kinds{allKinds}, generateGenericArgMethods)
 
 	// level 1 aggregation
 	pipeline(execLoc, "eng_arith.go", Kinds{allKinds}, generateEArith)
@@ -64,6 +65,7 @@ func main() {
 	pipeline(execLoc, "eng_reduce.go", Kinds{allKinds}, generateEReduce)
 	pipeline(execLoc, "eng_unary.go", Kinds{allKinds}, generateUncondEUnary, generateCondEUnary, generateSpecialEUnaries)
 	pipeline(execLoc, "reduction_specialization.go", Kinds{allKinds}, generateReductionSpecialization)
+	pipeline(execLoc, "eng_argmethods.go", Kinds{allKinds}, generateInternalEngArgmethods)
 
 	// level 2 aggregation
 	pipeline(tensorPkgLoc, "defaultengine_arith.go", Kinds{allKinds}, generateStdEngArith)

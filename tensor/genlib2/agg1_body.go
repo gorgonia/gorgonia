@@ -502,6 +502,85 @@ const (
 		return errors.Errorf("Unsupported type %v for Clamp", t)
 	}
 	`
+
+	eArgmaxRaw = `var next int
+	{{$name := .Name -}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		data := a.{{sliceOf .}}
+		tmp := make([]{{asType .}}, 0, lastSize)
+		for next,  err = it.Next(); err == nil; next, err = it.Next() {
+			tmp = append(tmp, data[next])
+			if len(tmp) == lastSize {
+				am := Arg{{$name}}{{short .}}(tmp)
+				indices = append(indices, am)
+
+				// reset
+				tmp = tmp[:0]
+			}
+		}
+		if _, ok := err.(NoOpError); !ok  {
+			err = nil
+		}
+		return
+		{{end -}}
+	default:
+		return nil, errors.Errorf("Unsupported type %v for Arg{{.Name}}", t)
+	}
+	`
+
+	eArgmaxMaskedRaw = `newMask := make([]bool, 0, lastSize)
+	var next int
+	{{$name := .Name -}}
+	switch t {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		data := a.{{sliceOf .}}
+		tmp := make([]{{asType .}}, 0, lastSize)
+		for next,  err = it.Next(); err == nil; next, err = it.Next() {
+			tmp = append(tmp, data[next])
+			newMask = append(newMask, mask[next])
+			if len(tmp) == lastSize {
+				am := Arg{{$name}}Masked{{short .}}(tmp, mask)
+				indices = append(indices, am)
+
+				// reset
+				tmp = tmp[:0]
+				newMask = newMask[:0]
+			}
+		}
+		if _, ok := err.(NoOpError); !ok {
+			err = nil
+		}
+		return 
+		{{end -}}
+	default:
+		return nil, errors.Errorf("Unsupported type %v for Arg{{.Name}}", t)
+	}
+	`
+
+	eArgmaxFlatRaw = `switch t {
+	{{$name := .Name -}}
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		return Arg{{$name}}{{short .}}(a.{{sliceOf .}})
+		{{end -}}
+	default:
+		return -1
+	}
+	`
+
+	eArgmaxFlatMaskedRaw = `switch t {
+		{{$name := .Name -}}
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		return Arg{{$name}}Masked{{short .}}(a.{{sliceOf .}}, mask)
+		{{end -}}
+	default:
+		return -1
+	}
+	`
 )
 
 var (
@@ -527,6 +606,11 @@ var (
 	eUnaryIter      *template.Template
 	eUnaryClamp     *template.Template
 	eUnaryClampIter *template.Template
+
+	eArgmax           *template.Template
+	eArgmaxMasked     *template.Template
+	eArgmaxFlat       *template.Template
+	eArgmaxFlatMasked *template.Template
 )
 
 func init() {
@@ -552,4 +636,9 @@ func init() {
 	eUnaryIter = template.Must(template.New("eUnaryIter").Funcs(funcs).Parse(eUnaryIterRaw))
 	eUnaryClamp = template.Must(template.New("eUnaryClamp").Funcs(funcs).Parse(eUnaryClampRaw))
 	eUnaryClampIter = template.Must(template.New("eUnaryClampIter").Funcs(funcs).Parse(eUnaryClampIterRaw))
+
+	eArgmax = template.Must(template.New("argmax").Funcs(funcs).Parse(eArgmaxRaw))
+	eArgmaxMasked = template.Must(template.New("argmaxMasked").Funcs(funcs).Parse(eArgmaxMaskedRaw))
+	eArgmaxFlat = template.Must(template.New("argmaxFlat").Funcs(funcs).Parse(eArgmaxFlatRaw))
+	eArgmaxFlatMasked = template.Must(template.New("argmaxFlatMasked").Funcs(funcs).Parse(eArgmaxFlatMaskedRaw))
 }

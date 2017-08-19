@@ -71,6 +71,7 @@ const (
 	boolsTypeRaw     = `[]bool`
 	boolTypeRaw      = `bool`
 	intTypeRaw       = `int`
+	intsTypeRaw      = `[]int`
 	reflectTypeRaw   = `reflect.Type`
 
 	// arrayTypeRaw        = `Array`
@@ -96,6 +97,7 @@ var (
 	boolsType        *template.Template
 	boolType         *template.Template
 	intType          *template.Template
+	intsType         *template.Template
 	reflectType      *template.Template
 	arrayType        *template.Template
 	unaryFuncType    *template.Template
@@ -117,6 +119,7 @@ func init() {
 	boolsType = template.Must(template.New("boolsType").Funcs(funcs).Parse(boolsTypeRaw))
 	boolType = template.Must(template.New("boolType").Funcs(funcs).Parse(boolTypeRaw))
 	intType = template.Must(template.New("intTYpe").Funcs(funcs).Parse(intTypeRaw))
+	intsType = template.Must(template.New("intsType").Funcs(funcs).Parse(intsTypeRaw))
 	reflectType = template.Must(template.New("reflectType").Funcs(funcs).Parse(reflectTypeRaw))
 	arrayType = template.Must(template.New("arrayType").Funcs(funcs).Parse(arrayTypeRaw))
 	unaryFuncType = template.Must(template.New("unaryFuncType").Funcs(funcs).Parse(unaryFuncTypeRaw))

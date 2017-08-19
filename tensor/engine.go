@@ -285,3 +285,13 @@ type Miner interface {
 type Maxer interface {
 	Max(a Tensor, along ...int) (Tensor, error)
 }
+
+/* Arg methods */
+
+type Argmaxer interface {
+	Argmax(t Tensor, axis int) (Tensor, error)
+}
+
+type Argminer interface {
+	Argmin(t Tensor, axis int) (Tensor, error)
+}
