@@ -232,7 +232,6 @@ func TestDense_MatVecMul(t *testing.T) {
 		// reuse
 		reuse := New(WithBacking(mvmt.reuse), WithShape(mvmt.shapeR...))
 		T, err = a.MatVecMul(b, WithReuse(reuse))
-
 		if checkErr(t, mvmt.errReuse, err, "WithReuse", i) {
 			continue
 		}

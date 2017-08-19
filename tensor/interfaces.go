@@ -143,4 +143,6 @@ type unsafeMem interface {
 	Set(i int, x interface{})
 	GetF64(i int) float64
 	GetF32(i int) float32
+	Float64s() []float64
+	Float32s() []float32
 }

@@ -88,7 +88,6 @@ func borrowDense(dt Dtype, size int) *Dense {
 
 end:
 	retVal := pool.Get().(*Dense)
-	// log.Printf("borrowing %p", retVal)
 	return retVal
 }
 

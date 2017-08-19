@@ -309,15 +309,14 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 	var t *Dense
 	var ok bool
+	if err = e.checkAccessible(a); err != nil {
+		return nil, nil, nil, errors.Wrapf(err, "opFail", "SVD")
+	}
 	if t, ok = a.(*Dense); !ok {
 		return nil, nil, nil, errors.Errorf("StdEng only performs SVDs for DenseTensors. Got %T instead", a)
 	}
 	if !isFloat(t.Dtype()) {
 		return nil, nil, nil, errors.Errorf("StdEng can only perform SVDs for float64 and float32 type. Got tensor of %v instead", t.Dtype())
-	}
-
-	if !t.IsNativelyAccessible() {
-		return nil, nil, nil, errors.New("StdEng can only perform SVDs for natively accessible tensors")
 	}
 
 	if !t.IsMatrix() {
@@ -368,22 +367,20 @@ func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 }
 
 // Inner is a thin layer over BLAS's D/Sdot.
-func (e StdEng) Inner(t, other Tensor) (retVal interface{}, err error) {
-	var ot DenseTensor
-	if ot, err = getFloatDenseTensor(other); err != nil {
-		return nil, errors.Wrapf(err, opFail, "inner")
-	}
-	if ot.Dtype() != t.Dtype() {
-		return nil, errors.Errorf(typeMismatch, t.Dtype(), ot.Dtype())
+// It returns a scalar value, wrapped in an interface{}, which is not quite nice.
+func (e StdEng) Inner(a, b Tensor) (retVal interface{}, err error) {
+	var ad, bd DenseTensor
+	if ad, bd, err = e.checkTwoFloatTensors(a, b); err != nil {
+		return nil, errors.Wrapf(err, opFail, "StdEng.Inner")
 	}
 
-	switch a := t.Data().(type) {
+	switch A := ad.Data().(type) {
 	case []float32:
-		b := ot.hdr().Float32s()
-		retVal = whichblas.Sdot(len(a), a, 1, b, 1)
+		B := bd.Float32s()
+		retVal = whichblas.Sdot(len(A), A, 1, B, 1)
 	case []float64:
-		b := ot.hdr().Float64s()
-		retVal = whichblas.Ddot(len(a), a, 1, b, 1)
+		B := bd.Float64s()
+		retVal = whichblas.Ddot(len(A), A, 1, B, 1)
 	}
 	return
 }
@@ -392,20 +389,11 @@ func (e StdEng) Inner(t, other Tensor) (retVal interface{}, err error) {
 // Because DGEMV computes:
 // 		y = αA * x + βy
 // we set beta to 0, so we don't have to manually zero out the reused/retval tensor data
-func (e StdEng) MatVecMul(a, b, prealloc Tensor) error {
+func (e StdEng) MatVecMul(a, b, prealloc Tensor) (err error) {
 	// check all are DenseTensors
 	var ad, bd, pd DenseTensor
-	var ok bool
-	if ad, ok = a.(DenseTensor); !ok {
-		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. a is not a %T", a)
-	}
-
-	if bd, ok = b.(DenseTensor); !ok {
-		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. b is not a %T", b)
-	}
-
-	if pd, ok = prealloc.(DenseTensor); !ok {
-		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. prealloc is not a %T", prealloc)
+	if ad, bd, pd, err = e.checkThreeFloatTensors(a, b, prealloc); err != nil {
+		return errors.Wrapf(err, opFail, "StdEng.MatVecMul")
 	}
 
 	m := ad.oshape()[0]
@@ -420,29 +408,13 @@ func (e StdEng) MatVecMul(a, b, prealloc Tensor) error {
 
 	switch A := ad.Data().(type) {
 	case []float64:
-		var x, y []float64
-		var ok bool
-		if x, ok = bd.Data().([]float64); !ok {
-			return errors.Errorf(dtypeMismatch, A, x)
-		}
-
-		if y, ok = pd.Data().([]float64); !ok {
-			return errors.Errorf(dtypeMismatch, A, y)
-		}
-
+		x := bd.Float64s()
+		y := pd.Float64s()
 		alpha, beta := float64(1), float64(0)
 		whichblas.Dgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
 	case []float32:
-		var x, y []float32
-		var ok bool
-		if x, ok = bd.Data().([]float32); !ok {
-			return errors.Errorf(dtypeMismatch, A, x)
-		}
-
-		if y, ok = pd.Data().([]float32); !ok {
-			return errors.Errorf(dtypeMismatch, A, y)
-		}
-
+		x := bd.Float32s()
+		y := pd.Float32s()
 		alpha, beta := float32(1), float32(0)
 		whichblas.Sgemv(tA, m, n, alpha, A, lda, x, incX, beta, y, incY)
 	default:
@@ -459,17 +431,8 @@ func (e StdEng) MatVecMul(a, b, prealloc Tensor) error {
 func (e StdEng) MatMul(a, b, prealloc Tensor) (err error) {
 	// check all are DenseTensors
 	var ad, bd, pd DenseTensor
-	var ok bool
-	if ad, ok = a.(DenseTensor); !ok {
-		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. a is not a %T", a)
-	}
-
-	if bd, ok = b.(DenseTensor); !ok {
-		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. b is not a %T", b)
-	}
-
-	if pd, ok = prealloc.(DenseTensor); !ok {
-		return errors.Errorf("MatVecMul for the StdEng{} only works on DenseTensor. prealloc is not a %T", prealloc)
+	if ad, bd, pd, err = e.checkThreeFloatTensors(a, b, prealloc); err != nil {
+		return errors.Wrapf(err, opFail, "StdEng.MatMul")
 	}
 
 	tA, tB := blas.NoTrans, blas.NoTrans
@@ -493,27 +456,13 @@ func (e StdEng) MatMul(a, b, prealloc Tensor) (err error) {
 
 	switch A := ad.Data().(type) {
 	case []float64:
-		var B, C []float64
-		if B, ok = bd.Data().([]float64); !ok {
-			return errors.Errorf(dtypeMismatch, A, B)
-		}
-
-		if C, ok = pd.Data().([]float64); !ok {
-			return errors.Errorf(dtypeMismatch, A, C)
-		}
-
+		B := bd.Float64s()
+		C := pd.Float64s()
 		alpha, beta := float64(1), float64(0)
 		whichblas.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
 	case []float32:
-		var B, C []float32
-		if B, ok = bd.Data().([]float32); !ok {
-			return errors.Errorf(dtypeMismatch, A, B)
-		}
-
-		if C, ok = pd.Data().([]float32); !ok {
-			return errors.Errorf(dtypeMismatch, A, C)
-		}
-
+		B := bd.Float32s()
+		C := pd.Float32s()
 		alpha, beta := float32(1), float32(0)
 		whichblas.Sgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
 	default:
@@ -523,44 +472,85 @@ func (e StdEng) MatMul(a, b, prealloc Tensor) (err error) {
 }
 
 // Outer is a thin wrapper over S/Dger
-func (e StdEng) Outer(a, b, prealloc Tensor) error {
-	m := a.Size()
-	n := b.Size()
+func (e StdEng) Outer(a, b, prealloc Tensor) (err error) {
+	// check all are DenseTensors
+	var ad, bd, pd DenseTensor
+	if ad, bd, pd, err = e.checkThreeFloatTensors(a, b, prealloc); err != nil {
+		return errors.Wrapf(err, opFail, "StdEng.Outer")
+	}
+
+	m := ad.Size()
+	n := bd.Size()
 
 	// the stride of a Vector is always going to be [1],
 	// incX := t.Strides()[0]
 	// incY := other.Strides()[0]
 	incX, incY := 1, 1
-	lda := prealloc.Strides()[0]
+	lda := pd.Strides()[0]
 
-	var ok bool
-	switch x := a.Data().(type) {
+	switch x := ad.Data().(type) {
 	case []float64:
-		var y, A []float64
-		if y, ok = b.Data().([]float64); !ok {
-			return errors.Errorf(dtypeMismatch, x, y)
-		}
-
-		if A, ok = prealloc.Data().([]float64); !ok {
-			return errors.Errorf(dtypeMismatch, x, A)
-		}
-
+		y := bd.Float64s()
+		A := pd.Float64s()
 		alpha := float64(1)
 		whichblas.Dger(m, n, alpha, x, incX, y, incY, A, lda)
 	case []float32:
-		var y, A []float32
-		if y, ok = b.Data().([]float32); !ok {
-			return errors.Errorf(dtypeMismatch, x, y)
-		}
-
-		if A, ok = prealloc.Data().([]float32); !ok {
-			return errors.Errorf(dtypeMismatch, x, A)
-		}
-
+		y := bd.Float32s()
+		A := pd.Float32s()
 		alpha := float32(1)
 		whichblas.Sger(m, n, alpha, x, incX, y, incY, A, lda)
 	default:
 		return errors.Errorf(typeNYI, "outer", b.Data())
 	}
 	return nil
+}
+
+/* UNEXPORTED UTILITY FUNCTIONS */
+
+func (e StdEng) checkTwoFloatTensors(a, b Tensor) (ad, bd DenseTensor, err error) {
+	if err = e.checkAccessible(a); err != nil {
+		return nil, nil, errors.Wrap(err, "checkTwoTensors: a is not accessible")
+	}
+	if err = e.checkAccessible(b); err != nil {
+		return nil, nil, errors.Wrap(err, "checkTwoTensors: a is not accessible")
+	}
+
+	if a.Dtype() != b.Dtype() {
+		return nil, nil, errors.New("Expected a and b to have the same Dtype")
+	}
+
+	if ad, err = getFloatDenseTensor(a); err != nil {
+		return nil, nil, errors.Wrap(err, "checkTwoTensors expects a to be be a DenseTensor")
+	}
+	if bd, err = getFloatDenseTensor(b); err != nil {
+		return nil, nil, errors.Wrap(err, "checkTwoTensors expects b to be be a DenseTensor")
+	}
+	return
+}
+
+func (e StdEng) checkThreeFloatTensors(a, b, ret Tensor) (ad, bd, retVal DenseTensor, err error) {
+	if err = e.checkAccessible(a); err != nil {
+		return nil, nil, nil, errors.Wrap(err, "checkTwoTensors: a is not accessible")
+	}
+	if err = e.checkAccessible(b); err != nil {
+		return nil, nil, nil, errors.Wrap(err, "checkTwoTensors: a is not accessible")
+	}
+	if err = e.checkAccessible(ret); err != nil {
+		return nil, nil, nil, errors.Wrap(err, "checkTwoTensors: ret is not accessible")
+	}
+
+	if a.Dtype() != b.Dtype() || b.Dtype() != ret.Dtype() {
+		return nil, nil, nil, errors.New("Expected a and b and retVal all to have the same Dtype")
+	}
+
+	if ad, err = getFloatDenseTensor(a); err != nil {
+		return nil, nil, nil, errors.Wrap(err, "checkTwoTensors expects a to be be a DenseTensor")
+	}
+	if bd, err = getFloatDenseTensor(b); err != nil {
+		return nil, nil, nil, errors.Wrap(err, "checkTwoTensors expects b to be be a DenseTensor")
+	}
+	if retVal, err = getFloatDenseTensor(ret); err != nil {
+		return nil, nil, nil, errors.Wrap(err, "checkTwoTensors expects retVal to be be a DenseTensor")
+	}
+	return
 }
