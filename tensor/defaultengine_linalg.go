@@ -412,7 +412,7 @@ func (e StdEng) MatVecMul(a, b, prealloc Tensor) error {
 	n := ad.oshape()[1]
 
 	tA := blas.NoTrans
-	if ad.isTransposed() {
+	if ad.oldAP() != nil {
 		tA = blas.Trans
 	}
 	lda := ad.ostrides()[0]

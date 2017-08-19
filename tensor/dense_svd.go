@@ -1,8 +1,6 @@
 package tensor
 
-import (
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // SVD does the Single Value Decomposition for the *Dense.
 //
@@ -18,7 +16,18 @@ func (t *Dense) SVD(uv, full bool) (s, u, v *Dense, err error) {
 		if sT, uT, vT, err = svder.SVD(t, uv, full); err != nil {
 			return nil, nil, nil, errors.Wrap(err, "Error while performing *Dense.SVD")
 		}
-		return sT.(*Dense), uT.(*Dense), vT.(*Dense), nil
+		if s, err = assertDense(sT); err != nil {
+			return nil, nil, nil, errors.Wrapf(err, "sT is not *Dense (uv %t full %t). Got %T instead", uv, full, sT)
+		}
+		// if not uv and not full, u can be nil
+		if u, err = assertDense(uT); err != nil && !(!uv && !full) {
+			return nil, nil, nil, errors.Wrapf(err, "uT is not *Dense (uv %t full %t). Got %T instead", uv, full, uT)
+		}
+		// if not uv and not full, v can be nil
+		if v, err = assertDense(vT); err != nil && !(!uv && !full) {
+			return nil, nil, nil, errors.Wrapf(err, "vT is not *Dense (uv %t full %t). Got %T instead", uv, full, vT)
+		}
+		return s, u, v, nil
 	}
 	return nil, nil, nil, errors.New("Engine does not support SVD")
 }

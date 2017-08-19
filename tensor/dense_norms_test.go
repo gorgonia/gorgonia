@@ -1,13 +1,12 @@
 package tensor
 
 import (
-	
 	"fmt"
 	"math"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func testNormVal(T *Dense, ord NormOrder, want float64) error {
@@ -85,7 +84,7 @@ func TestTensor_Norm(t *testing.T) {
 	T = New(WithShape(2, 2), WithBacking(backing))
 	for ord, want := range corrects {
 		if err = testNormVal(T, ord, want); err != nil {
-			t.Error(err)
+			t.Errorf("ORD %v: %v", ord, err)
 		}
 	}
 
