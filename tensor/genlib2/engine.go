@@ -51,15 +51,17 @@ func (fn *EngineArith) WriteBody(w io.Writer) {
 	switch {
 	case fn.VV:
 		prep = prepVV
+		fn.VecVar = "a"
 	case !fn.VV && fn.LeftVec:
-		fn.VecVar = "b"
+		fn.VecVar = "t"
 		fn.PrepData = "prepDataVS"
 		prep = prepMixed
 	default:
-		fn.VecVar = "a"
+		fn.VecVar = "t"
 		fn.PrepData = "prepDataSV"
 		prep = prepMixed
 	}
+	template.Must(prep.New("prep").Parse(arithPrepRaw))
 	prep.Execute(w, fn)
 	agg2Body.Execute(w, fn)
 }
@@ -143,15 +145,17 @@ func (fn *EngineCmp) WriteBody(w io.Writer) {
 	switch {
 	case fn.VV:
 		prep = prepVV
+		fn.VecVar = "a"
 	case !fn.VV && fn.LeftVec:
-		fn.VecVar = "b"
+		fn.VecVar = "t"
 		fn.PrepData = "prepDataVS"
 		prep = prepMixed
 	default:
-		fn.VecVar = "a"
+		fn.VecVar = "t"
 		fn.PrepData = "prepDataSV"
 		prep = prepMixed
 	}
+	template.Must(prep.New("prep").Parse(cmpPrepRaw))
 	prep.Execute(w, fn)
 	agg2CmpBody.Execute(w, fn)
 }
@@ -204,14 +208,14 @@ type EngineUnary struct {
 
 func (fn *EngineUnary) Signature() *Signature {
 	return &Signature{
-		Name:           fn.Name,
-		NameTemplate:   plainName,
-		ParamNames:     []string{"a", "opts"},
-		ParamTemplates: []*template.Template{tensorType, splatFuncOptType},
-		RetVals: []string{"retVal"},
+		Name:            fn.Name,
+		NameTemplate:    plainName,
+		ParamNames:      []string{"a", "opts"},
+		ParamTemplates:  []*template.Template{tensorType, splatFuncOptType},
+		RetVals:         []string{"retVal"},
 		RetValTemplates: []*template.Template{tensorType},
 
-		Err:            true,
+		Err: true,
 	}
 }
 

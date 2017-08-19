@@ -4,15 +4,26 @@ import "text/template"
 
 // level 2 aggregation (tensor.StdEng) templates
 
+const cmpPrepRaw = `
+	var safe, toReuse, same bool
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts({{.VecVar}}.Shape(), {{.VecVar}}.Dtype(), false, opts...); err != nil{
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+`
+
+const arithPrepRaw = `
+	var safe, toReuse, incr bool
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts({{.VecVar}}.Shape(), {{.VecVar}}.Dtype(), true, opts...); err != nil{
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}	
+`
+
 const prepVVRaw = `if err = binaryCheck(a, b, {{.TypeClassCheck | lower}}Types); err != nil {
 		return nil, errors.Wrapf(err, "{{.Name}} failed")
 	}
 
 	var reuse DenseTensor
-	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
-	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
+	{{template "prep" .}}
 
 	if reuse != nil && !reuse.IsNativelyAccessible() {
 		return nil, errors.Errorf(inaccessibleData, reuse)
@@ -32,10 +43,7 @@ const prepMixedRaw = `if err = unaryCheck(t, {{.TypeClassCheck | lower}}Types); 
 	}
 
 	var reuse DenseTensor
-	var safe, toReuse {{if eq .TypeClassCheck "Number"}}, incr{{else}}, same{{end}} bool
-	if reuse, safe, toReuse, {{if eq .TypeClassCheck "Number"}}incr, _,{{else}}_, same,{{end}} err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
-	}
+	{{template "prep" .}}
 
 	a := t
 	typ := t.Dtype().Type
@@ -61,7 +69,7 @@ const prepUnaryRaw = `if err = unaryCheck(a, {{.TypeClassCheck | lower}}Types); 
 	}
 	var reuse DenseTensor
 	var safe, toReuse, incr bool
-	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 

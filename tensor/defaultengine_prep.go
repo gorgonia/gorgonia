@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func handleFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr, same bool, err error) {
+func handleFuncOpts(expShape Shape, expType Dtype, strict bool, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr, same bool, err error) {
 	fo := ParseFuncOpts(opts...)
 	reuseT, incr := fo.IncrReuse()
 	safe = fo.Safe()
@@ -18,7 +18,7 @@ func handleFuncOpts(expShape Shape, expType Dtype, opts ...FuncOpt) (reuse Dense
 			return
 		}
 
-		if reuse.Dtype() != expType {
+		if (strict || same) && reuse.Dtype() != expType {
 			err = errors.Errorf(typeMismatch, expType, reuse.Dtype())
 			err = errors.Wrapf(err, "Cannot use reuse")
 			return

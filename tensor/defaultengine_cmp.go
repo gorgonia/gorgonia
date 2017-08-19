@@ -15,8 +15,9 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -88,8 +89,9 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -161,8 +163,9 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -234,8 +237,9 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -307,8 +311,9 @@ func (e StdEng) Eq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -380,8 +385,9 @@ func (e StdEng) Ne(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(a.Shape(), a.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -453,8 +459,9 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -530,8 +537,9 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -607,8 +615,9 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -684,8 +693,9 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -761,8 +771,9 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
@@ -838,8 +849,9 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	}
 
 	var reuse DenseTensor
+
 	var safe, toReuse, same bool
-	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), opts...); err != nil {
+	if reuse, safe, toReuse, _, same, err = handleFuncOpts(t.Shape(), t.Dtype(), false, opts...); err != nil {
 		return nil, errors.Wrap(err, "Unable to handle funcOpts")
 	}
 
