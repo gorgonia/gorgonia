@@ -16,6 +16,17 @@ type array struct {
 	v              interface{} // an additional reference to the underlying slice. This is not strictly necessary, but does improve upon anything that calls .Data()
 }
 
+// makeHeader makes a array Header
+func makeHeader(t Dtype, length int) storage.Header {
+	size := int(calcMemSize(t, length))
+	s := make([]byte, size)
+	return storage.Header{
+		Ptr: unsafe.Pointer(&s[0]),
+		L:   length,
+		C:   length,
+	}
+}
+
 // makeArray makes an array. The memory allocation is handled by Go
 func makeArray(t Dtype, length int) array {
 	hdr := makeHeader(t, length)
@@ -28,7 +39,7 @@ func makeArrayFromHeader(hdr storage.Header, t Dtype) array {
 	shdr := reflect.SliceHeader{
 		Data: uintptr(hdr.Ptr),
 		Len:  hdr.L,
-		Cap:  hdr.L,
+		Cap:  hdr.C,
 	}
 	sliceT := reflect.SliceOf(t.Type)
 	ptr := unsafe.Pointer(&shdr)
@@ -83,50 +94,60 @@ func (a array) sliceInto(i, j int, res *array) {
 	res.C = c - i
 
 	if c-1 > 0 {
-		res.Ptr = unsafe.Pointer(base + uintptr(i)*a.t.Size())
+		res.Ptr = storage.ElementAt(i, unsafe.Pointer(base), a.t.Size())
 	} else {
-		// don't adviance
+		// don't advance pointer
 		res.Ptr = unsafe.Pointer(base)
 	}
 }
 
 func (a array) slice(start, end int) array {
-	size := int(a.t.Size())
 	if end > a.L {
 		panic("Index out of range")
 	}
-	startptr := unsafe.Pointer(uintptr(a.Pointer()) + uintptr(start*size))
-
-	return array{
-		Header: storage.Header{
-			Ptr: startptr,
-			L:   end - start + 1,
-			C:   end - start + 1,
-		},
-		t: a.t,
+	if end < start {
+		panic("Index out of range")
 	}
+
+	L := end - start
+	C := a.C - start
+
+	var startptr unsafe.Pointer
+	if a.C-start > 0 {
+		startptr = storage.ElementAt(start, a.Ptr, a.t.Size())
+	} else {
+		startptr = a.Ptr
+	}
+
+	hdr := storage.Header{
+		Ptr: startptr,
+		L:   L,
+		C:   C,
+	}
+
+	return makeArrayFromHeader(hdr, a.t)
 }
 
 // swap swaps the elements i and j in the array
 func (a array) swap(i, j int) {
 	if a.t == String {
-		ss := *(*[]string)(unsafe.Pointer(&a.Header))
+		ss := a.hdr().Strings()
 		ss[i], ss[j] = ss[j], ss[i]
 		return
 	}
 	if !isParameterizedKind(a.t.Kind()) {
 		switch a.t.Size() {
 		case 8:
-			us := *(*[]uint64)(unsafe.Pointer(&a.Header))
+			us := a.hdr().Uint64s()
 			us[i], us[j] = us[j], us[i]
 		case 4:
-			us := *(*[]uint32)(unsafe.Pointer(&a.Header))
+			us := a.hdr().Uint32s()
 			us[i], us[j] = us[j], us[i]
 		case 2:
-			us := *(*[]uint16)(unsafe.Pointer(&a.Header))
+			us := a.hdr().Uint16s()
 			us[i], us[j] = us[j], us[i]
 		case 1:
-			us := *(*[]uint8)(unsafe.Pointer(&a.Header))
+			us := a.hdr().Uint8s()
 			us[i], us[j] = us[j], us[i]
 		}
 		return
@@ -160,17 +181,17 @@ func (a array) Data() interface{} { return a.v }
 
 // Zero zeroes out the underlying array of the *Dense tensor.
 func (a array) Zero() {
-	if !isParameterizedKind(a.t.Kind()) {
-		ba := a.byteSlice()
-		for i := range ba {
-			ba[i] = 0
-		}
-		return
-	}
 	if a.t.Kind() == reflect.String {
 		ss := a.Strings()
 		for i := range ss {
 			ss[i] = ""
+		}
+		return
+	}
+	if !isParameterizedKind(a.t.Kind()) {
+		ba := a.byteSlice()
+		for i := range ba {
+			ba[i] = 0
 		}
 		return
 	}
@@ -185,6 +206,13 @@ func (a array) Zero() {
 
 func (a array) hdr() *storage.Header { return &a.Header }
 func (a array) rtype() reflect.Type  { return a.t.Type }
+
+/* MEMORY MOVEMENT STUFF */
+
+// calcMemSize calulates the memory size of an array (given its size)
+func calcMemSize(dt Dtype, size int) int64 {
+	return int64(dt.Size()) * int64(size)
+}
 
 // copyArray copies an array.
 func copyArray(dst, src array) int {
@@ -289,4 +317,16 @@ func copyDenseIter(dst, src DenseTensor, diter, siter Iterator) (int, error) {
 		}
 	}
 	return storage.CopyIter(dst.rtype(), dst.hdr(), src.hdr(), diter, siter), nil
+}
+
+func extractPointer(a interface{}) unsafe.Pointer {
+	return ((*[2]unsafe.Pointer)(unsafe.Pointer(&a)))[1]
+}
+
+func scalarToHeader(a interface{}) *storage.Header {
+	return &storage.Header{
+		Ptr: extractPointer(a),
+		L:   1,
+		C:   1,
+	}
 }

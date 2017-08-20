@@ -10,10 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/*
-GENERATED FILE. DO NOT EDIT
-*/
-
 func TestSaveLoadNumpy(t *testing.T) {
 	if os.Getenv("TRAVISTEST") == "true" {
 		t.Skip("skipping test; This is being run on TravisCI")

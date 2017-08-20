@@ -178,14 +178,83 @@ const copyArrayIterRaw = `func copyArrayIter(dst, src array, diter, siter Iterat
 }
 `
 
+const memsetIterRaw = `
+func (t *array) memsetIter(x interface{}, it Iterator) (err error) {
+	var i int
+	switch t.t{
+	{{range .Kinds -}}
+		{{if isParameterized . -}}
+		{{else -}}
+	case {{reflectKind .}}:
+		xv, ok := x.({{asType .}})
+		if !ok {
+			return errors.Errorf(dtypeMismatch, t.t, x)
+		}
+		data := t.{{sliceOf .}}
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			data[i] = xv	
+		}
+		err = handleNoOp(err)
+		{{end -}}
+	{{end -}}
+	default:
+		xv := reflect.ValueOf(x)
+		ptr := uintptr(t.Ptr)
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(xv)
+		}
+		err = handleNoOp(err)
+	}
+	return
+}
+
+`
+
+const zeroIterRaw = `func (t *array) zeroIter(it Iterator) (err error){
+	var i int
+	switch t.t {
+	{{range .Kinds -}}
+		{{if isParameterized . -}}
+		{{else -}}
+	case {{reflectKind .}}:
+		data := t.{{sliceOf .}}
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			data[i] = {{if eq .String "bool" -}}
+				false
+			{{else if eq .String "string" -}}""
+			{{else if eq .String "unsafe.Pointer" -}}nil
+			{{else -}}0{{end -}}
+		}
+		err = handleNoOp(err)
+		{{end -}}
+	{{end -}}
+	default:
+		ptr := uintptr(t.Ptr)
+		for i, err = it.Next(); err == nil; i, err = it.Next(){
+			want := ptr + uintptr(i)*t.t.Size()
+			val := reflect.NewAt(t.t, unsafe.Pointer(want))
+			val = reflect.Indirect(val)
+			val.Set(reflect.Zero(t.t))
+		}
+		err = handleNoOp(err)
+	}
+	return
+}
+`
+
 var (
-	AsSlice   *template.Template
-	SimpleSet *template.Template
-	SimpleGet *template.Template
-	Get       *template.Template
-	Set       *template.Template
-	Memset    *template.Template
-	Eq        *template.Template
+	AsSlice    *template.Template
+	SimpleSet  *template.Template
+	SimpleGet  *template.Template
+	Get        *template.Template
+	Set        *template.Template
+	Memset     *template.Template
+	MemsetIter *template.Template
+	Eq         *template.Template
+	ZeroIter   *template.Template
 )
 
 func init() {
@@ -195,7 +264,9 @@ func init() {
 	Get = template.Must(template.New("Get").Funcs(funcs).Parse(getRaw))
 	Set = template.Must(template.New("Set").Funcs(funcs).Parse(setRaw))
 	Memset = template.Must(template.New("Memset").Funcs(funcs).Parse(memsetRaw))
+	MemsetIter = template.Must(template.New("MemsetIter").Funcs(funcs).Parse(memsetIterRaw))
 	Eq = template.Must(template.New("ArrayEq").Funcs(funcs).Parse(arrayEqRaw))
+	ZeroIter = template.Must(template.New("Zero").Funcs(funcs).Parse(zeroIterRaw))
 }
 
 func generateArrayMethods(f io.Writer, ak Kinds) {
@@ -205,9 +276,12 @@ func generateArrayMethods(f io.Writer, ak Kinds) {
 	fmt.Fprintf(f, "\n\n\n")
 	Memset.Execute(f, ak)
 	fmt.Fprintf(f, "\n\n\n")
+	MemsetIter.Execute(f, ak)
+	fmt.Fprintf(f, "\n\n\n")
 	Eq.Execute(f, ak)
 	fmt.Fprintf(f, "\n\n\n")
-
+	ZeroIter.Execute(f, ak)
+	fmt.Fprintf(f, "\n\n\n")
 }
 
 func generateHeaderGetSet(f io.Writer, ak Kinds) {

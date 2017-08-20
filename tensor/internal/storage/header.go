@@ -94,3 +94,8 @@ func AsByteSlice(a *Header, t reflect.Type) []byte {
 	}
 	return *(*[]byte)(unsafe.Pointer(&hdr))
 }
+
+// Element gets the pointer of ith element
+func ElementAt(i int, base unsafe.Pointer, typeSize uintptr) unsafe.Pointer {
+	return unsafe.Pointer(uintptr(base) + uintptr(i)*typeSize)
+}

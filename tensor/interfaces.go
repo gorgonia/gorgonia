@@ -137,6 +137,7 @@ type headerer interface {
 
 type arrayer interface {
 	arr() array
+	arrPtr() *array
 }
 
 type unsafeMem interface {

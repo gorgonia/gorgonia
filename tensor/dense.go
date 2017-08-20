@@ -244,9 +244,10 @@ func (t *Dense) MaskFromDense(tts ...*Dense) {
 
 // Private methods
 
-func (t *Dense) cap() int   { return t.array.C }
-func (t *Dense) len() int   { return t.array.L } // exactly the same as DataSize
-func (t *Dense) arr() array { return t.array }
+func (t *Dense) cap() int       { return t.array.C }
+func (t *Dense) len() int       { return t.array.L } // exactly the same as DataSize
+func (t *Dense) arr() array     { return t.array }
+func (t *Dense) arrPtr() *array { return &t.array }
 
 func (t *Dense) setShape(s ...int) {
 	t.unlock()
@@ -529,7 +530,8 @@ func (t *Dense) Memset(x interface{}) error {
 		return errors.Errorf(inaccessibleData, t)
 	}
 	if t.IsMaterializable() {
-		return t.memsetIter(x)
+		it := NewFlatIterator(t.AP)
+		return t.array.memsetIter(x, it)
 	}
 	return t.array.Memset(x)
 }
@@ -550,7 +552,8 @@ func (t *Dense) Eq(other interface{}) bool {
 
 func (t *Dense) Zero() {
 	if t.IsMaterializable() {
-		if err := t.zeroIter(); err != nil {
+		it := NewFlatIterator(t.AP)
+		if err := t.zeroIter(it); err != nil {
 			panic(err)
 		}
 	}
@@ -567,4 +570,8 @@ func (t *Dense) SetMask(mask []bool) {
 	// 	panic("Cannot set mask")
 	// }
 	t.mask = mask
+}
+
+func (t *Dense) slice(start, end int) {
+	t.array = t.array.slice(start, end)
 }

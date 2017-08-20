@@ -44,7 +44,7 @@ func main() {
 	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
 	pipeline(tensorPkgLoc, "array_getset.go", Kinds{allKinds}, generateArrayMethods)
-	pipeline(tensorPkgLoc, "dense_getset.go", Kinds{allKinds}, generateDenseGetSet)
+	// pipeline(tensorPkgLoc, "dense_getset.go", Kinds{allKinds}, generateDenseGetSet)
 
 	// execution
 	pipeline(execLoc, "generic_arith_vv.go", Kinds{allKinds}, generateGenericVecVecArith)
@@ -88,6 +88,8 @@ func main() {
 	pipeline(tensorPkgLoc, "test_test.go", Kinds{allKinds}, generateTestUtils)
 	pipeline(tensorPkgLoc, "dense_reduction_test.go", Kinds{allKinds}, generateDenseReductionTests)
 	pipeline(tensorPkgLoc, "dense_apply_test.go", Kinds{allKinds}, generateDenseApplyTests)
+	pipeline(tensorPkgLoc, "dense_argmethods_test.go", Kinds{allKinds}, generateArgmethodsTests)
+	pipeline(tensorPkgLoc, "dense_getset_test.go", Kinds{allKinds}, generateDenseGetSetTests)
 
 }
 
