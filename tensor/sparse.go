@@ -13,6 +13,7 @@ var (
 	_ Sparse = &CS{}
 )
 
+// Sparse is a sparse tensor.
 type Sparse interface {
 	Tensor
 	Densor
@@ -91,6 +92,7 @@ func NewCSR(indices, indptr []int, data interface{}, opts ...ConsOpt) *CS {
 	t.indptr = indptr
 	t.array = arrayFromSlice(data)
 	t.o = NonContiguous
+	t.e = StdEng{}
 
 	for _, opt := range opts {
 		opt(t)
@@ -105,6 +107,7 @@ func NewCSC(indices, indptr []int, data interface{}, opts ...ConsOpt) *CS {
 	t.indptr = indptr
 	t.array = arrayFromSlice(data)
 	t.o = MakeDataOrder(ColMajor, NonContiguous)
+	t.e = StdEng{}
 
 	for _, opt := range opts {
 		opt(t)
@@ -118,6 +121,7 @@ func CSRFromCoord(shape Shape, xs, ys []int, data interface{}) *CS {
 	t.s = shape
 	t.o = NonContiguous
 	t.array = arrayFromSlice(data)
+	t.e = StdEng{}
 
 	// coord matrix
 	cm := &coo{t.o, xs, ys, t.array}
@@ -150,6 +154,7 @@ func CSCFromCoord(shape Shape, xs, ys []int, data interface{}) *CS {
 	t.s = shape
 	t.o = MakeDataOrder(NonContiguous, ColMajor)
 	t.array = arrayFromSlice(data)
+	t.e = StdEng{}
 
 	// coord matrix
 	cm := &coo{t.o, xs, ys, t.array}
@@ -278,6 +283,7 @@ func (t *CS) Clone() interface{} {
 	retVal := new(CS)
 	retVal.s = t.s.Clone()
 	retVal.o = t.o
+	retVal.e = t.e
 	retVal.indices = make([]int, len(t.indices))
 	retVal.indptr = make([]int, len(t.indptr))
 	copy(retVal.indices, t.indices)
@@ -297,7 +303,7 @@ func (t *CS) Pointer() unsafe.Pointer { return t.array.Ptr }
 
 // NonZeroes returns the nonzeroes. In academic literature this is often written as NNZ.
 func (t *CS) NonZeroes() int     { return t.L }
-func (t *CS) Iterator() Iterator { return NewFlatSparseIterator(t) } // not yet created
+func (t *CS) Iterator() Iterator { return NewFlatSparseIterator(t) }
 
 func (t *CS) at(coord ...int) (int, bool) {
 	var r, c int

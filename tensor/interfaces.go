@@ -42,14 +42,6 @@ type MemSetter interface {
 	Memset(interface{}) error
 }
 
-// A Number is any type that can perform arithmetics. This allows for extensibility
-type Number interface {
-	Add(Number) (Number, error)
-	Sub(Number) (Number, error)
-	Mul(Number) (Number, error)
-	Div(Number) (Number, error)
-}
-
 // A Densor is any type that can return a *Dense
 type Densor interface {
 	Dense() *Dense

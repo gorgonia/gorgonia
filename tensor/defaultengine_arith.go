@@ -26,8 +26,8 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Add")
 	}
 	if useIter {
@@ -45,7 +45,12 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.AddIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
-			ret := a.Clone().(headerer)
+			var ret headerer
+			if swap {
+				ret = b.Clone().(headerer)
+			} else {
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.AddIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
@@ -63,7 +68,12 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Add(typ, dataA, dataB)
 		retVal = a
 	default:
-		ret := a.Clone().(headerer)
+		var ret headerer
+		if swap {
+			ret = b.Clone().(headerer)
+		} else {
+			ret = a.Clone().(headerer)
+		}
 		err = e.E.Add(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
@@ -87,8 +97,8 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Sub")
 	}
 	if useIter {
@@ -106,7 +116,12 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.SubIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
-			ret := a.Clone().(headerer)
+			var ret headerer
+			if swap {
+				ret = b.Clone().(headerer)
+			} else {
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.SubIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
@@ -124,7 +139,12 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Sub(typ, dataA, dataB)
 		retVal = a
 	default:
-		ret := a.Clone().(headerer)
+		var ret headerer
+		if swap {
+			ret = b.Clone().(headerer)
+		} else {
+			ret = a.Clone().(headerer)
+		}
 		err = e.E.Sub(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
@@ -148,8 +168,8 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Mul")
 	}
 	if useIter {
@@ -167,7 +187,12 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.MulIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
-			ret := a.Clone().(headerer)
+			var ret headerer
+			if swap {
+				ret = b.Clone().(headerer)
+			} else {
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.MulIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
@@ -185,7 +210,12 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Mul(typ, dataA, dataB)
 		retVal = a
 	default:
-		ret := a.Clone().(headerer)
+		var ret headerer
+		if swap {
+			ret = b.Clone().(headerer)
+		} else {
+			ret = a.Clone().(headerer)
+		}
 		err = e.E.Mul(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
@@ -209,8 +239,8 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Div")
 	}
 	if useIter {
@@ -228,7 +258,12 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.DivIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
-			ret := a.Clone().(headerer)
+			var ret headerer
+			if swap {
+				ret = b.Clone().(headerer)
+			} else {
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.DivIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
@@ -246,7 +281,12 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Div(typ, dataA, dataB)
 		retVal = a
 	default:
-		ret := a.Clone().(headerer)
+		var ret headerer
+		if swap {
+			ret = b.Clone().(headerer)
+		} else {
+			ret = a.Clone().(headerer)
+		}
 		err = e.E.Div(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
@@ -270,8 +310,8 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Pow")
 	}
 	if useIter {
@@ -289,7 +329,12 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.PowIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
-			ret := a.Clone().(headerer)
+			var ret headerer
+			if swap {
+				ret = b.Clone().(headerer)
+			} else {
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.PowIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
@@ -307,7 +352,12 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Pow(typ, dataA, dataB)
 		retVal = a
 	default:
-		ret := a.Clone().(headerer)
+		var ret headerer
+		if swap {
+			ret = b.Clone().(headerer)
+		} else {
+			ret = a.Clone().(headerer)
+		}
 		err = e.E.Pow(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
@@ -331,8 +381,8 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Mod")
 	}
 	if useIter {
@@ -350,7 +400,12 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.ModIter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
-			ret := a.Clone().(headerer)
+			var ret headerer
+			if swap {
+				ret = b.Clone().(headerer)
+			} else {
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.ModIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
@@ -368,7 +423,12 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Mod(typ, dataA, dataB)
 		retVal = a
 	default:
-		ret := a.Clone().(headerer)
+		var ret headerer
+		if swap {
+			ret = b.Clone().(headerer)
+		} else {
+			ret = a.Clone().(headerer)
+		}
 		err = e.E.Mod(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}

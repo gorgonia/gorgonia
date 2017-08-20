@@ -29,14 +29,18 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Gt")
 	}
 	// check to see if anything needs to be created
 	switch {
 	case same && safe && reuse == nil:
-		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		if swap {
+			reuse = NewDense(b.Dtype(), b.Shape().Clone(), WithEngine(e))
+		} else {
+			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		}
 		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	case !same && safe && reuse == nil:
@@ -97,14 +101,18 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Gte")
 	}
 	// check to see if anything needs to be created
 	switch {
 	case same && safe && reuse == nil:
-		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		if swap {
+			reuse = NewDense(b.Dtype(), b.Shape().Clone(), WithEngine(e))
+		} else {
+			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		}
 		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	case !same && safe && reuse == nil:
@@ -165,14 +173,18 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Lt")
 	}
 	// check to see if anything needs to be created
 	switch {
 	case same && safe && reuse == nil:
-		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		if swap {
+			reuse = NewDense(b.Dtype(), b.Shape().Clone(), WithEngine(e))
+		} else {
+			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		}
 		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	case !same && safe && reuse == nil:
@@ -233,14 +245,18 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Lte")
 	}
 	// check to see if anything needs to be created
 	switch {
 	case same && safe && reuse == nil:
-		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		if swap {
+			reuse = NewDense(b.Dtype(), b.Shape().Clone(), WithEngine(e))
+		} else {
+			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		}
 		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	case !same && safe && reuse == nil:
@@ -301,14 +317,18 @@ func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Eq")
 	}
 	// check to see if anything needs to be created
 	switch {
 	case same && safe && reuse == nil:
-		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		if swap {
+			reuse = NewDense(b.Dtype(), b.Shape().Clone(), WithEngine(e))
+		} else {
+			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		}
 		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	case !same && safe && reuse == nil:
@@ -369,14 +389,18 @@ func (e StdEng) ElNe(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Ne")
 	}
 	// check to see if anything needs to be created
 	switch {
 	case same && safe && reuse == nil:
-		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		if swap {
+			reuse = NewDense(b.Dtype(), b.Shape().Clone(), WithEngine(e))
+		} else {
+			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		}
 		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	case !same && safe && reuse == nil:

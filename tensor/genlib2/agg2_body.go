@@ -33,8 +33,8 @@ const prepVVRaw = `if err = binaryCheck(a, b, {{.TypeClassCheck | lower}}Types);
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter, swap bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.{{.Name}}")
 	}
 `
@@ -114,10 +114,16 @@ const agg2BodyRaw = `if useIter {
 			err = e.E.{{.Name}}Iter(typ, dataA, dataB, ait, bit)
 			retVal = a
 		default:
-			ret := a.Clone().(headerer)
 		{{if .VV -}}
+			var ret headerer
+			if swap{
+				ret = b.Clone().(headerer)
+			}else{
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.{{.Name}}Iter(typ, ret.hdr(), dataB, ait, bit)
 		{{else -}}
+			ret := a.Clone().(headerer)
 			if leftTensor {
 				err = e.E.{{.Name}}Iter(typ, ret.hdr(), dataB, ait, bit)
 			}else {
@@ -151,15 +157,21 @@ const agg2BodyRaw = `if useIter {
 		err = e.E.{{.Name}}(typ, dataA, dataB)
 		retVal = a
 	default:
-		ret := a.Clone().(headerer)
 		{{if .VV -}}
-		err = e.E.{{.Name}}(typ, ret.hdr(), dataB)
-		{{else -}}
-		if leftTensor {
+			var ret headerer
+			if swap {
+				ret = b.Clone().(headerer)
+			}else{
+				ret = a.Clone().(headerer)
+			}
 			err = e.E.{{.Name}}(typ, ret.hdr(), dataB)
-		}else {
-			err = e.E.{{.Name}}(typ, dataA, ret.hdr())	
-		}
+		{{else -}}
+			ret := a.Clone().(headerer)
+			if leftTensor {
+				err = e.E.{{.Name}}(typ, ret.hdr(), dataB)
+			}else {
+				err = e.E.{{.Name}}(typ, dataA, ret.hdr())	
+			}
 		{{end -}}
 		retVal = ret.(Tensor)
 	}
@@ -169,7 +181,15 @@ const agg2BodyRaw = `if useIter {
 const agg2CmpBodyRaw = `// check to see if anything needs to be created
 	switch {
 	case same && safe && reuse == nil:
+		{{if .VV -}}
+		if swap{
+			reuse = NewDense(b.Dtype(), b.Shape().Clone(), WithEngine(e))
+		} else{
+			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		}
+		{{else -}}
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
+		{{end -}}
 		dataReuse = reuse.hdr()
 		iit = IteratorFromDense(reuse)
 	case !same && safe && reuse == nil:

@@ -21,7 +21,7 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch at := a.(type) {
 	case Tensor:
 		if adder, ok = at.Engine().(Adder); !ok {
-			// error
+			return nil, errors.Errorf("Engine does not support Add")
 		}
 		switch bt := b.(type) {
 		case Tensor:
@@ -33,7 +33,7 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch bt := b.(type) {
 		case Tensor:
 			if adder, ok = bt.Engine().(Adder); !ok {
-				// error
+				return nil, errors.Errorf("Engine does not support AddScalar")
 			}
 			return adder.AddScalar(bt, a, false, opts...)
 		default:
@@ -54,7 +54,7 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch at := a.(type) {
 	case Tensor:
 		if suber, ok = at.Engine().(Suber); !ok {
-			// error
+			return nil, errors.Errorf("Engine does not support Sub")
 		}
 		switch bt := b.(type) {
 		case Tensor:
@@ -66,7 +66,7 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch bt := b.(type) {
 		case Tensor:
 			if suber, ok = bt.Engine().(Suber); !ok {
-				// error
+				return nil, errors.Errorf("Engine does not support SubScalar")
 			}
 			return suber.SubScalar(bt, a, false, opts...)
 		default:

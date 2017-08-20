@@ -76,7 +76,11 @@ func unaryCheck(a Tensor, tc *typeclass) error {
 	return nil
 }
 
-func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter bool, err error) {
+// prepDataVV prepares the data given the input and reuse tensors. It also retruns several indicators
+//
+// useIter indicates that the iterator methods should be used.
+// swap indicates that the operands are swapped.
+func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter, swap bool, err error) {
 	// prep actual data
 	switch at := a.(type) {
 	case DenseTensor:
@@ -91,7 +95,6 @@ func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storag
 					iit = IteratorFromDense(reuse)
 					dataReuse = reuse.hdr()
 				}
-
 				useIter = true
 			} else {
 				dataA = at.hdr()
@@ -101,6 +104,7 @@ func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storag
 				}
 			}
 		case *CS:
+			useIter = true
 			dataA = at.hdr()
 			dataB = bt.hdr()
 			ait = IteratorFromDense(at)
@@ -113,8 +117,10 @@ func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storag
 			err = errors.Errorf(typeNYI, "prepDataVV", b)
 		}
 	case *CS:
+		useIter = true
 		switch bt := b.(type) {
 		case DenseTensor:
+			swap = true
 			dataB = at.hdr()
 			dataA = bt.hdr()
 			bit = NewFlatSparseIterator(at)
