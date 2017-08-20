@@ -2,12 +2,15 @@
 
 package gorgonia
 
+import "github.com/chewxy/gorgonia/tensor"
+
 // CUDA indicates if this build is using CUDA
 const CUDA = false
 
 // ExternMetadata is used to hold metadata about external execution devices.
 // In this build, it's an empty struct because the default build doesn't use external devices to execute the graph on
 type ExternMetadata struct {
+	tensor.StdEng
 	b             batchedBLAS
 	workAvailable chan bool
 	syncChan      chan struct{}
