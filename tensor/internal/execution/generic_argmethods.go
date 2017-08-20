@@ -11,9 +11,10 @@ GENERATED FILE. DO NOT EDIT
 */
 
 func ArgmaxI(a []int) int {
+	var set bool
+	var f int
+	var max int
 	for i := range a {
-		var set bool
-		var f int
 		v := a[i]
 		if !set {
 			f = v
@@ -30,9 +31,10 @@ func ArgmaxI(a []int) int {
 }
 
 func ArgmaxI8(a []int8) int {
+	var set bool
+	var f int8
+	var max int
 	for i := range a {
-		var set bool
-		var f int8
 		v := a[i]
 		if !set {
 			f = v
@@ -49,9 +51,10 @@ func ArgmaxI8(a []int8) int {
 }
 
 func ArgmaxI16(a []int16) int {
+	var set bool
+	var f int16
+	var max int
 	for i := range a {
-		var set bool
-		var f int16
 		v := a[i]
 		if !set {
 			f = v
@@ -68,9 +71,10 @@ func ArgmaxI16(a []int16) int {
 }
 
 func ArgmaxI32(a []int32) int {
+	var set bool
+	var f int32
+	var max int
 	for i := range a {
-		var set bool
-		var f int32
 		v := a[i]
 		if !set {
 			f = v
@@ -87,9 +91,10 @@ func ArgmaxI32(a []int32) int {
 }
 
 func ArgmaxI64(a []int64) int {
+	var set bool
+	var f int64
+	var max int
 	for i := range a {
-		var set bool
-		var f int64
 		v := a[i]
 		if !set {
 			f = v
@@ -106,9 +111,10 @@ func ArgmaxI64(a []int64) int {
 }
 
 func ArgmaxU(a []uint) int {
+	var set bool
+	var f uint
+	var max int
 	for i := range a {
-		var set bool
-		var f uint
 		v := a[i]
 		if !set {
 			f = v
@@ -125,9 +131,10 @@ func ArgmaxU(a []uint) int {
 }
 
 func ArgmaxU8(a []uint8) int {
+	var set bool
+	var f uint8
+	var max int
 	for i := range a {
-		var set bool
-		var f uint8
 		v := a[i]
 		if !set {
 			f = v
@@ -144,9 +151,10 @@ func ArgmaxU8(a []uint8) int {
 }
 
 func ArgmaxU16(a []uint16) int {
+	var set bool
+	var f uint16
+	var max int
 	for i := range a {
-		var set bool
-		var f uint16
 		v := a[i]
 		if !set {
 			f = v
@@ -163,9 +171,10 @@ func ArgmaxU16(a []uint16) int {
 }
 
 func ArgmaxU32(a []uint32) int {
+	var set bool
+	var f uint32
+	var max int
 	for i := range a {
-		var set bool
-		var f uint32
 		v := a[i]
 		if !set {
 			f = v
@@ -182,9 +191,10 @@ func ArgmaxU32(a []uint32) int {
 }
 
 func ArgmaxU64(a []uint64) int {
+	var set bool
+	var f uint64
+	var max int
 	for i := range a {
-		var set bool
-		var f uint64
 		v := a[i]
 		if !set {
 			f = v
@@ -201,9 +211,10 @@ func ArgmaxU64(a []uint64) int {
 }
 
 func ArgmaxF32(a []float32) int {
+	var set bool
+	var f float32
+	var max int
 	for i := range a {
-		var set bool
-		var f float32
 		v := a[i]
 		if !set {
 			f = v
@@ -224,9 +235,10 @@ func ArgmaxF32(a []float32) int {
 }
 
 func ArgmaxF64(a []float64) int {
+	var set bool
+	var f float64
+	var max int
 	for i := range a {
-		var set bool
-		var f float64
 		v := a[i]
 		if !set {
 			f = v
@@ -247,9 +259,10 @@ func ArgmaxF64(a []float64) int {
 }
 
 func ArgmaxStr(a []string) int {
+	var set bool
+	var f string
+	var max int
 	for i := range a {
-		var set bool
-		var f string
 		v := a[i]
 		if !set {
 			f = v
@@ -266,12 +279,13 @@ func ArgmaxStr(a []string) int {
 }
 
 func ArgmaxMaskedI(a []int, mask []bool) int {
+	var set bool
+	var f int
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int
 		v := a[i]
 		if !set {
 			f = v
@@ -288,12 +302,13 @@ func ArgmaxMaskedI(a []int, mask []bool) int {
 }
 
 func ArgmaxMaskedI8(a []int8, mask []bool) int {
+	var set bool
+	var f int8
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int8
 		v := a[i]
 		if !set {
 			f = v
@@ -310,12 +325,13 @@ func ArgmaxMaskedI8(a []int8, mask []bool) int {
 }
 
 func ArgmaxMaskedI16(a []int16, mask []bool) int {
+	var set bool
+	var f int16
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int16
 		v := a[i]
 		if !set {
 			f = v
@@ -332,12 +348,13 @@ func ArgmaxMaskedI16(a []int16, mask []bool) int {
 }
 
 func ArgmaxMaskedI32(a []int32, mask []bool) int {
+	var set bool
+	var f int32
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int32
 		v := a[i]
 		if !set {
 			f = v
@@ -354,12 +371,13 @@ func ArgmaxMaskedI32(a []int32, mask []bool) int {
 }
 
 func ArgmaxMaskedI64(a []int64, mask []bool) int {
+	var set bool
+	var f int64
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int64
 		v := a[i]
 		if !set {
 			f = v
@@ -376,12 +394,13 @@ func ArgmaxMaskedI64(a []int64, mask []bool) int {
 }
 
 func ArgmaxMaskedU(a []uint, mask []bool) int {
+	var set bool
+	var f uint
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint
 		v := a[i]
 		if !set {
 			f = v
@@ -398,12 +417,13 @@ func ArgmaxMaskedU(a []uint, mask []bool) int {
 }
 
 func ArgmaxMaskedU8(a []uint8, mask []bool) int {
+	var set bool
+	var f uint8
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint8
 		v := a[i]
 		if !set {
 			f = v
@@ -420,12 +440,13 @@ func ArgmaxMaskedU8(a []uint8, mask []bool) int {
 }
 
 func ArgmaxMaskedU16(a []uint16, mask []bool) int {
+	var set bool
+	var f uint16
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint16
 		v := a[i]
 		if !set {
 			f = v
@@ -442,12 +463,13 @@ func ArgmaxMaskedU16(a []uint16, mask []bool) int {
 }
 
 func ArgmaxMaskedU32(a []uint32, mask []bool) int {
+	var set bool
+	var f uint32
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint32
 		v := a[i]
 		if !set {
 			f = v
@@ -464,12 +486,13 @@ func ArgmaxMaskedU32(a []uint32, mask []bool) int {
 }
 
 func ArgmaxMaskedU64(a []uint64, mask []bool) int {
+	var set bool
+	var f uint64
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint64
 		v := a[i]
 		if !set {
 			f = v
@@ -486,12 +509,13 @@ func ArgmaxMaskedU64(a []uint64, mask []bool) int {
 }
 
 func ArgmaxMaskedF32(a []float32, mask []bool) int {
+	var set bool
+	var f float32
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f float32
 		v := a[i]
 		if !set {
 			f = v
@@ -512,12 +536,13 @@ func ArgmaxMaskedF32(a []float32, mask []bool) int {
 }
 
 func ArgmaxMaskedF64(a []float64, mask []bool) int {
+	var set bool
+	var f float64
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f float64
 		v := a[i]
 		if !set {
 			f = v
@@ -538,12 +563,13 @@ func ArgmaxMaskedF64(a []float64, mask []bool) int {
 }
 
 func ArgmaxMaskedStr(a []string, mask []bool) int {
+	var set bool
+	var f string
+	var max int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f string
 		v := a[i]
 		if !set {
 			f = v
@@ -560,9 +586,10 @@ func ArgmaxMaskedStr(a []string, mask []bool) int {
 }
 
 func ArgminI(a []int) int {
+	var set bool
+	var f int
+	var min int
 	for i := range a {
-		var set bool
-		var f int
 		v := a[i]
 		if !set {
 			f = v
@@ -579,9 +606,10 @@ func ArgminI(a []int) int {
 }
 
 func ArgminI8(a []int8) int {
+	var set bool
+	var f int8
+	var min int
 	for i := range a {
-		var set bool
-		var f int8
 		v := a[i]
 		if !set {
 			f = v
@@ -598,9 +626,10 @@ func ArgminI8(a []int8) int {
 }
 
 func ArgminI16(a []int16) int {
+	var set bool
+	var f int16
+	var min int
 	for i := range a {
-		var set bool
-		var f int16
 		v := a[i]
 		if !set {
 			f = v
@@ -617,9 +646,10 @@ func ArgminI16(a []int16) int {
 }
 
 func ArgminI32(a []int32) int {
+	var set bool
+	var f int32
+	var min int
 	for i := range a {
-		var set bool
-		var f int32
 		v := a[i]
 		if !set {
 			f = v
@@ -636,9 +666,10 @@ func ArgminI32(a []int32) int {
 }
 
 func ArgminI64(a []int64) int {
+	var set bool
+	var f int64
+	var min int
 	for i := range a {
-		var set bool
-		var f int64
 		v := a[i]
 		if !set {
 			f = v
@@ -655,9 +686,10 @@ func ArgminI64(a []int64) int {
 }
 
 func ArgminU(a []uint) int {
+	var set bool
+	var f uint
+	var min int
 	for i := range a {
-		var set bool
-		var f uint
 		v := a[i]
 		if !set {
 			f = v
@@ -674,9 +706,10 @@ func ArgminU(a []uint) int {
 }
 
 func ArgminU8(a []uint8) int {
+	var set bool
+	var f uint8
+	var min int
 	for i := range a {
-		var set bool
-		var f uint8
 		v := a[i]
 		if !set {
 			f = v
@@ -693,9 +726,10 @@ func ArgminU8(a []uint8) int {
 }
 
 func ArgminU16(a []uint16) int {
+	var set bool
+	var f uint16
+	var min int
 	for i := range a {
-		var set bool
-		var f uint16
 		v := a[i]
 		if !set {
 			f = v
@@ -712,9 +746,10 @@ func ArgminU16(a []uint16) int {
 }
 
 func ArgminU32(a []uint32) int {
+	var set bool
+	var f uint32
+	var min int
 	for i := range a {
-		var set bool
-		var f uint32
 		v := a[i]
 		if !set {
 			f = v
@@ -731,9 +766,10 @@ func ArgminU32(a []uint32) int {
 }
 
 func ArgminU64(a []uint64) int {
+	var set bool
+	var f uint64
+	var min int
 	for i := range a {
-		var set bool
-		var f uint64
 		v := a[i]
 		if !set {
 			f = v
@@ -750,9 +786,10 @@ func ArgminU64(a []uint64) int {
 }
 
 func ArgminF32(a []float32) int {
+	var set bool
+	var f float32
+	var min int
 	for i := range a {
-		var set bool
-		var f float32
 		v := a[i]
 		if !set {
 			f = v
@@ -773,9 +810,10 @@ func ArgminF32(a []float32) int {
 }
 
 func ArgminF64(a []float64) int {
+	var set bool
+	var f float64
+	var min int
 	for i := range a {
-		var set bool
-		var f float64
 		v := a[i]
 		if !set {
 			f = v
@@ -796,9 +834,10 @@ func ArgminF64(a []float64) int {
 }
 
 func ArgminStr(a []string) int {
+	var set bool
+	var f string
+	var min int
 	for i := range a {
-		var set bool
-		var f string
 		v := a[i]
 		if !set {
 			f = v
@@ -815,12 +854,13 @@ func ArgminStr(a []string) int {
 }
 
 func ArgminMaskedI(a []int, mask []bool) int {
+	var set bool
+	var f int
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int
 		v := a[i]
 		if !set {
 			f = v
@@ -837,12 +877,13 @@ func ArgminMaskedI(a []int, mask []bool) int {
 }
 
 func ArgminMaskedI8(a []int8, mask []bool) int {
+	var set bool
+	var f int8
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int8
 		v := a[i]
 		if !set {
 			f = v
@@ -859,12 +900,13 @@ func ArgminMaskedI8(a []int8, mask []bool) int {
 }
 
 func ArgminMaskedI16(a []int16, mask []bool) int {
+	var set bool
+	var f int16
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int16
 		v := a[i]
 		if !set {
 			f = v
@@ -881,12 +923,13 @@ func ArgminMaskedI16(a []int16, mask []bool) int {
 }
 
 func ArgminMaskedI32(a []int32, mask []bool) int {
+	var set bool
+	var f int32
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int32
 		v := a[i]
 		if !set {
 			f = v
@@ -903,12 +946,13 @@ func ArgminMaskedI32(a []int32, mask []bool) int {
 }
 
 func ArgminMaskedI64(a []int64, mask []bool) int {
+	var set bool
+	var f int64
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f int64
 		v := a[i]
 		if !set {
 			f = v
@@ -925,12 +969,13 @@ func ArgminMaskedI64(a []int64, mask []bool) int {
 }
 
 func ArgminMaskedU(a []uint, mask []bool) int {
+	var set bool
+	var f uint
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint
 		v := a[i]
 		if !set {
 			f = v
@@ -947,12 +992,13 @@ func ArgminMaskedU(a []uint, mask []bool) int {
 }
 
 func ArgminMaskedU8(a []uint8, mask []bool) int {
+	var set bool
+	var f uint8
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint8
 		v := a[i]
 		if !set {
 			f = v
@@ -969,12 +1015,13 @@ func ArgminMaskedU8(a []uint8, mask []bool) int {
 }
 
 func ArgminMaskedU16(a []uint16, mask []bool) int {
+	var set bool
+	var f uint16
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint16
 		v := a[i]
 		if !set {
 			f = v
@@ -991,12 +1038,13 @@ func ArgminMaskedU16(a []uint16, mask []bool) int {
 }
 
 func ArgminMaskedU32(a []uint32, mask []bool) int {
+	var set bool
+	var f uint32
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint32
 		v := a[i]
 		if !set {
 			f = v
@@ -1013,12 +1061,13 @@ func ArgminMaskedU32(a []uint32, mask []bool) int {
 }
 
 func ArgminMaskedU64(a []uint64, mask []bool) int {
+	var set bool
+	var f uint64
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f uint64
 		v := a[i]
 		if !set {
 			f = v
@@ -1035,12 +1084,13 @@ func ArgminMaskedU64(a []uint64, mask []bool) int {
 }
 
 func ArgminMaskedF32(a []float32, mask []bool) int {
+	var set bool
+	var f float32
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f float32
 		v := a[i]
 		if !set {
 			f = v
@@ -1061,12 +1111,13 @@ func ArgminMaskedF32(a []float32, mask []bool) int {
 }
 
 func ArgminMaskedF64(a []float64, mask []bool) int {
+	var set bool
+	var f float64
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f float64
 		v := a[i]
 		if !set {
 			f = v
@@ -1087,12 +1138,13 @@ func ArgminMaskedF64(a []float64, mask []bool) int {
 }
 
 func ArgminMaskedStr(a []string, mask []bool) int {
+	var set bool
+	var f string
+	var min int
 	for i := range a {
 		if mask[i] {
 			continue
 		}
-		var set bool
-		var f string
 		v := a[i]
 		if !set {
 			f = v

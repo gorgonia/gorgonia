@@ -295,3 +295,13 @@ type Argmaxer interface {
 type Argminer interface {
 	Argmin(t Tensor, axis int) (Tensor, error)
 }
+
+/* Internal interfaces for faster shit */
+
+type denseArgmaxer interface {
+	argmaxDenseTensor(t DenseTensor, axis int) (*Dense, error)
+}
+
+type denseArgminer interface {
+	argminDenseTensor(t DenseTensor, axis int) (*Dense, error)
+}

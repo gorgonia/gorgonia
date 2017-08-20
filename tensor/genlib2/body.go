@@ -1,5 +1,7 @@
 package main
 
+import "text/template"
+
 // generic loop templates
 
 type LoopBody struct {
@@ -132,6 +134,11 @@ const (
 		continue
 	}
 	`
+
+	genericArgmaxVarDeclRaw = `var set bool
+	var f {{asType .Kind}}
+	var {{.ArgX | lower}} int
+	`
 )
 
 // renamed
@@ -146,3 +153,9 @@ const (
 	mixedIterLoopRaw     = genericUnaryIterLoopRaw
 	mixedIterIncrLoopRaw = genericBinaryIterLoopRaw
 )
+
+var genericArgmaxVarDecl *template.Template
+
+func init() {
+	genericArgmaxVarDecl = template.Must(template.New("genericArgmaxVarDecl").Funcs(funcs).Parse(genericArgmaxVarDeclRaw))
+}

@@ -520,7 +520,7 @@ const (
 				tmp = tmp[:0]
 			}
 		}
-		if _, ok := err.(NoOpError); !ok  {
+		if _, ok := err.(NoOpError); ok  {
 			err = nil
 		}
 		return
@@ -550,7 +550,7 @@ const (
 				newMask = newMask[:0]
 			}
 		}
-		if _, ok := err.(NoOpError); !ok {
+		if _, ok := err.(NoOpError); ok {
 			err = nil
 		}
 		return 

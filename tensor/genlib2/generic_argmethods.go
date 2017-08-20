@@ -86,6 +86,7 @@ func (fn *GenericArgMethod) WriteBody(w io.Writer) {
 	} else {
 		template.Must(T.New("check").Parse(""))
 	}
+	genericArgmaxVarDecl.Execute(w, fn)
 	T.Execute(w, fn)
 	fmt.Fprintf(w, "\nreturn %s\n", fn.ArgX)
 }
