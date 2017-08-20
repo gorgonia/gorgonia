@@ -170,95 +170,97 @@ func Range(dt Dtype, start, end int) interface{} {
 	}
 }
 
-// Random creates an array of random numbers of the given type
+// Random creates an array of random numbers of the given type.
+// For complex Dtypes, the imaginary component will be 0.
 //
-// WARNING: This function is super dodgy at the moment
+// This function is only useful in cases where the randomness is not vital.
 func Random(dt Dtype, size int) interface{} {
+	r := rand.New(rand.NewSource(1337))
 	switch dt.Kind() {
 	case reflect.Int:
-		r := make([]int, size)
-		for i := range r {
-			r[i] = int(rand.Int())
+		retVal := make([]int, size)
+		for i := range retVal {
+			retVal[i] = int(r.Int())
 		}
-		return r
+		return retVal
 	case reflect.Int8:
-		r := make([]int8, size)
-		for i := range r {
-			r[i] = int8(rand.Int())
+		retVal := make([]int8, size)
+		for i := range retVal {
+			retVal[i] = int8(r.Int())
 		}
-		return r
+		return retVal
 	case reflect.Int16:
-		r := make([]int16, size)
-		for i := range r {
-			r[i] = int16(rand.Int())
+		retVal := make([]int16, size)
+		for i := range retVal {
+			retVal[i] = int16(r.Int())
 		}
-		return r
+		return retVal
 	case reflect.Int32:
-		r := make([]int32, size)
-		for i := range r {
-			r[i] = int32(rand.Int())
+		retVal := make([]int32, size)
+		for i := range retVal {
+			retVal[i] = int32(r.Int())
 		}
-		return r
+		return retVal
 	case reflect.Int64:
-		r := make([]int64, size)
-		for i := range r {
-			r[i] = int64(rand.Int())
+		retVal := make([]int64, size)
+		for i := range retVal {
+			retVal[i] = int64(r.Int())
 		}
-		return r
+		return retVal
 	case reflect.Uint:
-		r := make([]uint, size)
-		for i := range r {
-			r[i] = uint(rand.Uint32())
+		retVal := make([]uint, size)
+		for i := range retVal {
+			retVal[i] = uint(r.Uint32())
 		}
-		return r
+		return retVal
 	case reflect.Uint8:
-		r := make([]uint8, size)
-		for i := range r {
-			r[i] = uint8(rand.Uint32())
+		retVal := make([]uint8, size)
+		for i := range retVal {
+			retVal[i] = uint8(r.Uint32())
 		}
-		return r
+		return retVal
 	case reflect.Uint16:
-		r := make([]uint16, size)
-		for i := range r {
-			r[i] = uint16(rand.Uint32())
+		retVal := make([]uint16, size)
+		for i := range retVal {
+			retVal[i] = uint16(r.Uint32())
 		}
-		return r
+		return retVal
 	case reflect.Uint32:
-		r := make([]uint32, size)
-		for i := range r {
-			r[i] = uint32(rand.Uint32())
+		retVal := make([]uint32, size)
+		for i := range retVal {
+			retVal[i] = uint32(r.Uint32())
 		}
-		return r
+		return retVal
 	case reflect.Uint64:
-		r := make([]uint64, size)
-		for i := range r {
-			r[i] = uint64(rand.Uint32())
+		retVal := make([]uint64, size)
+		for i := range retVal {
+			retVal[i] = uint64(r.Uint32())
 		}
-		return r
+		return retVal
 	case reflect.Float32:
-		r := make([]float32, size)
-		for i := range r {
-			r[i] = float32(rand.NormFloat64())
+		retVal := make([]float32, size)
+		for i := range retVal {
+			retVal[i] = float32(r.NormFloat64())
 		}
-		return r
+		return retVal
 	case reflect.Float64:
-		r := make([]float64, size)
-		for i := range r {
-			r[i] = rand.NormFloat64()
+		retVal := make([]float64, size)
+		for i := range retVal {
+			retVal[i] = rand.NormFloat64()
 		}
-		return r
+		return retVal
 	case reflect.Complex64:
-		r := make([]complex64, size)
-		for i := range r {
-			r[i] = complex(rand.Float32(), float32(0))
+		retVal := make([]complex64, size)
+		for i := range retVal {
+			retVal[i] = complex(r.Float32(), float32(0))
 		}
-		return r
+		return retVal
 	case reflect.Complex128:
-		r := make([]complex128, size)
-		for i := range r {
-			r[i] = complex(rand.Float64(), float64(0))
+		retVal := make([]complex128, size)
+		for i := range retVal {
+			retVal[i] = complex(r.Float64(), float64(0))
 		}
-		return r
+		return retVal
 	}
 	panic("unreachable")
 }

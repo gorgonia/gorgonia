@@ -44,7 +44,6 @@ func main() {
 	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
 	pipeline(tensorPkgLoc, "array_getset.go", Kinds{allKinds}, generateArrayMethods)
-	// pipeline(tensorPkgLoc, "dense_getset.go", Kinds{allKinds}, generateDenseGetSet)
 
 	// execution
 	pipeline(execLoc, "generic_arith_vv.go", Kinds{allKinds}, generateGenericVecVecArith)
@@ -57,6 +56,7 @@ func main() {
 	pipeline(execLoc, "generic_unary.go", Kinds{allKinds}, generateGenericUncondUnary, generateGenericCondUnary, generateSpecialGenericUnaries)
 	pipeline(execLoc, "generic_reduce.go", Kinds{allKinds}, generateGenericReduce)
 	pipeline(execLoc, "generic_argmethods.go", Kinds{allKinds}, generateGenericArgMethods)
+	pipeline(tensorPkgLoc, "generic_utils.go", Kinds{allKinds}, generateUtils)
 
 	// level 1 aggregation
 	pipeline(execLoc, "eng_arith.go", Kinds{allKinds}, generateEArith)
