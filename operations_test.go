@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"log"
 	"runtime"
 	"testing"
@@ -264,6 +265,7 @@ func TestGt(t *testing.T) {
 
 		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
+			ioutil.WriteFile("fail.dot", []byte(g.ToDot()), 0644)
 			t.Errorf("%v", m1.Prog())
 			t.Errorf("Test %d: %+v", i, err)
 			continue

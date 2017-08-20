@@ -24,11 +24,11 @@ func T(t Tensor, axes ...int) (retVal Tensor, err error) {
 }
 
 func Transpose(t Tensor, axes ...int) (retVal Tensor, err error) {
-	switch tt := t.(type){
+	switch tt := t.(type) {
 	case *Dense:
 		var ret *Dense
-		if ret, err = tt.SafeT(axes...);err != nil {
-			return 
+		if ret, err = tt.SafeT(axes...); err != nil {
+			return
 		}
 		ret.Transpose()
 		retVal = ret
@@ -78,4 +78,13 @@ func Copy(dst, src Tensor) error {
 		return err
 	}
 	panic("Unreachable")
+}
+
+func Materialize(t Tensor) Tensor {
+	switch tt := t.(type) {
+	case View:
+		return tt.Materialize()
+	default:
+		return t
+	}
 }

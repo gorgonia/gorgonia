@@ -955,7 +955,7 @@ func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 		return errors.Wrap(err, "Failed to T()")
 	}
 
-	d := zdvdT.Materialize()
+	d := tensor.Materialize(zdvdT)
 	zdvdT.UT()
 
 	add := newEBOByType(addOpType, inputs[0].t, TypeOf(zdvdT))
