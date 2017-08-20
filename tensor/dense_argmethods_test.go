@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"math"
 	"testing"
 
@@ -758,14 +757,12 @@ func TestDense_Argmin_F32(t *testing.T) {
 	assert.Equal(0, argmin.ScalarValue(), "Masked NaN test")
 
 	// test with +Inf
-	log.Printf("START WATCHING")
 	T = New(WithShape(4), WithBacking([]float32{1, 2, math32.Inf(1), 4}))
 	if argmin, err = T.Argmin(AllAxes); err != nil {
 		t.Errorf("Failed test with +Inf: %v", err)
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(0, argmin.ScalarValue(), "+Inf test")
-	log.Printf("END WATFCHING")
 
 	// test with Mask and +Inf
 	T = New(WithShape(4), WithBacking([]float32{1, -9, math32.Inf(1), 4}, []bool{false, true, true, false}))
