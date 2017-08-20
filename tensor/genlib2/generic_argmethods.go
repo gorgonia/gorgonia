@@ -15,7 +15,7 @@ if !set {
 	continue
 }
 {{if isFloat .Kind -}}
-if {{mathPkg .Kind}}IsNaN(v) || {{mathPkg .Kind}}IsInf(v, 1) {
+if {{mathPkg .Kind}}IsNaN(v) || {{mathPkg .Kind}}IsInf(v, {{if eq .ArgX "min"}}-{{end}}1) {
 	{{.ArgX}} = i
 	return {{.ArgX}}
 }

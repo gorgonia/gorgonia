@@ -797,7 +797,7 @@ func ArgminF32(a []float32) int {
 			set = true
 			continue
 		}
-		if math32.IsNaN(v) || math32.IsInf(v, 1) {
+		if math32.IsNaN(v) || math32.IsInf(v, -1) {
 			min = i
 			return min
 		}
@@ -821,7 +821,7 @@ func ArgminF64(a []float64) int {
 			set = true
 			continue
 		}
-		if math.IsNaN(v) || math.IsInf(v, 1) {
+		if math.IsNaN(v) || math.IsInf(v, -1) {
 			min = i
 			return min
 		}
@@ -1098,7 +1098,7 @@ func ArgminMaskedF32(a []float32, mask []bool) int {
 			set = true
 			continue
 		}
-		if math32.IsNaN(v) || math32.IsInf(v, 1) {
+		if math32.IsNaN(v) || math32.IsInf(v, -1) {
 			min = i
 			return min
 		}
@@ -1125,7 +1125,7 @@ func ArgminMaskedF64(a []float64, mask []bool) int {
 			set = true
 			continue
 		}
-		if math.IsNaN(v) || math.IsInf(v, 1) {
+		if math.IsNaN(v) || math.IsInf(v, -1) {
 			min = i
 			return min
 		}
