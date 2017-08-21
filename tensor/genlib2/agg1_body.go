@@ -264,7 +264,7 @@ const (
 	rs := isScalar(retVal)
 	rt := retVal.Bools()
 
-	if (as && !bs) || (bs && !as) && rs {
+	if ((as && !bs) || (bs && !as)) && rs {
 		return errors.Errorf("retVal is a scalar. a: %d, b %d", a.Len(), b.Len())
 	}
 
@@ -324,7 +324,7 @@ const (
 	rs := isScalar(retVal)
 	rt := retVal.Bools()
 
-	if (as && !bs) || (bs && !as) && rs {
+	if ((as && !bs) || (bs && !as)) && rs {
 		return errors.Errorf("retVal is scalar while len(a): %d, len(b) %d", a.Len(), b.Len())
 	}
 
