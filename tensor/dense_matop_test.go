@@ -952,30 +952,26 @@ func TestDense_Stack(t *testing.T) {
 
 	// arbitrary view slices
 
-	// T := New(WithShape(2, 2), WithBacking([]string{"hello", "world", "nihao", "sekai"}))
-	// var stacked []*Dense
-	// for i := 0; i < sts.stackCount-1; i++ {
-	// 	offset := (i + 1) * 100
-	// 	T1 := New(WithShape(sts.shape...), WithBacking(Range(sts.dt, offset, sts.shape.TotalSize()+offset)))
-	// 	switch {
-	// 	case sts.slices != nil && sts.transform == nil:
-	// 		var sliced Tensor
-	// 		if sliced, err = T1.Slice(sts.slices...); err != nil {
-	// 			t.Error(err)
-	// 			continue
-	// 		}
-	// 		T1 = sliced.(*Dense)
-	// 	case sts.transform != nil && sts.slices == nil:
-	// 		T1.T(sts.transform...)
-	// 	}
+	T := New(WithShape(2, 2), WithBacking([]string{"hello", "world", "nihao", "sekai"}))
+	var stacked []*Dense
+	for i := 0; i < 1; i++ {
+		T1 := New(WithShape(2, 2), WithBacking([]string{"blah1", "blah2", "blah3", "blah4"}))
+		var sliced Tensor
+		if sliced, err = T1.Slice(nil, nil); err != nil {
+			t.Error(err)
+			break
+		}
+		T1 = sliced.(*Dense)
+		stacked = append(stacked, T1)
+	}
+	T2, err := T.Stack(0, stacked...)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
-	// 	stacked = append(stacked, T1)
-	// }
-	// T2, err := T.Stack(sts.axis, stacked...)
-	// if err != nil {
-	// 	t.Error(err)
-	// 	continue
-	// }
-	// assert.True(sts.correctShape.Eq(T2.Shape()))
-	// assert.Equal(sts.correctData, T2.Data(), "%q failed", sts.name)
+	correctShape := Shape{2, 2, 2}
+	correctData := []string{"hello", "world", "nihao", "sekai", "blah1", "blah2", "blah3", "blah4"}
+	assert.True(correctShape.Eq(T2.Shape()))
+	assert.Equal(correctData, T2.Data(), "%q failed", "arbitrary view slice")
 }

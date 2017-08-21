@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"io/ioutil"
-	"log"
 	"runtime"
 	"testing"
 
@@ -301,7 +300,6 @@ func TestGt(t *testing.T) {
 	}
 
 	// other special cases
-	log.Printf("Special Cases")
 	g := NewGraph()
 	c := NewConstant(F64(1))
 	// T := NewTensor(g, Float64, 1, WithShape(2), WithInit(RangedFrom(0)))
