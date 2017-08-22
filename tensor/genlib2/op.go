@@ -36,6 +36,14 @@ type basicBinOp struct {
 	is     TypeClass
 }
 
+type arithOp struct {
+	basicBinOp
+	HasIdentity bool
+	Identity    int
+	IsInv       bool
+	Inv         string
+}
+
 func (op basicBinOp) Name() string           { return op.name }
 func (op basicBinOp) Arity() int             { return 2 }
 func (op basicBinOp) SymbolTemplate() string { return op.symbol }
@@ -78,7 +86,6 @@ type TypedUnaryOp struct {
 }
 
 func (op TypedUnaryOp) Kind() reflect.Kind { return op.k }
-
 
 type specialUnaryOp struct {
 	unaryOp

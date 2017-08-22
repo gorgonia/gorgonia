@@ -56,6 +56,38 @@ var unconditionalFloatUnarySymbolTemplates = [...]string{
 	`{{asType .Kind}}(1)/{{mathPkg .Kind}}Sqrt`,
 }
 
+var funcOptUse = map[string]string{
+	"reuse":  ",WithReuse(reuse)",
+	"incr":   ",WithIncr(incr)",
+	"unsafe": ",UseUnsafe()",
+}
+
+var funcOptCheck = map[string]string{
+	"reuse": `if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+	}`,
+
+	"incr": "",
+
+	"unsafe": `if ret != a.Dense {
+		t.Errorf("Expected ret to be the same as a.Dense")
+		return false
+	}`,
+}
+
+var funcOptDecl = map[string]string{
+	"reuse":  `reuse := New(Of(Float64), WithShape(a.len()))`,
+	"incr":   "incr := New(Of(Float64), WithShape(a.len()))",
+	"unsafe": "",
+}
+
+var funcOptCorrect = map[string]string{
+	"reuse":  "",
+	"incr":   "incr.Memset(100.0)",
+	"unsafe": "",
+}
+
 var stdTypes = [...]string{
 	"Bool",
 	"Int",
@@ -272,10 +304,10 @@ var funcs = template.FuncMap{
 	"trueValue":   trueValue,
 	"falseValue":  falseValue,
 
-	"mathPkg":   mathPkg,
-	"vecPkg":    vecPkg,
-	"bitSizeOf": bitSizeOf,
-	"getalias":  getalias,
+	"mathPkg":       mathPkg,
+	"vecPkg":        vecPkg,
+	"bitSizeOf":     bitSizeOf,
+	"getalias":      getalias,
 	"interfaceName": interfaceName,
 
 	"isntFloat": isntFloat,
@@ -343,7 +375,7 @@ var nameMaps = map[string]string{
 	"SubIncrSV": "IncrTransInvR",
 }
 
-var arithBinOps []basicBinOp
+var arithBinOps []arithOp
 var cmpBinOps []basicBinOp
 var typedAriths []TypedBinOp
 var typedCmps []TypedBinOp
@@ -366,13 +398,13 @@ func init() {
 
 	// ops
 
-	arithBinOps = []basicBinOp{
-		{"", "Add", false, isAddable},
-		{"", "Sub", false, isNumber},
-		{"", "Mul", false, isNumber},
-		{"", "Div", false, isNumber},
-		{"", "Pow", true, isFloatCmplx},
-		{"", "Mod", false, isNonComplexNumber},
+	arithBinOps = []arithOp{
+		{basicBinOp{"", "Add", false, isAddable}, true, 0, false, ""},
+		{basicBinOp{"", "Sub", false, isNumber}, false, 0, true, "Add"},
+		{basicBinOp{"", "Mul", false, isNumber}, true, 1, false, ""},
+		{basicBinOp{"", "Div", false, isNumber}, false, 0, true, "Mul"},
+		{basicBinOp{"", "Pow", true, isFloatCmplx}, true, 1, false, ""},
+		{basicBinOp{"", "Mod", false, isNonComplexNumber}, false, 0, false, ""},
 	}
 	for i := range arithBinOps {
 		arithBinOps[i].symbol = arithSymbolTemplates[i]

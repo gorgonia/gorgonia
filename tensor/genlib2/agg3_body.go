@@ -45,12 +45,71 @@ const denseArithScalarBodyRaw = `e := t.e
 	return nil, errors.Errorf("Engine does not support {{.Name}}Scalar()")
 `
 
+const denseIdentityArithTestBodyRaw = `iden := func(a *QCDenseF64) bool {
+	identity := New(Of(Float64), WithShape(a.len()))
+	{{if ne .Identity 0 -}}
+			identity.Memset({{.Identity}}.0)
+	{{end -}}
+	{{template "funcoptdecl"}}
+	correct := New(Of(Float64), WithShape(a.len()))
+	copyDense(correct, a)
+	{{template "funcoptcorrect"}}
+
+	ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
+	if err != nil {
+			t.Errorf("Identity tests for {{.Name}} was unable to proceed: %v", err)
+			return false
+	}
+	if !allClose(correct.Data(), ret.Data()) {
+		return false
+	}
+	{{template "funcoptcheck"}}
+
+	return true
+}
+		if err := quick.Check(iden, nil); err != nil{
+			t.Errorf("Identity test for {{.Name}} failed: %v", err)
+		}
+
+	idenSliced := func(a *QCDenseF64) bool {
+		a1, _ := sliceDense(a.Dense, makeRS(0,5))
+		identity := New(Of(Float64), WithShape(a.len()))
+		{{if ne .Identity 0 -}}
+				identity.Memset({{.Identity}}.0)
+		{{end -}}
+		{{template "funcoptdecl"}}
+		correct := New(Of(Float64), WithShape(5))
+		copyDense(correct, a1)
+		{{template "funcoptcorrect"}}
+
+		ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
+		if err != nil {
+			t.Errorf("Identity sliced test for {{.Name}} was unable to proceed: %v", err)
+			return false
+		}
+		if !allClose(correct.Data(), ret.Data()) {
+			return false
+		}
+		{{template "funcoptcheck"}}
+		return true
+
+	}
+
+	if err := quick.Check(idenSliced, nil); err != nil{
+			t.Errorf("IdentitySliced test for {{.Name}} failed: %v", err)
+	}
+`
+
 var (
 	denseArithBody       *template.Template
 	denseArithScalarBody *template.Template
+
+	denseIdentityArithTest *template.Template
 )
 
 func init() {
 	denseArithBody = template.Must(template.New("dense arith body").Funcs(funcs).Parse(denseArithBodyRaw))
 	denseArithScalarBody = template.Must(template.New("dense arith body").Funcs(funcs).Parse(denseArithScalarBodyRaw))
+
+	denseIdentityArithTest = template.Must(template.New("dense identity test").Funcs(funcs).Parse(denseIdentityArithTestBodyRaw))
 }

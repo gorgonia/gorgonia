@@ -83,6 +83,8 @@ const (
 	tensorTypeRaw           = `Tensor`
 	splatFuncOptTypeRaw     = `...FuncOpt`
 	denseTypeRaw            = `*Dense`
+
+	testingTypeRaw = `*testing.T`
 )
 
 var (
@@ -105,6 +107,7 @@ var (
 	tensorType       *template.Template
 	splatFuncOptType *template.Template
 	denseType        *template.Template
+	testingType      *template.Template
 )
 
 func init() {
@@ -127,4 +130,5 @@ func init() {
 	tensorType = template.Must(template.New("tensorType").Funcs(funcs).Parse(tensorTypeRaw))
 	splatFuncOptType = template.Must(template.New("splatFuncOpt").Funcs(funcs).Parse(splatFuncOptTypeRaw))
 	denseType = template.Must(template.New("*Dense").Funcs(funcs).Parse(denseTypeRaw))
+	testingType = template.Must(template.New("*testing.T").Funcs(funcs).Parse(testingTypeRaw))
 }
