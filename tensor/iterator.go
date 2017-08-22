@@ -9,6 +9,9 @@ func requiresIterator(a Tensor) bool {
 			return true
 		}
 		if v, ok := tt.(View); ok && v.IsMaterializable() {
+			if tt.DataOrder().isContiguous() {
+				return false
+			}
 			return true
 		}
 		if tt.DataOrder().isNotContiguous() {
