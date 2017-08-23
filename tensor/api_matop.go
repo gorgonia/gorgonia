@@ -61,21 +61,22 @@ func Concat(axis int, t Tensor, others ...Tensor) (retVal Tensor, err error) {
 // Copy copies a tensor to another. For *Dense views, only the relevant slots are copied.
 func Copy(dst, src Tensor) error {
 	switch st := src.(type) {
-	case *Dense:
-		dt, ok := dst.(*Dense)
+	case DenseTensor:
+		dt, ok := dst.(DenseTensor)
 		if !ok {
-			return errors.Errorf("Cannot copy from *Dense to %T", dst)
+			return errors.Errorf("Cannot copy from DenseTensor to %T", dst)
 		}
 
-		var siter, diter *FlatIterator
-		if st.IsMaterializable() {
-			siter = NewFlatIterator(st.AP)
+		if requiresIterator(st) || requiresIterator(dt) {
+			siter := IteratorFromDense(st)
+			diter := IteratorFromDense(dt)
+			_, err := copyDenseIter(dt, st, diter, siter)
+			return err
 		}
-		if dt.IsMaterializable() {
-			diter = NewFlatIterator(dt.AP)
-		}
-		_, err := copyDenseIter(dt, st, diter, siter)
-		return err
+		copyDense(dt, st)
+		return nil
+	default:
+		return errors.Errorf("NYI for Copy %T", src)
 	}
 	panic("Unreachable")
 }
