@@ -8,6 +8,7 @@ import (
 
 type ArithTest struct {
 	arithOp
+	scalars bool
 	funcOpt string
 }
 
@@ -25,7 +26,13 @@ func (fn *ArithTest) Signature() *Signature {
 }
 
 func (fn *ArithTest) WriteBody(w io.Writer) {
-	t := template.Must(template.New("dense identity test").Funcs(funcs).Parse(denseIdentityArithTestBodyRaw))
+	var t *template.Template
+	if fn.scalars {
+
+		} else {
+
+	t = template.Must(template.New("dense identity test").Funcs(funcs).Parse(denseIdentityArithTestBodyRaw))
+		}
 	template.Must(t.New("funcoptdecl").Parse(funcOptDecl[fn.funcOpt]))
 	template.Must(t.New("funcoptcorrect").Parse(funcOptCorrect[fn.funcOpt]))
 	template.Must(t.New("funcoptuse").Parse(funcOptUse[fn.funcOpt]))
