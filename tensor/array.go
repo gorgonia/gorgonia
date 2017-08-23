@@ -75,6 +75,20 @@ func arrayFromSlice(x interface{}) array {
 	}
 }
 
+func (a *array) fix() {
+	if a.v == nil {
+		shdr := reflect.SliceHeader{
+			Data: uintptr(a.Ptr),
+			Len:  a.L,
+			Cap:  a.C,
+		}
+		sliceT := reflect.SliceOf(a.t.Type)
+		ptr := unsafe.Pointer(&shdr)
+		val := reflect.Indirect(reflect.NewAt(sliceT, ptr))
+		a.v = val.Interface()
+	}
+}
+
 // byteSlice casts the underlying slice into a byte slice. Useful for copying and zeroing, but not much else
 func (a array) byteSlice() []byte {
 	return storage.AsByteSlice(&a.Header, a.t.Type)
@@ -82,7 +96,7 @@ func (a array) byteSlice() []byte {
 
 // sliceInto creates a slice. Instead of returning an array, which would cause a lot of reallocations, sliceInto expects a array to
 // already have been created. This allows repetitive actions to be done without having to have many pointless allocation
-func (a array) sliceInto(i, j int, res *array) {
+func (a *array) sliceInto(i, j int, res *array) {
 	base := uintptr(a.Ptr)
 	c := a.C
 
@@ -99,6 +113,7 @@ func (a array) sliceInto(i, j int, res *array) {
 		// don't advance pointer
 		res.Ptr = unsafe.Pointer(base)
 	}
+	res.fix()
 }
 
 func (a array) slice(start, end int) array {
