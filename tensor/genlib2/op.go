@@ -38,10 +38,11 @@ type basicBinOp struct {
 
 type arithOp struct {
 	basicBinOp
-	HasIdentity bool
-	Identity    int
-	IsInv       bool
-	Inv         string
+	HasIdentity   bool
+	Identity      int
+	IsInv         bool
+	Inv           string
+	IsCommutative bool
 }
 
 func (op basicBinOp) Name() string           { return op.name }

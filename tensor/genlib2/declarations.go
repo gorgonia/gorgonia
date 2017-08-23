@@ -70,8 +70,8 @@ var funcOptCheck = map[string]string{
 
 	"incr": "",
 
-	"unsafe": `if ret != a.Dense {
-		t.Errorf("Expected ret to be the same as a.Dense")
+	"unsafe": `if ret != a {
+		t.Errorf("Expected ret to be the same as a")
 		return false
 	}`,
 }
@@ -83,8 +83,13 @@ var funcOptDecl = map[string]string{
 }
 
 var funcOptCorrect = map[string]string{
-	"reuse":  "",
-	"incr":   "incr.Memset(100.0)",
+	"reuse": "",
+	"incr": `incr.Memset(100.0)
+	data :=  correct.Data().([]float64)
+	for i := range data {
+		data[i] += 100
+	}
+	`,
 	"unsafe": "",
 }
 
@@ -399,12 +404,12 @@ func init() {
 	// ops
 
 	arithBinOps = []arithOp{
-		{basicBinOp{"", "Add", false, isAddable}, true, 0, false, ""},
-		{basicBinOp{"", "Sub", false, isNumber}, false, 0, true, "Add"},
-		{basicBinOp{"", "Mul", false, isNumber}, true, 1, false, ""},
-		{basicBinOp{"", "Div", false, isNumber}, false, 0, true, "Mul"},
-		{basicBinOp{"", "Pow", true, isFloatCmplx}, true, 1, false, ""},
-		{basicBinOp{"", "Mod", false, isNonComplexNumber}, false, 0, false, ""},
+		{basicBinOp{"", "Add", false, isAddable}, true, 0, false, "", true},
+		{basicBinOp{"", "Sub", false, isNumber}, false, 0, true, "Add", false},
+		{basicBinOp{"", "Mul", false, isNumber}, true, 1, false, "", true},
+		{basicBinOp{"", "Div", false, isNumber}, false, 0, true, "Mul", false},
+		{basicBinOp{"", "Pow", true, isFloatCmplx}, true, 1, false, "", false},
+		{basicBinOp{"", "Mod", false, isNonComplexNumber}, false, 0, false, "", false},
 	}
 	for i := range arithBinOps {
 		arithBinOps[i].symbol = arithSymbolTemplates[i]

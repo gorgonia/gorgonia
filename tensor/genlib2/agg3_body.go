@@ -104,7 +104,7 @@ const denseIdentityArithTestBodyRaw = `iden := func(a *QCDenseF64) bool {
 	}
 `
 
-const denseIdentityArithScalarTestBodyRaw = `iden := func(q *QCDenseF64) bool {
+const denseIdentityArithScalarTestRaw = `iden1 := func(q *QCDenseF64) bool {
 	a := &QCDenseF64{q.Dense.Clone().(*Dense)}
 	identity := {{.Identity}}.0
 	{{template "funcoptdecl"}}
@@ -112,26 +112,7 @@ const denseIdentityArithScalarTestBodyRaw = `iden := func(q *QCDenseF64) bool {
 	copyDense(correct, a)
 	{{template "funcoptcorrect"}}
 
-	ret, err := {{.Name}}Scalar(a, identity, true, {{template "funcoptuse"}})
-	if err != nil {
-		t.Errorf("Identity tests for {{.Name}} the tensor in left operand was unable to proceed: %v", err)
-	}
-
-	if !allClose(correct.Data(), ret.Data()) {
-		t.Errorf("Correct.Data()\n%v", correct.Data())
-		t.Errorf("ret.Data()\n%v", ret.Data())
-		return false
-	}
-	{{template "funcoptcheck"}}
-
-	a = &QCDenseF64{q.Dense.Clone().(*Dense)}
-	identity := {{.Identity}}.0
-	{{template "funcoptdecl"}}
-	correct := New(Of(Float64), WithShape(a.len()))
-	copyDense(correct, a)
-	{{template "funcoptcorrect"}}
-
-	ret, err := {{.Name}}Scalar(a, identity, false, {{template "funcoptuse"}})
+	ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
 	if err != nil {
 		t.Errorf("Identity tests for {{.Name}} the tensor in left operand was unable to proceed: %v", err)
 	}
@@ -145,10 +126,40 @@ const denseIdentityArithScalarTestBodyRaw = `iden := func(q *QCDenseF64) bool {
 
 	return true
 }
-
-if err := quick.Check(iden, nil); err != nil {
-	t.Errorf("Identity test for {{.Name}}Scalar failed: %v", err)
+if err := quick.Check(iden1, nil); err != nil {
+	t.Errorf("Identity test for {{.Name}} (tensor as left, scalar as right) failed: %v", err)
 }
+
+{{if .IsCommutative -}}
+
+iden2 := func(q *QCDenseF64) bool {
+	a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+	identity := {{.Identity}}.0
+	{{template "funcoptdecl"}}
+	correct := New(Of(Float64), WithShape(a.len()))
+	copyDense(correct, a)
+	{{template "funcoptcorrect"}}
+
+	ret, err := {{.Name}}( identity, a {{template "funcoptuse"}})
+	if err != nil {
+		t.Errorf("Identity tests for {{.Name}} the tensor in left operand was unable to proceed: %v", err)
+	}
+
+	if !allClose(correct.Data(), ret.Data()) {
+		t.Errorf("Correct.Data()\n%v", correct.Data())
+		t.Errorf("ret.Data()\n%v", ret.Data())
+		return false
+	}
+	{{template "funcoptcheck"}}
+
+	return true
+}
+if err := quick.Check(iden2, nil); err != nil {
+	t.Errorf("Identity test for {{.Name}} (scalar as left, tensor as right) failed: %v", err)
+}
+{{end -}}
+
+
 
 `
 
@@ -156,7 +167,8 @@ var (
 	denseArithBody       *template.Template
 	denseArithScalarBody *template.Template
 
-	denseIdentityArithTest *template.Template
+	denseIdentityArithTest       *template.Template
+	denseIdentityArithScalarTest *template.Template
 )
 
 func init() {
@@ -164,4 +176,5 @@ func init() {
 	denseArithScalarBody = template.Must(template.New("dense arith body").Funcs(funcs).Parse(denseArithScalarBodyRaw))
 
 	denseIdentityArithTest = template.Must(template.New("dense identity test").Funcs(funcs).Parse(denseIdentityArithTestBodyRaw))
+	denseIdentityArithScalarTest = template.Must(template.New("dense scalar identity test").Funcs(funcs).Parse(denseIdentityArithScalarTestRaw))
 }

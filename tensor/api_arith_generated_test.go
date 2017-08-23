@@ -181,7 +181,7 @@ func TestAdd_unsafe(t *testing.T) {
 			return false
 		}
 		if ret != a {
-			t.Errorf("Expected ret to be the same as a.Dense")
+			t.Errorf("Expected ret to be the same as a")
 			return false
 		}
 
@@ -209,7 +209,7 @@ func TestAdd_unsafe(t *testing.T) {
 			return false
 		}
 		if ret != a {
-			t.Errorf("Expected ret to be the same as a.Dense")
+			t.Errorf("Expected ret to be the same as a")
 			return false
 		}
 		return true
@@ -239,7 +239,7 @@ func TestMul_unsafe(t *testing.T) {
 			return false
 		}
 		if ret != a {
-			t.Errorf("Expected ret to be the same as a.Dense")
+			t.Errorf("Expected ret to be the same as a")
 			return false
 		}
 
@@ -268,7 +268,7 @@ func TestMul_unsafe(t *testing.T) {
 			return false
 		}
 		if ret != a {
-			t.Errorf("Expected ret to be the same as a.Dense")
+			t.Errorf("Expected ret to be the same as a")
 			return false
 		}
 		return true
@@ -298,7 +298,7 @@ func TestPow_unsafe(t *testing.T) {
 			return false
 		}
 		if ret != a {
-			t.Errorf("Expected ret to be the same as a.Dense")
+			t.Errorf("Expected ret to be the same as a")
 			return false
 		}
 
@@ -327,7 +327,7 @@ func TestPow_unsafe(t *testing.T) {
 			return false
 		}
 		if ret != a {
-			t.Errorf("Expected ret to be the same as a.Dense")
+			t.Errorf("Expected ret to be the same as a")
 			return false
 		}
 		return true
@@ -520,9 +520,9 @@ func TestAdd_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(a.len()))
 		copyDense(correct, a)
 		incr.Memset(100.0)
-		dat := correct.Data().([]float64)
-		for i := range dat {
-			dat[i] += 100.0
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
 		}
 
 		ret, err := Add(a, identity, WithIncr(incr))
@@ -549,9 +549,9 @@ func TestAdd_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(5))
 		copyDense(correct, a1)
 		incr.Memset(100.0)
-		dat := correct.Data().([]float64)
-		for i := range dat {
-			dat[i] += 100.0
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
 		}
 
 		ret, err := Add(a, identity, WithIncr(incr))
@@ -581,9 +581,9 @@ func TestMul_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(a.len()))
 		copyDense(correct, a)
 		incr.Memset(100.0)
-		dat := correct.Data().([]float64)
-		for i := range dat {
-			dat[i] += 100.0
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
 		}
 
 		ret, err := Mul(a, identity, WithIncr(incr))
@@ -611,9 +611,9 @@ func TestMul_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(5))
 		copyDense(correct, a1)
 		incr.Memset(100.0)
-		dat := correct.Data().([]float64)
-		for i := range dat {
-			dat[i] += 100.0
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
 		}
 
 		ret, err := Mul(a, identity, WithIncr(incr))
@@ -643,9 +643,9 @@ func TestPow_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(a.len()))
 		copyDense(correct, a)
 		incr.Memset(100.0)
-		dat := correct.Data().([]float64)
-		for i := range dat {
-			dat[i] += 100.0
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
 		}
 
 		ret, err := Pow(a, identity, WithIncr(incr))
@@ -673,9 +673,9 @@ func TestPow_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(5))
 		copyDense(correct, a1)
 		incr.Memset(100.0)
-		dat := correct.Data().([]float64)
-		for i := range dat {
-			dat[i] += 100.0
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
 		}
 
 		ret, err := Pow(a, identity, WithIncr(incr))
@@ -696,4 +696,565 @@ func TestPow_incr(t *testing.T) {
 	if err := quick.Check(idenSliced, nil); err != nil {
 		t.Errorf("IdentitySliced test for Pow failed: %v", err)
 	}
+}
+func TestAddScalar(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Add(a, identity)
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Add(identity, a)
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestMulScalar(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Mul(a, identity)
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Mul(identity, a)
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestPowScalar(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Pow(a, identity)
+		if err != nil {
+			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
+	}
+
+}
+func TestAddScalar_unsafe(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Add(a, identity, UseUnsafe())
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Add(identity, a, UseUnsafe())
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestMulScalar_unsafe(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Mul(a, identity, UseUnsafe())
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Mul(identity, a, UseUnsafe())
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestPowScalar_unsafe(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Pow(a, identity, UseUnsafe())
+		if err != nil {
+			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
+	}
+
+}
+func TestAddScalar_reuse(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+		reuse := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Add(a, identity, WithReuse(reuse))
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+		reuse := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Add(identity, a, WithReuse(reuse))
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestMulScalar_reuse(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+		reuse := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Mul(a, identity, WithReuse(reuse))
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+		reuse := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Mul(identity, a, WithReuse(reuse))
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestPowScalar_reuse(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+		reuse := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+
+		ret, err := Pow(a, identity, WithReuse(reuse))
+		if err != nil {
+			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
+	}
+
+}
+func TestAddScalar_incr(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+		incr := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+		incr.Memset(100.0)
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
+		}
+
+		ret, err := Add(a, identity, WithIncr(incr))
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 0.0
+		incr := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+		incr.Memset(100.0)
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
+		}
+
+		ret, err := Add(identity, a, WithIncr(incr))
+		if err != nil {
+			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestMulScalar_incr(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+		incr := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+		incr.Memset(100.0)
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
+		}
+
+		ret, err := Mul(a, identity, WithIncr(incr))
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
+	}
+
+	iden2 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+		incr := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+		incr.Memset(100.0)
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
+		}
+
+		ret, err := Mul(identity, a, WithIncr(incr))
+		if err != nil {
+			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden2, nil); err != nil {
+		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
+	}
+}
+func TestPowScalar_incr(t *testing.T) {
+	iden1 := func(q *QCDenseF64) bool {
+		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
+		identity := 1.0
+		incr := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(Float64), WithShape(a.len()))
+		copyDense(correct, a)
+		incr.Memset(100.0)
+		data := correct.Data().([]float64)
+		for i := range data {
+			data[i] += 100
+		}
+
+		ret, err := Pow(a, identity, WithIncr(incr))
+		if err != nil {
+			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		}
+
+		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
+			return false
+		}
+
+		return true
+	}
+	if err := quick.Check(iden1, nil); err != nil {
+		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
+	}
+
 }
