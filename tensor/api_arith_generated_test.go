@@ -22,6 +22,8 @@ func TestAdd(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -44,6 +46,8 @@ func TestAdd(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -69,6 +73,8 @@ func TestMul(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -92,6 +98,8 @@ func TestMul(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -117,6 +125,8 @@ func TestPow(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -140,6 +150,8 @@ func TestPow(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -164,9 +176,11 @@ func TestAdd_unsafe(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
-		if ret != a.Dense {
+		if ret != a {
 			t.Errorf("Expected ret to be the same as a.Dense")
 			return false
 		}
@@ -190,9 +204,11 @@ func TestAdd_unsafe(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
-		if ret != a.Dense {
+		if ret != a {
 			t.Errorf("Expected ret to be the same as a.Dense")
 			return false
 		}
@@ -218,9 +234,11 @@ func TestMul_unsafe(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
-		if ret != a.Dense {
+		if ret != a {
 			t.Errorf("Expected ret to be the same as a.Dense")
 			return false
 		}
@@ -245,9 +263,11 @@ func TestMul_unsafe(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
-		if ret != a.Dense {
+		if ret != a {
 			t.Errorf("Expected ret to be the same as a.Dense")
 			return false
 		}
@@ -273,9 +293,11 @@ func TestPow_unsafe(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
-		if ret != a.Dense {
+		if ret != a {
 			t.Errorf("Expected ret to be the same as a.Dense")
 			return false
 		}
@@ -300,9 +322,11 @@ func TestPow_unsafe(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
-		if ret != a.Dense {
+		if ret != a {
 			t.Errorf("Expected ret to be the same as a.Dense")
 			return false
 		}
@@ -327,6 +351,8 @@ func TestAdd_reuse(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 		if reuse != ret {
@@ -353,6 +379,8 @@ func TestAdd_reuse(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 		if reuse != ret {
@@ -381,6 +409,8 @@ func TestMul_reuse(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 		if reuse != ret {
@@ -408,6 +438,8 @@ func TestMul_reuse(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 		if reuse != ret {
@@ -436,6 +468,8 @@ func TestPow_reuse(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 		if reuse != ret {
@@ -463,6 +497,8 @@ func TestPow_reuse(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 		if reuse != ret {
@@ -484,6 +520,10 @@ func TestAdd_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(a.len()))
 		copyDense(correct, a)
 		incr.Memset(100.0)
+		dat := correct.Data().([]float64)
+		for i := range dat {
+			dat[i] += 100.0
+		}
 
 		ret, err := Add(a, identity, WithIncr(incr))
 		if err != nil {
@@ -491,6 +531,8 @@ func TestAdd_incr(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -507,6 +549,10 @@ func TestAdd_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(5))
 		copyDense(correct, a1)
 		incr.Memset(100.0)
+		dat := correct.Data().([]float64)
+		for i := range dat {
+			dat[i] += 100.0
+		}
 
 		ret, err := Add(a, identity, WithIncr(incr))
 		if err != nil {
@@ -514,6 +560,8 @@ func TestAdd_incr(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -533,6 +581,10 @@ func TestMul_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(a.len()))
 		copyDense(correct, a)
 		incr.Memset(100.0)
+		dat := correct.Data().([]float64)
+		for i := range dat {
+			dat[i] += 100.0
+		}
 
 		ret, err := Mul(a, identity, WithIncr(incr))
 		if err != nil {
@@ -540,6 +592,8 @@ func TestMul_incr(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -557,6 +611,10 @@ func TestMul_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(5))
 		copyDense(correct, a1)
 		incr.Memset(100.0)
+		dat := correct.Data().([]float64)
+		for i := range dat {
+			dat[i] += 100.0
+		}
 
 		ret, err := Mul(a, identity, WithIncr(incr))
 		if err != nil {
@@ -564,6 +622,8 @@ func TestMul_incr(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -583,6 +643,10 @@ func TestPow_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(a.len()))
 		copyDense(correct, a)
 		incr.Memset(100.0)
+		dat := correct.Data().([]float64)
+		for i := range dat {
+			dat[i] += 100.0
+		}
 
 		ret, err := Pow(a, identity, WithIncr(incr))
 		if err != nil {
@@ -590,6 +654,8 @@ func TestPow_incr(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 
@@ -607,6 +673,10 @@ func TestPow_incr(t *testing.T) {
 		correct := New(Of(Float64), WithShape(5))
 		copyDense(correct, a1)
 		incr.Memset(100.0)
+		dat := correct.Data().([]float64)
+		for i := range dat {
+			dat[i] += 100.0
+		}
 
 		ret, err := Pow(a, identity, WithIncr(incr))
 		if err != nil {
@@ -614,6 +684,8 @@ func TestPow_incr(t *testing.T) {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 

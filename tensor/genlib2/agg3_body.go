@@ -61,6 +61,8 @@ const denseIdentityArithTestBodyRaw = `iden := func(a *QCDenseF64) bool {
 			return false
 	}
 	if !allClose(correct.Data(), ret.Data()) {
+		t.Errorf("Correct.Data()\n%v", correct.Data())
+		t.Errorf("ret.Data()\n%v", ret.Data())
 		return false
 	}
 	{{template "funcoptcheck"}}
@@ -88,6 +90,8 @@ const denseIdentityArithTestBodyRaw = `iden := func(a *QCDenseF64) bool {
 			return false
 		}
 		if !allClose(correct.Data(), ret.Data()) {
+			t.Errorf("Correct.Data()\n%v", correct.Data())
+				t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
 		{{template "funcoptcheck"}}
