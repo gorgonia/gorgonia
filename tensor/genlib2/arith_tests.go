@@ -75,7 +75,7 @@ func generateAPIArithTests(f io.Writer, ak Kinds) {
 		fn.funcOpt = "reuse"
 	}
 
-	for _, fn := range tests {
+	for _, fn := range tests { 
 		if fn.HasIdentity {
 			fn.Write(f)
 		}

@@ -973,3 +973,457 @@ func ExampleDense_Mod_incr() {
 	// ⎡100  101⎤
 	// ⎣103  104⎦
 }
+
+/* TENSOR-SCALAR AND VICE VERSA OPERATIONS */
+
+/* ADD */
+
+// By default, arithmetic operations are safe
+func ExampleDense_AddScalar_basic() {
+	var T1, T3, V *Dense
+	var sliced Tensor
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	T3, _ = T1.AddScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (tensor is left operand)\n==========================\nT3 = T1 + 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T3, _ = T1.AddScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (tensor is right operand)\n==========================\nT3 = 5 + T1\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(nil, makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.AddScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[0:2, 0:2] + 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.AddScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 + T1[0:2, 0:2]\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	// Output:
+	// Default operation is safe (tensor is left operand)
+	// ==========================
+	// T3 = T1 + 5
+	// T3:
+	// ⎡ 5   6   7⎤
+	// ⎢ 8   9  10⎥
+	// ⎣11  12  13⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (tensor is right operand)
+	// ==========================
+	// T3 = 5 + T1
+	// T3:
+	// ⎡ 5   6   7⎤
+	// ⎢ 8   9  10⎥
+	// ⎣11  12  13⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is left operand)
+	// =============================================
+	// T3 = T1[0:2, 0:2] + 5
+	// T3:
+	// ⎡5  6⎤
+	// ⎣8  9⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is right operand)
+	// =============================================
+	// T3 = 5 + T1[0:2, 0:2]
+	// T3:
+	// ⎡5  6⎤
+	// ⎣8  9⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+}
+
+// By default, arithmetic operations are safe
+func ExampleDense_SubScalar_basic() {
+	var T1, T3, V *Dense
+	var sliced Tensor
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	T3, _ = T1.SubScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (tensor is left operand)\n==========================\nT3 = T1 - 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T3, _ = T1.SubScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (tensor is right operand)\n==========================\nT3 = 5 - T1\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.SubScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[0:2, 0:2] - 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.SubScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 - T1[0:2, 0:2]\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	// Output:
+	// Default operation is safe (tensor is left operand)
+	// ==========================
+	// T3 = T1 - 5
+	// T3:
+	// ⎡-5  -4  -3⎤
+	// ⎢-2  -1   0⎥
+	// ⎣ 1   2   3⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (tensor is right operand)
+	// ==========================
+	// T3 = 5 - T1
+	// T3:
+	// ⎡ 5   4   3⎤
+	// ⎢ 2   1   0⎥
+	// ⎣-1  -2  -3⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is left operand)
+	// =============================================
+	// T3 = T1[0:2, 0:2] - 5
+	// T3:
+	// ⎡-5  -4⎤
+	// ⎣-2  -1⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is right operand)
+	// =============================================
+	// T3 = 5 - T1[0:2, 0:2]
+	// T3:
+	// ⎡5  4⎤
+	// ⎣2  1⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+}
+
+// By default, arithmetic operations are safe
+func ExampleDense_MulScalar_basic() {
+	var T1, T3, V *Dense
+	var sliced Tensor
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	T3, _ = T1.MulScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (tensor is left operand)\n==========================\nT3 = T1 * 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T3, _ = T1.MulScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (tensor is right operand)\n==========================\nT3 = 5 * T1\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.MulScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[0:2, 0:2] * 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.MulScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 * T1[0:2, 0:2]\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	// Output:
+	// Default operation is safe (tensor is left operand)
+	// ==========================
+	// T3 = T1 * 5
+	// T3:
+	// ⎡ 0   5  10⎤
+	// ⎢15  20  25⎥
+	// ⎣30  35  40⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (tensor is right operand)
+	// ==========================
+	// T3 = 5 * T1
+	// T3:
+	// ⎡ 0   5  10⎤
+	// ⎢15  20  25⎥
+	// ⎣30  35  40⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is left operand)
+	// =============================================
+	// T3 = T1[0:2, 0:2] * 5
+	// T3:
+	// ⎡ 0   5⎤
+	// ⎣15  20⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is right operand)
+	// =============================================
+	// T3 = 5 * T1[0:2, 0:2]
+	// T3:
+	// ⎡ 0   5⎤
+	// ⎣15  20⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+}
+
+// By default, arithmetic operations are safe
+func ExampleDense_DivScalar_basic() {
+	var T1, T3, V *Dense
+	var sliced Tensor
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	T3, _ = T1.DivScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (tensor is left operand)\n==========================\nT3 = T1 / 5\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
+
+	T3, _ = T1.DivScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (tensor is right operand)\n==========================\nT3 = 5 / T1\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.DivScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[0:2, 0:2] / 5\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.DivScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 / T1[0:2, 0:2]\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
+
+	// Output:
+	// Default operation is safe (tensor is left operand)
+	// ==========================
+	// T3 = T1 / 5
+	// T3:
+	// ⎡  0  0.2  0.4⎤
+	// ⎢0.6  0.8    1⎥
+	// ⎣  1    1    2⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (tensor is right operand)
+	// ==========================
+	// T3 = 5 / T1
+	// T3:
+	// ⎡+Inf     5     2⎤
+	// ⎢   2     1     1⎥
+	// ⎣ 0.8   0.7   0.6⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is left operand)
+	// =============================================
+	// T3 = T1[0:2, 0:2] / 5
+	// T3:
+	// ⎡  0  0.2⎤
+	// ⎣0.6  0.8⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is right operand)
+	// =============================================
+	// T3 = 5 / T1[0:2, 0:2]
+	// T3:
+	// ⎡+Inf     5⎤
+	// ⎣   2     1⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+}
+
+// By default, arithmetic operations are safe
+func ExampleDense_PowScalar_basic() {
+	var T1, T3, V *Dense
+	var sliced Tensor
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	T3, _ = T1.PowScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (tensor is left operand)\n==========================\nT3 = T1 ^ 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T3, _ = T1.PowScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (tensor is right operand)\n==========================\nT3 = 5 ^ T1\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.PowScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[0:2, 0:2] ^ 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.PowScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 ^ T1[0:2, 0:2]\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	// Output:
+	// Default operation is safe (tensor is left operand)
+	// ==========================
+	// T3 = T1 ^ 5
+	// T3:
+	// ⎡    0      1     32⎤
+	// ⎢  243   1024   3125⎥
+	// ⎣ 7776  16807  32768⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (tensor is right operand)
+	// ==========================
+	// T3 = 5 ^ T1
+	// T3:
+	// ⎡     1       5      25⎤
+	// ⎢   125     625    3125⎥
+	// ⎣ 15625   78125  390625⎦
+
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is left operand)
+	// =============================================
+	// T3 = T1[0:2, 0:2] ^ 5
+	// T3:
+	// ⎡   0     1⎤
+	// ⎣ 243  1024⎦
+
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is right operand)
+	// =============================================
+	// T3 = 5 ^ T1[0:2, 0:2]
+	// T3:
+	// ⎡  1    5⎤
+	// ⎣125  625⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+}
+
+// By default, arithmetic operations are safe
+func ExampleDense_ModScalar_basic() {
+	var T1, T3, V *Dense
+	var sliced Tensor
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	T3, _ = T1.ModScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (tensor is left operand)\n==========================\nT3 = T1 %% 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T3, _ = T1.ModScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (tensor is right operand)\n==========================\nT3 = 5 %% T1\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.ModScalar(float32(5), true)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[0:2, 0:2] %% 5\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.ModScalar(float32(5), false)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 %% T1[0:2, 0:2]\nT3:\n%v\nT1 is unchanged:\n%v\n", T3, T1)
+
+	// Output:
+	// Default operation is safe (tensor is left operand)
+	// ==========================
+	// T3 = T1 % 5
+	// T3:
+	// ⎡0  1  2⎤
+	// ⎢3  4  0⎥
+	// ⎣1  2  3⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (tensor is right operand)
+	// ==========================
+	// T3 = 5 % T1
+	// T3:
+	// ⎡NaN    0    1⎤
+	// ⎢  2    1    0⎥
+	// ⎣  5    5    5⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is left operand)
+	// =============================================
+	// T3 = T1[0:2, 0:2] % 5
+	// T3:
+	// ⎡0  1⎤
+	// ⎣3  4⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+	//
+	// Default operation is safe (sliced operations - tensor is right operand)
+	// =============================================
+	// T3 = 5 % T1[0:2, 0:2]
+	// T3:
+	// ⎡NaN    0⎤
+	// ⎣  2    1⎦
+	//
+	// T1 is unchanged:
+	// ⎡0  1  2⎤
+	// ⎢3  4  5⎥
+	// ⎣6  7  8⎦
+}
