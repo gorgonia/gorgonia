@@ -213,14 +213,24 @@ func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 		return
 	}
 
-	view := new(Dense)
+	var view *Dense
+	size := newAP.shape.TotalSize()
+	if newAP.shape.IsScalar() {
+		size = 1
+	}
+	if !isParameterizedKind(t.t.Kind()) {
+		view = borrowDense(t.t, size)
+	} else {
+		view = newDense(t.t, size)
+	}
+
+	// view := new(Dense)
 	view.t = t.t
 	view.e = t.e
 	view.flag = t.flag
 	view.viewOf = t
 	view.AP = newAP
-	view.array = t.array
-	view.slice(ndStart, ndEnd)
+	t.sliceInto(ndStart, ndEnd, &view.array)
 
 	if t.IsMasked() {
 		view.mask = t.mask[ndStart:ndEnd]
