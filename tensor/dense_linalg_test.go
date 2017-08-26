@@ -599,6 +599,7 @@ func TestDot(t *testing.T) {
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
 	// T-v
+
 	t.Log("3T⋅Vec")
 	b = New(Of(Float64), WithShape(4), WithBacking(Range(Float64, 0, 4)))
 	R, err = Dot(A, b)
@@ -610,6 +611,7 @@ func TestDot(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
+
 	// v-T
 	t.Log("Vec⋅3T")
 	R2, err = Dot(b, B)

@@ -188,11 +188,12 @@ func (t *Dense) CopyTo(other *Dense) error {
 	}
 
 	// easy peasy lemon squeezy
-	if t.viewOf == nil && other.viewOf == nil {
+	if t.viewOf == 0 && other.viewOf == 0 {
 		copyDense(other, t)
 		return nil
 	}
 
+	// TODO: use copyDenseIter
 	return errors.Errorf(methodNYI, "CopyTo", "views")
 }
 
@@ -217,8 +218,8 @@ func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 	view.t = t.t
 	view.e = t.e
 	view.flag = t.flag
-	view.viewOf = t
 	view.AP = newAP
+	view.setParentTensor(t)
 	t.sliceInto(ndStart, ndEnd, &view.array)
 
 	if t.IsMasked() {

@@ -7,7 +7,6 @@ import (
 
 func handleFuncOpts(expShape Shape, expType Dtype, strict bool, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr, same bool, err error) {
 	fo := ParseFuncOpts(opts...)
-	defer returnOpOpt(fo)
 
 	reuseT, incr := fo.IncrReuse()
 	safe = fo.Safe()
@@ -16,22 +15,26 @@ func handleFuncOpts(expShape Shape, expType Dtype, strict bool, opts ...FuncOpt)
 
 	if toReuse {
 		if reuse, err = getDenseTensor(reuseT); err != nil {
+			returnOpOpt(fo)
 			err = errors.Wrapf(err, "Cannot reuse a different type of Tensor in a *Dense-Scalar operation")
 			return
 		}
 
 		if (strict || same) && reuse.Dtype() != expType {
+			returnOpOpt(fo)
 			err = errors.Errorf(typeMismatch, expType, reuse.Dtype())
 			err = errors.Wrapf(err, "Cannot use reuse")
 			return
 		}
 
 		if reuse.len() != expShape.TotalSize() {
+			returnOpOpt(fo)
 			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
 		}
 	}
+	returnOpOpt(fo)
 	return
 }
 

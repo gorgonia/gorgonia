@@ -2,8 +2,8 @@ package tensor
 
 import (
 	"fmt"
+	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
 )
 
@@ -24,7 +24,7 @@ type Dense struct {
 	transposeWith []int
 
 	// if viewOf != nil, then this *Dense is a view.
-	viewOf *Dense
+	viewOf uintptr
 
 	mask       []bool // mask slice can be used to identify missing or invalid values. len(mask)<=len(v)
 	maskIsSoft bool
@@ -89,7 +89,7 @@ func (t *Dense) addMask(mask []bool) {
 
 func (t *Dense) makeArray(size int) {
 	if am, ok := t.e.(arrayMaker); ok {
-		t.array = am.makeArray(t.t, size)
+		am.makeArray(&t.array, t.t, size)
 		return
 	}
 
@@ -98,11 +98,10 @@ func (t *Dense) makeArray(size int) {
 		panic(err)
 	}
 
-	var hdr storage.Header
-	hdr.Ptr = mem.Pointer()
-	hdr.L = size
-	hdr.C = size
-	t.array = makeArrayFromHeader(hdr, t.t)
+	t.array.Ptr = mem.Pointer()
+	t.array.L = size
+	t.array.C = size
+	t.array.fix()
 	return
 
 }
@@ -134,7 +133,7 @@ func (t *Dense) Engine() Engine { return t.e }
 
 // Reshape reshapes a *Dense. If the tensors need to be materialized (either it's a view or transpose), it will be materialized before the reshape happens
 func (t *Dense) Reshape(dims ...int) error {
-	if t.viewOf != nil {
+	if t.viewOf != 0 {
 		return errors.Errorf(methodNYI, "Reshape", "views")
 	}
 
@@ -165,12 +164,12 @@ func (t *Dense) ScalarValue() interface{} {
 
 //  IsView indicates if the Tensor is a view of another (typically from slicing)
 func (t *Dense) IsView() bool {
-	return t.viewOf != nil
+	return t.viewOf != 0
 }
 
 // IsMaterializeable() indicates if the Tensor is materializable - if it has either gone through some transforms or slicing
 func (t *Dense) IsMaterializable() bool {
-	return t.viewOf != nil || t.old != nil
+	return t.viewOf != 0 || t.old != nil
 }
 
 // IsManuallyManaged returns true if the memory associated with this *Dense is manually managed (by the user)
@@ -310,7 +309,7 @@ func (t *Dense) sanity() error {
 
 	size := t.L
 	expected := t.Size()
-	if t.viewOf == nil && size != expected && !t.IsScalar() {
+	if t.viewOf == 0 && size != expected && !t.IsScalar() {
 		return errors.Errorf(shapeMismatch, t.Shape(), size)
 	}
 	// TODO: sanity check for views
@@ -343,11 +342,22 @@ func (t *Dense) shallowClone() *Dense {
 	return retVal
 }
 
-func (t *Dense) oldAP() *AP               { return t.old }
-func (t *Dense) setOldAP(ap *AP)          { t.old = ap }
-func (t *Dense) transposeAxes() []int     { return t.transposeWith }
-func (t *Dense) parentTensor() *Dense     { return t.viewOf }
-func (t *Dense) setParentTensor(d *Dense) { t.viewOf = d }
+func (t *Dense) oldAP() *AP           { return t.old }
+func (t *Dense) setOldAP(ap *AP)      { t.old = ap }
+func (t *Dense) transposeAxes() []int { return t.transposeWith }
+func (t *Dense) parentTensor() *Dense {
+	if t.viewOf != 0 {
+		return (*Dense)(unsafe.Pointer(t.viewOf))
+	}
+	return nil
+}
+func (t *Dense) setParentTensor(d *Dense) {
+	if d == nil {
+		t.viewOf = 0
+		return
+	}
+	t.viewOf = uintptr(unsafe.Pointer(d))
+}
 
 /* ------ Mask operations */
 

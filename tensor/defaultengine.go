@@ -1,6 +1,8 @@
 package tensor
 
 import (
+	"unsafe"
+
 	"github.com/chewxy/gorgonia/tensor/internal/execution"
 	"github.com/pkg/errors"
 )
@@ -10,7 +12,16 @@ type StdEng struct {
 	execution.E
 }
 
-func (e StdEng) makeArray(t Dtype, size int) array { return makeArray(t, size) }
+// makeArray allocates a slice for the array
+func (e StdEng) makeArray(arr *array, t Dtype, size int) {
+	memsize := calcMemSize(t, size)
+	s := make([]byte, memsize)
+	arr.t = t
+	arr.L = size
+	arr.C = size
+	arr.Ptr = unsafe.Pointer(&s[0])
+	arr.fix()
+}
 
 func (e StdEng) AllocAccessible() bool             { return true }
 func (e StdEng) Alloc(size int64) (Memory, error)  { return nil, noopError{} }

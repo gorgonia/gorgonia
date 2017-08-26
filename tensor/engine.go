@@ -30,7 +30,7 @@ type Engine interface {
 }
 
 type arrayMaker interface {
-	makeArray(t Dtype, size int) array
+	makeArray(arr *array, t Dtype, size int)
 }
 
 /* Data Agnostic Execution Engine Methods */

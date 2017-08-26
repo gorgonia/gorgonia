@@ -260,6 +260,7 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		}
 	default:
 	}
+
 	as := a.Shape()
 	bs := b.Shape()
 	axesA := BorrowInts(1)
@@ -302,6 +303,7 @@ func (e StdEng) Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	} else {
 		retVal = rd
 	}
+
 	return
 }
 

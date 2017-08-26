@@ -273,7 +273,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 		fmt.Fprintf(f, " %v %v\n", t.Shape(), t.Strides())
 	}
 
-	if !t.IsNativelyAccessible(){
+	if !t.IsNativelyAccessible() {
 		fmt.Fprintf(f, "Inaccesible data")
 		return
 	}
@@ -298,7 +298,7 @@ func (t *Dense) Format(s fmt.State, c rune) {
 					f.Write(f.pad[:1])
 				}
 			}
-		case t.viewOf != nil:
+		case t.viewOf != 0:
 			it := IteratorFromDense(t)
 			var c, i int
 			var err error
