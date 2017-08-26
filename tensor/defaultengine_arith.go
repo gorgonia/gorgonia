@@ -474,8 +474,8 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = reuse
 		case toReuse && !leftTensor:
 			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
-			ait.Reset()
 			iit.Reset()
+			bit.Reset()
 			err = e.E.AddIter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		case !safe:
@@ -558,8 +558,8 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = reuse
 		case toReuse && !leftTensor:
 			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
-			ait.Reset()
 			iit.Reset()
+			bit.Reset()
 			err = e.E.SubIter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		case !safe:
@@ -642,8 +642,8 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = reuse
 		case toReuse && !leftTensor:
 			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
-			ait.Reset()
 			iit.Reset()
+			bit.Reset()
 			err = e.E.MulIter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		case !safe:
@@ -726,8 +726,8 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = reuse
 		case toReuse && !leftTensor:
 			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
-			ait.Reset()
 			iit.Reset()
+			bit.Reset()
 			err = e.E.DivIter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		case !safe:
@@ -810,8 +810,8 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = reuse
 		case toReuse && !leftTensor:
 			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
-			ait.Reset()
 			iit.Reset()
+			bit.Reset()
 			err = e.E.PowIter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		case !safe:
@@ -894,8 +894,8 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			retVal = reuse
 		case toReuse && !leftTensor:
 			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
-			ait.Reset()
 			iit.Reset()
+			bit.Reset()
 			err = e.E.ModIter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		case !safe:

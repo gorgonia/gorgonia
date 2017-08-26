@@ -105,8 +105,8 @@ const agg2BodyRaw = `if useIter {
 			retVal = reuse
 		case toReuse && !leftTensor:
 			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
-			ait.Reset()
 			iit.Reset()
+			bit.Reset()
 			err = e.E.{{.Name}}Iter(typ, dataA, dataReuse, ait, iit)
 			retVal = reuse
 		{{end -}}
