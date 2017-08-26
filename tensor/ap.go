@@ -28,11 +28,11 @@ type AP struct {
 
 // NewAP creates a new AP, given the shape and strides
 func NewAP(shape Shape, strides []int) *AP {
-	return &AP{
-		shape:   shape,
-		strides: strides,
-		fin:     true,
-	}
+	ap := borrowAP()
+	ap.shape = shape
+	ap.strides = strides
+	ap.fin = true
+	return ap
 }
 
 // SetShape is for very specific times when modifying the AP is necessary, such as reshaping and doing I/O related stuff
@@ -52,11 +52,11 @@ func (ap *AP) SetShape(s ...int) {
 		}
 
 		if ap.shape != nil {
-			// ReturnInts(ap.shape)
+			ReturnInts(ap.shape)
 			ap.shape = nil
 		}
 		if ap.strides != nil {
-			// ReturnInts(ap.strides)
+			ReturnInts(ap.strides)
 			ap.strides = nil
 		}
 		ap.shape = Shape(s).Clone()
@@ -137,10 +137,9 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 	}
 
 	ndEnd = size
-
-	newShape := ap.shape.Clone()    // the new shape
-	dims := ap.Dims()               // reported dimensions
-	newStrides := make([]int, dims) // the new strides
+	newShape := ap.shape.Clone()   // the new shape
+	dims := ap.Dims()              // reported dimensions
+	newStrides := BorrowInts(dims) // the new strides
 
 	var outerDim int
 	order := ap.o
@@ -157,7 +156,6 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		}
 
 		size := ap.shape[i]
-
 		var stride int
 		if ap.IsVector() {
 			// handles non-vanilla vectors
@@ -195,7 +193,7 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 
 	if ndEnd-ndStart == 1 {
 		// scalars are a special case
-		newAP = new(AP)
+		newAP = borrowAP()
 		newAP.SetShape() // make it a Scalar
 		newAP.lock()
 	} else {
@@ -212,7 +210,10 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 
 		//fix up strides
 		if newShape.IsColVec() {
-			newStrides = []int{newStrides[0]}
+			stride0 := newStrides[0]
+			ReturnInts(newStrides)
+			newStrides = BorrowInts(1)
+			newStrides[0] = stride0
 		}
 
 		newAP = NewAP(newShape, newStrides)
@@ -267,14 +268,13 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 		}
 	}
 
-	retVal = BorrowAP(len(shape))
-	copy(retVal.shape, shape)
-	copy(retVal.strides, strides)
-
+	retVal = borrowAP()
+	retVal.shape = shape
+	retVal.strides = strides
 	if ap.IsVector() {
 		retVal.strides = retVal.strides[:1]
 	}
-
+	retVal.fin = true
 	return
 }
 

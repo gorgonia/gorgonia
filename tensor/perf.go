@@ -1,18 +1,14 @@
 package tensor
 
-import (
-	"reflect"
-	"sync"
-
-	_ "unsafe"
-)
+import "sync"
 
 var habbo sync.Mutex
 var usePool = true
 
 // tensorPool is a pool of *Tensor grouped by size. It's guarded by poolsClosed
-var poolsClosed sync.RWMutex
-var densePool = make(map[reflect.Kind]map[int]*sync.Pool)
+var densePool = &sync.Pool{
+	New: func() interface{} { d := new(Dense); d.e = StdEng{}; return d },
+}
 
 const (
 	maxAPDims = 8
@@ -35,60 +31,8 @@ func DontUsePool() {
 	habbo.Unlock()
 }
 
-func newDensePool(dt Dtype, size int) *sync.Pool {
-	var pool *sync.Pool
-
-	k := dt.Kind()
-	poolsClosed.Lock()
-	// check once more that before the lock was acquired, that nothing else had written to that key
-	pools, ok := densePool[k]
-	if !ok {
-		pools = make(map[int]*sync.Pool)
-		densePool[k] = pools
-	}
-
-	if p, ok := pools[size]; !ok {
-		pool = new(sync.Pool)
-		l := size
-		t := dt
-
-		pool.New = func() interface{} {
-			return newDense(t, l)
-		}
-
-		pools[size] = pool
-	} else {
-		pool = p
-	}
-
-	poolsClosed.Unlock()
-	return pool
-}
-
-func borrowDense(dt Dtype, size int) *Dense {
-	if !usePool {
-		return newDense(dt, size)
-	}
-
-	var pool *sync.Pool
-	k := dt.Kind()
-
-	poolsClosed.RLock()
-	pools, ok := densePool[k]
-	poolsClosed.RUnlock()
-
-	if !ok {
-		pool = newDensePool(dt, size)
-		goto end
-	}
-
-	if pool, ok = pools[size]; !ok {
-		pool = newDensePool(dt, size)
-	}
-
-end:
-	retVal := pool.Get().(*Dense)
-	return retVal
+func borrowDense() *Dense {
+	return densePool.Get().(*Dense)
 }
 
 // ReturnTensor returns a Tensor to their respective pools. USE WITH CAUTION
@@ -98,42 +42,6 @@ func ReturnTensor(t Tensor) {
 	}
 	switch tt := t.(type) {
 	case *Dense:
-		if tt.IsManuallyManaged() {
-			tt.array.Ptr = nil
-			tt.array.L = 0
-			tt.array.C = 0
-			return
-		}
-
-		dt := tt.t.Kind()
-		if _, ok := densePool[dt]; !ok {
-			return
-		}
-
-		if tt.viewOf != nil {
-			ReturnAP(tt.AP)
-			tt.AP = nil
-			if tt.old != nil {
-				ReturnAP(tt.old)
-				tt.old = nil
-			}
-			if tt.transposeWith != nil {
-				ReturnInts(tt.transposeWith)
-				tt.transposeWith = nil
-			}
-			tt.array.Ptr = nil
-			return // yes, we're not putting it back into the pool
-		}
-
-		tt.Zero()
-		size := tt.cap()
-		poolsClosed.RLock()
-		pool, ok := densePool[dt][size]
-		poolsClosed.RUnlock()
-		if !ok {
-			pool = newDensePool(tt.t, size)
-		}
-
 		if tt.old != nil {
 			ReturnAP(tt.old)
 			tt.old = nil
@@ -144,38 +52,59 @@ func ReturnTensor(t Tensor) {
 			tt.transposeWith = nil
 		}
 
-		tt.unlock()
-		pool.Put(tt)
+		// return AP
+		ReturnAP(tt.AP)
+
+		// array reset
+		tt.array.Ptr = nil
+		tt.array.L = 0
+		tt.array.C = 0
+
+		// engine and flag reset
+		tt.e = StdEng{}
+		tt.flag = 0
+
+		// other reset
+		tt.old = nil
+		tt.viewOf = nil
+		tt.transposeWith = nil
+
+		// mask related stuff - TODO: deprecate
+		tt.mask = nil
+		tt.maskIsSoft = false
+
+		densePool.Put(tt)
 	}
 }
 
 /* AP POOL */
 
-// apPool supports tensors up to 4-dimensions. Because, c'mon, you're not likely to use anything more than 5
-var apPool [maxAPDims]sync.Pool
+var apPool = &sync.Pool{
+	New: func() interface{} { return new(AP) },
+}
+
+func borrowAP() *AP {
+	return apPool.Get().(*AP)
+}
 
 // BorrowAP gets an AP from the pool. USE WITH CAUTION.
 func BorrowAP(dims int) *AP {
-	if dims >= maxAPDims {
-		ap := new(AP)
-		ap.shape = make(Shape, dims)
-		ap.strides = make([]int, dims)
-		return ap
-	}
-
-	ap := apPool[dims].Get().(*AP)
-
-	// restore strides and shape to whatever that may have been truncated
+	ap := borrowAP()
+	ap.shape = BorrowInts(dims)
+	ap.strides = BorrowInts(dims)
+	ap.shape = ap.shape[:cap(ap.shape)]
 	ap.strides = ap.strides[:cap(ap.strides)]
 	return ap
 }
 
 // ReturnAP returns the AP to the pool. USE WITH CAUTION.
 func ReturnAP(ap *AP) {
-	if ap.Dims() >= maxAPDims {
-		return
-	}
-	apPool[ap.Dims()].Put(ap)
+	ReturnInts([]int(ap.shape))
+	ReturnInts(ap.strides)
+	ap.fin = false
+
+	ap.o = 0
+	ap.Δ = 0
 }
 
 /* ----------------------------------------------------------------
@@ -191,16 +120,6 @@ func init() {
 	for i := range apListPool {
 		size := i
 		apListPool[i].New = func() interface{} { return make([]*AP, size) }
-	}
-
-	for i := range apPool {
-		l := i
-		apPool[i].New = func() interface{} {
-			ap := new(AP)
-			ap.strides = make([]int, l)
-			ap.shape = make(Shape, l)
-			return ap
-		}
 	}
 
 	for i := range intsPool {

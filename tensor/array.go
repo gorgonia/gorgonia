@@ -144,7 +144,7 @@ func (a array) slice(start, end int) array {
 }
 
 // swap swaps the elements i and j in the array
-func (a array) swap(i, j int) {
+func (a *array) swap(i, j int) {
 	if a.t == String {
 		ss := a.hdr().Strings()
 		ss[i], ss[j] = ss[j], ss[i]
@@ -219,8 +219,8 @@ func (a array) Zero() {
 	}
 }
 
-func (a array) hdr() *storage.Header { return &a.Header }
-func (a array) rtype() reflect.Type  { return a.t.Type }
+func (a *array) hdr() *storage.Header { return &a.Header }
+func (a *array) rtype() reflect.Type  { return a.t.Type }
 
 /* MEMORY MOVEMENT STUFF */
 

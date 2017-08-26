@@ -95,7 +95,7 @@ type DenseTensor interface {
 	cap() int
 
 	// operations
-	Inner(other Tensor) (retVal *Dense, err error)
+	Inner(other Tensor) (retVal interface{}, err error)
 	MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 	MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 	TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err error)

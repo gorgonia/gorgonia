@@ -230,7 +230,7 @@ func MatVecMul(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // Inner finds the inner products of two vector Tensors. Both arguments to the functions are eexpected to be vectors.
-func Inner(a, b Tensor) (retVal Tensor, err error) {
+func Inner(a, b Tensor) (retVal interface{}, err error) {
 	if a.Dtype() != b.Dtype() {
 		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
 		return

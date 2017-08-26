@@ -49,11 +49,11 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 	if shape.IsScalar() {
 		size = 1
 	}
-	if !isParameterizedKind(dt.Kind()) {
-		retVal = borrowDense(dt, size)
-	} else {
-		retVal = newDense(dt, size)
-	}
+	retVal = borrowDense()
+	retVal.array.t = dt
+	retVal.array.L = size
+	retVal.array.C = size
+	retVal.AP = BorrowAP(shape.Dims())
 
 	for _, opt := range opts {
 		opt(retVal)
@@ -63,10 +63,10 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 }
 
 func newDense(dt Dtype, size int) *Dense {
-	d := new(Dense)
-	d.e = StdEng{}
+	d := borrowDense()
 	d.t = dt
-	d.AP = new(AP)
+	d.t = dt
+	d.AP = borrowAP()
 	d.setShape(size)
 	d.fix()
 	if err := d.sanity(); err != nil {

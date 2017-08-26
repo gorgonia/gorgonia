@@ -15,8 +15,7 @@ func (t *Dense) Trace() (retVal interface{}, err error) {
 }
 
 // Inner performs a dot product on two vectors. If t or other are not vectors, it will return an error.
-// It doesn't matter if the vectors are vertical-vertical (shape that looks like this: (x, 1)), or horizontal-horizontal (shapes that look like this: (1, x))
-func (t *Dense) Inner(other Tensor) (retVal *Dense, err error) {
+func (t *Dense) Inner(other Tensor) (retVal interface{}, err error) {
 	// check that the data is a float
 	if !isFloat(t.t) {
 		return nil, errors.Errorf(unsupportedDtype, t.t, "Inner")
@@ -39,12 +38,7 @@ func (t *Dense) Inner(other Tensor) (retVal *Dense, err error) {
 	}
 
 	if ip, ok := e.(InnerProder); ok {
-		var ret interface{}
-		if ret, err = ip.Inner(t, other); err != nil {
-			return nil, errors.Wrap(err, "Failed to perform Inner()")
-		}
-		retVal = New(FromScalar(ret))
-		return
+		return ip.Inner(t, other)
 	}
 	return nil, errors.Errorf("Engine does not support Inner()")
 }
@@ -85,6 +79,7 @@ func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err err
 
 	// check whether retVal has the same size as the resulting matrix would be: mx1
 	fo := ParseFuncOpts(opts...)
+	defer returnOpOpt(fo)
 	if retVal, err = handleReuse(fo.Reuse(), expectedShape); err != nil {
 		err = errors.Wrapf(err, opFail, "MatVecMul")
 		return
@@ -133,6 +128,7 @@ func (t *Dense) MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 	expectedShape := Shape{m, n}
 
 	fo := ParseFuncOpts(opts...)
+	defer returnOpOpt(fo)
 	if retVal, err = handleReuse(fo.Reuse(), expectedShape); err != nil {
 		err = errors.Wrapf(err, opFail, "MatMul")
 		return
@@ -172,6 +168,7 @@ func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) 
 	expectedShape := Shape{m, n}
 
 	fo := ParseFuncOpts(opts...)
+	defer returnOpOpt(fo)
 	if retVal, err = handleReuse(fo.Reuse(), expectedShape); err != nil {
 		err = errors.Wrapf(err, opFail, "Outer")
 		return

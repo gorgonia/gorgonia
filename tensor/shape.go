@@ -147,7 +147,6 @@ func (s Shape) Eq(other Shape) bool {
 // Clone clones a shape.
 func (s Shape) Clone() Shape {
 	retVal := BorrowInts(len(s))
-	// retVal := make(Shape, len(s), len(s))
 	copy(retVal, s)
 	return retVal
 }

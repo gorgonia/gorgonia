@@ -112,7 +112,7 @@ func TestDense_Inner(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, its.correct, T.Data())
+		assert.Equal(t, its.correct, T)
 	}
 }
 

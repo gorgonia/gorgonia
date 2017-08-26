@@ -1,6 +1,10 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"log"
+
+	"github.com/pkg/errors"
+)
 
 // This file contains code pertaining to tensor operations that actually move memory
 
@@ -8,6 +12,7 @@ import "github.com/pkg/errors"
 // This is a generalized version of the inplace matrix transposition algorithm from Wikipedia:
 // https://en.wikipedia.org/wiki/In-place_matrix_transposition
 func (t *Dense) Transpose() error {
+	log.Printf("t.AP %v | %p |||| %v | %p", t.AP, t.AP, t.old, t.old)
 	// if there is no oldinfo, that means the current info is the latest, and not the transpose
 	if t.old == nil {
 		return nil
@@ -34,7 +39,7 @@ func (t *Dense) Transpose() error {
 	}
 	defer ReturnInts(expStrides)
 	defer func() {
-		t.setShape(expShape...)
+		copy(t.AP.strides, expStrides) // dimensions do not change, so it's actually safe to do this
 		t.sanity()
 	}()
 
@@ -52,7 +57,9 @@ func (t *Dense) Transpose() error {
 	if !ok {
 		return errors.Errorf("Engine does not support Transpose()")
 	}
-	return transposer.Transpose(t, expStrides)
+	err := transposer.Transpose(t, expStrides)
+	log.Printf("AFTER TRANSPOSE t.AP %v | %p |||| %v | %p", t.AP, t.AP, t.old, t.old)
+	return err
 }
 
 // Repeat is like Numpy's repeat. It repeats the elements of an array.

@@ -7,6 +7,8 @@ import (
 
 func handleFuncOpts(expShape Shape, expType Dtype, strict bool, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr, same bool, err error) {
 	fo := ParseFuncOpts(opts...)
+	defer returnOpOpt(fo)
+
 	reuseT, incr := fo.IncrReuse()
 	safe = fo.Safe()
 	same = fo.Same()

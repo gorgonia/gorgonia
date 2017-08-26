@@ -213,7 +213,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 		return
 	}
 
-	view := new(Dense)
+	view := borrowDense()
 	view.t = t.t
 	view.e = t.e
 	view.flag = t.flag
@@ -224,6 +224,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 	if t.IsMasked() {
 		view.mask = t.mask[ndStart:ndEnd]
 	}
+
 	return view, err
 }
 

@@ -315,6 +315,7 @@ func convToFloat64(x interface{}) float64 {
 func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 	r, c := m.Dims()
 	fo := ParseFuncOpts(opts...)
+	defer returnOpOpt(fo)
 	toCopy := fo.Safe()
 	as := fo.As()
 	if as.Type == nil {
@@ -406,6 +407,7 @@ func ToMat64(t *Dense, opts ...FuncOpt) (retVal *mat64.Dense, err error) {
 	}
 
 	fo := ParseFuncOpts(opts...)
+	defer returnOpOpt(fo)
 	toCopy := fo.Safe()
 
 	// fix dims
