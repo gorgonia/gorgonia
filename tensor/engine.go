@@ -305,3 +305,181 @@ type denseArgmaxer interface {
 type denseArgminer interface {
 	argminDenseTensor(t DenseTensor, axis int) (*Dense, error)
 }
+
+/* Type Specialized Engines */
+
+/* FLOAT64 Specialized Engines */
+
+// Float64Adder is any engine that can perform elementwise addition.
+type Float64Adder interface {
+	// Float64Add performs a + b
+	Float64Add(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float64AddScalar adds a scalar to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float64AddScalar(a Tensor, b float64, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float64Subber is any engine that can perform elementwise subtraction.
+type Float64Suber interface {
+	// Float64Sub performs a - b
+	Float64Sub(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float64SubScalar subtracts a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float64SubScalar(a Tensor, b float64, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float64Mul is any engine that can perform elementwise multiplication.
+// For matrix multiplication, an engine should implement MatMul() or MatVecMul() or Inner()
+type Float64Muler interface {
+	// Float64Mul performs a * b
+	Float64Mul(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float64MulScalar multiplies a scalar to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float64MulScalar(a Tensor, b float64, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float64Diver is any engine that can perform elementwise division.
+type Float64Diver interface {
+	// Float64Div performs a / b
+	Float64Div(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// DivScalar divides a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float64DivScalar(a Tensor, b float64, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float64Power is any engine that can perform elementwise Pow()
+type Float64Power interface {
+	// Float64Pow performs a ^ b
+	Float64Pow(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float64PowScalar exponentiates a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float64PowScalar(a Tensor, b float64, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float64Moder is any engine that can perform elementwise Mod()
+type Float64Moder interface {
+	// Float64Mod performs a % b
+	Float64Mod(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float64ModScalar performs a % b where one of the operands is scalar. leftTensor indicates if the tensor is the left operand.
+	// Whether or not hte input tensor is clobbered is left to the implementation
+	Float64ModScalar(a Tensor, b float64, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float64Tracer is any engine that can return the trace (aka the sum of the diagonal elements).
+type Float64Tracer interface {
+	Float64Trace(a Tensor) (float64, error)
+}
+
+// Float64MatMuler is any engine that can perform matrix multiplication
+type Float64MatMuler interface {
+	Float64MatMul(a, b, preallocated Tensor) error
+}
+
+// Float64MatVecMuler is any engine that can perform matrix vector multiplication
+type Float64MatVecMuler interface {
+	Float64MatVecMul(a, b, preallocated Tensor) error
+}
+
+// Float64InnerProder is any engine that can perform inner product multiplication
+type Float64InnerProder interface {
+	Float64Inner(a, b Tensor) (float64, error) // Inner always returns a scalar value
+}
+
+// Float64OuterProder is any engine that can perform outer product (kronecker) multiplication
+type Float64OuterProder interface {
+	Float64Outer(a, b, preallocated Tensor) error
+}
+
+/* Float32 Specialized Engines */
+
+// Float32Adder is any engine that can perform elementwise addition.
+type Float32Adder interface {
+	// Float32Add performs a + b
+	Float32Add(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float32AddScalar adds a scalar to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float32AddScalar(a Tensor, b float32, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float32Subber is any engine that can perform elementwise subtraction.
+type Float32Suber interface {
+	// Float32Sub performs a - b
+	Float32Sub(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float32SubScalar subtracts a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float32SubScalar(a Tensor, b float32, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float32Mul is any engine that can perform elementwise multiplication.
+// For matrix multiplication, an engine should implement MatMul() or MatVecMul() or Inner()
+type Float32Muler interface {
+	// Float32Mul performs a * b
+	Float32Mul(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float32MulScalar multiplies a scalar to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float32MulScalar(a Tensor, b float32, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float32Diver is any engine that can perform elementwise division.
+type Float32Diver interface {
+	// Float32Div performs a / b
+	Float32FDiv(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// DivScalar divides a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float32DivScalar(a Tensor, b float32, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float32Power is any engine that can perform elementwise Pow()
+type Float32Power interface {
+	// Float32Pow performs a ^ b
+	Float32Pow(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float32PowScalar exponentiates a scalar from/to the tensor. leftTensor indicates if the tensor is the left operand.
+	// Whether or not the input tensor is clobbered is left to the implementation
+	Float32PowScalar(a Tensor, b float32, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float32Moder is any engine that can perform elementwise Mod()
+type Float32Moder interface {
+	// Float32Mod performs a % b
+	Float32Mod(a, b Tensor, opts ...FuncOpt) (Tensor, error)
+
+	// Float32ModScalar performs a % b where one of the operands is scalar. leftTensor indicates if the tensor is the left operand.
+	// Whether or not hte input tensor is clobbered is left to the implementation
+	Float32ModScalar(a Tensor, b float32, leftTensor bool, opts ...FuncOpt) (Tensor, error)
+}
+
+// Float32Tracer is any engine that can return the trace (aka the sum of the diagonal elements).
+type Float32Tracer interface {
+	Float32Trace(a Tensor) (float32, error)
+}
+
+// Float32MatMuler is any engine that can perform matrix multiplication
+type Float32MatMuler interface {
+	Float32MatMul(a, b, preallocated Tensor) error
+}
+
+// Float32MatVecMuler is any engine that can perform matrix vector multiplication
+type Float32MatVecMuler interface {
+	Float32MatVecMul(a, b, preallocated Tensor) error
+}
+
+// Float32InnerProder is any engine that can perform inner product multiplication
+type Float32InnerProder interface {
+	Float32Inner(a, b Tensor) (float32, error) // Inner always returns a scalar value
+}
+
+// Float32OuterProder is any engine that can perform outer product (kronecker) multiplication
+type Float32OuterProder interface {
+	Float32Outer(a, b, preallocated Tensor) error
+}

@@ -191,6 +191,52 @@ func prepDataSV(a interface{}, b Tensor, reuse DenseTensor) (dataA, dataB, dataR
 	return
 }
 
+func prepDataVSF64(a Tensor, b interface{}, reuse DenseTensor) (dataA []float64, dataB float64, dataReuse []float64, ait, iit Iterator, useIter bool, err error) {
+	dataB = b.(float64)
+	switch at := a.(type) {
+	case DenseTensor:
+		dataA = at.hdr()
+		if reuse != nil {
+			dataReuse = reuse.hdr()
+		}
+		if requiresOrderedIterator(a.Engine(), at) {
+			ait = IteratorFromDense(at)
+			if reuse != nil {
+				iit = IteratorFromDense(reuse)
+			}
+			useIter = true
+		}
+	case *CS:
+		err = errors.Errorf("NYI")
+	default:
+		err = errors.Errorf("NYI")
+	}
+	return
+}
+
+func prepDataSVF64(a interface{}, b Tensor, reuse DenseTensor) (dataA float64, dataB, dataReuse []float64, bit, iit Iterator, useIter bool, err error) {
+	dataA = a.(float64)
+	switch bt := b.(type) {
+	case DenseTensor:
+		dataB = bt.hdr().Float64s()
+		if reuse != nil {
+			dataReuse = reuse.hdr()
+		}
+		if requiresOrderedIterator(b.Engine(), bt) {
+			bit = IteratorFromDense(bt)
+			if reuse != nil {
+				iit = IteratorFromDense(reuse)
+			}
+			useIter = true
+		}
+	case *CS:
+		err = errors.Errorf("NYI")
+	default:
+		err = errors.Errorf("NYI")
+	}
+	return
+}
+
 func prepDataUnary(a Tensor, reuse DenseTensor) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
 	switch at := a.(type) {
 	case DenseTensor:

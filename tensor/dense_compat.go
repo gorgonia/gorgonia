@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/cmplx"
 	"reflect"
@@ -30,7 +29,7 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 		}
 		return retVal
 	case Int8:
-		log.Printf("data %v", data)
+
 		retVal := make([]int8, len(data))
 		for i, v := range data {
 			switch {
@@ -40,7 +39,6 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 				retVal[i] = int8(v)
 			}
 		}
-		log.Printf("retVal %v", data)
 		return retVal
 	case Int16:
 		retVal := make([]int16, len(data))
@@ -371,19 +369,19 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 		retVal := New(WithBacking(backing), WithShape(r, c))
 		return retVal
 	case reflect.Float64:
-		log.Printf("Convert to Float64")
+
 		var backing []float64
 		if toCopy {
-			log.Printf("COPY")
+
 			backing = make([]float64, len(m.RawMatrix().Data))
 			copy(backing, m.RawMatrix().Data)
 		} else {
-			log.Printf("Bakcing here")
+
 			backing = m.RawMatrix().Data
 		}
-		log.Printf("Got backing: %v", backing)
+
 		retVal := New(WithBacking(backing), WithShape(r, c))
-		log.Printf("%v", retVal.Float64s())
+
 		return retVal
 	case reflect.Complex64:
 		backing := convFromFloat64s(Complex64, m.RawMatrix().Data).([]complex64)
