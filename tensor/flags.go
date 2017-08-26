@@ -1,5 +1,7 @@
 package tensor
 
+import "runtime"
+
 // DataOrder is a flag that indicates the order of data. The default DataOrder (0)
 // is what this package uses by default.
 type DataOrder byte
@@ -89,6 +91,7 @@ func ParseFuncOpts(opts ...FuncOpt) *OpOpt {
 	for _, opt := range opts {
 		opt(retVal)
 	}
+	runtime.SetFinalizer(retVal, returnOpOpt)
 	return retVal
 }
 

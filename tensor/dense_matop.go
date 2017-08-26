@@ -213,18 +213,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 		return
 	}
 
-	var view *Dense
-	size := newAP.shape.TotalSize()
-	if newAP.shape.IsScalar() {
-		size = 1
-	}
-	if !isParameterizedKind(t.t.Kind()) {
-		view = borrowDense(t.t, size)
-	} else {
-		view = newDense(t.t, size)
-	}
-
-	// view := new(Dense)
+	view := new(Dense)
 	view.t = t.t
 	view.e = t.e
 	view.flag = t.flag

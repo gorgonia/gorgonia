@@ -311,3 +311,15 @@ func ReturnAPList(aps []*AP) {
 
 	apListPool[size].Put(aps)
 }
+
+var optPool *sync.Pool = &sync.Pool{
+	New: func() interface{} { return new(OpOpt) },
+}
+
+func borrowOpOpt() *OpOpt {
+	return optPool.Get().(*OpOpt)
+}
+
+func returnOpOpt(oo *OpOpt) {
+	optPool.Put(oo)
+}
