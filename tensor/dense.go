@@ -76,7 +76,9 @@ func newDense(dt Dtype, size int) *Dense {
 }
 
 func (t *Dense) fromSlice(x interface{}) {
-	t.array = arrayFromSlice(x)
+	t.array.Ptr = nil
+	t.array.v = nil
+	t.array.fromSlice(x)
 }
 
 func (t *Dense) addMask(mask []bool) {

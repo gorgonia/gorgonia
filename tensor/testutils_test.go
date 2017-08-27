@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"reflect"
 	"testing"
+	"testing/quick"
 	"time"
 	"unsafe"
 
@@ -272,6 +273,44 @@ func RandomFloat64(size int) []float64 {
 		r[i] = rand.NormFloat64()
 	}
 	return r
+}
+
+func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
+	// generate type
+	ri := r.Intn(len(specializedTypes.set))
+	of := specializedTypes.set[ri]
+	datatyp := reflect.SliceOf(of.Type)
+	gendat, _ := quick.Value(datatyp, r)
+	// generate dims
+	var scalar bool
+	dims := r.Intn(5) // dims4 is the max we'll generate even though we can handle much more
+	if dims == 0 {
+		scalar = true
+		gendat, _ = quick.Value(of.Type, r)
+	}
+
+	if !scalar {
+		// generate shape
+		l := gendat.Len()
+		rem := l
+		s := Shape(BorrowInts(dims))
+		for i := 0; i < dims; i++ {
+			s[i] = r.Intn(l)
+
+		}
+	}
+
+	// generate flags
+	flag := MemoryFlag(r.Intn(4))
+
+	// generate order
+	order := DataOrder(r.Intn(4))
+
+	v := New(Of(of), WithShape(s...))
+	v.flag = flag
+	v.AP.o = order
+
+	return reflect.ValueOf(v)
 }
 
 // fakemem is a byteslice, while making it a Memory

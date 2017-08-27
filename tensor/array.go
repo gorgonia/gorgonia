@@ -75,6 +75,22 @@ func arrayFromSlice(x interface{}) array {
 	}
 }
 
+func (a *array) fromSlice(x interface{}) {
+	xT := reflect.TypeOf(x)
+	if xT.Kind() != reflect.Slice {
+		panic("Expected a slice")
+	}
+	elT := xT.Elem()
+	xV := reflect.ValueOf(x)
+	ptr := xV.Pointer()
+	uptr := unsafe.Pointer(ptr)
+	a.Ptr = uptr
+	a.L = xV.Len()
+	a.C = xV.Cap()
+	a.t = Dtype{elT}
+	a.v = x
+}
+
 func (a *array) fix() {
 	if a.v == nil {
 		shdr := reflect.SliceHeader{
