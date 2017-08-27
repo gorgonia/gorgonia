@@ -195,6 +195,43 @@ func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	panic("Unreachable")
 }
 
+// Mod performs elementwise exponentiation on the Tensor(s). These operations are supported:
+//		Mod(*Dense, scalar)
+//		Mod(scalar, *Dense)
+//		Mod(*Dense, *Dense)
+// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
+func Mod(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	var moder Moder
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		moder, ok = at.Engine().(Moder)
+		switch bt := b.(type) {
+		case Tensor:
+			if !ok {
+				if moder, ok = bt.Engine().(Moder); !ok {
+					return nil, errors.New("Neither engines of either operand support Mod")
+				}
+			}
+			return moder.Mod(at, bt, opts...)
+		default:
+			return moder.ModScalar(at, bt, true, opts...)
+
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if moder, ok = bt.Engine().(Moder); !ok {
+				return nil, errors.New("Operand B's engine does not support Mod")
+			}
+			return moder.ModScalar(bt, at, false, opts...)
+		default:
+			return nil, errors.Errorf("Cannot perform Mod of %T and %T", a, b)
+		}
+	}
+	panic("Unreachable")
+}
+
 // Dot is a highly opinionated API for performing dot product operations on two *Denses, a and b.
 // This function is opinionated with regard to the vector operations because of how it treats operations with vectors.
 // Vectors in this package comes in two flavours - column or row vectors. Column vectors have shape (x, 1), while row vectors have shape (1, x).
