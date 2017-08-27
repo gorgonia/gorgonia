@@ -18,7 +18,7 @@ func requiresOrderedIterator(e Engine, t Tensor) bool {
 	}
 	switch tt := t.(type) {
 	case DenseTensor:
-		return e.WorksWith(tt.DataOrder())
+		return !e.WorksWith(tt.DataOrder())
 	case SparseTensor:
 		return true
 	}
