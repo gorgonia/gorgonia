@@ -74,6 +74,7 @@ type DenseTensor interface {
 	DataOrder() DataOrder
 	IsVector() bool
 	IsMatrix() bool
+	requiresIterator() bool
 
 	headerer
 	arrayer

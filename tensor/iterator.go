@@ -5,19 +5,7 @@ import "runtime"
 func requiresIterator(a Tensor) bool {
 	switch tt := a.(type) {
 	case DenseTensor:
-		if mt, ok := tt.(MaskedTensor); ok && mt.IsMasked() {
-			return true
-		}
-		if v, ok := tt.(View); ok && v.IsMaterializable() {
-			if tt.DataOrder().isContiguous() {
-				return false
-			}
-			return true
-		}
-		if tt.DataOrder().isNotContiguous() {
-			return true
-		}
-		return false
+		return tt.requiresIterator()
 	case SparseTensor:
 		return true
 	}
@@ -30,7 +18,7 @@ func requiresOrderedIterator(e Engine, t Tensor) bool {
 	}
 	switch tt := t.(type) {
 	case DenseTensor:
-		return !e.DataOrder().hasSameOrder(tt.DataOrder())
+		return e.WorksWith(tt.DataOrder())
 	case SparseTensor:
 		return true
 	}

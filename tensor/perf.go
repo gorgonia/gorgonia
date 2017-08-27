@@ -310,26 +310,39 @@ func ReturnAPList(aps []*AP) {
 	apListPool[size].Put(aps)
 }
 
-var optPool = make(chan *OpOpt, PoolSize)
+// var optPool = make(chan *OpOpt, PoolSize)
+// var optPool = newRingbuffer(PoolSize)
+var optPool = &sync.Pool{
+	New: func() interface{} { return new(OpOpt) },
+}
 
 func borrowOpOpt() *OpOpt {
-	select {
-	case fo := <-optPool:
-		return fo
-	default:
-		return new(OpOpt)
-	}
-	// return optPool.Get().(*OpOpt)
+	// select {
+	// case fo := <-optPool:
+	// 	return fo
+	// default:
+	// 	return new(OpOpt)
+	// }
+
+	return optPool.Get().(*OpOpt)
+
+	// if fo, err := optPool.Get(); err == nil {
+	// 	return (*OpOpt)(fo)
+	// }
+	// return new(OpOpt)
 }
 
 func returnOpOpt(oo *OpOpt) {
-	// optPool.Put(oo)
 	oo.reuse = nil
 	oo.incr = nil
 	oo.unsafe = false
 	oo.same = false
 	oo.t = Dtype{}
-	if len(optPool) < cap(optPool) {
-		optPool <- oo
-	}
+	// if len(optPool) < cap(optPool) {
+	// 	optPool <- oo
+	// }
+
+	optPool.Put(oo)
+
+	// optPool.Put(unsafe.Pointer(oo))
 }

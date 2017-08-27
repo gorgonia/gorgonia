@@ -585,3 +585,11 @@ func (t *Dense) SetMask(mask []bool) {
 func (t *Dense) slice(start, end int) {
 	t.array = t.array.slice(start, end)
 }
+
+func (t *Dense) requiresIterator() bool {
+	// non continuous slice, transpose, or masked. If it's a slice and contiguous, then iterator is not required
+	if !t.o.isContiguous() || t.old != nil || t.IsMasked() {
+		return true
+	}
+	return false
+}
