@@ -3,7 +3,7 @@ package tensor
 import "testing"
 
 func BenchmarkDense_Transpose(b *testing.B) {
-	T := New(WithShape(1000, 1000, 2), WithBacking(Range(Byte, 0, 1000*1000*2)))
+	T := New(WithShape(100, 100, 2), WithBacking(Range(Byte, 0, 100*100*2)))
 	for i := 0; i < b.N; i++ {
 		T.T()
 		T.Transpose()
