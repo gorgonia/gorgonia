@@ -1,7 +1,6 @@
 package tensor
 
 import (
-	"log"
 	"testing"
 
 	"github.com/chewxy/vecf64"
@@ -232,10 +231,8 @@ func TestDense_Transpose(t *testing.T) {
 
 		assert.True(tts.correctShape.Eq(T.Shape()), "Transpose %v Expected shape: %v. Got %v", tts.name, tts.correctShape, T.Shape())
 		assert.Equal(tts.correctStrides, T.Strides())
-		log.Printf("B4T.Shape() %v | %p", T.Shape(), T.Info())
 		T.Transpose()
 		assert.True(tts.correctShape.Eq(T.Shape()), "Transpose %v Expected shape: %v. Got %v", tts.name, tts.correctShape, T.Shape())
-		log.Printf("AFT.Shape() %v | %p", T.Shape(), T.Info())
 		assert.Equal(tts.correctStrides2, T.Strides(), "Transpose %v - Wrong strides", tts.name)
 		assert.Equal(tts.correctData, T.Data(), "Transpose %v", tts.name)
 	}
@@ -549,7 +546,6 @@ func TestDense_Slice(t *testing.T) {
 		assert.Equal(sts.correctStride, V.Strides(), "Test: %v - Incorrect Stride", sts.name)
 		assert.Equal(sts.correctData, V.Data(), "Test: %v - Incorrect Data", sts.name)
 	}
-	log.Printf("END")
 
 	// Transposed slice
 	T = New(WithShape(2, 3), WithBacking(Range(Float32, 0, 6)))
