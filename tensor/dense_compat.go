@@ -29,7 +29,6 @@ func convFromFloat64s(to Dtype, data []float64) interface{} {
 		}
 		return retVal
 	case Int8:
-
 		retVal := make([]int8, len(data))
 		for i, v := range data {
 			switch {
@@ -369,19 +368,14 @@ func FromMat64(m *mat64.Dense, opts ...FuncOpt) *Dense {
 		retVal := New(WithBacking(backing), WithShape(r, c))
 		return retVal
 	case reflect.Float64:
-
 		var backing []float64
 		if toCopy {
-
 			backing = make([]float64, len(m.RawMatrix().Data))
 			copy(backing, m.RawMatrix().Data)
 		} else {
-
 			backing = m.RawMatrix().Data
 		}
-
 		retVal := New(WithBacking(backing), WithShape(r, c))
-
 		return retVal
 	case reflect.Complex64:
 		backing := convFromFloat64s(Complex64, m.RawMatrix().Data).([]complex64)

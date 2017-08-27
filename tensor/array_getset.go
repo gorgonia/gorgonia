@@ -127,178 +127,178 @@ func (a *array) Get(i int) interface{} {
 
 // Memset sets all values in the array.
 func (a *array) Memset(x interface{}) error {
-	switch a.t.Kind() {
-	case reflect.Bool:
-		xv, ok := x.(bool)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+	switch a.t {
+	case Bool:
+		if xv, ok := x.(bool); ok {
+			data := a.Bools()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Bools()
-		for i := range data {
-			data[i] = xv
+
+	case Int:
+		if xv, ok := x.(int); ok {
+			data := a.Ints()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Int:
-		xv, ok := x.(int)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case Int8:
+		if xv, ok := x.(int8); ok {
+			data := a.Int8s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Ints()
-		for i := range data {
-			data[i] = xv
+
+	case Int16:
+		if xv, ok := x.(int16); ok {
+			data := a.Int16s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Int8:
-		xv, ok := x.(int8)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case Int32:
+		if xv, ok := x.(int32); ok {
+			data := a.Int32s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Int8s()
-		for i := range data {
-			data[i] = xv
+
+	case Int64:
+		if xv, ok := x.(int64); ok {
+			data := a.Int64s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Int16:
-		xv, ok := x.(int16)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case Uint:
+		if xv, ok := x.(uint); ok {
+			data := a.Uints()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Int16s()
-		for i := range data {
-			data[i] = xv
+
+	case Uint8:
+		if xv, ok := x.(uint8); ok {
+			data := a.Uint8s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Int32:
-		xv, ok := x.(int32)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case Uint16:
+		if xv, ok := x.(uint16); ok {
+			data := a.Uint16s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Int32s()
-		for i := range data {
-			data[i] = xv
+
+	case Uint32:
+		if xv, ok := x.(uint32); ok {
+			data := a.Uint32s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Int64:
-		xv, ok := x.(int64)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case Uint64:
+		if xv, ok := x.(uint64); ok {
+			data := a.Uint64s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Int64s()
-		for i := range data {
-			data[i] = xv
+
+	case Uintptr:
+		if xv, ok := x.(uintptr); ok {
+			data := a.Uintptrs()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Uint:
-		xv, ok := x.(uint)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case Float32:
+		if xv, ok := x.(float32); ok {
+			data := a.Float32s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Uints()
-		for i := range data {
-			data[i] = xv
+
+	case Float64:
+		if xv, ok := x.(float64); ok {
+			data := a.Float64s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Uint8:
-		xv, ok := x.(uint8)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case Complex64:
+		if xv, ok := x.(complex64); ok {
+			data := a.Complex64s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Uint8s()
-		for i := range data {
-			data[i] = xv
+
+	case Complex128:
+		if xv, ok := x.(complex128); ok {
+			data := a.Complex128s()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Uint16:
-		xv, ok := x.(uint16)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+
+	case String:
+		if xv, ok := x.(string); ok {
+			data := a.Strings()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.Uint16s()
-		for i := range data {
-			data[i] = xv
+
+	case UnsafePointer:
+		if xv, ok := x.(unsafe.Pointer); ok {
+			data := a.UnsafePointers()
+			for i := range data {
+				data[i] = xv
+			}
+			return nil
 		}
-	case reflect.Uint32:
-		xv, ok := x.(uint32)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Uint32s()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.Uint64:
-		xv, ok := x.(uint64)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Uint64s()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.Uintptr:
-		xv, ok := x.(uintptr)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Uintptrs()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.Float32:
-		xv, ok := x.(float32)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Float32s()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.Float64:
-		xv, ok := x.(float64)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Float64s()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.Complex64:
-		xv, ok := x.(complex64)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Complex64s()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.Complex128:
-		xv, ok := x.(complex128)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Complex128s()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.String:
-		xv, ok := x.(string)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.Strings()
-		for i := range data {
-			data[i] = xv
-		}
-	case reflect.UnsafePointer:
-		xv, ok := x.(unsafe.Pointer)
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
-		}
-		data := a.UnsafePointers()
-		for i := range data {
-			data[i] = xv
-		}
-	default:
-		xv := reflect.ValueOf(x)
-		ptr := uintptr(a.Ptr)
-		for i := 0; i < a.L; i++ {
-			want := ptr + uintptr(i)*a.t.Size()
-			val := reflect.NewAt(a.t, unsafe.Pointer(want))
-			val = reflect.Indirect(val)
-			val.Set(xv)
-		}
+
+	}
+
+	xv := reflect.ValueOf(x)
+	ptr := uintptr(a.Ptr)
+	for i := 0; i < a.L; i++ {
+		want := ptr + uintptr(i)*a.t.Size()
+		val := reflect.NewAt(a.t, unsafe.Pointer(want))
+		val = reflect.Indirect(val)
+		val.Set(xv)
 	}
 	return nil
 }

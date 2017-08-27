@@ -26,9 +26,6 @@ const prepVVRaw = `if err = binaryCheck(a, b, {{.TypeClassCheck | lower}}Types);
 	var reuse DenseTensor
 	{{template "prep" . -}}
 
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, reuse)
-	}
 
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header

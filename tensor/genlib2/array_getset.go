@@ -59,30 +59,30 @@ func (a *array) Set(i int, x interface{}) {
 
 const memsetRaw = `// Memset sets all values in the array.
 func (a *array) Memset(x interface{}) error {
-	switch a.t.Kind() {
+	switch a.t {
 	{{range .Kinds -}}
 		{{if isParameterized . -}}
 		{{else -}}
-	case reflect.{{reflectKind .}}:
-		xv, ok := x.({{asType .}})
-		if !ok {
-			return errors.Errorf(dtypeMismatch, a.t, x)
+	case {{reflectKind .}}:
+		if xv, ok := x.({{asType .}}); ok {
+			data := a.{{sliceOf .}}
+			for i := range data{
+				data[i] = xv
+			}
+			return nil
 		}
-		data := a.{{sliceOf .}}
-		for i := range data{
-			data[i] = xv
-		}
+
 		{{end -}}
 	{{end -}}
-	default:
-		xv := reflect.ValueOf(x)
-		ptr := uintptr(a.Ptr)
-		for i := 0; i < a.L; i++ {
-			want := ptr + uintptr(i)*a.t.Size()
-			val := reflect.NewAt(a.t, unsafe.Pointer(want))
-			val = reflect.Indirect(val)
-			val.Set(xv)
-		}
+	}
+	
+	xv := reflect.ValueOf(x)
+	ptr := uintptr(a.Ptr)
+	for i := 0; i < a.L; i++ {
+		want := ptr + uintptr(i)*a.t.Size()
+		val := reflect.NewAt(a.t, unsafe.Pointer(want))
+		val = reflect.Indirect(val)
+		val.Set(xv)
 	}
 	return nil
 }

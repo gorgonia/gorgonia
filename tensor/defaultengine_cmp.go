@@ -22,10 +22,6 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	if !safe {
 		same = true
 	}
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, reuse)
-	}
-
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
@@ -94,10 +90,6 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	if !safe {
 		same = true
 	}
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, reuse)
-	}
-
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
@@ -166,10 +158,6 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	if !safe {
 		same = true
 	}
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, reuse)
-	}
-
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
@@ -238,10 +226,6 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	if !safe {
 		same = true
 	}
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, reuse)
-	}
-
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
@@ -310,10 +294,6 @@ func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 	if !safe {
 		same = true
 	}
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, reuse)
-	}
-
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
@@ -382,10 +362,6 @@ func (e StdEng) ElNe(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 	if !safe {
 		same = true
 	}
-	if reuse != nil && !reuse.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, reuse)
-	}
-
 	typ := a.Dtype().Type
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator

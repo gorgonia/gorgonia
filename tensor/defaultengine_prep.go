@@ -20,6 +20,12 @@ func handleFuncOpts(expShape Shape, expType Dtype, strict bool, opts ...FuncOpt)
 			return
 		}
 
+		if reuse != nil && !reuse.IsNativelyAccessible() {
+			returnOpOpt(fo)
+			err = errors.Errorf(inaccessibleData, reuse)
+			return
+		}
+
 		if (strict || same) && reuse.Dtype() != expType {
 			returnOpOpt(fo)
 			err = errors.Errorf(typeMismatch, expType, reuse.Dtype())
@@ -33,6 +39,7 @@ func handleFuncOpts(expShape Shape, expType Dtype, strict bool, opts ...FuncOpt)
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
 			return
 		}
+
 	}
 	returnOpOpt(fo)
 	return
