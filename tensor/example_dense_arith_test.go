@@ -1770,16 +1770,16 @@ func ExampleDense_DivScalar_basic() {
 	fmt.Printf("Default operation is safe (tensor is right operand)\n==========================\nT3 = 5 / T1\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
 
 	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
-	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	sliced, _ = T1.Slice(nil, makeRS(1, 3))
 	V = sliced.(*Dense)
 	T3, _ = V.DivScalar(float32(5), true)
-	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[0:2, 0:2] / 5\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[:, 1:3] + 5\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
 
 	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
-	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	sliced, _ = T1.Slice(nil, makeRS(1, 3))
 	V = sliced.(*Dense)
 	T3, _ = V.DivScalar(float32(5), false)
-	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 / T1[0:2, 0:2]\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
+	fmt.Printf("Default operation is safe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 / T1[:, 1:3]\nT3:\n%1.1v\nT1 is unchanged:\n%1.1v\n", T3, T1)
 
 	// Output:
 	// Default operation is safe (tensor is left operand)
@@ -1810,10 +1810,11 @@ func ExampleDense_DivScalar_basic() {
 	//
 	// Default operation is safe (sliced operations - tensor is left operand)
 	// =============================================
-	// T3 = T1[0:2, 0:2] / 5
+	// T3 = T1[:, 1:3] + 5
 	// T3:
-	// ⎡  0  0.2⎤
-	// ⎣0.6  0.8⎦
+	// ⎡0.2  0.4⎤
+	// ⎢0.8    1⎥
+	// ⎣  1    2⎦
 	//
 	// T1 is unchanged:
 	// ⎡0  1  2⎤
@@ -1822,15 +1823,198 @@ func ExampleDense_DivScalar_basic() {
 	//
 	// Default operation is safe (sliced operations - tensor is right operand)
 	// =============================================
-	// T3 = 5 / T1[0:2, 0:2]
+	// T3 = 5 / T1[:, 1:3]
 	// T3:
-	// ⎡+Inf     5⎤
-	// ⎣   2     1⎦
+	// ⎡  5    2⎤
+	// ⎢  1    1⎥
+	// ⎣0.7  0.6⎦
 	//
 	// T1 is unchanged:
 	// ⎡0  1  2⎤
 	// ⎢3  4  5⎥
 	// ⎣6  7  8⎦
+}
+
+func ExampleDense_DivScalar_unsafe() {
+	var T1, T3, V *Dense
+	var sliced Tensor
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	T3, _ = T1.DivScalar(float32(5), true, UseUnsafe())
+	fmt.Printf("Operation is unsafe (tensor is left operand)\n==========================\nT3 = T1 / 5\nT3:\n%1.1v\nT3 == T1: %t\nT1 is changed:\n%1.1v\n", T3, T3 == T1, T1)
+
+	T3, _ = T1.DivScalar(float32(5), false, UseUnsafe())
+	fmt.Printf("Operation is unsafe (tensor is right operand)\n==========================\nT3 = 5 / T1\nT3:\n%1.1v\nT3 == T1: %t\nT1 is changed:\n%1.1v\n", T3, T3 == T1, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(nil, makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.DivScalar(float32(5), true, UseUnsafe())
+	fmt.Printf("Operation is unsafe (sliced operations - tensor is left operand)\n=============================================\nT3 = T1[:, 0:2] + 5\nT3:\n%1.1v\nsliced == T3: %t\nT1 is changed:\n%1.1v\n", T3, sliced == T3, T1)
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(nil, makeRS(0, 2))
+	V = sliced.(*Dense)
+	T3, _ = V.DivScalar(float32(5), false, UseUnsafe())
+	fmt.Printf("Operation is unsafe (sliced operations - tensor is right operand)\n=============================================\nT3 = 5 / T1[:, 0:2]\nT3:\n%1.1v\nsliced == T3: %t\nT1 is changed:\n%1.1v\n", T3, sliced == T3, T1)
+
+	// Output:
+	// Operation is unsafe (tensor is left operand)
+	// ==========================
+	// T3 = T1 / 5
+	// T3:
+	// ⎡  0  0.2  0.4⎤
+	// ⎢0.6  0.8    1⎥
+	// ⎣  1    1    2⎦
+	//
+	// T3 == T1: true
+	// T1 is changed:
+	// ⎡  0  0.2  0.4⎤
+	// ⎢0.6  0.8    1⎥
+	// ⎣  1    1    2⎦
+	//
+	// Operation is unsafe (tensor is right operand)
+	// ==========================
+	// T3 = 5 / T1
+	// T3:
+	// ⎡ +Inf  2e+01  1e+01⎤
+	// ⎢    8      6      5⎥
+	// ⎣    4      4      3⎦
+	//
+	// T3 == T1: true
+	// T1 is changed:
+	// ⎡ +Inf  2e+01  1e+01⎤
+	// ⎢    8      6      5⎥
+	// ⎣    4      4      3⎦
+	//
+	// Operation is unsafe (sliced operations - tensor is left operand)
+	// =============================================
+	// T3 = T1[:, 0:2] + 5
+	// T3:
+	// ⎡  0  0.2⎤
+	// ⎢0.6  0.8⎥
+	// ⎣  1    1⎦
+	//
+	// sliced == T3: true
+	// T1 is changed:
+	// ⎡  0  0.2    2⎤
+	// ⎢0.6  0.8    5⎥
+	// ⎣  1    1    8⎦
+	//
+	// Operation is unsafe (sliced operations - tensor is right operand)
+	// =============================================
+	// T3 = 5 / T1[:, 0:2]
+	// T3:
+	// ⎡+Inf     5⎤
+	// ⎢   2     1⎥
+	// ⎣ 0.8   0.7⎦
+	//
+	// sliced == T3: true
+	// T1 is changed:
+	// ⎡+Inf     5     2⎤
+	// ⎢   2     1     5⎥
+	// ⎣ 0.8   0.7     8⎦
+}
+
+// Reuse tensors may be used, with the WithReuse() function option.
+func ExampleDense_DivScalar_reuse() {
+	var T1, V, Reuse, T3 *Dense
+	var sliced Tensor
+
+	// Tensor is left operand
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	Reuse = New(WithBacking(Range(Float32, 100, 109)), WithShape(3, 3))
+	T3, _ = T1.DivScalar(float32(5), true, WithReuse(Reuse))
+	fmt.Printf("Reuse tensor passed in (Tensor is left operand)\n======================\nT3 == Reuse: %t\nT3:\n%1.1v\n", T3 == Reuse, T3)
+
+	// Tensor is right operand
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	Reuse = New(WithBacking(Range(Float32, 100, 109)), WithShape(3, 3))
+	T3, _ = T1.DivScalar(float32(5), false, WithReuse(Reuse))
+	fmt.Printf("Reuse tensor passed in (Tensor is right operand)\n======================\nT3 == Reuse: %t\nT3:\n%1.1v\n", T3 == Reuse, T3)
+
+	// Tensor is left operand
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	Reuse = New(WithBacking(Range(Float32, 100, 104)), WithShape(2, 2)) // same shape as result
+	T3, _ = V.DivScalar(float32(5), true, WithReuse(Reuse))
+	fmt.Printf("Reuse tensor passed in (sliced tensor - Tensor is left operand)\n======================================\nT3 == Reuse: %t\nT3:\n%1.1v\n", T3 == Reuse, T3)
+
+	// Tensor is left operand
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	Reuse = New(WithBacking(Range(Float32, 100, 104)), WithShape(2, 2)) // same shape as result
+	T3, _ = V.DivScalar(float32(5), false, WithReuse(Reuse))
+	fmt.Printf("Reuse tensor passed in (sliced tensor - Tensor is left operand)\n======================================\nT3 == Reuse: %t\nT3:\n%1.1v", T3 == Reuse, T3)
+
+	// Output:
+	// Reuse tensor passed in (Tensor is left operand)
+	// ======================
+	// T3 == Reuse: true
+	// T3:
+	// ⎡  0  0.2  0.4⎤
+	// ⎢0.6  0.8    1⎥
+	// ⎣  1    1    2⎦
+	//
+	// Reuse tensor passed in (Tensor is right operand)
+	// ======================
+	// T3 == Reuse: true
+	// T3:
+	// ⎡+Inf     5     2⎤
+	// ⎢   2     1     1⎥
+	// ⎣ 0.8   0.7   0.6⎦
+	//
+	// Reuse tensor passed in (sliced tensor - Tensor is left operand)
+	// ======================================
+	// T3 == Reuse: true
+	// T3:
+	// ⎡  0  0.2⎤
+	// ⎣0.6  0.8⎦
+	//
+	// Reuse tensor passed in (sliced tensor - Tensor is left operand)
+	// ======================================
+	// T3 == Reuse: true
+	// T3:
+	// ⎡+Inf     5⎤
+	// ⎣   2     1⎦
+}
+
+// Incrementing a tensor is also a function option provided by the package
+func ExampleDense_DivScalar_incr() {
+	var T1, T3, Incr, V *Dense
+	var sliced Tensor
+
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	Incr = New(WithBacking([]float32{100, 100, 100, 100, 100, 100, 100, 100, 100}), WithShape(3, 3))
+	T3, _ = T1.DivScalar(float32(5), true, WithIncr(Incr))
+	fmt.Printf("Incr tensor passed in\n======================\nIncr += T1 / T2\nIncr == T3: %t\nT3:\n%3.1v\n", Incr == T3, T3)
+
+	// Operations on sliced tensor is also allowed. Note that your Incr tensor has to be the same shape as the result
+	T1 = New(WithBacking(Range(Float32, 0, 9)), WithShape(3, 3))
+	sliced, _ = T1.Slice(makeRS(0, 2), makeRS(0, 2))
+	V = sliced.(*Dense)
+	Incr = New(WithBacking([]float32{100, 100, 100, 100}), WithShape(2, 2))
+	T3, _ = V.DivScalar(float32(5), true, WithIncr(Incr))
+	fmt.Printf("Incr tensor passed in (sliced tensor)\n======================================\nIncr += T1 / T2\nIncr == T3: %t\nT3:\n%3.1v\n", Incr == T3, T3)
+
+	// Output:
+	// Incr tensor passed in
+	// ======================
+	// Incr += T1 / T2
+	// Incr == T3: true
+	// T3:
+	// ⎡1e+02  1e+02  1e+02⎤
+	// ⎢1e+02  1e+02  1e+02⎥
+	// ⎣1e+02  1e+02  1e+02⎦
+	//
+	// Incr tensor passed in (sliced tensor)
+	// ======================================
+	// Incr += T1 / T2
+	// Incr == T3: true
+	// T3:
+	// ⎡1e+02  1e+02⎤
+	// ⎣1e+02  1e+02⎦
 }
 
 // By default, arithmetic operations are safe

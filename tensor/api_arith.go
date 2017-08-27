@@ -20,24 +20,28 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		if adder, ok = at.Engine().(Adder); !ok {
-			return nil, errors.Errorf("Engine does not support Add")
-		}
+		adder, ok = at.Engine().(Adder)
 		switch bt := b.(type) {
 		case Tensor:
+			if !ok {
+				if adder, ok = bt.Engine().(Adder); !ok {
+					return nil, errors.New("Neither engines of either operand support Add")
+				}
+			}
 			return adder.Add(at, bt, opts...)
 		default:
-			return adder.AddScalar(at, b, true, opts...)
+			return adder.AddScalar(at, bt, true, opts...)
+
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
 			if adder, ok = bt.Engine().(Adder); !ok {
-				return nil, errors.Errorf("Engine does not support AddScalar")
+				return nil, errors.New("Operand B's engine does not support Add")
 			}
-			return adder.AddScalar(bt, a, false, opts...)
+			return adder.AddScalar(bt, at, false, opts...)
 		default:
-			// error
+			return nil, errors.Errorf("Cannot perform Add of %T and %T", a, b)
 		}
 	}
 	panic("Unreachable")
@@ -53,24 +57,28 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		if suber, ok = at.Engine().(Suber); !ok {
-			return nil, errors.Errorf("Engine does not support Sub")
-		}
+		suber, ok = at.Engine().(Suber)
 		switch bt := b.(type) {
 		case Tensor:
+			if !ok {
+				if suber, ok = bt.Engine().(Suber); !ok {
+					return nil, errors.New("Neither engines of either operand support Sub")
+				}
+			}
 			return suber.Sub(at, bt, opts...)
 		default:
-			return suber.SubScalar(at, b, true, opts...)
+			return suber.SubScalar(at, bt, true, opts...)
+
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
 			if suber, ok = bt.Engine().(Suber); !ok {
-				return nil, errors.Errorf("Engine does not support SubScalar")
+				return nil, errors.New("Operand B's engine does not support Sub")
 			}
-			return suber.SubScalar(bt, a, false, opts...)
+			return suber.SubScalar(bt, at, false, opts...)
 		default:
-			// error
+			return nil, errors.Errorf("Cannot perform Sub of %T and %T", a, b)
 		}
 	}
 	panic("Unreachable")
@@ -123,24 +131,28 @@ func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		if diver, ok = at.Engine().(Diver); !ok {
-			// error
-		}
+		diver, ok = at.Engine().(Diver)
 		switch bt := b.(type) {
 		case Tensor:
+			if !ok {
+				if diver, ok = bt.Engine().(Diver); !ok {
+					return nil, errors.New("Neither engines of either operand support Div")
+				}
+			}
 			return diver.Div(at, bt, opts...)
 		default:
-			return diver.DivScalar(at, b, true, opts...)
+			return diver.DivScalar(at, bt, true, opts...)
+
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
 			if diver, ok = bt.Engine().(Diver); !ok {
-				// error
+				return nil, errors.New("Operand B's engine does not support Div")
 			}
-			return diver.DivScalar(bt, a, false, opts...)
+			return diver.DivScalar(bt, at, false, opts...)
 		default:
-			// error
+			return nil, errors.Errorf("Cannot perform Div of %T and %T", a, b)
 		}
 	}
 	panic("Unreachable")
@@ -156,24 +168,28 @@ func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		if power, ok = at.Engine().(Power); !ok {
-			// error
-		}
+		power, ok = at.Engine().(Power)
 		switch bt := b.(type) {
 		case Tensor:
+			if !ok {
+				if power, ok = bt.Engine().(Power); !ok {
+					return nil, errors.New("Neither engines of either operand support Pow")
+				}
+			}
 			return power.Pow(at, bt, opts...)
 		default:
-			return power.PowScalar(at, b, true, opts...)
+			return power.PowScalar(at, bt, true, opts...)
+
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
 			if power, ok = bt.Engine().(Power); !ok {
-				// error
+				return nil, errors.New("Operand B's engine does not support Pow")
 			}
-			return power.PowScalar(bt, a, false, opts...)
+			return power.PowScalar(bt, at, false, opts...)
 		default:
-			// error
+			return nil, errors.Errorf("Cannot perform Pow of %T and %T", a, b)
 		}
 	}
 	panic("Unreachable")
