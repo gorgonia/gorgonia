@@ -66,7 +66,12 @@ func (e StdEng) Memcpy(dst, src Memory) error {
 
 func (e StdEng) Accessible(mem Memory) (Memory, error) { return mem, nil }
 
-func (e StdEng) DataOrder() DataOrder { return DataOrder(0) }
+func (e StdEng) WorksWith(order DataOrder) bool {
+	if order.isColMajor() {
+		return false
+	}
+	return true
+}
 
 func (e StdEng) checkAccessible(t Tensor) error {
 	if !t.IsNativelyAccessible() {

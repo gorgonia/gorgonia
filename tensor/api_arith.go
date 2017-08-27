@@ -82,59 +82,30 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Mul(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	var muler Muler
+	var ok bool
 	switch at := a.(type) {
 	case Tensor:
+		muler, ok = at.Engine().(Muler)
 		switch bt := b.(type) {
 		case Tensor:
-			switch e := at.Engine().(type) {
-			case Float64Muler:
-				return e.Float64Mul(at, bt, opts...)
-			case Float32Muler:
-				return e.Float32Mul(at, bt, opts...)
-			case Muler:
-				return e.Mul(at, bt, opts...)
-			default:
-				switch e := bt.Engine().(type) {
-				case Float64Muler:
-					return e.Float64Mul(at, bt, opts...)
-				case Float32Muler:
-					return e.Float32Mul(at, bt, opts...)
-				case Muler:
-					return e.Mul(at, bt, opts...)
-				default:
-					return nil, errors.New("Neither engines support Mul")
+			if !ok {
+				if muler, ok = bt.Engine().(Muler); !ok {
+					return nil, errors.New("Neither engines of either operand support Mul")
 				}
 			}
-
+			return muler.Mul(at, bt, opts...)
 		default:
-			switch e := at.Engine().(type) {
-			case Float64Muler:
-				btf := bt.(float64)
-				return e.Float64MulScalar(at, btf, true, opts...)
-			case Float32Muler:
-				btf := bt.(float32)
-				return e.Float32MulScalar(at, btf, true, opts...)
-			case Muler:
-				return e.MulScalar(at, bt, true, opts...)
-			default:
-				return nil, errors.New("Engine does not support MulScalar")
-			}
+			return muler.MulScalar(at, bt, true, opts...)
+
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
-			switch e := bt.Engine().(type) {
-			case Float64Muler:
-				atf := at.(float64)
-				return e.Float64MulScalar(bt, atf, false, opts...)
-			case Float32Muler:
-				atf := at.(float32)
-				return e.Float32MulScalar(bt, atf, false, opts...)
-			case Muler:
-				return e.MulScalar(bt, at, false, opts...)
-			default:
-				return nil, errors.New("Engine does not support MulScalar")
+			if muler, ok = bt.Engine().(Muler); !ok {
+				return nil, errors.New("Operand B's engine does not support Mul")
 			}
+			return muler.MulScalar(bt, at, false, opts...)
 		default:
 			return nil, errors.Errorf("Cannot perform Mul of %T and %T", a, b)
 		}
