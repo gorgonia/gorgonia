@@ -46,34 +46,31 @@ const denseArithScalarBodyRaw = `e := t.e
 `
 
 const denseIdentityArithTestBodyRaw = `iden := func(a *Dense) bool {
-	identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+	b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 	{{if ne .Identity 0 -}}
-			identity.Memset(identityVal({{.Identity}}, a.t))
+			b.Memset(identityVal({{.Identity}}, a.t))
 	{{end -}}
-	{{template "funcoptdecl"}}
+	{{template "funcoptdecl" -}}
 	correct := a.Clone().(*Dense)
-	{{template "funcoptcorrect"}}
+	{{template "funcoptcorrect" -}}
 
 	we := willerr(a, {{.TypeClassName}})
-	ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
-	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, identity, we, err); retEarly{
+	{{template "call0" . }}
+	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
 		if err != nil {
 			return false
 		}
 		return true
 	}
 	
-	var isFloatTypes bool
-	if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
-		isFloatTypes = true
-	}
+	isFloatTypes := qcIsFloat(a)
 	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
 		t.Errorf("a.Dtype: %v", a.Dtype())
 		t.Errorf("correct.Data()\n%v", correct.Data())
 		t.Errorf("ret.Data()\n%v", ret.Data())
 		return false
 	}
-	{{template "funcoptcheck"}}
+	{{template "funcoptcheck" -}}
 
 	return true
 }
@@ -84,32 +81,28 @@ const denseIdentityArithTestBodyRaw = `iden := func(a *Dense) bool {
 
 const denseIdentityArithScalarTestRaw = `iden1 := func(q *Dense) bool {
 	a := q.Clone().(*Dense)
-	identity := identityVal({{.Identity}}, q.t)
+	b := identityVal({{.Identity}}, q.t)
 	{{template "funcoptdecl"}}
-	correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
-	copyDense(correct, a)
-	{{template "funcoptcorrect"}}
+	correct := a.Clone().(*Dense)
+	{{template "funcoptcorrect" -}}
 
 	we := willerr(a, {{.TypeClassName}})
-	ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
-	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, identity, we, err); retEarly{
+	{{template "call0" . }}
+	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
 		if err != nil {
 			return false
 		}
 		return true
 	}
 
-	var isFloatTypes bool
-		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
-			isFloatTypes = true
-	}
+	isFloatTypes := qcIsFloat(a)
 	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
 		t.Errorf("q.Dtype: %v", q.Dtype())
 		t.Errorf("Correct.Data()\n%v", correct.Data())
 		t.Errorf("ret.Data()\n%v", ret.Data())
 		return false
 	}
-	{{template "funcoptcheck"}}
+	{{template "funcoptcheck" -}}
 
 	return true
 }
@@ -121,37 +114,135 @@ if err := quick.Check(iden1, nil); err != nil {
 
 iden2 := func(q *Dense) bool {
 	a := q.Clone().(*Dense)
-	identity := identityVal({{.Identity}}, q.t)
-	{{template "funcoptdecl"}}
-	correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
-	copyDense(correct, a)
-	{{template "funcoptcorrect"}}
+	b := identityVal({{.Identity}}, q.t)
+	{{template "funcoptdecl" -}}
+	correct := a.Clone().(*Dense)
+	{{template "funcoptcorrect" -}}
 
 	we := willerr(a, {{.TypeClassName}})
-	ret, err := {{.Name}}( identity, a {{template "funcoptuse"}})
-	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, identity, we, err); retEarly{
+	{{template "call1" . }}
+	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
 		if err != nil {
 			return false
 		}
 		return true
 	}
 
-	var isFloatTypes bool
-		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
-			isFloatTypes = true
-	}
+	isFloatTypes := qcIsFloat(a)
 	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
 		t.Errorf("q.Dtype: %v", q.Dtype())
 		t.Errorf("correct.Data()\n%v", correct.Data())
 		t.Errorf("ret.Data()\n%v", ret.Data())
 		return false
 	}
-	{{template "funcoptcheck"}}
+	{{template "funcoptcheck" -}}
 
 	return true
 }
 if err := quick.Check(iden2, nil); err != nil {
 	t.Errorf("Identity test for {{.Name}} (scalar as left, tensor as right) failed: %v", err)
+}
+{{end -}}
+`
+
+const denseInvArithTestBodyRaw = `inv := func(a *Dense) bool {
+	b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+	{{if ne .Identity 0 -}}
+			b.Memset(identityVal({{.Identity}}, a.t))
+	{{end -}}
+	{{template "funcoptdecl" -}}
+	correct := a.Clone().(*Dense)
+	{{template "funcoptcorrect" -}}
+
+	we := willerr(a, {{.TypeClassName}})
+	{{template "call0" . }}
+	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	{{template "callInv" .}}
+	
+	isFloatTypes := qcIsFloat(a)
+	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+		t.Errorf("a.Dtype: %v", a.Dtype())
+		t.Errorf("correct.Data()\n%v", correct.Data())
+		t.Errorf("ret.Data()\n%v", ret.Data())
+		return false
+	}
+	{{template "funcoptcheck" -}}
+
+	return true
+}
+		if err := quick.Check(inv, nil); err != nil{
+			t.Errorf("Inv test for {{.Name}} failed: %v", err)
+		}
+`
+
+const denseInvArithScalarTestRaw = `inv1 := func(q *Dense) bool {
+	a := q.Clone().(*Dense)
+	b := identityVal({{.Identity}}, q.t)
+	{{template "funcoptdecl"}}
+	correct := a.Clone().(*Dense)
+	{{template "funcoptcorrect" -}}
+
+	we := willerr(a, {{.TypeClassName}})
+	{{template "call0" . }}
+	if err, retEarly := qcErrCheck(t, "{{.Name}}VS", a, b, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	{{template "callInv0" .}}
+
+	isFloatTypes := qcIsFloat(a)
+	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+		t.Errorf("q.Dtype: %v", q.Dtype())
+		t.Errorf("Correct.Data()\n%v", correct.Data())
+		t.Errorf("ret.Data()\n%v", ret.Data())
+		return false
+	}
+	{{template "funcoptcheck" -}}
+
+	return true
+}
+if err := quick.Check(inv1, nil); err != nil {
+	t.Errorf("Inv test for {{.Name}} (tensor as left, scalar as right) failed: %v", err)
+}
+
+{{if .IsInvolutionary -}}
+inv2 := func(q *Dense) bool {
+	a := q.Clone().(*Dense)
+	b := identityVal({{.Identity}}, q.t)
+	{{template "funcoptdecl" -}}
+	correct := a.Clone().(*Dense)
+	{{template "funcoptcorrect" -}}
+
+	we := willerr(a, {{.TypeClassName}})
+	{{template "call1" . }}
+	if err, retEarly := qcErrCheck(t, "{{.Name}}SV", a, b, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	{{template "callInv1" .}}
+
+	isFloatTypes := qcIsFloat(a)
+	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+		t.Errorf("q.Dtype: %v", q.Dtype())
+		t.Errorf("correct.Data()\n%v", correct.Data())
+		t.Errorf("ret.Data()\n%v", ret.Data())
+		return false
+	}
+	{{template "funcoptcheck" -}}
+
+	return true
+}
+if err := quick.Check(inv2, nil); err != nil {
+	t.Errorf("Inv test for {{.Name}} (scalar as left, tensor as right) failed: %v", err)
 }
 {{end -}}
 `

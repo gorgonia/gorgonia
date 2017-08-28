@@ -323,8 +323,8 @@ func shuffleInts(a []int, r *rand.Rand) {
 
 func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	// generate type
-	ri := r.Intn(len(specializedTypes.set))
-	of := specializedTypes.set[ri]
+	ri := r.Intn(len(generatableTypes.set))
+	of := generatableTypes.set[ri]
 	datatyp := reflect.SliceOf(of.Type)
 	gendat, _ := quick.Value(datatyp, r)
 	// generate dims
@@ -426,7 +426,6 @@ func (e dummyEngine) Memcpy(dst, src Memory) error {
 func (e dummyEngine) Accessible(mem Memory) (Memory, error) { return mem, nil }
 func (e dummyEngine) WorksWith(order DataOrder) bool        { return true }
 
-
 func willerr(a *Dense, tc *typeclass) (retVal bool) {
 	if err := typeclassCheck(a.Dtype(), tc); err != nil {
 		return true
@@ -438,17 +437,24 @@ func willerr(a *Dense, tc *typeclass) (retVal bool) {
 func qcErrCheck(t *testing.T, name string, a Dtyper, b interface{}, we bool, err error) (e error, retEarly bool) {
 	switch {
 	case !we && err != nil:
-		t.Errorf("Identity tests for %v the tensor in left operand was unable to proceed: %v", name, err)
+		t.Errorf("Tests for %v (%v) was unable to proceed: %v", name, a.Dtype(), err)
 		return err, true
 	case we && err == nil:
 		if bd, ok := b.(Dtyper); ok {
-			t.Errorf("Expected error when adding %T of %v and %T of %v", a, a.Dtype(), b, bd.Dtype())			
-		} else{
-			t.Errorf("Expected error when adding %T of %v and %v of %T", a, a.Dtype(), b, b)	
+			t.Errorf("Expected error when adding %T of %v and %T of %v", a, a.Dtype(), b, bd.Dtype())
+		} else {
+			t.Errorf("Expected error when adding %T of %v and %v of %T", a, a.Dtype(), b, b)
 		}
 		return errors.New("Error"), true
 	case we && err != nil:
 		return nil, true
 	}
 	return nil, false
+}
+
+func qcIsFloat(a *Dense) bool {
+	if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+		return true
+	}
+	return false
 }

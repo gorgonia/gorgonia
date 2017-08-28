@@ -66,19 +66,23 @@ var funcOptCheck = map[string]string{
 	"reuse": `if reuse != ret {
 			t.Errorf("Expected reuse to be the same as retVal")
 			return false
-	}`,
+	}
+
+	`,
 
 	"incr": "",
 
 	"unsafe": `if ret != a {
 		t.Errorf("Expected ret to be the same as a")
 		return false
-	}`,
+	}
+
+	`,
 }
 
 var funcOptDecl = map[string]string{
-	"reuse":  `reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))`,
-	"incr":   "incr := New(Of(a.t), WithShape(a.Shape().Clone()...))",
+	"reuse":  "reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))\n",
+	"incr":   "incr := New(Of(a.t), WithShape(a.Shape().Clone()...))\n",
 	"unsafe": "",
 }
 
@@ -404,7 +408,7 @@ func init() {
 		{basicBinOp{"", "Add", false, isAddable}, "numberTypes", true, 0, false, "", true, false},
 		{basicBinOp{"", "Sub", false, isNumber}, "numberTypes", false, 0, true, "Add", false, true},
 		{basicBinOp{"", "Mul", false, isNumber}, "numberTypes", true, 1, false, "", true, false},
-		{basicBinOp{"", "Div", false, isNumber}, "numberTypes", false, 0, true, "Mul", false, true},
+		{basicBinOp{"", "Div", false, isNumber}, "numberTypes", false, 1, true, "Mul", false, false},
 		{basicBinOp{"", "Pow", true, isFloatCmplx}, "floatcmplxTypes", true, 1, false, "", false, false},
 		{basicBinOp{"", "Mod", false, isNonComplexNumber}, "nonComplexNumberTypes", false, 0, false, "", false, false},
 	}

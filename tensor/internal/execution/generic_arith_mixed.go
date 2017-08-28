@@ -282,8 +282,10 @@ func DivSVI(a int, b []int) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVI8(a int8, b []int8) (err error) {
@@ -299,8 +301,10 @@ func DivSVI8(a int8, b []int8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVI16(a int16, b []int16) (err error) {
@@ -316,8 +320,10 @@ func DivSVI16(a int16, b []int16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVI32(a int32, b []int32) (err error) {
@@ -333,8 +339,10 @@ func DivSVI32(a int32, b []int32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVI64(a int64, b []int64) (err error) {
@@ -350,8 +358,10 @@ func DivSVI64(a int64, b []int64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVU(a uint, b []uint) (err error) {
@@ -367,8 +377,10 @@ func DivSVU(a uint, b []uint) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVU8(a uint8, b []uint8) (err error) {
@@ -384,8 +396,10 @@ func DivSVU8(a uint8, b []uint8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVU16(a uint16, b []uint16) (err error) {
@@ -401,8 +415,10 @@ func DivSVU16(a uint16, b []uint16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVU32(a uint32, b []uint32) (err error) {
@@ -418,8 +434,10 @@ func DivSVU32(a uint32, b []uint32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVU64(a uint64, b []uint64) (err error) {
@@ -435,8 +453,10 @@ func DivSVU64(a uint64, b []uint64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivSVF32(a float32, b []float32) {
@@ -830,8 +850,10 @@ func DivIncrSVI(a int, b []int, incr []int) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVI8(a int8, b []int8, incr []int8) (err error) {
@@ -847,8 +869,10 @@ func DivIncrSVI8(a int8, b []int8, incr []int8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVI16(a int16, b []int16, incr []int16) (err error) {
@@ -864,8 +888,10 @@ func DivIncrSVI16(a int16, b []int16, incr []int16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVI32(a int32, b []int32, incr []int32) (err error) {
@@ -881,8 +907,10 @@ func DivIncrSVI32(a int32, b []int32, incr []int32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVI64(a int64, b []int64, incr []int64) (err error) {
@@ -898,8 +926,10 @@ func DivIncrSVI64(a int64, b []int64, incr []int64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVU(a uint, b []uint, incr []uint) (err error) {
@@ -915,8 +945,10 @@ func DivIncrSVU(a uint, b []uint, incr []uint) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVU8(a uint8, b []uint8, incr []uint8) (err error) {
@@ -932,8 +964,10 @@ func DivIncrSVU8(a uint8, b []uint8, incr []uint8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVU16(a uint16, b []uint16, incr []uint16) (err error) {
@@ -949,8 +983,10 @@ func DivIncrSVU16(a uint16, b []uint16, incr []uint16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVU32(a uint32, b []uint32, incr []uint32) (err error) {
@@ -966,8 +1002,10 @@ func DivIncrSVU32(a uint32, b []uint32, incr []uint32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVU64(a uint64, b []uint64, incr []uint64) (err error) {
@@ -983,8 +1021,10 @@ func DivIncrSVU64(a uint64, b []uint64, incr []uint64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrSVF32(a float32, b []float32, incr []float32) {
@@ -1773,8 +1813,10 @@ func DivIterSVI(a int, b []int, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVI8(a int8, b []int8, bit Iterator) (err error) {
@@ -1798,8 +1840,10 @@ func DivIterSVI8(a int8, b []int8, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVI16(a int16, b []int16, bit Iterator) (err error) {
@@ -1823,8 +1867,10 @@ func DivIterSVI16(a int16, b []int16, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVI32(a int32, b []int32, bit Iterator) (err error) {
@@ -1848,8 +1894,10 @@ func DivIterSVI32(a int32, b []int32, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVI64(a int64, b []int64, bit Iterator) (err error) {
@@ -1873,8 +1921,10 @@ func DivIterSVI64(a int64, b []int64, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVU(a uint, b []uint, bit Iterator) (err error) {
@@ -1898,8 +1948,10 @@ func DivIterSVU(a uint, b []uint, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVU8(a uint8, b []uint8, bit Iterator) (err error) {
@@ -1923,8 +1975,10 @@ func DivIterSVU8(a uint8, b []uint8, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVU16(a uint16, b []uint16, bit Iterator) (err error) {
@@ -1948,8 +2002,10 @@ func DivIterSVU16(a uint16, b []uint16, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVU32(a uint32, b []uint32, bit Iterator) (err error) {
@@ -1973,8 +2029,10 @@ func DivIterSVU32(a uint32, b []uint32, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVU64(a uint64, b []uint64, bit Iterator) (err error) {
@@ -1998,8 +2056,10 @@ func DivIterSVU64(a uint64, b []uint64, bit Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterSVF32(a float32, b []float32, bit Iterator) (err error) {
@@ -3144,8 +3204,10 @@ func DivIterIncrSVI(a int, b []int, incr []int, bit Iterator, iit Iterator) (err
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVI8(a int8, b []int8, incr []int8, bit Iterator, iit Iterator) (err error) {
@@ -3173,8 +3235,10 @@ func DivIterIncrSVI8(a int8, b []int8, incr []int8, bit Iterator, iit Iterator) 
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVI16(a int16, b []int16, incr []int16, bit Iterator, iit Iterator) (err error) {
@@ -3202,8 +3266,10 @@ func DivIterIncrSVI16(a int16, b []int16, incr []int16, bit Iterator, iit Iterat
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVI32(a int32, b []int32, incr []int32, bit Iterator, iit Iterator) (err error) {
@@ -3231,8 +3297,10 @@ func DivIterIncrSVI32(a int32, b []int32, incr []int32, bit Iterator, iit Iterat
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVI64(a int64, b []int64, incr []int64, bit Iterator, iit Iterator) (err error) {
@@ -3260,8 +3328,10 @@ func DivIterIncrSVI64(a int64, b []int64, incr []int64, bit Iterator, iit Iterat
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVU(a uint, b []uint, incr []uint, bit Iterator, iit Iterator) (err error) {
@@ -3289,8 +3359,10 @@ func DivIterIncrSVU(a uint, b []uint, incr []uint, bit Iterator, iit Iterator) (
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVU8(a uint8, b []uint8, incr []uint8, bit Iterator, iit Iterator) (err error) {
@@ -3318,8 +3390,10 @@ func DivIterIncrSVU8(a uint8, b []uint8, incr []uint8, bit Iterator, iit Iterato
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVU16(a uint16, b []uint16, incr []uint16, bit Iterator, iit Iterator) (err error) {
@@ -3347,8 +3421,10 @@ func DivIterIncrSVU16(a uint16, b []uint16, incr []uint16, bit Iterator, iit Ite
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVU32(a uint32, b []uint32, incr []uint32, bit Iterator, iit Iterator) (err error) {
@@ -3376,8 +3452,10 @@ func DivIterIncrSVU32(a uint32, b []uint32, incr []uint32, bit Iterator, iit Ite
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVU64(a uint64, b []uint64, incr []uint64, bit Iterator, iit Iterator) (err error) {
@@ -3405,8 +3483,10 @@ func DivIterIncrSVU64(a uint64, b []uint64, incr []uint64, bit Iterator, iit Ite
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrSVF32(a float32, b []float32, incr []float32, bit Iterator, iit Iterator) (err error) {
@@ -4060,8 +4140,10 @@ func DivVSI(a []int, b int) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSI8(a []int8, b int8) (err error) {
@@ -4077,8 +4159,10 @@ func DivVSI8(a []int8, b int8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSI16(a []int16, b int16) (err error) {
@@ -4094,8 +4178,10 @@ func DivVSI16(a []int16, b int16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSI32(a []int32, b int32) (err error) {
@@ -4111,8 +4197,10 @@ func DivVSI32(a []int32, b int32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSI64(a []int64, b int64) (err error) {
@@ -4128,8 +4216,10 @@ func DivVSI64(a []int64, b int64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSU(a []uint, b uint) (err error) {
@@ -4145,8 +4235,10 @@ func DivVSU(a []uint, b uint) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSU8(a []uint8, b uint8) (err error) {
@@ -4162,8 +4254,10 @@ func DivVSU8(a []uint8, b uint8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSU16(a []uint16, b uint16) (err error) {
@@ -4179,8 +4273,10 @@ func DivVSU16(a []uint16, b uint16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSU32(a []uint32, b uint32) (err error) {
@@ -4196,8 +4292,10 @@ func DivVSU32(a []uint32, b uint32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSU64(a []uint64, b uint64) (err error) {
@@ -4213,8 +4311,10 @@ func DivVSU64(a []uint64, b uint64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivVSF32(a []float32, b float32) {
@@ -4608,8 +4708,10 @@ func DivIncrVSI(a []int, b int, incr []int) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSI8(a []int8, b int8, incr []int8) (err error) {
@@ -4625,8 +4727,10 @@ func DivIncrVSI8(a []int8, b int8, incr []int8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSI16(a []int16, b int16, incr []int16) (err error) {
@@ -4642,8 +4746,10 @@ func DivIncrVSI16(a []int16, b int16, incr []int16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSI32(a []int32, b int32, incr []int32) (err error) {
@@ -4659,8 +4765,10 @@ func DivIncrVSI32(a []int32, b int32, incr []int32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSI64(a []int64, b int64, incr []int64) (err error) {
@@ -4676,8 +4784,10 @@ func DivIncrVSI64(a []int64, b int64, incr []int64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSU(a []uint, b uint, incr []uint) (err error) {
@@ -4693,8 +4803,10 @@ func DivIncrVSU(a []uint, b uint, incr []uint) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSU8(a []uint8, b uint8, incr []uint8) (err error) {
@@ -4710,8 +4822,10 @@ func DivIncrVSU8(a []uint8, b uint8, incr []uint8) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSU16(a []uint16, b uint16, incr []uint16) (err error) {
@@ -4727,8 +4841,10 @@ func DivIncrVSU16(a []uint16, b uint16, incr []uint16) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSU32(a []uint32, b uint32, incr []uint32) (err error) {
@@ -4744,8 +4860,10 @@ func DivIncrVSU32(a []uint32, b uint32, incr []uint32) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSU64(a []uint64, b uint64, incr []uint64) (err error) {
@@ -4761,8 +4879,10 @@ func DivIncrVSU64(a []uint64, b uint64, incr []uint64) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIncrVSF32(a []float32, b float32, incr []float32) {
@@ -5551,8 +5671,10 @@ func DivIterVSI(a []int, b int, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSI8(a []int8, b int8, ait Iterator) (err error) {
@@ -5576,8 +5698,10 @@ func DivIterVSI8(a []int8, b int8, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSI16(a []int16, b int16, ait Iterator) (err error) {
@@ -5601,8 +5725,10 @@ func DivIterVSI16(a []int16, b int16, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSI32(a []int32, b int32, ait Iterator) (err error) {
@@ -5626,8 +5752,10 @@ func DivIterVSI32(a []int32, b int32, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSI64(a []int64, b int64, ait Iterator) (err error) {
@@ -5651,8 +5779,10 @@ func DivIterVSI64(a []int64, b int64, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSU(a []uint, b uint, ait Iterator) (err error) {
@@ -5676,8 +5806,10 @@ func DivIterVSU(a []uint, b uint, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSU8(a []uint8, b uint8, ait Iterator) (err error) {
@@ -5701,8 +5833,10 @@ func DivIterVSU8(a []uint8, b uint8, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSU16(a []uint16, b uint16, ait Iterator) (err error) {
@@ -5726,8 +5860,10 @@ func DivIterVSU16(a []uint16, b uint16, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSU32(a []uint32, b uint32, ait Iterator) (err error) {
@@ -5751,8 +5887,10 @@ func DivIterVSU32(a []uint32, b uint32, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSU64(a []uint64, b uint64, ait Iterator) (err error) {
@@ -5776,8 +5914,10 @@ func DivIterVSU64(a []uint64, b uint64, ait Iterator) (err error) {
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterVSF32(a []float32, b float32, ait Iterator) (err error) {
@@ -6922,8 +7062,10 @@ func DivIterIncrVSI(a []int, b int, incr []int, ait Iterator, iit Iterator) (err
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSI8(a []int8, b int8, incr []int8, ait Iterator, iit Iterator) (err error) {
@@ -6951,8 +7093,10 @@ func DivIterIncrVSI8(a []int8, b int8, incr []int8, ait Iterator, iit Iterator) 
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSI16(a []int16, b int16, incr []int16, ait Iterator, iit Iterator) (err error) {
@@ -6980,8 +7124,10 @@ func DivIterIncrVSI16(a []int16, b int16, incr []int16, ait Iterator, iit Iterat
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSI32(a []int32, b int32, incr []int32, ait Iterator, iit Iterator) (err error) {
@@ -7009,8 +7155,10 @@ func DivIterIncrVSI32(a []int32, b int32, incr []int32, ait Iterator, iit Iterat
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSI64(a []int64, b int64, incr []int64, ait Iterator, iit Iterator) (err error) {
@@ -7038,8 +7186,10 @@ func DivIterIncrVSI64(a []int64, b int64, incr []int64, ait Iterator, iit Iterat
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSU(a []uint, b uint, incr []uint, ait Iterator, iit Iterator) (err error) {
@@ -7067,8 +7217,10 @@ func DivIterIncrVSU(a []uint, b uint, incr []uint, ait Iterator, iit Iterator) (
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSU8(a []uint8, b uint8, incr []uint8, ait Iterator, iit Iterator) (err error) {
@@ -7096,8 +7248,10 @@ func DivIterIncrVSU8(a []uint8, b uint8, incr []uint8, ait Iterator, iit Iterato
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSU16(a []uint16, b uint16, incr []uint16, ait Iterator, iit Iterator) (err error) {
@@ -7125,8 +7279,10 @@ func DivIterIncrVSU16(a []uint16, b uint16, incr []uint16, ait Iterator, iit Ite
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSU32(a []uint32, b uint32, incr []uint32, ait Iterator, iit Iterator) (err error) {
@@ -7154,8 +7310,10 @@ func DivIterIncrVSU32(a []uint32, b uint32, incr []uint32, ait Iterator, iit Ite
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSU64(a []uint64, b uint64, incr []uint64, ait Iterator, iit Iterator) (err error) {
@@ -7183,8 +7341,10 @@ func DivIterIncrVSU64(a []uint64, b uint64, incr []uint64, ait Iterator, iit Ite
 	if err != nil {
 		return
 	}
-	err = errs
-	return
+	if len(errs) > 0 {
+		return errs
+	}
+	return nil
 }
 
 func DivIterIncrVSF32(a []float32, b float32, incr []float32, ait Iterator, iit Iterator) (err error) {

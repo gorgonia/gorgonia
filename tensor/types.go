@@ -237,6 +237,13 @@ var nonComplexNumberTypes = &typeclass{
 	},
 }
 
+var generatableTypes = &typeclass{
+	name: "Generatable types",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64 /*Complex64, Complex128,*/, String,
+	},
+}
+
 func isSpecialized(dt Kinder) bool {
 	for _, s := range specializedTypes.set {
 		if s.Kind() == dt.Kind() {

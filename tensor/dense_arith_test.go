@@ -10,12 +10,12 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
-func TestAdd(t *testing.T) {
+func TestDense_Add(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b)
+		ret, err := a.Add(b)
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -37,19 +37,19 @@ func TestAdd(t *testing.T) {
 	}
 
 }
-func TestSub(t *testing.T) {
+func TestDense_Sub(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b)
+		ret, err := a.Sub(b)
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.Add(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -64,13 +64,13 @@ func TestSub(t *testing.T) {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
-func TestMul(t *testing.T) {
+func TestDense_Mul(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b)
+		ret, err := a.Mul(b)
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -92,20 +92,20 @@ func TestMul(t *testing.T) {
 	}
 
 }
-func TestDiv(t *testing.T) {
+func TestDense_Div(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b)
+		ret, err := a.Div(b)
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.Mul(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -120,13 +120,13 @@ func TestDiv(t *testing.T) {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
-func TestPow(t *testing.T) {
+func TestDense_Pow(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b)
+		ret, err := a.Pow(b)
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -148,12 +148,12 @@ func TestPow(t *testing.T) {
 	}
 
 }
-func TestAdd_unsafe(t *testing.T) {
+func TestDense_Add_unsafe(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b, UseUnsafe())
+		ret, err := a.Add(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -180,19 +180,19 @@ func TestAdd_unsafe(t *testing.T) {
 	}
 
 }
-func TestSub_unsafe(t *testing.T) {
+func TestDense_Sub_unsafe(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b, UseUnsafe())
+		ret, err := a.Sub(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.Add(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -212,13 +212,13 @@ func TestSub_unsafe(t *testing.T) {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
-func TestMul_unsafe(t *testing.T) {
+func TestDense_Mul_unsafe(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b, UseUnsafe())
+		ret, err := a.Mul(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -245,20 +245,20 @@ func TestMul_unsafe(t *testing.T) {
 	}
 
 }
-func TestDiv_unsafe(t *testing.T) {
+func TestDense_Div_unsafe(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b, UseUnsafe())
+		ret, err := a.Div(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.Mul(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -278,13 +278,13 @@ func TestDiv_unsafe(t *testing.T) {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
-func TestPow_unsafe(t *testing.T) {
+func TestDense_Pow_unsafe(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b, UseUnsafe())
+		ret, err := a.Pow(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -311,13 +311,13 @@ func TestPow_unsafe(t *testing.T) {
 	}
 
 }
-func TestAdd_reuse(t *testing.T) {
+func TestDense_Add_reuse(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b, WithReuse(reuse))
+		ret, err := a.Add(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -344,20 +344,20 @@ func TestAdd_reuse(t *testing.T) {
 	}
 
 }
-func TestSub_reuse(t *testing.T) {
+func TestDense_Sub_reuse(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b, WithReuse(reuse))
+		ret, err := a.Sub(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.Add(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -377,14 +377,14 @@ func TestSub_reuse(t *testing.T) {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
-func TestMul_reuse(t *testing.T) {
+func TestDense_Mul_reuse(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b, WithReuse(reuse))
+		ret, err := a.Mul(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -411,21 +411,21 @@ func TestMul_reuse(t *testing.T) {
 	}
 
 }
-func TestDiv_reuse(t *testing.T) {
+func TestDense_Div_reuse(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b, WithReuse(reuse))
+		ret, err := a.Div(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.Mul(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -445,14 +445,14 @@ func TestDiv_reuse(t *testing.T) {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
-func TestPow_reuse(t *testing.T) {
+func TestDense_Pow_reuse(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b, WithReuse(reuse))
+		ret, err := a.Pow(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -479,7 +479,7 @@ func TestPow_reuse(t *testing.T) {
 	}
 
 }
-func TestAdd_incr(t *testing.T) {
+func TestDense_Add_incr(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -487,7 +487,7 @@ func TestAdd_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b, WithIncr(incr))
+		ret, err := a.Add(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -509,7 +509,7 @@ func TestAdd_incr(t *testing.T) {
 	}
 
 }
-func TestSub_incr(t *testing.T) {
+func TestDense_Sub_incr(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -517,14 +517,14 @@ func TestSub_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b, WithIncr(incr))
+		ret, err := a.Sub(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.Add(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -539,7 +539,7 @@ func TestSub_incr(t *testing.T) {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
-func TestMul_incr(t *testing.T) {
+func TestDense_Mul_incr(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
@@ -548,7 +548,7 @@ func TestMul_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b, WithIncr(incr))
+		ret, err := a.Mul(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -570,7 +570,7 @@ func TestMul_incr(t *testing.T) {
 	}
 
 }
-func TestDiv_incr(t *testing.T) {
+func TestDense_Div_incr(t *testing.T) {
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
@@ -579,14 +579,14 @@ func TestDiv_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b, WithIncr(incr))
+		ret, err := a.Div(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.Mul(b, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -601,7 +601,7 @@ func TestDiv_incr(t *testing.T) {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
-func TestPow_incr(t *testing.T) {
+func TestDense_Pow_incr(t *testing.T) {
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		b.Memset(identityVal(1, a.t))
@@ -610,7 +610,7 @@ func TestPow_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b, WithIncr(incr))
+		ret, err := a.Pow(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -632,14 +632,14 @@ func TestPow_incr(t *testing.T) {
 	}
 
 }
-func TestAddScalar(t *testing.T) {
+func TestDense_AddScalar(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b)
+		ret, err := a.AddScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -665,7 +665,7 @@ func TestAddScalar(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(b, a)
+		ret, err := a.AddScalar(b, false)
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -687,21 +687,21 @@ func TestAddScalar(t *testing.T) {
 	}
 
 }
-func TestSubScalar(t *testing.T) {
+func TestDense_SubScalar(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b)
+		ret, err := a.SubScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.AddScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -721,14 +721,14 @@ func TestSubScalar(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(b, a)
+		ret, err := a.SubScalar(b, false)
 		if err, retEarly := qcErrCheck(t, "SubSV", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Sub(b, ret, UseUnsafe())
+		ret, err = ret.SubScalar(b, false, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -743,14 +743,14 @@ func TestSubScalar(t *testing.T) {
 		t.Errorf("Inv test for Sub (scalar as left, tensor as right) failed: %v", err)
 	}
 }
-func TestMulScalar(t *testing.T) {
+func TestDense_MulScalar(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b)
+		ret, err := a.MulScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -776,7 +776,7 @@ func TestMulScalar(t *testing.T) {
 		b := identityVal(1, q.t)
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(b, a)
+		ret, err := a.MulScalar(b, false)
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -798,21 +798,21 @@ func TestMulScalar(t *testing.T) {
 	}
 
 }
-func TestDivScalar(t *testing.T) {
+func TestDense_DivScalar(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b)
+		ret, err := a.DivScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.MulScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -828,14 +828,14 @@ func TestDivScalar(t *testing.T) {
 	}
 
 }
-func TestPowScalar(t *testing.T) {
+func TestDense_PowScalar(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b)
+		ret, err := a.PowScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -857,14 +857,14 @@ func TestPowScalar(t *testing.T) {
 	}
 
 }
-func TestAddScalar_unsafe(t *testing.T) {
+func TestDense_AddScalar_unsafe(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b, UseUnsafe())
+		ret, err := a.AddScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -895,7 +895,7 @@ func TestAddScalar_unsafe(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(b, a, UseUnsafe())
+		ret, err := a.AddScalar(b, false, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -922,21 +922,21 @@ func TestAddScalar_unsafe(t *testing.T) {
 	}
 
 }
-func TestSubScalar_unsafe(t *testing.T) {
+func TestDense_SubScalar_unsafe(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b, UseUnsafe())
+		ret, err := a.SubScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.AddScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -961,14 +961,14 @@ func TestSubScalar_unsafe(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(b, a, UseUnsafe())
+		ret, err := a.SubScalar(b, false, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "SubSV", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Sub(b, ret, UseUnsafe())
+		ret, err = ret.SubScalar(b, false, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -988,14 +988,14 @@ func TestSubScalar_unsafe(t *testing.T) {
 		t.Errorf("Inv test for Sub (scalar as left, tensor as right) failed: %v", err)
 	}
 }
-func TestMulScalar_unsafe(t *testing.T) {
+func TestDense_MulScalar_unsafe(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b, UseUnsafe())
+		ret, err := a.MulScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1026,7 +1026,7 @@ func TestMulScalar_unsafe(t *testing.T) {
 		b := identityVal(1, q.t)
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(b, a, UseUnsafe())
+		ret, err := a.MulScalar(b, false, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1053,21 +1053,21 @@ func TestMulScalar_unsafe(t *testing.T) {
 	}
 
 }
-func TestDivScalar_unsafe(t *testing.T) {
+func TestDense_DivScalar_unsafe(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b, UseUnsafe())
+		ret, err := a.DivScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.MulScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -1088,14 +1088,14 @@ func TestDivScalar_unsafe(t *testing.T) {
 	}
 
 }
-func TestPowScalar_unsafe(t *testing.T) {
+func TestDense_PowScalar_unsafe(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b, UseUnsafe())
+		ret, err := a.PowScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1122,7 +1122,7 @@ func TestPowScalar_unsafe(t *testing.T) {
 	}
 
 }
-func TestAddScalar_reuse(t *testing.T) {
+func TestDense_AddScalar_reuse(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1130,7 +1130,7 @@ func TestAddScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b, WithReuse(reuse))
+		ret, err := a.AddScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1162,7 +1162,7 @@ func TestAddScalar_reuse(t *testing.T) {
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Add(b, a, WithReuse(reuse))
+		ret, err := a.AddScalar(b, false, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1189,7 +1189,7 @@ func TestAddScalar_reuse(t *testing.T) {
 	}
 
 }
-func TestSubScalar_reuse(t *testing.T) {
+func TestDense_SubScalar_reuse(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1197,14 +1197,14 @@ func TestSubScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b, WithReuse(reuse))
+		ret, err := a.SubScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.AddScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -1230,14 +1230,14 @@ func TestSubScalar_reuse(t *testing.T) {
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Sub(b, a, WithReuse(reuse))
+		ret, err := a.SubScalar(b, false, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "SubSV", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Sub(b, ret, UseUnsafe())
+		ret, err = ret.SubScalar(b, false, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -1257,7 +1257,7 @@ func TestSubScalar_reuse(t *testing.T) {
 		t.Errorf("Inv test for Sub (scalar as left, tensor as right) failed: %v", err)
 	}
 }
-func TestMulScalar_reuse(t *testing.T) {
+func TestDense_MulScalar_reuse(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1265,7 +1265,7 @@ func TestMulScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b, WithReuse(reuse))
+		ret, err := a.MulScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1297,7 +1297,7 @@ func TestMulScalar_reuse(t *testing.T) {
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Mul(b, a, WithReuse(reuse))
+		ret, err := a.MulScalar(b, false, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1324,7 +1324,7 @@ func TestMulScalar_reuse(t *testing.T) {
 	}
 
 }
-func TestDivScalar_reuse(t *testing.T) {
+func TestDense_DivScalar_reuse(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1332,14 +1332,14 @@ func TestDivScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b, WithReuse(reuse))
+		ret, err := a.DivScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.MulScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -1360,7 +1360,7 @@ func TestDivScalar_reuse(t *testing.T) {
 	}
 
 }
-func TestPowScalar_reuse(t *testing.T) {
+func TestDense_PowScalar_reuse(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1368,7 +1368,7 @@ func TestPowScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b, WithReuse(reuse))
+		ret, err := a.PowScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1395,7 +1395,7 @@ func TestPowScalar_reuse(t *testing.T) {
 	}
 
 }
-func TestAddScalar_incr(t *testing.T) {
+func TestDense_AddScalar_incr(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1405,7 +1405,7 @@ func TestAddScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Add(a, b, WithIncr(incr))
+		ret, err := a.AddScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1434,7 +1434,7 @@ func TestAddScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Add(b, a, WithIncr(incr))
+		ret, err := a.AddScalar(b, false, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1456,7 +1456,7 @@ func TestAddScalar_incr(t *testing.T) {
 	}
 
 }
-func TestSubScalar_incr(t *testing.T) {
+func TestDense_SubScalar_incr(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1466,14 +1466,14 @@ func TestSubScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Sub(a, b, WithIncr(incr))
+		ret, err := a.SubScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Add(ret, b, UseUnsafe())
+		ret, err = ret.AddScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -1496,14 +1496,14 @@ func TestSubScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Sub(b, a, WithIncr(incr))
+		ret, err := a.SubScalar(b, false, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "SubSV", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Sub(b, ret, UseUnsafe())
+		ret, err = ret.SubScalar(b, false, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -1518,7 +1518,7 @@ func TestSubScalar_incr(t *testing.T) {
 		t.Errorf("Inv test for Sub (scalar as left, tensor as right) failed: %v", err)
 	}
 }
-func TestMulScalar_incr(t *testing.T) {
+func TestDense_MulScalar_incr(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1528,7 +1528,7 @@ func TestMulScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Mul(a, b, WithIncr(incr))
+		ret, err := a.MulScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1557,7 +1557,7 @@ func TestMulScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Mul(b, a, WithIncr(incr))
+		ret, err := a.MulScalar(b, false, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1579,7 +1579,7 @@ func TestMulScalar_incr(t *testing.T) {
 	}
 
 }
-func TestDivScalar_incr(t *testing.T) {
+func TestDense_DivScalar_incr(t *testing.T) {
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1589,14 +1589,14 @@ func TestDivScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, numberTypes)
-		ret, err := Div(a, b, WithIncr(incr))
+		ret, err := a.DivScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
 				return false
 			}
 			return true
 		}
-		ret, err = Mul(ret, b, UseUnsafe())
+		ret, err = ret.MulScalar(b, true, UseUnsafe())
 
 		isFloatTypes := qcIsFloat(a)
 		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
@@ -1612,7 +1612,7 @@ func TestDivScalar_incr(t *testing.T) {
 	}
 
 }
-func TestPowScalar_incr(t *testing.T) {
+func TestDense_PowScalar_incr(t *testing.T) {
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1622,7 +1622,7 @@ func TestPowScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we := willerr(a, floatcmplxTypes)
-		ret, err := Pow(a, b, WithIncr(incr))
+		ret, err := a.PowScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
 				return false

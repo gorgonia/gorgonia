@@ -152,9 +152,10 @@ func (fn *GenericVecVecArith) Write(w io.Writer) {
 	fn.WriteBody(w)
 	if sig.Err {
 		if fn.Check != nil {
-			w.Write([]byte("\nif err != nil {\n return\n}\nerr = errs"))
+			w.Write([]byte("\nif err != nil {\n return\n}\nif len(errs) > 0 {\n return errs }\nreturn nil"))
+		} else {
+			w.Write([]byte("\nreturn\n"))
 		}
-		w.Write([]byte("\nreturn\n"))
 	}
 	w.Write([]byte("}\n\n"))
 }
@@ -323,9 +324,10 @@ func (fn *GenericMixedArith) Write(w io.Writer) {
 	fn.WriteBody(w)
 	if sig.Err {
 		if fn.Check != nil {
-			w.Write([]byte("\nif err != nil {\n return\n}\nerr = errs"))
+			w.Write([]byte("\nif err != nil {\n return\n}\nif len(errs) > 0 {\n return errs }\nreturn nil"))
+		} else {
+			w.Write([]byte("\nreturn\n"))
 		}
-		w.Write([]byte("\nreturn\n"))
 	}
 	w.Write([]byte("}\n\n"))
 }

@@ -38,7 +38,7 @@ type basicBinOp struct {
 
 type arithOp struct {
 	basicBinOp
-	TypeClassName string
+	TypeClassName   string
 	HasIdentity     bool
 	Identity        int
 	IsInv           bool
@@ -94,3 +94,13 @@ type specialUnaryOp struct {
 	unaryOp
 	additionalParams []string
 }
+
+type Level int
+
+const (
+	Basic Level = iota
+	InternalE
+	StdEng
+	Dense
+	API
+)
