@@ -77,18 +77,15 @@ var funcOptCheck = map[string]string{
 }
 
 var funcOptDecl = map[string]string{
-	"reuse":  `reuse := New(Of(Float64), WithShape(a.len()))`,
-	"incr":   "incr := New(Of(Float64), WithShape(a.len()))",
+	"reuse":  `reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))`,
+	"incr":   "incr := New(Of(a.t), WithShape(a.Shape().Clone()...))",
 	"unsafe": "",
 }
 
 var funcOptCorrect = map[string]string{
 	"reuse": "",
-	"incr": `incr.Memset(100.0)
-	data :=  correct.Data().([]float64)
-	for i := range data {
-		data[i] += 100
-	}
+	"incr": `incr.Memset(identityVal(100, a.t))
+	correct.Add(incr, UseUnsafe())
 	`,
 	"unsafe": "",
 }
@@ -404,12 +401,12 @@ func init() {
 	// ops
 
 	arithBinOps = []arithOp{
-		{basicBinOp{"", "Add", false, isAddable}, true, 0, false, "", true},
-		{basicBinOp{"", "Sub", false, isNumber}, false, 0, true, "Add", false},
-		{basicBinOp{"", "Mul", false, isNumber}, true, 1, false, "", true},
-		{basicBinOp{"", "Div", false, isNumber}, false, 0, true, "Mul", false},
-		{basicBinOp{"", "Pow", true, isFloatCmplx}, true, 1, false, "", false},
-		{basicBinOp{"", "Mod", false, isNonComplexNumber}, false, 0, false, "", false},
+		{basicBinOp{"", "Add", false, isAddable}, "numberTypes", true, 0, false, "", true, false},
+		{basicBinOp{"", "Sub", false, isNumber}, "numberTypes", false, 0, true, "Add", false, true},
+		{basicBinOp{"", "Mul", false, isNumber}, "numberTypes", true, 1, false, "", true, false},
+		{basicBinOp{"", "Div", false, isNumber}, "numberTypes", false, 0, true, "Mul", false, true},
+		{basicBinOp{"", "Pow", true, isFloatCmplx}, "floatcmplxTypes", true, 1, false, "", false, false},
+		{basicBinOp{"", "Mod", false, isNonComplexNumber}, "nonComplexNumberTypes", false, 0, false, "", false, false},
 	}
 	for i := range arithBinOps {
 		arithBinOps[i].symbol = arithSymbolTemplates[i]

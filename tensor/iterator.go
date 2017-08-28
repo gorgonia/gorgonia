@@ -13,6 +13,9 @@ func requiresIterator(a Tensor) bool {
 }
 
 func requiresOrderedIterator(e Engine, t Tensor) bool {
+	if t.IsScalar() {
+		return false
+	}
 	if requiresIterator(t) {
 		return true
 	}

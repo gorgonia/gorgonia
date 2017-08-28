@@ -589,6 +589,9 @@ func (t *Dense) slice(start, end int) {
 }
 
 func (t *Dense) requiresIterator() bool {
+	if t.len() == 1 {
+		return false
+	}
 	// non continuous slice, transpose, or masked. If it's a slice and contiguous, then iterator is not required
 	if !t.o.isContiguous() || t.old != nil || t.IsMasked() {
 		return true

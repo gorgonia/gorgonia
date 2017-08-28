@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"reflect"
 	"testing"
 	"testing/quick"
 )
@@ -10,19 +11,27 @@ GENERATED FILE. DO NOT EDIT
 */
 
 func TestAdd(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
 
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(a, identity)
-		if err != nil {
-			t.Errorf("Identity tests for Add was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -31,49 +40,31 @@ func TestAdd(t *testing.T) {
 	}
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
-	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Add(a, identity)
-		if err != nil {
-			t.Errorf("Identity sliced test for Add was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Add failed: %v", err)
 	}
 }
 func TestMul(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
 
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(a, identity)
-		if err != nil {
-			t.Errorf("Identity tests for Mul was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -82,50 +73,31 @@ func TestMul(t *testing.T) {
 	}
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
-	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Mul(a, identity)
-		if err != nil {
-			t.Errorf("Identity sliced test for Mul was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Mul failed: %v", err)
 	}
 }
 func TestPow(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
 
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, floatcmplxTypes)
 		ret, err := Pow(a, identity)
-		if err != nil {
-			t.Errorf("Identity tests for Pow was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -134,49 +106,30 @@ func TestPow(t *testing.T) {
 	}
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
-	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Pow(a, identity)
-		if err != nil {
-			t.Errorf("Identity sliced test for Pow was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Pow failed: %v", err)
 	}
 }
 func TestAdd_unsafe(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
 
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Add was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -189,52 +142,31 @@ func TestAdd_unsafe(t *testing.T) {
 	}
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
-	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Add(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity sliced test for Add was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-		if ret != a {
-			t.Errorf("Expected ret to be the same as a")
-			return false
-		}
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Add failed: %v", err)
 	}
 }
 func TestMul_unsafe(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
 
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Mul was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -247,53 +179,31 @@ func TestMul_unsafe(t *testing.T) {
 	}
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
-	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Mul(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity sliced test for Mul was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-		if ret != a {
-			t.Errorf("Expected ret to be the same as a")
-			return false
-		}
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Mul failed: %v", err)
 	}
 }
 func TestPow_unsafe(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
 
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, floatcmplxTypes)
 		ret, err := Pow(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Pow was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -306,52 +216,30 @@ func TestPow_unsafe(t *testing.T) {
 	}
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
-	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Pow(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity sliced test for Pow was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-		if ret != a {
-			t.Errorf("Expected ret to be the same as a")
-			return false
-		}
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Pow failed: %v", err)
 	}
 }
 func TestAdd_reuse(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Add was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -364,52 +252,31 @@ func TestAdd_reuse(t *testing.T) {
 	}
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
-	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Add(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity sliced test for Add was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-		if reuse != ret {
-			t.Errorf("Expected reuse to be the same as retVal")
-			return false
-		}
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Add failed: %v", err)
 	}
 }
 func TestMul_reuse(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Mul was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -423,52 +290,30 @@ func TestMul_reuse(t *testing.T) {
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
 	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Mul(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity sliced test for Mul was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-		if reuse != ret {
-			t.Errorf("Expected reuse to be the same as retVal")
-			return false
-		}
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Mul failed: %v", err)
-	}
 }
 func TestPow_reuse(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
 
+		we := willerr(a, floatcmplxTypes)
 		ret, err := Pow(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Pow was unable to proceed: %v", err)
-			return false
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -482,56 +327,31 @@ func TestPow_reuse(t *testing.T) {
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
 	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-
-		ret, err := Pow(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity sliced test for Pow was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-		if reuse != ret {
-			t.Errorf("Expected reuse to be the same as retVal")
-			return false
-		}
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Pow failed: %v", err)
-	}
 }
 func TestAdd_incr(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
+
+		we := willerr(a, numberTypes)
+		ret, err := Add(a, identity, WithIncr(incr))
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		ret, err := Add(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Add was unable to proceed: %v", err)
-			return false
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -541,58 +361,32 @@ func TestAdd_incr(t *testing.T) {
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
 	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
-
-		ret, err := Add(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity sliced test for Add was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Add failed: %v", err)
-	}
 }
 func TestMul_incr(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
+
+		we := willerr(a, numberTypes)
+		ret, err := Mul(a, identity, WithIncr(incr))
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		ret, err := Mul(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Mul was unable to proceed: %v", err)
-			return false
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -602,59 +396,32 @@ func TestMul_incr(t *testing.T) {
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
 	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
-
-		ret, err := Mul(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity sliced test for Mul was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Mul failed: %v", err)
-	}
 }
 func TestPow_incr(t *testing.T) {
-	iden := func(a *QCDenseF64) bool {
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
-		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
+	iden := func(a *Dense) bool {
+		identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		identity.Memset(identityVal(1, a.t))
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
+
+		we := willerr(a, floatcmplxTypes)
+		ret, err := Pow(a, identity, WithIncr(incr))
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		ret, err := Pow(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Pow was unable to proceed: %v", err)
-			return false
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
 		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("a.Dtype: %v", a.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -664,53 +431,30 @@ func TestPow_incr(t *testing.T) {
 	if err := quick.Check(iden, nil); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
 	}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0, 5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		identity.Memset(1.0)
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
-
-		ret, err := Pow(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity sliced test for Pow was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-			t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil {
-		t.Errorf("IdentitySliced test for Pow failed: %v", err)
-	}
 }
 func TestAddScalar(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(a, identity)
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -722,20 +466,29 @@ func TestAddScalar(t *testing.T) {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(identity, a)
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -747,19 +500,28 @@ func TestAddScalar(t *testing.T) {
 	}
 }
 func TestMulScalar(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(a, identity)
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -771,20 +533,29 @@ func TestMulScalar(t *testing.T) {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(identity, a)
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -796,19 +567,28 @@ func TestMulScalar(t *testing.T) {
 	}
 }
 func TestPowScalar(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, floatcmplxTypes)
 		ret, err := Pow(a, identity)
-		if err != nil {
-			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -822,19 +602,28 @@ func TestPowScalar(t *testing.T) {
 
 }
 func TestAddScalar_unsafe(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -850,20 +639,29 @@ func TestAddScalar_unsafe(t *testing.T) {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(identity, a, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -879,19 +677,28 @@ func TestAddScalar_unsafe(t *testing.T) {
 	}
 }
 func TestMulScalar_unsafe(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -907,20 +714,29 @@ func TestMulScalar_unsafe(t *testing.T) {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(identity, a, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -936,19 +752,28 @@ func TestMulScalar_unsafe(t *testing.T) {
 	}
 }
 func TestPowScalar_unsafe(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
 
-		correct := New(Of(Float64), WithShape(a.len()))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, floatcmplxTypes)
 		ret, err := Pow(a, identity, UseUnsafe())
-		if err != nil {
-			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -966,19 +791,28 @@ func TestPowScalar_unsafe(t *testing.T) {
 
 }
 func TestAddScalar_reuse(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -994,20 +828,29 @@ func TestAddScalar_reuse(t *testing.T) {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(identity, a, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -1023,19 +866,28 @@ func TestAddScalar_reuse(t *testing.T) {
 	}
 }
 func TestMulScalar_reuse(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -1051,20 +903,29 @@ func TestMulScalar_reuse(t *testing.T) {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(identity, a, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -1080,19 +941,28 @@ func TestMulScalar_reuse(t *testing.T) {
 	}
 }
 func TestPowScalar_reuse(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
-		reuse := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
 
+		we := willerr(a, floatcmplxTypes)
 		ret, err := Pow(a, identity, WithReuse(reuse))
-		if err != nil {
-			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -1110,24 +980,30 @@ func TestPowScalar_reuse(t *testing.T) {
 
 }
 func TestAddScalar_incr(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -1139,25 +1015,31 @@ func TestAddScalar_incr(t *testing.T) {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 0.0
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(0, q.t)
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
 
+		we := willerr(a, numberTypes)
 		ret, err := Add(identity, a, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Add the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Add", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -1169,24 +1051,30 @@ func TestAddScalar_incr(t *testing.T) {
 	}
 }
 func TestMulScalar_incr(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
@@ -1198,25 +1086,31 @@ func TestMulScalar_incr(t *testing.T) {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
-	iden2 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden2 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
 
+		we := willerr(a, numberTypes)
 		ret, err := Mul(identity, a, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Mul the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Mul", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
+			t.Errorf("correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false
 		}
@@ -1228,24 +1122,30 @@ func TestMulScalar_incr(t *testing.T) {
 	}
 }
 func TestPowScalar_incr(t *testing.T) {
-	iden1 := func(q *QCDenseF64) bool {
-		a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-		identity := 1.0
-		incr := New(Of(Float64), WithShape(a.len()))
-		correct := New(Of(Float64), WithShape(a.len()))
+	iden1 := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		identity := identityVal(1, q.t)
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		copyDense(correct, a)
-		incr.Memset(100.0)
-		data := correct.Data().([]float64)
-		for i := range data {
-			data[i] += 100
-		}
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
 
+		we := willerr(a, floatcmplxTypes)
 		ret, err := Pow(a, identity, WithIncr(incr))
-		if err != nil {
-			t.Errorf("Identity tests for Pow the tensor in left operand was unable to proceed: %v", err)
+		if err, retEarly := qcErrCheck(t, "Pow", a, identity, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
 
-		if !allClose(correct.Data(), ret.Data()) {
+		var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+		}
+		if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+			t.Errorf("q.Dtype: %v", q.Dtype())
 			t.Errorf("Correct.Data()\n%v", correct.Data())
 			t.Errorf("ret.Data()\n%v", ret.Data())
 			return false

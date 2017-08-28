@@ -6,6 +6,11 @@ import (
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
 )
 
+// Dtyper is any type that has a Dtype
+type Dtyper interface {
+	Dtype() Dtype
+}
+
 // Eq is any type where you can perform an equality test
 type Eq interface {
 	Eq(interface{}) bool

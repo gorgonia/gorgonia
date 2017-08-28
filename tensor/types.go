@@ -176,6 +176,13 @@ var specializedTypes = &typeclass{
 	},
 }
 
+var addableTypes = &typeclass{
+	name: "Addable",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+	},
+}
+
 var numberTypes = &typeclass{
 	name: "Number",
 	set: []Dtype{
@@ -224,7 +231,7 @@ var floatcmplxTypes = &typeclass{
 }
 
 var nonComplexNumberTypes = &typeclass{
-	name:"Non complex numbers",
+	name: "Non complex numbers",
 	set: []Dtype{
 		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64,
 	},

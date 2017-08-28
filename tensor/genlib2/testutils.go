@@ -141,12 +141,48 @@ const mutateFnsRaw = `func mutate{{short .}}(a {{asType . }}){{asType .}} { {{if
 {{end -}} 
 `
 
+const identityValsRaw = `func identityVal(x int, dt Dtype) interface{} {
+	switch dt {
+		{{range .Kinds -}}
+	case {{reflectKind .}}:
+		return {{asType .}}(x)
+		{{end -}}
+	case Complex64:
+		var c complex64
+		if x == 0 {
+			return c
+		}
+		c = 1
+		return c
+	case Complex128:
+		var c complex128
+		if x == 0 {
+			return c
+		}
+		c = 1
+		return c
+	case Bool:
+		if x == 0 {
+			return false
+		}
+		return true
+	case String:
+		if x == 0 {
+			return ""
+		}
+		return fmt.Sprintf("%v", x)
+	default:
+		return x
+	}
+}`
+
 var (
 	anyToF64s   *template.Template
 	qcGen       *template.Template
 	testQC      *template.Template
 	identityFns *template.Template
 	mutateFns   *template.Template
+	identityVals *template.Template
 )
 
 func init() {
@@ -155,10 +191,14 @@ func init() {
 	anyToF64s = template.Must(template.New("anyToF64s").Funcs(funcs).Parse(anyToF64sRaw))
 	identityFns = template.Must(template.New("identityFn").Funcs(funcs).Parse(identityFnsRaw))
 	mutateFns = template.Must(template.New("mutateFns").Funcs(funcs).Parse(mutateFnsRaw))
+	identityVals = template.Must(template.New("identityVal").Funcs(funcs).Parse(identityValsRaw))
 }
 
 func generateTestUtils(f io.Writer, ak Kinds) {
 	anyToF64s.Execute(f, ak)
+	fmt.Fprintf(f, "\n")
+	ak2 := Kinds{Kinds:filter(ak.Kinds, isNonComplexNumber)}
+	identityVals.Execute(f, ak2)
 	fmt.Fprintf(f, "\n")
 	for _, k := range ak.Kinds {
 		if !isParameterized(k) {
@@ -171,11 +211,11 @@ func generateTestUtils(f io.Writer, ak Kinds) {
 		}
 	}
 	fmt.Fprintf(f, "\n")
-	for _, k := range ak.Kinds {
-		if !isParameterized(k) {
-			testQC.Execute(f, k)
-			fmt.Fprint(f, "\n")
-		}
-	}
+	// for _, k := range ak.Kinds {
+	// 	if !isParameterized(k) {
+	// 		testQC.Execute(f, k)
+	// 		fmt.Fprint(f, "\n")
+	// 	}
+	// }
 
 }

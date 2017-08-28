@@ -87,7 +87,7 @@ func main() {
 	// tests
 	pipeline(tensorPkgLoc, "test_test.go", Kinds{allKinds}, generateTestUtils)
 	pipeline(tensorPkgLoc, "dense_reduction_test.go", Kinds{allKinds}, generateDenseReductionTests)
-	pipeline(tensorPkgLoc, "dense_apply_test.go", Kinds{allKinds}, generateDenseApplyTests)
+	// pipeline(tensorPkgLoc, "dense_apply_test.go", Kinds{allKinds}, generateDenseApplyTests)
 	pipeline(tensorPkgLoc, "dense_argmethods_test.go", Kinds{allKinds}, generateArgmethodsTests)
 	pipeline(tensorPkgLoc, "dense_getset_test.go", Kinds{allKinds}, generateDenseGetSetTests)
 

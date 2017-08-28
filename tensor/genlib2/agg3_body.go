@@ -45,23 +45,31 @@ const denseArithScalarBodyRaw = `e := t.e
 	return nil, errors.Errorf("Engine does not support {{.Name}}Scalar()")
 `
 
-const denseIdentityArithTestBodyRaw = `iden := func(a *QCDenseF64) bool {
-	identity := New(Of(Float64), WithShape(a.len()))
+const denseIdentityArithTestBodyRaw = `iden := func(a *Dense) bool {
+	identity := New(Of(a.t), WithShape(a.Shape().Clone()...))
 	{{if ne .Identity 0 -}}
-			identity.Memset({{.Identity}}.0)
+			identity.Memset(identityVal({{.Identity}}, a.t))
 	{{end -}}
 	{{template "funcoptdecl"}}
-	correct := New(Of(Float64), WithShape(a.len()))
-	copyDense(correct, a)
+	correct := a.Clone().(*Dense)
 	{{template "funcoptcorrect"}}
 
+	we := willerr(a, {{.TypeClassName}})
 	ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
-	if err != nil {
-			t.Errorf("Identity tests for {{.Name}} was unable to proceed: %v", err)
+	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, identity, we, err); retEarly{
+		if err != nil {
 			return false
+		}
+		return true
 	}
-	if !allClose(correct.Data(), ret.Data()) {
-		t.Errorf("Correct.Data()\n%v", correct.Data())
+	
+	var isFloatTypes bool
+	if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+		isFloatTypes = true
+	}
+	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+		t.Errorf("a.Dtype: %v", a.Dtype())
+		t.Errorf("correct.Data()\n%v", correct.Data())
 		t.Errorf("ret.Data()\n%v", ret.Data())
 		return false
 	}
@@ -72,52 +80,31 @@ const denseIdentityArithTestBodyRaw = `iden := func(a *QCDenseF64) bool {
 		if err := quick.Check(iden, nil); err != nil{
 			t.Errorf("Identity test for {{.Name}} failed: %v", err)
 		}
-
-	idenSliced := func(a *QCDenseF64) bool {
-		a1, _ := sliceDense(a.Dense, makeRS(0,5))
-		identity := New(Of(Float64), WithShape(a.len()))
-		{{if ne .Identity 0 -}}
-				identity.Memset({{.Identity}}.0)
-		{{end -}}
-		{{template "funcoptdecl"}}
-		correct := New(Of(Float64), WithShape(5))
-		copyDense(correct, a1)
-		{{template "funcoptcorrect"}}
-
-		ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
-		if err != nil {
-			t.Errorf("Identity sliced test for {{.Name}} was unable to proceed: %v", err)
-			return false
-		}
-		if !allClose(correct.Data(), ret.Data()) {
-			t.Errorf("Correct.Data()\n%v", correct.Data())
-				t.Errorf("ret.Data()\n%v", ret.Data())
-			return false
-		}
-		{{template "funcoptcheck"}}
-		return true
-
-	}
-
-	if err := quick.Check(idenSliced, nil); err != nil{
-			t.Errorf("IdentitySliced test for {{.Name}} failed: %v", err)
-	}
 `
 
-const denseIdentityArithScalarTestRaw = `iden1 := func(q *QCDenseF64) bool {
-	a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-	identity := {{.Identity}}.0
+const denseIdentityArithScalarTestRaw = `iden1 := func(q *Dense) bool {
+	a := q.Clone().(*Dense)
+	identity := identityVal({{.Identity}}, q.t)
 	{{template "funcoptdecl"}}
-	correct := New(Of(Float64), WithShape(a.len()))
+	correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 	copyDense(correct, a)
 	{{template "funcoptcorrect"}}
 
+	we := willerr(a, {{.TypeClassName}})
 	ret, err := {{.Name}}(a, identity {{template "funcoptuse"}})
-	if err != nil {
-		t.Errorf("Identity tests for {{.Name}} the tensor in left operand was unable to proceed: %v", err)
+	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, identity, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
 	}
 
-	if !allClose(correct.Data(), ret.Data()) {
+	var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+	}
+	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+		t.Errorf("q.Dtype: %v", q.Dtype())
 		t.Errorf("Correct.Data()\n%v", correct.Data())
 		t.Errorf("ret.Data()\n%v", ret.Data())
 		return false
@@ -132,21 +119,30 @@ if err := quick.Check(iden1, nil); err != nil {
 
 {{if .IsCommutative -}}
 
-iden2 := func(q *QCDenseF64) bool {
-	a := &QCDenseF64{q.Dense.Clone().(*Dense)}
-	identity := {{.Identity}}.0
+iden2 := func(q *Dense) bool {
+	a := q.Clone().(*Dense)
+	identity := identityVal({{.Identity}}, q.t)
 	{{template "funcoptdecl"}}
-	correct := New(Of(Float64), WithShape(a.len()))
+	correct := New(Of(a.t), WithShape(a.Shape().Clone()...))
 	copyDense(correct, a)
 	{{template "funcoptcorrect"}}
 
+	we := willerr(a, {{.TypeClassName}})
 	ret, err := {{.Name}}( identity, a {{template "funcoptuse"}})
-	if err != nil {
-		t.Errorf("Identity tests for {{.Name}} the tensor in left operand was unable to proceed: %v", err)
+	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, identity, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
 	}
 
-	if !allClose(correct.Data(), ret.Data()) {
-		t.Errorf("Correct.Data()\n%v", correct.Data())
+	var isFloatTypes bool
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+			isFloatTypes = true
+	}
+	if (isFloatTypes && !allClose(correct.Data(), ret.Data())) || (!isFloatTypes && !reflect.DeepEqual(correct.Data(), ret.Data())) {
+		t.Errorf("q.Dtype: %v", q.Dtype())
+		t.Errorf("correct.Data()\n%v", correct.Data())
 		t.Errorf("ret.Data()\n%v", ret.Data())
 		return false
 	}
@@ -158,9 +154,6 @@ if err := quick.Check(iden2, nil); err != nil {
 	t.Errorf("Identity test for {{.Name}} (scalar as left, tensor as right) failed: %v", err)
 }
 {{end -}}
-
-
-
 `
 
 var (

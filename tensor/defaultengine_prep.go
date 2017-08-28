@@ -33,10 +33,10 @@ func handleFuncOpts(expShape Shape, expType Dtype, strict bool, opts ...FuncOpt)
 			return
 		}
 
-		if reuse.len() != expShape.TotalSize() {
+		if reuse.len() != expShape.TotalSize() && !expShape.IsScalar() {
 			returnOpOpt(fo)
 			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
-			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
+			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch - reuse.len() %v, expShape.TotalSize() %v", reuse.len(), expShape.TotalSize())
 			return
 		}
 

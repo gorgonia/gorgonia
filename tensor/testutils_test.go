@@ -425,3 +425,30 @@ func (e dummyEngine) Memcpy(dst, src Memory) error {
 }
 func (e dummyEngine) Accessible(mem Memory) (Memory, error) { return mem, nil }
 func (e dummyEngine) WorksWith(order DataOrder) bool        { return true }
+
+
+func willerr(a *Dense, tc *typeclass) (retVal bool) {
+	if err := typeclassCheck(a.Dtype(), tc); err != nil {
+		return true
+	}
+	retVal = retVal || !a.IsNativelyAccessible()
+	return
+}
+
+func qcErrCheck(t *testing.T, name string, a Dtyper, b interface{}, we bool, err error) (e error, retEarly bool) {
+	switch {
+	case !we && err != nil:
+		t.Errorf("Identity tests for %v the tensor in left operand was unable to proceed: %v", name, err)
+		return err, true
+	case we && err == nil:
+		if bd, ok := b.(Dtyper); ok {
+			t.Errorf("Expected error when adding %T of %v and %T of %v", a, a.Dtype(), b, bd.Dtype())			
+		} else{
+			t.Errorf("Expected error when adding %T of %v and %v of %T", a, a.Dtype(), b, b)	
+		}
+		return errors.New("Error"), true
+	case we && err != nil:
+		return nil, true
+	}
+	return nil, false
+}
