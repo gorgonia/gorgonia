@@ -146,7 +146,7 @@ func (fn *ArithTest) Write(w io.Writer) {
 	sig := fn.Signature()
 	w.Write([]byte("func "))
 	sig.Write(w)
-	w.Write([]byte("{\n"))
+	w.Write([]byte("{\nvar r *rand.Rand\n"))
 	fn.WriteBody(w)
 	w.Write([]byte("}\n"))
 }

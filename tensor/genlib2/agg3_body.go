@@ -45,7 +45,8 @@ const denseArithScalarBodyRaw = `e := t.e
 	return nil, errors.Errorf("Engine does not support {{.Name}}Scalar()")
 `
 
-const denseIdentityArithTestBodyRaw = `iden := func(a *Dense) bool {
+const denseIdentityArithTestBodyRaw = `r = rand.New(rand.NewSource(time.Now().UnixNano()))
+iden := func(a *Dense) bool {
 	b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 	{{if ne .Identity 0 -}}
 			b.Memset(identityVal({{.Identity}}, a.t))
@@ -74,12 +75,13 @@ const denseIdentityArithTestBodyRaw = `iden := func(a *Dense) bool {
 
 	return true
 }
-		if err := quick.Check(iden, nil); err != nil{
+		if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil{
 			t.Errorf("Identity test for {{.Name}} failed: %v", err)
 		}
 `
 
-const denseIdentityArithScalarTestRaw = `iden1 := func(q *Dense) bool {
+const denseIdentityArithScalarTestRaw = `r = rand.New(rand.NewSource(time.Now().UnixNano()))
+iden1 := func(q *Dense) bool {
 	a := q.Clone().(*Dense)
 	b := identityVal({{.Identity}}, q.t)
 	{{template "funcoptdecl"}}
@@ -106,7 +108,8 @@ const denseIdentityArithScalarTestRaw = `iden1 := func(q *Dense) bool {
 
 	return true
 }
-if err := quick.Check(iden1, nil); err != nil {
+
+if err := quick.Check(iden1, &quick.Config{Rand:r}); err != nil {
 	t.Errorf("Identity test for {{.Name}} (tensor as left, scalar as right) failed: %v", err)
 }
 
@@ -139,13 +142,15 @@ iden2 := func(q *Dense) bool {
 
 	return true
 }
-if err := quick.Check(iden2, nil); err != nil {
+r = rand.New(rand.NewSource(time.Now().UnixNano()))
+if err := quick.Check(iden2, &quick.Config{Rand:r}); err != nil {
 	t.Errorf("Identity test for {{.Name}} (scalar as left, tensor as right) failed: %v", err)
 }
 {{end -}}
 `
 
-const denseInvArithTestBodyRaw = `inv := func(a *Dense) bool {
+const denseInvArithTestBodyRaw = `r = rand.New(rand.NewSource(time.Now().UnixNano()))
+inv := func(a *Dense) bool {
 	b := New(Of(a.t), WithShape(a.Shape().Clone()...))
 	{{if ne .Identity 0 -}}
 			b.Memset(identityVal({{.Identity}}, a.t))
@@ -175,12 +180,13 @@ const denseInvArithTestBodyRaw = `inv := func(a *Dense) bool {
 
 	return true
 }
-		if err := quick.Check(inv, nil); err != nil{
+		if err := quick.Check(inv, &quick.Config{Rand:r}); err != nil{
 			t.Errorf("Inv test for {{.Name}} failed: %v", err)
 		}
 `
 
-const denseInvArithScalarTestRaw = `inv1 := func(q *Dense) bool {
+const denseInvArithScalarTestRaw = `r = rand.New(rand.NewSource(time.Now().UnixNano()))
+inv1 := func(q *Dense) bool {
 	a := q.Clone().(*Dense)
 	b := identityVal({{.Identity}}, q.t)
 	{{template "funcoptdecl"}}
@@ -208,7 +214,7 @@ const denseInvArithScalarTestRaw = `inv1 := func(q *Dense) bool {
 
 	return true
 }
-if err := quick.Check(inv1, nil); err != nil {
+if err := quick.Check(inv1, &quick.Config{Rand:r}); err != nil {
 	t.Errorf("Inv test for {{.Name}} (tensor as left, scalar as right) failed: %v", err)
 }
 
@@ -241,7 +247,8 @@ inv2 := func(q *Dense) bool {
 
 	return true
 }
-if err := quick.Check(inv2, nil); err != nil {
+r = rand.New(rand.NewSource(time.Now().UnixNano()))
+if err := quick.Check(inv2, &quick.Config{Rand:r}); err != nil {
 	t.Errorf("Inv test for {{.Name}} (scalar as left, tensor as right) failed: %v", err)
 }
 {{end -}}
