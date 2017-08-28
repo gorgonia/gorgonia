@@ -275,6 +275,52 @@ func RandomFloat64(size int) []float64 {
 	return r
 }
 
+func factorize(a int) []int {
+	if a <= 0 {
+		return nil
+	}
+	// all numbers are divisible by at least 1
+	retVal := make([]int, 1)
+	retVal[0] = 1
+
+	fill := func(a int, e int) {
+		n := len(retVal)
+		for i, p := 0, a; i < e; i, p = i+1, p*a {
+			for j := 0; j < n; j++ {
+				retVal = append(retVal, retVal[j]*p)
+			}
+		}
+	}
+	// find factors of 2
+	// rightshift by 1 = division by 2
+	var e int
+	for ; a&1 == 0; e++ {
+		a >>= 1
+	}
+	fill(2, e)
+
+	// find factors of 3 and up
+	for next := 3; a > 1; next += 2 {
+		if next*next > a {
+			next = a
+		}
+		for e = 0; a%next == 0; e++ {
+			a /= next
+		}
+		if e > 0 {
+			fill(next, e)
+		}
+	}
+	return retVal
+}
+
+func shuffleInts(a []int, r *rand.Rand) {
+	for i := range a {
+		j := r.Intn(i + 1)
+		a[i], a[j] = a[j], a[i]
+	}
+}
+
 func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	// generate type
 	ri := r.Intn(len(specializedTypes.set))
@@ -283,21 +329,43 @@ func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	gendat, _ := quick.Value(datatyp, r)
 	// generate dims
 	var scalar bool
+	var s Shape
 	dims := r.Intn(5) // dims4 is the max we'll generate even though we can handle much more
-	if dims == 0 {
+	l := gendat.Len()
+
+	// generate shape based on inputs
+	switch {
+	case dims == 0 || l == 0:
 		scalar = true
 		gendat, _ = quick.Value(of.Type, r)
-	}
-
-	if !scalar {
-		// generate shape
-		l := gendat.Len()
-		rem := l
-		s := Shape(BorrowInts(dims))
-		for i := 0; i < dims; i++ {
-			s[i] = r.Intn(l)
-
+	case dims == 1:
+		s = Shape{gendat.Len()}
+	default:
+		factors := factorize(l)
+		s = Shape(BorrowInts(dims))
+		// fill with 1s so that we can get a non-zero TotalSize
+		for i := 0; i < len(s); i++ {
+			s[i] = 1
 		}
+
+		for i := 0; i < dims; i++ {
+			j := rand.Intn(len(factors))
+			s[i] = factors[j]
+			size := s.TotalSize()
+			if q, r := divmod(l, size); r != 0 {
+				factors = factorize(r)
+			} else if size != l {
+				if i < dims-2 {
+					factors = factorize(q)
+				} else if i == dims-2 {
+					s[i+1] = q
+					break
+				}
+			} else {
+				break
+			}
+		}
+		shuffleInts(s, r)
 	}
 
 	// generate flags
@@ -306,7 +374,13 @@ func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	// generate order
 	order := DataOrder(r.Intn(4))
 
-	v := New(Of(of), WithShape(s...))
+	var v *Dense
+	if scalar {
+		v = New(FromScalar(gendat.Interface()))
+	} else {
+		v = New(Of(of), WithShape(s...), WithBacking(gendat.Interface()))
+	}
+
 	v.flag = flag
 	v.AP.o = order
 
