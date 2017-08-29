@@ -3,6 +3,8 @@ package tensor
 import "github.com/pkg/errors"
 
 // Apply applies a function to all the values in the tensor.
+//
+// BUG(chewxy):  cannot apply on Dense with length of 1 - you get a invalid memory access error
 func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var e Engine = t.e
 	if e == nil {
