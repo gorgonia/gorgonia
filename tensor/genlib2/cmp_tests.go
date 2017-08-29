@@ -10,17 +10,40 @@ const (
 	APICallVVaxbRaw    = `axb, err := {{.Name}}(a, b {{template "funcoptuse" . -}})`
 	APICallVVbxcRaw    = `bxc, err := {{.Name}}(b, c {{template "funcoptuse" . -}})`
 	APICallVVaxcRaw    = `axc, err := {{.Name}}(a, c {{template "funcoptuse" . -}})`
+	APICallVVbxaRaw    = `bxa, err := {{.Name}}(b, a {{template "funcoptuse" . -}})`
 	APICallMixedaxbRaw = `axb, err := {{.Name}}(a, b {{template "funcoptuse" . -}})`
 	APICallMixedbxcRaw = `bxc, err := {{.Name}}(b, c {{template "funcoptuse" . -}})`
 	APICallMixedaxcRaw = `axc, err := {{.Name}}(a, c {{template "funcoptuse" . -}})`
+	APICallMixedbxaRaw = `bxa, err := {{.Name}}(b, a {{template "funcoptuse" . -}})`
 
 	DenseMethodCallVVaxbRaw    = `axb, err := a.{{.Name}}(b {{template "funcoptuse" . -}})`
 	DenseMethodCallVVbxcRaw    = `bxc, err := b.{{.Name}}(c {{template "funcoptuse" . -}})`
 	DenseMethodCallVVaxcRaw    = `axc, err := a.{{.Name}}(c {{template "funcoptuse" . -}})`
+	DenseMethodCallVVbxaRaw    = `bxa, err := b.{{.Name}}(a {{template "funcoptuse" . -}})`
 	DenseMethodCallMixedaxbRaw = `axb, err := a.{{.Name}}Scalar(b, true {{template "funcoptuse" . -}})`
 	DenseMethodCallMixedbxcRaw = `bxc, err := c.{{.Name}}Scalar(b, false {{template "funcoptuse" . -}})`
 	DenseMethodCallMixedaxcRaw = `axc, err := a.{{.Name}}(c {{template "funcoptuse" . -}})`
+	DenseMethodCallMixedbxaRaw = `bxa, err := a.{{.Name}}Scalar(b, false {{template "funcoptuse" . -}})`
 )
+
+const transitivityCheckRaw = `{{if eq .Level "API" -}}
+	ab := axb.(*Dense).Bools()
+	bc := bxc.(*Dense).Bools()
+	ac := axc.(*Dense).Bools()
+	{{else -}}
+	ab := axb.Bools()
+	bc := bxc.Bools()
+	ac := axc.Bools()
+	{{end -}}
+
+	for i, vab := range ab {
+		if vab && bc[i] {
+			if !ac[i]{
+				return false
+			}
+		}
+	}
+`
 
 const transitivityBodyRaw = `transFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
@@ -59,23 +82,7 @@ const transitivityBodyRaw = `transFn := func(q *Dense) bool {
 		return true
 	}
 
-	{{if eq .Level "API" -}}
-	ab := axb.(*Dense).Bools()
-	bc := bxc.(*Dense).Bools()
-	ac := axc.(*Dense).Bools()
-	{{else -}}
-	ab := axb.Bools()
-	bc := bxc.Bools()
-	ac := axc.Bools()
-	{{end -}}
-
-	for i, vab := range ab {
-		if vab && bc[i] {
-			if !ac[i]{
-				return false
-			}
-		}
-	}
+	{{template "transitivityCheck" .}}
 	return true
 }
 r = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -119,27 +126,77 @@ const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
 		return true
 	}
 
-	{{if eq .Level "API" -}}
-	ab := axb.(*Dense).Bools()
-	bc := bxc.(*Dense).Bools()
-	ac := axc.(*Dense).Bools()
-	{{else -}}
-	ab := axb.Bools()
-	bc := bxc.Bools()
-	ac := axc.Bools()
-	{{end -}}
-
-	for i, vab := range ab {
-		if vab && bc[i] {
-			if !ac[i]{
-				return false
-			}
-		}
-	}
+	{{template "transitivityCheck" .}}
 	return true
 }
 r = rand.New(rand.NewSource(time.Now().UnixNano()))
 if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	t.Error("Transitivity test for {{.Name}} failed: %v", err)
+}
+`
+
+const symmetryBodyRaw = `symFn := func(q *Dense) bool {
+	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	a := q.Clone().(*Dense)
+	b := q.Clone().(*Dense)
+
+	bv, _ := quick.Value(b.Dtype().Type, r)
+	b.Memset(bv.Interface())
+
+	{{template "axb" .}}
+	if err, retEarly := qcErrCheck(t, "{{.Name}} - a∙b", a, b, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
+	}
+
+	{{template "bxa" .}}
+	if err, retEarly := qcErrCheck(t, "{{.Name}} - b∙a", a, b, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	return reflect.DeepEqual(axb.Data(), bxa.Data())
+
+}
+r = rand.New(rand.NewSource(time.Now().UnixNano()))
+if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	t.Error("Transitivity test for {{.Name}} failed: %v", err)
+}
+`
+
+const symmetryMixedBodyRaw = `symFn := func(q *Dense) bool {
+	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	a := q.Clone().(*Dense)
+	bv, _ := quick.Value(a.Dtype().Type, r)
+	b := bv.Interface()
+
+	{{template "axb" .}}
+	if err, retEarly := qcErrCheck(t, "{{.Name}} - a∙b", a, b, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
+	}
+
+	{{template "bxa" .}}
+	if err, retEarly := qcErrCheck(t, "{{.Name}} - b∙a", a, b, we, err); retEarly{
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	return reflect.DeepEqual(axb.Data(), bxa.Data())
+
+}
+r = rand.New(rand.NewSource(time.Now().UnixNano()))
+if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
 	t.Error("Transitivity test for {{.Name}} failed: %v", err)
 }
 `
@@ -192,12 +249,16 @@ func (fn *CmpTest) Signature() *Signature {
 }
 
 func (fn *CmpTest) canWrite() bool {
-	return fn.IsTransitive
+	return fn.IsTransitive || fn.IsSymmetric
 }
 
 func (fn *CmpTest) WriteBody(w io.Writer) {
 	if fn.IsTransitive {
 		fn.writeTransitivity(w)
+		fmt.Fprintf(w, "\n")
+	}
+	if fn.IsSymmetric {
+		fn.writeSymmetry(w)
 	}
 }
 
@@ -231,7 +292,41 @@ func (fn *CmpTest) writeTransitivity(w io.Writer) {
 			template.Must(t.New("axc").Parse(DenseMethodCallVVaxcRaw))
 		}
 	}
+	template.Must(t.New("transitivityCheck").Parse(transitivityCheckRaw))
+	template.Must(t.New("funcoptdecl").Parse(funcOptDecl[fn.FuncOpt]))
+	template.Must(t.New("funcoptcorrect").Parse(funcOptCorrect[fn.FuncOpt]))
+	template.Must(t.New("funcoptuse").Parse(funcOptUse[fn.FuncOpt]))
+	template.Must(t.New("funcoptcheck").Parse(funcOptCheck[fn.FuncOpt]))
 
+	t.Execute(w, fn)
+}
+
+func (fn *CmpTest) writeSymmetry(w io.Writer) {
+	var t *template.Template
+	if fn.scalars {
+		t = template.Must(template.New("dense cmp symmetry test").Funcs(funcs).Parse(symmetryMixedBodyRaw))
+	} else {
+		t = template.Must(template.New("dense cmp symmetry test").Funcs(funcs).Parse(symmetryBodyRaw))
+	}
+
+	switch fn.lvl {
+	case API:
+		if fn.scalars {
+			template.Must(t.New("axb").Parse(APICallMixedaxbRaw))
+			template.Must(t.New("bxa").Parse(APICallMixedbxaRaw))
+		} else {
+			template.Must(t.New("axb").Parse(APICallVVaxbRaw))
+			template.Must(t.New("bxa").Parse(APICallVVbxaRaw))
+		}
+	case Dense:
+		if fn.scalars {
+			template.Must(t.New("axb").Parse(DenseMethodCallMixedaxbRaw))
+			template.Must(t.New("bxa").Parse(DenseMethodCallMixedbxaRaw))
+		} else {
+			template.Must(t.New("axb").Parse(DenseMethodCallVVaxbRaw))
+			template.Must(t.New("bxa").Parse(DenseMethodCallVVbxaRaw))
+		}
+	}
 	template.Must(t.New("funcoptdecl").Parse(funcOptDecl[fn.FuncOpt]))
 	template.Must(t.New("funcoptcorrect").Parse(funcOptCorrect[fn.FuncOpt]))
 	template.Must(t.New("funcoptuse").Parse(funcOptUse[fn.FuncOpt]))

@@ -12,7 +12,7 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
-func TestDense_Gt(t *testing.T) {
+func TestGt(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -27,7 +27,7 @@ func TestDense_Gt(t *testing.T) {
 		b.Memset(bv.Interface())
 		c.Memset(cv.Interface())
 
-		axb, err := a.Gt(b)
+		axb, err := Gt(a, b)
 		if err, retEarly := qcErrCheck(t, "Gt - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -35,7 +35,7 @@ func TestDense_Gt(t *testing.T) {
 			return true
 		}
 
-		bxc, err := b.Gt(c)
+		bxc, err := Gt(b, c)
 		if err, retEarly := qcErrCheck(t, "Gt - b∙c", b, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -43,7 +43,7 @@ func TestDense_Gt(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Gt(c)
+		axc, err := Gt(a, c)
 		if err, retEarly := qcErrCheck(t, "Gt - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -51,9 +51,9 @@ func TestDense_Gt(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -70,7 +70,7 @@ func TestDense_Gt(t *testing.T) {
 	}
 
 }
-func TestDense_Gte(t *testing.T) {
+func TestGte(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -85,7 +85,7 @@ func TestDense_Gte(t *testing.T) {
 		b.Memset(bv.Interface())
 		c.Memset(cv.Interface())
 
-		axb, err := a.Gte(b)
+		axb, err := Gte(a, b)
 		if err, retEarly := qcErrCheck(t, "Gte - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -93,7 +93,7 @@ func TestDense_Gte(t *testing.T) {
 			return true
 		}
 
-		bxc, err := b.Gte(c)
+		bxc, err := Gte(b, c)
 		if err, retEarly := qcErrCheck(t, "Gte - b∙c", b, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -101,7 +101,7 @@ func TestDense_Gte(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Gte(c)
+		axc, err := Gte(a, c)
 		if err, retEarly := qcErrCheck(t, "Gte - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -109,9 +109,9 @@ func TestDense_Gte(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -128,7 +128,7 @@ func TestDense_Gte(t *testing.T) {
 	}
 
 }
-func TestDense_Lt(t *testing.T) {
+func TestLt(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -143,7 +143,7 @@ func TestDense_Lt(t *testing.T) {
 		b.Memset(bv.Interface())
 		c.Memset(cv.Interface())
 
-		axb, err := a.Lt(b)
+		axb, err := Lt(a, b)
 		if err, retEarly := qcErrCheck(t, "Lt - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -151,7 +151,7 @@ func TestDense_Lt(t *testing.T) {
 			return true
 		}
 
-		bxc, err := b.Lt(c)
+		bxc, err := Lt(b, c)
 		if err, retEarly := qcErrCheck(t, "Lt - b∙c", b, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -159,7 +159,7 @@ func TestDense_Lt(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Lt(c)
+		axc, err := Lt(a, c)
 		if err, retEarly := qcErrCheck(t, "Lt - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -167,9 +167,9 @@ func TestDense_Lt(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -186,7 +186,7 @@ func TestDense_Lt(t *testing.T) {
 	}
 
 }
-func TestDense_Lte(t *testing.T) {
+func TestLte(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -201,7 +201,7 @@ func TestDense_Lte(t *testing.T) {
 		b.Memset(bv.Interface())
 		c.Memset(cv.Interface())
 
-		axb, err := a.Lte(b)
+		axb, err := Lte(a, b)
 		if err, retEarly := qcErrCheck(t, "Lte - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -209,7 +209,7 @@ func TestDense_Lte(t *testing.T) {
 			return true
 		}
 
-		bxc, err := b.Lte(c)
+		bxc, err := Lte(b, c)
 		if err, retEarly := qcErrCheck(t, "Lte - b∙c", b, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -217,7 +217,7 @@ func TestDense_Lte(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Lte(c)
+		axc, err := Lte(a, c)
 		if err, retEarly := qcErrCheck(t, "Lte - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -225,9 +225,9 @@ func TestDense_Lte(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -244,7 +244,7 @@ func TestDense_Lte(t *testing.T) {
 	}
 
 }
-func TestDense_Eq(t *testing.T) {
+func TestEq(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
@@ -259,7 +259,7 @@ func TestDense_Eq(t *testing.T) {
 		b.Memset(bv.Interface())
 		c.Memset(cv.Interface())
 
-		axb, err := a.ElEq(b)
+		axb, err := ElEq(a, b)
 		if err, retEarly := qcErrCheck(t, "ElEq - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -267,7 +267,7 @@ func TestDense_Eq(t *testing.T) {
 			return true
 		}
 
-		bxc, err := b.ElEq(c)
+		bxc, err := ElEq(b, c)
 		if err, retEarly := qcErrCheck(t, "ElEq - b∙c", b, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -275,7 +275,7 @@ func TestDense_Eq(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.ElEq(c)
+		axc, err := ElEq(a, c)
 		if err, retEarly := qcErrCheck(t, "ElEq - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -283,9 +283,9 @@ func TestDense_Eq(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -311,7 +311,7 @@ func TestDense_Eq(t *testing.T) {
 		bv, _ := quick.Value(b.Dtype().Type, r)
 		b.Memset(bv.Interface())
 
-		axb, err := a.ElEq(b)
+		axb, err := ElEq(a, b)
 		if err, retEarly := qcErrCheck(t, "ElEq - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -319,7 +319,7 @@ func TestDense_Eq(t *testing.T) {
 			return true
 		}
 
-		bxa, err := b.ElEq(a)
+		bxa, err := ElEq(b, a)
 		if err, retEarly := qcErrCheck(t, "ElEq - b∙a", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -334,7 +334,7 @@ func TestDense_Eq(t *testing.T) {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 }
-func TestDense_Ne(t *testing.T) {
+func TestNe(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
@@ -346,7 +346,7 @@ func TestDense_Ne(t *testing.T) {
 		bv, _ := quick.Value(b.Dtype().Type, r)
 		b.Memset(bv.Interface())
 
-		axb, err := a.ElNe(b)
+		axb, err := ElNe(a, b)
 		if err, retEarly := qcErrCheck(t, "ElNe - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -354,7 +354,7 @@ func TestDense_Ne(t *testing.T) {
 			return true
 		}
 
-		bxa, err := b.ElNe(a)
+		bxa, err := ElNe(b, a)
 		if err, retEarly := qcErrCheck(t, "ElNe - b∙a", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -369,7 +369,7 @@ func TestDense_Ne(t *testing.T) {
 		t.Error("Transitivity test for ElNe failed: %v", err)
 	}
 }
-func TestDense_GtScalar(t *testing.T) {
+func TestGtScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -382,7 +382,7 @@ func TestDense_GtScalar(t *testing.T) {
 		cv, _ := quick.Value(c.Dtype().Type, r)
 		c.Memset(cv.Interface())
 
-		axb, err := a.GtScalar(b, true)
+		axb, err := Gt(a, b)
 		if err, retEarly := qcErrCheck(t, "Gt - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -390,7 +390,7 @@ func TestDense_GtScalar(t *testing.T) {
 			return true
 		}
 
-		bxc, err := c.GtScalar(b, false)
+		bxc, err := Gt(b, c)
 		if err, retEarly := qcErrCheck(t, "Gt - b∙c", c, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -398,7 +398,7 @@ func TestDense_GtScalar(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Gt(c)
+		axc, err := Gt(a, c)
 		if err, retEarly := qcErrCheck(t, "Gt - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -406,9 +406,9 @@ func TestDense_GtScalar(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -425,7 +425,7 @@ func TestDense_GtScalar(t *testing.T) {
 	}
 
 }
-func TestDense_GteScalar(t *testing.T) {
+func TestGteScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -438,7 +438,7 @@ func TestDense_GteScalar(t *testing.T) {
 		cv, _ := quick.Value(c.Dtype().Type, r)
 		c.Memset(cv.Interface())
 
-		axb, err := a.GteScalar(b, true)
+		axb, err := Gte(a, b)
 		if err, retEarly := qcErrCheck(t, "Gte - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -446,7 +446,7 @@ func TestDense_GteScalar(t *testing.T) {
 			return true
 		}
 
-		bxc, err := c.GteScalar(b, false)
+		bxc, err := Gte(b, c)
 		if err, retEarly := qcErrCheck(t, "Gte - b∙c", c, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -454,7 +454,7 @@ func TestDense_GteScalar(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Gte(c)
+		axc, err := Gte(a, c)
 		if err, retEarly := qcErrCheck(t, "Gte - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -462,9 +462,9 @@ func TestDense_GteScalar(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -481,7 +481,7 @@ func TestDense_GteScalar(t *testing.T) {
 	}
 
 }
-func TestDense_LtScalar(t *testing.T) {
+func TestLtScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -494,7 +494,7 @@ func TestDense_LtScalar(t *testing.T) {
 		cv, _ := quick.Value(c.Dtype().Type, r)
 		c.Memset(cv.Interface())
 
-		axb, err := a.LtScalar(b, true)
+		axb, err := Lt(a, b)
 		if err, retEarly := qcErrCheck(t, "Lt - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -502,7 +502,7 @@ func TestDense_LtScalar(t *testing.T) {
 			return true
 		}
 
-		bxc, err := c.LtScalar(b, false)
+		bxc, err := Lt(b, c)
 		if err, retEarly := qcErrCheck(t, "Lt - b∙c", c, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -510,7 +510,7 @@ func TestDense_LtScalar(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Lt(c)
+		axc, err := Lt(a, c)
 		if err, retEarly := qcErrCheck(t, "Lt - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -518,9 +518,9 @@ func TestDense_LtScalar(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -537,7 +537,7 @@ func TestDense_LtScalar(t *testing.T) {
 	}
 
 }
-func TestDense_LteScalar(t *testing.T) {
+func TestLteScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
@@ -550,7 +550,7 @@ func TestDense_LteScalar(t *testing.T) {
 		cv, _ := quick.Value(c.Dtype().Type, r)
 		c.Memset(cv.Interface())
 
-		axb, err := a.LteScalar(b, true)
+		axb, err := Lte(a, b)
 		if err, retEarly := qcErrCheck(t, "Lte - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -558,7 +558,7 @@ func TestDense_LteScalar(t *testing.T) {
 			return true
 		}
 
-		bxc, err := c.LteScalar(b, false)
+		bxc, err := Lte(b, c)
 		if err, retEarly := qcErrCheck(t, "Lte - b∙c", c, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -566,7 +566,7 @@ func TestDense_LteScalar(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.Lte(c)
+		axc, err := Lte(a, c)
 		if err, retEarly := qcErrCheck(t, "Lte - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -574,9 +574,9 @@ func TestDense_LteScalar(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -593,7 +593,7 @@ func TestDense_LteScalar(t *testing.T) {
 	}
 
 }
-func TestDense_EqScalar(t *testing.T) {
+func TestEqScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
@@ -606,7 +606,7 @@ func TestDense_EqScalar(t *testing.T) {
 		cv, _ := quick.Value(c.Dtype().Type, r)
 		c.Memset(cv.Interface())
 
-		axb, err := a.ElEqScalar(b, true)
+		axb, err := ElEq(a, b)
 		if err, retEarly := qcErrCheck(t, "ElEq - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -614,7 +614,7 @@ func TestDense_EqScalar(t *testing.T) {
 			return true
 		}
 
-		bxc, err := c.ElEqScalar(b, false)
+		bxc, err := ElEq(b, c)
 		if err, retEarly := qcErrCheck(t, "ElEq - b∙c", c, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -622,7 +622,7 @@ func TestDense_EqScalar(t *testing.T) {
 			return true
 		}
 
-		axc, err := a.ElEq(c)
+		axc, err := ElEq(a, c)
 		if err, retEarly := qcErrCheck(t, "ElEq - a∙c", a, c, we, err); retEarly {
 			if err != nil {
 				return false
@@ -630,9 +630,9 @@ func TestDense_EqScalar(t *testing.T) {
 			return true
 		}
 
-		ab := axb.Bools()
-		bc := bxc.Bools()
-		ac := axc.Bools()
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 		for i, vab := range ab {
 			if vab && bc[i] {
 				if !ac[i] {
@@ -656,7 +656,7 @@ func TestDense_EqScalar(t *testing.T) {
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
 
-		axb, err := a.ElEqScalar(b, true)
+		axb, err := ElEq(a, b)
 		if err, retEarly := qcErrCheck(t, "ElEq - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -664,7 +664,7 @@ func TestDense_EqScalar(t *testing.T) {
 			return true
 		}
 
-		bxa, err := a.ElEqScalar(b, false)
+		bxa, err := ElEq(b, a)
 		if err, retEarly := qcErrCheck(t, "ElEq - b∙a", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -679,7 +679,7 @@ func TestDense_EqScalar(t *testing.T) {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 }
-func TestDense_NeScalar(t *testing.T) {
+func TestNeScalar(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
@@ -689,7 +689,7 @@ func TestDense_NeScalar(t *testing.T) {
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
 
-		axb, err := a.ElNeScalar(b, true)
+		axb, err := ElNe(a, b)
 		if err, retEarly := qcErrCheck(t, "ElNe - a∙b", a, b, we, err); retEarly {
 			if err != nil {
 				return false
@@ -697,7 +697,7 @@ func TestDense_NeScalar(t *testing.T) {
 			return true
 		}
 
-		bxa, err := a.ElNeScalar(b, false)
+		bxa, err := ElNe(b, a)
 		if err, retEarly := qcErrCheck(t, "ElNe - b∙a", a, b, we, err); retEarly {
 			if err != nil {
 				return false
