@@ -282,7 +282,7 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 }
 
 func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	if err = binaryCheck(a, b, ordTypes); err != nil {
+	if err = binaryCheck(a, b, eqTypes); err != nil {
 		return nil, errors.Wrapf(err, "Eq failed")
 	}
 
@@ -350,7 +350,7 @@ func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 }
 
 func (e StdEng) ElNe(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	if err = binaryCheck(a, b, ordTypes); err != nil {
+	if err = binaryCheck(a, b, eqTypes); err != nil {
 		return nil, errors.Wrapf(err, "Ne failed")
 	}
 
@@ -710,7 +710,7 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 }
 
 func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
-	if err = unaryCheck(t, ordTypes); err != nil {
+	if err = unaryCheck(t, eqTypes); err != nil {
 		return nil, errors.Wrapf(err, "Eq failed")
 	}
 
@@ -783,7 +783,7 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 }
 
 func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
-	if err = unaryCheck(t, ordTypes); err != nil {
+	if err = unaryCheck(t, eqTypes); err != nil {
 		return nil, errors.Wrapf(err, "Ne failed")
 	}
 

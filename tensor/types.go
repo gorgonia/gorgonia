@@ -193,7 +193,7 @@ var numberTypes = &typeclass{
 var ordTypes = &typeclass{
 	name: "Ord",
 	set: []Dtype{
-		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, String,
 	},
 }
 

@@ -177,7 +177,7 @@ func generateStdEngCmp(f io.Writer, ak Kinds) {
 
 	for _, abo := range cmpBinOps {
 		var tc string
-		if abo.Name() == "eq" || abo.Name() == "ne" {
+		if abo.Name() == "Eq" || abo.Name() == "Ne" {
 			tc = "Eq"
 		} else {
 			tc = "Ord"

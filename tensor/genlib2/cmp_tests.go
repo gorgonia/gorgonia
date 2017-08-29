@@ -19,11 +19,11 @@ const (
 	DenseMethodCallVVaxcRaw    = `axc, err := a.{{.Name}}(c {{template "funcoptuse" . -}})`
 	DenseMethodCallMixedaxbRaw = `axb, err := a.{{.Name}}Scalar(b, true {{template "funcoptuse" . -}})`
 	DenseMethodCallMixedbxcRaw = `bxc, err := c.{{.Name}}Scalar(b, false {{template "funcoptuse" . -}})`
-	DenseMethodCallMixedaxcRaw = `axc, err := a.{{.Name}}(c, true {{template "funcoptuse" . -}})`
+	DenseMethodCallMixedaxcRaw = `axc, err := a.{{.Name}}(c {{template "funcoptuse" . -}})`
 )
 
 const transitivityBodyRaw = `transFn := func(q *Dense) bool {
-	we, willFailEq := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	a := q.Clone().(*Dense)
@@ -59,9 +59,15 @@ const transitivityBodyRaw = `transFn := func(q *Dense) bool {
 		return true
 	}
 
+	{{if eq .Level "API" -}}
 	ab := axb.(*Dense).Bools()
 	bc := bxc.(*Dense).Bools()
 	ac := axc.(*Dense).Bools()
+	{{else -}}
+	ab := axb.Bools()
+	bc := bxc.Bools()
+	ac := axc.Bools()
+	{{end -}}
 
 	for i, vab := range ab {
 		if vab && bc[i] {
@@ -79,7 +85,7 @@ if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
 `
 
 const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
-	we, willFailEq := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})	
+	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})	
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	a := q.Clone().(*Dense)
@@ -98,7 +104,7 @@ const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
 	}
 
 	{{template "bxc" . }}
-	if err, retEarly := qcErrCheck(t, "{{.Name}} - b∙c", b, c, we, err); retEarly{
+	if err, retEarly := qcErrCheck(t, "{{.Name}} - b∙c", c, b, we, err); retEarly{
 		if err != nil {
 			return false
 		}
@@ -113,19 +119,15 @@ const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
 		return true
 	}
 
-
-
-
-
-
-
-
-
-
-
+	{{if eq .Level "API" -}}
 	ab := axb.(*Dense).Bools()
 	bc := bxc.(*Dense).Bools()
 	ac := axc.(*Dense).Bools()
+	{{else -}}
+	ab := axb.Bools()
+	bc := bxc.Bools()
+	ac := axc.Bools()
+	{{end -}}
 
 	for i, vab := range ab {
 		if vab && bc[i] {
@@ -136,7 +138,10 @@ const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
 	}
 	return true
 }
-
+r = rand.New(rand.NewSource(time.Now().UnixNano()))
+if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	t.Error("Transitivity test for {{.Name}} failed: %v", err)
+}
 `
 
 type CmpTest struct {
@@ -147,13 +152,30 @@ type CmpTest struct {
 	EqFailTypeClassName string
 }
 
+func (fn *CmpTest) Name() string {
+	if fn.cmpOp.Name() == "Eq" || fn.cmpOp.Name() == "Ne" {
+		return "El" + fn.cmpOp.Name()
+	}
+	return fn.cmpOp.Name()
+}
+
+func (fn *CmpTest) Level() string {
+	switch fn.lvl {
+	case API:
+		return "API"
+	case Dense:
+		return "Dense"
+	}
+	return ""
+}
+
 func (fn *CmpTest) Signature() *Signature {
 	var name string
 	switch fn.lvl {
 	case API:
-		name = fmt.Sprintf("Test%s", fn.Name())
+		name = fmt.Sprintf("Test%s", fn.cmpOp.Name())
 	case Dense:
-		name = fmt.Sprintf("TestDense_%s", fn.Name())
+		name = fmt.Sprintf("TestDense_%s", fn.cmpOp.Name())
 	}
 	if fn.scalars {
 		name += "Scalar"
@@ -167,6 +189,10 @@ func (fn *CmpTest) Signature() *Signature {
 		ParamNames:     []string{"t"},
 		ParamTemplates: []*template.Template{testingType},
 	}
+}
+
+func (fn *CmpTest) canWrite() bool {
+	return fn.IsTransitive
 }
 
 func (fn *CmpTest) WriteBody(w io.Writer) {
@@ -236,6 +262,67 @@ func generateAPICmpTests(f io.Writer, ak Kinds) {
 	}
 
 	for _, fn := range tests {
-		fn.Write(f)
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
+}
+
+func generateAPICmpMixedTests(f io.Writer, ak Kinds) {
+	var tests []*CmpTest
+
+	for _, op := range cmpBinOps {
+		t := &CmpTest{
+			cmpOp:               op,
+			lvl:                 API,
+			scalars:             true,
+			EqFailTypeClassName: "nil",
+		}
+		tests = append(tests, t)
+	}
+
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
+}
+
+func generateDenseMethodCmpTests(f io.Writer, ak Kinds) {
+	var tests []*CmpTest
+
+	for _, op := range cmpBinOps {
+		t := &CmpTest{
+			cmpOp:               op,
+			lvl:                 Dense,
+			EqFailTypeClassName: "nil",
+		}
+		tests = append(tests, t)
+	}
+
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
+}
+
+func generateDenseMethodCmpMixedTests(f io.Writer, ak Kinds) {
+	var tests []*CmpTest
+
+	for _, op := range cmpBinOps {
+		t := &CmpTest{
+			cmpOp:               op,
+			lvl:                 Dense,
+			scalars:             true,
+			EqFailTypeClassName: "nil",
+		}
+		tests = append(tests, t)
+	}
+
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
 	}
 }
