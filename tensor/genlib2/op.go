@@ -47,6 +47,14 @@ type arithOp struct {
 	IsInvolutionary bool
 }
 
+type cmpOp struct {
+	basicBinOp
+	TypeClassName string
+	Inv string
+	IsTransitive bool
+	IsSymmetric bool
+}
+
 func (op basicBinOp) Name() string           { return op.name }
 func (op basicBinOp) Arity() int             { return 2 }
 func (op basicBinOp) SymbolTemplate() string { return op.symbol }

@@ -46,8 +46,15 @@ type unaryTest struct {
 	InvTypeClass        string
 }
 
+func (fn *unaryTest) Name() string {
+	if fn.unaryOp.Name() == "Eq" || fn.unaryOp.Name() == "Ne" {
+		return "El" + fn.unaryOp.Name()
+	}
+	return fn.unaryOp.Name()
+}
+
 func (fn *unaryTest) Signature() *Signature {
-	name := fmt.Sprintf("Test%s", fn.Name())
+	name := fmt.Sprintf("Test%s", fn.unaryOp.Name())
 	if fn.FuncOpt != "" {
 		name += "_" + fn.FuncOpt
 	}

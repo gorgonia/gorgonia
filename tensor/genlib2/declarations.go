@@ -382,7 +382,7 @@ var nameMaps = map[string]string{
 }
 
 var arithBinOps []arithOp
-var cmpBinOps []basicBinOp
+var cmpBinOps []cmpOp
 var typedAriths []TypedBinOp
 var typedCmps []TypedBinOp
 
@@ -416,13 +416,13 @@ func init() {
 		arithBinOps[i].symbol = arithSymbolTemplates[i]
 	}
 
-	cmpBinOps = []basicBinOp{
-		{"", "Gt", false, isOrd},
-		{"", "Gte", false, isOrd},
-		{"", "Lt", false, isOrd},
-		{"", "Lte", false, isOrd},
-		{"", "Eq", false, isEq},
-		{"", "Ne", false, isEq},
+	cmpBinOps = []cmpOp{
+		{basicBinOp{"", "Gt", false, isOrd}, "ordTypes", "Lt", true, false},
+		{basicBinOp{"", "Gte", false, isOrd}, "ordTypes", "Lte", true, false},
+		{basicBinOp{"", "Lt", false, isOrd}, "ordTypes", "Gt", true, false},
+		{basicBinOp{"", "Lte", false, isOrd}, "ordTypes", "Gte", true, false},
+		{basicBinOp{"", "Eq", false, isEq}, "eqTypes", "Eq", true, true},
+		{basicBinOp{"", "Ne", false, isEq}, "eqTypes", "Ne", false, true},
 	}
 	for i := range cmpBinOps {
 		cmpBinOps[i].symbol = cmpSymbolTemplates[i]
