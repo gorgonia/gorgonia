@@ -74,6 +74,9 @@ type unaryOp struct {
 	name   string
 	isfunc bool
 	is     TypeClass
+
+	TypeClassName string // mainly used in tests
+	Inv string
 }
 
 func (op unaryOp) Name() string           { return op.name }

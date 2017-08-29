@@ -443,10 +443,14 @@ func qcErrCheck(t *testing.T, name string, a Dtyper, b interface{}, we bool, err
 		t.Errorf("Tests for %v (%v) was unable to proceed: %v", name, a.Dtype(), err)
 		return err, true
 	case we && err == nil:
+		if b == nil {
+			t.Errorf("Expected error when performing %v on %T of %v ", name, a, a.Dtype())
+			return errors.New("Error"), true
+		}
 		if bd, ok := b.(Dtyper); ok {
-			t.Errorf("Expected error when adding %T of %v and %T of %v", a, a.Dtype(), b, bd.Dtype())
+			t.Errorf("Expected error when performing %v on %T of %v and %T of %v", name, a, a.Dtype(), b, bd.Dtype())
 		} else {
-			t.Errorf("Expected error when adding %T of %v and %v of %T", a, a.Dtype(), b, b)
+			t.Errorf("Expected error when performing %v on %T of %v and %v of %T", name, a, a.Dtype(), b, b)
 		}
 		return errors.New("Error"), true
 	case we && err != nil:

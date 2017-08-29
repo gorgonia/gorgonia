@@ -1,455 +1,633 @@
 package tensor
 
 import (
+	"math/rand"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"testing/quick"
+	"time"
 )
 
 /*
 GENERATED FILE. DO NOT EDIT
 */
 
-var clampTests = []struct {
-	a, reuse      interface{}
-	min, max      interface{}
-	correct       interface{}
-	correctSliced interface{}
-}{
-	{[]int{1, 2, 3, 4}, []int{10, 20, 30, 40}, int(2), int(3), []int{2, 2, 3, 3}, []int{2, 2, 3}},
-	{[]int8{1, 2, 3, 4}, []int8{10, 20, 30, 40}, int8(2), int8(3), []int8{2, 2, 3, 3}, []int8{2, 2, 3}},
-	{[]int16{1, 2, 3, 4}, []int16{10, 20, 30, 40}, int16(2), int16(3), []int16{2, 2, 3, 3}, []int16{2, 2, 3}},
-	{[]int32{1, 2, 3, 4}, []int32{10, 20, 30, 40}, int32(2), int32(3), []int32{2, 2, 3, 3}, []int32{2, 2, 3}},
-	{[]int64{1, 2, 3, 4}, []int64{10, 20, 30, 40}, int64(2), int64(3), []int64{2, 2, 3, 3}, []int64{2, 2, 3}},
-	{[]uint{1, 2, 3, 4}, []uint{10, 20, 30, 40}, uint(2), uint(3), []uint{2, 2, 3, 3}, []uint{2, 2, 3}},
-	{[]uint8{1, 2, 3, 4}, []uint8{10, 20, 30, 40}, uint8(2), uint8(3), []uint8{2, 2, 3, 3}, []uint8{2, 2, 3}},
-	{[]uint16{1, 2, 3, 4}, []uint16{10, 20, 30, 40}, uint16(2), uint16(3), []uint16{2, 2, 3, 3}, []uint16{2, 2, 3}},
-	{[]uint32{1, 2, 3, 4}, []uint32{10, 20, 30, 40}, uint32(2), uint32(3), []uint32{2, 2, 3, 3}, []uint32{2, 2, 3}},
-	{[]uint64{1, 2, 3, 4}, []uint64{10, 20, 30, 40}, uint64(2), uint64(3), []uint64{2, 2, 3, 3}, []uint64{2, 2, 3}},
-	{[]float32{1, 2, 3, 4}, []float32{10, 20, 30, 40}, float32(2), float32(3), []float32{2, 2, 3, 3}, []float32{2, 2, 3}},
-	{[]float64{1, 2, 3, 4}, []float64{10, 20, 30, 40}, float64(2), float64(3), []float64{2, 2, 3, 3}, []float64{2, 2, 3}},
-}
-
-var clampTestsMasked = []struct {
-	a, reuse      interface{}
-	min, max      interface{}
-	correct       interface{}
-	correctSliced interface{}
-}{
-	{[]int{1, 2, 3, 4}, []int{1, 20, 30, 40}, int(2), int(3), []int{1, 2, 3, 3}, []int{1, 2, 3}},
-	{[]int8{1, 2, 3, 4}, []int8{1, 20, 30, 40}, int8(2), int8(3), []int8{1, 2, 3, 3}, []int8{1, 2, 3}},
-	{[]int16{1, 2, 3, 4}, []int16{1, 20, 30, 40}, int16(2), int16(3), []int16{1, 2, 3, 3}, []int16{1, 2, 3}},
-	{[]int32{1, 2, 3, 4}, []int32{1, 20, 30, 40}, int32(2), int32(3), []int32{1, 2, 3, 3}, []int32{1, 2, 3}},
-	{[]int64{1, 2, 3, 4}, []int64{1, 20, 30, 40}, int64(2), int64(3), []int64{1, 2, 3, 3}, []int64{1, 2, 3}},
-	{[]uint{1, 2, 3, 4}, []uint{1, 20, 30, 40}, uint(2), uint(3), []uint{1, 2, 3, 3}, []uint{1, 2, 3}},
-	{[]uint8{1, 2, 3, 4}, []uint8{1, 20, 30, 40}, uint8(2), uint8(3), []uint8{1, 2, 3, 3}, []uint8{1, 2, 3}},
-	{[]uint16{1, 2, 3, 4}, []uint16{1, 20, 30, 40}, uint16(2), uint16(3), []uint16{1, 2, 3, 3}, []uint16{1, 2, 3}},
-	{[]uint32{1, 2, 3, 4}, []uint32{1, 20, 30, 40}, uint32(2), uint32(3), []uint32{1, 2, 3, 3}, []uint32{1, 2, 3}},
-	{[]uint64{1, 2, 3, 4}, []uint64{1, 20, 30, 40}, uint64(2), uint64(3), []uint64{1, 2, 3, 3}, []uint64{1, 2, 3}},
-	{[]float32{1, 2, 3, 4}, []float32{1, 20, 30, 40}, float32(2), float32(3), []float32{1, 2, 3, 3}, []float32{1, 2, 3}},
-	{[]float64{1, 2, 3, 4}, []float64{1, 20, 30, 40}, float64(2), float64(3), []float64{1, 2, 3, 3}, []float64{1, 2, 3}},
-}
-
-func TestClamp(t *testing.T) {
-	assert := assert.New(t)
-	var got, sliced Tensor
-	var T, reuse *Dense
-	var err error
-	for _, ct := range clampTests {
-		T = New(WithBacking(ct.a))
-		// safe
-		if got, err = Clamp(T, ct.min, ct.max); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got == T {
-			t.Error("expected got != T")
-			continue
-		}
-		assert.Equal(ct.correct, got.Data())
-
-		// sliced safe
-		if sliced, err = T.Slice(makeRS(0, 3)); err != nil {
-			t.Error("Unable to slice T")
-			continue
-		}
-		if got, err = Clamp(sliced, ct.min, ct.max); err != nil {
-			t.Error(err)
-			continue
-		}
-
-		// reuse
-		reuse = New(WithBacking(ct.reuse))
-		if got, err = Clamp(T, ct.min, ct.max, WithReuse(reuse)); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got != reuse {
-			t.Error("expected got == reuse")
-			continue
-		}
-		assert.Equal(ct.correct, got.Data())
-
-		// unsafe
-		if got, err = Clamp(T, ct.min, ct.max, UseUnsafe()); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got != T {
-			t.Error("expected got == T")
-			continue
-		}
-		assert.Equal(ct.correct, got.Data())
-	}
-}
-
-func TestClampMasked(t *testing.T) {
-	assert := assert.New(t)
-	var got, sliced Tensor
-	var T, reuse *Dense
-	var err error
-	for _, ct := range clampTestsMasked {
-		T = New(WithBacking(ct.a, []bool{true, false, false, false}))
-		// safe
-		if got, err = Clamp(T, ct.min, ct.max); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got == T {
-			t.Error("expected got != T")
-			continue
-		}
-		assert.Equal(ct.correct, got.Data())
-
-		// sliced safe
-		if sliced, err = T.Slice(makeRS(0, 3)); err != nil {
-			t.Error("Unable to slice T")
-			continue
-		}
-		if got, err = Clamp(sliced, ct.min, ct.max); err != nil {
-			t.Error(err)
-			continue
-		}
-
-		// reuse
-		reuse = New(WithBacking(ct.reuse, []bool{true, false, false, false}))
-		if got, err = Clamp(T, ct.min, ct.max, WithReuse(reuse)); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got != reuse {
-			t.Error("expected got == reuse")
-			continue
-		}
-		assert.Equal(ct.correct, got.Data())
-
-		// unsafe
-		if got, err = Clamp(T, ct.min, ct.max, UseUnsafe()); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got != T {
-			t.Error("expected got == T")
-			continue
-		}
-		assert.Equal(ct.correct, got.Data())
-	}
-}
-
-var signTests = []struct {
-	a, reuse      interface{}
-	correct       interface{}
-	correctSliced interface{}
-}{
-	{[]int{0, 1, 2, -2, -1}, []int{100, 10, 20, 30, 40}, []int{0, 1, 1, -1, -1}, []int{0, 1, 1, -1}},
-	{[]int8{0, 1, 2, -2, -1}, []int8{100, 10, 20, 30, 40}, []int8{0, 1, 1, -1, -1}, []int8{0, 1, 1, -1}},
-	{[]int16{0, 1, 2, -2, -1}, []int16{100, 10, 20, 30, 40}, []int16{0, 1, 1, -1, -1}, []int16{0, 1, 1, -1}},
-	{[]int32{0, 1, 2, -2, -1}, []int32{100, 10, 20, 30, 40}, []int32{0, 1, 1, -1, -1}, []int32{0, 1, 1, -1}},
-	{[]int64{0, 1, 2, -2, -1}, []int64{100, 10, 20, 30, 40}, []int64{0, 1, 1, -1, -1}, []int64{0, 1, 1, -1}},
-	{[]float32{0, 1, 2, -2, -1}, []float32{100, 10, 20, 30, 40}, []float32{0, 1, 1, -1, -1}, []float32{0, 1, 1, -1}},
-	{[]float64{0, 1, 2, -2, -1}, []float64{100, 10, 20, 30, 40}, []float64{0, 1, 1, -1, -1}, []float64{0, 1, 1, -1}},
-}
-
-var signTestsMasked = []struct {
-	a, reuse interface{}
-	correct  interface{}
-	// correctSliced interface{}
-}{
-	{[]int{1, 2, -2, -1}, []int{10, 20, 30, 40}, []int{1, 1, -2, -1}},
-	{[]int8{1, 2, -2, -1}, []int8{10, 20, 30, 40}, []int8{1, 1, -2, -1}},
-	{[]int16{1, 2, -2, -1}, []int16{10, 20, 30, 40}, []int16{1, 1, -2, -1}},
-	{[]int32{1, 2, -2, -1}, []int32{10, 20, 30, 40}, []int32{1, 1, -2, -1}},
-	{[]int64{1, 2, -2, -1}, []int64{10, 20, 30, 40}, []int64{1, 1, -2, -1}},
-	{[]float32{1, 2, -2, -1}, []float32{10, 20, 30, 40}, []float32{1, 1, -2, -1}},
-	{[]float64{1, 2, -2, -1}, []float64{10, 20, 30, 40}, []float64{1, 1, -2, -1}},
-}
-
-func TestSign(t *testing.T) {
-	assert := assert.New(t)
-	var got, sliced Tensor
-	var T, reuse *Dense
-	var err error
-	for _, st := range signTests {
-		T = New(WithBacking(st.a))
-		// safe
-		if got, err = Sign(T); err != nil {
-			t.Error(err)
-			continue
-		}
-
-		if got == T {
-			t.Error("expected got != T")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-
-		// sliced safe
-		if sliced, err = T.Slice(makeRS(0, 4)); err != nil {
-			t.Error("Unable to slice T")
-			continue
-		}
-		if got, err = Sign(sliced); err != nil {
-			t.Error(err)
-			continue
-		}
-		assert.Equal(st.correctSliced, got.Data())
-
-		// reuse
-		reuse = New(WithBacking(st.reuse))
-		if got, err = Sign(T, WithReuse(reuse)); err != nil {
-			t.Error(err)
-			continue
-		}
-
-		if got != reuse {
-			t.Error("expected got == reuse")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-
-		// unsafe
-		if got, err = Sign(T, UseUnsafe()); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got != T {
-			t.Error("expected got == T")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-	}
-}
-
-func TestSignMasked(t *testing.T) {
-	assert := assert.New(t)
-	var got Tensor
-	var T, reuse *Dense
-	var err error
-	for _, st := range signTestsMasked {
-		T = New(WithBacking(st.a, []bool{false, false, true, false}))
-		// safe
-		if got, err = Sign(T); err != nil {
-			t.Error(err)
-			continue
-		}
-
-		if got == T {
-			t.Error("expected got != T")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-
-		// reuse
-		reuse = New(WithBacking(st.reuse, []bool{false, false, true, false}))
-		if got, err = Sign(T, WithReuse(reuse)); err != nil {
-			t.Error(err)
-			continue
-		}
-
-		if got != reuse {
-			t.Error("expected got == reuse")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-
-		// unsafe
-		if got, err = Sign(T, UseUnsafe()); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got != T {
-			t.Error("expected got == T")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-	}
-}
-
-var negTests = []struct {
-	a, reuse      interface{}
-	correct       interface{}
-	correctSliced interface{}
-}{
-	{[]int{0, 1, 2, -2, -1}, []int{100, 10, 20, 30, 40}, []int{0, -1, -2, 2, 1}, []int{0, -1, -2, 2}},
-	{[]int8{0, 1, 2, -2, -1}, []int8{100, 10, 20, 30, 40}, []int8{0, -1, -2, 2, 1}, []int8{0, -1, -2, 2}},
-	{[]int16{0, 1, 2, -2, -1}, []int16{100, 10, 20, 30, 40}, []int16{0, -1, -2, 2, 1}, []int16{0, -1, -2, 2}},
-	{[]int32{0, 1, 2, -2, -1}, []int32{100, 10, 20, 30, 40}, []int32{0, -1, -2, 2, 1}, []int32{0, -1, -2, 2}},
-	{[]int64{0, 1, 2, -2, -1}, []int64{100, 10, 20, 30, 40}, []int64{0, -1, -2, 2, 1}, []int64{0, -1, -2, 2}},
-	{[]float32{0, 1, 2, -2, -1}, []float32{100, 10, 20, 30, 40}, []float32{0, -1, -2, 2, 1}, []float32{0, -1, -2, 2}},
-	{[]float64{0, 1, 2, -2, -1}, []float64{100, 10, 20, 30, 40}, []float64{0, -1, -2, 2, 1}, []float64{0, -1, -2, 2}},
-	{[]complex64{complex(float32(0), float32(0)),
-		complex(float32(1), float32(1)),
-		complex(float32(2), float32(2)),
-		complex(float32(-2), float32(-2)),
-		complex(float32(-1), float32(-1))},
-		[]complex64{complex(float32(100), float32(100)),
-			complex(float32(100), float32(100)),
-			complex(float32(100), float32(100)),
-			complex(float32(100), float32(100)),
-			complex(float32(100), float32(100))},
-		[]complex64{complex(float32(0), float32(0)),
-			complex(float32(-1), float32(-1)),
-			complex(float32(-2), float32(-2)),
-			complex(float32(2), float32(2)),
-			complex(float32(1), float32(1))},
-		[]complex64{complex(float32(0), float32(0)),
-			complex(float32(-1), float32(-1)),
-			complex(float32(-2), float32(-2)),
-			complex(float32(2), float32(2))},
-	},
-
-	{[]complex128{complex(0.0, 0.0),
-		complex(1.0, 1.0),
-		complex(2.0, 2.0),
-		complex(-2.0, -2.0),
-		complex(-1.0, -1.0)},
-		[]complex128{complex(100.0, 100.0),
-			complex(100.0, 100.0),
-			complex(100.0, 100.0),
-			complex(100.0, 100.0),
-			complex(100.0, 100.0)},
-		[]complex128{complex(0.0, 0.0),
-			complex(-1.0, -1.0),
-			complex(-2.0, -2.0),
-			complex(2.0, 2.0),
-			complex(1.0, 1.0)},
-		[]complex128{complex(0.0, 0.0),
-			complex(-1.0, -1.0),
-			complex(-2.0, -2.0),
-			complex(2.0, 2.0)},
-	},
-}
-
-var negTestsMasked = []struct {
-	a, reuse interface{}
-	correct  interface{}
-}{
-	{[]int{1, 2, -2, -1}, []int{10, 20, 30, 40}, []int{-1, -2, -2, 1}},
-	{[]int8{1, 2, -2, -1}, []int8{10, 20, 30, 40}, []int8{-1, -2, -2, 1}},
-	{[]int16{1, 2, -2, -1}, []int16{10, 20, 30, 40}, []int16{-1, -2, -2, 1}},
-	{[]int32{1, 2, -2, -1}, []int32{10, 20, 30, 40}, []int32{-1, -2, -2, 1}},
-	{[]int64{1, 2, -2, -1}, []int64{10, 20, 30, 40}, []int64{-1, -2, -2, 1}},
-	{[]float32{1, 2, -2, -1}, []float32{10, 20, 30, 40}, []float32{-1, -2, -2, 1}},
-	{[]float64{1, 2, -2, -1}, []float64{10, 20, 30, 40}, []float64{-1, -2, -2, 1}},
-}
-
 func TestNeg(t *testing.T) {
-	assert := assert.New(t)
-	var got, sliced Tensor
-	var T, reuse *Dense
-	var err error
-	for _, st := range negTests {
-		T = New(WithBacking(st.a))
-		// safe
-		if got, err = Neg(T); err != nil {
-			t.Error(err)
-			continue
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Neg(a)
+		if err, retEarly := qcErrCheck(t, "Neg", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
+		Neg(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
 
-		if got == T {
-			t.Error("expected got != T")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-
-		// sliced safe
-		if sliced, err = T.Slice(makeRS(0, 4)); err != nil {
-			t.Error("Unable to slice T")
-			continue
-		}
-		if got, err = Neg(sliced); err != nil {
-			t.Error(err)
-			continue
-		}
-		assert.Equal(st.correctSliced, got.Data())
-
-		// reuse
-		reuse = New(WithBacking(st.reuse))
-		if got, err = Neg(T, WithReuse(reuse)); err != nil {
-			t.Error(err)
-			continue
-		}
-
-		if got != reuse {
-			t.Error("expected got == reuse")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
-
-		// unsafe
-		if got, err = Neg(T, UseUnsafe()); err != nil {
-			t.Error(err)
-			continue
-		}
-		if got != T {
-			t.Error("expected got == T")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Neg failed: %v", err)
 	}
 }
+func TestSquare(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Square(a)
+		if err, retEarly := qcErrCheck(t, "Square", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err != nil {
+			return true // uninvertible due to type class implementation issues
+		}
+		Sqrt(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
 
-func TestNegMasked(t *testing.T) {
-	assert := assert.New(t)
-	var got Tensor
-	var T, reuse *Dense
-	var err error
-	for _, st := range negTestsMasked {
-		T = New(WithBacking(st.a, []bool{false, false, true, false}))
-		// safe
-		if got, err = Neg(T); err != nil {
-			t.Error(err)
-			continue
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Square failed: %v", err)
+	}
+}
+func TestCube(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Cube(a)
+		if err, retEarly := qcErrCheck(t, "Cube", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true // uninvertible due to type class implementation issues
+		}
+		Cbrt(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Cube failed: %v", err)
+	}
+}
+func TestExp(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Exp(a)
+		if err, retEarly := qcErrCheck(t, "Exp", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Log(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Exp failed: %v", err)
+	}
+}
+func TestLog(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Log(a)
+		if err, retEarly := qcErrCheck(t, "Log", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Exp(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Log failed: %v", err)
+	}
+}
+func TestSqrt(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Sqrt(a)
+		if err, retEarly := qcErrCheck(t, "Sqrt", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Square(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Sqrt failed: %v", err)
+	}
+}
+func TestCbrt(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		ret, err := Cbrt(a)
+		if err, retEarly := qcErrCheck(t, "Cbrt", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Cube(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Cbrt failed: %v", err)
+	}
+}
+func TestNeg_unsafe(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Neg(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Neg", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Neg(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
 		}
 
-		if got == T {
-			t.Error("expected got != T")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
+		return true
+	}
 
-		// reuse
-		reuse = New(WithBacking(st.reuse, []bool{false, false, true, false}))
-		if got, err = Neg(T, WithReuse(reuse)); err != nil {
-			t.Error(err)
-			continue
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Neg failed: %v", err)
+	}
+}
+func TestSquare_unsafe(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Square(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Square", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err != nil {
+			return true // uninvertible due to type class implementation issues
+		}
+		Sqrt(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
 		}
 
-		if got != reuse {
-			t.Error("expected got == reuse")
-			continue
-		}
-		assert.Equal(st.correct, got.Data())
+		return true
+	}
 
-		// unsafe
-		if got, err = Neg(T, UseUnsafe()); err != nil {
-			t.Error(err)
-			continue
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Square failed: %v", err)
+	}
+}
+func TestCube_unsafe(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Cube(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Cube", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
 		}
-		if got != T {
-			t.Error("expected got == T")
-			continue
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true // uninvertible due to type class implementation issues
 		}
-		assert.Equal(st.correct, got.Data())
+		Cbrt(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Cube failed: %v", err)
+	}
+}
+func TestExp_unsafe(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Exp(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Exp", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Log(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Exp failed: %v", err)
+	}
+}
+func TestLog_unsafe(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Log(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Log", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Exp(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Log failed: %v", err)
+	}
+}
+func TestSqrt_unsafe(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Sqrt(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Sqrt", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Square(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Sqrt failed: %v", err)
+	}
+}
+func TestCbrt_unsafe(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		ret, err := Cbrt(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Cbrt", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Cube(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Cbrt failed: %v", err)
+	}
+}
+func TestNeg_reuse(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Neg(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Neg", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Neg(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Neg failed: %v", err)
+	}
+}
+func TestSquare_reuse(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Square(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Square", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err != nil {
+			return true // uninvertible due to type class implementation issues
+		}
+		Sqrt(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Square failed: %v", err)
+	}
+}
+func TestCube_reuse(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, numberTypes, nil)
+		ret, err := Cube(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Cube", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true // uninvertible due to type class implementation issues
+		}
+		Cbrt(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Cube failed: %v", err)
+	}
+}
+func TestExp_reuse(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Exp(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Exp", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Log(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Exp failed: %v", err)
+	}
+}
+func TestLog_reuse(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Log(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Log", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Exp(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Log failed: %v", err)
+	}
+}
+func TestSqrt_reuse(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatcmplxTypes, nil)
+		ret, err := Sqrt(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Sqrt", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Square(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Sqrt failed: %v", err)
+	}
+}
+func TestCbrt_reuse(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		ret, err := Cbrt(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Cbrt", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Cube(ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if reuse != ret {
+			t.Errorf("Expected reuse to be the same as retVal")
+			return false
+		}
+
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Cbrt failed: %v", err)
 	}
 }

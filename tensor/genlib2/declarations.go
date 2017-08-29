@@ -429,27 +429,27 @@ func init() {
 	}
 
 	conditionalUnaries = []unaryOp{
-		{"", "Abs", false, isSignedNumber},
-		{"", "Sign", false, isSignedNumber},
+		{"", "Abs", false, isSignedNumber, "signedTypes", ""},
+		{"", "Sign", false, isSignedNumber, "signedTypes", ""},
 	}
 	for i := range conditionalUnaries {
 		conditionalUnaries[i].symbol = nonFloatConditionalUnarySymbolTemplates[i]
 	}
 
 	unconditionalUnaries = []unaryOp{
-		{"", "Neg", false, isNumber},
-		{"", "Inv", false, isNumber},
-		{"", "Square", false, isNumber},
-		{"", "Cube", false, isNumber},
+		{"", "Neg", false, isNumber, "numberTypes", "Neg"},
+		{"", "Inv", false, isNumber, "numberTypes", ""},
+		{"", "Square", false, isNumber, "numberTypes", "Sqrt"},
+		{"", "Cube", false, isNumber, "numberTypes", "Cbrt"},
 
-		{"", "Exp", true, isFloatCmplx},
-		{"", "Tanh", true, isFloatCmplx},
-		{"", "Log", true, isFloatCmplx},
-		{"", "Log2", true, isFloat},
-		{"", "Log10", true, isFloatCmplx},
-		{"", "Sqrt", true, isFloatCmplx},
-		{"", "Cbrt", true, isFloat},
-		{"", "InvSqrt", true, isFloat}, // TODO: cmplx requires to much finagling to the template. Come back to it later
+		{"", "Exp", true, isFloatCmplx, "floatcmplxTypes", "Log"},
+		{"", "Tanh", true, isFloatCmplx, "floatcmplxTypes", ""},
+		{"", "Log", true, isFloatCmplx, "floatcmplxTypes", "Exp"},
+		{"", "Log2", true, isFloat, "floatTypes", ""},
+		{"", "Log10", true, isFloatCmplx, "floatcmplxTypes", ""},
+		{"", "Sqrt", true, isFloatCmplx, "floatcmplxTypes", "Square"},
+		{"", "Cbrt", true, isFloat, "floatTypes", "Cube"},
+		{"", "InvSqrt", true, isFloat, "floatTypes", ""}, // TODO: cmplx requires to much finagling to the template. Come back to it later
 	}
 	nonF := len(unconditionalNumUnarySymbolTemplates)
 	for i := range unconditionalNumUnarySymbolTemplates {
@@ -460,7 +460,7 @@ func init() {
 	}
 
 	specialUnaries = []UnaryOp{
-		specialUnaryOp{unaryOp{clampBody, "Clamp", false, isNonComplexNumber}, []string{"min", "max"}},
+		specialUnaryOp{unaryOp{clampBody, "Clamp", false, isNonComplexNumber, "nonComplexNumberTypes", ""}, []string{"min", "max"}},
 	}
 
 	// typed operations
