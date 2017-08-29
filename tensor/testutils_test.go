@@ -323,8 +323,8 @@ func shuffleInts(a []int, r *rand.Rand) {
 
 func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	// generate type
-	ri := r.Intn(len(generatableTypes.set))
-	of := generatableTypes.set[ri]
+	ri := r.Intn(len(specializedTypes.set))
+	of := specializedTypes.set[ri]
 	datatyp := reflect.SliceOf(of.Type)
 	gendat, _ := quick.Value(datatyp, r)
 	// generate dims
@@ -426,9 +426,12 @@ func (e dummyEngine) Memcpy(dst, src Memory) error {
 func (e dummyEngine) Accessible(mem Memory) (Memory, error) { return mem, nil }
 func (e dummyEngine) WorksWith(order DataOrder) bool        { return true }
 
-func willerr(a *Dense, tc *typeclass) (retVal bool) {
+func willerr(a *Dense, tc, eqtc *typeclass) (retVal, willFailEq bool) {
+	if err := typeclassCheck(a.Dtype(), eqtc); err == nil {
+		willFailEq = true
+	}
 	if err := typeclassCheck(a.Dtype(), tc); err != nil {
-		return true
+		return true, willFailEq
 	}
 	retVal = retVal || !a.IsNativelyAccessible()
 	return
@@ -452,9 +455,20 @@ func qcErrCheck(t *testing.T, name string, a Dtyper, b interface{}, we bool, err
 	return nil, false
 }
 
-func qcIsFloat(a *Dense) bool {
-	if err := typeclassCheck(a.Dtype(), floatcmplxTypes); err == nil {
+func qcIsFloat(dt Dtype) bool {
+	if err := typeclassCheck(dt, floatcmplxTypes); err == nil {
 		return true
 	}
 	return false
+}
+
+func qcEqCheck(t *testing.T, dt Dtype, willFailEq bool, correct, got interface{}) bool {
+	isFloatTypes := qcIsFloat(dt)
+	if !willFailEq && (isFloatTypes && !allClose(correct, got) || (!isFloatTypes && !reflect.DeepEqual(correct, got))) {
+		t.Errorf("q.Dtype: %v", dt)
+		t.Errorf("correct\n%v", correct)
+		t.Errorf("got\n%v", got)
+		return false
+	}
+	return true
 }

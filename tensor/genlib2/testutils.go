@@ -176,6 +176,9 @@ const identityValsRaw = `func identityVal(x int, dt Dtype) interface{} {
 	}
 }`
 
+const dataEqualityRaw = `
+`
+
 var (
 	anyToF64s   *template.Template
 	qcGen       *template.Template

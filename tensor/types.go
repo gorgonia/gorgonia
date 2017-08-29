@@ -216,11 +216,24 @@ var signedTypes = &typeclass{
 	},
 }
 
+// this typeclass is ever only used by Sub tests
+var signedNonComplexTypes = &typeclass{
+	name: "Signed NonComplex",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Float32, Float64,
+	},
+}
+
 var floatTypes = &typeclass{
 	name: "Float",
 	set: []Dtype{
 		Float32, Float64,
 	},
+}
+
+var complexTypes = &typeclass{
+	name: "Complex Numbers",
+	set:  []Dtype{Complex64, Complex128},
 }
 
 var floatcmplxTypes = &typeclass{
@@ -237,10 +250,11 @@ var nonComplexNumberTypes = &typeclass{
 	},
 }
 
+// this typeclass is ever only used by Pow tests
 var generatableTypes = &typeclass{
 	name: "Generatable types",
 	set: []Dtype{
-		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64 /*Complex64, Complex128,*/, String,
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, String,
 	},
 }
 
@@ -276,6 +290,9 @@ func isUnsigned(dt Kinder) bool {
 }
 
 func typeclassCheck(a Dtype, tc *typeclass) error {
+	if tc == nil {
+		return nil
+	}
 	for _, s := range tc.set {
 		if s == a {
 			return nil

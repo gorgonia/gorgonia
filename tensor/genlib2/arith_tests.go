@@ -27,8 +27,9 @@ const (
 type ArithTest struct {
 	arithOp
 	scalars bool
-	funcOpt string
 	lvl     Level
+	FuncOpt string
+	EqFailTypeClassName string
 }
 
 func (fn *ArithTest) Signature() *Signature {
@@ -43,8 +44,8 @@ func (fn *ArithTest) Signature() *Signature {
 	if fn.scalars {
 		name += "Scalar"
 	}
-	if fn.funcOpt != "" {
-		name += "_" + fn.funcOpt
+	if fn.FuncOpt != "" {
+		name += "_" + fn.FuncOpt
 	}
 	return &Signature{
 		Name:           name,
@@ -96,10 +97,10 @@ func (fn *ArithTest) writeIdentity(w io.Writer) {
 		}
 
 	}
-	template.Must(t.New("funcoptdecl").Parse(funcOptDecl[fn.funcOpt]))
-	template.Must(t.New("funcoptcorrect").Parse(funcOptCorrect[fn.funcOpt]))
-	template.Must(t.New("funcoptuse").Parse(funcOptUse[fn.funcOpt]))
-	template.Must(t.New("funcoptcheck").Parse(funcOptCheck[fn.funcOpt]))
+	template.Must(t.New("funcoptdecl").Parse(funcOptDecl[fn.FuncOpt]))
+	template.Must(t.New("funcoptcorrect").Parse(funcOptCorrect[fn.FuncOpt]))
+	template.Must(t.New("funcoptuse").Parse(funcOptUse[fn.FuncOpt]))
+	template.Must(t.New("funcoptcheck").Parse(funcOptCheck[fn.FuncOpt]))
 
 	t.Execute(w, fn)
 }
@@ -134,10 +135,10 @@ func (fn *ArithTest) writeInv(w io.Writer) {
 		}
 	}
 
-	template.Must(t.New("funcoptdecl").Parse(funcOptDecl[fn.funcOpt]))
-	template.Must(t.New("funcoptcorrect").Parse(funcOptCorrect[fn.funcOpt]))
-	template.Must(t.New("funcoptuse").Parse(funcOptUse[fn.funcOpt]))
-	template.Must(t.New("funcoptcheck").Parse(funcOptCheck[fn.funcOpt]))
+	template.Must(t.New("funcoptdecl").Parse(funcOptDecl[fn.FuncOpt]))
+	template.Must(t.New("funcoptcorrect").Parse(funcOptCorrect[fn.FuncOpt]))
+	template.Must(t.New("funcoptuse").Parse(funcOptUse[fn.FuncOpt]))
+	template.Must(t.New("funcoptcheck").Parse(funcOptCheck[fn.FuncOpt]))
 
 	t.Execute(w, fn)
 }
@@ -157,6 +158,10 @@ func generateAPIArithTests(f io.Writer, ak Kinds) {
 		t := &ArithTest{
 			arithOp: op,
 			lvl:     API,
+			EqFailTypeClassName: "nil",
+		}
+		if t.name == "Pow"{
+			t.EqFailTypeClassName = "complexTypes"
 		}
 		tests = append(tests, t)
 	}
@@ -165,21 +170,21 @@ func generateAPIArithTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "unsafe"
+		fn.FuncOpt = "unsafe"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "reuse"
+		fn.FuncOpt = "reuse"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "incr"
+		fn.FuncOpt = "incr"
 	}
 
 	for _, fn := range tests {
@@ -196,6 +201,13 @@ func generateAPIArithScalarTests(f io.Writer, ak Kinds) {
 			arithOp: op,
 			scalars: true,
 			lvl:     API,
+			EqFailTypeClassName: "nil",
+		}
+		switch t.name{
+			case "Pow":
+				t.EqFailTypeClassName = "complexTypes"
+			case "Sub":
+				t.EqFailTypeClassName = "unsignedTypes"
 		}
 		tests = append(tests, t)
 	}
@@ -204,21 +216,21 @@ func generateAPIArithScalarTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "unsafe"
+		fn.FuncOpt = "unsafe"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "reuse"
+		fn.FuncOpt = "reuse"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "incr"
+		fn.FuncOpt = "incr"
 	}
 
 	for _, fn := range tests {
@@ -234,6 +246,10 @@ func generateDenseMethodArithTests(f io.Writer, ak Kinds) {
 		t := &ArithTest{
 			arithOp: op,
 			lvl:     Dense,
+			EqFailTypeClassName: "nil",
+		}
+		if t.name == "Pow"{
+			t.EqFailTypeClassName = "complexTypes"
 		}
 		tests = append(tests, t)
 	}
@@ -242,21 +258,21 @@ func generateDenseMethodArithTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "unsafe"
+		fn.FuncOpt = "unsafe"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "reuse"
+		fn.FuncOpt = "reuse"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "incr"
+		fn.FuncOpt = "incr"
 	}
 
 	for _, fn := range tests {
@@ -273,6 +289,13 @@ func generateDenseMethodScalarTests(f io.Writer, ak Kinds) {
 			arithOp: op,
 			scalars: true,
 			lvl:     Dense,
+			EqFailTypeClassName: "nil",
+		}
+		switch t.name{
+			case "Pow":
+				t.EqFailTypeClassName = "complexTypes"
+			case "Sub":
+				t.EqFailTypeClassName = "unsignedTypes"
 		}
 		tests = append(tests, t)
 	}
@@ -281,21 +304,21 @@ func generateDenseMethodScalarTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "unsafe"
+		fn.FuncOpt = "unsafe"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "reuse"
+		fn.FuncOpt = "reuse"
 	}
 
 	for _, fn := range tests {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
-		fn.funcOpt = "incr"
+		fn.FuncOpt = "incr"
 	}
 
 	for _, fn := range tests {
