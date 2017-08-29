@@ -26,16 +26,23 @@ const (
 	DenseMethodCallMixedbxaRaw = `bxa, err := a.{{.Name}}Scalar(b, false {{template "funcoptuse" . -}})`
 )
 
-const transitivityCheckRaw = `{{if eq .Level "API" -}}
-	ab := axb.(*Dense).Bools()
-	bc := bxc.(*Dense).Bools()
-	ac := axc.(*Dense).Bools()
+const transitivityCheckRaw = `{{if eq .FuncOpt "assame" -}}
+	if !threewayEq(axb.Data(), bxc.Data(), axc.Data()){
+		t.Errorf("axb.Data() %v", axb.Data())
+		t.Errorf("bxc.Data() %v", bxc.Data())
+		t.Errorf("axc.Data() %v", axc.Data())
+		return false
+	}
+{{else -}}
+	{{if eq .Level "API" -}}
+		ab := axb.(*Dense).Bools()
+		bc := bxc.(*Dense).Bools()
+		ac := axc.(*Dense).Bools()
 	{{else -}}
-	ab := axb.Bools()
-	bc := bxc.Bools()
-	ac := axc.Bools()
+		ab := axb.Bools()
+		bc := bxc.Bools()
+		ac := axc.Bools()
 	{{end -}}
-
 	for i, vab := range ab {
 		if vab && bc[i] {
 			if !ac[i]{
@@ -43,10 +50,12 @@ const transitivityCheckRaw = `{{if eq .Level "API" -}}
 			}
 		}
 	}
+{{end -}}
 `
 
 const transitivityBodyRaw = `transFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	a := q.Clone().(*Dense)
@@ -93,6 +102,7 @@ if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
 
 const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})	
+	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	a := q.Clone().(*Dense)
@@ -137,6 +147,7 @@ if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
 
 const symmetryBodyRaw = `symFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	a := q.Clone().(*Dense)
@@ -171,6 +182,7 @@ if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
 
 const symmetryMixedBodyRaw = `symFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	a := q.Clone().(*Dense)
@@ -360,7 +372,15 @@ func generateAPICmpTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
+		fn.FuncOpt = "assame"
+		fn.TypeClassName = "nonComplexNumberTypes"
 	}
+	// for _, fn := range tests {
+	// 	if fn.canWrite() {
+	// 		fn.Write(f)
+	// 	}
+	// }
+
 }
 
 func generateAPICmpMixedTests(f io.Writer, ak Kinds) {
@@ -380,7 +400,14 @@ func generateAPICmpMixedTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
+		fn.FuncOpt = "assame"
+		fn.TypeClassName = "nonComplexNumberTypes"
 	}
+	// for _, fn := range tests {
+	// 	if fn.canWrite() {
+	// 		fn.Write(f)
+	// 	}
+	// }
 }
 
 func generateDenseMethodCmpTests(f io.Writer, ak Kinds) {
@@ -399,7 +426,14 @@ func generateDenseMethodCmpTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
+		fn.FuncOpt = "assame"
+		fn.TypeClassName = "nonComplexNumberTypes"
 	}
+	// for _, fn := range tests {
+	// 	if fn.canWrite() {
+	// 		fn.Write(f)
+	// 	}
+	// }
 }
 
 func generateDenseMethodCmpMixedTests(f io.Writer, ak Kinds) {
@@ -419,5 +453,12 @@ func generateDenseMethodCmpMixedTests(f io.Writer, ak Kinds) {
 		if fn.canWrite() {
 			fn.Write(f)
 		}
+		fn.FuncOpt = "assame"
+		fn.TypeClassName = "nonComplexNumberTypes"
 	}
+	// for _, fn := range tests {
+	// 	if fn.canWrite() {
+	// 		fn.Write(f)
+	// 	}
+	// }
 }

@@ -60,6 +60,7 @@ var funcOptUse = map[string]string{
 	"reuse":  ",WithReuse(reuse)",
 	"incr":   ",WithIncr(incr)",
 	"unsafe": ",UseUnsafe()",
+	"assame": ", AsSameType()",
 }
 
 var funcOptCheck = map[string]string{
@@ -84,6 +85,10 @@ var funcOptDecl = map[string]string{
 	"reuse":  "reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))\n",
 	"incr":   "incr := New(Of(a.t), WithShape(a.Shape().Clone()...))\n",
 	"unsafe": "",
+	"assame": `if err := typeclassCheck(q.Dtype(), {{.TypeClassName}}); err != nil {
+		return true // we exit early if the generated type is not something we can handle
+	}
+	`,
 }
 
 var funcOptCorrect = map[string]string{

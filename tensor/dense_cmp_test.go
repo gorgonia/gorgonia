@@ -16,7 +16,6 @@ func TestDense_Gt(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -74,7 +73,6 @@ func TestDense_Gte(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -132,7 +130,6 @@ func TestDense_Lt(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -190,7 +187,6 @@ func TestDense_Lte(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -248,7 +244,6 @@ func TestDense_Eq(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -303,7 +298,6 @@ func TestDense_Eq(t *testing.T) {
 
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -338,7 +332,6 @@ func TestDense_Ne(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -373,7 +366,6 @@ func TestDense_GtScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -429,7 +421,6 @@ func TestDense_GteScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -485,7 +476,6 @@ func TestDense_LtScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -541,7 +531,6 @@ func TestDense_LteScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -597,7 +586,6 @@ func TestDense_EqScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -650,7 +638,6 @@ func TestDense_EqScalar(t *testing.T) {
 
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -683,7 +670,6 @@ func TestDense_NeScalar(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
-
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)

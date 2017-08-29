@@ -176,6 +176,181 @@ func identityVal(x int, dt Dtype) interface{} {
 		return x
 	}
 }
+func threewayEq(a, b, c interface{}) bool {
+	switch at := a.(type) {
+	case []int:
+		bt := b.([]int)
+		ct := c.([]int)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []int8:
+		bt := b.([]int8)
+		ct := c.([]int8)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []int16:
+		bt := b.([]int16)
+		ct := c.([]int16)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []int32:
+		bt := b.([]int32)
+		ct := c.([]int32)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []int64:
+		bt := b.([]int64)
+		ct := c.([]int64)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []uint:
+		bt := b.([]uint)
+		ct := c.([]uint)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []uint8:
+		bt := b.([]uint8)
+		ct := c.([]uint8)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []uint16:
+		bt := b.([]uint16)
+		ct := c.([]uint16)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []uint32:
+		bt := b.([]uint32)
+		ct := c.([]uint32)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []uint64:
+		bt := b.([]uint64)
+		ct := c.([]uint64)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []float32:
+		bt := b.([]float32)
+		ct := c.([]float32)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []float64:
+		bt := b.([]float64)
+		ct := c.([]float64)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []complex64:
+		bt := b.([]complex64)
+		ct := c.([]complex64)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	case []complex128:
+		bt := b.([]complex128)
+		ct := c.([]complex128)
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+	}
+
+	return false
+}
+
 func identityB(a bool) bool                                 { return a }
 func identityI(a int) int                                   { return a }
 func identityI8(a int8) int8                                { return a }

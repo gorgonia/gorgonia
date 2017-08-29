@@ -176,16 +176,36 @@ const identityValsRaw = `func identityVal(x int, dt Dtype) interface{} {
 	}
 }`
 
-const dataEqualityRaw = `
+const threewayEqualityRaw = `func threewayEq(a, b, c interface{}) bool {
+	switch at := a.(type){
+		{{range .Kinds -}}
+	case []{{asType .}}:
+		bt := b.([]{{asType .}})
+		ct := c.([]{{asType .}})
+
+		for i, va := range at {
+			if va == 1 && bt[i] == 1 {
+				if ct[i] != 1 {
+					return false
+				}
+			}
+		}
+		return true
+		{{end -}}
+	}
+
+	return false
+}
 `
 
 var (
-	anyToF64s   *template.Template
-	qcGen       *template.Template
-	testQC      *template.Template
-	identityFns *template.Template
-	mutateFns   *template.Template
-	identityVals *template.Template
+	anyToF64s        *template.Template
+	qcGen            *template.Template
+	testQC           *template.Template
+	identityFns      *template.Template
+	mutateFns        *template.Template
+	identityVals     *template.Template
+	threewayEquality *template.Template
 )
 
 func init() {
@@ -195,13 +215,17 @@ func init() {
 	identityFns = template.Must(template.New("identityFn").Funcs(funcs).Parse(identityFnsRaw))
 	mutateFns = template.Must(template.New("mutateFns").Funcs(funcs).Parse(mutateFnsRaw))
 	identityVals = template.Must(template.New("identityVal").Funcs(funcs).Parse(identityValsRaw))
+	threewayEquality = template.Must(template.New("threeway").Funcs(funcs).Parse(threewayEqualityRaw))
 }
 
 func generateTestUtils(f io.Writer, ak Kinds) {
 	anyToF64s.Execute(f, ak)
 	fmt.Fprintf(f, "\n")
-	ak2 := Kinds{Kinds:filter(ak.Kinds, isNonComplexNumber)}
+	ak2 := Kinds{Kinds: filter(ak.Kinds, isNonComplexNumber)}
 	identityVals.Execute(f, ak2)
+	fmt.Fprintf(f, "\n")
+	ak3 := Kinds{Kinds: filter(ak.Kinds, isNumber)}
+	threewayEquality.Execute(f, ak3)
 	fmt.Fprintf(f, "\n")
 	for _, k := range ak.Kinds {
 		if !isParameterized(k) {
