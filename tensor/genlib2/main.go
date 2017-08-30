@@ -2,11 +2,14 @@ package main
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 const genmsg = "GENERATED FILE. DO NOT EDIT"
@@ -27,19 +30,7 @@ func init() {
 }
 
 func main() {
-	// pipeline("test", "BLAH_1.go", Kinds{allKinds}, generateGenericVecVecArith)
-	// pipeline("test", "BLAH_2.go", Kinds{allKinds}, generateGenericMixedArith)
-	// pipeline("test", "BLAH_3.go", Kinds{allKinds}, generateEArith)
-	// pipeline("test", "BLAH_4.go", Kinds{allKinds}, generateGenericMap)
-	// pipeline("test", "BLAH_5.go", Kinds{allKinds}, generateMap)
-	// pipeline("test", "BLAH_6.go", Kinds{allKinds}, generateGenericVecVecCmp)
-	// pipeline("test", "BLAH_7.go", Kinds{allKinds}, generateGenericMixedCmp)
-	// pipeline("test", "BLAH_8.go", Kinds{allKinds}, generateMinMax)
-	// pipeline("test", "BLAH_9.go", Kinds{allKinds}, generateStdEngArith)
-	// pipeline("test", "BLAH_10.go", Kinds{allKinds}, generateDenseArith)
-	// pipeline("test", "BLAH_11.go", Kinds{allKinds}, generateGenericUncondUnary)
-	// pipeline("test", "BLAH_12.go", Kinds{allKinds}, generateGenericArgMethods)
-	// pipeline("test", "BLAH_14.go", Kinds{allKinds}, generateStdEngCmp)
+	pregenerate()
 
 	// storage
 	pipeline(storageLoc, "getset.go", Kinds{allKinds}, generateHeaderGetSet)
@@ -90,6 +81,7 @@ func main() {
 	pipeline(tensorPkgLoc, "dense_argmethods_test.go", Kinds{allKinds}, generateArgmethodsTests)
 	pipeline(tensorPkgLoc, "dense_getset_test.go", Kinds{allKinds}, generateDenseGetSetTests)
 
+	// qc-style tests
 	pipeline(tensorPkgLoc, "api_arith_generated_test.go", Kinds{allKinds}, generateAPIArithTests, generateAPIArithScalarTests)
 	pipeline(tensorPkgLoc, "dense_arith_test.go", Kinds{allKinds}, generateDenseMethodArithTests, generateDenseMethodScalarTests)
 	pipeline(tensorPkgLoc, "api_unary_generated_test.go", Kinds{allKinds}, generateAPIUnaryTests)
@@ -128,4 +120,36 @@ func pipeline(pkg, filename string, kinds Kinds, fns ...func(io.Writer, Kinds)) 
 	if err = cmd.Run(); err != nil {
 		log.Fatalf("Gofmt failed for %q", fullpath)
 	}
+}
+
+// pregenerate cleans up all files that were previously generated.
+func pregenerate() error {
+	if err := cleanup(storageLoc); err != nil {
+		return err
+	}
+	if err := cleanup(execLoc); err != nil {
+		return err
+	}
+	return cleanup(tensorPkgLoc)
+}
+
+func cleanup(loc string) error {
+	pattern := path.Join(loc, "*.go")
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return err
+	}
+	for _, m := range matches {
+		b, err := ioutil.ReadFile(m)
+		if err != nil {
+			return err
+		}
+		s := string(b)
+		if strings.Contains(s, genmsg) {
+			if err := os.Remove(m); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

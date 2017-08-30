@@ -8,7 +8,7 @@ import (
 )
 
 /*
-GENERATED FILE. DO NOT EDIT
+GENERATED FILE (ONCE). DO NOT EDIT
 */
 
 func AddI(a int, b int) int                         { return a + b }
