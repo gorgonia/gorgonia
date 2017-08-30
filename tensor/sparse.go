@@ -274,7 +274,7 @@ func (t *CS) Eq(other interface{}) bool {
 				return false
 			}
 		}
-		return t.array.Eq(ot.array)
+		return t.array.Eq(&ot.array)
 	}
 	return false
 }

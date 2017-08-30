@@ -247,7 +247,7 @@ func (fn *CmpTest) Signature() *Signature {
 	case API:
 		name = fmt.Sprintf("Test%s", fn.cmpOp.Name())
 	case Dense:
-		name = fmt.Sprintf("TestDense_%s", fn.cmpOp.Name())
+		name = fmt.Sprintf("TestDense_%s", fn.Name())
 	}
 	if fn.scalars {
 		name += "Scalar"

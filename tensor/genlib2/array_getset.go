@@ -90,7 +90,7 @@ func (a *array) Memset(x interface{}) error {
 
 const arrayEqRaw = ` // Eq checks that any two arrays are equal
 func (a array) Eq(other interface{}) bool {
-	if oa, ok := other.(array); ok {
+	if oa, ok := other.(*array); ok {
 		if oa.t != a.t {
 			return false
 		}

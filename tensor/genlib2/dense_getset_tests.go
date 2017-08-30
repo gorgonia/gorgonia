@@ -192,6 +192,26 @@ func TestDense_Zero(t *testing.T) {
 }
 `
 
+const denseEqTestRaw = `func TestDense_Eq(t *testing.T) {
+	eqFn := func(q *Dense) bool{
+		a := q.Clone().(*Dense)
+		if !q.Eq(a) {
+			t.Error("Expected a clone to be exactly equal")
+			return false
+		}
+		a.Zero()
+		if q.Eq(a)  && !(a.len() ==0 && a.Dtype() == Bool) {
+			t.Error("Expected *Dense to be not equal")
+			return false
+		}
+		return true
+	}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(eqFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Failed to perform equality checks")
+	}
+}`
+
 var (
 	GetTest    *template.Template
 	MemsetTest *template.Template
@@ -211,4 +231,5 @@ func generateDenseGetSetTests(f io.Writer, generic Kinds) {
 	MemsetTest.Execute(f, tests)
 	fmt.Fprintf(f, "\n\n")
 	ZeroTest.Execute(f, makeZeroTests(generic))
+	fmt.Fprintf(f, "\n%v\n", denseEqTestRaw)
 }

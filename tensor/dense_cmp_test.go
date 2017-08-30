@@ -240,7 +240,7 @@ func TestDense_Lte(t *testing.T) {
 	}
 
 }
-func TestDense_Eq(t *testing.T) {
+func TestDense_ElEq(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
@@ -328,7 +328,7 @@ func TestDense_Eq(t *testing.T) {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 }
-func TestDense_Ne(t *testing.T) {
+func TestDense_ElNe(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
@@ -598,7 +598,7 @@ func TestDense_Lte_assame(t *testing.T) {
 	}
 
 }
-func TestDense_Eq_assame(t *testing.T) {
+func TestDense_ElEq_assame(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
@@ -691,7 +691,7 @@ func TestDense_Eq_assame(t *testing.T) {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 }
-func TestDense_Ne_assame(t *testing.T) {
+func TestDense_ElNe_assame(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
@@ -948,7 +948,7 @@ func TestDense_LteScalar(t *testing.T) {
 	}
 
 }
-func TestDense_EqScalar(t *testing.T) {
+func TestDense_ElEqScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
@@ -1032,7 +1032,7 @@ func TestDense_EqScalar(t *testing.T) {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 }
-func TestDense_NeScalar(t *testing.T) {
+func TestDense_ElNeScalar(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)

@@ -544,7 +544,7 @@ func (t *Dense) Eq(other interface{}) bool {
 		if !t.Shape().Eq(ot.Shape()) {
 			return false
 		}
-		return t.array.Eq(ot.array)
+		return t.array.Eq(&ot.array)
 	}
 	return false
 }
