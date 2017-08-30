@@ -192,6 +192,15 @@ const threewayEqualityRaw = `func threewayEq(a, b, c interface{}) bool {
 		}
 		return true
 		{{end -}}
+		{{range .Kinds -}}
+	case {{asType .}}:
+		bt := b.({{asType .}})
+		ct := c.({{asType .}})
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+		{{end -}}
 	}
 
 	return false

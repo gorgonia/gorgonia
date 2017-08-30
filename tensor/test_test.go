@@ -346,6 +346,104 @@ func threewayEq(a, b, c interface{}) bool {
 			}
 		}
 		return true
+	case int:
+		bt := b.(int)
+		ct := c.(int)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case int8:
+		bt := b.(int8)
+		ct := c.(int8)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case int16:
+		bt := b.(int16)
+		ct := c.(int16)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case int32:
+		bt := b.(int32)
+		ct := c.(int32)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case int64:
+		bt := b.(int64)
+		ct := c.(int64)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case uint:
+		bt := b.(uint)
+		ct := c.(uint)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case uint8:
+		bt := b.(uint8)
+		ct := c.(uint8)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case uint16:
+		bt := b.(uint16)
+		ct := c.(uint16)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case uint32:
+		bt := b.(uint32)
+		ct := c.(uint32)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case uint64:
+		bt := b.(uint64)
+		ct := c.(uint64)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case float32:
+		bt := b.(float32)
+		ct := c.(float32)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case float64:
+		bt := b.(float64)
+		ct := c.(float64)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case complex64:
+		bt := b.(complex64)
+		ct := c.(complex64)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
+	case complex128:
+		bt := b.(complex128)
+		ct := c.(complex128)
+		if (at == 1 && bt == 1) && ct != 1 {
+			return false
+		}
+		return true
 	}
 
 	return false

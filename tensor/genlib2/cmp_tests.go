@@ -28,6 +28,9 @@ const (
 
 const transitivityCheckRaw = `{{if eq .FuncOpt "assame" -}}
 	if !threewayEq(axb.Data(), bxc.Data(), axc.Data()){
+		t.Errorf("a: %-v", a)
+		t.Errorf("b: %-v", b)
+		t.Errorf("c: %-v", c)
 		t.Errorf("axb.Data() %v", axb.Data())
 		t.Errorf("bxc.Data() %v", bxc.Data())
 		t.Errorf("axc.Data() %v", axc.Data())
@@ -375,11 +378,11 @@ func generateAPICmpTests(f io.Writer, ak Kinds) {
 		fn.FuncOpt = "assame"
 		fn.TypeClassName = "nonComplexNumberTypes"
 	}
-	// for _, fn := range tests {
-	// 	if fn.canWrite() {
-	// 		fn.Write(f)
-	// 	}
-	// }
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
 
 }
 
@@ -429,11 +432,11 @@ func generateDenseMethodCmpTests(f io.Writer, ak Kinds) {
 		fn.FuncOpt = "assame"
 		fn.TypeClassName = "nonComplexNumberTypes"
 	}
-	// for _, fn := range tests {
-	// 	if fn.canWrite() {
-	// 		fn.Write(f)
-	// 	}
-	// }
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
 }
 
 func generateDenseMethodCmpMixedTests(f io.Writer, ak Kinds) {
