@@ -200,7 +200,10 @@ const denseEqTestRaw = `func TestDense_Eq(t *testing.T) {
 			return false
 		}
 		a.Zero()
-		if q.Eq(a)  && !(a.len() ==1 && a.Dtype() == Bool) {
+
+		// a.len() < 10 is used because there are only 2 possibilities for Bool. Therefore it's extremely likely
+		// that q and a are the same AFTER zeroing out.
+		if q.Eq(a)  && !((a.len() < 10 || a.IsScalar()) && a.Dtype() == Bool) {
 			t.Errorf("a %v", a.Data())
 			t.Errorf("q %v", q.Data())
 			t.Error("Expected *Dense to be not equal")

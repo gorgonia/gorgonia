@@ -201,8 +201,6 @@ var boolsPool = make(chan []bool, PoolSize)
 
 // var boolsPool [PoolSize]sync.Pool
 
-var check bool
-
 // BorrowInts borrows a slice of ints from the pool. USE WITH CAUTION.
 func BorrowInts(size int) []int {
 	if size > 8 {

@@ -94,17 +94,6 @@ func assertDense(t Tensor) (*Dense, error) {
 	return nil, errors.Errorf("%T is not *Dense", t)
 }
 
-// typed nils return errror too
-func assertDenseTensor(t Tensor) error {
-	if t == nil {
-		return errors.New("nil is not a valid DenseTensor")
-	}
-	if _, ok := t.(DenseTensor); ok {
-		return nil
-	}
-	return errors.Errorf("%T is not a DenseTensor", t)
-}
-
 func getDenseTensor(t Tensor) (DenseTensor, error) {
 	switch tt := t.(type) {
 	case DenseTensor:

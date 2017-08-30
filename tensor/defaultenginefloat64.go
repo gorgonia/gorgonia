@@ -27,12 +27,6 @@ func handleFuncOptsF64(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe
 	toReuse = reuseT != nil
 
 	if toReuse {
-		// if reuse != nil && !reuse.IsNativelyAccessible() {
-		// 	returnOpOpt(fo)
-		// 	err = errors.Errorf(inaccessibleData, reuse)
-		// 	return
-		// }
-
 		var ok bool
 		if reuse, ok = reuseT.(DenseTensor); !ok {
 			returnOpOpt(fo)
