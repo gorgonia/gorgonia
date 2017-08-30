@@ -1,7 +1,10 @@
 package tensor
 
 import (
+	"math/rand"
 	"testing"
+	"testing/quick"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -405,5 +408,100 @@ func TestInvSqrt(t *testing.T) {
 		}
 		assert.Equal(ist.correct, T.Data())
 		assert.Equal(ist.correct, ist.a) // ensure a has been clobbered
+	}
+}
+
+func TestInv(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Inv(a)
+		if err, retEarly := qcErrCheck(t, "Inv", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		Mul(ret, a, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Inv failed: %v", err)
+	}
+}
+
+func TestLog10(t *testing.T) {
+	var r *rand.Rand
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Log10(a)
+		if err, retEarly := qcErrCheck(t, "Log10", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		ten := identityVal(10, a.Dtype())
+		Pow(ten, ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Log10 failed: %v", err)
+	}
+}
+
+func TestAbs(t *testing.T) {
+	var r *rand.Rand
+	absFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		zeros := New(Of(q.Dtype()), WithShape(q.Shape().Clone()...))
+		correct := New(Of(Bool), WithShape(q.Shape().Clone()...))
+		correct.Memset(true)
+		// we'll exclude everything other than ordtypes because complex numbers cannot be abs'd
+		if err := typeclassCheck(a.Dtype(), ordTypes); err != nil {
+			return true
+		}
+		we, willFailEq := willerr(a, signedTypes, nil)
+		ret, err := Abs(a)
+		if err, retEarly := qcErrCheck(t, "Abs", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		check, _ := Gte(ret, zeros)
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), check.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(absFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Abs failed: %v", err)
 	}
 }
