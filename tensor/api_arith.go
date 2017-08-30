@@ -256,6 +256,20 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	return nil, errors.New("Neither x's nor y's engines support Dot")
 }
 
+// FMA performs Y = A * X + Y.
+func FMA(a, x, y Tensor) (retVal Tensor, err error) {
+	if e, ok := a.Engine().(FMAer); ok {
+		e.FMA(a, x, y)
+	}
+	if e, ok := x.Engine().(FMAer); ok {
+		e.FMA(a, x, y)
+	}
+	if e, ok := y.Engine().(FMAer); ok {
+		e.FMA(a, x, y)
+	}
+	return Mul(a, x, WithIncr(y))
+}
+
 // MatMul performs matrix-matrix multiplication between two Tensors
 func MatMul(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if a.Dtype() != b.Dtype() {
