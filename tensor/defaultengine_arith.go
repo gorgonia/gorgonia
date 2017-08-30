@@ -50,6 +50,7 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.AddIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
+
 		return
 	}
 	switch {
@@ -73,6 +74,7 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Add(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
+
 	return
 }
 
@@ -117,6 +119,7 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.SubIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
+
 		return
 	}
 	switch {
@@ -140,6 +143,7 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Sub(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
+
 	return
 }
 
@@ -184,6 +188,7 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.MulIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
+
 		return
 	}
 	switch {
@@ -207,6 +212,7 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Mul(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
+
 	return
 }
 
@@ -251,6 +257,7 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.DivIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
+
 		return
 	}
 	switch {
@@ -274,6 +281,7 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Div(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
+
 	return
 }
 
@@ -318,6 +326,7 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.PowIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
+
 		return
 	}
 	switch {
@@ -341,6 +350,7 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Pow(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
+
 	return
 }
 
@@ -385,6 +395,7 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			err = e.E.ModIter(typ, ret.hdr(), dataB, ait, bit)
 			retVal = ret.(Tensor)
 		}
+
 		return
 	}
 	switch {
@@ -408,6 +419,7 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 		err = e.E.Mod(typ, ret.hdr(), dataB)
 		retVal = ret.(Tensor)
 	}
+
 	return
 }
 
@@ -424,17 +436,19 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
-	var dataA, dataB, dataReuse *storage.Header
+	var dataA, dataB, dataReuse, scalarHeader *storage.Header
 	var useIter bool
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Add")
 		}
+		scalarHeader = dataB
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Add")
 		}
+		scalarHeader = dataA
 	}
 
 	if useIter {
@@ -466,6 +480,7 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			}
 			retVal = ret.(Tensor)
 		}
+		returnHeader(scalarHeader)
 		return
 	}
 	switch {
@@ -492,6 +507,7 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		}
 		retVal = ret.(Tensor)
 	}
+	returnHeader(scalarHeader)
 	return
 }
 
@@ -508,17 +524,19 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
-	var dataA, dataB, dataReuse *storage.Header
+	var dataA, dataB, dataReuse, scalarHeader *storage.Header
 	var useIter bool
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Sub")
 		}
+		scalarHeader = dataB
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Sub")
 		}
+		scalarHeader = dataA
 	}
 
 	if useIter {
@@ -550,6 +568,7 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			}
 			retVal = ret.(Tensor)
 		}
+		returnHeader(scalarHeader)
 		return
 	}
 	switch {
@@ -576,6 +595,7 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		}
 		retVal = ret.(Tensor)
 	}
+	returnHeader(scalarHeader)
 	return
 }
 
@@ -592,17 +612,19 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
-	var dataA, dataB, dataReuse *storage.Header
+	var dataA, dataB, dataReuse, scalarHeader *storage.Header
 	var useIter bool
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Mul")
 		}
+		scalarHeader = dataB
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Mul")
 		}
+		scalarHeader = dataA
 	}
 
 	if useIter {
@@ -634,6 +656,7 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			}
 			retVal = ret.(Tensor)
 		}
+		returnHeader(scalarHeader)
 		return
 	}
 	switch {
@@ -660,6 +683,7 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		}
 		retVal = ret.(Tensor)
 	}
+	returnHeader(scalarHeader)
 	return
 }
 
@@ -676,17 +700,19 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
-	var dataA, dataB, dataReuse *storage.Header
+	var dataA, dataB, dataReuse, scalarHeader *storage.Header
 	var useIter bool
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Div")
 		}
+		scalarHeader = dataB
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Div")
 		}
+		scalarHeader = dataA
 	}
 
 	if useIter {
@@ -718,6 +744,7 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			}
 			retVal = ret.(Tensor)
 		}
+		returnHeader(scalarHeader)
 		return
 	}
 	switch {
@@ -744,6 +771,7 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		}
 		retVal = ret.(Tensor)
 	}
+	returnHeader(scalarHeader)
 	return
 }
 
@@ -760,17 +788,19 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
-	var dataA, dataB, dataReuse *storage.Header
+	var dataA, dataB, dataReuse, scalarHeader *storage.Header
 	var useIter bool
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Pow")
 		}
+		scalarHeader = dataB
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Pow")
 		}
+		scalarHeader = dataA
 	}
 
 	if useIter {
@@ -802,6 +832,7 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			}
 			retVal = ret.(Tensor)
 		}
+		returnHeader(scalarHeader)
 		return
 	}
 	switch {
@@ -828,6 +859,7 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		}
 		retVal = ret.(Tensor)
 	}
+	returnHeader(scalarHeader)
 	return
 }
 
@@ -844,17 +876,19 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	a := t
 	typ := t.Dtype().Type
 	var ait, bit, iit Iterator
-	var dataA, dataB, dataReuse *storage.Header
+	var dataA, dataB, dataReuse, scalarHeader *storage.Header
 	var useIter bool
 
 	if leftTensor {
 		if dataA, dataB, dataReuse, ait, iit, useIter, err = prepDataVS(t, s, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Mod")
 		}
+		scalarHeader = dataB
 	} else {
 		if dataA, dataB, dataReuse, bit, iit, useIter, err = prepDataSV(s, t, reuse); err != nil {
 			return nil, errors.Wrapf(err, opFail, "StdEng.Mod")
 		}
+		scalarHeader = dataA
 	}
 
 	if useIter {
@@ -886,6 +920,7 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 			}
 			retVal = ret.(Tensor)
 		}
+		returnHeader(scalarHeader)
 		return
 	}
 	switch {
@@ -912,5 +947,6 @@ func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		}
 		retVal = ret.(Tensor)
 	}
+	returnHeader(scalarHeader)
 	return
 }

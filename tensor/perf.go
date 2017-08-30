@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"runtime"
 	"sync"
 
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
@@ -41,17 +42,23 @@ func borrowHeader() *storage.Header {
 	case hdr := <-headerPool:
 		return hdr
 	default:
-		return new(storage.Header)
+		hdr := new(storage.Header)
+		runtime.SetFinalizer(hdr, destroyHeader)
+		return hdr
 	}
 }
 
 func returnHeader(hdr *storage.Header) {
-	hdr.Ptr = nil
-	hdr.L = 0
-	hdr.C = 0
+	destroyHeader(hdr)
 	if len(headerPool) < cap(headerPool) {
 		headerPool <- hdr
 	}
+}
+
+func destroyHeader(hdr *storage.Header) {
+	hdr.Ptr = nil
+	hdr.L = 0
+	hdr.C = 0
 }
 
 var densePool = make(chan *Dense, PoolSize)

@@ -361,14 +361,54 @@ func copyDenseIter(dst, src DenseTensor, diter, siter Iterator) (int, error) {
 	return storage.CopyIter(dst.rtype(), dst.hdr(), src.hdr(), diter, siter), nil
 }
 
-func extractPointer(a interface{}) unsafe.Pointer {
-	return ((*[2]unsafe.Pointer)(unsafe.Pointer(&a)))[1]
+func getPointer(a interface{}) unsafe.Pointer {
+	switch at := a.(type) {
+	case Memory:
+		return at.Pointer()
+	case bool:
+		return unsafe.Pointer(&at)
+	case int:
+		return unsafe.Pointer(&at)
+	case int8:
+		return unsafe.Pointer(&at)
+	case int16:
+		return unsafe.Pointer(&at)
+	case int32:
+		return unsafe.Pointer(&at)
+	case int64:
+		return unsafe.Pointer(&at)
+	case uint:
+		return unsafe.Pointer(&at)
+	case uint8:
+		return unsafe.Pointer(&at)
+	case uint16:
+		return unsafe.Pointer(&at)
+	case uint32:
+		return unsafe.Pointer(&at)
+	case uint64:
+		return unsafe.Pointer(&at)
+	case float32:
+		return unsafe.Pointer(&at)
+	case float64:
+		return unsafe.Pointer(&at)
+	case complex64:
+		return unsafe.Pointer(&at)
+	case complex128:
+		return unsafe.Pointer(&at)
+	case string:
+		return unsafe.Pointer(&at)
+	case uintptr:
+		return unsafe.Pointer(&at)
+	case unsafe.Pointer:
+		return at
+	}
+	panic("Cannot get pointer")
 }
 
 func scalarToHeader(a interface{}) *storage.Header {
-	return &storage.Header{
-		Ptr: extractPointer(a),
-		L:   1,
-		C:   1,
-	}
+	hdr := borrowHeader()
+	hdr.Ptr = getPointer(a)
+	hdr.L = 1
+	hdr.C = 1
+	return hdr
 }
