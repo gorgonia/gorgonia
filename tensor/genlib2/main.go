@@ -70,16 +70,22 @@ func main() {
 	// level 4 aggregation
 	pipeline(tensorPkgLoc, "api_unary.go", Kinds{allKinds}, generateUncondUnaryAPI, generateCondUnaryAPI, generateSpecialUnaryAPI)
 
-	// dense methods
+	// dense methods (old genlib style)
 	pipeline(tensorPkgLoc, "dense_generated.go", Kinds{allKinds}, generateDenseConstructionFns)
 	pipeline(tensorPkgLoc, "dense_io.go", Kinds{allKinds}, generateDenseIO)
 	pipeline(tensorPkgLoc, "dense_compat.go", Kinds{allKinds}, generateDenseCompat)
+	pipeline(tensorPkgLoc, "dense_maskcmp_methods.go", Kinds{allKinds}, generateDenseMaskedMethods)
 
 	// tests
 	pipeline(tensorPkgLoc, "test_test.go", Kinds{allKinds}, generateTestUtils)
-	pipeline(tensorPkgLoc, "dense_reduction_test.go", Kinds{allKinds}, generateDenseReductionTests)
 	pipeline(tensorPkgLoc, "dense_argmethods_test.go", Kinds{allKinds}, generateArgmethodsTests)
 	pipeline(tensorPkgLoc, "dense_getset_test.go", Kinds{allKinds}, generateDenseGetSetTests)
+
+	// old-genlib style tests
+	pipeline(tensorPkgLoc, "dense_reduction_test.go", Kinds{allKinds}, generateDenseReductionTests, generateDenseReductionMethodsTests)
+	pipeline(tensorPkgLoc, "dense_compat_test.go", Kinds{allKinds}, generateDenseCompatTests)
+	pipeline(tensorPkgLoc, "dense_generated_test.go", Kinds{allKinds}, generateDenseConsTests)
+	pipeline(tensorPkgLoc, "dense_maskcmp_methods_test.go", Kinds{allKinds}, generateMaskCmpMethodsTests)
 
 	// qc-style tests
 	pipeline(tensorPkgLoc, "api_arith_generated_test.go", Kinds{allKinds}, generateAPIArithTests, generateAPIArithScalarTests)

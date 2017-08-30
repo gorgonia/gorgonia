@@ -89,7 +89,7 @@ func TestFromMat64(t *testing.T) {
 		m = mat64.NewDense(2, 3, backing)
 		T = FromMat64(m)
 		conv := anyToFloat64s(tmt.data)
-		assert.Equal(conv, T.Data(), "test %d: []float64 from %v", i, tmt.dt)
+		assert.Equal(conv, T.Float64s(), "test %d: []float64 from %v", i, tmt.dt)
 		assert.True(T.Shape().Eq(tmt.shape))
 
 		T = FromMat64(m, As(tmt.dt))
