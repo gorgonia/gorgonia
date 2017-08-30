@@ -5,9 +5,7 @@ import "github.com/pkg/errors"
 // Trace returns the trace of the matrix (i.e. the sum of the diagonal elements). It only works for matrices
 func (t *Dense) Trace() (retVal interface{}, err error) {
 	e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
+
 	if tracer, ok := e.(Tracer); ok {
 		return tracer.Trace(t)
 	}
@@ -33,9 +31,6 @@ func (t *Dense) Inner(other Tensor) (retVal interface{}, err error) {
 	}
 
 	e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
 
 	if ip, ok := e.(InnerProder); ok {
 		return ip.Inner(t, other)
@@ -90,9 +85,6 @@ func (t *Dense) MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err err
 	}
 
 	e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
 
 	if mvm, ok := e.(MatVecMuler); ok {
 		if err = mvm.MatVecMul(t, other, retVal); err != nil {
@@ -139,9 +131,6 @@ func (t *Dense) MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 	}
 
 	e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
 
 	if mm, ok := e.(MatMuler); ok {
 		if err = mm.MatMul(t, other, retVal); err != nil {
@@ -179,9 +168,7 @@ func (t *Dense) Outer(other Tensor, opts ...FuncOpt) (retVal *Dense, err error) 
 	}
 
 	e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
+
 	// DGER does not have any beta. So the values have to be zeroed first if the tensor is to be reused
 	retVal.Zero()
 	if op, ok := e.(OuterProder); ok {
@@ -350,9 +337,7 @@ func (t *Dense) TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err 
 // In the future, when gonum/lapack fully supports float32, we'll look into rewriting this
 func (t *Dense) SVD(uv, full bool) (s, u, v *Dense, err error) {
 	e := t.Engine()
-	if e == nil {
-		e = StdEng{}
-	}
+
 	if svder, ok := e.(SVDer); ok {
 		var sT, uT, vT Tensor
 		if sT, uT, vT, err = svder.SVD(t, uv, full); err != nil {

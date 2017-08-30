@@ -45,9 +45,7 @@ func (t *Dense) Transpose() error {
 
 	// actually move data
 	var e Engine = t.e
-	if e == nil {
-		e = StdEng{}
-	}
+
 	transposer, ok := e.(Transposer)
 	if !ok {
 		return errors.Errorf("Engine does not support Transpose()")
@@ -60,9 +58,7 @@ func (t *Dense) Transpose() error {
 // Just like NumPy, the repeats param is broadcasted to fit the size of the given axis.
 func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 	e := t.Engine()
-	if e == nil {
-		e = StdEng{}
-	}
+
 	if rp, ok := e.(Repeater); ok {
 		return rp.Repeat(t, axis, repeats...)
 	}
@@ -72,9 +68,7 @@ func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
 // Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
 func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
 	e := t.Engine()
-	if e == nil {
-		e = StdEng{}
-	}
+
 	if c, ok := e.(Concater); ok {
 		var ret Tensor
 		others := densesToTensors(Ts)
@@ -123,9 +117,6 @@ func (t *Dense) Vstack(others ...*Dense) (*Dense, error) {
 // Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
 func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
 	e := t.Engine()
-	if e == nil {
-		e = StdEng{}
-	}
 
 	if ds, ok := e.(DenseStacker); ok {
 		var ret DenseTensor

@@ -7,9 +7,6 @@ import "github.com/pkg/errors"
 // Argmax finds the index of the max value along the axis provided
 func (t *Dense) Argmax(axis int) (retVal *Dense, err error) {
 	e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
 	switch am := e.(type) {
 	case denseArgmaxer:
 		return am.argmaxDenseTensor(t, axis)
@@ -32,9 +29,6 @@ func (t *Dense) Argmax(axis int) (retVal *Dense, err error) {
 // Argmin finds the index of the min value along the axis provided
 func (t *Dense) Argmin(axis int) (retVal *Dense, err error) {
 	e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
 	switch am := e.(type) {
 	case denseArgminer:
 		return am.argminDenseTensor(t, axis)

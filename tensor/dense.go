@@ -62,19 +62,6 @@ func recycledDenseNoFix(dt Dtype, shape Shape, opts ...ConsOpt) (retVal *Dense) 
 	return
 }
 
-func newDense(dt Dtype, size int) *Dense {
-	d := borrowDense()
-	d.t = dt
-	d.t = dt
-	d.AP = borrowAP()
-	d.setShape(size)
-	d.fix()
-	if err := d.sanity(); err != nil {
-		panic(err)
-	}
-	return d
-}
-
 func (t *Dense) fromSlice(x interface{}) {
 	t.array.Ptr = nil
 	t.array.v = nil

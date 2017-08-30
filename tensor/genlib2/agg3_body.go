@@ -5,9 +5,6 @@ import "text/template"
 // 3rd level function aggregation templates
 
 const denseArithBodyRaw = `e := t.e
-if e == nil {
-	e = StdEng{}
-}
 {{$elne := eq .Name "Ne"}}
 {{$eleq := eq .Name "Eq"}}
 {{$eleqne := or $eleq $elne}}
@@ -27,10 +24,6 @@ return  nil, errors.Errorf("Engine does not support {{.Name}}()")
 `
 
 const denseArithScalarBodyRaw = `e := t.e
-	if e == nil {
-		e = StdEng{}
-	}
-
 	if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
 		var ret Tensor
 		if ret, err = {{interfaceName .Name | lower}}.{{.Name}}Scalar(t, other, leftTensor, opts...); err != nil {
