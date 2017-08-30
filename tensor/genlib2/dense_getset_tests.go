@@ -200,7 +200,9 @@ const denseEqTestRaw = `func TestDense_Eq(t *testing.T) {
 			return false
 		}
 		a.Zero()
-		if q.Eq(a)  && !(a.len() ==0 && a.Dtype() == Bool) {
+		if q.Eq(a)  && !(a.len() ==1 && a.Dtype() == Bool) {
+			t.Errorf("a %v", a.Data())
+			t.Errorf("q %v", q.Data())
 			t.Error("Expected *Dense to be not equal")
 			return false
 		}

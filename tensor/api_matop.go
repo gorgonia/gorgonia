@@ -23,6 +23,7 @@ func T(t Tensor, axes ...int) (retVal Tensor, err error) {
 	panic("Unreachable")
 }
 
+// Transpose performs transposition of a tensor according to its axes.
 func Transpose(t Tensor, axes ...int) (retVal Tensor, err error) {
 	switch tt := t.(type) {
 	case *Dense:

@@ -11,45 +11,31 @@ func cloneArray(a interface{}) interface{} {
 	switch at := a.(type) {
 	case []float64:
 		retVal := make([]float64, len(at))
-		for i, v := range at {
-			retVal[i] = v
-		}
+		copy(retVal, at)
 		return retVal
 	case []float32:
 		retVal := make([]float32, len(at))
-		for i, v := range at {
-			retVal[i] = v
-		}
+		copy(retVal, at)
 		return retVal
 	case []int:
 		retVal := make([]int, len(at))
-		for i, v := range at {
-			retVal[i] = v
-		}
+		copy(retVal, at)
 		return retVal
 	case []int64:
 		retVal := make([]int64, len(at))
-		for i, v := range at {
-			retVal[i] = v
-		}
+		copy(retVal, at)
 		return retVal
 	case []int32:
 		retVal := make([]int32, len(at))
-		for i, v := range at {
-			retVal[i] = v
-		}
+		copy(retVal, at)
 		return retVal
 	case []byte:
 		retVal := make([]byte, len(at))
-		for i, v := range at {
-			retVal[i] = v
-		}
+		copy(retVal, at)
 		return retVal
 	case []bool:
 		retVal := make([]bool, len(at))
-		for i, v := range at {
-			retVal[i] = v
-		}
+		copy(retVal, at)
 		return retVal
 	}
 	return nil

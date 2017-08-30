@@ -151,12 +151,12 @@ func (t *Dense) ScalarValue() interface{} {
 	return t.Get(0)
 }
 
-//  IsView indicates if the Tensor is a view of another (typically from slicing)
+// IsView indicates if the Tensor is a view of another (typically from slicing)
 func (t *Dense) IsView() bool {
 	return t.viewOf != 0
 }
 
-// IsMaterializeable() indicates if the Tensor is materializable - if it has either gone through some transforms or slicing
+// IsMaterializeable indicates if the Tensor is materializable - if it has either gone through some transforms or slicing
 func (t *Dense) IsMaterializable() bool {
 	return t.viewOf != 0 || t.old != nil
 }

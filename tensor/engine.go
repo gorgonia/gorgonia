@@ -74,7 +74,7 @@ type Adder interface {
 	AddScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
-// Subber is any engine that can perform elementwise subtraction.
+// Suber is any engine that can perform elementwise subtraction.
 type Suber interface {
 	// Sub performs a - b
 	Sub(a, b Tensor, opts ...FuncOpt) (Tensor, error)
@@ -84,7 +84,7 @@ type Suber interface {
 	SubScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
-// Mul is any engine that can perform elementwise multiplication.
+// Muler is any engine that can perform elementwise multiplication.
 // For matrix multiplication, an engine should implement MatMul() or MatVecMul() or Inner()
 type Muler interface {
 	// Mul performs a * b
@@ -164,21 +164,25 @@ type SVDer interface {
 
 /* ORD INTERFACES */
 
+// Lter is any engine that can perform the Lt operation.
 type Lter interface {
 	Lt(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	LtScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
+// Lteer is any engine that can perform the Lte operation.
 type Lteer interface {
 	Lte(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	LteScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
+// Gter is any engine that can perform the Gt operation.
 type Gter interface {
 	Gt(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	GtScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
 }
 
+// Gteer is any engine that can perform the Gte operation.
 type Gteer interface {
 	Gte(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	GteScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
@@ -186,6 +190,7 @@ type Gteer interface {
 
 /* EQ INTERFACES */
 
+// ElEqer is any engine that can perform the elementwise equality comparison operation.
 type ElEqer interface {
 	ElEq(a, b Tensor, opts ...FuncOpt) (Tensor, error)
 	EqScalar(a Tensor, b interface{}, leftTensor bool, opts ...FuncOpt) (Tensor, error)
@@ -196,6 +201,7 @@ type ElEqer interface {
 
 /* Unary Operators for Numbers */
 
+// Mapper is any engine that can map a function onto the values of a tensor.
 type Mapper interface {
 	Map(fn interface{}, a Tensor, opts ...FuncOpt) (Tensor, error)
 }

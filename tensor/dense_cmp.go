@@ -6,6 +6,10 @@ import "github.com/pkg/errors"
 GENERATED FILE. DO NOT EDIT
 */
 
+// Gt performs t > other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Gt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -23,6 +27,10 @@ func (t *Dense) Gt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Gt()")
 }
 
+// Gte performs t ≥ other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Gte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -40,6 +48,10 @@ func (t *Dense) Gte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Gte()")
 }
 
+// Lt performs t < other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Lt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -57,6 +69,10 @@ func (t *Dense) Lt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Lt()")
 }
 
+// Lte performs t ≤ other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Lte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -74,6 +90,10 @@ func (t *Dense) Lte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Lte()")
 }
 
+// ElEq performs t == other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElEq(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -91,6 +111,10 @@ func (t *Dense) ElEq(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Eq()")
 }
 
+// ElNe performs t ≠ other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElNe(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -108,6 +132,10 @@ func (t *Dense) ElNe(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Ne()")
 }
 
+// GtScalar performs t > other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) GtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if gter, ok := e.(Gter); ok {
@@ -124,6 +152,10 @@ func (t *Dense) GtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 	return nil, errors.Errorf("Engine does not support GtScalar()")
 }
 
+// GteScalar performs t ≥ other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) GteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if gteer, ok := e.(Gteer); ok {
@@ -140,6 +172,10 @@ func (t *Dense) GteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 	return nil, errors.Errorf("Engine does not support GteScalar()")
 }
 
+// LtScalar performs t < other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) LtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if lter, ok := e.(Lter); ok {
@@ -156,6 +192,10 @@ func (t *Dense) LtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 	return nil, errors.Errorf("Engine does not support LtScalar()")
 }
 
+// LteScalar performs t ≤ other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) LteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if lteer, ok := e.(Lteer); ok {
@@ -172,6 +212,10 @@ func (t *Dense) LteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 	return nil, errors.Errorf("Engine does not support LteScalar()")
 }
 
+// EqScalar performs t == other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if eleqer, ok := e.(ElEqer); ok {
@@ -188,6 +232,10 @@ func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 	return nil, errors.Errorf("Engine does not support EqScalar()")
 }
 
+// NeScalar performs t ≠ other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElNeScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if eleqer, ok := e.(ElEqer); ok {

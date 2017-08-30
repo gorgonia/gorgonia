@@ -67,6 +67,21 @@ func (fn *EngineArith) WriteBody(w io.Writer) {
 }
 
 func (fn *EngineArith) Write(w io.Writer) {
+	if tmpl, ok := arithDocStrings[fn.methName()]; ok {
+		type tmp struct {
+			Left, Right string
+		}
+		var ds tmp
+		if fn.VV {
+			ds.Left = "a"
+			ds.Right = "b"
+		} else {
+			ds.Left = "t"
+			ds.Right = "s"
+		}
+		tmpl.Execute(w, ds)
+	}
+
 	sig := fn.Signature()
 	w.Write([]byte("func (e StdEng) "))
 	sig.Write(w)
@@ -164,6 +179,20 @@ func (fn *EngineCmp) WriteBody(w io.Writer) {
 }
 
 func (fn *EngineCmp) Write(w io.Writer) {
+	if tmpl, ok := cmpDocStrings[fn.methName()]; ok {
+		type tmp struct {
+			Left, Right string
+		}
+		var ds tmp
+		if fn.VV {
+			ds.Left = "a"
+			ds.Right = "b"
+		} else {
+			ds.Left = "t"
+			ds.Right = "s"
+		}
+		tmpl.Execute(w, ds)
+	}
 	sig := fn.Signature()
 	w.Write([]byte("func (e StdEng) "))
 	sig.Write(w)

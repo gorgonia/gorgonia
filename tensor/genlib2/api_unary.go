@@ -32,7 +32,7 @@ func (fn *APIUnary) Signature() *Signature {
 }
 
 func (fn *APIUnary) WriteBody(w io.Writer) {
-	body := `var e Engine = a.Engine()
+	body := `e := a.Engine()
 	if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
 		{{if eq .Name "Clamp" -}}
 		return clamper.Clamp(a, min, max, opts...)

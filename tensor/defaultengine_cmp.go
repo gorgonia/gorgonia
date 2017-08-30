@@ -9,6 +9,10 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
+// Gt performs a > b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Gt failed")
@@ -79,6 +83,10 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	return
 }
 
+// Gte performs a ≥ b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Gte failed")
@@ -149,6 +157,10 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// Lt performs a < b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Lt failed")
@@ -219,6 +231,10 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 	return
 }
 
+// Lte performs a ≤ b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Lte failed")
@@ -289,6 +305,10 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// ElEq performs a == b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, eqTypes); err != nil {
 		return nil, errors.Wrapf(err, "Eq failed")
@@ -359,6 +379,10 @@ func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 	return
 }
 
+// ElNe performs a ≠ b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+//UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) ElNe(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, eqTypes); err != nil {
 		return nil, errors.Wrapf(err, "Ne failed")
@@ -429,6 +453,10 @@ func (e StdEng) ElNe(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 	return
 }
 
+// GtScalar performs t > s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Gt failed")
@@ -506,6 +534,10 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	return
 }
 
+// GteScalar performs t ≥ s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Gte failed")
@@ -583,6 +615,10 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	return
 }
 
+// LtScalar performs t < s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Lt failed")
@@ -660,6 +696,10 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	return
 }
 
+// LteScalar performs t ≤ s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s
+// Acceptable FuncOpts are: UseUnsafe(), AsSameType(), WithReuse().
+// UseUnsafe() will ensure that the same type is returned.
+// Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, "Lte failed")

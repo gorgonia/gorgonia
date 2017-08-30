@@ -6,6 +6,8 @@ import "github.com/pkg/errors"
 GENERATED FILE. DO NOT EDIT
 */
 
+// Add performs t + other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -23,6 +25,8 @@ func (t *Dense) Add(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Add()")
 }
 
+// Sub performs t - other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -40,6 +44,8 @@ func (t *Dense) Sub(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Sub()")
 }
 
+// Mul performs t × other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -57,6 +63,8 @@ func (t *Dense) Mul(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Mul()")
 }
 
+// Div performs t ÷ other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -74,6 +82,8 @@ func (t *Dense) Div(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Div()")
 }
 
+// Pow performs t ^ other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -91,6 +101,8 @@ func (t *Dense) Pow(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Pow()")
 }
 
+// Mod performs t % other elementwise. Both t and other must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) Mod(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 
@@ -108,6 +120,8 @@ func (t *Dense) Mod(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 	return nil, errors.Errorf("Engine does not support Mod()")
 }
 
+// AddScalar performs t + other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) AddScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if adder, ok := e.(Adder); ok {
@@ -124,6 +138,8 @@ func (t *Dense) AddScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 	return nil, errors.Errorf("Engine does not support AddScalar()")
 }
 
+// SubScalar performs t - other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) SubScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if suber, ok := e.(Suber); ok {
@@ -140,6 +156,8 @@ func (t *Dense) SubScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 	return nil, errors.Errorf("Engine does not support SubScalar()")
 }
 
+// MulScalar performs t × other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) MulScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if muler, ok := e.(Muler); ok {
@@ -156,6 +174,8 @@ func (t *Dense) MulScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 	return nil, errors.Errorf("Engine does not support MulScalar()")
 }
 
+// DivScalar performs t ÷ other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) DivScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if diver, ok := e.(Diver); ok {
@@ -172,6 +192,8 @@ func (t *Dense) DivScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 	return nil, errors.Errorf("Engine does not support DivScalar()")
 }
 
+// PowScalar performs t ^ other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) PowScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if power, ok := e.(Power); ok {
@@ -188,6 +210,8 @@ func (t *Dense) PowScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 	return nil, errors.Errorf("Engine does not support PowScalar()")
 }
 
+// ModScalar performs t % other elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in other.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (t *Dense) ModScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
 	e := t.e
 	if moder, ok := e.(Moder); ok {

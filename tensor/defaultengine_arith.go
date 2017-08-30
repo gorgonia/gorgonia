@@ -9,6 +9,8 @@ import (
 GENERATED FILE. DO NOT EDIT
 */
 
+// Add performs a + b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Add failed")
@@ -78,6 +80,8 @@ func (e StdEng) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// Sub performs a - b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Sub failed")
@@ -147,6 +151,8 @@ func (e StdEng) Sub(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// Mul performs a × b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Mul failed")
@@ -216,6 +222,8 @@ func (e StdEng) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// Div performs a ÷ b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Div failed")
@@ -285,6 +293,8 @@ func (e StdEng) Div(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// Pow performs a ^ b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Pow failed")
@@ -354,6 +364,8 @@ func (e StdEng) Pow(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// Mod performs a % b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = binaryCheck(a, b, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Mod failed")
@@ -423,6 +435,8 @@ func (e StdEng) Mod(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 	return
 }
 
+// AddScalar performs t + s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Add failed")
@@ -511,6 +525,8 @@ func (e StdEng) AddScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	return
 }
 
+// SubScalar performs t - s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Sub failed")
@@ -599,6 +615,8 @@ func (e StdEng) SubScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	return
 }
 
+// MulScalar performs t × s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Mul failed")
@@ -687,6 +705,8 @@ func (e StdEng) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	return
 }
 
+// DivScalar performs t ÷ s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Div failed")
@@ -775,6 +795,8 @@ func (e StdEng) DivScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	return
 }
 
+// PowScalar performs t ^ s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Pow failed")
@@ -863,6 +885,8 @@ func (e StdEng) PowScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	return
 }
 
+// ModScalar performs t % s elementwise. The leftTensor parameter indicates if the tensor is the left operand. Only scalar types are accepted in s.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
 func (e StdEng) ModScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
 	if err = unaryCheck(t, numberTypes); err != nil {
 		return nil, errors.Wrapf(err, "Mod failed")

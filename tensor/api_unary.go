@@ -7,7 +7,7 @@ GENERATED FILE. DO NOT EDIT
 */
 
 func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if neger, ok := e.(Neger); ok {
 		return neger.Neg(a, opts...)
 	}
@@ -16,7 +16,7 @@ func Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Inv(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if inver, ok := e.(Inver); ok {
 		return inver.Inv(a, opts...)
 	}
@@ -25,7 +25,7 @@ func Inv(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if squarer, ok := e.(Squarer); ok {
 		return squarer.Square(a, opts...)
 	}
@@ -34,7 +34,7 @@ func Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if cuber, ok := e.(Cuber); ok {
 		return cuber.Cube(a, opts...)
 	}
@@ -43,7 +43,7 @@ func Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Exp(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if exper, ok := e.(Exper); ok {
 		return exper.Exp(a, opts...)
 	}
@@ -52,7 +52,7 @@ func Exp(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Tanh(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if tanher, ok := e.(Tanher); ok {
 		return tanher.Tanh(a, opts...)
 	}
@@ -61,7 +61,7 @@ func Tanh(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Log(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if loger, ok := e.(Loger); ok {
 		return loger.Log(a, opts...)
 	}
@@ -70,7 +70,7 @@ func Log(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Log2(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if log2er, ok := e.(Log2er); ok {
 		return log2er.Log2(a, opts...)
 	}
@@ -79,7 +79,7 @@ func Log2(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Log10(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if log10er, ok := e.(Log10er); ok {
 		return log10er.Log10(a, opts...)
 	}
@@ -88,7 +88,7 @@ func Log10(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if sqrter, ok := e.(Sqrter); ok {
 		return sqrter.Sqrt(a, opts...)
 	}
@@ -97,7 +97,7 @@ func Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Cbrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if cbrter, ok := e.(Cbrter); ok {
 		return cbrter.Cbrt(a, opts...)
 	}
@@ -106,7 +106,7 @@ func Cbrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if invsqrter, ok := e.(InvSqrter); ok {
 		return invsqrter.InvSqrt(a, opts...)
 	}
@@ -115,7 +115,7 @@ func InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Abs(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if abser, ok := e.(Abser); ok {
 		return abser.Abs(a, opts...)
 	}
@@ -124,7 +124,7 @@ func Abs(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if signer, ok := e.(Signer); ok {
 		return signer.Sign(a, opts...)
 	}
@@ -133,7 +133,7 @@ func Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 func Clamp(a Tensor, min interface{}, max interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	var e Engine = a.Engine()
+	e := a.Engine()
 	if clamper, ok := e.(Clamper); ok {
 		return clamper.Clamp(a, min, max, opts...)
 	}
