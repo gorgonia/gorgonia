@@ -42,22 +42,22 @@ func (e StdEng) Memclr(mem Memory) {
 
 func (e StdEng) Memcpy(dst, src Memory) error {
 	switch dt := dst.(type) {
-	case array:
+	case *array:
 		switch st := src.(type) {
-		case array:
+		case *array:
 			copyArray(dt, st)
 			return nil
 		case arrayer:
-			copyArray(dt, st.arr())
+			copyArray(dt, st.arrPtr())
 			return nil
 		}
 	case arrayer:
 		switch st := src.(type) {
-		case array:
-			copyArray(dt.arr(), st)
+		case *array:
+			copyArray(dt.arrPtr(), st)
 			return nil
 		case arrayer:
-			copyArray(dt.arr(), st.arr())
+			copyArray(dt.arrPtr(), st.arrPtr())
 			return nil
 		}
 	}

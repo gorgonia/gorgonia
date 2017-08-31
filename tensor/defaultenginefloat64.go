@@ -110,157 +110,62 @@ func (e Float64Engine) makeArray(arr *array, t Dtype, size int) {
 	arr.fix()
 }
 
-func (e Float64Engine) Mul(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+func (e Float64Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
 	var reuse DenseTensor
-	var safe, toReuse, incr bool
-	// if reuse, safe, toReuse, incr, _, err = handleFuncOpts(a.Shape(), a.Dtype(), true, opts...); err != nil {
-	if reuse, safe, toReuse, incr, err = handleFuncOptsF64(a.Shape(), opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	var ok bool
+	if reuse, ok = y.(DenseTensor); !ok {
+		return nil, errors.New("y has to be a DenseTensor")
 	}
 
-	typ := a.Dtype().Type
+	if a.Dtype() != Float64 {
+		return nil, errors.Errorf("Expected a to be of Float64. Got %v instead", a.Dtype())
+	}
+	if a.Dtype() != x.Dtype() || x.Dtype() != y.Dtype() {
+		return nil, errors.Errorf("Expected a, x and y to have the same Dtype. Got %v, %v and %v instead", a.Dtype(), x.Dtype(), y.Dtype())
+	}
+
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
-	var useIter, swap bool
-	if dataA, dataB, dataReuse, ait, bit, iit, useIter, swap, err = prepDataVV(a, b, reuse); err != nil {
+	var useIter bool
+	if dataA, dataB, dataReuse, ait, bit, iit, useIter, _, err = prepDataVV(a, x, reuse); err != nil {
 		return nil, errors.Wrapf(err, "StdEng.Mul")
 	}
 	if useIter {
-		switch {
-		case incr:
-			err = execution.MulIterIncrF64(dataA.Float64s(), dataB.Float64s(), dataReuse.Float64s(), ait, bit, iit)
-			retVal = reuse
-		case toReuse:
-			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
-			ait.Reset()
-			iit.Reset()
-			err = execution.MulIterF64(dataReuse.Float64s(), dataB.Float64s(), iit, bit)
-			retVal = reuse
-		case !safe:
-			err = execution.MulIterF64(dataA.Float64s(), dataB.Float64s(), ait, bit)
-			retVal = a
-		default:
-			var ret headerer
-			if swap {
-				ret = b.Clone().(headerer)
-			} else {
-				ret = a.Clone().(headerer)
-			}
-			err = execution.MulIterF64(ret.hdr().Float64s(), dataB.Float64s(), ait, bit)
-			retVal = ret.(Tensor)
-		}
+		err = execution.MulIterIncrF64(dataA.Float64s(), dataB.Float64s(), dataReuse.Float64s(), ait, bit, iit)
+		retVal = reuse
 		return
 	}
-	switch {
-	case incr:
-		mulIncrF64(dataA.Float64s(), dataB.Float64s(), dataReuse.Float64s())
-		retVal = reuse
-	case toReuse:
-		storage.Copy(typ, dataReuse, dataA)
-		vecMulF64(dataReuse.Float64s(), dataB.Float64s())
-		retVal = reuse
-	case !safe:
-		vecMulF64(dataA.Float64s(), dataB.Float64s())
-		retVal = a
-	default:
-		var ret headerer
-		if swap {
-			ret = b.Clone().(headerer)
-		} else {
-			ret = a.Clone().(headerer)
-		}
-		vecMulF64(ret.hdr().Float64s(), dataB.Float64s())
-		retVal = ret.(Tensor)
-	}
+
+	mulIncrF64(dataA.Float64s(), dataB.Float64s(), dataReuse.Float64s())
+	retVal = reuse
 	return
 }
 
-func (e Float64Engine) MulScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncOpt) (retVal Tensor, err error) {
+func (e Float64Engine) FMAScalar(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
 	var reuse DenseTensor
-	var safe, toReuse, incr bool
-	// if reuse, safe, toReuse, incr, _, err = handleFuncOpts(t.Shape(), t.Dtype(), true, opts...); err != nil {
-	if reuse, safe, toReuse, incr, err = handleFuncOptsF64(t.Shape(), opts...); err != nil {
-		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	var ok bool
+	if reuse, ok = y.(DenseTensor); !ok {
+		return nil, errors.New("y has to be a DenseTensor")
 	}
-	a := t
-	typ := t.Dtype().Type
-	var ait, bit, iit Iterator
 
+	if a.Dtype() != Float64 {
+		return nil, errors.Errorf("Expected a to be of Float64. Got %v instead", a.Dtype())
+	}
+
+	var ait, iit Iterator
 	var dataTensor, dataReuse *storage.Header
 	var scalar float64
 	var useIter bool
-
-	if leftTensor {
-		if dataTensor, scalar, dataReuse, ait, iit, useIter, err = prepDataVSF64(t, s, reuse); err != nil {
-			return nil, errors.Wrapf(err, opFail, "StdEng.Mul")
-		}
-	} else {
-		if scalar, dataTensor, dataReuse, bit, iit, useIter, err = prepDataSVF64(s, t, reuse); err != nil {
-			return nil, errors.Wrapf(err, opFail, "StdEng.Mul")
-		}
+	if dataTensor, scalar, dataReuse, ait, iit, useIter, err = prepDataVSF64(a, x, reuse); err != nil {
+		return nil, errors.Wrapf(err, opFail, "StdEng.FMAScalar")
 	}
-
 	if useIter {
-		switch {
-		case incr && leftTensor:
-			err = execution.MulIterIncrVSF64(dataTensor.Float64s(), scalar, dataReuse.Float64s(), ait, iit)
-			retVal = reuse
-		case incr && !leftTensor:
-			err = execution.MulIterIncrSVF64(scalar, dataTensor.Float64s(), dataReuse.Float64s(), bit, iit)
-			retVal = reuse
-		case toReuse && leftTensor:
-			storage.CopyIter(typ, dataReuse, dataTensor, iit, ait)
-			ait.Reset()
-			iit.Reset()
+		err = execution.MulIterIncrVSF64(dataTensor.Float64s(), scalar, dataReuse.Float64s(), ait, iit)
+		retVal = reuse
+	}
 
-			err = execution.MulIterVSF64(dataReuse.Float64s(), scalar, iit)
-			retVal = reuse
-		case toReuse && !leftTensor:
-			storage.CopyIter(typ, dataReuse, dataTensor, iit, bit)
-			iit.Reset()
-			bit.Reset()
-			err = execution.MulIterSVF64(scalar, dataReuse.Float64s(), iit)
-			retVal = reuse
-		case !safe && leftTensor:
-			err = execution.MulIterVSF64(dataTensor.Float64s(), scalar, ait)
-			retVal = a
-		case !safe && !leftTensor:
-			err = execution.MulIterSVF64(scalar, dataTensor.Float64s(), bit)
-			retVal = a
-		default:
-			ret := a.Clone().(headerer)
-			if leftTensor {
-				err = execution.MulIterVSF64(ret.hdr().Float64s(), scalar, ait)
-			} else {
-				err = execution.MulIterSVF64(scalar, ret.hdr().Float64s(), bit)
-			}
-			retVal = ret.(Tensor)
-		}
-		return
-	}
-	switch {
-	case incr && leftTensor:
-		execution.MulIncrVSF64(dataTensor.Float64s(), scalar, dataReuse.Float64s())
-		retVal = reuse
-	case incr && !leftTensor:
-		execution.MulIncrSVF64(scalar, dataTensor.Float64s(), dataReuse.Float64s())
-		retVal = reuse
-	case toReuse && leftTensor:
-		storage.Copy(typ, dataReuse, dataTensor)
-		vecScaleF64(dataReuse.Float64s(), scalar)
-		retVal = reuse
-	case toReuse && !leftTensor:
-		storage.Copy(typ, dataReuse, dataTensor)
-		vecScaleF64(dataReuse.Float64s(), scalar)
-		retVal = reuse
-	case !safe:
-		vecScaleF64(dataTensor.Float64s(), scalar)
-		retVal = a
-	default:
-		ret := a.Clone().(headerer)
-		vecScaleF64(ret.hdr().Float64s(), scalar)
-		retVal = ret.(Tensor)
-	}
+	execution.MulIncrVSF64(dataTensor.Float64s(), scalar, dataReuse.Float64s())
+	retVal = reuse
 	return
 }
 

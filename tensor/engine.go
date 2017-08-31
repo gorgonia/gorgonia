@@ -132,9 +132,10 @@ type Tracer interface {
 	Trace(a Tensor) (interface{}, error)
 }
 
-// FMAer is any engine that can perform fused multiply add functions
+// FMAer is any engine that can perform fused multiply add functions: A * X + Y
 type FMAer interface {
 	FMA(a, x, y Tensor) (Tensor, error)
+	FMAScalar(a Tensor, x interface{}, y Tensor) (Tensor, error)
 }
 
 // MatMuler is any engine that can perform matrix multiplication

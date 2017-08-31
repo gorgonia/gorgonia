@@ -257,15 +257,24 @@ func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // FMA performs Y = A * X + Y.
-func FMA(a, x, y Tensor) (retVal Tensor, err error) {
-	if e, ok := a.Engine().(FMAer); ok {
-		e.FMA(a, x, y)
-	}
-	if e, ok := x.Engine().(FMAer); ok {
-		e.FMA(a, x, y)
-	}
-	if e, ok := y.Engine().(FMAer); ok {
-		e.FMA(a, x, y)
+func FMA(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
+	if xTensor, ok := x.(Tensor); ok {
+		if e, ok := a.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
+		}
+		if e, ok := xTensor.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
+		}
+		if e, ok := y.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
+		}
+	} else {
+		if e, ok := a.Engine().(FMAer); ok {
+			return e.FMAScalar(a, x, y)
+		}
+		if e, ok := y.(Engine).(FMAer); ok {
+			return e.FMAScalar(a, x, y)
+		}
 	}
 	return Mul(a, x, WithIncr(y))
 }

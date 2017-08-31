@@ -289,7 +289,7 @@ func (t *CS) Clone() interface{} {
 	copy(retVal.indices, t.indices)
 	copy(retVal.indptr, t.indptr)
 	retVal.array = makeArray(t.t, t.array.L)
-	copyArray(retVal.array, t.array)
+	copyArray(&retVal.array, &t.array)
 	retVal.e = t.e
 	return retVal
 }

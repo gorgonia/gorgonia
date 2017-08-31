@@ -199,13 +199,13 @@ func (a *array) swap(i, j int) {
 /* *Array is a Memory */
 
 // Uintptr returns the pointer of the first value of the slab
-func (t array) Uintptr() uintptr { return uintptr(t.Ptr) }
+func (t *array) Uintptr() uintptr { return uintptr(t.Ptr) }
 
 // MemSize returns how big the slice is in bytes
-func (t array) MemSize() uintptr { return uintptr(t.L) * t.t.Size() }
+func (t *array) MemSize() uintptr { return uintptr(t.L) * t.t.Size() }
 
 // Pointer returns the pointer of the first value of the slab, as an unsafe.Pointer
-func (t array) Pointer() unsafe.Pointer { return t.Ptr }
+func (t *array) Pointer() unsafe.Pointer { return t.Ptr }
 
 // Data returns the representation of a slice.
 func (a array) Data() interface{} { return a.v }
@@ -246,7 +246,7 @@ func calcMemSize(dt Dtype, size int) int64 {
 }
 
 // copyArray copies an array.
-func copyArray(dst, src array) int {
+func copyArray(dst, src *array) int {
 	if dst.t != src.t {
 		panic("Cannot copy arrays of different types.")
 	}
@@ -280,13 +280,12 @@ func copyDense(dst, src DenseTensor) int {
 	}
 
 	e := src.Engine()
-	if e != nil {
-		if err := e.Memcpy(dst.arr(), src.arr()); err != nil {
-			panic(err)
-		}
-		return dst.len()
+	if err := e.Memcpy(dst.arrPtr(), src.arrPtr()); err != nil {
+		panic(err)
 	}
-	return copyArray(dst.arr(), src.arr())
+	return dst.len()
+
+	// return copyArray(dst.arr(), src.arr())
 }
 
 func copyDenseSliced(dst DenseTensor, dstart, dend int, src DenseTensor, sstart, send int) int {
@@ -309,7 +308,7 @@ func copyDenseSliced(dst DenseTensor, dstart, dend int, src DenseTensor, sstart,
 	if e := src.Engine(); e != nil {
 		d := dst.arr().slice(dstart, dend)
 		s := src.arr().slice(sstart, send)
-		if err := e.Memcpy(d, s); err != nil {
+		if err := e.Memcpy(&d, &s); err != nil {
 			panic(err)
 		}
 		return d.Len()
