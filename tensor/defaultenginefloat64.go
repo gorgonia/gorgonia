@@ -19,30 +19,30 @@ func mulIncrF64(a []float64, b []float64, incr []float64)
 //go:linkname vecScaleF64 github.com/chewxy/vecf64.Scale
 func vecScaleF64(a []float64, b float64)
 
-func handleFuncOptsF64(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr bool, err error) {
-	fo := ParseFuncOpts(opts...)
+// func handleFuncOptsF64(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr bool, err error) {
+// 	fo := ParseFuncOpts(opts...)
 
-	reuseT, incr := fo.IncrReuse()
-	safe = fo.Safe()
-	toReuse = reuseT != nil
+// 	reuseT, incr := fo.IncrReuse()
+// 	safe = fo.Safe()
+// 	toReuse = reuseT != nil
 
-	if toReuse {
-		var ok bool
-		if reuse, ok = reuseT.(DenseTensor); !ok {
-			returnOpOpt(fo)
-			err = errors.Errorf("Cannot reuse a different type of Tensor in a *Dense-Scalar operation. Reuse is of %T", reuseT)
-			return
-		}
-		if reuse.len() != expShape.TotalSize() {
-			returnOpOpt(fo)
-			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
-			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
-			return
-		}
-	}
-	returnOpOpt(fo)
-	return
-}
+// 	if toReuse {
+// 		var ok bool
+// 		if reuse, ok = reuseT.(DenseTensor); !ok {
+// 			returnOpOpt(fo)
+// 			err = errors.Errorf("Cannot reuse a different type of Tensor in a *Dense-Scalar operation. Reuse is of %T", reuseT)
+// 			return
+// 		}
+// 		if reuse.len() != expShape.TotalSize() {
+// 			returnOpOpt(fo)
+// 			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
+// 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
+// 			return
+// 		}
+// 	}
+// 	returnOpOpt(fo)
+// 	return
+// }
 
 func prepDataVSF64(a Tensor, b interface{}, reuse DenseTensor) (dataA *storage.Header, dataB float64, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
 	dataB = b.(float64)
@@ -67,28 +67,28 @@ func prepDataVSF64(a Tensor, b interface{}, reuse DenseTensor) (dataA *storage.H
 	return
 }
 
-func prepDataSVF64(a interface{}, b Tensor, reuse DenseTensor) (dataA float64, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
-	dataA = a.(float64)
-	switch bt := b.(type) {
-	case DenseTensor:
-		dataB = bt.hdr()
-		if reuse != nil {
-			dataReuse = reuse.hdr()
-		}
-		if bt.requiresIterator() || (reuse != nil && reuse.requiresIterator()) {
-			bit = IteratorFromDense(bt)
-			if reuse != nil {
-				iit = IteratorFromDense(reuse)
-			}
-			useIter = true
-		}
-	case *CS:
-		err = errors.Errorf("NYI")
-	default:
-		err = errors.Errorf("NYI")
-	}
-	return
-}
+// func prepDataSVF64(a interface{}, b Tensor, reuse DenseTensor) (dataA float64, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
+// 	dataA = a.(float64)
+// 	switch bt := b.(type) {
+// 	case DenseTensor:
+// 		dataB = bt.hdr()
+// 		if reuse != nil {
+// 			dataReuse = reuse.hdr()
+// 		}
+// 		if bt.requiresIterator() || (reuse != nil && reuse.requiresIterator()) {
+// 			bit = IteratorFromDense(bt)
+// 			if reuse != nil {
+// 				iit = IteratorFromDense(reuse)
+// 			}
+// 			useIter = true
+// 		}
+// 	case *CS:
+// 		err = errors.Errorf("NYI")
+// 	default:
+// 		err = errors.Errorf("NYI")
+// 	}
+// 	return
+// }
 
 // Float64Engine is an execution engine that is optimized to only work with float64s. It assumes all data will are float64s.
 //
@@ -113,6 +113,17 @@ func (e Float64Engine) makeArray(arr *array, t Dtype, size int) {
 func (e Float64Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
 	var reuse DenseTensor
 	var ok bool
+
+	if !a.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, a)
+	}
+	if !x.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, x)
+	}
+	if !y.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, y)
+	}
+
 	if reuse, ok = y.(DenseTensor); !ok {
 		return nil, errors.New("y has to be a DenseTensor")
 	}
@@ -144,6 +155,14 @@ func (e Float64Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
 func (e Float64Engine) FMAScalar(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
 	var reuse DenseTensor
 	var ok bool
+
+	if !a.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, a)
+	}
+	if !y.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, y)
+	}
+
 	if reuse, ok = y.(DenseTensor); !ok {
 		return nil, errors.New("y has to be a DenseTensor")
 	}

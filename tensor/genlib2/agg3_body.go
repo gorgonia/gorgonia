@@ -40,7 +40,7 @@ const denseArithScalarBodyRaw = `e := t.e
 
 const denseIdentityArithTestBodyRaw = `r = rand.New(rand.NewSource(time.Now().UnixNano()))
 iden := func(a *Dense) bool {
-	b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+	b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 	{{if ne .Identity 0 -}}
 			b.Memset(identityVal({{.Identity}}, a.t))
 	{{end -}}
@@ -49,6 +49,8 @@ iden := func(a *Dense) bool {
 	{{template "funcoptcorrect" -}}
 
 	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := a.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "call0" . }}
 	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
 		if err != nil {
@@ -78,6 +80,8 @@ iden1 := func(q *Dense) bool {
 	{{template "funcoptcorrect" -}}
 
 	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "call0" . }}
 	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
 		if err != nil {
@@ -107,6 +111,8 @@ iden2 := func(q *Dense) bool {
 	{{template "funcoptcorrect" -}}
 
 	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "call1" . }}
 	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
 		if err != nil {
@@ -131,7 +137,7 @@ if err := quick.Check(iden2, &quick.Config{Rand:r}); err != nil {
 
 const denseInvArithTestBodyRaw = `r = rand.New(rand.NewSource(time.Now().UnixNano()))
 inv := func(a *Dense) bool {
-	b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+	b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 	{{if ne .Identity 0 -}}
 			b.Memset(identityVal({{.Identity}}, a.t))
 	{{end -}}
@@ -139,7 +145,9 @@ inv := func(a *Dense) bool {
 	correct := a.Clone().(*Dense)
 	{{template "funcoptcorrect" -}}
 
-	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	we, willFailEq := willerr(a,  {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := a.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "call0" . }}
 	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, b, we, err); retEarly{
 		if err != nil {
@@ -170,6 +178,8 @@ inv1 := func(q *Dense) bool {
 	{{template "funcoptcorrect" -}}
 
 	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "call0" . }}
 	if err, retEarly := qcErrCheck(t, "{{.Name}}VS", a, b, we, err); retEarly{
 		if err != nil {
@@ -201,6 +211,8 @@ inv2 := func(q *Dense) bool {
 	{{template "funcoptcorrect" -}}
 
 	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "call1" . }}
 	if err, retEarly := qcErrCheck(t, "{{.Name}}SV", a, b, we, err); retEarly{
 		if err != nil {

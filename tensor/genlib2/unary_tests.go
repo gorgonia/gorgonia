@@ -13,6 +13,8 @@ const unaryTestBodyRaw = `invFn := func(q *Dense) bool {
 	{{template "funcoptcorrect" -}}
 
 	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+	
 	ret, err := {{.Name}}(a {{template "funcoptuse"}})
 	if err, retEarly := qcErrCheck(t, "{{.Name}}", a, nil, we, err); retEarly{
 		if err != nil {

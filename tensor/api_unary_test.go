@@ -417,6 +417,9 @@ func TestInv(t *testing.T) {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Inver)
+		we = we || !ok
+
 		// we'll exclude everything other than floats
 		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
 			return true
@@ -447,6 +450,9 @@ func TestLog10(t *testing.T) {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Log10er)
+		we = we || !ok
+
 		// we'll exclude everything other than floats
 		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
 			return true
@@ -485,6 +491,9 @@ func TestAbs(t *testing.T) {
 			return true
 		}
 		we, willFailEq := willerr(a, signedTypes, nil)
+		_, ok := q.Engine().(Abser)
+		we = we || !ok
+
 		ret, err := Abs(a)
 		if err, retEarly := qcErrCheck(t, "Abs", a, nil, we, err); retEarly {
 			if err != nil {

@@ -384,6 +384,22 @@ func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	v.flag = flag
 	v.AP.o = order
 
+	// generate engine
+	eint := r.Intn(3)
+	switch eint {
+	case 0:
+		v.e = StdEng{}
+	case 1:
+		// check is to prevent panics which Float64Engine will do if asked to allocate memory for non float64s
+		if of == Float64 {
+			v.e = Float64Engine{}
+		} else {
+			v.e = StdEng{}
+		}
+	case 2:
+		v.e = dummyEngine(true)
+	}
+
 	return reflect.ValueOf(v)
 }
 
@@ -433,6 +449,7 @@ func willerr(a *Dense, tc, eqtc *typeclass) (retVal, willFailEq bool) {
 	if err := typeclassCheck(a.Dtype(), tc); err != nil {
 		return true, willFailEq
 	}
+
 	retVal = retVal || !a.IsNativelyAccessible()
 	return
 }

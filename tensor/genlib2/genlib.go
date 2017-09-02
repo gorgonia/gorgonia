@@ -150,9 +150,9 @@ func interfaceName(name string) string {
 		return "Squarer"
 	case "Cube":
 		return "Cuber"
-	case "Eq":
+	case "Eq", "ElEq":
 		return "ElEqer"
-	case "Ne":
+	case "Ne", "ElNe":
 		return "ElEqer"
 	default:
 		return name + "er"

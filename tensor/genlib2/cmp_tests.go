@@ -58,6 +58,8 @@ const transitivityCheckRaw = `{{if eq .FuncOpt "assame" -}}
 
 const transitivityBodyRaw = `transFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -104,7 +106,9 @@ if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
 `
 
 const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
-	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})	
+	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -150,6 +154,8 @@ if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
 
 const symmetryBodyRaw = `symFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -185,6 +191,8 @@ if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
 
 const symmetryMixedBodyRaw = `symFn := func(q *Dense) bool {
 	we, _ := willerr(q, {{.TypeClassName}}, {{.EqFailTypeClassName}})
+	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
+
 	{{template "funcoptdecl" . -}}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))

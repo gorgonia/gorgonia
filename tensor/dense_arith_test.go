@@ -15,9 +15,12 @@ func TestDense_Add(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.Add(b)
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -40,9 +43,12 @@ func TestDense_Sub(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.Sub(b)
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
@@ -65,10 +71,13 @@ func TestDense_Mul(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.Mul(b)
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -91,10 +100,13 @@ func TestDense_Div(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.Div(b)
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
@@ -117,10 +129,13 @@ func TestDense_Pow(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := a.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.Pow(b)
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
@@ -143,9 +158,12 @@ func TestDense_Add_unsafe(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.Add(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -173,9 +191,12 @@ func TestDense_Sub_unsafe(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.Sub(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
@@ -203,10 +224,13 @@ func TestDense_Mul_unsafe(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.Mul(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -234,10 +258,13 @@ func TestDense_Div_unsafe(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.Div(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
@@ -265,10 +292,13 @@ func TestDense_Pow_unsafe(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := a.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.Pow(b, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
@@ -296,10 +326,13 @@ func TestDense_Add_reuse(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.Add(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -327,10 +360,13 @@ func TestDense_Sub_reuse(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.Sub(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
@@ -358,11 +394,14 @@ func TestDense_Mul_reuse(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.Mul(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -390,11 +429,14 @@ func TestDense_Div_reuse(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.Div(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
@@ -422,11 +464,14 @@ func TestDense_Pow_reuse(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := a.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.Pow(b, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
@@ -454,12 +499,15 @@ func TestDense_Add_incr(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.Add(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -482,12 +530,15 @@ func TestDense_Sub_incr(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.Sub(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Sub", a, b, we, err); retEarly {
 			if err != nil {
@@ -510,13 +561,16 @@ func TestDense_Mul_incr(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.Mul(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -539,13 +593,16 @@ func TestDense_Div_incr(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := a.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.Div(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Div", a, b, we, err); retEarly {
 			if err != nil {
@@ -568,13 +625,16 @@ func TestDense_Pow_incr(t *testing.T) {
 	var r *rand.Rand
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
-		b := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := a.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.Pow(b, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
@@ -602,6 +662,9 @@ func TestDense_AddScalar(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -625,6 +688,9 @@ func TestDense_AddScalar(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, false)
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -653,6 +719,9 @@ func TestDense_SubScalar(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, unsignedTypes)
+		_, ok := q.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.SubScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -676,6 +745,9 @@ func TestDense_SubScalar(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, unsignedTypes)
+		_, ok := q.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.SubScalar(b, false)
 		if err, retEarly := qcErrCheck(t, "SubSV", a, b, we, err); retEarly {
 			if err != nil {
@@ -704,6 +776,9 @@ func TestDense_MulScalar(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -727,6 +802,9 @@ func TestDense_MulScalar(t *testing.T) {
 		b := identityVal(1, q.t)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, false)
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -755,6 +833,9 @@ func TestDense_DivScalar(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.DivScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -783,6 +864,9 @@ func TestDense_PowScalar(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := q.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.PowScalar(b, true)
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
@@ -811,6 +895,9 @@ func TestDense_AddScalar_unsafe(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -839,6 +926,9 @@ func TestDense_AddScalar_unsafe(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, false, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -872,6 +962,9 @@ func TestDense_SubScalar_unsafe(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, unsignedTypes)
+		_, ok := q.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.SubScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -900,6 +993,9 @@ func TestDense_SubScalar_unsafe(t *testing.T) {
 		b := identityVal(0, q.t)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, unsignedTypes)
+		_, ok := q.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.SubScalar(b, false, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "SubSV", a, b, we, err); retEarly {
 			if err != nil {
@@ -933,6 +1029,9 @@ func TestDense_MulScalar_unsafe(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -961,6 +1060,9 @@ func TestDense_MulScalar_unsafe(t *testing.T) {
 		b := identityVal(1, q.t)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, false, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -994,6 +1096,9 @@ func TestDense_DivScalar_unsafe(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.DivScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -1027,6 +1132,9 @@ func TestDense_PowScalar_unsafe(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := q.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.PowScalar(b, true, UseUnsafe())
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
@@ -1061,6 +1169,9 @@ func TestDense_AddScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -1090,6 +1201,9 @@ func TestDense_AddScalar_reuse(t *testing.T) {
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, false, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -1124,6 +1238,9 @@ func TestDense_SubScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, unsignedTypes)
+		_, ok := q.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.SubScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -1153,6 +1270,9 @@ func TestDense_SubScalar_reuse(t *testing.T) {
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, unsignedTypes)
+		_, ok := q.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.SubScalar(b, false, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "SubSV", a, b, we, err); retEarly {
 			if err != nil {
@@ -1187,6 +1307,9 @@ func TestDense_MulScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -1216,6 +1339,9 @@ func TestDense_MulScalar_reuse(t *testing.T) {
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, false, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -1250,6 +1376,9 @@ func TestDense_DivScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.DivScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -1284,6 +1413,9 @@ func TestDense_PowScalar_reuse(t *testing.T) {
 
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := q.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.PowScalar(b, true, WithReuse(reuse))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {
@@ -1320,6 +1452,9 @@ func TestDense_AddScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -1346,6 +1481,9 @@ func TestDense_AddScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Adder)
+		we = we || !ok
+
 		ret, err := a.AddScalar(b, false, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Add", a, b, we, err); retEarly {
 			if err != nil {
@@ -1377,6 +1515,9 @@ func TestDense_SubScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, unsignedTypes)
+		_, ok := q.Engine().(Suber)
+		we = we || !ok
+
 		ret, err := a.SubScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "SubVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -1408,6 +1549,9 @@ func TestDense_MulScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -1434,6 +1578,9 @@ func TestDense_MulScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Muler)
+		we = we || !ok
+
 		ret, err := a.MulScalar(b, false, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Mul", a, b, we, err); retEarly {
 			if err != nil {
@@ -1465,6 +1612,9 @@ func TestDense_DivScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, numberTypes, nil)
+		_, ok := q.Engine().(Diver)
+		we = we || !ok
+
 		ret, err := a.DivScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "DivVS", a, b, we, err); retEarly {
 			if err != nil {
@@ -1496,6 +1646,9 @@ func TestDense_PowScalar_incr(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, floatcmplxTypes, complexTypes)
+		_, ok := q.Engine().(Power)
+		we = we || !ok
+
 		ret, err := a.PowScalar(b, true, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Pow", a, b, we, err); retEarly {
 			if err != nil {

@@ -112,6 +112,9 @@ func TestDense_Apply(t *testing.T) {
 		}
 
 		we, eqFail := willerr(q, nil, nil)
+		_, ok := q.Engine().(Mapper)
+		we = we || !ok
+
 		a := q.Clone().(*Dense)
 		correct := q.Clone().(*Dense)
 		correct.Memset(mutVal)
@@ -157,6 +160,9 @@ func TestDense_Apply_unsafe(t *testing.T) {
 		}
 
 		we, eqFail := willerr(q, nil, nil)
+		_, ok := q.Engine().(Mapper)
+		we = we || !ok
+
 		a := q.Clone().(*Dense)
 		correct := q.Clone().(*Dense)
 		correct.Memset(mutVal)
@@ -200,6 +206,9 @@ func TestDense_Apply_reuse(t *testing.T) {
 		}
 
 		we, eqFail := willerr(q, nil, nil)
+		_, ok := q.Engine().(Mapper)
+		we = we || !ok
+
 		a := q.Clone().(*Dense)
 		reuse := q.Clone().(*Dense)
 		reuse.Zero()

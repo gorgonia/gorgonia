@@ -16,6 +16,9 @@ func TestDense_Gt(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Gter)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -73,6 +76,9 @@ func TestDense_Gte(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Gteer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -130,6 +136,9 @@ func TestDense_Lt(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Lter)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -187,6 +196,9 @@ func TestDense_Lte(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Lteer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -244,6 +256,9 @@ func TestDense_ElEq(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -298,6 +313,9 @@ func TestDense_ElEq(t *testing.T) {
 
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -332,6 +350,9 @@ func TestDense_ElNe(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
@@ -366,6 +387,9 @@ func TestDense_Gt_assame(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Gter)
+		we = we || !ok
+
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
@@ -425,6 +449,9 @@ func TestDense_Gte_assame(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Gteer)
+		we = we || !ok
+
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
@@ -484,6 +511,9 @@ func TestDense_Lt_assame(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Lter)
+		we = we || !ok
+
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
@@ -543,6 +573,9 @@ func TestDense_Lte_assame(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Lteer)
+		we = we || !ok
+
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
@@ -602,6 +635,9 @@ func TestDense_ElEq_assame(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
@@ -658,6 +694,9 @@ func TestDense_ElEq_assame(t *testing.T) {
 
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
@@ -695,6 +734,9 @@ func TestDense_ElNe_assame(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
@@ -732,6 +774,9 @@ func TestDense_GtScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Gter)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -787,6 +832,9 @@ func TestDense_GteScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Gteer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -842,6 +890,9 @@ func TestDense_LtScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Lter)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -897,6 +948,9 @@ func TestDense_LteScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
+		_, ok := q.Engine().(Lteer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -952,6 +1006,9 @@ func TestDense_ElEqScalar(t *testing.T) {
 	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -1004,6 +1061,9 @@ func TestDense_ElEqScalar(t *testing.T) {
 
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
@@ -1036,6 +1096,9 @@ func TestDense_ElNeScalar(t *testing.T) {
 	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)

@@ -1,6 +1,8 @@
 package tensor
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 // exported API for arithmetics and the stupidly crazy amount of overloaded semantics
 
@@ -30,8 +32,10 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return adder.Add(at, bt, opts...)
 		default:
-			return adder.AddScalar(at, bt, true, opts...)
-
+			if ok {
+				return adder.AddScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Add")
 		}
 	default:
 		switch bt := b.(type) {
@@ -67,7 +71,10 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return suber.Sub(at, bt, opts...)
 		default:
-			return suber.SubScalar(at, bt, true, opts...)
+			if ok {
+				return suber.SubScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Sub")
 
 		}
 	default:
@@ -104,7 +111,10 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return muler.Mul(at, bt, opts...)
 		default:
-			return muler.MulScalar(at, bt, true, opts...)
+			if ok {
+				return muler.MulScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Sub")
 
 		}
 	default:
@@ -141,7 +151,10 @@ func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return diver.Div(at, bt, opts...)
 		default:
-			return diver.DivScalar(at, bt, true, opts...)
+			if ok {
+				return diver.DivScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Mul")
 
 		}
 	default:
@@ -178,7 +191,10 @@ func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return power.Pow(at, bt, opts...)
 		default:
-			return power.PowScalar(at, bt, true, opts...)
+			if ok {
+				return power.PowScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Div")
 
 		}
 	default:
@@ -215,7 +231,10 @@ func Mod(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return moder.Mod(at, bt, opts...)
 		default:
-			return moder.ModScalar(at, bt, true, opts...)
+			if ok {
+				return moder.ModScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Mod")
 
 		}
 	default:
