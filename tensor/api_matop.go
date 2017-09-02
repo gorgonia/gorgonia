@@ -7,11 +7,10 @@ import "github.com/pkg/errors"
 
 // Repeat repeats a Tensor along the axis and given the number of repeats.
 func Repeat(t Tensor, axis int, repeats ...int) (retVal Tensor, err error) {
-	switch T := t.(type) {
-	case *Dense:
-		return T.Repeat(axis, repeats...)
+	if r, ok := t.Engine().(Repeater); ok {
+		return r.Repeat(t, axis, repeats...)
 	}
-	panic("Unreachable")
+	return nil, errors.New("Engine does not support Repeat")
 }
 
 // T safely transposes a Tensor. It returns a tensor that is not a view of the input tensor - rather, the data is all copied.
@@ -82,6 +81,7 @@ func Copy(dst, src Tensor) error {
 	panic("Unreachable")
 }
 
+// Materialize takes a View and copies out the data into a new allocation.
 func Materialize(t Tensor) Tensor {
 	switch tt := t.(type) {
 	case View:

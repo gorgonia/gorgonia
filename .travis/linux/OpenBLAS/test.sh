@@ -2,8 +2,8 @@ set -ex
 
 go env
 
-go test -race -covermode=atomic -quickchecks=2000 -v -a -coverprofile=test.cover .
-go test -race -covermode=atomic -quickchecks=2000 -v -a -coverprofile=./tensor/test.cover ./tensor/
+go test -race -covermode=atomic -v -a -coverprofile=test.cover .
+go test -race -covermode=atomic -v -a -coverprofile=./tensor/test.cover ./tensor/
 
 go test -tags='avx' -a  ./tensor/
 go test -tags='sse' -a  ./tensor/
