@@ -146,7 +146,7 @@ func TestDense_Eq(t *testing.T) {
 
 		// a.len() < 10 is used because there are only 2 possibilities for Bool. Therefore it's extremely likely
 		// that q and a are the same AFTER zeroing out.
-		if q.Eq(a) && !((a.len() < 10 || a.IsScalar()) && a.Dtype() == Bool) {
+		if q.Eq(a) && !(a.IsScalar() || (a.len() < 10 && a.Dtype() == Bool)) {
 			t.Errorf("Dtype %v", a.Dtype())
 			t.Errorf("a %T | %v", a.Engine(), a.Data())
 			t.Errorf("q %T | %v", q.Engine(), q.Data())
