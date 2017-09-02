@@ -291,7 +291,7 @@ func FMA(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
 		if e, ok := a.Engine().(FMAer); ok {
 			return e.FMAScalar(a, x, y)
 		}
-		if e, ok := y.(Engine).(FMAer); ok {
+		if e, ok := y.Engine().(FMAer); ok {
 			return e.FMAScalar(a, x, y)
 		}
 	}
