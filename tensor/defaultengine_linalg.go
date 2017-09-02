@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+//  Trace returns the trace of a matrix (i.e. the sum of the diagonal elements). If the Tensor provided is not a matrix, it will return an error
 func (e StdEng) Trace(t Tensor) (retVal interface{}, err error) {
 	if t.Dims() != 2 {
 		err = errors.Errorf(dimMismatch, 2, t.Dims())

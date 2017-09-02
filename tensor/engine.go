@@ -19,14 +19,14 @@ type Memory interface {
 // Engine is a representation of an execution engine.
 // While different execution engines can have different capabilities, all execution engines must be able to allocate and free memory
 type Engine interface {
-	AllocAccessible() bool                    // does the engine return Go-accessible memory pointers?
-	Alloc(size int64) (Memory, error)         // Allocates memory
-	Free(mem Memory, size int64) error        // Frees memory
-	Memset(mem Memory, val interface{}) error // Memset
-	Memclr(mem Memory)                        // Memclear
-	Memcpy(dst, src Memory) error             // Memcpy
-	Accessible(mem Memory) (Memory, error)    // returns Go-accesible memory pointers
-	WorksWith(order DataOrder) bool           // returns true if the data order can be directly worked with
+	AllocAccessible() bool                    // AllocAccessible returns true if the engine return Go-accessible memory pointers?
+	Alloc(size int64) (Memory, error)         // Alloc allocates memory
+	Free(mem Memory, size int64) error        // Free rees memory
+	Memset(mem Memory, val interface{}) error // Memset - duh
+	Memclr(mem Memory)                        // Memclr - duh
+	Memcpy(dst, src Memory) error             // Memcpy - duh
+	Accessible(mem Memory) (Memory, error)    // Accessible returns Go-accesible memory pointers, or errors, if it cannot be done
+	WorksWith(order DataOrder) bool           // WorksWith returns true if the data order can be directly worked with
 }
 
 type arrayMaker interface {
@@ -40,22 +40,22 @@ type Transposer interface {
 	Transpose(t Tensor, expStrides []int) error
 }
 
-type Materializer interface {
-	Materialize(t Tensor) (Tensor, error)
-}
-
+// Concater is any enegine that can concatenate multiple Tensors together
 type Concater interface {
 	Concat(t Tensor, axis int, others ...Tensor) (Tensor, error)
 }
 
+// Stacker is any engine that can stack multiple Tenosrs along an axis
 type Stacker interface {
 	Stack(t Tensor, axis int, others ...Tensor) (Tensor, error)
 }
 
+// DenseStacker is any engine that can stack DenseTensors along an axis. This is a specialization of Stacker.
 type DenseStacker interface {
 	StackDense(t DenseTensor, axis int, others ...DenseTensor) (retVal DenseTensor, err error)
 }
 
+// Repeater is any engine that can repeat values along the given axis.
 type Repeater interface {
 	Repeat(t Tensor, axis int, repeats ...int) (Tensor, error)
 }
@@ -132,7 +132,7 @@ type Tracer interface {
 	Trace(a Tensor) (interface{}, error)
 }
 
-// FMAer is any engine that can perform fused multiply add functions: A * X + Y
+// FMAer is any engine that can perform fused multiply add functions: A * X + Y. Also known as Axpy.
 type FMAer interface {
 	FMA(a, x, y Tensor) (Tensor, error)
 	FMAScalar(a Tensor, x interface{}, y Tensor) (Tensor, error)
@@ -212,98 +212,123 @@ type Mapper interface {
 	Map(fn interface{}, a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Neger is any engine that can negate the sign of the values in the tensor.d
 type Neger interface {
 	Neg(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Inver is any engine that can perform 1/x for each element in the Tensor.
 type Inver interface {
 	Inv(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Squarer is any engine that can square the values elementwise in a Tensor.
 type Squarer interface {
 	Square(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Cuber is any engine that can cube the values elementwise in a Tensor.
 type Cuber interface {
 	Cube(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Exper is any engine that can perform elementwise natural exponentiation on the values in a Tensor.
 type Exper interface {
 	Exp(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Tanher is any engine that can perform elementwise Tanh on the values in a Tensor.
 type Tanher interface {
 	Tanh(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Loger is any engine that can perform natural log on the values in a Tensor.
 type Loger interface {
 	Log(a Tensor, opt ...FuncOpt) (Tensor, error)
 }
 
+// Log2 is any engine that can perform base-2 logarithm on the values in a Tensor.
 type Log2er interface {
 	Log2(a Tensor, opt ...FuncOpt) (Tensor, error)
 }
 
+// Log10er is any engine that can perform base-10 logarithm on the values in a Tensor.
 type Log10er interface {
 	Log10(a Tensor, opt ...FuncOpt) (Tensor, error)
 }
 
+// Sqrter is any engine that can perform square root on the values in a Tensor.
 type Sqrter interface {
 	Sqrt(a Tensor, opt ...FuncOpt) (Tensor, error)
 }
 
+// Cbrter is any engine that can perform cube root on the values in a Tensor.
 type Cbrter interface {
 	Cbrt(a Tensor, opt ...FuncOpt) (Tensor, error)
 }
 
+// InvSqrter is any engine that can perform 1/sqrt(x) on the values of a Tensor.
 type InvSqrter interface {
 	InvSqrt(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Signer is any engine that can perform a sign function on the values of a Tensor.
 type Signer interface {
 	Sign(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Abser is any engine that can perform Abs on the values of a Tensor.
 type Abser interface {
 	Abs(a Tensor, opts ...FuncOpt) (Tensor, error)
 }
 
+// Clamper is any engine that can clamp the values in a tensor to between min and max.
 type Clamper interface {
 	Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
 /* Reduction */
 
+// Reducer is any engine that can perform a reduction function.
 type Reducer interface {
 	Reduce(fn interface{}, a Tensor, axis int, defaultValue interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
+// OptimizedReducer is any engine that can perform a reduction function with optimizations for the first dimension, last dimension and dimensions in between.
 type OptimizedReducer interface {
 	OptimizedReduce(a Tensor, axis int, firstFn, lastFn, defaultFn, defaultValue interface{}, opts ...FuncOpt) (Tensor, error)
 }
 
+// Sumer is any engine that can perform summation along an axis of a Tensor.
 type Sumer interface {
 	Sum(a Tensor, along ...int) (Tensor, error)
 }
 
+// Proder is any engine that can perform product along an axis of a Tensor.
 type Proder interface {
 	Prod(a Tensor, along ...int) (Tensor, error)
 }
 
+// Miner is any engine that can find the minimum value along an axis of a Tensor.
 type Miner interface {
 	Min(a Tensor, along ...int) (Tensor, error)
 }
 
+// Maxer is any engine that can find the maximum value along an axis of a Tensor.
 type Maxer interface {
 	Max(a Tensor, along ...int) (Tensor, error)
 }
 
 /* Arg methods */
 
+// Argmaxer is any engine that can find the indices of the maximum values along an axis.
+// By convention the returned Tensor has Dtype of Int.
 type Argmaxer interface {
 	Argmax(t Tensor, axis int) (Tensor, error)
 }
 
+// Argmaxer is any engine that can find the indices of the minimum values along an axis.
+// By convention the returned Tensor has Dtype of Int.
 type Argminer interface {
 	Argmin(t Tensor, axis int) (Tensor, error)
 }
