@@ -385,7 +385,7 @@ func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	v.AP.o = order
 
 	// generate engine
-	eint := r.Intn(3)
+	eint := r.Intn(4)
 	switch eint {
 	case 0:
 		v.e = StdEng{}
@@ -397,6 +397,13 @@ func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 			v.e = StdEng{}
 		}
 	case 2:
+		// check is to prevent panics which Float64Engine will do if asked to allocate memory for non float64s
+		if of == Float32 {
+			v.e = Float32Engine{}
+		} else {
+			v.e = StdEng{}
+		}
+	case 3:
 		v.e = dummyEngine(true)
 	}
 

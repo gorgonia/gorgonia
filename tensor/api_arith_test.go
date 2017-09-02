@@ -40,21 +40,14 @@ func TestFMA(t *testing.T) {
 		y2 := y.Clone().(*Dense)
 
 		we, willFailEq := willerr(a, numberTypes, nil)
-		originalWE := we
 		_, ok1 := q.Engine().(FMAer)
 		_, ok2 := q.Engine().(Muler)
 		_, ok3 := q.Engine().(Adder)
 		we = we || (!ok1 && (!ok2 || !ok3))
 
-		f, orerr := FMA(a, x, y)
-		if err, retEarly := qcErrCheck(t, "FMA#1", a, x, we, orerr); retEarly {
+		f, err := FMA(a, x, y)
+		if err, retEarly := qcErrCheck(t, "FMA#1", a, x, we, err); retEarly {
 			if err != nil {
-				if orerr == nil {
-					t.Errorf("got %v", f)
-				}
-
-				t.Errorf("OriginalWillErr %v, %v ok1: %v, ok2 %v, ok3 %v", originalWE, q.IsNativelyAccessible(), ok1, ok2, ok3)
-				t.Errorf("orig %v a.Engine %T, x.Engine %T, y.Engine %T", orerr, a.Engine(), x.Engine(), y.Engine())
 				return false
 			}
 			return true
@@ -63,10 +56,9 @@ func TestFMA(t *testing.T) {
 		we, _ = willerr(a, numberTypes, nil)
 		_, ok := a.Engine().(Muler)
 		we = we || !ok
-		wi, orerr := Mul(a, x, WithIncr(y2))
-		if err, retEarly := qcErrCheck(t, "FMA#2", a, x, we, orerr); retEarly {
+		wi, err := Mul(a, x, WithIncr(y2))
+		if err, retEarly := qcErrCheck(t, "FMA#2", a, x, we, err); retEarly {
 			if err != nil {
-				t.Errorf("we: %v orig %v a.Engine %T, x.Engine %T, y.Engine %T", we, orerr, a.Engine(), x.Engine(), y.Engine())
 				return false
 			}
 			return true
@@ -79,9 +71,12 @@ func TestFMA(t *testing.T) {
 	}
 
 	// specific engines
+	var eng Engine
+
+	// FLOAT64 ENGINE
 
 	// vec-vec
-	eng := Float64Engine{}
+	eng = Float64Engine{}
 	a := New(WithBacking(Range(Float64, 0, 100)), WithEngine(eng))
 	x := New(WithBacking(Range(Float64, 1, 101)), WithEngine(eng))
 	y := New(Of(Float64), WithShape(100), WithEngine(eng))
@@ -116,4 +111,42 @@ func TestFMA(t *testing.T) {
 	}
 
 	assert.Equal(t, f.Data(), f2.Data())
+
+	// FLOAT32 engine
+	eng = Float32Engine{}
+	a = New(WithBacking(Range(Float32, 0, 100)), WithEngine(eng))
+	x = New(WithBacking(Range(Float32, 1, 101)), WithEngine(eng))
+	y = New(Of(Float32), WithShape(100), WithEngine(eng))
+
+	f, err = FMA(a, x, y)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	a2 = New(WithBacking(Range(Float32, 0, 100)))
+	x2 = New(WithBacking(Range(Float32, 1, 101)))
+	y2 = New(Of(Float32), WithShape(100))
+	f2, err = Mul(a2, x2, WithIncr(y2))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, f.Data(), f2.Data())
+
+	// vec-scalar
+	a = New(WithBacking(Range(Float32, 0, 100)), WithEngine(eng))
+	y = New(Of(Float32), WithShape(100))
+
+	if f, err = FMA(a, float32(2), y); err != nil {
+		t.Fatal(err)
+	}
+
+	a2 = New(WithBacking(Range(Float32, 0, 100)))
+	y2 = New(Of(Float32), WithShape(100))
+	if f2, err = Mul(a2, float32(2), WithIncr(y2)); err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, f.Data(), f2.Data())
+
 }
