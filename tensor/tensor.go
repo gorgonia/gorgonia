@@ -27,6 +27,10 @@ type Tensor interface {
 	Size() int
 	DataSize() int
 
+	// Data access related
+	RequiresIterator() bool
+	Iterator() Iterator
+
 	// ops
 	Slicer
 	At(...int) (interface{}, error)

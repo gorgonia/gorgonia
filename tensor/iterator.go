@@ -2,21 +2,11 @@ package tensor
 
 import "runtime"
 
-func requiresIterator(a Tensor) bool {
-	switch tt := a.(type) {
-	case DenseTensor:
-		return tt.requiresIterator()
-	case SparseTensor:
-		return true
-	}
-	panic("Unreachable")
-}
-
 func requiresOrderedIterator(e Engine, t Tensor) bool {
 	if t.IsScalar() {
 		return false
 	}
-	if requiresIterator(t) {
+	if t.RequiresIterator() {
 		return true
 	}
 	switch tt := t.(type) {

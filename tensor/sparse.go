@@ -17,8 +17,7 @@ var (
 type Sparse interface {
 	Tensor
 	Densor
-	NonZeroes() int     // NonZeroes returns the number of nonzero values
-	Iterator() Iterator // get an iterator
+	NonZeroes() int // NonZeroes returns the number of nonzero values
 }
 
 // coo is an internal representation of the Coordinate type sparse matrix.
@@ -302,8 +301,9 @@ func (t *CS) Uintptr() uintptr        { return uintptr(t.array.Ptr) }
 func (t *CS) Pointer() unsafe.Pointer { return t.array.Ptr }
 
 // NonZeroes returns the nonzeroes. In academic literature this is often written as NNZ.
-func (t *CS) NonZeroes() int     { return t.L }
-func (t *CS) Iterator() Iterator { return NewFlatSparseIterator(t) }
+func (t *CS) NonZeroes() int         { return t.L }
+func (t *CS) RequiresIterator() bool { return true }
+func (t *CS) Iterator() Iterator     { return NewFlatSparseIterator(t) }
 
 func (t *CS) at(coord ...int) (int, bool) {
 	var r, c int

@@ -19,76 +19,99 @@ func mulIncrF32(a []float32, b []float32, incr []float32)
 //go:linkname vecScaleF32 github.com/chewxy/vecf32.Scale
 func vecScaleF32(a []float32, b float32)
 
-// func handleFuncOptsF32(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr bool, err error) {
-// 	fo := ParseFuncOpts(opts...)
+//go:linkname vecAddF32 github.com/chewxy/vecf32.Add
+func vecAddF32(a []float32, b []float32)
 
-// 	reuseT, incr := fo.IncrReuse()
-// 	safe = fo.Safe()
-// 	toReuse = reuseT != nil
+//go:linkname addIncrF32 github.com/chewxy/vecf32.IncrAdd
+func addIncrF32(a []float32, b []float32, incr []float32)
 
-// 	if toReuse {
-// 		var ok bool
-// 		if reuse, ok = reuseT.(DenseTensor); !ok {
-// 			returnOpOpt(fo)
-// 			err = errors.Errorf("Cannot reuse a different type of Tensor in a *Dense-Scalar operation. Reuse is of %T", reuseT)
-// 			return
-// 		}
-// 		if reuse.len() != expShape.TotalSize() {
-// 			returnOpOpt(fo)
-// 			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
-// 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
-// 			return
-// 		}
-// 	}
-// 	returnOpOpt(fo)
-// 	return
-// }
+func handleFuncOptsF32(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr bool, err error) {
+	fo := ParseFuncOpts(opts...)
+
+	reuseT, incr := fo.IncrReuse()
+	safe = fo.Safe()
+	toReuse = reuseT != nil
+
+	if toReuse {
+		var ok bool
+		if reuse, ok = reuseT.(DenseTensor); !ok {
+			returnOpOpt(fo)
+			err = errors.Errorf("Cannot reuse a different type of Tensor in a *Dense-Scalar operation. Reuse is of %T", reuseT)
+			return
+		}
+		if reuse.len() != expShape.TotalSize() && !expShape.IsScalar() {
+			returnOpOpt(fo)
+			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
+			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch")
+			return
+		}
+	}
+	returnOpOpt(fo)
+	return
+}
 
 func prepDataVSF32(a Tensor, b interface{}, reuse DenseTensor) (dataA *storage.Header, dataB float32, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
+	// get data
+	if ah, ok := a.(headerer); ok {
+		dataA = ah.hdr()
+	} else {
+		err = errors.New("Unable to get data from a")
+		return
+	}
+
 	dataB = b.(float32)
-	switch at := a.(type) {
-	case DenseTensor:
-		dataA = at.hdr()
+	if reuse != nil {
+		dataReuse = reuse.hdr()
+	}
+
+	if a.RequiresIterator() || (reuse != nil && reuse.RequiresIterator()) {
+		ait = a.Iterator()
 		if reuse != nil {
-			dataReuse = reuse.hdr()
+			iit = reuse.Iterator()
 		}
-		if at.requiresIterator() || (reuse != nil && reuse.requiresIterator()) {
-			ait = IteratorFromDense(at)
-			if reuse != nil {
-				iit = IteratorFromDense(reuse)
-			}
-			useIter = true
-		}
-	case *CS:
-		err = errors.Errorf("NYI")
-	default:
-		err = errors.Errorf("NYI")
+		useIter = true
 	}
 	return
 }
 
-// func prepDataSVF32(a interface{}, b Tensor, reuse DenseTensor) (dataA float32, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
-// 	dataA = a.(float32)
-// 	switch bt := b.(type) {
-// 	case DenseTensor:
-// 		dataB = bt.hdr()
-// 		if reuse != nil {
-// 			dataReuse = reuse.hdr()
-// 		}
-// 		if bt.requiresIterator() || (reuse != nil && reuse.requiresIterator()) {
-// 			bit = IteratorFromDense(bt)
-// 			if reuse != nil {
-// 				iit = IteratorFromDense(reuse)
-// 			}
-// 			useIter = true
-// 		}
-// 	case *CS:
-// 		err = errors.Errorf("NYI")
-// 	default:
-// 		err = errors.Errorf("NYI")
-// 	}
-// 	return
-// }
+func (e Float32Engine) checkThree(a, b Tensor, reuse DenseTensor) error {
+	if !a.IsNativelyAccessible() {
+		return errors.Errorf(inaccessibleData, a)
+	}
+	if !b.IsNativelyAccessible() {
+		return errors.Errorf(inaccessibleData, b)
+	}
+
+	if reuse != nil && !reuse.IsNativelyAccessible() {
+		return errors.Errorf(inaccessibleData, reuse)
+	}
+
+	if a.Dtype() != Float32 {
+		return errors.Errorf("Expected a to be of Float32. Got %v instead", a.Dtype())
+	}
+	if a.Dtype() != b.Dtype() || (reuse != nil && b.Dtype() != reuse.Dtype()) {
+		return errors.Errorf("Expected a, b and reuse to have the same Dtype. Got %v, %v and %v instead", a.Dtype(), b.Dtype(), reuse.Dtype())
+	}
+	return nil
+}
+
+func (e Float32Engine) checkTwo(a Tensor, reuse DenseTensor) error {
+	if !a.IsNativelyAccessible() {
+		return errors.Errorf(inaccessibleData, a)
+	}
+	if reuse != nil && !reuse.IsNativelyAccessible() {
+		return errors.Errorf(inaccessibleData, reuse)
+	}
+
+	if a.Dtype() != Float32 {
+		return errors.Errorf("Expected a to be of Float32. Got %v instead", a.Dtype())
+	}
+
+	if reuse != nil && reuse.Dtype() != a.Dtype() {
+		return errors.Errorf("Expected reuse to be the same as a. Got %v instead", reuse.Dtype())
+	}
+	return nil
+}
 
 // Float32Engine is an execution engine that is optimized to only work with float32s. It assumes all data will are float32s.
 //
@@ -114,32 +137,18 @@ func (e Float32Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
 	var reuse DenseTensor
 	var ok bool
 
-	if !a.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, a)
-	}
-	if !x.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, x)
-	}
-	if !y.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, y)
-	}
-
 	if reuse, ok = y.(DenseTensor); !ok {
 		return nil, errors.New("y has to be a DenseTensor")
 	}
-
-	if a.Dtype() != Float32 {
-		return nil, errors.Errorf("Expected a to be of Float32. Got %v instead", a.Dtype())
-	}
-	if a.Dtype() != x.Dtype() || x.Dtype() != y.Dtype() {
-		return nil, errors.Errorf("Expected a, x and y to have the same Dtype. Got %v, %v and %v instead", a.Dtype(), x.Dtype(), y.Dtype())
+	if err = e.checkThree(a, x, reuse); err != nil {
+		return nil, errors.Wrap(err, "Failed checks")
 	}
 
 	var dataA, dataB, dataReuse *storage.Header
 	var ait, bit, iit Iterator
 	var useIter bool
 	if dataA, dataB, dataReuse, ait, bit, iit, useIter, _, err = prepDataVV(a, x, reuse); err != nil {
-		return nil, errors.Wrapf(err, "StdEng.Mul")
+		return nil, errors.Wrap(err, "Float32Engine.FMA")
 	}
 	if useIter {
 		err = execution.MulIterIncrF32(dataA.Float32s(), dataB.Float32s(), dataReuse.Float32s(), ait, bit, iit)
@@ -155,20 +164,11 @@ func (e Float32Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
 func (e Float32Engine) FMAScalar(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
 	var reuse DenseTensor
 	var ok bool
-
-	if !a.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, a)
-	}
-	if !y.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, y)
-	}
-
 	if reuse, ok = y.(DenseTensor); !ok {
 		return nil, errors.New("y has to be a DenseTensor")
 	}
-
-	if a.Dtype() != Float32 {
-		return nil, errors.Errorf("Expected a to be of Float32. Got %v instead", a.Dtype())
+	if err = e.checkTwo(a, reuse); err != nil {
+		return nil, errors.Wrap(err, "Failed checks")
 	}
 
 	var ait, iit Iterator
@@ -176,7 +176,7 @@ func (e Float32Engine) FMAScalar(a Tensor, x interface{}, y Tensor) (retVal Tens
 	var scalar float32
 	var useIter bool
 	if dataTensor, scalar, dataReuse, ait, iit, useIter, err = prepDataVSF32(a, x, reuse); err != nil {
-		return nil, errors.Wrapf(err, opFail, "StdEng.FMAScalar")
+		return nil, errors.Wrapf(err, opFail, "Float32Engine.FMAScalar")
 	}
 	if useIter {
 		err = execution.MulIterIncrVSF32(dataTensor.Float32s(), scalar, dataReuse.Float32s(), ait, iit)
@@ -185,6 +185,53 @@ func (e Float32Engine) FMAScalar(a Tensor, x interface{}, y Tensor) (retVal Tens
 
 	execution.MulIncrVSF32(dataTensor.Float32s(), scalar, dataReuse.Float32s())
 	retVal = reuse
+	return
+}
+
+// Add performs a + b elementwise. Both a and b must have the same shape.
+// Acceptable FuncOpts are: UseUnsafe(), WithReuse(T), WithIncr(T)
+func (e Float32Engine) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
+	if a.RequiresIterator() || b.RequiresIterator() {
+		return e.StdEng.Add(a, b, opts...)
+	}
+
+	var reuse DenseTensor
+	var safe, toReuse, incr bool
+	if reuse, safe, toReuse, incr, err = handleFuncOptsF32(a.Shape(), opts...); err != nil {
+		return nil, errors.Wrap(err, "Unable to handle funcOpts")
+	}
+	if err = e.checkThree(a, b, reuse); err != nil {
+		return nil, errors.Wrap(err, "Failed checks")
+	}
+
+	var hdrA, hdrB, hdrReuse *storage.Header
+	var dataA, dataB, dataReuse []float32
+
+	if hdrA, hdrB, hdrReuse, _, _, _, _, _, err = prepDataVV(a, b, reuse); err != nil {
+		return nil, errors.Wrapf(err, "Float32Engine.Add")
+	}
+	dataA = hdrA.Float32s()
+	dataB = hdrB.Float32s()
+	if hdrReuse != nil {
+		dataReuse = hdrReuse.Float32s()
+	}
+
+	switch {
+	case incr:
+		addIncrF32(dataA, dataB, dataReuse)
+		retVal = reuse
+	case toReuse:
+		copy(dataReuse, dataA)
+		vecAddF32(dataReuse, dataB)
+		retVal = reuse
+	case !safe:
+		vecAddF32(dataA, dataB)
+		retVal = a
+	default:
+		ret := a.Clone().(headerer)
+		vecAddF32(ret.hdr().Float32s(), dataB)
+		retVal = ret.(Tensor)
+	}
 	return
 }
 

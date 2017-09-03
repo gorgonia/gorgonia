@@ -93,129 +93,112 @@ func unaryCheck(a Tensor, tc *typeclass) error {
 // useIter indicates that the iterator methods should be used.
 // swap indicates that the operands are swapped.
 func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter, swap bool, err error) {
-	// prep actual data
-	switch at := a.(type) {
-	case DenseTensor:
-		switch bt := b.(type) {
-		case DenseTensor:
-			if requiresOrderedIterator(a.Engine(), at) || requiresOrderedIterator(a.Engine(), bt) {
-				dataA = at.hdr()
-				dataB = bt.hdr()
-				ait = IteratorFromDense(at)
-				bit = IteratorFromDense(bt)
-				if reuse != nil {
-					iit = IteratorFromDense(reuse)
-					dataReuse = reuse.hdr()
-				}
-				useIter = true
-			} else {
-				dataA = at.hdr()
-				dataB = bt.hdr()
-				if reuse != nil {
-					dataReuse = reuse.hdr()
-				}
-			}
-		case *CS:
-			useIter = true
-			dataA = at.hdr()
-			dataB = bt.hdr()
-			ait = IteratorFromDense(at)
-			bit = NewFlatSparseIterator(bt)
-			if reuse != nil {
-				dataReuse = reuse.hdr()
-				iit = IteratorFromDense(reuse)
-			}
-		default:
-			err = errors.Errorf(typeNYI, "prepDataVV", b)
-		}
-	case *CS:
-		useIter = true
-		switch bt := b.(type) {
-		case DenseTensor:
-			swap = true
-			dataB = at.hdr()
-			dataA = bt.hdr()
-			bit = NewFlatSparseIterator(at)
-			ait = IteratorFromDense(bt)
-			if reuse != nil {
-				dataReuse = reuse.hdr()
-				iit = IteratorFromDense(reuse)
-			}
-		case *CS:
-			err = errors.Errorf(methodNYI, "prepDataVV", "CS-CS")
-		default:
-			err = errors.Errorf(typeNYI, "prepDataVV", b)
-		}
-	default:
-		err = errors.Errorf(typeNYI, "prepDataVV", a)
+	// get data
+	var ah, bh headerer
+	var ok bool
+	if ah, ok = a.(headerer); !ok {
+		err = errors.New("Unable to get *storage.Header from a")
+		return
 	}
+	if bh, ok = b.(headerer); !ok {
+		err = errors.New("Unable to get *storage.Header from b")
+		return
+	}
+	dataA = ah.hdr()
+	dataB = bh.hdr()
+	if reuse != nil {
+		dataReuse = reuse.hdr()
+	}
+
+	// iter
+	useIter = a.RequiresIterator() || b.RequiresIterator() || (reuse != nil && reuse.RequiresIterator())
+	if useIter {
+		ait = a.Iterator()
+		bit = b.Iterator()
+		if reuse != nil {
+			iit = reuse.Iterator()
+		}
+	}
+
+	// swap
+	if _, ok := a.(*CS); ok {
+		if _, ok := b.(DenseTensor); ok {
+			swap = true
+			dataA, dataB = dataB, dataA
+			ait, bit = bit, ait
+		}
+	}
+
 	return
 }
 
 func prepDataVS(a Tensor, b interface{}, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
+	// get data
+	if ah, ok := a.(headerer); ok {
+		dataA = ah.hdr()
+	} else {
+		err = errors.New("Unable to get data from a")
+		return
+	}
+
 	dataB = scalarToHeader(b)
-	switch at := a.(type) {
-	case DenseTensor:
-		dataA = at.hdr()
+	if reuse != nil {
+		dataReuse = reuse.hdr()
+	}
+
+	if a.RequiresIterator() || (reuse != nil && reuse.RequiresIterator()) {
+		ait = a.Iterator()
 		if reuse != nil {
-			dataReuse = reuse.hdr()
+			iit = reuse.Iterator()
 		}
-		if requiresOrderedIterator(a.Engine(), at) {
-			ait = IteratorFromDense(at)
-			if reuse != nil {
-				iit = IteratorFromDense(reuse)
-			}
-			useIter = true
-		}
-	case *CS:
-		err = errors.Errorf("NYI")
-	default:
-		err = errors.Errorf("NYI")
+		useIter = true
 	}
 	return
 }
 
 func prepDataSV(a interface{}, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
+	// get data
 	dataA = scalarToHeader(a)
-	switch bt := b.(type) {
-	case DenseTensor:
-		dataB = bt.hdr()
+	if bh, ok := b.(headerer); ok {
+		dataB = bh.hdr()
+	} else {
+		err = errors.New("Unable to get data from b")
+		return
+	}
+	if reuse != nil {
+		dataReuse = reuse.hdr()
+	}
+
+	// get iterator
+	if b.RequiresIterator() || (reuse != nil && reuse.RequiresIterator()) {
+		bit = b.Iterator()
 		if reuse != nil {
-			dataReuse = reuse.hdr()
+			iit = reuse.Iterator()
 		}
-		if requiresOrderedIterator(b.Engine(), bt) {
-			bit = IteratorFromDense(bt)
-			if reuse != nil {
-				iit = IteratorFromDense(reuse)
-			}
-			useIter = true
-		}
-	case *CS:
-		err = errors.Errorf("NYI")
-	default:
-		err = errors.Errorf("NYI")
+		useIter = true
 	}
 	return
 }
 
 func prepDataUnary(a Tensor, reuse DenseTensor) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
-	switch at := a.(type) {
-	case DenseTensor:
-		dataA = at.hdr()
+	// get data
+	if ah, ok := a.(headerer); ok {
+		dataA = ah.hdr()
+	} else {
+		err = errors.New("Unable to get data from a")
+		return
+	}
+	if reuse != nil {
+		dataReuse = reuse.hdr()
+	}
+
+	// get iterator
+	if a.RequiresIterator() || (reuse != nil && reuse.RequiresIterator()) {
+		ait = a.Iterator()
 		if reuse != nil {
-			dataReuse = reuse.hdr()
+			rit = reuse.Iterator()
 		}
-		if requiresOrderedIterator(a.Engine(), at) {
-			ait = IteratorFromDense(at)
-			useIter = true
-			if reuse != nil {
-				rit = IteratorFromDense(reuse)
-			}
-		}
-	case *CS:
-		err = errors.Errorf("NYI")
-	default:
-		err = errors.Errorf("NYI")
+		useIter = true
 	}
 	return
 }

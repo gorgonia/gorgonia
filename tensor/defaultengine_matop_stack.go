@@ -38,9 +38,9 @@ func (e StdEng) StackDense(t DenseTensor, axis int, others ...DenseTensor) (retV
 	ap.o = info.o
 	ap.Δ = info.Δ
 
-	allNoMat := !requiresIterator(t)
+	allNoMat := !t.RequiresIterator()
 	for _, ot := range others {
-		if allNoMat && requiresIterator(ot) {
+		if allNoMat && ot.RequiresIterator() {
 			allNoMat = false
 		}
 	}

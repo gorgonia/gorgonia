@@ -575,7 +575,7 @@ func (t *Dense) slice(start, end int) {
 	t.array = t.array.slice(start, end)
 }
 
-func (t *Dense) requiresIterator() bool {
+func (t *Dense) RequiresIterator() bool {
 	if t.len() == 1 {
 		return false
 	}
@@ -585,3 +585,5 @@ func (t *Dense) requiresIterator() bool {
 	}
 	return false
 }
+
+func (t *Dense) Iterator() Iterator { return IteratorFromDense(t) }

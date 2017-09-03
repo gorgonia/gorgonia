@@ -67,9 +67,9 @@ func Copy(dst, src Tensor) error {
 			return errors.Errorf("Cannot copy from DenseTensor to %T", dst)
 		}
 
-		if requiresIterator(st) || requiresIterator(dt) {
-			siter := IteratorFromDense(st)
-			diter := IteratorFromDense(dt)
+		if st.RequiresIterator() || dt.RequiresIterator() {
+			siter := st.Iterator()
+			diter := dt.Iterator()
 			_, err := copyDenseIter(dt, st, diter, siter)
 			return err
 		}
