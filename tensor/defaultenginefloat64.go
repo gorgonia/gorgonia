@@ -53,14 +53,15 @@ func handleFuncOptsF64(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe
 func prepDataVSF64(a Tensor, b interface{}, reuse Tensor) (dataA *storage.Header, dataB float64, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
 	// get data
 	dataA = a.hdr()
-	// if ah, ok := a.(headerer); ok {
-	// 	dataA = ah.hdr()
-	// } else {
-	// 	err = errors.New("Unable to get data from a")
-	// 	return
-	// }
-
-	dataB = b.(float64)
+	switch bt := b.(type) {
+	case float64:
+		dataB = bt
+	case *float64:
+		dataB = *bt
+	default:
+		err = errors.Errorf("b is not a float64: %T", b)
+		return
+	}
 	if reuse != nil {
 		dataReuse = reuse.hdr()
 	}
@@ -227,14 +228,14 @@ func (e Float64Engine) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, 
 	return
 }
 
-func (e Float64Engine) Inner(a, b Tensor) (retVal interface{}, err error) {
+func (e Float64Engine) Inner(a, b Tensor) (retVal float64, err error) {
 	var A, B []float64
 	var ok bool
 	if A, ok = a.Data().([]float64); !ok {
-		return nil, errors.Errorf("A's data is not []float64")
+		return 0, errors.Errorf("A's data is not []float64")
 	}
 	if B, ok = b.Data().([]float64); !ok {
-		return nil, errors.Errorf("B's data is not []float64")
+		return 0, errors.Errorf("B's data is not []float64")
 	}
 	retVal = whichblas.Ddot(len(A), A, 1, B, 1)
 	return

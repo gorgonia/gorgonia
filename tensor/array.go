@@ -400,7 +400,19 @@ func getPointer(a interface{}) unsafe.Pointer {
 		return unsafe.Pointer(&at)
 	case unsafe.Pointer:
 		return at
+
+		// POINTERS
+
+	case *float32:
+		return unsafe.Pointer(at)
+	case *float64:
+		return unsafe.Pointer(at)
+	case *complex64:
+		return unsafe.Pointer(at)
+	case *complex128:
+		return unsafe.Pointer(at)
 	}
+
 	panic("Cannot get pointer")
 }
 

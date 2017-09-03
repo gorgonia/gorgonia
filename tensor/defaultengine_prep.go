@@ -94,16 +94,6 @@ func unaryCheck(a Tensor, tc *typeclass) error {
 // swap indicates that the operands are swapped.
 func prepDataVV(a, b Tensor, reuse Tensor) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter, swap bool, err error) {
 	// get data
-	// var ah, bh headerer
-	// var ok bool
-	// if ah, ok = a.(headerer); !ok {
-	// 	err = errors.New("Unable to get *storage.Header from a")
-	// 	return
-	// }
-	// if bh, ok = b.(headerer); !ok {
-	// 	err = errors.New("Unable to get *storage.Header from b")
-	// 	return
-	// }
 	dataA = a.hdr()
 	dataB = b.hdr()
 	if reuse != nil {
@@ -134,12 +124,6 @@ func prepDataVV(a, b Tensor, reuse Tensor) (dataA, dataB, dataReuse *storage.Hea
 
 func prepDataVS(a Tensor, b interface{}, reuse Tensor) (dataA, dataB, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
 	// get data
-	// if ah, ok := a.(headerer); ok {
-	// 	dataA = ah.hdr()
-	// } else {
-	// 	err = errors.New("Unable to get data from a")
-	// 	return
-	// }
 	dataA = a.hdr()
 	dataB = scalarToHeader(b)
 	if reuse != nil {
@@ -160,12 +144,6 @@ func prepDataSV(a interface{}, b Tensor, reuse Tensor) (dataA, dataB, dataReuse 
 	// get data
 	dataA = scalarToHeader(a)
 	dataB = b.hdr()
-	// if bh, ok := b.(headerer); ok {
-	// 	dataB = bh.hdr()
-	// } else {
-	// 	err = errors.New("Unable to get data from b")
-	// 	return
-	// }
 	if reuse != nil {
 		dataReuse = reuse.hdr()
 	}
@@ -183,12 +161,7 @@ func prepDataSV(a interface{}, b Tensor, reuse Tensor) (dataA, dataB, dataReuse 
 
 func prepDataUnary(a Tensor, reuse Tensor) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
 	// get data
-	if ah, ok := a.(headerer); ok {
-		dataA = ah.hdr()
-	} else {
-		err = errors.New("Unable to get data from a")
-		return
-	}
+	dataA = a.hdr()
 	if reuse != nil {
 		dataReuse = reuse.hdr()
 	}

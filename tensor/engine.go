@@ -153,6 +153,16 @@ type InnerProder interface {
 	Inner(a, b Tensor) (interface{}, error) // Inner always returns a scalar value
 }
 
+// InnerProderF32 is an optimization for float32 - results are returned as float32.
+type InnerProderF32 interface {
+	Inner(a, b Tensor) (float32, error)
+}
+
+// InnerProderF64 is an optimization for float64 - results are returned as float64
+type InnerProderF64 interface {
+	Inner(a, b Tensor) (float64, error)
+}
+
 // OuterProder is any engine that can perform outer product (kronecker) multiplication
 type OuterProder interface {
 	Outer(a, b, preallocated Tensor) error

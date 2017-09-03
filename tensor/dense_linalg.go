@@ -31,10 +31,15 @@ func (t *Dense) Inner(other Tensor) (retVal interface{}, err error) {
 	}
 
 	e := t.e
-
-	if ip, ok := e.(InnerProder); ok {
+	switch ip := e.(type) {
+	case InnerProder:
+		return ip.Inner(t, other)
+	case InnerProderF32:
+		return ip.Inner(t, other)
+	case InnerProderF64:
 		return ip.Inner(t, other)
 	}
+
 	return nil, errors.Errorf("Engine does not support Inner()")
 }
 
