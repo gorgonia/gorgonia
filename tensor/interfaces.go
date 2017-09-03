@@ -80,8 +80,8 @@ type DenseTensor interface {
 	IsVector() bool
 	IsMatrix() bool
 
-	headerer
-	arrayer
+	// headerer
+	// arrayer
 	unsafeMem
 	setAP(*AP)
 	rtype() reflect.Type
@@ -113,7 +113,7 @@ type SparseTensor interface {
 	Indices() []int
 	Indptr() []int
 
-	headerer
+	// headerer
 }
 
 type MaskedTensor interface {

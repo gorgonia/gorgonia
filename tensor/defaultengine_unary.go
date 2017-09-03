@@ -33,15 +33,11 @@ func (e StdEng) Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.NegIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.NegIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Neg")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -53,11 +49,7 @@ func (e StdEng) Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.NegIter(typ, h.hdr(), ait)
+			err = e.E.NegIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -65,14 +57,10 @@ func (e StdEng) Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Neg(typ, h.hdr()); err != nil {
+		if err = e.E.Neg(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Neg")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -83,11 +71,7 @@ func (e StdEng) Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Neg(typ, h.hdr())
+		err = e.E.Neg(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -117,15 +101,11 @@ func (e StdEng) Inv(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.InvIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.InvIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Inv")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -137,11 +117,7 @@ func (e StdEng) Inv(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.InvIter(typ, h.hdr(), ait)
+			err = e.E.InvIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -149,14 +125,10 @@ func (e StdEng) Inv(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Inv(typ, h.hdr()); err != nil {
+		if err = e.E.Inv(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Inv")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -167,11 +139,7 @@ func (e StdEng) Inv(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Inv(typ, h.hdr())
+		err = e.E.Inv(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -201,15 +169,11 @@ func (e StdEng) Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.SquareIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.SquareIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Square")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -221,11 +185,7 @@ func (e StdEng) Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.SquareIter(typ, h.hdr(), ait)
+			err = e.E.SquareIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -233,14 +193,10 @@ func (e StdEng) Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Square(typ, h.hdr()); err != nil {
+		if err = e.E.Square(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Square")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -251,11 +207,7 @@ func (e StdEng) Square(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Square(typ, h.hdr())
+		err = e.E.Square(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -285,15 +237,11 @@ func (e StdEng) Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.CubeIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.CubeIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Cube")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -305,11 +253,7 @@ func (e StdEng) Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.CubeIter(typ, h.hdr(), ait)
+			err = e.E.CubeIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -317,14 +261,10 @@ func (e StdEng) Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Cube(typ, h.hdr()); err != nil {
+		if err = e.E.Cube(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Cube")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -335,11 +275,7 @@ func (e StdEng) Cube(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Cube(typ, h.hdr())
+		err = e.E.Cube(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -369,15 +305,11 @@ func (e StdEng) Exp(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.ExpIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.ExpIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Exp")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -389,11 +321,7 @@ func (e StdEng) Exp(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.ExpIter(typ, h.hdr(), ait)
+			err = e.E.ExpIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -401,14 +329,10 @@ func (e StdEng) Exp(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Exp(typ, h.hdr()); err != nil {
+		if err = e.E.Exp(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Exp")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -419,11 +343,7 @@ func (e StdEng) Exp(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Exp(typ, h.hdr())
+		err = e.E.Exp(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -453,15 +373,11 @@ func (e StdEng) Tanh(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.TanhIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.TanhIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Tanh")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -473,11 +389,7 @@ func (e StdEng) Tanh(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.TanhIter(typ, h.hdr(), ait)
+			err = e.E.TanhIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -485,14 +397,10 @@ func (e StdEng) Tanh(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Tanh(typ, h.hdr()); err != nil {
+		if err = e.E.Tanh(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Tanh")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -503,11 +411,7 @@ func (e StdEng) Tanh(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Tanh(typ, h.hdr())
+		err = e.E.Tanh(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -537,15 +441,11 @@ func (e StdEng) Log(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.LogIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.LogIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Log")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -557,11 +457,7 @@ func (e StdEng) Log(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.LogIter(typ, h.hdr(), ait)
+			err = e.E.LogIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -569,14 +465,10 @@ func (e StdEng) Log(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Log(typ, h.hdr()); err != nil {
+		if err = e.E.Log(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Log")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -587,11 +479,7 @@ func (e StdEng) Log(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Log(typ, h.hdr())
+		err = e.E.Log(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -621,15 +509,11 @@ func (e StdEng) Log2(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.Log2Iter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.Log2Iter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Log2")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -641,11 +525,7 @@ func (e StdEng) Log2(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.Log2Iter(typ, h.hdr(), ait)
+			err = e.E.Log2Iter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -653,14 +533,10 @@ func (e StdEng) Log2(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Log2(typ, h.hdr()); err != nil {
+		if err = e.E.Log2(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Log2")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -671,11 +547,7 @@ func (e StdEng) Log2(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Log2(typ, h.hdr())
+		err = e.E.Log2(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -705,15 +577,11 @@ func (e StdEng) Log10(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.Log10Iter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.Log10Iter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Log10")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -725,11 +593,7 @@ func (e StdEng) Log10(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.Log10Iter(typ, h.hdr(), ait)
+			err = e.E.Log10Iter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -737,14 +601,10 @@ func (e StdEng) Log10(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Log10(typ, h.hdr()); err != nil {
+		if err = e.E.Log10(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Log10")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -755,11 +615,7 @@ func (e StdEng) Log10(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Log10(typ, h.hdr())
+		err = e.E.Log10(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -789,15 +645,11 @@ func (e StdEng) Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.SqrtIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.SqrtIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Sqrt")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -809,11 +661,7 @@ func (e StdEng) Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.SqrtIter(typ, h.hdr(), ait)
+			err = e.E.SqrtIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -821,14 +669,10 @@ func (e StdEng) Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Sqrt(typ, h.hdr()); err != nil {
+		if err = e.E.Sqrt(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Sqrt")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -839,11 +683,7 @@ func (e StdEng) Sqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Sqrt(typ, h.hdr())
+		err = e.E.Sqrt(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -873,15 +713,11 @@ func (e StdEng) Cbrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.CbrtIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.CbrtIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Cbrt")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -893,11 +729,7 @@ func (e StdEng) Cbrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.CbrtIter(typ, h.hdr(), ait)
+			err = e.E.CbrtIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -905,14 +737,10 @@ func (e StdEng) Cbrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Cbrt(typ, h.hdr()); err != nil {
+		if err = e.E.Cbrt(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Cbrt")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -923,11 +751,7 @@ func (e StdEng) Cbrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Cbrt(typ, h.hdr())
+		err = e.E.Cbrt(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -957,15 +781,11 @@ func (e StdEng) InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.InvSqrtIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.InvSqrtIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform InvSqrt")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -977,11 +797,7 @@ func (e StdEng) InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.InvSqrtIter(typ, h.hdr(), ait)
+			err = e.E.InvSqrtIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -989,14 +805,10 @@ func (e StdEng) InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.InvSqrt(typ, h.hdr()); err != nil {
+		if err = e.E.InvSqrt(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform InvSqrt")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -1007,11 +819,7 @@ func (e StdEng) InvSqrt(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.InvSqrt(typ, h.hdr())
+		err = e.E.InvSqrt(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -1041,15 +849,11 @@ func (e StdEng) Abs(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.AbsIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.AbsIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Abs")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -1061,11 +865,7 @@ func (e StdEng) Abs(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.AbsIter(typ, h.hdr(), ait)
+			err = e.E.AbsIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -1073,14 +873,10 @@ func (e StdEng) Abs(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Abs(typ, h.hdr()); err != nil {
+		if err = e.E.Abs(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Abs")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -1091,11 +887,7 @@ func (e StdEng) Abs(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Abs(typ, h.hdr())
+		err = e.E.Abs(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return
@@ -1125,15 +917,11 @@ func (e StdEng) Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.SignIter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.SignIter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform Sign")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -1145,11 +933,7 @@ func (e StdEng) Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.SignIter(typ, h.hdr(), ait)
+			err = e.E.SignIter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -1157,14 +941,10 @@ func (e StdEng) Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Sign(typ, h.hdr()); err != nil {
+		if err = e.E.Sign(typ, cloned.hdr()); err != nil {
 			return nil, errors.Wrap(err, "Unable to perform Sign")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -1175,11 +955,7 @@ func (e StdEng) Sign(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		retVal = a
 	default: // safe by default
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Sign(typ, h.hdr())
+		err = e.E.Sign(typ, cloned.hdr())
 		retVal = cloned
 	}
 	return

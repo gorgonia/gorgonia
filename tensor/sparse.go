@@ -376,3 +376,6 @@ func (t *CS) AsCSC() {
 
 func (t *CS) IsNativelyAccessible() bool { return t.f.nativelyAccessible() }
 func (t *CS) IsManuallyManaged() bool    { return t.f.manuallyManaged() }
+
+func (t *CS) arr() array     { return t.array }
+func (t *CS) arrPtr() *array { return &t.array }

@@ -71,6 +71,9 @@ type Tensor interface {
 	ReadNpy(io.Reader) error
 	gob.GobEncoder
 	gob.GobDecoder
+
+	headerer
+	arrayer
 }
 
 // New creates a new Dense Tensor. For sparse arrays use their relevant construction function

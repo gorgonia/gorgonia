@@ -50,14 +50,15 @@ func handleFuncOptsF32(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe
 	return
 }
 
-func prepDataVSF32(a Tensor, b interface{}, reuse DenseTensor) (dataA *storage.Header, dataB float32, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
+func prepDataVSF32(a Tensor, b interface{}, reuse Tensor) (dataA *storage.Header, dataB float32, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
 	// get data
-	if ah, ok := a.(headerer); ok {
-		dataA = ah.hdr()
-	} else {
-		err = errors.New("Unable to get data from a")
-		return
-	}
+	dataA = a.hdr()
+	// if ah, ok := a.(headerer); ok {
+	// 	dataA = ah.hdr()
+	// } else {
+	// 	err = errors.New("Unable to get data from a")
+	// 	return
+	// }
 
 	dataB = b.(float32)
 	if reuse != nil {
@@ -74,7 +75,7 @@ func prepDataVSF32(a Tensor, b interface{}, reuse DenseTensor) (dataA *storage.H
 	return
 }
 
-func (e Float32Engine) checkThree(a, b Tensor, reuse DenseTensor) error {
+func (e Float32Engine) checkThree(a, b Tensor, reuse Tensor) error {
 	if !a.IsNativelyAccessible() {
 		return errors.Errorf(inaccessibleData, a)
 	}
@@ -95,7 +96,7 @@ func (e Float32Engine) checkThree(a, b Tensor, reuse DenseTensor) error {
 	return nil
 }
 
-func (e Float32Engine) checkTwo(a Tensor, reuse DenseTensor) error {
+func (e Float32Engine) checkTwo(a Tensor, reuse Tensor) error {
 	if !a.IsNativelyAccessible() {
 		return errors.Errorf(inaccessibleData, a)
 	}
@@ -134,12 +135,7 @@ func (e Float32Engine) makeArray(arr *array, t Dtype, size int) {
 }
 
 func (e Float32Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
-	var reuse DenseTensor
-	var ok bool
-
-	if reuse, ok = y.(DenseTensor); !ok {
-		return nil, errors.New("y has to be a DenseTensor")
-	}
+	reuse := y
 	if err = e.checkThree(a, x, reuse); err != nil {
 		return nil, errors.Wrap(err, "Failed checks")
 	}
@@ -162,11 +158,7 @@ func (e Float32Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
 }
 
 func (e Float32Engine) FMAScalar(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
-	var reuse DenseTensor
-	var ok bool
-	if reuse, ok = y.(DenseTensor); !ok {
-		return nil, errors.New("y has to be a DenseTensor")
-	}
+	reuse := y
 	if err = e.checkTwo(a, reuse); err != nil {
 		return nil, errors.Wrap(err, "Failed checks")
 	}

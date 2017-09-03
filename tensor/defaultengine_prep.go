@@ -92,20 +92,20 @@ func unaryCheck(a Tensor, tc *typeclass) error {
 //
 // useIter indicates that the iterator methods should be used.
 // swap indicates that the operands are swapped.
-func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter, swap bool, err error) {
+func prepDataVV(a, b Tensor, reuse Tensor) (dataA, dataB, dataReuse *storage.Header, ait, bit, iit Iterator, useIter, swap bool, err error) {
 	// get data
-	var ah, bh headerer
-	var ok bool
-	if ah, ok = a.(headerer); !ok {
-		err = errors.New("Unable to get *storage.Header from a")
-		return
-	}
-	if bh, ok = b.(headerer); !ok {
-		err = errors.New("Unable to get *storage.Header from b")
-		return
-	}
-	dataA = ah.hdr()
-	dataB = bh.hdr()
+	// var ah, bh headerer
+	// var ok bool
+	// if ah, ok = a.(headerer); !ok {
+	// 	err = errors.New("Unable to get *storage.Header from a")
+	// 	return
+	// }
+	// if bh, ok = b.(headerer); !ok {
+	// 	err = errors.New("Unable to get *storage.Header from b")
+	// 	return
+	// }
+	dataA = a.hdr()
+	dataB = b.hdr()
 	if reuse != nil {
 		dataReuse = reuse.hdr()
 	}
@@ -132,15 +132,15 @@ func prepDataVV(a, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storag
 	return
 }
 
-func prepDataVS(a Tensor, b interface{}, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
+func prepDataVS(a Tensor, b interface{}, reuse Tensor) (dataA, dataB, dataReuse *storage.Header, ait, iit Iterator, useIter bool, err error) {
 	// get data
-	if ah, ok := a.(headerer); ok {
-		dataA = ah.hdr()
-	} else {
-		err = errors.New("Unable to get data from a")
-		return
-	}
-
+	// if ah, ok := a.(headerer); ok {
+	// 	dataA = ah.hdr()
+	// } else {
+	// 	err = errors.New("Unable to get data from a")
+	// 	return
+	// }
+	dataA = a.hdr()
 	dataB = scalarToHeader(b)
 	if reuse != nil {
 		dataReuse = reuse.hdr()
@@ -156,15 +156,16 @@ func prepDataVS(a Tensor, b interface{}, reuse DenseTensor) (dataA, dataB, dataR
 	return
 }
 
-func prepDataSV(a interface{}, b Tensor, reuse DenseTensor) (dataA, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
+func prepDataSV(a interface{}, b Tensor, reuse Tensor) (dataA, dataB, dataReuse *storage.Header, bit, iit Iterator, useIter bool, err error) {
 	// get data
 	dataA = scalarToHeader(a)
-	if bh, ok := b.(headerer); ok {
-		dataB = bh.hdr()
-	} else {
-		err = errors.New("Unable to get data from b")
-		return
-	}
+	dataB = b.hdr()
+	// if bh, ok := b.(headerer); ok {
+	// 	dataB = bh.hdr()
+	// } else {
+	// 	err = errors.New("Unable to get data from b")
+	// 	return
+	// }
 	if reuse != nil {
 		dataReuse = reuse.hdr()
 	}
@@ -180,7 +181,7 @@ func prepDataSV(a interface{}, b Tensor, reuse DenseTensor) (dataA, dataB, dataR
 	return
 }
 
-func prepDataUnary(a Tensor, reuse DenseTensor) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
+func prepDataUnary(a Tensor, reuse Tensor) (dataA, dataReuse *storage.Header, ait, rit Iterator, useIter bool, err error) {
 	// get data
 	if ah, ok := a.(headerer); ok {
 		dataA = ah.hdr()

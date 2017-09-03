@@ -114,22 +114,20 @@ const agg2BodyRaw = `if useIter {
 			retVal = a
 		default:
 		{{if .VV -}}
-			var ret headerer
 			if swap{
-				ret = b.Clone().(headerer)
+				retVal = b.Clone().(Tensor)
 			}else{
-				ret = a.Clone().(headerer)
+				retVal = a.Clone().(Tensor)
 			}
-			err = e.E.{{.Name}}Iter(typ, ret.hdr(), dataB, ait, bit)
+			err = e.E.{{.Name}}Iter(typ, retVal.hdr(), dataB, ait, bit)
 		{{else -}}
-			ret := a.Clone().(headerer)
+			retVal = a.Clone().(Tensor)
 			if leftTensor {
-				err = e.E.{{.Name}}Iter(typ, ret.hdr(), dataB, ait, bit)
+				err = e.E.{{.Name}}Iter(typ, retVal.hdr(), dataB, ait, bit)
 			}else {
-				err = e.E.{{.Name}}Iter(typ, dataA, ret.hdr(), ait, bit)
+				err = e.E.{{.Name}}Iter(typ, dataA, retVal.hdr(), ait, bit)
 			}
 		{{end -}}
-			retVal = ret.(Tensor)
 		}
 		{{if not .VV -}}returnHeader(scalarHeader){{end}}
 		return
@@ -158,22 +156,20 @@ const agg2BodyRaw = `if useIter {
 		retVal = a
 	default:
 		{{if .VV -}}
-			var ret headerer
 			if swap {
-				ret = b.Clone().(headerer)
+				retVal = b.Clone().(Tensor)
 			}else{
-				ret = a.Clone().(headerer)
+				retVal = a.Clone().(Tensor)
 			}
-			err = e.E.{{.Name}}(typ, ret.hdr(), dataB)
+			err = e.E.{{.Name}}(typ, retVal.hdr(), dataB)
 		{{else -}}
-			ret := a.Clone().(headerer)
+			retVal = a.Clone().(Tensor)
 			if leftTensor {
-				err = e.E.{{.Name}}(typ, ret.hdr(), dataB)
+				err = e.E.{{.Name}}(typ, retVal.hdr(), dataB)
 			}else {
-				err = e.E.{{.Name}}(typ, dataA, ret.hdr())	
+				err = e.E.{{.Name}}(typ, dataA, retVal.hdr())	
 			}
 		{{end -}}
-		retVal = ret.(Tensor)
 	}
 	{{if not .VV -}}returnHeader(scalarHeader){{end}}
 	return
@@ -238,15 +234,11 @@ const agg2UnaryBodyRaw = `
 		switch {
 		case incr:
 			cloned:= a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.{{.Name}}Iter(typ, h.hdr(), ait); err != nil {
+			if err = e.E.{{.Name}}Iter(typ, cloned.hdr(), ait); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform {{.Name}}")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -258,11 +250,7 @@ const agg2UnaryBodyRaw = `
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok{
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.{{.Name}}Iter(typ, h.hdr(), ait)
+			err = e.E.{{.Name}}Iter(typ, cloned.hdr(), ait)
 			retVal = cloned
 		}
 		return
@@ -270,14 +258,10 @@ const agg2UnaryBodyRaw = `
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok{
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.{{.Name}}(typ, h.hdr()); err != nil {
+			if err = e.E.{{.Name}}(typ, cloned.hdr()); err != nil {
 				return nil, errors.Wrap(err, "Unable to perform {{.Name}}")
 			}
-			err = e.E.Add(typ, dataReuse, h.hdr())
+			err = e.E.Add(typ, dataReuse, cloned.hdr())
 			retVal = reuse
 		case toReuse:
 			storage.Copy(typ, dataReuse, dataA)
@@ -288,11 +272,7 @@ const agg2UnaryBodyRaw = `
 			retVal = a
 		default: // safe by default
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok{
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.{{.Name}}(typ, h.hdr())
+			err = e.E.{{.Name}}(typ, cloned.hdr())
 			retVal = cloned
 		}
 		return

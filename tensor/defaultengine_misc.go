@@ -29,15 +29,11 @@ func (e StdEng) Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal T
 		switch {
 		case incr:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			if err = e.E.ClampIter(typ, h.hdr(), ait, min, max); err != nil {
+			if err = e.E.ClampIter(typ, cloned.hdr(), ait, min, max); err != nil {
 				return nil, errors.Wrapf(err, "Unable to perform Clamp")
 			}
 			ait.Reset()
-			err = e.E.AddIter(typ, dataReuse, h.hdr(), rit, ait)
+			err = e.E.AddIter(typ, dataReuse, cloned.hdr(), rit, ait)
 			retVal = reuse
 		case toReuse:
 			storage.CopyIter(typ, dataReuse, dataA, rit, ait)
@@ -49,11 +45,7 @@ func (e StdEng) Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal T
 			retVal = a
 		default:
 			cloned := a.Clone().(Tensor)
-			h, ok := cloned.(headerer)
-			if !ok {
-				return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-			}
-			err = e.E.ClampIter(typ, h.hdr(), ait, min, max)
+			err = e.E.ClampIter(typ, cloned.hdr(), ait, min, max)
 			retVal = cloned
 		}
 		return
@@ -61,14 +53,10 @@ func (e StdEng) Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal T
 	switch {
 	case incr:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		if err = e.E.Clamp(typ, h.hdr(), min, max); err != nil {
+		if err = e.E.Clamp(typ, cloned.hdr(), min, max); err != nil {
 			return nil, errors.Wrapf(err, "Unable to perform Clamp")
 		}
-		err = e.E.Add(typ, dataReuse, h.hdr())
+		err = e.E.Add(typ, dataReuse, cloned.hdr())
 		retVal = reuse
 	case toReuse:
 		storage.Copy(typ, dataReuse, dataA)
@@ -79,11 +67,7 @@ func (e StdEng) Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal T
 		retVal = a
 	default:
 		cloned := a.Clone().(Tensor)
-		h, ok := cloned.(headerer)
-		if !ok {
-			return nil, errors.Errorf("Unable to clone a %T - not a headerer", a)
-		}
-		err = e.E.Clamp(typ, h.hdr(), min, max)
+		err = e.E.Clamp(typ, cloned.hdr(), min, max)
 		retVal = cloned
 	}
 	return
