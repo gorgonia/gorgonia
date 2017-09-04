@@ -19,20 +19,32 @@ import (
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var adder Adder
+	var oe standardEngine
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		adder, ok = at.Engine().(Adder)
+		oe = at.standardEngine()
 		switch bt := b.(type) {
 		case Tensor:
-			if !ok {
-				if adder, ok = bt.Engine().(Adder); !ok {
-					return nil, errors.New("Neither engines of either operand support Add")
-				}
+			if oe != nil {
+				return oe.Add(at, bt, opts...)
 			}
-			return adder.Add(at, bt, opts...)
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Add(at, bt, opts...)
+			}
+			if adder, ok = at.Engine().(Adder); ok {
+				return adder.Add(at, bt, opts...)
+			}
+			if adder, ok = bt.Engine().(Adder); ok {
+				return adder.Add(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Add")
+
 		default:
-			if ok {
+			if oe != nil {
+				return oe.AddScalar(at, bt, true, opts...)
+			}
+			if adder, ok = at.Engine().(Adder); ok {
 				return adder.AddScalar(at, bt, true, opts...)
 			}
 			return nil, errors.New("Operand A's engine does not support Add")
@@ -40,10 +52,13 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	default:
 		switch bt := b.(type) {
 		case Tensor:
-			if adder, ok = bt.Engine().(Adder); !ok {
-				return nil, errors.New("Operand B's engine does not support Add")
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.AddScalar(bt, at, false, opts...)
 			}
-			return adder.AddScalar(bt, at, false, opts...)
+			if adder, ok = bt.Engine().(Adder); ok {
+				return adder.AddScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Add")
 		default:
 			return nil, errors.Errorf("Cannot perform Add of %T and %T", a, b)
 		}
@@ -58,32 +73,46 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var suber Suber
+	var oe standardEngine
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		suber, ok = at.Engine().(Suber)
+		oe = at.standardEngine()
 		switch bt := b.(type) {
 		case Tensor:
-			if !ok {
-				if suber, ok = bt.Engine().(Suber); !ok {
-					return nil, errors.New("Neither engines of either operand support Sub")
-				}
+			if oe != nil {
+				return oe.Sub(at, bt, opts...)
 			}
-			return suber.Sub(at, bt, opts...)
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Sub(at, bt, opts...)
+			}
+			if suber, ok = at.Engine().(Suber); ok {
+				return suber.Sub(at, bt, opts...)
+			}
+			if suber, ok = bt.Engine().(Suber); ok {
+				return suber.Sub(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Sub")
+
 		default:
-			if ok {
+			if oe != nil {
+				return oe.SubScalar(at, bt, true, opts...)
+			}
+			if suber, ok = at.Engine().(Suber); ok {
 				return suber.SubScalar(at, bt, true, opts...)
 			}
 			return nil, errors.New("Operand A's engine does not support Sub")
-
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
-			if suber, ok = bt.Engine().(Suber); !ok {
-				return nil, errors.New("Operand B's engine does not support Sub")
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.SubScalar(bt, at, false, opts...)
 			}
-			return suber.SubScalar(bt, at, false, opts...)
+			if suber, ok = bt.Engine().(Suber); ok {
+				return suber.SubScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Sub")
 		default:
 			return nil, errors.Errorf("Cannot perform Sub of %T and %T", a, b)
 		}
@@ -98,32 +127,46 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var muler Muler
+	var oe standardEngine
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		muler, ok = at.Engine().(Muler)
+		oe = at.standardEngine()
 		switch bt := b.(type) {
 		case Tensor:
-			if !ok {
-				if muler, ok = bt.Engine().(Muler); !ok {
-					return nil, errors.New("Neither engines of either operand support Mul")
-				}
+			if oe != nil {
+				return oe.Mul(at, bt, opts...)
 			}
-			return muler.Mul(at, bt, opts...)
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Mul(at, bt, opts...)
+			}
+			if muler, ok = at.Engine().(Muler); ok {
+				return muler.Mul(at, bt, opts...)
+			}
+			if muler, ok = bt.Engine().(Muler); ok {
+				return muler.Mul(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Mul")
+
 		default:
-			if ok {
+			if oe != nil {
+				return oe.MulScalar(at, bt, true, opts...)
+			}
+			if muler, ok = at.Engine().(Muler); ok {
 				return muler.MulScalar(at, bt, true, opts...)
 			}
-			return nil, errors.New("Operand A's engine does not support Sub")
-
+			return nil, errors.New("Operand A's engine does not support Mul")
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
-			if muler, ok = bt.Engine().(Muler); !ok {
-				return nil, errors.New("Operand B's engine does not support Mul")
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.MulScalar(bt, at, false, opts...)
 			}
-			return muler.MulScalar(bt, at, false, opts...)
+			if muler, ok = bt.Engine().(Muler); ok {
+				return muler.MulScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Mul")
 		default:
 			return nil, errors.Errorf("Cannot perform Mul of %T and %T", a, b)
 		}
@@ -138,32 +181,46 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var diver Diver
+	var oe standardEngine
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		diver, ok = at.Engine().(Diver)
+		oe = at.standardEngine()
 		switch bt := b.(type) {
 		case Tensor:
-			if !ok {
-				if diver, ok = bt.Engine().(Diver); !ok {
-					return nil, errors.New("Neither engines of either operand support Div")
-				}
+			if oe != nil {
+				return oe.Div(at, bt, opts...)
 			}
-			return diver.Div(at, bt, opts...)
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Div(at, bt, opts...)
+			}
+			if diver, ok = at.Engine().(Diver); ok {
+				return diver.Div(at, bt, opts...)
+			}
+			if diver, ok = bt.Engine().(Diver); ok {
+				return diver.Div(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Div")
+
 		default:
-			if ok {
+			if oe != nil {
+				return oe.DivScalar(at, bt, true, opts...)
+			}
+			if diver, ok = at.Engine().(Diver); ok {
 				return diver.DivScalar(at, bt, true, opts...)
 			}
-			return nil, errors.New("Operand A's engine does not support Mul")
-
+			return nil, errors.New("Operand A's engine does not support Div")
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
-			if diver, ok = bt.Engine().(Diver); !ok {
-				return nil, errors.New("Operand B's engine does not support Div")
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.DivScalar(bt, at, false, opts...)
 			}
-			return diver.DivScalar(bt, at, false, opts...)
+			if diver, ok = bt.Engine().(Diver); ok {
+				return diver.DivScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Div")
 		default:
 			return nil, errors.Errorf("Cannot perform Div of %T and %T", a, b)
 		}
@@ -178,32 +235,46 @@ func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var power Power
+	var oe standardEngine
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		power, ok = at.Engine().(Power)
+		oe = at.standardEngine()
 		switch bt := b.(type) {
 		case Tensor:
-			if !ok {
-				if power, ok = bt.Engine().(Power); !ok {
-					return nil, errors.New("Neither engines of either operand support Pow")
-				}
+			if oe != nil {
+				return oe.Pow(at, bt, opts...)
 			}
-			return power.Pow(at, bt, opts...)
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Pow(at, bt, opts...)
+			}
+			if power, ok = at.Engine().(Power); ok {
+				return power.Pow(at, bt, opts...)
+			}
+			if power, ok = bt.Engine().(Power); ok {
+				return power.Pow(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Pow")
+
 		default:
-			if ok {
+			if oe != nil {
+				return oe.PowScalar(at, bt, true, opts...)
+			}
+			if power, ok = at.Engine().(Power); ok {
 				return power.PowScalar(at, bt, true, opts...)
 			}
-			return nil, errors.New("Operand A's engine does not support Div")
-
+			return nil, errors.New("Operand A's engine does not support Pow")
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
-			if power, ok = bt.Engine().(Power); !ok {
-				return nil, errors.New("Operand B's engine does not support Pow")
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.PowScalar(bt, at, false, opts...)
 			}
-			return power.PowScalar(bt, at, false, opts...)
+			if power, ok = bt.Engine().(Power); ok {
+				return power.PowScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Pow")
 		default:
 			return nil, errors.Errorf("Cannot perform Pow of %T and %T", a, b)
 		}
@@ -218,32 +289,46 @@ func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Mod(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	var moder Moder
+	var oe standardEngine
 	var ok bool
 	switch at := a.(type) {
 	case Tensor:
-		moder, ok = at.Engine().(Moder)
+		oe = at.standardEngine()
 		switch bt := b.(type) {
 		case Tensor:
-			if !ok {
-				if moder, ok = bt.Engine().(Moder); !ok {
-					return nil, errors.New("Neither engines of either operand support Mod")
-				}
+			if oe != nil {
+				return oe.Mod(at, bt, opts...)
 			}
-			return moder.Mod(at, bt, opts...)
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Mod(at, bt, opts...)
+			}
+			if moder, ok = at.Engine().(Moder); ok {
+				return moder.Mod(at, bt, opts...)
+			}
+			if moder, ok = bt.Engine().(Moder); ok {
+				return moder.Mod(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Mod")
+
 		default:
-			if ok {
+			if oe != nil {
+				return oe.ModScalar(at, bt, true, opts...)
+			}
+			if moder, ok = at.Engine().(Moder); ok {
 				return moder.ModScalar(at, bt, true, opts...)
 			}
 			return nil, errors.New("Operand A's engine does not support Mod")
-
 		}
 	default:
 		switch bt := b.(type) {
 		case Tensor:
-			if moder, ok = bt.Engine().(Moder); !ok {
-				return nil, errors.New("Operand B's engine does not support Mod")
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.ModScalar(bt, at, false, opts...)
 			}
-			return moder.ModScalar(bt, at, false, opts...)
+			if moder, ok = bt.Engine().(Moder); ok {
+				return moder.ModScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Mod")
 		default:
 			return nil, errors.Errorf("Cannot perform Mod of %T and %T", a, b)
 		}

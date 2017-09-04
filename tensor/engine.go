@@ -29,6 +29,32 @@ type Engine interface {
 	WorksWith(order DataOrder) bool           // WorksWith returns true if the data order can be directly worked with
 }
 
+type standardEngine interface {
+	Engine
+
+	Adder
+	Suber
+	Muler
+	Diver
+	Power
+	Moder
+	FMAer
+	MatMuler
+	MatVecMuler
+	OuterProder
+	Dotter
+	SVDer
+	Lter
+	Lteer
+	Gter
+	Gteer
+	ElEqer
+
+	// Anything that returns interface{} cannot be added here because they will likely have additional
+	// optimized versions of the functions for types.
+	// For example: Tracer and InnerProder both have optimized interfaces for Float32 and Float64 which returns those types specifically.
+}
+
 type arrayMaker interface {
 	makeArray(arr *array, t Dtype, size int)
 }

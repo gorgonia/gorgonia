@@ -17,7 +17,8 @@ type Dense struct {
 	array
 
 	flag MemoryFlag
-	e    Engine // execution engine for the *Dense (optional)
+	e    Engine         // execution engine for the *Dense
+	oe   standardEngine // optimized engine
 
 	// backup AP. When a transpose is done, the old *AP is backed up here, for easy untransposes
 	old           *AP
@@ -253,6 +254,10 @@ func (t *Dense) fix() {
 
 	if t.e == nil {
 		t.e = StdEng{}
+	}
+
+	if oe, ok := t.e.(standardEngine); ok {
+		t.oe = oe
 	}
 
 	switch {
@@ -587,3 +592,5 @@ func (t *Dense) RequiresIterator() bool {
 }
 
 func (t *Dense) Iterator() Iterator { return IteratorFromDense(t) }
+
+func (t *Dense) standardEngine() standardEngine { return t.oe }

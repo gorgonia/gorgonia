@@ -11,13 +11,21 @@ GENERATED FILE. DO NOT EDIT
 //UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Gt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
 
-	if gter, ok := e.(Gter); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.Gt(t, other, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do Gt()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Gt")
+		}
+		return
+	}
+
+	if gter, ok := t.e.(Gter); ok {
 		if ret, err = gter.Gt(t, other, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do Gt()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do Gt()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "Gt")
@@ -32,13 +40,21 @@ func (t *Dense) Gt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 //UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Gte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
 
-	if gteer, ok := e.(Gteer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.Gte(t, other, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do Gte()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Gte")
+		}
+		return
+	}
+
+	if gteer, ok := t.e.(Gteer); ok {
 		if ret, err = gteer.Gte(t, other, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do Gte()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do Gte()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "Gte")
@@ -53,13 +69,21 @@ func (t *Dense) Gte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 //UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Lt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
 
-	if lter, ok := e.(Lter); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.Lt(t, other, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do Lt()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Lt")
+		}
+		return
+	}
+
+	if lter, ok := t.e.(Lter); ok {
 		if ret, err = lter.Lt(t, other, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do Lt()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do Lt()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "Lt")
@@ -74,13 +98,21 @@ func (t *Dense) Lt(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 //UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) Lte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
 
-	if lteer, ok := e.(Lteer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.Lte(t, other, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do Lte()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Lte")
+		}
+		return
+	}
+
+	if lteer, ok := t.e.(Lteer); ok {
 		if ret, err = lteer.Lte(t, other, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do Lte()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do Lte()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "Lte")
@@ -95,13 +127,21 @@ func (t *Dense) Lte(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 //UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElEq(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
 
-	if eleqer, ok := e.(ElEqer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.ElEq(t, other, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do Eq()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Eq")
+		}
+		return
+	}
+
+	if eleqer, ok := t.e.(ElEqer); ok {
 		if ret, err = eleqer.ElEq(t, other, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do Eq()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do Eq()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "Eq")
@@ -116,13 +156,21 @@ func (t *Dense) ElEq(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 //UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElNe(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
 
-	if eleqer, ok := e.(ElEqer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.ElNe(t, other, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do Ne()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "Ne")
+		}
+		return
+	}
+
+	if eleqer, ok := t.e.(ElEqer); ok {
 		if ret, err = eleqer.ElNe(t, other, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do Ne()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do Ne()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "Ne")
@@ -137,12 +185,20 @@ func (t *Dense) ElNe(other *Dense, opts ...FuncOpt) (retVal *Dense, err error) {
 // UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) GtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
-	if gter, ok := e.(Gter); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.GtScalar(t, other, leftTensor, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do GtScalar()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "GtScalar")
+		}
+		return
+	}
+
+	if gter, ok := t.e.(Gter); ok {
 		if ret, err = gter.GtScalar(t, other, leftTensor, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do GtScalar()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do GtScalar()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "GtScalar")
@@ -157,12 +213,20 @@ func (t *Dense) GtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 // UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) GteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
-	if gteer, ok := e.(Gteer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.GteScalar(t, other, leftTensor, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do GteScalar()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "GteScalar")
+		}
+		return
+	}
+
+	if gteer, ok := t.e.(Gteer); ok {
 		if ret, err = gteer.GteScalar(t, other, leftTensor, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do GteScalar()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do GteScalar()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "GteScalar")
@@ -177,12 +241,20 @@ func (t *Dense) GteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 // UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) LtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
-	if lter, ok := e.(Lter); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.LtScalar(t, other, leftTensor, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do LtScalar()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "LtScalar")
+		}
+		return
+	}
+
+	if lter, ok := t.e.(Lter); ok {
 		if ret, err = lter.LtScalar(t, other, leftTensor, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do LtScalar()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do LtScalar()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "LtScalar")
@@ -197,12 +269,20 @@ func (t *Dense) LtScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (r
 // UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) LteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
-	if lteer, ok := e.(Lteer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.LteScalar(t, other, leftTensor, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do LteScalar()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "LteScalar")
+		}
+		return
+	}
+
+	if lteer, ok := t.e.(Lteer); ok {
 		if ret, err = lteer.LteScalar(t, other, leftTensor, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do LteScalar()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do LteScalar()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "LteScalar")
@@ -217,12 +297,20 @@ func (t *Dense) LteScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (
 // UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
-	if eleqer, ok := e.(ElEqer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.EqScalar(t, other, leftTensor, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do EqScalar()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "EqScalar")
+		}
+		return
+	}
+
+	if eleqer, ok := t.e.(ElEqer); ok {
 		if ret, err = eleqer.EqScalar(t, other, leftTensor, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do EqScalar()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do EqScalar()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "EqScalar")
@@ -237,12 +325,20 @@ func (t *Dense) ElEqScalar(other interface{}, leftTensor bool, opts ...FuncOpt) 
 // UseUnsafe() will ensure that the same type is returned.
 // Tensors used in WithReuse has to have the same Dtype as the return value's Dtype.
 func (t *Dense) ElNeScalar(other interface{}, leftTensor bool, opts ...FuncOpt) (retVal *Dense, err error) {
-	e := t.e
-	if eleqer, ok := e.(ElEqer); ok {
-		var ret Tensor
+	var ret Tensor
+	if t.oe != nil {
+		if ret, err = t.oe.NeScalar(t, other, leftTensor, opts...); err != nil {
+			return nil, errors.Wrapf(err, "Unable to do NeScalar()")
+		}
+		if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "NeScalar")
+		}
+		return
+	}
+
+	if eleqer, ok := t.e.(ElEqer); ok {
 		if ret, err = eleqer.NeScalar(t, other, leftTensor, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do NeScalar()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do NeScalar()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "NeScalar")

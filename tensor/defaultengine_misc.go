@@ -72,3 +72,10 @@ func (e StdEng) Clamp(a Tensor, min, max interface{}, opts ...FuncOpt) (retVal T
 	}
 	return
 }
+
+func (e StdEng) FMA(a, x, y Tensor) (Tensor, error) {
+	return e.Mul(a, x, WithIncr(y))
+}
+func (e StdEng) FMAScalar(a Tensor, x interface{}, y Tensor) (Tensor, error) {
+	return e.MulScalar(a, x, true, WithIncr(y))
+}

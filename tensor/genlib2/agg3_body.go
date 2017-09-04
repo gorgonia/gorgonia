@@ -4,16 +4,23 @@ import "text/template"
 
 // 3rd level function aggregation templates
 
-const denseArithBodyRaw = `e := t.e
-{{$elne := eq .Name "Ne"}}
+const denseArithBodyRaw = `{{$elne := eq .Name "Ne"}}
 {{$eleq := eq .Name "Eq"}}
 {{$eleqne := or $eleq $elne}}
+var ret Tensor
+if t.oe != nil {
+	if ret, err = t.oe.{{if $eleqne}}El{{end}}{{.Name}}(t, other, opts...); err != nil {
+		return nil, errors.Wrapf(err, "Unable to do {{.Name}}()")
+	}
+	if retVal, err = assertDense(ret); err != nil {
+		return nil, errors.Wrapf(err, opFail, "{{.Name}}")
+	}
+	return
+}
 
-if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
-	var ret Tensor
+if {{interfaceName .Name | lower}}, ok := t.e.({{interfaceName .Name}}); ok {
 	if ret, err = {{interfaceName .Name | lower}}.{{if $eleqne}}El{{end}}{{.Name}}(t, other, opts...); err != nil {
-		err = errors.Wrapf(err, "Unable to do {{.Name}}()")
-		return
+		return nil, errors.Wrapf(err, "Unable to do {{.Name}}()")
 	}
 	if retVal, err = assertDense(ret); err != nil {
 		return nil, errors.Wrapf(err, opFail, "{{.Name}}")
@@ -23,12 +30,20 @@ if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
 return  nil, errors.Errorf("Engine does not support {{.Name}}()")
 `
 
-const denseArithScalarBodyRaw = `e := t.e
-	if {{interfaceName .Name | lower}}, ok := e.({{interfaceName .Name}}); ok {
-		var ret Tensor
+const denseArithScalarBodyRaw = `var ret Tensor
+if t.oe != nil {
+	if ret, err = t.oe.{{.Name}}Scalar(t, other, leftTensor, opts...); err != nil{
+		return nil, errors.Wrapf(err, "Unable to do {{.Name}}Scalar()")
+	}
+	if retVal, err = assertDense(ret); err != nil {
+			return nil, errors.Wrapf(err, opFail, "{{.Name}}Scalar")
+		}
+		return
+}
+
+	if {{interfaceName .Name | lower}}, ok := t.e.({{interfaceName .Name}}); ok {
 		if ret, err = {{interfaceName .Name | lower}}.{{.Name}}Scalar(t, other, leftTensor, opts...); err != nil {
-			err = errors.Wrapf(err, "Unable to do {{.Name}}Scalar()")
-			return
+			return nil, errors.Wrapf(err, "Unable to do {{.Name}}Scalar()")
 		}
 		if retVal, err = assertDense(ret); err != nil {
 			return nil, errors.Wrapf(err, opFail, "{{.Name}}Scalar")

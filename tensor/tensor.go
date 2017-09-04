@@ -72,6 +72,7 @@ type Tensor interface {
 	gob.GobEncoder
 	gob.GobDecoder
 
+	standardEngine() standardEngine
 	headerer
 	arrayer
 }

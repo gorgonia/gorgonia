@@ -385,26 +385,53 @@ func (t *Dense) Generate(r *rand.Rand, size int) reflect.Value {
 	v.AP.o = order
 
 	// generate engine
+	oeint := r.Intn(2)
 	eint := r.Intn(4)
 	switch eint {
 	case 0:
 		v.e = StdEng{}
+		if oeint == 0 {
+			v.oe = StdEng{}
+		} else {
+			v.oe = nil
+		}
 	case 1:
 		// check is to prevent panics which Float64Engine will do if asked to allocate memory for non float64s
 		if of == Float64 {
 			v.e = Float64Engine{}
+			if oeint == 0 {
+				v.oe = Float64Engine{}
+			} else {
+				v.oe = nil
+			}
 		} else {
 			v.e = StdEng{}
+			if oeint == 0 {
+				v.oe = StdEng{}
+			} else {
+				v.oe = nil
+			}
 		}
 	case 2:
 		// check is to prevent panics which Float64Engine will do if asked to allocate memory for non float64s
 		if of == Float32 {
 			v.e = Float32Engine{}
+			if oeint == 0 {
+				v.oe = Float32Engine{}
+			} else {
+				v.oe = nil
+			}
 		} else {
 			v.e = StdEng{}
+			if oeint == 0 {
+				v.oe = StdEng{}
+			} else {
+				v.oe = nil
+			}
 		}
 	case 3:
 		v.e = dummyEngine(true)
+		v.oe = nil
 	}
 
 	return reflect.ValueOf(v)
