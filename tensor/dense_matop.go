@@ -217,6 +217,7 @@ func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 	view := borrowDense()
 	view.t = t.t
 	view.e = t.e
+	view.oe = t.oe
 	view.flag = t.flag
 	view.AP = newAP
 	view.setParentTensor(t)

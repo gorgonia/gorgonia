@@ -70,6 +70,7 @@ func borrowDense() *Dense {
 	default:
 		t := new(Dense)
 		t.e = StdEng{}
+		// t.oe = StdEng{}
 		return t
 	}
 	// return densePool.Get().(*Dense)
@@ -104,6 +105,7 @@ func ReturnTensor(t Tensor) {
 
 		// engine and flag reset
 		tt.e = StdEng{}
+		tt.oe = nil
 		tt.flag = 0
 
 		// other reset

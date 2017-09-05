@@ -366,17 +366,18 @@ func FMA(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
 		if oe := a.standardEngine(); oe != nil {
 			return oe.FMA(a, xTensor, y)
 		}
-		if e, ok := a.Engine().(FMAer); ok {
-			return e.FMA(a, xTensor, y)
-		}
 		if oe := xTensor.standardEngine(); oe != nil {
 			return oe.FMA(a, xTensor, y)
 		}
-		if e, ok := xTensor.Engine().(FMAer); ok {
-			return e.FMA(a, xTensor, y)
-		}
 		if oe := y.standardEngine(); oe != nil {
 			return oe.FMA(a, xTensor, y)
+		}
+
+		if e, ok := a.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
+		}
+		if e, ok := xTensor.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
 		}
 		if e, ok := y.Engine().(FMAer); ok {
 			return e.FMA(a, xTensor, y)
@@ -385,11 +386,12 @@ func FMA(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
 		if oe := a.standardEngine(); oe != nil {
 			return oe.FMAScalar(a, x, y)
 		}
-		if e, ok := a.Engine().(FMAer); ok {
-			return e.FMAScalar(a, x, y)
-		}
 		if oe := y.standardEngine(); oe != nil {
 			return oe.FMAScalar(a, x, y)
+		}
+
+		if e, ok := a.Engine().(FMAer); ok {
+			return e.FMAScalar(a, x, y)
 		}
 		if e, ok := y.Engine().(FMAer); ok {
 			return e.FMAScalar(a, x, y)

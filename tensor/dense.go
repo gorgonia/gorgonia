@@ -175,6 +175,7 @@ func (t *Dense) Clone() interface{} {
 		retVal.AP = t.AP.Clone()
 		retVal.t = t.t
 		retVal.e = t.e
+		retVal.oe = t.oe
 		retVal.flag = t.flag
 		retVal.makeArray(t.L)
 
@@ -549,6 +550,7 @@ func (t *Dense) Eq(other interface{}) bool {
 		if !t.Shape().Eq(ot.Shape()) {
 			return false
 		}
+
 		return t.array.Eq(&ot.array)
 	}
 	return false

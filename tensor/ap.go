@@ -111,7 +111,10 @@ func (ap *AP) Clone() (retVal *AP) {
 	// handle vectors
 	retVal.shape = retVal.shape[:len(ap.shape)]
 	retVal.strides = retVal.strides[:len(ap.strides)]
+
 	retVal.fin = ap.fin
+	retVal.o = ap.o
+	retVal.Δ = ap.Δ
 	return
 }
 
