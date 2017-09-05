@@ -230,13 +230,18 @@ func (e Float32Engine) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, 
 
 func (e Float32Engine) Inner(a, b Tensor) (retVal float32, err error) {
 	var A, B []float32
+	var AD, BD *Dense
 	var ok bool
-	if A, ok = a.Data().([]float32); !ok {
-		return 0, errors.Errorf("A's data is not []float32")
+
+	if AD, ok = a.(*Dense); !ok {
+		return 0, errors.Errorf("a is not a *Dense")
 	}
-	if B, ok = b.Data().([]float32); !ok {
-		return 0, errors.Errorf("B's data is not []float32")
+	if BD, ok = b.(*Dense); !ok {
+		return 0, errors.Errorf("b is not a *Dense")
 	}
+
+	A = AD.Float32s()
+	B = BD.Float32s()
 	retVal = whichblas.Sdot(len(A), A, 1, B, 1)
 	return
 }

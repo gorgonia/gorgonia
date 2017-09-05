@@ -178,14 +178,14 @@ func init() {
 		apListPool[i].New = func() interface{} { return make([]*AP, size) }
 	}
 
-	for i := 0; i < PoolSize; i++ {
-		intsPool <- make([]int, 8, 8)
-	}
-
-	// for i := range intsPool {
-	// 	size := i
-	// 	intsPool[i].New = func() interface{} { return make([]int, size) }
+	// for i := 0; i < PoolSize; i++ {
+	// 	intsPool <- make([]int, 8, 8)
 	// }
+
+	for i := range intsPool {
+		size := i
+		intsPool[i].New = func() interface{} { return make([]int, size) }
+	}
 
 	// for i := range boolsPool {
 	// 	size := i
@@ -195,8 +195,9 @@ func init() {
 
 /* INTS POOL */
 
-// var intsPool [PoolSize]sync.Pool
-var intsPool = make(chan []int, PoolSize)
+var intsPool [maxDims + 1]sync.Pool
+
+// var intsPool = make(chan []int, PoolSize)
 
 /* BOOLS POOL */
 var boolsPool = make(chan []bool, PoolSize)
@@ -205,23 +206,23 @@ var boolsPool = make(chan []bool, PoolSize)
 
 // BorrowInts borrows a slice of ints from the pool. USE WITH CAUTION.
 func BorrowInts(size int) []int {
-	if size > 8 {
+	if size > maxDims {
 		return make([]int, size, size)
 	}
 
-	select {
-	case ints := <-intsPool:
-		ints = ints[:size]
-		return ints
-	default:
-		ints := make([]int, size, 8)
-		return ints
-	}
-	// retVal := intsPool[size].Get()
+	// select {
+	// case ints := <-intsPool:
+	// 	ints = ints[:size]
+	// 	return ints
+	// default:
+	// 	ints := make([]int, size, 8)
+	// 	return ints
+	// }
+	retVal := intsPool[size].Get()
 	// if retVal == nil {
 	// 	return make([]int, size)
 	// }
-	// return retVal.([]int)
+	return retVal.([]int)[:size]
 }
 
 // ReturnInts returns a slice from the pool. USE WITH CAUTION.
@@ -230,19 +231,19 @@ func ReturnInts(is []int) {
 		return
 	}
 	size := cap(is)
-	if size != 8 {
+	if size > maxDims {
 		return
 	}
 	is = is[:cap(is)]
-	for i := range is {
-		is[i] = 0
-	}
+	// for i := range is {
+	// 	is[i] = 0
+	// }
 
-	if len(intsPool) < cap(intsPool) {
-		intsPool <- is
-	}
+	// if len(intsPool) < cap(intsPool) {
+	// 	intsPool <- is
+	// }
 
-	// intsPool[size].Put(is)
+	intsPool[size].Put(is)
 }
 
 // BorrowBools borrows a slice of bools from the pool. USE WITH CAUTION.
