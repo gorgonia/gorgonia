@@ -219,9 +219,9 @@ func BorrowInts(size int) []int {
 	// 	return ints
 	// }
 	retVal := intsPool[size].Get()
-	// if retVal == nil {
-	// 	return make([]int, size)
-	// }
+	if retVal == nil {
+		return make([]int, size)
+	}
 	return retVal.([]int)[:size]
 }
 
