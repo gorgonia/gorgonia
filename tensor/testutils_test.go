@@ -476,6 +476,23 @@ func (e dummyEngine) Memcpy(dst, src Memory) error {
 func (e dummyEngine) Accessible(mem Memory) (Memory, error) { return mem, nil }
 func (e dummyEngine) WorksWith(order DataOrder) bool        { return true }
 
+// dummyEngine2 is used for testing additional methods that may not be provided in the stdeng
+type dummyEngine2 struct {
+	e StdEng
+}
+
+func (e dummyEngine2) AllocAccessible() bool                    { return e.e.AllocAccessible() }
+func (e dummyEngine2) Alloc(size int64) (Memory, error)         { return e.e.Alloc(size) }
+func (e dummyEngine2) Free(mem Memory, size int64) error        { return e.e.Free(mem, size) }
+func (e dummyEngine2) Memset(mem Memory, val interface{}) error { return e.e.Memset(mem, val) }
+func (e dummyEngine2) Memclr(mem Memory)                        { e.e.Memclr(mem) }
+func (e dummyEngine2) Memcpy(dst, src Memory) error             { return e.e.Memcpy(dst, src) }
+func (e dummyEngine2) Accessible(mem Memory) (Memory, error)    { return e.e.Accessible(mem) }
+func (e dummyEngine2) WorksWith(order DataOrder) bool           { return e.e.WorksWith(order) }
+
+func (e dummyEngine2) Argmax(t Tensor, axis int) (Tensor, error) { return e.e.Argmax(t, axis) }
+func (e dummyEngine2) Argmin(t Tensor, axis int) (Tensor, error) { return e.e.Argmin(t, axis) }
+
 func willerr(a *Dense, tc, eqtc *typeclass) (retVal, willFailEq bool) {
 	if err := typeclassCheck(a.Dtype(), eqtc); err == nil {
 		willFailEq = true

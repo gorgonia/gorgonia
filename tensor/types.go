@@ -25,87 +25,73 @@ func (dt Dtype) Types() hm.Types                               { return nil }
 func (dt Dtype) Format(s fmt.State, c rune)                    { fmt.Fprintf(s, "%s", dt.Name()) }
 func (dt Dtype) Eq(other hm.Type) bool                         { return other == dt }
 
-// NumpyDtype returns the Numpy's Dtype equivalent. This is predominantly used in converting a Tensor to a Numpy ndarray,
-// however, not all Dtypes are supported
-func (dt Dtype) numpyDtype() (string, error) {
-	switch dt {
-	case Bool:
-		return "b1", nil
-	case Int:
-		return fmt.Sprintf("i%d", dt.Size()), nil
-	case Int8:
-		return "i1", nil
-	case Int16:
-		return "i2", nil
-	case Int32:
-		return "i4", nil
-	case Int64:
-		return "i8", nil
-	case Uint:
-		return fmt.Sprintf("u%d", dt.Size()), nil
-	case Uint8:
-		return "u1", nil
-	case Uint16:
-		return "u2", nil
-	case Uint32:
-		return "u4", nil
-	case Uint64:
-		return "u8", nil
-	case Float32:
-		return "f4", nil
-	case Float64:
-		return "f8", nil
-	case Complex64:
-		return "c8", nil
-	case Complex128:
-		return "c16", nil
-	default:
-		return "v", errors.Errorf("Unsupported Dtype conversion")
+var numpyDtypes map[Dtype]string
+var reverseNumpyDtypes map[string]Dtype
+
+func init() {
+	numpyDtypes = map[Dtype]string{
+		Bool:       "b1",
+		Int:        fmt.Sprintf("i%d", Int.Size()),
+		Int8:       "i1",
+		Int16:      "i2",
+		Int32:      "i4",
+		Int64:      "i8",
+		Uint:       fmt.Sprintf("u%d", Uint.Size()),
+		Uint8:      "u1",
+		Uint16:     "u2",
+		Uint32:     "u4",
+		Uint64:     "u8",
+		Float32:    "f4",
+		Float64:    "f8",
+		Complex64:  "c8",
+		Complex128: "c16",
+	}
+
+	reverseNumpyDtypes = map[string]Dtype{
+		"b1":  Bool,
+		"i1":  Int8,
+		"i2":  Int16,
+		"i4":  Int32,
+		"i8":  Int64,
+		"u1":  Uint8,
+		"u2":  Uint16,
+		"u4":  Uint32,
+		"u8":  Uint64,
+		"f4":  Float32,
+		"f8":  Float64,
+		"c8":  Complex64,
+		"c16": Complex128,
 	}
 }
 
-func fromNumpyDtype(t string) (Dtype, error) {
-	switch t {
-	case "b1":
-		return Bool, nil
-	case "i1":
-		return Int8, nil
-	case "i2":
-		return Int16, nil
-	case "i4":
-		if Int.Size() == 4 {
-			return Int, nil
-		}
-		return Int32, nil
-	case "i8":
-		if Int.Size() == 8 {
-			return Int, nil
-		}
-		return Int64, nil
-	case "u1":
-		return Uint8, nil
-	case "u2":
-		return Uint16, nil
-	case "u4":
-		if Uint.Size() == 4 {
-			return Uint, nil
-		}
-		return Uint32, nil
-	case "u8":
-		if Uint.Size() == 8 {
-			return Uint, nil
-		}
-		return Uint64, nil
-	case "f4":
-		return Float32, nil
-	case "f8":
-		return Float64, nil
-	case "c8":
-		return Complex64, nil
-	case "c16":
-		return Complex128, nil
+// NumpyDtype returns the Numpy's Dtype equivalent. This is predominantly used in converting a Tensor to a Numpy ndarray,
+// however, not all Dtypes are supported
+func (dt Dtype) numpyDtype() (string, error) {
+	retVal, ok := numpyDtypes[dt]
+	if !ok {
+		return "v", errors.Errorf("Unsupported Dtype conversion to Numpy Dtype: %v", dt)
 	}
-	return Dtype{}, errors.Errorf("Unsupported Dtype conversion from %q to Dtype", t)
+	return retVal, nil
+}
+
+func fromNumpyDtype(t string) (Dtype, error) {
+	retVal, ok := reverseNumpyDtypes[t]
+	if !ok {
+		return Dtype{}, errors.Errorf("Unsupported Dtype conversion from %q to Dtype", t)
+	}
+	if t == "i4" && Int.Size() == 4 {
+		return Int, nil
+	}
+	if t == "i8" && Int.Size() == 8 {
+		return Int, nil
+	}
+	if t == "u4" && Uint.Size() == 4 {
+		return Uint, nil
+	}
+	if t == "u8" && Uint.Size() == 8 {
+		return Uint, nil
+	}
+	return retVal, nil
 }
 
 type typeclass struct {
@@ -258,35 +244,8 @@ var generatableTypes = &typeclass{
 	},
 }
 
-func isSpecialized(dt Kinder) bool {
-	for _, s := range specializedTypes.set {
-		if s.Kind() == dt.Kind() {
-			return true
-		}
-	}
-	return false
-}
-
-func isNumber(dt Dtype) bool {
-	for _, s := range numberTypes.set {
-		if s == dt {
-			return true
-		}
-	}
-	return false
-}
-
 func isFloat(dt Dtype) bool {
 	return dt == Float64 || dt == Float32
-}
-
-func isUnsigned(dt Kinder) bool {
-	for _, s := range unsignedTypes.set {
-		if s == dt {
-			return true
-		}
-	}
-	return false
 }
 
 func typeclassCheck(a Dtype, tc *typeclass) error {
@@ -326,6 +285,18 @@ func RegisterNumber(a Dtype) {
 		}
 	}
 	numberTypes.set = append(numberTypes.set, a)
+	RegisterEq(a)
+}
+
+func RegisterFloat(a Dtype) {
+	for _, dt := range floatTypes.set {
+		if dt == a {
+			return
+		}
+	}
+	floatTypes.set = append(floatTypes.set, a)
+	RegisterNumber(a)
+	RegisterOrd(a)
 }
 
 func RegisterOrd(a Dtype) {

@@ -91,16 +91,6 @@ func IteratorFromDense(tts ...DenseTensor) Iterator {
 	}
 }
 
-func IteratorFromTensor(a Tensor) Iterator {
-	switch at := a.(type) {
-	case DenseTensor:
-		return IteratorFromDense(at)
-	case *CS:
-		return NewFlatSparseIterator(at)
-	}
-	panic("Unreachable")
-}
-
 func destroyIterator(it Iterator) {
 	switch itt := it.(type) {
 	case *MultIterator:

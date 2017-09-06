@@ -186,6 +186,21 @@ const testArgMethodsRaw = `func TestDense_{{title .ArgMethod}}_{{short .Kind}}(t
 
 	{{end -}}
 
+	// with different engine
+	T = basicDense{{short .Kind}}.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i:= 0; i < T.Dims(); i++ {
+		if {{.ArgMethod}}, err = T.{{title .ArgMethod}}(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True({{.ArgMethod}}Correct[i].shape.Eq({{.ArgMethod}}.Shape()), "{{title .ArgMethod}}(%d) error. Want shape %v. Got %v", i, {{.ArgMethod}}Correct[i].shape)
+		assert.Equal({{.ArgMethod}}Correct[i].data, {{.ArgMethod}}.Data(), "{{title .ArgMethod}}(%d) error. ", i)
+	}
+
+
+
 	// idiotsville
 	_, err = T.{{title .ArgMethod}}(10000)
 	assert.NotNil(err)
