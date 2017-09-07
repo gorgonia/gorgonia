@@ -106,11 +106,6 @@ func TestDense_Apply(t *testing.T) {
 			return true // we'll skip those that we cannot mutate
 		}
 
-		// other temporary exclusions
-		if q.len() == 1 {
-			return true
-		}
-
 		we, eqFail := willerr(q, nil, nil)
 		_, ok := q.Engine().(Mapper)
 		we = we || !ok
@@ -154,11 +149,6 @@ func TestDense_Apply_unsafe(t *testing.T) {
 			return true // we'll skip those that we cannot mutate
 		}
 
-		// other temporary exclusions
-		if q.len() == 1 {
-			return true
-		}
-
 		we, eqFail := willerr(q, nil, nil)
 		_, ok := q.Engine().(Mapper)
 		we = we || !ok
@@ -198,11 +188,6 @@ func TestDense_Apply_reuse(t *testing.T) {
 		var fn interface{}
 		if fn = getMutateFn(q.Dtype()); fn == nil {
 			return true // we'll skip those that we cannot mutate
-		}
-
-		// other temporary exclusions
-		if q.len() == 1 {
-			return true
 		}
 
 		we, eqFail := willerr(q, nil, nil)

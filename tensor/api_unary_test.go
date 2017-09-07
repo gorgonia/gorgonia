@@ -5,8 +5,10 @@ import (
 	"testing"
 	"testing/quick"
 	"time"
+	"math"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/chewxy/math32"
 )
 
 /*
@@ -353,7 +355,7 @@ func TestInvSqrt(t *testing.T) {
 		b := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatTypes, nil)
-		_, ok := q.Engine().(Inver)
+		_, ok := q.Engine().(InvSqrter)
 		we = we || !ok
 
 		// we'll exclude everything other than floats
@@ -386,7 +388,7 @@ func TestInvSqrt(t *testing.T) {
 		b := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatTypes, nil)
-		_, ok := q.Engine().(Inver)
+		_, ok := q.Engine().(InvSqrter)
 		we = we || !ok
 
 		// we'll exclude everything other than floats
@@ -425,7 +427,7 @@ func TestInvSqrt(t *testing.T) {
 		reuse.Zero()
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatTypes, nil)
-		_, ok := q.Engine().(Inver)
+		_, ok := q.Engine().(InvSqrter)
 		we = we || !ok
 
 		// we'll exclude everything other than floats
@@ -465,7 +467,7 @@ func TestInvSqrt(t *testing.T) {
 		correct.Add(incr, UseUnsafe())
 
 		we, willFailEq := willerr(a, floatTypes, nil)
-		_, ok := q.Engine().(Inver)
+		_, ok := q.Engine().(InvSqrter)
 		we = we || !ok
 
 		// we'll exclude everything other than floats
@@ -688,7 +690,7 @@ func TestLog10(t *testing.T) {
 		b := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
 		we, willFailEq := willerr(a, floatTypes, nil)
-		_, ok := q.Engine().(Inver)
+		_, ok := q.Engine().(Log10er)
 		we = we || !ok
 
 		// we'll exclude everything other than floats
@@ -696,7 +698,7 @@ func TestLog10(t *testing.T) {
 			return true
 		}
 		ret, err := Log10(a, UseUnsafe())
-		if err, retEarly := qcErrCheck(t, "Inv", a, nil, we, err); retEarly {
+		if err, retEarly := qcErrCheck(t, "Log10", a, nil, we, err); retEarly {
 			if err != nil {
 				return false
 			}
@@ -715,7 +717,7 @@ func TestLog10(t *testing.T) {
 	}
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
-		t.Errorf("Inv tests using unsafe for Inv failed: %v", err)
+		t.Errorf("Inv tests using unsafe for Log10 failed: %v", err)
 	}
 
 
@@ -726,7 +728,7 @@ func TestLog10(t *testing.T) {
 		reuse := a.Clone().(*Dense)
 		reuse.Zero()
 		we, willFailEq := willerr(a, floatTypes, nil)
-		_, ok := q.Engine().(Inver)
+		_, ok := q.Engine().(Log10er)
 		we = we || !ok
 
 		// we'll exclude everything other than floats
@@ -734,7 +736,7 @@ func TestLog10(t *testing.T) {
 			return true
 		}
 		ret, err := Log10(a, WithReuse(reuse))
-		if err, retEarly := qcErrCheck(t, "Inv", a, nil, we, err); retEarly {
+		if err, retEarly := qcErrCheck(t, "Log10", a, nil, we, err); retEarly {
 			if err != nil {
 				return false
 			}
@@ -752,7 +754,7 @@ func TestLog10(t *testing.T) {
 	}
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
-		t.Errorf("Inv tests using unsafe for Inv failed: %v", err)
+		t.Errorf("Inv tests using unsafe for Log10 failed: %v", err)
 	}
 
 	// incr
@@ -763,7 +765,7 @@ func TestLog10(t *testing.T) {
 		incr.Memset(identityVal(100, a.t))
 		correct.Add(incr, UseUnsafe())
 		we, willFailEq := willerr(a, floatTypes, nil)
-		_, ok := q.Engine().(Inver)
+		_, ok := q.Engine().(Log10er)
 		we = we || !ok
 
 		// we'll exclude everything other than floats
@@ -771,7 +773,7 @@ func TestLog10(t *testing.T) {
 			return true
 		}
 		ret, err := Inv(a, WithIncr(incr))
-		if err, retEarly := qcErrCheck(t, "Inv", a, nil, we, err); retEarly {
+		if err, retEarly := qcErrCheck(t, "Log10", a, nil, we, err); retEarly {
 			if err != nil {
 				return false
 			}
@@ -793,7 +795,7 @@ func TestLog10(t *testing.T) {
 	}
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
-		t.Errorf("Inv tests using unsafe for Inv failed: %v", err)
+		t.Errorf("Inv tests using unsafe for Log10 failed: %v", err)
 	}
 
 }
@@ -832,4 +834,347 @@ func TestAbs(t *testing.T) {
 	if err := quick.Check(absFn, &quick.Config{Rand: r}); err != nil {
 		t.Errorf("Inv tests for Abs failed: %v", err)
 	}
+}
+
+
+func TestTanh(t *testing.T) {
+	var r *rand.Rand
+	// default
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Tanher)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Tanh(a)
+		if err, retEarly := qcErrCheck(t, "Tanh", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		switch a.Dtype() {
+		case Float64:
+			if ret, err = ret.Apply(math.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		case Float32:
+			if ret, err = ret.Apply(math32.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		}
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Tanh failed: %v", err)
+	}
+
+	// unsafe
+	invFn = func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Tanher)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Tanh(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Tanh", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		switch a.Dtype() {
+		case Float64:
+			if ret, err = ret.Apply(math.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		case Float32:
+			if ret, err = ret.Apply(math32.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		}
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests using unsafe for Tanh failed: %v", err)
+	}
+
+
+	// reuse
+	invFn = func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		reuse := a.Clone().(*Dense)
+		reuse.Zero()
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Tanher)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Tanh(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Tanh", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		switch a.Dtype() {
+		case Float64:
+			if ret, err = ret.Apply(math.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		case Float32:
+			if ret, err = ret.Apply(math32.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		}
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != reuse {
+			t.Errorf("Expected ret to be the same as reuse")
+		}
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests using unsafe for Tanh failed: %v", err)
+	}
+
+
+	// incr
+	invFn = func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Tanher)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Tanh(a, WithIncr(incr))
+		if err, retEarly := qcErrCheck(t, "Tanh", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		if ret, err = Sub(ret, identityVal(100, a.Dtype()), UseUnsafe()); err != nil {
+			t.Errorf("err while subtracting incr: %v", err)
+			return false
+		}
+		switch a.Dtype() {
+		case Float64:
+			if ret, err = ret.Apply(math.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		case Float32:
+			if ret, err = ret.Apply(math32.Atan, UseUnsafe()); err != nil {
+				t.Error(err)
+				return false
+			}
+		}
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != incr {
+			t.Errorf("Expected ret to be the same as incr")
+		}
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests using unsafe for Tanh failed: %v", err)
+	}
+}
+
+func TestLog2(t *testing.T) {
+	var r *rand.Rand
+
+	// default
+	invFn := func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Log2er)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Log2(a)
+		if err, retEarly := qcErrCheck(t, "Log2", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		two := identityVal(2, a.Dtype())
+		Pow(two, ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		return true
+	}
+
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests for Log2 failed: %v", err)
+	}
+
+
+	// unsafe
+	invFn = func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		b := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Log2er)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Log2(a, UseUnsafe())
+		if err, retEarly := qcErrCheck(t, "Log2", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		two := identityVal(2, a.Dtype())
+		Pow(two, b, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != a {
+			t.Errorf("Expected ret to be the same as a")
+			return false
+		}
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests using unsafe for Log2 failed: %v", err)
+	}
+
+
+	// reuse
+	invFn = func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		correct := a.Clone().(*Dense)
+		reuse := a.Clone().(*Dense)
+		reuse.Zero()
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Log2er)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Log2(a, WithReuse(reuse))
+		if err, retEarly := qcErrCheck(t, "Log2", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		two := identityVal(2, a.Dtype())
+		Pow(two, ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != reuse {
+			t.Errorf("Expected ret to be the same as reuse")
+		}
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests using unsafe for Log2 failed: %v", err)
+	}
+
+	// incr
+	invFn = func(q *Dense) bool {
+		a := q.Clone().(*Dense)
+		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
+		correct := a.Clone().(*Dense)
+		incr.Memset(identityVal(100, a.t))
+		correct.Add(incr, UseUnsafe())
+		we, willFailEq := willerr(a, floatTypes, nil)
+		_, ok := q.Engine().(Log2er)
+		we = we || !ok
+
+		// we'll exclude everything other than floats
+		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
+			return true
+		}
+		ret, err := Inv(a, WithIncr(incr))
+		if err, retEarly := qcErrCheck(t, "Log2", a, nil, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		if ret, err = Sub(ret, identityVal(100, a.Dtype()), UseUnsafe()); err != nil {
+			t.Errorf("err while subtracting incr: %v", err)
+			return false
+		}
+		two := identityVal(2, a.Dtype())
+		Pow(two, ret, UseUnsafe())
+		if !qcEqCheck(t, a.Dtype(), willFailEq, correct.Data(), ret.Data()) {
+			return false
+		}
+		if ret != incr {
+			t.Errorf("Expected ret to be the same as incr")
+		}
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+		t.Errorf("Inv tests using unsafe for Log2 failed: %v", err)
+	}
+
 }
