@@ -154,7 +154,7 @@ const (
 			}
 			at[0] += tmp
 		case as && !incr && f0 != nil:
-			at[0], err = f1(at[0])
+			at[0] = f0(at[0])
 		case as && !incr && f0 == nil:
 			at[0], err = f1(at[0])
 		case !as && incr && f0 != nil:
