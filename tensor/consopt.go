@@ -152,41 +152,8 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 
 			tt.flag = MakeMemoryFlag(tt.flag, ManuallyManaged)
 
-			switch tt.t {
-			case Bool:
-				tt.v = *(*[]bool)(unsafe.Pointer(&tt.Header))
-			case Int:
-				tt.v = *(*[]int)(unsafe.Pointer(&tt.Header))
-			case Int8:
-				tt.v = *(*[]int8)(unsafe.Pointer(&tt.Header))
-			case Int16:
-				tt.v = *(*[]int16)(unsafe.Pointer(&tt.Header))
-			case Int32:
-				tt.v = *(*[]int32)(unsafe.Pointer(&tt.Header))
-			case Int64:
-				tt.v = *(*[]int64)(unsafe.Pointer(&tt.Header))
-			case Uint:
-				tt.v = *(*[]uint)(unsafe.Pointer(&tt.Header))
-			case Byte:
-				tt.v = *(*[]uint8)(unsafe.Pointer(&tt.Header))
-			case Uint16:
-				tt.v = *(*[]uint16)(unsafe.Pointer(&tt.Header))
-			case Uint32:
-				tt.v = *(*[]uint32)(unsafe.Pointer(&tt.Header))
-			case Uint64:
-				tt.v = *(*[]uint64)(unsafe.Pointer(&tt.Header))
-			case Float32:
-				tt.v = *(*[]float32)(unsafe.Pointer(&tt.Header))
-			case Float64:
-				tt.v = *(*[]float64)(unsafe.Pointer(&tt.Header))
-			case Complex64:
-				tt.v = *(*[]complex64)(unsafe.Pointer(&tt.Header))
-			case Complex128:
-				tt.v = *(*[]complex128)(unsafe.Pointer(&tt.Header))
-			case String:
-				tt.v = *(*[]string)(unsafe.Pointer(&tt.Header))
-			default:
-				panic("Unsupported Dtype for using the FromMemory construction option")
+			if tt.IsNativelyAccessible() {
+				tt.array.fix()
 			}
 
 		default:

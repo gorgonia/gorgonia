@@ -51,23 +51,23 @@ func ProdInts(a []int) (retVal int) {
 }
 
 // EqInts returns true if slices have same value
-func EqInts(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
+// func EqInts(a, b []int) bool {
+// 	if len(a) != len(b) {
+// 		return false
+// 	}
 
-	if (a == nil) != (b == nil) {
-		return false
-	}
+// 	if (a == nil) != (b == nil) {
+// 		return false
+// 	}
 
-	b = b[:len(a)]
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
-}
+// 	b = b[:len(a)]
+// 	for i, v := range a {
+// 		if v != b[i] {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
 
 // IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1
 func IsMonotonicInts(a []int) (monotonic bool, incr1 bool) {
@@ -213,75 +213,6 @@ func UnsafePermute(pattern []int, xs ...[]int) (err error) {
 	return nil
 }
 
-func Permute(pattern []int, xs ...[]int) (retVal [][]int, err error) {
-	if len(xs) == 0 {
-		err = errors.New("Permute requires something to permute")
-		return
-	}
-
-	dims := -1
-	patLen := len(pattern)
-	for _, x := range xs {
-		if dims == -1 {
-			dims = len(x)
-			if patLen != dims {
-				err = errors.Errorf(dimMismatch, len(x), len(pattern))
-				return
-			}
-		} else {
-			if len(x) != dims {
-				err = errors.Errorf(dimMismatch, len(x), len(pattern))
-				return
-			}
-		}
-	}
-
-	// check that all the axes are < nDims
-	// and that there are no axis repeated
-	seen := make(map[int]struct{})
-	for _, a := range pattern {
-		if a >= dims {
-			err = errors.Errorf(invalidAxis, a, dims)
-			return
-		}
-
-		if _, ok := seen[a]; ok {
-			err = errors.Errorf(repeatedAxis, a)
-			return
-		}
-
-		seen[a] = struct{}{}
-	}
-
-	// no op really... we did the checks for no reason too. Maybe move this up?
-	if monotonic, incr1 := IsMonotonicInts(pattern); monotonic && incr1 {
-		retVal = xs
-		err = noopError{}
-		return
-	}
-
-	switch dims {
-	case 0, 1:
-		retVal = xs
-	case 2:
-		for _, x := range xs {
-			rv := []int{x[1], x[0]}
-			retVal = append(retVal, rv)
-		}
-	default:
-		retVal = make([][]int, len(xs))
-		for i := range retVal {
-			retVal[i] = make([]int, dims)
-		}
-
-		for i, v := range pattern {
-			for j, x := range xs {
-				retVal[j][i] = x[v]
-			}
-		}
-	}
-	return
-}
 
 // CheckSlice checks a slice to see if it's sane
 func CheckSlice(s Slice, size int) error {
@@ -377,3 +308,81 @@ func memsetBools(a []bool, v bool) {
 		copy(a[bp:], a[:bp])
 	}
 }
+
+
+/* FOR ILLUSTRATIVE PURPOSES */
+
+// Permute permutates a pattern according to xs. This function exists for illustrative purposes (i.e. the dumb, unoptimized version)
+//
+// In reality, the UnsafePermute function is used.
+/*
+func Permute(pattern []int, xs ...[]int) (retVal [][]int, err error) {
+	if len(xs) == 0 {
+		err = errors.New("Permute requires something to permute")
+		return
+	}
+
+	dims := -1
+	patLen := len(pattern)
+	for _, x := range xs {
+		if dims == -1 {
+			dims = len(x)
+			if patLen != dims {
+				err = errors.Errorf(dimMismatch, len(x), len(pattern))
+				return
+			}
+		} else {
+			if len(x) != dims {
+				err = errors.Errorf(dimMismatch, len(x), len(pattern))
+				return
+			}
+		}
+	}
+
+	// check that all the axes are < nDims
+	// and that there are no axis repeated
+	seen := make(map[int]struct{})
+	for _, a := range pattern {
+		if a >= dims {
+			err = errors.Errorf(invalidAxis, a, dims)
+			return
+		}
+
+		if _, ok := seen[a]; ok {
+			err = errors.Errorf(repeatedAxis, a)
+			return
+		}
+
+		seen[a] = struct{}{}
+	}
+
+	// no op really... we did the checks for no reason too. Maybe move this up?
+	if monotonic, incr1 := IsMonotonicInts(pattern); monotonic && incr1 {
+		retVal = xs
+		err = noopError{}
+		return
+	}
+
+	switch dims {
+	case 0, 1:
+		retVal = xs
+	case 2:
+		for _, x := range xs {
+			rv := []int{x[1], x[0]}
+			retVal = append(retVal, rv)
+		}
+	default:
+		retVal = make([][]int, len(xs))
+		for i := range retVal {
+			retVal[i] = make([]int, dims)
+		}
+
+		for i, v := range pattern {
+			for j, x := range xs {
+				retVal[j][i] = x[v]
+			}
+		}
+	}
+	return
+}
+*/

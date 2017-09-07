@@ -12,6 +12,7 @@ const unaryTestBodyRaw = `invFn := func(q *Dense) bool {
 	correct := a.Clone().(*Dense)
 	{{template "funcoptcorrect" -}}
 
+
 	we, willFailEq := willerr(a, {{.TypeClassName}}, {{.EqFailTypeClassName}})
 	_, ok := q.Engine().({{interfaceName .Name}}); we = we || !ok
 	
@@ -25,6 +26,12 @@ const unaryTestBodyRaw = `invFn := func(q *Dense) bool {
 	{{if ne .InvTypeClass "" -}}
 	if err := typeclassCheck(a.Dtype(), {{.InvTypeClass}}); err != nil {
 		return true // uninvertible due to type class implementation issues
+	}
+	{{end -}}
+	{{if eq .FuncOpt "incr" -}}
+	if ret, err = Sub(ret, identityVal(100, a.Dtype()),  UseUnsafe()) ; err != nil {
+		t.Errorf("err while subtracting incr: %v", err)
+		return false
 	}
 	{{end -}}
 	{{.Inv}}(ret, UseUnsafe())
@@ -137,9 +144,9 @@ func generateAPIUnaryTests(f io.Writer, ak Kinds) {
 
 	// for now incr cannot be quickchecked
 
-	// for _, fn := range tests {
-	// 	if fn.canWrite() {
-	// 		fn.Write(f)
-	// 	}
-	// }
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
 }
