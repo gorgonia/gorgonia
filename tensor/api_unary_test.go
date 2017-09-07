@@ -772,7 +772,7 @@ func TestLog10(t *testing.T) {
 		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
 			return true
 		}
-		ret, err := Inv(a, WithIncr(incr))
+		ret, err := Log2(a, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Log10", a, nil, we, err); retEarly {
 			if err != nil {
 				return false
@@ -1151,7 +1151,7 @@ func TestLog2(t *testing.T) {
 		if err := typeclassCheck(a.Dtype(), floatTypes); err != nil {
 			return true
 		}
-		ret, err := Inv(a, WithIncr(incr))
+		ret, err := Log2(a, WithIncr(incr))
 		if err, retEarly := qcErrCheck(t, "Log2", a, nil, we, err); retEarly {
 			if err != nil {
 				return false
