@@ -443,15 +443,6 @@ type FlatMaskedIterator struct {
 	mask []bool
 }
 
-// NewFlatMaskedIterator creates a new flat masked iterator
-func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
-	it := new(FlatMaskedIterator)
-	runtime.SetFinalizer(it, destroyIterator)
-	it.FlatIterator = NewFlatIterator(ap)
-	it.mask = mask
-	return it
-}
-
 // FlatMaskedIteratorFromDense creates a new FlatMaskedIterator from dense tensor
 func FlatMaskedIteratorFromDense(tt MaskedTensor) *FlatMaskedIterator {
 	it := new(FlatMaskedIterator)

@@ -1,8 +1,9 @@
 package tensor
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var flatIterTests1 = []struct {
@@ -333,6 +334,11 @@ func TestFlatIterator_Reset(t *testing.T) {
 	assert.Equal([]int{0, 0, 0}, it.track)
 }
 
+func TestDestroyIterator(t *testing.T) {
+	it := new(MultIterator)
+	destroyIterator(it)
+}
+
 /* BENCHMARK */
 type oldFlatIterator struct {
 	*AP
@@ -395,7 +401,7 @@ func (it *oldFlatIterator) Reset() {
 	}
 }
 
-/*func BenchmarkOldFlatIterator(b *testing.B) {
+func BenchmarkOldFlatIterator(b *testing.B) {
 	var err error
 
 	// as if T = NewTensor(WithShape(30, 1000, 1000))
@@ -413,7 +419,7 @@ func (it *oldFlatIterator) Reset() {
 
 		it.Reset()
 	}
-}*/
+}
 
 func BenchmarkFlatIterator(b *testing.B) {
 	var err error
