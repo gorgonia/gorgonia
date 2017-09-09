@@ -120,6 +120,7 @@ type EngineCmp struct {
 	VecVar         string
 	PrepData       string
 	TypeClassCheck string
+	Inv            string
 
 	VV      bool
 	LeftVec bool
@@ -213,6 +214,7 @@ func generateStdEngCmp(f io.Writer, ak Kinds) {
 		}
 		meth := &EngineCmp{
 			Name:           abo.Name(),
+			Inv:            abo.Inv,
 			VV:             true,
 			TypeClassCheck: tc,
 		}

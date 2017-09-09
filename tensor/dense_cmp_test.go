@@ -1089,7 +1089,7 @@ func TestDense_ElEqScalar(t *testing.T) {
 	}
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
-		t.Error("Transitivity test for ElEq failed: %v", err)
+		t.Error("Symmetry test for ElEq failed: %v", err)
 	}
 }
 func TestDense_ElNeScalar(t *testing.T) {
@@ -1124,6 +1124,379 @@ func TestDense_ElNeScalar(t *testing.T) {
 	}
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
-		t.Error("Transitivity test for ElNe failed: %v", err)
+		t.Error("Symmetry test for ElNe failed: %v", err)
+	}
+}
+func TestDense_GtScalar_assame(t *testing.T) {
+	var r *rand.Rand
+	transFn := func(q *Dense) bool {
+		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Gter)
+		we = we || !ok
+
+		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
+			return true // we exit early if the generated type is not something we can handle
+		}
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		a := q.Clone().(*Dense)
+		bv, _ := quick.Value(a.Dtype().Type, r)
+		b := bv.Interface()
+		c := q.Clone().(*Dense)
+		cv, _ := quick.Value(c.Dtype().Type, r)
+		c.Memset(cv.Interface())
+
+		axb, err := a.GtScalar(b, true, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Gt - a∙b", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		bxc, err := c.GtScalar(b, false, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Gt - b∙c", c, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		axc, err := a.Gt(c, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Gt - a∙c", a, c, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		if !threewayEq(axb.Data(), bxc.Data(), axc.Data()) {
+			t.Errorf("a: %-v", a)
+			t.Errorf("b: %-v", b)
+			t.Errorf("c: %-v", c)
+			t.Errorf("axb.Data() %v", axb.Data())
+			t.Errorf("bxc.Data() %v", bxc.Data())
+			t.Errorf("axc.Data() %v", axc.Data())
+			return false
+		}
+
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+		t.Error("Transitivity test for Gt failed: %v", err)
+	}
+
+}
+func TestDense_GteScalar_assame(t *testing.T) {
+	var r *rand.Rand
+	transFn := func(q *Dense) bool {
+		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Gteer)
+		we = we || !ok
+
+		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
+			return true // we exit early if the generated type is not something we can handle
+		}
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		a := q.Clone().(*Dense)
+		bv, _ := quick.Value(a.Dtype().Type, r)
+		b := bv.Interface()
+		c := q.Clone().(*Dense)
+		cv, _ := quick.Value(c.Dtype().Type, r)
+		c.Memset(cv.Interface())
+
+		axb, err := a.GteScalar(b, true, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Gte - a∙b", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		bxc, err := c.GteScalar(b, false, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Gte - b∙c", c, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		axc, err := a.Gte(c, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Gte - a∙c", a, c, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		if !threewayEq(axb.Data(), bxc.Data(), axc.Data()) {
+			t.Errorf("a: %-v", a)
+			t.Errorf("b: %-v", b)
+			t.Errorf("c: %-v", c)
+			t.Errorf("axb.Data() %v", axb.Data())
+			t.Errorf("bxc.Data() %v", bxc.Data())
+			t.Errorf("axc.Data() %v", axc.Data())
+			return false
+		}
+
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+		t.Error("Transitivity test for Gte failed: %v", err)
+	}
+
+}
+func TestDense_LtScalar_assame(t *testing.T) {
+	var r *rand.Rand
+	transFn := func(q *Dense) bool {
+		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Lter)
+		we = we || !ok
+
+		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
+			return true // we exit early if the generated type is not something we can handle
+		}
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		a := q.Clone().(*Dense)
+		bv, _ := quick.Value(a.Dtype().Type, r)
+		b := bv.Interface()
+		c := q.Clone().(*Dense)
+		cv, _ := quick.Value(c.Dtype().Type, r)
+		c.Memset(cv.Interface())
+
+		axb, err := a.LtScalar(b, true, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Lt - a∙b", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		bxc, err := c.LtScalar(b, false, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Lt - b∙c", c, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		axc, err := a.Lt(c, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Lt - a∙c", a, c, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		if !threewayEq(axb.Data(), bxc.Data(), axc.Data()) {
+			t.Errorf("a: %-v", a)
+			t.Errorf("b: %-v", b)
+			t.Errorf("c: %-v", c)
+			t.Errorf("axb.Data() %v", axb.Data())
+			t.Errorf("bxc.Data() %v", bxc.Data())
+			t.Errorf("axc.Data() %v", axc.Data())
+			return false
+		}
+
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+		t.Error("Transitivity test for Lt failed: %v", err)
+	}
+
+}
+func TestDense_LteScalar_assame(t *testing.T) {
+	var r *rand.Rand
+	transFn := func(q *Dense) bool {
+		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(Lteer)
+		we = we || !ok
+
+		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
+			return true // we exit early if the generated type is not something we can handle
+		}
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		a := q.Clone().(*Dense)
+		bv, _ := quick.Value(a.Dtype().Type, r)
+		b := bv.Interface()
+		c := q.Clone().(*Dense)
+		cv, _ := quick.Value(c.Dtype().Type, r)
+		c.Memset(cv.Interface())
+
+		axb, err := a.LteScalar(b, true, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Lte - a∙b", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		bxc, err := c.LteScalar(b, false, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Lte - b∙c", c, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		axc, err := a.Lte(c, AsSameType())
+		if err, retEarly := qcErrCheck(t, "Lte - a∙c", a, c, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		if !threewayEq(axb.Data(), bxc.Data(), axc.Data()) {
+			t.Errorf("a: %-v", a)
+			t.Errorf("b: %-v", b)
+			t.Errorf("c: %-v", c)
+			t.Errorf("axb.Data() %v", axb.Data())
+			t.Errorf("bxc.Data() %v", bxc.Data())
+			t.Errorf("axc.Data() %v", axc.Data())
+			return false
+		}
+
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+		t.Error("Transitivity test for Lte failed: %v", err)
+	}
+
+}
+func TestDense_ElEqScalar_assame(t *testing.T) {
+	var r *rand.Rand
+	transFn := func(q *Dense) bool {
+		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
+		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
+			return true // we exit early if the generated type is not something we can handle
+		}
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		a := q.Clone().(*Dense)
+		bv, _ := quick.Value(a.Dtype().Type, r)
+		b := bv.Interface()
+		c := q.Clone().(*Dense)
+		cv, _ := quick.Value(c.Dtype().Type, r)
+		c.Memset(cv.Interface())
+
+		axb, err := a.ElEqScalar(b, true, AsSameType())
+		if err, retEarly := qcErrCheck(t, "ElEq - a∙b", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		bxc, err := c.ElEqScalar(b, false, AsSameType())
+		if err, retEarly := qcErrCheck(t, "ElEq - b∙c", c, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		axc, err := a.ElEq(c, AsSameType())
+		if err, retEarly := qcErrCheck(t, "ElEq - a∙c", a, c, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		if !threewayEq(axb.Data(), bxc.Data(), axc.Data()) {
+			t.Errorf("a: %-v", a)
+			t.Errorf("b: %-v", b)
+			t.Errorf("c: %-v", c)
+			t.Errorf("axb.Data() %v", axb.Data())
+			t.Errorf("bxc.Data() %v", bxc.Data())
+			t.Errorf("axc.Data() %v", axc.Data())
+			return false
+		}
+
+		return true
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+		t.Error("Transitivity test for ElEq failed: %v", err)
+	}
+
+	symFn := func(q *Dense) bool {
+		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
+		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
+			return true // we exit early if the generated type is not something we can handle
+		}
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		a := q.Clone().(*Dense)
+		bv, _ := quick.Value(a.Dtype().Type, r)
+		b := bv.Interface()
+
+		axb, err := a.ElEqScalar(b, true, AsSameType())
+		if err, retEarly := qcErrCheck(t, "ElEq - a∙b", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		bxa, err := a.ElEqScalar(b, false, AsSameType())
+		if err, retEarly := qcErrCheck(t, "ElEq - b∙a", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		return reflect.DeepEqual(axb.Data(), bxa.Data())
+
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+		t.Error("Symmetry test for ElEq failed: %v", err)
+	}
+}
+func TestDense_ElNeScalar_assame(t *testing.T) {
+	var r *rand.Rand
+	symFn := func(q *Dense) bool {
+		we, _ := willerr(q, nonComplexNumberTypes, nil)
+		_, ok := q.Engine().(ElEqer)
+		we = we || !ok
+
+		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
+			return true // we exit early if the generated type is not something we can handle
+		}
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		a := q.Clone().(*Dense)
+		bv, _ := quick.Value(a.Dtype().Type, r)
+		b := bv.Interface()
+
+		axb, err := a.ElNeScalar(b, true, AsSameType())
+		if err, retEarly := qcErrCheck(t, "ElNe - a∙b", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+
+		bxa, err := a.ElNeScalar(b, false, AsSameType())
+		if err, retEarly := qcErrCheck(t, "ElNe - b∙a", a, b, we, err); retEarly {
+			if err != nil {
+				return false
+			}
+			return true
+		}
+		return reflect.DeepEqual(axb.Data(), bxa.Data())
+
+	}
+	r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+		t.Error("Symmetry test for ElNe failed: %v", err)
 	}
 }

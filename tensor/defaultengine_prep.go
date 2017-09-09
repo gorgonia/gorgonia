@@ -130,6 +130,9 @@ func prepDataVS(a Tensor, b interface{}, reuse Tensor) (dataA, dataB, dataReuse 
 		dataReuse = reuse.hdr()
 	}
 
+	if a.IsScalar() {
+		return
+	}
 	if a.RequiresIterator() || (reuse != nil && reuse.RequiresIterator()) {
 		ait = a.Iterator()
 		if reuse != nil {
@@ -149,6 +152,9 @@ func prepDataSV(a interface{}, b Tensor, reuse Tensor) (dataA, dataB, dataReuse 
 	}
 
 	// get iterator
+	if b.IsScalar() {
+		return
+	}
 	if b.RequiresIterator() || (reuse != nil && reuse.RequiresIterator()) {
 		bit = b.Iterator()
 		if reuse != nil {

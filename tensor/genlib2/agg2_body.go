@@ -188,11 +188,15 @@ const agg2CmpBodyRaw = `// check to see if anything needs to be created
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		{{end -}}
 		dataReuse = reuse.hdr()
+		if useIter{
 		iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse =  reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter{
+		iit = IteratorFromDense(reuse)	
+		}
 	}
 
 	if useIter {
@@ -200,12 +204,27 @@ const agg2CmpBodyRaw = `// check to see if anything needs to be created
 		case !safe && same && reuse == nil:
 			err = e.E.{{.Name}}SameIter(typ, dataA, dataB, ait, bit)
 			retVal = a
+		{{if .VV -}}
 		case same && safe && reuse != nil:
 			storage.CopyIter(typ,dataReuse,dataA, iit, ait)
 			ait.Reset()
 			iit.Reset()
 			err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, iit, bit)
 			retVal = reuse
+		{{else -}}
+		case same && safe && reuse != nil && !leftTensor:
+			storage.CopyIter(typ,dataReuse,dataB, iit, bit)
+			bit.Reset()
+			iit.Reset()
+			err = e.E.{{.Name}}SameIter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		case same && safe && reuse != nil && leftTensor:
+			storage.CopyIter(typ,dataReuse,dataA, iit, ait)
+			ait.Reset()
+			iit.Reset()
+			err = e.E.{{.Name}}SameIter(typ, dataReuse, dataB, iit, bit)
+			retVal = reuse
+		{{end -}}
 		default: // safe && bool
 			err = e.E.{{.Name}}Iter(typ, dataA, dataB, dataReuse, ait, bit, iit)
 			retVal = reuse
@@ -213,14 +232,45 @@ const agg2CmpBodyRaw = `// check to see if anything needs to be created
 		{{if not .VV -}}returnHeader(scalarHeader){{end}}
 		return
 	}
+
+	{{if not .VV -}}
+	// handle special case where A and B have both len 1
+	if dataB.L == 1 && dataB.L == 1 {
+		switch {
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ,dataReuse,dataA)
+			err = e.E.{{.Name}}Same(typ, dataReuse, dataB)
+			retVal = reuse
+			return
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ,dataReuse,dataB)
+			err = e.E.{{.Inv}}Same(typ, dataReuse, dataA)
+			retVal = reuse
+			return
+		}	
+	}
+	{{end -}}
+
+	// standard
 	switch {
 		case !safe && same && reuse == nil:
 			err = e.E.{{.Name}}Same(typ, dataA, dataB)
 			retVal = a
+		{{if .VV -}}
 		case same && safe && reuse != nil:
 			storage.Copy(typ,dataReuse,dataA)
 			err = e.E.{{.Name}}Same(typ, dataReuse, dataB)
 			retVal = reuse
+		{{else -}}
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ,dataReuse,dataA)
+			err = e.E.{{.Name}}Same(typ, dataReuse, dataB)
+			retVal = reuse
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ,dataReuse,dataB)
+			err = e.E.{{.Name}}Same(typ, dataA, dataReuse)
+			retVal = reuse
+		{{end -}}
 		default:
 			err = e.E.{{.Name}}(typ, dataA, dataB, dataReuse)
 			retVal = reuse

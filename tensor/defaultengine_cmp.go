@@ -42,11 +42,15 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		}
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -67,6 +71,8 @@ func (e StdEng) Gt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 		return
 	}
+
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.GtSame(typ, dataA, dataB)
@@ -116,11 +122,15 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		}
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -141,6 +151,8 @@ func (e StdEng) Gte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 
 		return
 	}
+
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.GteSame(typ, dataA, dataB)
@@ -190,11 +202,15 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		}
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -215,6 +231,8 @@ func (e StdEng) Lt(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err erro
 
 		return
 	}
+
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.LtSame(typ, dataA, dataB)
@@ -264,11 +282,15 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		}
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -289,6 +311,8 @@ func (e StdEng) Lte(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err err
 
 		return
 	}
+
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.LteSame(typ, dataA, dataB)
@@ -338,11 +362,15 @@ func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		}
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -363,6 +391,8 @@ func (e StdEng) ElEq(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 
 		return
 	}
+
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.EqSame(typ, dataA, dataB)
@@ -412,11 +442,15 @@ func (e StdEng) ElNe(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 			reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		}
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -437,6 +471,8 @@ func (e StdEng) ElNe(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, err er
 
 		return
 	}
+
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.NeSame(typ, dataA, dataB)
@@ -493,11 +529,15 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	case same && safe && reuse == nil:
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -505,7 +545,13 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		case !safe && same && reuse == nil:
 			err = e.E.GtSameIter(typ, dataA, dataB, ait, bit)
 			retVal = a
-		case same && safe && reuse != nil:
+		case same && safe && reuse != nil && !leftTensor:
+			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
+			bit.Reset()
+			iit.Reset()
+			err = e.E.GtSameIter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		case same && safe && reuse != nil && leftTensor:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
 			ait.Reset()
 			iit.Reset()
@@ -518,13 +564,34 @@ func (e StdEng) GtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		returnHeader(scalarHeader)
 		return
 	}
+
+	// handle special case where A and B have both len 1
+	if dataB.L == 1 && dataB.L == 1 {
+		switch {
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
+			err = e.E.GtSame(typ, dataReuse, dataB)
+			retVal = reuse
+			return
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.LtSame(typ, dataReuse, dataA)
+			retVal = reuse
+			return
+		}
+	}
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.GtSame(typ, dataA, dataB)
 		retVal = a
-	case same && safe && reuse != nil:
+	case same && safe && reuse != nil && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.GtSame(typ, dataReuse, dataB)
+		retVal = reuse
+	case same && safe && reuse != nil && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.GtSame(typ, dataA, dataReuse)
 		retVal = reuse
 	default:
 		err = e.E.Gt(typ, dataA, dataB, dataReuse)
@@ -574,11 +641,15 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case same && safe && reuse == nil:
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -586,7 +657,13 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case !safe && same && reuse == nil:
 			err = e.E.GteSameIter(typ, dataA, dataB, ait, bit)
 			retVal = a
-		case same && safe && reuse != nil:
+		case same && safe && reuse != nil && !leftTensor:
+			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
+			bit.Reset()
+			iit.Reset()
+			err = e.E.GteSameIter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		case same && safe && reuse != nil && leftTensor:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
 			ait.Reset()
 			iit.Reset()
@@ -599,13 +676,34 @@ func (e StdEng) GteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		returnHeader(scalarHeader)
 		return
 	}
+
+	// handle special case where A and B have both len 1
+	if dataB.L == 1 && dataB.L == 1 {
+		switch {
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
+			err = e.E.GteSame(typ, dataReuse, dataB)
+			retVal = reuse
+			return
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.LteSame(typ, dataReuse, dataA)
+			retVal = reuse
+			return
+		}
+	}
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.GteSame(typ, dataA, dataB)
 		retVal = a
-	case same && safe && reuse != nil:
+	case same && safe && reuse != nil && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.GteSame(typ, dataReuse, dataB)
+		retVal = reuse
+	case same && safe && reuse != nil && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.GteSame(typ, dataA, dataReuse)
 		retVal = reuse
 	default:
 		err = e.E.Gte(typ, dataA, dataB, dataReuse)
@@ -655,11 +753,15 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	case same && safe && reuse == nil:
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -667,7 +769,13 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		case !safe && same && reuse == nil:
 			err = e.E.LtSameIter(typ, dataA, dataB, ait, bit)
 			retVal = a
-		case same && safe && reuse != nil:
+		case same && safe && reuse != nil && !leftTensor:
+			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
+			bit.Reset()
+			iit.Reset()
+			err = e.E.LtSameIter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		case same && safe && reuse != nil && leftTensor:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
 			ait.Reset()
 			iit.Reset()
@@ -680,13 +788,34 @@ func (e StdEng) LtScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		returnHeader(scalarHeader)
 		return
 	}
+
+	// handle special case where A and B have both len 1
+	if dataB.L == 1 && dataB.L == 1 {
+		switch {
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
+			err = e.E.LtSame(typ, dataReuse, dataB)
+			retVal = reuse
+			return
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.GtSame(typ, dataReuse, dataA)
+			retVal = reuse
+			return
+		}
+	}
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.LtSame(typ, dataA, dataB)
 		retVal = a
-	case same && safe && reuse != nil:
+	case same && safe && reuse != nil && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.LtSame(typ, dataReuse, dataB)
+		retVal = reuse
+	case same && safe && reuse != nil && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.LtSame(typ, dataA, dataReuse)
 		retVal = reuse
 	default:
 		err = e.E.Lt(typ, dataA, dataB, dataReuse)
@@ -736,11 +865,15 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 	case same && safe && reuse == nil:
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -748,7 +881,13 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		case !safe && same && reuse == nil:
 			err = e.E.LteSameIter(typ, dataA, dataB, ait, bit)
 			retVal = a
-		case same && safe && reuse != nil:
+		case same && safe && reuse != nil && !leftTensor:
+			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
+			bit.Reset()
+			iit.Reset()
+			err = e.E.LteSameIter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		case same && safe && reuse != nil && leftTensor:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
 			ait.Reset()
 			iit.Reset()
@@ -761,13 +900,34 @@ func (e StdEng) LteScalar(t Tensor, s interface{}, leftTensor bool, opts ...Func
 		returnHeader(scalarHeader)
 		return
 	}
+
+	// handle special case where A and B have both len 1
+	if dataB.L == 1 && dataB.L == 1 {
+		switch {
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
+			err = e.E.LteSame(typ, dataReuse, dataB)
+			retVal = reuse
+			return
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.GteSame(typ, dataReuse, dataA)
+			retVal = reuse
+			return
+		}
+	}
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.LteSame(typ, dataA, dataB)
 		retVal = a
-	case same && safe && reuse != nil:
+	case same && safe && reuse != nil && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.LteSame(typ, dataReuse, dataB)
+		retVal = reuse
+	case same && safe && reuse != nil && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.LteSame(typ, dataA, dataReuse)
 		retVal = reuse
 	default:
 		err = e.E.Lte(typ, dataA, dataB, dataReuse)
@@ -813,11 +973,15 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	case same && safe && reuse == nil:
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -825,7 +989,13 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		case !safe && same && reuse == nil:
 			err = e.E.EqSameIter(typ, dataA, dataB, ait, bit)
 			retVal = a
-		case same && safe && reuse != nil:
+		case same && safe && reuse != nil && !leftTensor:
+			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
+			bit.Reset()
+			iit.Reset()
+			err = e.E.EqSameIter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		case same && safe && reuse != nil && leftTensor:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
 			ait.Reset()
 			iit.Reset()
@@ -838,13 +1008,34 @@ func (e StdEng) EqScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		returnHeader(scalarHeader)
 		return
 	}
+
+	// handle special case where A and B have both len 1
+	if dataB.L == 1 && dataB.L == 1 {
+		switch {
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
+			err = e.E.EqSame(typ, dataReuse, dataB)
+			retVal = reuse
+			return
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.EqSame(typ, dataReuse, dataA)
+			retVal = reuse
+			return
+		}
+	}
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.EqSame(typ, dataA, dataB)
 		retVal = a
-	case same && safe && reuse != nil:
+	case same && safe && reuse != nil && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.EqSame(typ, dataReuse, dataB)
+		retVal = reuse
+	case same && safe && reuse != nil && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.EqSame(typ, dataA, dataReuse)
 		retVal = reuse
 	default:
 		err = e.E.Eq(typ, dataA, dataB, dataReuse)
@@ -890,11 +1081,15 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 	case same && safe && reuse == nil:
 		reuse = NewDense(a.Dtype(), a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	case !same && safe && reuse == nil:
 		reuse = NewDense(Bool, a.Shape().Clone(), WithEngine(e))
 		dataReuse = reuse.hdr()
-		iit = IteratorFromDense(reuse)
+		if useIter {
+			iit = IteratorFromDense(reuse)
+		}
 	}
 
 	if useIter {
@@ -902,7 +1097,13 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		case !safe && same && reuse == nil:
 			err = e.E.NeSameIter(typ, dataA, dataB, ait, bit)
 			retVal = a
-		case same && safe && reuse != nil:
+		case same && safe && reuse != nil && !leftTensor:
+			storage.CopyIter(typ, dataReuse, dataB, iit, bit)
+			bit.Reset()
+			iit.Reset()
+			err = e.E.NeSameIter(typ, dataA, dataReuse, ait, bit)
+			retVal = reuse
+		case same && safe && reuse != nil && leftTensor:
 			storage.CopyIter(typ, dataReuse, dataA, iit, ait)
 			ait.Reset()
 			iit.Reset()
@@ -915,13 +1116,34 @@ func (e StdEng) NeScalar(t Tensor, s interface{}, leftTensor bool, opts ...FuncO
 		returnHeader(scalarHeader)
 		return
 	}
+
+	// handle special case where A and B have both len 1
+	if dataB.L == 1 && dataB.L == 1 {
+		switch {
+		case same && safe && reuse != nil && leftTensor:
+			storage.Copy(typ, dataReuse, dataA)
+			err = e.E.NeSame(typ, dataReuse, dataB)
+			retVal = reuse
+			return
+		case same && safe && reuse != nil && !leftTensor:
+			storage.Copy(typ, dataReuse, dataB)
+			err = e.E.NeSame(typ, dataReuse, dataA)
+			retVal = reuse
+			return
+		}
+	}
+	// standard
 	switch {
 	case !safe && same && reuse == nil:
 		err = e.E.NeSame(typ, dataA, dataB)
 		retVal = a
-	case same && safe && reuse != nil:
+	case same && safe && reuse != nil && leftTensor:
 		storage.Copy(typ, dataReuse, dataA)
 		err = e.E.NeSame(typ, dataReuse, dataB)
+		retVal = reuse
+	case same && safe && reuse != nil && !leftTensor:
+		storage.Copy(typ, dataReuse, dataB)
+		err = e.E.NeSame(typ, dataA, dataReuse)
 		retVal = reuse
 	default:
 		err = e.E.Ne(typ, dataA, dataB, dataReuse)

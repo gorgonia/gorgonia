@@ -220,7 +220,7 @@ const symmetryMixedBodyRaw = `symFn := func(q *Dense) bool {
 }
 r = rand.New(rand.NewSource(time.Now().UnixNano()))
 if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
-	t.Error("Transitivity test for {{.Name}} failed: %v", err)
+	t.Error("Symmetry test for {{.Name}} failed: %v", err)
 }
 `
 
@@ -414,11 +414,11 @@ func generateAPICmpMixedTests(f io.Writer, ak Kinds) {
 		fn.FuncOpt = "assame"
 		fn.TypeClassName = "nonComplexNumberTypes"
 	}
-	// for _, fn := range tests {
-	// 	if fn.canWrite() {
-	// 		fn.Write(f)
-	// 	}
-	// }
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
 }
 
 func generateDenseMethodCmpTests(f io.Writer, ak Kinds) {
@@ -467,9 +467,9 @@ func generateDenseMethodCmpMixedTests(f io.Writer, ak Kinds) {
 		fn.FuncOpt = "assame"
 		fn.TypeClassName = "nonComplexNumberTypes"
 	}
-	// for _, fn := range tests {
-	// 	if fn.canWrite() {
-	// 		fn.Write(f)
-	// 	}
-	// }
+	for _, fn := range tests {
+		if fn.canWrite() {
+			fn.Write(f)
+		}
+	}
 }
