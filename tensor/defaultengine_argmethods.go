@@ -13,10 +13,6 @@ func (e StdEng) Argmax(t Tensor, axis int) (retVal Tensor, err error) {
 }
 
 func (e StdEng) argmaxDenseTensor(t DenseTensor, axis int) (retVal *Dense, err error) {
-	if !t.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, t)
-	}
-
 	if err = unaryCheck(t, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, opFail, "Argmax")
 	}
@@ -100,10 +96,6 @@ func (e StdEng) Argmin(t Tensor, axis int) (retVal Tensor, err error) {
 }
 
 func (e StdEng) argminDenseTensor(t DenseTensor, axis int) (retVal *Dense, err error) {
-	if !t.IsNativelyAccessible() {
-		return nil, errors.Errorf(inaccessibleData, t)
-	}
-
 	if err = unaryCheck(t, ordTypes); err != nil {
 		return nil, errors.Wrapf(err, opFail, "Argmin")
 	}
