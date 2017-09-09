@@ -173,26 +173,27 @@ The `storage.Header` field of the `array` (and hence `*Dense`) is there to provi
 
 By default, `*Dense` operations try to use the language builtin slice operations by casting the `*storage.Header` field into a slice. However, to accomodate a larger subset of types, the `*Dense` operations have a fallback to using pointer arithmetic to iterate through the slices for other types with non-primitive kinds (yes, you CAN do pointer arithmetic in Go. It's slow and unsafe). The result is slower operations for types with non-primitive kinds.
 
-### Memory Allocation###
+### Memory Allocation ###
 `New()` functions as expected - it returns a pointer of `*Dense` to a array of zeroed memory. The underlying array is allocated, depending on what `ConsOpt` is passed in. With `New()`, `ConsOpt`s are used to determine the exact nature of the `*Dense`. It's a bit icky (I'd have preferred everything to have been known statically at compile time), but it works. Let's look at some examples:
 
 ``` go
-x := New(Of(Float64), WithShape(2,2))
+x := New(Of(Float64), WithShape(2,2)) // works
+y := New(WithShape(2,2)) // panics
+z := New(WithBacking([]int{1,2,3,4})) // works
 ```
 
-This will allocate a `float64` array of size 4.
+The following will happen:
+* Line 1 works: This will allocate a `float64` array of size 4.
+* Line 2 will cause a panic. This is because the function doesn't know what to allocate - it only knows to allocate an array of *something* for the size of 4.
+* Line 3 will NOT fail, because the array has already been allocated (the `*Dense` reuses the same backing array as the slice passed in). Its shape will be set to `(4)`.
+
+Alternatively you may also pass in an `Engine`. If that's the case then the allocation will use the `Alloc` method of the `Engine` instead:
 
 ```go
-x := New(WithShape(2,2))
+x := New(Of(Float64), WithEngine(myEngine), WithShape(2,2))
 ```
 
-This will panic - because the function doesn't know what to allocate - it only knows to allocate an array of *something* for the size of 4.
-
-```go
-x := New(WithBacking([]int{1,2,3,4}))
-```
-
-This will NOT fail, because the array has already been allocated (the `*Dense` reuses the same backing array as the slice passed in). Its shape will be set to `(4)`.
+The above call will use `myEngine` to allocate memory instead. This is useful in cases where you may want to manually manage your memory.
 
 
 ### Other failed designs ###
