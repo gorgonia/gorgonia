@@ -144,9 +144,8 @@ The data structure for `*Dense` is similar, but a lot more complex. Much of the 
 ```go 
 type Dense struct {
 	*AP
-	data unsafe.Pointer
-	hdr *reflect.SliceHeader
-	t Dtype
+	array
+	e Engine
 
 	// other fields elided for simplicity's sake
 }
@@ -158,9 +157,21 @@ And here's a visual representation of the `*Dense`.
 
 `*Dense` draws its inspiration from Go's slice. Underlying it all is a flat array, and access to elements are controlled by `*AP`. Where a Go is able to store its metadata in a 3-word stucture (obiviating the need to allocate memory), a `*Dense` unfortunately needs to allocate some memory. The majority of the data is stored in the `*AP` structure, which contains metadata such as shape, stride, and methods for accessing the array.
 
-The `*Dense` tensor stores the address of the first element in the `data` field as an `unsafe.Pointer` mainly to ensure that the underlying data does not get garbage collected. The `hdr` field of the `*Dense` tensor is there to provide a quick and easy way to translate back into a slice for operations that use familiar slice semantics, of which much of the operations are dependent upon.
+`*Dense` embeds an `array` (not to be confused with Go's array), which is an abstracted data structure that looks like this:
 
-By default, `*Dense` operations try to use the language builtin slice operations by casting the `hdr` field into a slice. However, to accomodate a larger subset of types, the `*Dense` operations have a fallback to using pointer arithmetic to iterate through the slices for other types with non-primitive kinds (yes, you CAN do pointer arithmetic in Go. It's slow and unsafe). The result is slower operations for types with non-primitive kinds.
+```
+type array struct {
+	storage.Header
+	t Dtype
+	v interface{}
+}
+```
+
+`*storage.Header` is the same structure as `reflect.SliceHeader`, except it stores a `unsafe.Pointer` instead of a `uintptr`. This is done so that eventually when more tests are done to determine how the garbage collector marks data, the `v` field may be removed. 
+
+The `storage.Header` field of the `array` (and hence `*Dense`) is there to provide a quick and easy way to translate back into a slice for operations that use familiar slice semantics, of which much of the operations are dependent upon.
+
+By default, `*Dense` operations try to use the language builtin slice operations by casting the `*storage.Header` field into a slice. However, to accomodate a larger subset of types, the `*Dense` operations have a fallback to using pointer arithmetic to iterate through the slices for other types with non-primitive kinds (yes, you CAN do pointer arithmetic in Go. It's slow and unsafe). The result is slower operations for types with non-primitive kinds.
 
 ### Memory Allocation###
 `New()` functions as expected - it returns a pointer of `*Dense` to a array of zeroed memory. The underlying array is allocated, depending on what `ConsOpt` is passed in. With `New()`, `ConsOpt`s are used to determine the exact nature of the `*Dense`. It's a bit icky (I'd have preferred everything to have been known statically at compile time), but it works. Let's look at some examples:
@@ -186,9 +197,7 @@ This will NOT fail, because the array has already been allocated (the `*Dense` r
 
 ### Other failed designs ###
 
-One particular failed design of which I am interested in revisiting is direcly inspired by the slice design. Instead of having to allocate `*Dense`, a `Dense` data structure comprising of fewer words are used. In particular, the `*AP` would be reduced to being a 2 word structure. However, there are limitations arising from that - the number of dimensions allowed would be a maximum of 2 (a 64-bit uint can be split into 2 32-bit uints, representing shape). That would defeat the purpose of the design of this package, which is to go beyond two dimensions. Eventually the data structure built up to roughly around the same number of words as the current definition. 
-
-Given the Go runtime isn't generally guaranteed to stay the same, it would have been a better decision to stick with passing around pointers.
+The alternative designs can be seen in the [ALTERNATIVE DESIGNS document](https://github.com/chewxy/gorgonia/blob/master/tensor/ALTERNATIVEDESIGNS.md)
 
 ## Generic Features ##
 
@@ -207,32 +216,14 @@ One could argue that this sidesteps the compiler's type checking system, deferri
 Currently, the tensor package supports limited type of genericity - limited to a tensor of any primitive type. 
 
 ## How This Package is Developed ##
-Much of the code in this package is generated. The code to generate them is in the directory `genlib`. 
+Much of the code in this package is generated. The code to generate them is in the directory `genlib2`. 
 
 ## Things Knowingly Untested For ##
-- Inverse tests fail, and have been disabled (not generated)
-- Bugs involving changing from int/uint type to float type and back
-		- Identity tests for Pow
+- `complex64` and `complex128` are excluded from quick check generation process [https://github.com/chewxy/gorgonia/issues/143](Issue #143)
 
-### Edge Cases: ###
 
-Due to use of `testing/quick`, a number of edge cases were found, and primarily are caused by loss of accuracy. Handling these edge cases is deferred to the user of this package, hence all the edge cases are enumerated here:
+### TODO ###
 
-1.  In `Pow` related functions, there are loss of accuracy issues
-	This fails due to loss of accuracy from conversion:
-
-	```go
-		// identity property of exponentiation: a ^ 1 ==  a
-		a := New(WithBacking([]int(1,2,3)))
-		b, _ := a.PowOf(1) // or a.Pow(New(WithBacking([]{1,1,1})))
-		t := a.ElemEq(b) // []bool{false, false, false}
-	```
-
-2. Large number float operations - inverse of Vector-Scalar ops have not been generated because tests to handle the correctness of weird cases haven't been written
-
-TODO: 
-
-* Identity optimizations for op
-* Zero value optimizations
-* fix SVD tests
-* fix Random() - super dodgy
+* [ ] Identity optimizations for op
+* [ ] Zero value optimizations
+* [ ] fix Random() - super dodgy
