@@ -1,19 +1,21 @@
 package tensor
 
 import (
-	"reflect"
+	"runtime"
 	"sync"
+
+	"github.com/chewxy/gorgonia/tensor/internal/storage"
 )
 
 var habbo sync.Mutex
 var usePool = true
 
 // tensorPool is a pool of *Tensor grouped by size. It's guarded by poolsClosed
-var poolsClosed sync.RWMutex
-var densePool = make(map[reflect.Kind]map[int]*sync.Pool)
 
 const (
 	maxAPDims = 8
+	maxDims   = 8
+	PoolSize  = 4096
 )
 
 // UsePool enables the use of a pool of *Tensors as provided in the package. This is the default option
@@ -32,61 +34,46 @@ func DontUsePool() {
 	habbo.Unlock()
 }
 
-func newDensePool(dt Dtype, size int) *sync.Pool {
-	var pool *sync.Pool
+// headerPool should ever only be used by scalarToHeader
+var headerPool = make(chan *storage.Header, PoolSize)
 
-	k := dt.Kind()
-	poolsClosed.Lock()
-	// check once more that before the lock was acquired, that nothing else had written to that key
-	pools, ok := densePool[k]
-	if !ok {
-		pools = make(map[int]*sync.Pool)
-		densePool[k] = pools
+func borrowHeader() *storage.Header {
+	select {
+	case hdr := <-headerPool:
+		return hdr
+	default:
+		hdr := new(storage.Header)
+		runtime.SetFinalizer(hdr, destroyHeader)
+		return hdr
 	}
-
-	if p, ok := pools[size]; !ok {
-		pool = new(sync.Pool)
-		l := size
-		t := dt
-
-		pool.New = func() interface{} {
-			return newDense(t, l)
-		}
-
-		pools[size] = pool
-	} else {
-		pool = p
-	}
-
-	poolsClosed.Unlock()
-	return pool
 }
 
-func borrowDense(dt Dtype, size int) *Dense {
-	if !usePool {
-		return newDense(dt, size)
+func returnHeader(hdr *storage.Header) {
+	destroyHeader(hdr)
+	if len(headerPool) < cap(headerPool) {
+		headerPool <- hdr
 	}
+}
 
-	var pool *sync.Pool
-	k := dt.Kind()
+func destroyHeader(hdr *storage.Header) {
+	hdr.Ptr = nil
+	hdr.L = 0
+	hdr.C = 0
+}
 
-	poolsClosed.RLock()
-	pools, ok := densePool[k]
-	poolsClosed.RUnlock()
+var densePool = make(chan *Dense, PoolSize)
 
-	if !ok {
-		pool = newDensePool(dt, size)
-		goto end
+func borrowDense() *Dense {
+	select {
+	case t := <-densePool:
+		return t
+	default:
+		t := new(Dense)
+		t.e = StdEng{}
+		// t.oe = StdEng{}
+		return t
 	}
-
-	if pool, ok = pools[size]; !ok {
-		pool = newDensePool(dt, size)
-	}
-
-end:
-	retVal := pool.Get().(*Dense)
-	// log.Printf("borrowing %p", retVal)
-	return retVal
+	// return densePool.Get().(*Dense)
 }
 
 // ReturnTensor returns a Tensor to their respective pools. USE WITH CAUTION
@@ -96,41 +83,6 @@ func ReturnTensor(t Tensor) {
 	}
 	switch tt := t.(type) {
 	case *Dense:
-		if tt.IsManuallyManaged() {
-			tt.data = nil
-			tt.hdr.Data = 0
-			return
-		}
-
-		dt := tt.t.Kind()
-		if _, ok := densePool[dt]; !ok {
-			return
-		}
-
-		if tt.viewOf != nil {
-			ReturnAP(tt.AP)
-			tt.AP = nil
-			if tt.old != nil {
-				ReturnAP(tt.old)
-				tt.old = nil
-			}
-			if tt.transposeWith != nil {
-				ReturnInts(tt.transposeWith)
-				tt.transposeWith = nil
-			}
-			tt.data = nil
-			return // yes, we're not putting it back into the pool
-		}
-
-		tt.Zero()
-		size := tt.cap()
-		poolsClosed.RLock()
-		pool, ok := densePool[dt][size]
-		poolsClosed.RUnlock()
-		if !ok {
-			pool = newDensePool(tt.t, size)
-		}
-
 		if tt.old != nil {
 			ReturnAP(tt.old)
 			tt.old = nil
@@ -141,50 +93,79 @@ func ReturnTensor(t Tensor) {
 			tt.transposeWith = nil
 		}
 
-		tt.unlock()
-		pool.Put(tt)
+		// return AP
+		ReturnAP(tt.AP)
+
+		// array reset
+		tt.t = Dtype{}
+		tt.array.Ptr = nil
+		tt.array.L = 0
+		tt.array.C = 0
+		tt.array.v = nil
+
+		// engine and flag reset
+		tt.e = StdEng{}
+		tt.oe = nil
+		tt.flag = 0
+
+		// other reset
+		tt.old = nil
+		tt.viewOf = 0
+		tt.transposeWith = nil
+
+		// mask related stuff - TODO: deprecate
+		tt.mask = nil
+		tt.maskIsSoft = false
+
+		// densePool.Put(tt)
+		if len(densePool) < cap(densePool) {
+			densePool <- tt
+		}
 	}
 }
 
 /* AP POOL */
 
-// apPool supports tensors up to 4-dimensions. Because, c'mon, you're not likely to use anything more than 5
-var apPool [maxAPDims]sync.Pool
+var apPool = make(chan *AP, PoolSize)
+
+func borrowAP() *AP {
+	select {
+	case ap := <-apPool:
+		return ap
+	default:
+		return new(AP)
+	}
+	// return apPool.Get().(*AP)
+}
 
 // BorrowAP gets an AP from the pool. USE WITH CAUTION.
 func BorrowAP(dims int) *AP {
-	if dims >= maxAPDims {
-		ap := new(AP)
-		ap.shape = make(Shape, dims)
-		ap.strides = make([]int, dims)
-		return ap
-	}
-
-	ap := apPool[dims].Get().(*AP)
-
-	// restore strides and shape to whatever that may have been truncated
+	ap := borrowAP()
+	ap.shape = BorrowInts(dims)
+	ap.strides = BorrowInts(dims)
+	ap.shape = ap.shape[:cap(ap.shape)]
 	ap.strides = ap.strides[:cap(ap.strides)]
 	return ap
 }
 
 // ReturnAP returns the AP to the pool. USE WITH CAUTION.
 func ReturnAP(ap *AP) {
-	if ap.Dims() >= maxAPDims {
-		return
+	ReturnInts([]int(ap.shape))
+	ReturnInts(ap.strides)
+	ap.fin = false
+
+	ap.o = 0
+	ap.Δ = 0
+
+	if len(apPool) < cap(apPool) {
+		apPool <- ap
 	}
-	apPool[ap.Dims()].Put(ap)
+	// apPool.Put(ap)
 }
 
 /* ----------------------------------------------------------------
 ------------------ Create Pools
 ------------------------------------------------------------------*/
-/* INTS POOL */
-
-var intsPool [8]sync.Pool
-
-/* BOOLS POOL */
-
-var boolsPool [8]sync.Pool
 
 /* APLIST POOL */
 
@@ -192,43 +173,56 @@ var apListPool [maxAPDims]sync.Pool
 
 // Init function
 func init() {
-	for i := range intsPool {
-		size := i
-		intsPool[i].New = func() interface{} { return make([]int, size) }
-	}
-
-	for i := range boolsPool {
-		size := i
-		boolsPool[i].New = func() interface{} { return make([]bool, size) }
-	}
-
 	for i := range apListPool {
 		size := i
 		apListPool[i].New = func() interface{} { return make([]*AP, size) }
 	}
 
-	for i := range apPool {
-		l := i
-		apPool[i].New = func() interface{} {
-			ap := new(AP)
-			ap.strides = make([]int, l)
-			ap.shape = make(Shape, l)
-			return ap
-		}
+	// for i := 0; i < PoolSize; i++ {
+	// 	intsPool <- make([]int, 8, 8)
+	// }
+
+	for i := range intsPool {
+		size := i
+		intsPool[i].New = func() interface{} { return make([]int, size) }
 	}
+
+	// for i := range boolsPool {
+	// 	size := i
+	// 	boolsPool[i].New = func() interface{} { return make([]bool, size) }
+	// }
 }
+
+/* INTS POOL */
+
+var intsPool [maxDims + 1]sync.Pool
+
+// var intsPool = make(chan []int, PoolSize)
+
+/* BOOLS POOL */
+var boolsPool = make(chan []bool, PoolSize)
+
+// var boolsPool [PoolSize]sync.Pool
 
 // BorrowInts borrows a slice of ints from the pool. USE WITH CAUTION.
 func BorrowInts(size int) []int {
-	if size >= 8 {
-		return make([]int, size)
+	if size > maxDims {
+		return make([]int, size, size)
 	}
 
+	// select {
+	// case ints := <-intsPool:
+	// 	ints = ints[:size]
+	// 	return ints
+	// default:
+	// 	ints := make([]int, size, 8)
+	// 	return ints
+	// }
 	retVal := intsPool[size].Get()
 	if retVal == nil {
 		return make([]int, size)
 	}
-	return retVal.([]int)
+	return retVal.([]int)[:size]
 }
 
 // ReturnInts returns a slice from the pool. USE WITH CAUTION.
@@ -237,13 +231,17 @@ func ReturnInts(is []int) {
 		return
 	}
 	size := cap(is)
-	if size >= 8 {
+	if size > maxDims {
 		return
 	}
 	is = is[:cap(is)]
-	for i := range is {
-		is[i] = 0
-	}
+	// for i := range is {
+	// 	is[i] = 0
+	// }
+
+	// if len(intsPool) < cap(intsPool) {
+	// 	intsPool <- is
+	// }
 
 	intsPool[size].Put(is)
 }
@@ -254,11 +252,20 @@ func BorrowBools(size int) []bool {
 		return make([]bool, size)
 	}
 
-	retVal := boolsPool[size].Get()
-	if retVal == nil {
-		return make([]bool, size)
+	select {
+	case bools := <-boolsPool:
+		return bools
+	default:
+		bools := make([]bool, 8)
+		bools = bools[:size]
+		return bools
 	}
-	return retVal.([]bool)
+
+	// retVal := boolsPool[size].Get()
+	// if retVal == nil {
+	// 	return make([]bool, size)
+	// }
+	// return retVal.([]bool)
 }
 
 // ReturnBools returns a slice from the pool. USE WITH CAUTION.
@@ -275,7 +282,10 @@ func ReturnBools(is []bool) {
 		is[i] = false
 	}
 
-	boolsPool[size].Put(is)
+	if len(boolsPool) < cap(boolsPool) {
+		boolsPool <- is
+	}
+	// boolsPool[size].Put(is)
 }
 
 // BorrowAPList gets an APList from the pool. USE WITH CAUTION.
@@ -306,4 +316,41 @@ func ReturnAPList(aps []*AP) {
 	}
 
 	apListPool[size].Put(aps)
+}
+
+// var optPool = make(chan *OpOpt, PoolSize)
+// var optPool = newRingbuffer(PoolSize)
+var optPool = &sync.Pool{
+	New: func() interface{} { return new(OpOpt) },
+}
+
+func borrowOpOpt() *OpOpt {
+	// select {
+	// case fo := <-optPool:
+	// 	return fo
+	// default:
+	// 	return new(OpOpt)
+	// }
+
+	return optPool.Get().(*OpOpt)
+
+	// if fo, err := optPool.Get(); err == nil {
+	// 	return (*OpOpt)(fo)
+	// }
+	// return new(OpOpt)
+}
+
+func returnOpOpt(oo *OpOpt) {
+	oo.reuse = nil
+	oo.incr = nil
+	oo.unsafe = false
+	oo.same = false
+	oo.t = Dtype{}
+	// if len(optPool) < cap(optPool) {
+	// 	optPool <- oo
+	// }
+
+	optPool.Put(oo)
+
+	// optPool.Put(unsafe.Pointer(oo))
 }

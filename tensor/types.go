@@ -25,103 +25,78 @@ func (dt Dtype) Types() hm.Types                               { return nil }
 func (dt Dtype) Format(s fmt.State, c rune)                    { fmt.Fprintf(s, "%s", dt.Name()) }
 func (dt Dtype) Eq(other hm.Type) bool                         { return other == dt }
 
-func (dt Dtype) id() int {
-	for i, v := range allTypes {
-		if v == dt {
-			return i
-		}
+var numpyDtypes map[Dtype]string
+var reverseNumpyDtypes map[string]Dtype
+
+func init() {
+	numpyDtypes = map[Dtype]string{
+		Bool:       "b1",
+		Int:        fmt.Sprintf("i%d", Int.Size()),
+		Int8:       "i1",
+		Int16:      "i2",
+		Int32:      "i4",
+		Int64:      "i8",
+		Uint:       fmt.Sprintf("u%d", Uint.Size()),
+		Uint8:      "u1",
+		Uint16:     "u2",
+		Uint32:     "u4",
+		Uint64:     "u8",
+		Float32:    "f4",
+		Float64:    "f8",
+		Complex64:  "c8",
+		Complex128: "c16",
 	}
-	return -1
+
+	reverseNumpyDtypes = map[string]Dtype{
+		"b1":  Bool,
+		"i1":  Int8,
+		"i2":  Int16,
+		"i4":  Int32,
+		"i8":  Int64,
+		"u1":  Uint8,
+		"u2":  Uint16,
+		"u4":  Uint32,
+		"u8":  Uint64,
+		"f4":  Float32,
+		"f8":  Float64,
+		"c8":  Complex64,
+		"c16": Complex128,
+	}
 }
 
 // NumpyDtype returns the Numpy's Dtype equivalent. This is predominantly used in converting a Tensor to a Numpy ndarray,
 // however, not all Dtypes are supported
 func (dt Dtype) numpyDtype() (string, error) {
-	switch dt {
-	case Bool:
-		return "b1", nil
-	case Int:
-		return fmt.Sprintf("i%d", dt.Size()), nil
-	case Int8:
-		return "i1", nil
-	case Int16:
-		return "i2", nil
-	case Int32:
-		return "i4", nil
-	case Int64:
-		return "i8", nil
-	case Uint:
-		return fmt.Sprintf("u%d", dt.Size()), nil
-	case Uint8:
-		return "u1", nil
-	case Uint16:
-		return "u2", nil
-	case Uint32:
-		return "u4", nil
-	case Uint64:
-		return "u8", nil
-	case Float32:
-		return "f4", nil
-	case Float64:
-		return "f8", nil
-	case Complex64:
-		return "c8", nil
-	case Complex128:
-		return "c16", nil
-	default:
-		return "v", errors.Errorf("Unsupported Dtype conversion")
+	retVal, ok := numpyDtypes[dt]
+	if !ok {
+		return "v", errors.Errorf("Unsupported Dtype conversion to Numpy Dtype: %v", dt)
 	}
-}
-
-func fromTypeID(i int) (Dtype, error) {
-	if i > len(allTypes) || i < 0 {
-		return Dtype{}, errors.Errorf("Unsupported Dtype for serialization")
-	}
-	return allTypes[i], nil
+	return retVal, nil
 }
 
 func fromNumpyDtype(t string) (Dtype, error) {
-	switch t {
-	case "b1":
-		return Bool, nil
-	case "i1":
-		return Int8, nil
-	case "i2":
-		return Int16, nil
-	case "i4":
-		if Int.Size() == 4 {
-			return Int, nil
-		}
-		return Int32, nil
-	case "i8":
-		if Int.Size() == 8 {
-			return Int, nil
-		}
-		return Int64, nil
-	case "u1":
-		return Uint8, nil
-	case "u2":
-		return Uint16, nil
-	case "u4":
-		if Uint.Size() == 4 {
-			return Uint, nil
-		}
-		return Uint32, nil
-	case "u8":
-		if Uint.Size() == 8 {
-			return Uint, nil
-		}
-		return Uint64, nil
-	case "f4":
-		return Float32, nil
-	case "f8":
-		return Float64, nil
-	case "c8":
-		return Complex64, nil
-	case "c16":
-		return Complex128, nil
+	retVal, ok := reverseNumpyDtypes[t]
+	if !ok {
+		return Dtype{}, errors.Errorf("Unsupported Dtype conversion from %q to Dtype", t)
 	}
-	return Dtype{}, errors.Errorf("Unsupported Dtype conversion from %q to Dtype", t)
+	if t == "i4" && Int.Size() == 4 {
+		return Int, nil
+	}
+	if t == "i8" && Int.Size() == 8 {
+		return Int, nil
+	}
+	if t == "u4" && Uint.Size() == 4 {
+		return Uint, nil
+	}
+	if t == "u8" && Uint.Size() == 8 {
+		return Uint, nil
+	}
+	return retVal, nil
+}
+
+type typeclass struct {
+	name string
+	set  []Dtype
 }
 
 var parameterizedKinds = [...]reflect.Kind{
@@ -135,7 +110,7 @@ var parameterizedKinds = [...]reflect.Kind{
 	reflect.Struct,
 }
 
-func isSimpleKind(k reflect.Kind) bool {
+func isParameterizedKind(k reflect.Kind) bool {
 	for _, v := range parameterizedKinds {
 		if v == k {
 			return true
@@ -172,43 +147,174 @@ var (
 )
 
 // allTypes for indexing
-var allTypes = []Dtype{
-	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+var allTypes = &typeclass{
+	name: "τ",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+	},
 }
 
 // specialized types indicate that there are specialized code generated for these types
-var specializedTypes = []Dtype{
-	Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+var specializedTypes = &typeclass{
+	name: "Specialized",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+	},
 }
 
-var numberTypes = []Dtype{
-	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128,
+var addableTypes = &typeclass{
+	name: "Addable",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+	},
 }
 
-var ordTypes = []Dtype{
-	Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String,
+var numberTypes = &typeclass{
+	name: "Number",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128,
+	},
 }
 
-func isSpecialized(dt Dtype) bool {
-	for _, s := range specializedTypes {
-		if s.Kind() == dt.Kind() {
-			return true
-		}
-	}
-	return false
+var ordTypes = &typeclass{
+	name: "Ord",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, String,
+	},
 }
 
-func isNumber(dt Dtype) bool {
-	for _, s := range numberTypes {
-		if s.Kind() == dt.Kind() {
-			return true
-		}
-	}
-	return false
+var eqTypes = &typeclass{
+	name: "Eq",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, Complex64, Complex128, String, Uintptr, UnsafePointer,
+	},
+}
+
+var unsignedTypes = &typeclass{
+	name: "Unsigned",
+	set:  []Dtype{Uint, Uint8, Uint16, Uint32, Uint64},
+}
+
+var signedTypes = &typeclass{
+	name: "Signed",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Float32, Float64, Complex64, Complex128,
+	},
+}
+
+// this typeclass is ever only used by Sub tests
+var signedNonComplexTypes = &typeclass{
+	name: "Signed NonComplex",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Float32, Float64,
+	},
+}
+
+var floatTypes = &typeclass{
+	name: "Float",
+	set: []Dtype{
+		Float32, Float64,
+	},
+}
+
+var complexTypes = &typeclass{
+	name: "Complex Numbers",
+	set:  []Dtype{Complex64, Complex128},
+}
+
+var floatcmplxTypes = &typeclass{
+	name: "Real",
+	set: []Dtype{
+		Float32, Float64, Complex64, Complex128,
+	},
+}
+
+var nonComplexNumberTypes = &typeclass{
+	name: "Non complex numbers",
+	set: []Dtype{
+		Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64,
+	},
+}
+
+// this typeclass is ever only used by Pow tests
+var generatableTypes = &typeclass{
+	name: "Generatable types",
+	set: []Dtype{
+		Bool, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Float32, Float64, String,
+	},
 }
 
 func isFloat(dt Dtype) bool {
-	return dt.Kind() == reflect.Float64 || dt.Kind() == reflect.Float32
+	return dt == Float64 || dt == Float32
+}
+
+func typeclassCheck(a Dtype, tc *typeclass) error {
+	if tc == nil {
+		return nil
+	}
+	for _, s := range tc.set {
+		if s == a {
+			return nil
+		}
+	}
+	return errors.Errorf("Type %v is not a member of %v", a, tc.name)
+}
+
+// RegisterNumber is a function required to register a new numerical Dtype.
+// This package provides the following Dtype:
+//		Int
+//		Int8
+//		Int16
+//		Int32
+//		Int64
+//		Uint
+//		Uint8
+//		Uint16
+//		Uint32
+//		Uint64
+//		Float32
+//		Float64
+//		Complex64
+//		Complex128
+//
+// If a Dtype that is registered already exists on the list, it will not be added to the list.
+func RegisterNumber(a Dtype) {
+	for _, dt := range numberTypes.set {
+		if dt == a {
+			return
+		}
+	}
+	numberTypes.set = append(numberTypes.set, a)
+	RegisterEq(a)
+}
+
+func RegisterFloat(a Dtype) {
+	for _, dt := range floatTypes.set {
+		if dt == a {
+			return
+		}
+	}
+	floatTypes.set = append(floatTypes.set, a)
+	RegisterNumber(a)
+	RegisterOrd(a)
+}
+
+func RegisterOrd(a Dtype) {
+	for _, dt := range ordTypes.set {
+		if dt == a {
+			return
+		}
+	}
+	ordTypes.set = append(ordTypes.set, a)
+}
+
+func RegisterEq(a Dtype) {
+	for _, dt := range eqTypes.set {
+		if dt == a {
+			return
+		}
+	}
+	eqTypes.set = append(eqTypes.set, a)
 }
 
 // NormOrder represents the order of the norm. Ideally, we'd only represent norms with a uint/byte.
@@ -283,11 +389,11 @@ func (n NormOrder) String() string {
 }
 
 // FuncOpt are optionals for calling Tensor function.
-type FuncOpt func(*funcOpt)
+type FuncOpt func(*OpOpt)
 
 // WithIncr passes in a Tensor to be incremented.
 func WithIncr(incr Tensor) FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.incr = incr
 	}
 	return f
@@ -295,7 +401,7 @@ func WithIncr(incr Tensor) FuncOpt {
 
 // WithReuse passes in a Tensor to be reused.
 func WithReuse(reuse Tensor) FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.reuse = reuse
 	}
 	return f
@@ -303,7 +409,7 @@ func WithReuse(reuse Tensor) FuncOpt {
 
 // UseSafe ensures that the operation is a safe operation (copies data, does not clobber). This is the default option for most methods and functions
 func UseSafe() FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.unsafe = false
 	}
 	return f
@@ -311,7 +417,7 @@ func UseSafe() FuncOpt {
 
 // UseUnsafe ensures that the operation is an unsafe operation - data will be clobbered, and operations performed inplace
 func UseUnsafe() FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.unsafe = true
 	}
 	return f
@@ -319,7 +425,7 @@ func UseUnsafe() FuncOpt {
 
 // AsSameType makes sure that the return Tensor is the same type as input Tensors.
 func AsSameType() FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.same = true
 	}
 	return f
@@ -327,7 +433,7 @@ func AsSameType() FuncOpt {
 
 // As makes sure that the the return Tensor is of the type specified. Currently only works for FromMat64
 func As(t Dtype) FuncOpt {
-	f := func(opt *funcOpt) {
+	f := func(opt *OpOpt) {
 		opt.t = t
 	}
 	return f

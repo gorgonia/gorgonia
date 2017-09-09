@@ -376,7 +376,7 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 		if !ok {
 			return nil, errors.Errorf("Expected left value to be Tensor. Got %v of %T instead", vals[0], vals[0])
 		}
-		a = t.Materialize()
+		a = tensor.Materialize(t)
 
 		switch other := vals[1].(type) {
 		case *F64:
@@ -384,7 +384,7 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 		case *F32:
 			b = other.any()
 		case tensor.Tensor:
-			b = other.Materialize()
+			b = tensor.Materialize(other)
 		default:
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])
 		}
@@ -393,7 +393,7 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 		if !ok {
 			return nil, errors.Errorf("Expected right value to be Tensor. Got %v of %T instead", vals[1], vals[1])
 		}
-		b = t.Materialize()
+		b = tensor.Materialize(t)
 
 		switch other := vals[0].(type) {
 		case *F64:
@@ -401,7 +401,7 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 		case *F32:
 			a = other.any()
 		case tensor.Tensor:
-			a = other.Materialize()
+			a = tensor.Materialize(other)
 		default:
 			return nil, errors.Errorf(nyiFail, "tBinOp.do()", vals[1])
 		}

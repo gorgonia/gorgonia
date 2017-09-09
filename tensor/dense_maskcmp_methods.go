@@ -24,7 +24,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 
@@ -41,7 +41,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 
@@ -58,7 +58,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 
@@ -75,7 +75,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 
@@ -92,7 +92,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 
@@ -109,7 +109,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 
@@ -126,7 +126,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
@@ -143,7 +143,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
@@ -160,7 +160,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
@@ -177,7 +177,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
@@ -194,7 +194,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 
@@ -211,7 +211,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 
@@ -228,7 +228,7 @@ func (t *Dense) MaskedEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 
@@ -261,7 +261,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 
@@ -278,7 +278,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 
@@ -295,7 +295,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 
@@ -312,7 +312,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 
@@ -329,7 +329,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 
@@ -346,7 +346,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 
@@ -363,7 +363,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
@@ -380,7 +380,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
@@ -397,7 +397,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
@@ -414,7 +414,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
@@ -431,7 +431,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 
@@ -448,7 +448,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 
@@ -465,7 +465,7 @@ func (t *Dense) MaskedNotEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 
@@ -503,7 +503,7 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 	switch t.t.Kind() {
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 		y := val2.(float32)
@@ -526,7 +526,7 @@ func (t *Dense) MaskedValues(val1 interface{}, val2 interface{}, val3 ...interfa
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 		y := val2.(float64)
@@ -565,7 +565,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 
@@ -582,7 +582,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 
@@ -599,7 +599,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 
@@ -616,7 +616,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 
@@ -633,7 +633,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 
@@ -650,7 +650,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 
@@ -667,7 +667,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
@@ -684,7 +684,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
@@ -701,7 +701,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
@@ -718,7 +718,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
@@ -735,7 +735,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 
@@ -752,7 +752,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 
@@ -769,7 +769,7 @@ func (t *Dense) MaskedGreater(val1 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 
@@ -802,7 +802,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 
@@ -819,7 +819,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 
@@ -836,7 +836,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 
@@ -853,7 +853,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 
@@ -870,7 +870,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 
@@ -887,7 +887,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 
@@ -904,7 +904,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
@@ -921,7 +921,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
@@ -938,7 +938,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
@@ -955,7 +955,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
@@ -972,7 +972,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 
@@ -989,7 +989,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 
@@ -1006,7 +1006,7 @@ func (t *Dense) MaskedGreaterEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 
@@ -1039,7 +1039,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 
@@ -1056,7 +1056,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 
@@ -1073,7 +1073,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 
@@ -1090,7 +1090,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 
@@ -1107,7 +1107,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 
@@ -1124,7 +1124,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 
@@ -1141,7 +1141,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
@@ -1158,7 +1158,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
@@ -1175,7 +1175,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
@@ -1192,7 +1192,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
@@ -1209,7 +1209,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 
@@ -1226,7 +1226,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 
@@ -1243,7 +1243,7 @@ func (t *Dense) MaskedLess(val1 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 
@@ -1276,7 +1276,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 
@@ -1293,7 +1293,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 
@@ -1310,7 +1310,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 
@@ -1327,7 +1327,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 
@@ -1344,7 +1344,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 
@@ -1361,7 +1361,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 
@@ -1378,7 +1378,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 
@@ -1395,7 +1395,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 
@@ -1412,7 +1412,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 
@@ -1429,7 +1429,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 
@@ -1446,7 +1446,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 
@@ -1463,7 +1463,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 
@@ -1480,7 +1480,7 @@ func (t *Dense) MaskedLessEqual(val1 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 
@@ -1513,7 +1513,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 		y := val2.(int)
@@ -1531,7 +1531,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 		y := val2.(int8)
@@ -1549,7 +1549,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 		y := val2.(int16)
@@ -1567,7 +1567,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 		y := val2.(int32)
@@ -1585,7 +1585,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 		y := val2.(int64)
@@ -1603,7 +1603,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 		y := val2.(uint)
@@ -1621,7 +1621,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 		y := val2.(uint8)
@@ -1639,7 +1639,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 		y := val2.(uint16)
@@ -1657,7 +1657,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 		y := val2.(uint32)
@@ -1675,7 +1675,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 		y := val2.(uint64)
@@ -1693,7 +1693,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 		y := val2.(float32)
@@ -1711,7 +1711,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 		y := val2.(float64)
@@ -1729,7 +1729,7 @@ func (t *Dense) MaskedInside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 		y := val2.(string)
@@ -1763,7 +1763,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 	switch t.t.Kind() {
 
 	case reflect.Int:
-		data := t.ints()
+		data := t.Ints()
 		mask := t.mask
 		x := val1.(int)
 		y := val2.(int)
@@ -1781,7 +1781,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int8:
-		data := t.int8s()
+		data := t.Int8s()
 		mask := t.mask
 		x := val1.(int8)
 		y := val2.(int8)
@@ -1799,7 +1799,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int16:
-		data := t.int16s()
+		data := t.Int16s()
 		mask := t.mask
 		x := val1.(int16)
 		y := val2.(int16)
@@ -1817,7 +1817,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int32:
-		data := t.int32s()
+		data := t.Int32s()
 		mask := t.mask
 		x := val1.(int32)
 		y := val2.(int32)
@@ -1835,7 +1835,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Int64:
-		data := t.int64s()
+		data := t.Int64s()
 		mask := t.mask
 		x := val1.(int64)
 		y := val2.(int64)
@@ -1853,7 +1853,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint:
-		data := t.uints()
+		data := t.Uints()
 		mask := t.mask
 		x := val1.(uint)
 		y := val2.(uint)
@@ -1871,7 +1871,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint8:
-		data := t.uint8s()
+		data := t.Uint8s()
 		mask := t.mask
 		x := val1.(uint8)
 		y := val2.(uint8)
@@ -1889,7 +1889,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint16:
-		data := t.uint16s()
+		data := t.Uint16s()
 		mask := t.mask
 		x := val1.(uint16)
 		y := val2.(uint16)
@@ -1907,7 +1907,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint32:
-		data := t.uint32s()
+		data := t.Uint32s()
 		mask := t.mask
 		x := val1.(uint32)
 		y := val2.(uint32)
@@ -1925,7 +1925,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Uint64:
-		data := t.uint64s()
+		data := t.Uint64s()
 		mask := t.mask
 		x := val1.(uint64)
 		y := val2.(uint64)
@@ -1943,7 +1943,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Float32:
-		data := t.float32s()
+		data := t.Float32s()
 		mask := t.mask
 		x := val1.(float32)
 		y := val2.(float32)
@@ -1961,7 +1961,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.Float64:
-		data := t.float64s()
+		data := t.Float64s()
 		mask := t.mask
 		x := val1.(float64)
 		y := val2.(float64)
@@ -1979,7 +1979,7 @@ func (t *Dense) MaskedOutside(val1 interface{}, val2 interface{}) (err error) {
 		}
 
 	case reflect.String:
-		data := t.strings()
+		data := t.Strings()
 		mask := t.mask
 		x := val1.(string)
 		y := val2.(string)

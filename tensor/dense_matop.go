@@ -1,68 +1,6 @@
 package tensor
 
-import (
-	"github.com/pkg/errors"
-	"reflect"
-)
-
-// Apply applies a function to all the values in the ndarray
-func (t *Dense) Apply(fn interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	fo := parseFuncOpts(opts...)
-	reuseT, incr := fo.incrReuse()
-	safe := fo.safe()
-
-	var reuse *Dense
-	if reuse, err = getDense(reuseT); err != nil {
-		return
-	}
-
-	// check reuse and stuff
-	var res *Dense
-	switch {
-	case reuse != nil:
-		res = reuse
-		if res.len() != t.Size() {
-			err = errors.Errorf(shapeMismatch, t.Shape(), reuse.Shape())
-			return
-		}
-	case !safe:
-		res = t
-	default:
-		if t.IsMaterializable() {
-			res = t.Materialize().(*Dense)
-		} else {
-			res = t.Clone().(*Dense)
-		}
-	}
-	// do
-	switch {
-	case t.viewOf == nil:
-		err = res.mapFn(fn, incr)
-	case t.viewOf != nil:
-		it := IteratorFromDense(t)
-		if err = res.iterMap(fn, it, incr); err != nil {
-			return
-		}
-
-	default:
-		err = errors.Errorf("Apply not implemented for this state: isView: %t and incr: %t", t.viewOf == nil, incr)
-		return
-	}
-	// set retVal
-	switch {
-	case reuse != nil:
-		if err = reuseCheckShape(reuse, t.Shape()); err != nil {
-			return
-		}
-		retVal = reuse
-	case !safe:
-		retVal = t
-	default:
-		retVal = res
-		// retVal = New(Of(t.t), WithBacking(res), WithShape(t.Shape()...))
-	}
-	return
-}
+import "github.com/pkg/errors"
 
 // T performs a thunked transpose. It doesn't actually do anything, except store extra information about the post-transposed shapes and strides
 // Usually this is more than enough, as BLAS will handle the rest of the transpose
@@ -148,43 +86,11 @@ func (t *Dense) SafeT(axes ...int) (retVal *Dense, err error) {
 	return
 }
 
-// Transpose() actually transposes the data.
-// This is a generalized version of the inplace matrix transposition algorithm from Wikipedia:
-// https://en.wikipedia.org/wiki/In-place_matrix_transposition
-func (t *Dense) Transpose() {
-	// if there is no oldinfo, that means the current info is the latest, and not the transpose
-	if t.old == nil {
-		return
-	}
-
-	if t.IsScalar() {
-		return // cannot transpose scalars
-	}
-
-	defer func() {
-		ReturnAP(t.old)
-		t.old = nil
-		t.transposeWith = nil
-	}()
-
-	expShape := t.Shape()
-	expStrides := expShape.calcStrides() // important! because the strides would have changed once the underlying data changed
-	defer ReturnInts(expStrides)
-	defer func() {
-		t.setShape(expShape...)
-		t.sanity()
-	}()
-
-	if t.IsVector() {
-		// no change of strides.
-		return
-	}
-
-	t.transpose(expStrides)
-}
-
 // At returns the value at the given coordinate
 func (t *Dense) At(coords ...int) (interface{}, error) {
+	if !t.IsNativelyAccessible() {
+		return nil, errors.Errorf(inaccessibleData, t)
+	}
 	if len(coords) != t.Dims() {
 		return nil, errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -203,6 +109,9 @@ func (t *Dense) MaskAt(coords ...int) (bool, error) {
 	if !t.IsMasked() {
 		return false, nil
 	}
+	if !t.IsNativelyAccessible() {
+		return false, errors.Errorf(inaccessibleData, t)
+	}
 	if len(coords) != t.Dims() {
 		return true, errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -217,6 +126,10 @@ func (t *Dense) MaskAt(coords ...int) (bool, error) {
 
 // SetAt sets the value at the given coordinate
 func (t *Dense) SetAt(v interface{}, coords ...int) error {
+	if !t.IsNativelyAccessible() {
+		return errors.Errorf(inaccessibleData, t)
+	}
+
 	if len(coords) != t.Dims() {
 		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -243,6 +156,9 @@ func (t *Dense) SetMaskAt(v bool, coords ...int) error {
 	if !t.IsMasked() {
 		return nil
 	}
+	if !t.IsNativelyAccessible() {
+		return errors.Errorf(inaccessibleData, t)
+	}
 	if len(coords) != t.Dims() {
 		return errors.Errorf(dimMismatch, t.Dims(), len(coords))
 	}
@@ -253,66 +169,6 @@ func (t *Dense) SetMaskAt(v bool, coords ...int) error {
 	}
 	t.mask[at] = v
 	return nil
-}
-
-// Repeat is like Numpy's repeat. It repeats the elements of an array.
-// The repeats param defines how many times each element in the axis is repeated.
-// Just like NumPy, the repeats param is broadcasted to fit the size of the given axis.
-func (t *Dense) Repeat(axis int, repeats ...int) (retVal Tensor, err error) {
-	var newShape Shape
-	var size int
-	if newShape, repeats, size, err = t.Shape().Repeat(axis, repeats...); err != nil {
-		return nil, errors.Wrap(err, "Unable to get repeated shape")
-	}
-
-	if axis == AllAxes {
-		axis = 0
-	}
-
-	d := recycledDense(t.t, newShape)
-	// d := New(Of(t.t), WithShape(newShape...))
-
-	var outers int
-	if t.IsScalar() {
-		outers = 1
-	} else {
-		outers = ProdInts(t.Shape()[0:axis])
-		if outers == 0 {
-			outers = 1
-		}
-	}
-
-	var stride, newStride int
-	if newShape.IsVector() || t.IsVector() {
-		stride = 1 // special case because CalcStrides() will return []int{1} as the strides for a vector
-	} else {
-		stride = t.ostrides()[axis]
-	}
-
-	if newShape.IsVector() {
-		newStride = 1
-	} else {
-		newStride = d.ostrides()[axis]
-	}
-
-	var destStart, srcStart int
-	for i := 0; i < outers; i++ {
-		for j := 0; j < size; j++ {
-			var tmp int
-			tmp = repeats[j]
-
-			for k := 0; k < tmp; k++ {
-				if srcStart >= t.len() || destStart+stride > d.len() {
-					break
-				}
-				copySliced(d, destStart, d.len(), t, srcStart, t.len())
-				destStart += newStride
-			}
-			srcStart += stride
-		}
-	}
-
-	return d, nil
 }
 
 // CopyTo copies the underlying data to the destination *Dense. The original data is untouched.
@@ -332,11 +188,12 @@ func (t *Dense) CopyTo(other *Dense) error {
 	}
 
 	// easy peasy lemon squeezy
-	if t.viewOf == nil && other.viewOf == nil {
+	if t.viewOf == 0 && other.viewOf == 0 {
 		copyDense(other, t)
 		return nil
 	}
 
+	// TODO: use copyDenseIter
 	return errors.Errorf(methodNYI, "CopyTo", "views")
 }
 
@@ -349,7 +206,7 @@ func (t *Dense) CopyTo(other *Dense) error {
 // Any modification to the values in V, will be reflected in T as well.
 //
 // The method treats <nil> as equivalent to a colon slice. T.Slice(nil) is equivalent to T[:] in Numpy syntax
-func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
+func (t *Dense) Slice(slices ...Slice) (retVal View, err error) {
 	var newAP *AP
 	var ndStart, ndEnd int
 
@@ -357,20 +214,19 @@ func (t *Dense) Slice(slices ...Slice) (retVal Tensor, err error) {
 		return
 	}
 
-	view := new(Dense)
+	view := borrowDense()
 	view.t = t.t
-	view.viewOf = t
+	view.e = t.e
+	view.oe = t.oe
+	view.flag = t.flag
 	view.AP = newAP
-	view.hdr = new(reflect.SliceHeader)
-	view.data = t.data
-	view.hdr.Data = t.hdr.Data
-	view.hdr.Len = t.hdr.Len
-	view.hdr.Cap = t.hdr.Cap
-	view.slice(ndStart, ndEnd)
+	view.setParentTensor(t)
+	t.sliceInto(ndStart, ndEnd, &view.array)
 
 	if t.IsMasked() {
 		view.mask = t.mask[ndStart:ndEnd]
 	}
+
 	return view, err
 }
 
@@ -419,135 +275,6 @@ func (t *Dense) RollAxis(axis, start int, safe bool) (retVal *Dense, err error) 
 	return
 }
 
-// Concat concatenates the other tensors along the given axis. It is like Numpy's concatenate() function.
-func (t *Dense) Concat(axis int, Ts ...*Dense) (retVal *Dense, err error) {
-	ss := make([]Shape, len(Ts))
-
-	var isMasked = false
-	for i, T := range Ts {
-		ss[i] = T.Shape()
-		isMasked = isMasked || T.IsMasked()
-	}
-
-	var newShape Shape
-	if newShape, err = t.Shape().Concat(axis, ss...); err != nil {
-		return
-	}
-	retVal = recycledDense(t.t, newShape)
-	if isMasked {
-		retVal.makeMask()
-	}
-
-	all := make([]*Dense, len(Ts)+1)
-	all[0] = t
-	copy(all[1:], Ts)
-
-	// special case
-	var start, end int
-
-	for _, T := range all {
-		end += T.Shape()[axis]
-		slices := make([]Slice, axis+1)
-		slices[axis] = makeRS(start, end)
-
-		var v *Dense
-		if v, err = sliceDense(retVal, slices...); err != nil {
-			return
-		}
-
-		if v.IsVector() && T.IsMatrix() && axis == 0 {
-			v.reshape(v.shape[0], 1)
-		}
-
-		if err = assignArray(v, T); err != nil {
-			return
-		}
-		start = end
-	}
-
-	return
-}
-
-// Hstack stacks other tensors columnwise (horizontal stacking)
-func (t *Dense) Hstack(others ...*Dense) (*Dense, error) {
-	// check that everything is at least 1D
-	if t.Dims() == 0 {
-		return nil, errors.Errorf(atleastDims, 1)
-	}
-
-	for _, d := range others {
-		if d.Dims() < 1 {
-			return nil, errors.Errorf(atleastDims, 1)
-		}
-	}
-
-	if t.Dims() == 1 {
-		return t.Concat(0, others...)
-	}
-	return t.Concat(1, others...)
-}
-
-// Vstack stacks other tensors rowwise (vertical stacking). Vertical stacking requires all involved Tensors to have at least 2 dimensions
-func (t *Dense) Vstack(others ...*Dense) (*Dense, error) {
-	// check that everything is at least 2D
-	if t.Dims() < 2 {
-		return nil, errors.Errorf(atleastDims, 2)
-	}
-
-	for _, d := range others {
-		if d.Dims() < 2 {
-			return nil, errors.Errorf(atleastDims, 2)
-		}
-	}
-	return t.Concat(0, others...)
-}
-
-// Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
-func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
-	opdims := t.Dims()
-	if axis >= opdims+1 {
-		err = errors.Errorf(dimMismatch, opdims+1, axis)
-		return
-	}
-
-	newShape := Shape(BorrowInts(opdims + 1))
-	newShape[axis] = len(others) + 1
-	shape := t.Shape()
-	var cur int
-	for i, s := range shape {
-		if i == axis {
-			cur++
-		}
-		newShape[cur] = s
-		cur++
-	}
-
-	newStrides := newShape.calcStrides()
-	ap := NewAP(newShape, newStrides)
-
-	allNoMat := !t.IsMaterializable()
-	for _, ot := range others {
-		if allNoMat && ot.IsMaterializable() {
-			allNoMat = false
-		}
-	}
-
-	retVal = recycledDense(t.t, ap.Shape())
-	ReturnAP(retVal.AP)
-	retVal.AP = ap
-
-	// the "viewStack" method is the more generalized method
-	// and will work for all Tensors, regardless of whether it's a view
-	// But the simpleStack is faster, and is an optimization
-
-	if allNoMat {
-		retVal = t.simpleStack(retVal, axis, others...)
-	} else {
-		retVal = t.viewStack(retVal, axis, others...)
-	}
-	return
-}
-
 /* Private Methods */
 
 // returns the new index given the old index
@@ -586,55 +313,4 @@ func (t *Dense) at(coords ...int) (at int, err error) {
 func (t *Dense) maskAt(coords ...int) (at int, err error) {
 	//TODO: Add check for non-masked tensor
 	return t.at(coords...)
-}
-
-// simpleStack is the data movement function for non-view tensors. What it does is simply copy the data according to the new strides
-func (t *Dense) simpleStack(retVal *Dense, axis int, others ...*Dense) *Dense {
-	switch axis {
-	case 0:
-		copyDense(retVal, t)
-		next := t.len()
-		for _, ot := range others {
-			copySliced(retVal, next, retVal.len(), ot, 0, ot.len())
-			next += ot.len()
-		}
-	default:
-		axisStride := retVal.AP.Strides()[axis]
-		batches := retVal.len() / axisStride
-
-		destStart := 0
-		start := 0
-		end := start + axisStride
-
-		for i := 0; i < batches; i++ {
-			copySliced(retVal, destStart, retVal.len(), t, start, end)
-			for _, ot := range others {
-				destStart += axisStride
-				copySliced(retVal, destStart, retVal.len(), ot, start, end)
-				i++
-			}
-			destStart += axisStride
-			start += axisStride
-			end += axisStride
-		}
-	}
-	return retVal
-}
-
-// viewStack is the data movement function for Stack(), applied on views
-func (t *Dense) viewStack(retVal *Dense, axis int, others ...*Dense) *Dense {
-	axisStride := retVal.AP.Strides()[axis]
-	batches := retVal.len() / axisStride
-
-	it := NewFlatIterator(t.AP)
-	ch := it.Chan()
-	chs := make([]chan int, len(others))
-	chs = chs[:0]
-	for _, ot := range others {
-		oter := NewFlatIterator(ot.AP)
-		chs = append(chs, oter.Chan())
-	}
-
-	t.doViewStack(retVal, axisStride, batches, ch, others, chs)
-	return retVal
 }

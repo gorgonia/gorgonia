@@ -29,12 +29,20 @@ var traceTests = []struct {
 	correct interface{}
 	err     bool
 }{
-	{[]float64{0, 1, 2, 3, 4, 5}, float64(4), false},
-	{[]float32{0, 1, 2, 3, 4, 5}, float32(4), false},
 	{[]int{0, 1, 2, 3, 4, 5}, int(4), false},
-	{[]int64{0, 1, 2, 3, 4, 5}, int64(4), false},
+	{[]int8{0, 1, 2, 3, 4, 5}, int8(4), false},
+	{[]int16{0, 1, 2, 3, 4, 5}, int16(4), false},
 	{[]int32{0, 1, 2, 3, 4, 5}, int32(4), false},
-	{[]byte{0, 1, 2, 3, 4, 5}, byte(4), false},
+	{[]int64{0, 1, 2, 3, 4, 5}, int64(4), false},
+	{[]uint{0, 1, 2, 3, 4, 5}, uint(4), false},
+	{[]uint8{0, 1, 2, 3, 4, 5}, uint8(4), false},
+	{[]uint16{0, 1, 2, 3, 4, 5}, uint16(4), false},
+	{[]uint32{0, 1, 2, 3, 4, 5}, uint32(4), false},
+	{[]uint64{0, 1, 2, 3, 4, 5}, uint64(4), false},
+	{[]float32{0, 1, 2, 3, 4, 5}, float32(4), false},
+	{[]float64{0, 1, 2, 3, 4, 5}, float64(4), false},
+	{[]complex64{0, 1, 2, 3, 4, 5}, complex64(4), false},
+	{[]complex128{0, 1, 2, 3, 4, 5}, complex128(4), false},
 	{[]bool{true, false, true, false, true, false}, nil, true},
 }
 
@@ -104,7 +112,7 @@ func TestDense_Inner(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, its.correct, T.Data())
+		assert.Equal(t, its.correct, T)
 	}
 }
 
@@ -224,7 +232,6 @@ func TestDense_MatVecMul(t *testing.T) {
 		// reuse
 		reuse := New(WithBacking(mvmt.reuse), WithShape(mvmt.shapeR...))
 		T, err = a.MatVecMul(b, WithReuse(reuse))
-
 		if checkErr(t, mvmt.errReuse, err, "WithReuse", i) {
 			continue
 		}
@@ -592,6 +599,7 @@ func TestDot(t *testing.T) {
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
 	// T-v
+
 	t.Log("3T⋅Vec")
 	b = New(Of(Float64), WithShape(4), WithBacking(Range(Float64, 0, 4)))
 	R, err = Dot(A, b)
@@ -603,6 +611,7 @@ func TestDot(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
+
 	// v-T
 	t.Log("Vec⋅3T")
 	R2, err = Dot(b, B)
@@ -681,6 +690,7 @@ func TestDot(t *testing.T) {
 	assert.Equal(incr, R)
 	assert.Equal(expectedData, R.Data())
 	assert.Equal(expectedShape, R.Shape())
+
 	// The Nearly Stupids
 	s = New(FromScalar(5.0))
 	s2 = New(FromScalar(10.0))
@@ -693,6 +703,7 @@ func TestDot(t *testing.T) {
 	assert.Nil(err)
 	assert.True(R2.IsScalar())
 	assert.Equal(float64(50), R2.Data())
+
 	R, err = Dot(s, A)
 	expectedData = vecf64.Range(0, 24)
 	vecf64.Scale(expectedData, 5)
@@ -725,6 +736,7 @@ func TestDot(t *testing.T) {
 	assert.Equal(A.Shape(), R.Shape())
 	assert.Equal(expectedData, R.Data())
 	incr = incr2
+
 	R, err = Dot(s, A, WithIncr(incr))
 	assert.Nil(err)
 	assert.Equal(incr, R)

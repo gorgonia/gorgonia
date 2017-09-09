@@ -12,7 +12,7 @@ func ExampleDense_Slice() {
 	fmt.Printf("T[0:2, 0:2]:\n%v\n", T)
 
 	// T[:, 1]
-	T, _ = T.Slice(nil, ss(1)) // ss is unexported
+	T, _ = T.(Slicer).Slice(nil, ss(1)) // ss is unexported
 	fmt.Printf("T[:, 1]:\n%v\n", T)
 
 	// Output:
@@ -142,7 +142,7 @@ func ExampleDense_Hstack() {
 	// ⎡   0     1  1000⎤
 	// ⎣   2     3  2000⎦
 	//
-	// Error: Dimension mismatch. Expected 2, got 1
+	// Error: Failed to perform Concat: Unable to find new shape that results from concatenation: Dimension mismatch. Expected 2, got 1
 	//
 	// T.Hstack(T1, T3):
 	// ⎡   0     1  1000  1000⎤
@@ -152,8 +152,8 @@ func ExampleDense_Hstack() {
 	// ⎡0  1  0  0  0⎤
 	// ⎣2  3  0  0  0⎦
 	//
-	// Hstacking (2) with (1,2): Dimension mismatch. Expected 1, got 2
-	// Hstacking (2,2) with (3,2): Dimension mismatch. Expected 1, got 2
+	// Hstacking (2) with (1,2): Failed to perform Concat: Unable to find new shape that results from concatenation: Dimension mismatch. Expected 1, got 2
+	// Hstacking (2,2) with (3,2): Failed to perform Concat: Unable to find new shape that results from concatenation: Dimension mismatch. Expected 1, got 2
 	// Hstacking a scalar onto a tensor: Tensor has to be at least 1 dimensions
 	// Hstacking a tensor onto a scalar: Tensor has to be at least 1 dimensions
 }

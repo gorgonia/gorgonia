@@ -22,17 +22,17 @@ type AP struct {
 	strides []int // strides is usually calculated from shape
 	fin     bool  // is this struct change-proof?
 
-	// future stuff
-	// triangle byte // up = 0xf0;  down = 0x0f; symmetric = 0xff; not a triangle = 0x00
+	o DataOrder
+	Δ Triangle
 }
 
 // NewAP creates a new AP, given the shape and strides
 func NewAP(shape Shape, strides []int) *AP {
-	return &AP{
-		shape:   shape,
-		strides: strides,
-		fin:     true,
-	}
+	ap := borrowAP()
+	ap.shape = shape
+	ap.strides = strides
+	ap.fin = true
+	return ap
 }
 
 // SetShape is for very specific times when modifying the AP is necessary, such as reshaping and doing I/O related stuff
@@ -52,21 +52,17 @@ func (ap *AP) SetShape(s ...int) {
 		}
 
 		if ap.shape != nil {
-			// ReturnInts(ap.shape)
+			ReturnInts(ap.shape)
 			ap.shape = nil
 		}
 		if ap.strides != nil {
-			// ReturnInts(ap.strides)
+			ReturnInts(ap.strides)
 			ap.strides = nil
 		}
 		ap.shape = Shape(s).Clone()
-		ap.strides = ap.shape.calcStrides()
+		ap.strides = ap.calcStrides()
 	}
 }
-
-// locking and unlocking is used to ensure that the shape and stride doesn't change (it's not really safe though, as a direct mutation of the strides/shape would still mutate it, but at least the dimensions cannot change)
-func (ap *AP) lock()   { ap.fin = true }
-func (ap *AP) unlock() { ap.fin = false }
 
 // Shape returns the shape of the AP
 func (ap *AP) Shape() Shape { return ap.shape }
@@ -115,18 +111,24 @@ func (ap *AP) Clone() (retVal *AP) {
 	// handle vectors
 	retVal.shape = retVal.shape[:len(ap.shape)]
 	retVal.strides = retVal.strides[:len(ap.strides)]
+
 	retVal.fin = ap.fin
+	retVal.o = ap.o
+	retVal.Δ = ap.Δ
 	return
 }
 
+// DataOrder returns the data order of the AP.
+func (ap *AP) DataOrder() DataOrder { return ap.o }
+
 // C returns true if the access pattern is C-contiguous array
 func (ap *AP) C() bool {
-	return ap.strides[len(ap.strides)-1] == 1
+	return ap.o.isRowMajor() && ap.o.isContiguous()
 }
 
 // F returns true if the access pattern is Fortran contiguous array
 func (ap *AP) F() bool {
-	return ap.strides[0] == 1
+	return ap.o.isColMajor() && ap.o.isContiguous()
 }
 
 // S returns the metadata of the sliced tensor.
@@ -138,10 +140,17 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 	}
 
 	ndEnd = size
+	newShape := ap.shape.Clone()   // the new shape
+	dims := ap.Dims()              // reported dimensions
+	newStrides := BorrowInts(dims) // the new strides
 
-	newShape := ap.shape.Clone()    // the new shape
-	dims := ap.Dims()               // reported dimensions
-	newStrides := make([]int, dims) // the new strides
+	var outerDim int
+	order := ap.o
+	if ap.o.isRowMajor() || ap.IsVector() {
+		outerDim = 0
+	} else {
+		outerDim = len(ap.shape) - 1
+	}
 
 	for i := 0; i < dims; i++ {
 		var sl Slice
@@ -150,7 +159,6 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 		}
 
 		size := ap.shape[i]
-
 		var stride int
 		if ap.IsVector() {
 			// handles non-vanilla vectors
@@ -161,6 +169,7 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 
 		var start, end, step int
 		if start, end, step, err = SliceDetails(sl, size); err != nil {
+			err = errors.Wrapf(err, "Unable to get slice details on slice %d with size %d: %v", i, sl, size)
 			return
 		}
 
@@ -179,11 +188,15 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 			newShape[i] = (end - start)
 			newStrides[i] = stride
 		}
+
+		if (sl != nil && (!ap.IsVector() && i != outerDim)) || step > 1 {
+			order = MakeDataOrder(order, NonContiguous)
+		}
 	}
 
 	if ndEnd-ndStart == 1 {
 		// scalars are a special case
-		newAP = new(AP)
+		newAP = borrowAP()
 		newAP.SetShape() // make it a Scalar
 		newAP.lock()
 	} else {
@@ -200,10 +213,14 @@ func (ap *AP) S(size int, slices ...Slice) (newAP *AP, ndStart, ndEnd int, err e
 
 		//fix up strides
 		if newShape.IsColVec() {
-			newStrides = []int{newStrides[0]}
+			stride0 := newStrides[0]
+			ReturnInts(newStrides)
+			newStrides = BorrowInts(1)
+			newStrides[0] = stride0
 		}
 
 		newAP = NewAP(newShape, newStrides)
+		newAP.o = order
 	}
 	return
 }
@@ -254,15 +271,28 @@ func (ap *AP) T(axes ...int) (retVal *AP, a []int, err error) {
 		}
 	}
 
-	retVal = BorrowAP(len(shape))
-	copy(retVal.shape, shape)
-	copy(retVal.strides, strides)
-
+	retVal = borrowAP()
+	retVal.shape = shape
+	retVal.strides = strides
 	if ap.IsVector() {
 		retVal.strides = retVal.strides[:1]
 	}
-
+	retVal.fin = true
 	return
+}
+
+// locking and unlocking is used to ensure that the shape and stride doesn't change (it's not really safe though, as a direct mutation of the strides/shape would still mutate it, but at least the dimensions cannot change)
+func (ap *AP) lock()   { ap.fin = true }
+func (ap *AP) unlock() { ap.fin = false }
+
+func (ap *AP) calcStrides() []int {
+	switch {
+	case ap.o.isRowMajor():
+		return ap.shape.calcStrides()
+	case ap.o.isColMajor():
+		return ap.shape.calcStridesColMajor()
+	}
+	panic("unreachable")
 }
 
 // TransposeIndex returns the new index given the old index

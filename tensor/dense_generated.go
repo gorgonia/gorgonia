@@ -95,72 +95,72 @@ func I(dt Dtype, r, c, k int) *Dense {
 
 	switch s.t.Kind() {
 	case reflect.Int:
-		data := s.ints()
+		data := s.Ints()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Int8:
-		data := s.int8s()
+		data := s.Int8s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Int16:
-		data := s.int16s()
+		data := s.Int16s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Int32:
-		data := s.int32s()
+		data := s.Int32s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Int64:
-		data := s.int64s()
+		data := s.Int64s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Uint:
-		data := s.uints()
+		data := s.Uints()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Uint8:
-		data := s.uint8s()
+		data := s.Uint8s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Uint16:
-		data := s.uint16s()
+		data := s.Uint16s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Uint32:
-		data := s.uint32s()
+		data := s.Uint32s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Uint64:
-		data := s.uint64s()
+		data := s.Uint64s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Float32:
-		data := s.float32s()
+		data := s.Float32s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Float64:
-		data := s.float64s()
+		data := s.Float64s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Complex64:
-		data := s.complex64s()
+		data := s.Complex64s()
 		for _, v := range nexts {
 			data[v] = 1
 		}
 	case reflect.Complex128:
-		data := s.complex128s()
+		data := s.Complex128s()
 		for _, v := range nexts {
 			data[v] = 1
 		}

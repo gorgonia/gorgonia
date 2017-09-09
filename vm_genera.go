@@ -376,7 +376,9 @@ func (m *lispMachine) forward() (err error) {
 			if allocD {
 				m.PutValue(dev, d)
 			}
-			returnDV(dv)
+			if allocV && allocD {
+				returnDV(dv)
+			}
 		}()
 	}
 	m.leaveLoggingContext()

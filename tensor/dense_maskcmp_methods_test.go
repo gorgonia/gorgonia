@@ -16,7 +16,7 @@ func TestDense_MaskedEqual_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -65,7 +65,7 @@ func TestDense_MaskedEqual_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -114,7 +114,7 @@ func TestDense_MaskedEqual_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -163,7 +163,7 @@ func TestDense_MaskedEqual_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -212,7 +212,7 @@ func TestDense_MaskedEqual_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -261,7 +261,7 @@ func TestDense_MaskedEqual_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -310,7 +310,7 @@ func TestDense_MaskedEqual_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -359,7 +359,7 @@ func TestDense_MaskedEqual_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -408,7 +408,7 @@ func TestDense_MaskedEqual_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -457,7 +457,7 @@ func TestDense_MaskedEqual_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -506,7 +506,7 @@ func TestDense_MaskedEqual_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -555,7 +555,7 @@ func TestDense_MaskedEqual_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -604,7 +604,7 @@ func TestDense_MaskedEqual_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}
@@ -656,7 +656,7 @@ func TestDense_MaskedNotEqual_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -705,7 +705,7 @@ func TestDense_MaskedNotEqual_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -754,7 +754,7 @@ func TestDense_MaskedNotEqual_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -803,7 +803,7 @@ func TestDense_MaskedNotEqual_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -852,7 +852,7 @@ func TestDense_MaskedNotEqual_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -901,7 +901,7 @@ func TestDense_MaskedNotEqual_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -950,7 +950,7 @@ func TestDense_MaskedNotEqual_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -999,7 +999,7 @@ func TestDense_MaskedNotEqual_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -1048,7 +1048,7 @@ func TestDense_MaskedNotEqual_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -1097,7 +1097,7 @@ func TestDense_MaskedNotEqual_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -1146,7 +1146,7 @@ func TestDense_MaskedNotEqual_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -1195,7 +1195,7 @@ func TestDense_MaskedNotEqual_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -1244,7 +1244,7 @@ func TestDense_MaskedNotEqual_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}
@@ -1296,7 +1296,7 @@ func TestDense_MaskedValues_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -1345,7 +1345,7 @@ func TestDense_MaskedValues_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -1397,7 +1397,7 @@ func TestDense_MaskedGreater_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -1446,7 +1446,7 @@ func TestDense_MaskedGreater_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -1495,7 +1495,7 @@ func TestDense_MaskedGreater_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -1544,7 +1544,7 @@ func TestDense_MaskedGreater_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -1593,7 +1593,7 @@ func TestDense_MaskedGreater_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -1642,7 +1642,7 @@ func TestDense_MaskedGreater_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -1691,7 +1691,7 @@ func TestDense_MaskedGreater_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -1740,7 +1740,7 @@ func TestDense_MaskedGreater_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -1789,7 +1789,7 @@ func TestDense_MaskedGreater_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -1838,7 +1838,7 @@ func TestDense_MaskedGreater_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -1887,7 +1887,7 @@ func TestDense_MaskedGreater_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -1936,7 +1936,7 @@ func TestDense_MaskedGreater_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -1985,7 +1985,7 @@ func TestDense_MaskedGreater_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}
@@ -2037,7 +2037,7 @@ func TestDense_MaskedGreaterEqual_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -2086,7 +2086,7 @@ func TestDense_MaskedGreaterEqual_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -2135,7 +2135,7 @@ func TestDense_MaskedGreaterEqual_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -2184,7 +2184,7 @@ func TestDense_MaskedGreaterEqual_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -2233,7 +2233,7 @@ func TestDense_MaskedGreaterEqual_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -2282,7 +2282,7 @@ func TestDense_MaskedGreaterEqual_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -2331,7 +2331,7 @@ func TestDense_MaskedGreaterEqual_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -2380,7 +2380,7 @@ func TestDense_MaskedGreaterEqual_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -2429,7 +2429,7 @@ func TestDense_MaskedGreaterEqual_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -2478,7 +2478,7 @@ func TestDense_MaskedGreaterEqual_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -2527,7 +2527,7 @@ func TestDense_MaskedGreaterEqual_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -2576,7 +2576,7 @@ func TestDense_MaskedGreaterEqual_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -2625,7 +2625,7 @@ func TestDense_MaskedGreaterEqual_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}
@@ -2677,7 +2677,7 @@ func TestDense_MaskedLess_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -2726,7 +2726,7 @@ func TestDense_MaskedLess_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -2775,7 +2775,7 @@ func TestDense_MaskedLess_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -2824,7 +2824,7 @@ func TestDense_MaskedLess_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -2873,7 +2873,7 @@ func TestDense_MaskedLess_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -2922,7 +2922,7 @@ func TestDense_MaskedLess_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -2971,7 +2971,7 @@ func TestDense_MaskedLess_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -3020,7 +3020,7 @@ func TestDense_MaskedLess_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -3069,7 +3069,7 @@ func TestDense_MaskedLess_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -3118,7 +3118,7 @@ func TestDense_MaskedLess_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -3167,7 +3167,7 @@ func TestDense_MaskedLess_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -3216,7 +3216,7 @@ func TestDense_MaskedLess_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -3265,7 +3265,7 @@ func TestDense_MaskedLess_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}
@@ -3317,7 +3317,7 @@ func TestDense_MaskedLessEqual_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -3366,7 +3366,7 @@ func TestDense_MaskedLessEqual_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -3415,7 +3415,7 @@ func TestDense_MaskedLessEqual_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -3464,7 +3464,7 @@ func TestDense_MaskedLessEqual_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -3513,7 +3513,7 @@ func TestDense_MaskedLessEqual_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -3562,7 +3562,7 @@ func TestDense_MaskedLessEqual_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -3611,7 +3611,7 @@ func TestDense_MaskedLessEqual_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -3660,7 +3660,7 @@ func TestDense_MaskedLessEqual_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -3709,7 +3709,7 @@ func TestDense_MaskedLessEqual_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -3758,7 +3758,7 @@ func TestDense_MaskedLessEqual_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -3807,7 +3807,7 @@ func TestDense_MaskedLessEqual_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -3856,7 +3856,7 @@ func TestDense_MaskedLessEqual_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -3905,7 +3905,7 @@ func TestDense_MaskedLessEqual_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}
@@ -3957,7 +3957,7 @@ func TestDense_MaskedInside_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -4006,7 +4006,7 @@ func TestDense_MaskedInside_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -4055,7 +4055,7 @@ func TestDense_MaskedInside_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -4104,7 +4104,7 @@ func TestDense_MaskedInside_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -4153,7 +4153,7 @@ func TestDense_MaskedInside_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -4202,7 +4202,7 @@ func TestDense_MaskedInside_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -4251,7 +4251,7 @@ func TestDense_MaskedInside_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -4300,7 +4300,7 @@ func TestDense_MaskedInside_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -4349,7 +4349,7 @@ func TestDense_MaskedInside_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -4398,7 +4398,7 @@ func TestDense_MaskedInside_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -4447,7 +4447,7 @@ func TestDense_MaskedInside_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -4496,7 +4496,7 @@ func TestDense_MaskedInside_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -4545,7 +4545,7 @@ func TestDense_MaskedInside_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}
@@ -4597,7 +4597,7 @@ func TestDense_MaskedOutside_I(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.ints()
+	data := T.Ints()
 	for i := range data {
 		data[i] = int(i)
 	}
@@ -4646,7 +4646,7 @@ func TestDense_MaskedOutside_I8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int8s()
+	data := T.Int8s()
 	for i := range data {
 		data[i] = int8(i)
 	}
@@ -4695,7 +4695,7 @@ func TestDense_MaskedOutside_I16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int16s()
+	data := T.Int16s()
 	for i := range data {
 		data[i] = int16(i)
 	}
@@ -4744,7 +4744,7 @@ func TestDense_MaskedOutside_I32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int32s()
+	data := T.Int32s()
 	for i := range data {
 		data[i] = int32(i)
 	}
@@ -4793,7 +4793,7 @@ func TestDense_MaskedOutside_I64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Int64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.int64s()
+	data := T.Int64s()
 	for i := range data {
 		data[i] = int64(i)
 	}
@@ -4842,7 +4842,7 @@ func TestDense_MaskedOutside_U(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uints()
+	data := T.Uints()
 	for i := range data {
 		data[i] = uint(i)
 	}
@@ -4891,7 +4891,7 @@ func TestDense_MaskedOutside_U8(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint8), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint8s()
+	data := T.Uint8s()
 	for i := range data {
 		data[i] = uint8(i)
 	}
@@ -4940,7 +4940,7 @@ func TestDense_MaskedOutside_U16(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint16), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint16s()
+	data := T.Uint16s()
 	for i := range data {
 		data[i] = uint16(i)
 	}
@@ -4989,7 +4989,7 @@ func TestDense_MaskedOutside_U32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint32s()
+	data := T.Uint32s()
 	for i := range data {
 		data[i] = uint32(i)
 	}
@@ -5038,7 +5038,7 @@ func TestDense_MaskedOutside_U64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Uint64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.uint64s()
+	data := T.Uint64s()
 	for i := range data {
 		data[i] = uint64(i)
 	}
@@ -5087,7 +5087,7 @@ func TestDense_MaskedOutside_F32(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float32), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float32s()
+	data := T.Float32s()
 	for i := range data {
 		data[i] = float32(i)
 	}
@@ -5136,7 +5136,7 @@ func TestDense_MaskedOutside_F64(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(Float64), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.float64s()
+	data := T.Float64s()
 	for i := range data {
 		data[i] = float64(i)
 	}
@@ -5185,7 +5185,7 @@ func TestDense_MaskedOutside_Str(t *testing.T) {
 	assert := assert.New(t)
 	T := New(Of(String), WithShape(2, 3, 4, 5))
 	assert.False(T.IsMasked())
-	data := T.strings()
+	data := T.Strings()
 	for i := range data {
 		data[i] = string(i)
 	}

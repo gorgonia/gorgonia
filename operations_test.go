@@ -1,7 +1,7 @@
 package gorgonia
 
 import (
-	"log"
+	"io/ioutil"
 	"runtime"
 	"testing"
 
@@ -264,6 +264,7 @@ func TestGt(t *testing.T) {
 
 		m1 := NewTapeMachine(g)
 		if err = m1.RunAll(); err != nil {
+			ioutil.WriteFile("fail.dot", []byte(g.ToDot()), 0644)
 			t.Errorf("%v", m1.Prog())
 			t.Errorf("Test %d: %+v", i, err)
 			continue
@@ -299,7 +300,6 @@ func TestGt(t *testing.T) {
 	}
 
 	// other special cases
-	log.Printf("Special Cases")
 	g := NewGraph()
 	c := NewConstant(F64(1))
 	// T := NewTensor(g, Float64, 1, WithShape(2), WithInit(RangedFrom(0)))

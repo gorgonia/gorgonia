@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"math"
-	"reflect"
 
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
@@ -56,10 +55,11 @@ func (t *Dense) multiSVDNorm(rowAxis, colAxis int) (retVal *Dense, err error) {
 // This implementation is directly adapted from Numpy, which is licenced under a BSD-like licence, and can be found here: https://docs.scipy.org/doc/numpy-1.9.1/license.html
 func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 	var ret Tensor
+	var ok bool
 	var abs, norm0, normN interface{}
 	var oneOverOrd interface{}
-	switch t.t.Kind() {
-	case reflect.Float64:
+	switch t.t {
+	case Float64:
 		abs = math.Abs
 		norm0 = func(x float64) float64 {
 			if x != 0 {
@@ -71,7 +71,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			return math.Pow(math.Abs(x), float64(ord))
 		}
 		oneOverOrd = float64(1) / float64(ord)
-	case reflect.Float32:
+	case Float32:
 		abs = math32.Abs
 		norm0 = func(x float32) float32 {
 			if x != 0 {
@@ -106,16 +106,15 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 				err = errors.Wrapf(err, opFail, "Norm-0")
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Norm-0")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "Norm-0")
 			}
 
 			switch t.t {
 			case Float64:
-				retVal.setF64(0, math.Sqrt(retVal.getF64(0)))
+				retVal.SetF64(0, math.Sqrt(retVal.GetF64(0)))
 			case Float32:
-				retVal.setF32(0, math32.Sqrt(retVal.getF32(0)))
+				retVal.SetF32(0, math32.Sqrt(retVal.GetF32(0)))
 			}
 			t.AP = backup
 			return
@@ -136,9 +135,8 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 				return
 			}
 
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "UnorderedNorm-1")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "UnorderedNorm-1")
 			}
 
 			if retVal, err = retVal.Sum(axes...); err != nil {
@@ -148,59 +146,51 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			if ret, err = Sqrt(retVal); err != nil {
 				return
 			}
-
-			retVal, err = getDense(ret)
-			return
+			return assertDense(ret)
 		case ord.IsInf(1):
 			if ret, err = cloned.Apply(abs); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "InfNorm-1")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "InfNorm-1")
 			}
 			return retVal.Max(axes...)
 		case ord.IsInf(-1):
 			if ret, err = cloned.Apply(abs); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "-InfNorm-1")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "-InfNorm-1")
 			}
 			return retVal.Min(axes...)
 		case ord == Norm(0):
 			if ret, err = cloned.Apply(norm0); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Norm-0")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "Norm-0")
 			}
 			return retVal.Sum(axes...)
 		case ord == Norm(1):
 			if ret, err = cloned.Apply(abs); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Norm-1")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "Norm-1")
 			}
 			return retVal.Sum(axes...)
 		default:
 			if ret, err = cloned.Apply(normN); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Norm-N")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "Norm-N")
 			}
 
 			if retVal, err = retVal.Sum(axes...); err != nil {
 				return
 			}
-			retVal, err = retVal.PowOf(oneOverOrd)
-			return
+			return retVal.PowScalar(oneOverOrd, true)
 		}
 	case 2:
 		rowAxis := axes[0]
@@ -208,17 +198,14 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 
 		// checks
 		if rowAxis < 0 {
-			err = errors.Errorf("Row Axis %d is < 0", rowAxis)
-			return
+			return nil, errors.Errorf("Row Axis %d is < 0", rowAxis)
 		}
 		if colAxis < 0 {
-			err = errors.Errorf("Col Axis %d is < 0", colAxis)
-			return
+			return nil, errors.Errorf("Col Axis %d is < 0", colAxis)
 		}
 
 		if rowAxis == colAxis {
-			err = errors.Errorf("Duplicate axes found. Row Axis: %d, Col Axis %d", rowAxis, colAxis)
-			return
+			return nil, errors.Errorf("Duplicate axes found. Row Axis: %d, Col Axis %d", rowAxis, colAxis)
 		}
 
 		cloned := t.Clone().(*Dense)
@@ -226,14 +213,14 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 		case ord == Norm(2):
 			// svd norm
 			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
-				return
+				return nil, errors.Wrapf(err, opFail, "MultiSVDNorm, case 2 with Ord == Norm(2)")
 			}
 			dims := retVal.Dims()
 			return retVal.Max(dims - 1)
 		case ord == Norm(-2):
 			// svd norm
 			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
-				return
+				return nil, errors.Wrapf(err, opFail, "MultiSVDNorm, case 2 with Ord == Norm(-2)")
 			}
 			dims := retVal.Dims()
 			return retVal.Min(dims - 1)
@@ -242,11 +229,10 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 				colAxis--
 			}
 			if ret, err = cloned.Apply(abs); err != nil {
-				return
+				return nil, errors.Wrapf(err, opFail, "Apply abs in Norm. ord == Norm(1")
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Norm-1, axis = 2")
-				return
+			if retVal, err = assertDense(ret); err != nil {
+				return nil, errors.Wrapf(err, opFail, "Norm-1, axis=2")
 			}
 			if retVal, err = retVal.Sum(rowAxis); err != nil {
 				return
@@ -259,18 +245,15 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			if ret, err = cloned.Apply(abs); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Norm-(-1), axis = 2")
-				return
+			if retVal, err = assertDense(ret); err != nil {
+				return nil, errors.Wrapf(err, opFail, "Norm-(-1), axis=2")
 			}
 			if retVal, err = retVal.Sum(rowAxis); err != nil {
 				return
 			}
 			return retVal.Min(colAxis)
 		case ord == Norm(0):
-			err = errors.New("Norm of order 0 undefined for matrices")
-			return
-
+			return nil, errors.Errorf("Norm of order 0 undefined for matrices")
 		case ord.IsInf(1):
 			if rowAxis > colAxis {
 				rowAxis--
@@ -278,12 +261,11 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			if ret, err = cloned.Apply(abs); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "InfNorm, axis = 2")
-				return
+			if retVal, err = assertDense(ret); err != nil {
+				return nil, errors.Wrapf(err, opFail, "InfNorm, axis=2")
 			}
 			if retVal, err = retVal.Sum(colAxis); err != nil {
-				return
+				return nil, errors.Wrapf(err, "Sum in infNorm")
 			}
 			return retVal.Max(rowAxis)
 		case ord.IsInf(-1):
@@ -293,28 +275,25 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			if ret, err = cloned.Apply(abs); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "-InfNorm, axis = 2")
-				return
+			if retVal, err = assertDense(ret); err != nil {
+				return nil, errors.Wrapf(err, opFail, "-InfNorm, axis=2")
 			}
 			if retVal, err = retVal.Sum(colAxis); err != nil {
-				return
+				return nil, errors.Wrapf(err, opFail, "Sum with InfNorm")
 			}
 			return retVal.Min(rowAxis)
 		case ord.IsUnordered() || ord.IsFrobenius():
 			if ret, err = cloned.Apply(abs); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Frobenius Norm, axis = 2")
-				return
+			if retVal, ok = ret.(*Dense); !ok {
+				return nil, errors.Errorf(opFail, "Frobenius Norm, axis = 2")
 			}
 			if ret, err = Square(retVal); err != nil {
 				return
 			}
-			if retVal, err = getDense(ret); err != nil {
-				err = errors.Wrapf(err, opFail, "Norm-0")
-				return
+			if retVal, err = assertDense(ret); err != nil {
+				return nil, errors.Wrapf(err, opFail, "Norm-0, axis=2")
 			}
 			if retVal, err = retVal.Sum(axes...); err != nil {
 				return
@@ -322,7 +301,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			if ret, err = Sqrt(retVal); err != nil {
 				return
 			}
-			return getDense(ret)
+			return assertDense(ret)
 		case ord.IsNuclear():
 			// svd norm
 			if retVal, err = t.multiSVDNorm(rowAxis, colAxis); err != nil {
@@ -330,7 +309,7 @@ func (t *Dense) Norm(ord NormOrder, axes ...int) (retVal *Dense, err error) {
 			}
 			return retVal.Sum(len(t.Shape()) - 1)
 		case ord == Norm(0):
-			err = errors.New("Norm order 0 undefined for matrices")
+			err = errors.Errorf("Norm order 0 undefined for matrices")
 			return
 		default:
 			return nil, errors.Errorf("Not yet implemented: Norm for Axes %v, ord %v", axes, ord)

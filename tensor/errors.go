@@ -46,6 +46,7 @@ const (
 	broadcastError    = "Cannot broadcast together. Resulting shape will be at least (%d, 1). Repeats is (%d, 1)"
 	lenMismatch       = "Cannot compare with differing lengths: %d and %d"
 	typeMismatch      = "TypeMismatch: a %T and b %T"
+	typeclassMismatch = "Typeclass mismatch on %v"
 	shapeMismatch     = "Shape mismatch. Expected %v. Got %v"
 	sizeMismatch      = "Size Mismatch. %d and %d"
 	reuseReshapeErr   = "Failed to reshape the reuse *Dense from into %v. Size was: %d"
@@ -58,6 +59,7 @@ const (
 	unknownState      = "Unknown state reached: Safe %t, Incr %t, Reuse %t"
 	unsupportedDtype  = "Array of %v is unsupported for %v"
 	maskRequired      = "Masked array type required for %v"
+	inaccessibleData = "Data in %p inaccessble"
 
 	methodNYI = "%q not yet implemented for %v"
 	typeNYI   = "%q not yet implemented for interactions with %T"

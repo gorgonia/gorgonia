@@ -14,6 +14,8 @@ func Of(a Dtype) ConsOpt {
 		switch tt := t.(type) {
 		case *Dense:
 			tt.t = a
+		case *CS:
+			tt.t = a
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -78,6 +80,14 @@ func WithShape(dims ...int) ConsOpt {
 			throw := BorrowInts(len(dims))
 			copy(throw, dims)
 			tt.setShape(throw...)
+		case *CS:
+			if len(dims) != 2 {
+				panic("Only sparse matrices are supported")
+			}
+			throw := BorrowInts(len(dims))
+			copy(throw, dims)
+			tt.s = throw
+
 		default:
 			panic("Unsupported Tensor type")
 		}
@@ -101,15 +111,12 @@ func FromScalar(x interface{}, argMask ...[]bool) ConsOpt {
 			xvi.Set(reflect.ValueOf(x))
 			ptr := xv.Pointer()
 			uptr := unsafe.Pointer(ptr)
-			hdr := &reflect.SliceHeader{
-				Data: ptr,
-				Len:  1,
-				Cap:  1,
-			}
-			tt.data = uptr
+
+			tt.array.Ptr = uptr
+			tt.array.L = 1
+			tt.array.C = 1
 			tt.v = x
 			tt.t = Dtype{xt}
-			tt.hdr = hdr
 			tt.mask = mask
 
 		default:
@@ -138,56 +145,54 @@ func FromMemory(ptr uintptr, memsize uintptr) ConsOpt {
 		switch tt := t.(type) {
 		case *Dense:
 			tt.v = nil // if there were any underlying slices it should be GC'd
-			if tt.hdr == nil {
-				tt.hdr = &reflect.SliceHeader{}
-			}
 
-			tt.data = unsafe.Pointer(ptr)
-			tt.hdr.Data = ptr
-			tt.hdr.Len = int(memsize / tt.t.Size())
-			tt.hdr.Cap = int(memsize / tt.t.Size())
+			tt.array.Ptr = unsafe.Pointer(ptr)
+			tt.array.L = int(memsize / tt.t.Size())
+			tt.array.C = int(memsize / tt.t.Size())
 
-			tt.flag |= denseFlag(1) << manuallyManagedMem
+			tt.flag = MakeMemoryFlag(tt.flag, ManuallyManaged)
 
-			switch tt.t {
-			case Bool:
-				tt.v = *(*[]bool)(unsafe.Pointer(tt.hdr))
-			case Int:
-				tt.v = *(*[]int)(unsafe.Pointer(tt.hdr))
-			case Int8:
-				tt.v = *(*[]int8)(unsafe.Pointer(tt.hdr))
-			case Int16:
-				tt.v = *(*[]int16)(unsafe.Pointer(tt.hdr))
-			case Int32:
-				tt.v = *(*[]int32)(unsafe.Pointer(tt.hdr))
-			case Int64:
-				tt.v = *(*[]int64)(unsafe.Pointer(tt.hdr))
-			case Uint:
-				tt.v = *(*[]uint)(unsafe.Pointer(tt.hdr))
-			case Byte:
-				tt.v = *(*[]uint8)(unsafe.Pointer(tt.hdr))
-			case Uint16:
-				tt.v = *(*[]uint16)(unsafe.Pointer(tt.hdr))
-			case Uint32:
-				tt.v = *(*[]uint32)(unsafe.Pointer(tt.hdr))
-			case Uint64:
-				tt.v = *(*[]uint64)(unsafe.Pointer(tt.hdr))
-			case Float32:
-				tt.v = *(*[]float32)(unsafe.Pointer(tt.hdr))
-			case Float64:
-				tt.v = *(*[]float64)(unsafe.Pointer(tt.hdr))
-			case Complex64:
-				tt.v = *(*[]complex64)(unsafe.Pointer(tt.hdr))
-			case Complex128:
-				tt.v = *(*[]complex128)(unsafe.Pointer(tt.hdr))
-			case String:
-				tt.v = *(*[]string)(unsafe.Pointer(tt.hdr))
-			default:
-				panic("Unsupported Dtype for using the FromMemory construction option")
+			if tt.IsNativelyAccessible() {
+				tt.array.fix()
 			}
 
 		default:
 			panic("Unsupported Tensor type")
+		}
+	}
+	return f
+}
+
+// WithEngine is a construction option that would cause a Tensor to be linked with an execution engine.
+func WithEngine(e Engine) ConsOpt {
+	f := func(t Tensor) {
+		switch tt := t.(type) {
+		case *Dense:
+			tt.e = e
+			if e != nil && !e.AllocAccessible() {
+				tt.flag = MakeMemoryFlag(tt.flag, NativelyInaccessible)
+			}
+			// if oe, ok := e.(standardEngine); ok {
+			// 	tt.oe = oe
+			// }
+		case *CS:
+			tt.e = e
+			if e != nil && !e.AllocAccessible() {
+				tt.f = MakeMemoryFlag(tt.f, NativelyInaccessible)
+			}
+		}
+	}
+	return f
+}
+
+func AsFortran() ConsOpt {
+	f := func(t Tensor) {
+		switch tt := t.(type) {
+		case *Dense:
+			if tt.AP == nil {
+				// create AP
+			}
+			tt.AP.o = MakeDataOrder(tt.AP.o, ColMajor)
 		}
 	}
 	return f

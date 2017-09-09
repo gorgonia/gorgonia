@@ -51,12 +51,12 @@ var svdtestsThin = []struct {
 }
 
 var svdtestsFull = []Shape{
-// {5, 5},
-// {5, 3},
-// {3, 5},
-// {150, 150},
-// {200, 150},
-// {150, 200},
+	{5, 5},
+	{5, 3},
+	{3, 5},
+	{150, 150},
+	{200, 150},
+	{150, 200},
 }
 
 // calculate corrects
@@ -67,7 +67,7 @@ func calcSigma(s, T *Dense, shape Shape) (sigma *Dense, err error) {
 		if idx, err = Ltoi(sigma.Shape(), sigma.Strides(), i, i); err != nil {
 			return
 		}
-		sigma.float64s()[idx] = s.float64s()[i]
+		sigma.Float64s()[idx] = s.Float64s()[i]
 	}
 
 	return
@@ -98,7 +98,7 @@ func testSVD(T, T2, s, u, v *Dense, t string, i int) (err error) {
 		return
 	}
 
-	if !allClose(T2.data, reconstructed.Data(), closeenoughf64) {
+	if !allClose(T2.Data(), reconstructed.Data(), closeenoughf64) {
 		return errors.Errorf("Expected reconstructed to be %v. Got %v instead", T2.Data(), reconstructed.Data())
 	}
 	return nil
@@ -181,8 +181,8 @@ func TestDense_SVD(t *testing.T) {
 			continue
 		}
 
-		if !allClose(s.data, svd.Values(nil), closeenoughf64) {
-			t.Errorf("Singular value mismatch between Full and None decomposition. Expected %v. Got %v instead", svd.Values(nil), s.data)
+		if !allClose(s.Data(), svd.Values(nil), closeenoughf64) {
+			t.Errorf("Singular value mismatch between Full and None decomposition. Expected %v. Got %v instead", svd.Values(nil), s.Data())
 		}
 	}
 

@@ -125,6 +125,19 @@ func TestDense_Argmax_I(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseI.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -151,6 +164,19 @@ func TestDense_Argmin_I(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseI.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -179,6 +205,19 @@ func TestDense_Argmax_I8(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseI8.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -205,6 +244,19 @@ func TestDense_Argmin_I8(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseI8.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -233,6 +285,19 @@ func TestDense_Argmax_I16(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseI16.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -259,6 +324,19 @@ func TestDense_Argmin_I16(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseI16.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -287,6 +365,19 @@ func TestDense_Argmax_I32(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseI32.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -313,6 +404,19 @@ func TestDense_Argmin_I32(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseI32.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -341,6 +445,19 @@ func TestDense_Argmax_I64(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseI64.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -367,6 +484,19 @@ func TestDense_Argmin_I64(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseI64.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -395,6 +525,19 @@ func TestDense_Argmax_U(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseU.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -421,6 +564,19 @@ func TestDense_Argmin_U(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseU.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -449,6 +605,19 @@ func TestDense_Argmax_U8(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseU8.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -475,6 +644,19 @@ func TestDense_Argmin_U8(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseU8.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -503,6 +685,19 @@ func TestDense_Argmax_U16(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseU16.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -529,6 +724,19 @@ func TestDense_Argmin_U16(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseU16.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -557,6 +765,19 @@ func TestDense_Argmax_U32(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseU32.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -583,6 +804,19 @@ func TestDense_Argmin_U32(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseU32.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -611,6 +845,19 @@ func TestDense_Argmax_U64(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(7, argmax.ScalarValue())
 
+	// with different engine
+	T = basicDenseU64.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -637,6 +884,19 @@ func TestDense_Argmin_U64(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(11, argmin.ScalarValue())
+
+	// with different engine
+	T = basicDenseU64.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -713,6 +973,19 @@ func TestDense_Argmax_F32(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(3, argmax.ScalarValue(), "Masked -Inf test")
 
+	// with different engine
+	T = basicDenseF32.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -787,6 +1060,19 @@ func TestDense_Argmin_F32(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(0, argmin.ScalarValue(), "Masked -Inf test")
+
+	// with different engine
+	T = basicDenseF32.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)
@@ -863,6 +1149,19 @@ func TestDense_Argmax_F64(t *testing.T) {
 	assert.True(argmax.IsScalar())
 	assert.Equal(3, argmax.ScalarValue(), "Masked -Inf test")
 
+	// with different engine
+	T = basicDenseF64.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmax, err = T.Argmax(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argmaxCorrect[i].shape.Eq(argmax.Shape()), "Argmax(%d) error. Want shape %v. Got %v", i, argmaxCorrect[i].shape)
+		assert.Equal(argmaxCorrect[i].data, argmax.Data(), "Argmax(%d) error. ", i)
+	}
+
 	// idiotsville
 	_, err = T.Argmax(10000)
 	assert.NotNil(err)
@@ -937,6 +1236,19 @@ func TestDense_Argmin_F64(t *testing.T) {
 	}
 	assert.True(argmin.IsScalar())
 	assert.Equal(0, argmin.ScalarValue(), "Masked -Inf test")
+
+	// with different engine
+	T = basicDenseF64.Clone().(*Dense)
+	WithEngine(dummyEngine2{})(T)
+	for i := 0; i < T.Dims(); i++ {
+		if argmin, err = T.Argmin(i); err != nil {
+			t.Error(err)
+			continue
+		}
+
+		assert.True(argminCorrect[i].shape.Eq(argmin.Shape()), "Argmin(%d) error. Want shape %v. Got %v", i, argminCorrect[i].shape)
+		assert.Equal(argminCorrect[i].data, argmin.Data(), "Argmin(%d) error. ", i)
+	}
 
 	// idiotsville
 	_, err = T.Argmin(10000)

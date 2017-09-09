@@ -11,5 +11,7 @@ func (t *Dense) Materialize() Tensor {
 
 	retVal := recycledDense(t.t, t.shape.Clone())
 	copyDenseIter(retVal, t, nil, nil)
+	retVal.e = t.e
+	retVal.oe = t.oe
 	return retVal
 }
