@@ -3,14 +3,11 @@
 package tensor
 
 import (
-	"math/rand"
 	"testing"
 	"testing/quick"
-	"time"
 )
 
 func TestNeg(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -32,13 +29,11 @@ func TestNeg(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Neg failed: %v", err)
 	}
 }
 func TestSquare(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -63,13 +58,11 @@ func TestSquare(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Square failed: %v", err)
 	}
 }
 func TestCube(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -94,13 +87,11 @@ func TestCube(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cube failed: %v", err)
 	}
 }
 func TestExp(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -122,13 +113,11 @@ func TestExp(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Exp failed: %v", err)
 	}
 }
 func TestLog(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -150,13 +139,11 @@ func TestLog(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Log failed: %v", err)
 	}
 }
 func TestSqrt(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -178,13 +165,11 @@ func TestSqrt(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Sqrt failed: %v", err)
 	}
 }
 func TestCbrt(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -206,13 +191,11 @@ func TestCbrt(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cbrt failed: %v", err)
 	}
 }
 func TestNeg_unsafe(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -239,13 +222,11 @@ func TestNeg_unsafe(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Neg failed: %v", err)
 	}
 }
 func TestSquare_unsafe(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -275,13 +256,11 @@ func TestSquare_unsafe(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Square failed: %v", err)
 	}
 }
 func TestCube_unsafe(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -311,13 +290,11 @@ func TestCube_unsafe(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cube failed: %v", err)
 	}
 }
 func TestExp_unsafe(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -344,13 +321,11 @@ func TestExp_unsafe(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Exp failed: %v", err)
 	}
 }
 func TestLog_unsafe(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -377,13 +352,11 @@ func TestLog_unsafe(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Log failed: %v", err)
 	}
 }
 func TestSqrt_unsafe(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -410,13 +383,11 @@ func TestSqrt_unsafe(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Sqrt failed: %v", err)
 	}
 }
 func TestCbrt_unsafe(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		correct := a.Clone().(*Dense)
@@ -443,13 +414,11 @@ func TestCbrt_unsafe(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cbrt failed: %v", err)
 	}
 }
 func TestNeg_reuse(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -477,13 +446,11 @@ func TestNeg_reuse(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Neg failed: %v", err)
 	}
 }
 func TestSquare_reuse(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -514,13 +481,11 @@ func TestSquare_reuse(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Square failed: %v", err)
 	}
 }
 func TestCube_reuse(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -551,13 +516,11 @@ func TestCube_reuse(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cube failed: %v", err)
 	}
 }
 func TestExp_reuse(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -585,13 +548,11 @@ func TestExp_reuse(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Exp failed: %v", err)
 	}
 }
 func TestLog_reuse(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -619,13 +580,11 @@ func TestLog_reuse(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Log failed: %v", err)
 	}
 }
 func TestSqrt_reuse(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -653,13 +612,11 @@ func TestSqrt_reuse(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Sqrt failed: %v", err)
 	}
 }
 func TestCbrt_reuse(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -687,13 +644,11 @@ func TestCbrt_reuse(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cbrt failed: %v", err)
 	}
 }
 func TestNeg_incr(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -722,13 +677,11 @@ func TestNeg_incr(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Neg failed: %v", err)
 	}
 }
 func TestSquare_incr(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -760,13 +713,11 @@ func TestSquare_incr(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Square failed: %v", err)
 	}
 }
 func TestCube_incr(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -798,13 +749,11 @@ func TestCube_incr(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cube failed: %v", err)
 	}
 }
 func TestExp_incr(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -833,13 +782,11 @@ func TestExp_incr(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Exp failed: %v", err)
 	}
 }
 func TestLog_incr(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -868,13 +815,11 @@ func TestLog_incr(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Log failed: %v", err)
 	}
 }
 func TestSqrt_incr(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -903,13 +848,11 @@ func TestSqrt_incr(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Sqrt failed: %v", err)
 	}
 }
 func TestCbrt_incr(t *testing.T) {
-	var r *rand.Rand
 	invFn := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -938,8 +881,7 @@ func TestCbrt_incr(t *testing.T) {
 		return true
 	}
 
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(invFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(invFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv tests for Cbrt failed: %v", err)
 	}
 }

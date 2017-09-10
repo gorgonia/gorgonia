@@ -3,21 +3,18 @@
 package tensor
 
 import (
-	"math/rand"
 	"reflect"
 	"testing"
 	"testing/quick"
-	"time"
 )
 
 func TestDense_Gt(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Gter)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -64,20 +61,18 @@ func TestDense_Gt(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gt failed: %v", err)
 	}
 
 }
 func TestDense_Gte(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Gteer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -124,20 +119,18 @@ func TestDense_Gte(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gte failed: %v", err)
 	}
 
 }
 func TestDense_Lt(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Lter)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -184,20 +177,18 @@ func TestDense_Lt(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lt failed: %v", err)
 	}
 
 }
 func TestDense_Lte(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Lteer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -244,20 +235,18 @@ func TestDense_Lte(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lte failed: %v", err)
 	}
 
 }
 func TestDense_ElEq(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
 		_, ok := q.Engine().(ElEqer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -304,8 +293,7 @@ func TestDense_ElEq(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 
@@ -314,7 +302,7 @@ func TestDense_ElEq(t *testing.T) {
 		_, ok := q.Engine().(ElEqer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 
@@ -339,19 +327,17 @@ func TestDense_ElEq(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 }
 func TestDense_ElNe(t *testing.T) {
-	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
 		_, ok := q.Engine().(ElEqer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 
@@ -376,13 +362,11 @@ func TestDense_ElNe(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElNe failed: %v", err)
 	}
 }
 func TestDense_Gt_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Gter)
@@ -391,7 +375,7 @@ func TestDense_Gt_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -437,14 +421,12 @@ func TestDense_Gt_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gt failed: %v", err)
 	}
 
 }
 func TestDense_Gte_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Gteer)
@@ -453,7 +435,7 @@ func TestDense_Gte_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -499,14 +481,12 @@ func TestDense_Gte_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gte failed: %v", err)
 	}
 
 }
 func TestDense_Lt_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Lter)
@@ -515,7 +495,7 @@ func TestDense_Lt_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -561,14 +541,12 @@ func TestDense_Lt_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lt failed: %v", err)
 	}
 
 }
 func TestDense_Lte_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Lteer)
@@ -577,7 +555,7 @@ func TestDense_Lte_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -623,14 +601,12 @@ func TestDense_Lte_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lte failed: %v", err)
 	}
 
 }
 func TestDense_ElEq_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(ElEqer)
@@ -639,7 +615,7 @@ func TestDense_ElEq_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 		c := q.Clone().(*Dense)
@@ -685,8 +661,7 @@ func TestDense_ElEq_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 
@@ -698,7 +673,7 @@ func TestDense_ElEq_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 
@@ -723,13 +698,11 @@ func TestDense_ElEq_assame(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 }
 func TestDense_ElNe_assame(t *testing.T) {
-	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(ElEqer)
@@ -738,7 +711,7 @@ func TestDense_ElNe_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		b := q.Clone().(*Dense)
 
@@ -763,19 +736,17 @@ func TestDense_ElNe_assame(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElNe failed: %v", err)
 	}
 }
 func TestDense_GtScalar(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Gter)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -820,20 +791,18 @@ func TestDense_GtScalar(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gt failed: %v", err)
 	}
 
 }
 func TestDense_GteScalar(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Gteer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -878,20 +847,18 @@ func TestDense_GteScalar(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gte failed: %v", err)
 	}
 
 }
 func TestDense_LtScalar(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Lter)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -936,20 +903,18 @@ func TestDense_LtScalar(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lt failed: %v", err)
 	}
 
 }
 func TestDense_LteScalar(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, ordTypes, nil)
 		_, ok := q.Engine().(Lteer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -994,20 +959,18 @@ func TestDense_LteScalar(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lte failed: %v", err)
 	}
 
 }
 func TestDense_ElEqScalar(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
 		_, ok := q.Engine().(ElEqer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1052,8 +1015,7 @@ func TestDense_ElEqScalar(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 
@@ -1062,7 +1024,7 @@ func TestDense_ElEqScalar(t *testing.T) {
 		_, ok := q.Engine().(ElEqer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1085,19 +1047,17 @@ func TestDense_ElEqScalar(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Symmetry test for ElEq failed: %v", err)
 	}
 }
 func TestDense_ElNeScalar(t *testing.T) {
-	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, eqTypes, nil)
 		_, ok := q.Engine().(ElEqer)
 		we = we || !ok
 
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1120,13 +1080,11 @@ func TestDense_ElNeScalar(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Symmetry test for ElNe failed: %v", err)
 	}
 }
 func TestDense_GtScalar_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Gter)
@@ -1135,7 +1093,7 @@ func TestDense_GtScalar_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1179,14 +1137,12 @@ func TestDense_GtScalar_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gt failed: %v", err)
 	}
 
 }
 func TestDense_GteScalar_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Gteer)
@@ -1195,7 +1151,7 @@ func TestDense_GteScalar_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1239,14 +1195,12 @@ func TestDense_GteScalar_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Gte failed: %v", err)
 	}
 
 }
 func TestDense_LtScalar_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Lter)
@@ -1255,7 +1209,7 @@ func TestDense_LtScalar_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1299,14 +1253,12 @@ func TestDense_LtScalar_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lt failed: %v", err)
 	}
 
 }
 func TestDense_LteScalar_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(Lteer)
@@ -1315,7 +1267,7 @@ func TestDense_LteScalar_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1359,14 +1311,12 @@ func TestDense_LteScalar_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for Lte failed: %v", err)
 	}
 
 }
 func TestDense_ElEqScalar_assame(t *testing.T) {
-	var r *rand.Rand
 	transFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(ElEqer)
@@ -1375,7 +1325,7 @@ func TestDense_ElEqScalar_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1419,8 +1369,7 @@ func TestDense_ElEqScalar_assame(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Transitivity test for ElEq failed: %v", err)
 	}
 
@@ -1432,7 +1381,7 @@ func TestDense_ElEqScalar_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1455,13 +1404,11 @@ func TestDense_ElEqScalar_assame(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Symmetry test for ElEq failed: %v", err)
 	}
 }
 func TestDense_ElNeScalar_assame(t *testing.T) {
-	var r *rand.Rand
 	symFn := func(q *Dense) bool {
 		we, _ := willerr(q, nonComplexNumberTypes, nil)
 		_, ok := q.Engine().(ElEqer)
@@ -1470,7 +1417,7 @@ func TestDense_ElNeScalar_assame(t *testing.T) {
 		if err := typeclassCheck(q.Dtype(), nonComplexNumberTypes); err != nil {
 			return true // we exit early if the generated type is not something we can handle
 		}
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		r := newRand()
 		a := q.Clone().(*Dense)
 		bv, _ := quick.Value(a.Dtype().Type, r)
 		b := bv.Interface()
@@ -1493,8 +1440,7 @@ func TestDense_ElNeScalar_assame(t *testing.T) {
 		return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Error("Symmetry test for ElNe failed: %v", err)
 	}
 }

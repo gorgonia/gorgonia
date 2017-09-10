@@ -3,15 +3,11 @@
 package tensor
 
 import (
-	"math/rand"
 	"testing"
 	"testing/quick"
-	"time"
 )
 
 func TestAdd(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
@@ -32,14 +28,12 @@ func TestAdd(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
 	}
 
 }
 func TestSub(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
@@ -61,13 +55,11 @@ func TestSub(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
 func TestMul(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -89,14 +81,12 @@ func TestMul(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
 	}
 
 }
 func TestDiv(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -119,13 +109,11 @@ func TestDiv(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
 func TestPow(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -147,14 +135,12 @@ func TestPow(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
 	}
 
 }
 func TestAdd_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
@@ -180,14 +166,12 @@ func TestAdd_unsafe(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
 	}
 
 }
 func TestSub_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		correct := a.Clone().(*Dense)
@@ -214,13 +198,11 @@ func TestSub_unsafe(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
 func TestMul_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -247,14 +229,12 @@ func TestMul_unsafe(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
 	}
 
 }
 func TestDiv_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -282,13 +262,11 @@ func TestDiv_unsafe(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
 func TestPow_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -315,14 +293,12 @@ func TestPow_unsafe(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
 	}
 
 }
 func TestAdd_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -349,14 +325,12 @@ func TestAdd_reuse(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
 	}
 
 }
 func TestSub_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		reuse := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -384,13 +358,11 @@ func TestSub_reuse(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
 func TestMul_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -418,14 +390,12 @@ func TestMul_reuse(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
 	}
 
 }
 func TestDiv_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -454,13 +424,11 @@ func TestDiv_reuse(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
 func TestPow_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -488,14 +456,12 @@ func TestPow_reuse(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
 	}
 
 }
 func TestAdd_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -519,14 +485,12 @@ func TestAdd_incr(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add failed: %v", err)
 	}
 
 }
 func TestSub_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		incr := New(Of(a.t), WithShape(a.Shape().Clone()...))
@@ -551,13 +515,11 @@ func TestSub_incr(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub failed: %v", err)
 	}
 }
 func TestMul_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -582,14 +544,12 @@ func TestMul_incr(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul failed: %v", err)
 	}
 
 }
 func TestDiv_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -615,13 +575,11 @@ func TestDiv_incr(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div failed: %v", err)
 	}
 }
 func TestPow_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden := func(a *Dense) bool {
 		b := New(Of(a.t), WithShape(a.Shape().Clone()...), WithEngine(a.Engine()))
 		b.Memset(identityVal(1, a.t))
@@ -646,14 +604,12 @@ func TestPow_incr(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(iden, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow failed: %v", err)
 	}
 
 }
 func TestAddScalar(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -677,7 +633,7 @@ func TestAddScalar(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -702,15 +658,12 @@ func TestAddScalar(t *testing.T) {
 		}
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestSubScalar(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -734,7 +687,7 @@ func TestSubScalar(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -760,14 +713,11 @@ func TestSubScalar(t *testing.T) {
 		}
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(inv2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub (scalar as left, tensor as right) failed: %v", err)
 	}
 }
 func TestMulScalar(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -791,7 +741,7 @@ func TestMulScalar(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -816,15 +766,12 @@ func TestMulScalar(t *testing.T) {
 		}
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestDivScalar(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -848,14 +795,12 @@ func TestDivScalar(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestPowScalar(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -879,14 +824,12 @@ func TestPowScalar(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestAddScalar_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -915,7 +858,7 @@ func TestAddScalar_unsafe(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -945,15 +888,12 @@ func TestAddScalar_unsafe(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestSubScalar_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -982,7 +922,7 @@ func TestSubScalar_unsafe(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -1013,14 +953,11 @@ func TestSubScalar_unsafe(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(inv2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub (scalar as left, tensor as right) failed: %v", err)
 	}
 }
 func TestMulScalar_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1049,7 +986,7 @@ func TestMulScalar_unsafe(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -1079,15 +1016,12 @@ func TestMulScalar_unsafe(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestDivScalar_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1116,14 +1050,12 @@ func TestDivScalar_unsafe(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestPowScalar_unsafe(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1152,14 +1084,12 @@ func TestPowScalar_unsafe(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestAddScalar_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1189,7 +1119,7 @@ func TestAddScalar_reuse(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -1220,15 +1150,12 @@ func TestAddScalar_reuse(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestSubScalar_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1258,7 +1185,7 @@ func TestSubScalar_reuse(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -1290,14 +1217,11 @@ func TestSubScalar_reuse(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(inv2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub (scalar as left, tensor as right) failed: %v", err)
 	}
 }
 func TestMulScalar_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1327,7 +1251,7 @@ func TestMulScalar_reuse(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -1358,15 +1282,12 @@ func TestMulScalar_reuse(t *testing.T) {
 
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestDivScalar_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1396,14 +1317,12 @@ func TestDivScalar_reuse(t *testing.T) {
 
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestPowScalar_reuse(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1433,14 +1352,12 @@ func TestPowScalar_reuse(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestAddScalar_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1467,7 +1384,7 @@ func TestAddScalar_incr(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -1495,15 +1412,12 @@ func TestAddScalar_incr(t *testing.T) {
 		}
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Add (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestSubScalar_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(0, q.t)
@@ -1530,14 +1444,12 @@ func TestSubScalar_incr(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Sub (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestMulScalar_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1564,7 +1476,7 @@ func TestMulScalar_incr(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (tensor as left, scalar as right) failed: %v", err)
 	}
 
@@ -1592,15 +1504,12 @@ func TestMulScalar_incr(t *testing.T) {
 		}
 		return true
 	}
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(iden2, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden2, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Mul (scalar as left, tensor as right) failed: %v", err)
 	}
 
 }
 func TestDivScalar_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	inv1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1627,14 +1536,12 @@ func TestDivScalar_incr(t *testing.T) {
 		}
 		return true
 	}
-	if err := quick.Check(inv1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(inv1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Inv test for Div (tensor as left, scalar as right) failed: %v", err)
 	}
 
 }
 func TestPowScalar_incr(t *testing.T) {
-	var r *rand.Rand
-	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	iden1 := func(q *Dense) bool {
 		a := q.Clone().(*Dense)
 		b := identityVal(1, q.t)
@@ -1661,7 +1568,7 @@ func TestPowScalar_incr(t *testing.T) {
 		return true
 	}
 
-	if err := quick.Check(iden1, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(iden1, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Identity test for Pow (tensor as left, scalar as right) failed: %v", err)
 	}
 
