@@ -131,10 +131,14 @@ func (fn *GenericVecVecArith) WriteBody(w io.Writer) {
 func (fn *GenericVecVecArith) Write(w io.Writer) {
 	sig := fn.Signature()
 	if !fn.Iter && isFloat(fn.Kind()) {
-		golinkPragma.Execute(w, fn)
+		// golinkPragma.Execute(w, fn)
 		w.Write([]byte("func "))
 		sig.Write(w)
-		w.Write([]byte("\n\n"))
+		if fn.Incr {
+			fmt.Fprintf(w, "{ %v%v(a, b, incr)}\n", vecPkg(fn.Kind()), getalias(fn.Name()))
+		} else {
+			fmt.Fprintf(w, "{ %v%v(a, b)}\n", vecPkg(fn.Kind()), getalias(fn.Name()))
+		}
 		return
 	}
 
@@ -428,14 +432,14 @@ func makeGenericScalarScalarAriths(tbo []TypedBinOp) (retVal []*GenericScalarSca
 func generateGenericVecVecArith(f io.Writer, ak Kinds) {
 	gen := makeGenericVecVecAriths(typedAriths)
 
-	importStmt := `
-	import (
-		_ "unsafe"
+	// importStmt := `
+	// import (
+	// 	_ "unsafe"
 
-	_ "github.com/chewxy/vecf32"
-	_ "github.com/chewxy/vecf64")
-	`
-	f.Write([]byte(importStmt))
+	// _ "github.com/chewxy/vecf32"
+	// _ "github.com/chewxy/vecf64")
+	// `
+	// f.Write([]byte(importStmt))
 
 	for _, g := range gen {
 		g.Write(f)
