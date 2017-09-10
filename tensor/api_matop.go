@@ -81,6 +81,24 @@ func Copy(dst, src Tensor) error {
 	panic("Unreachable")
 }
 
+// Stack stacks a list of other Tensors. At the moment the operation only supports Tensors of the same type.
+// (*Dense can only be stacked with *Dense... etc)
+func Stack(axis int, t Tensor, others ...Tensor) (retVal Tensor, err error) {
+	if len(others) == 0 {
+		return t, nil
+	}
+
+	switch T := t.(type) {
+	case DenseTensor:
+		var dts []DenseTensor
+		if dts, err = tensorsToDenseTensors(others); err != nil {
+			return nil, errors.Wrap(err, "Cannot  convert others into a slice of DenseTensors")
+		}
+		return T.stackDense(axis, dts...)
+	}
+	panic("Unreachable")
+}
+
 // Materialize takes a View and copies out the data into a new allocation.
 func Materialize(t Tensor) Tensor {
 	switch tt := t.(type) {

@@ -7,23 +7,8 @@ import (
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
 
-	_ "github.com/chewxy/vecf64"
+	"github.com/chewxy/vecf64"
 )
-
-//go:linkname vecMulF64 github.com/chewxy/vecf64.Mul
-func vecMulF64(a []float64, b []float64)
-
-//go:linkname mulIncrF64 github.com/chewxy/vecf64.IncrMul
-func mulIncrF64(a []float64, b []float64, incr []float64)
-
-//go:linkname vecScaleF64 github.com/chewxy/vecf64.Scale
-func vecScaleF64(a []float64, b float64)
-
-//go:linkname vecAddF64 github.com/chewxy/vecf64.Add
-func vecAddF64(a []float64, b []float64)
-
-//go:linkname addIncrF64 github.com/chewxy/vecf64.IncrAdd
-func addIncrF64(a []float64, b []float64, incr []float64)
 
 func handleFuncOptsF64(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr bool, err error) {
 	fo := ParseFuncOpts(opts...)
@@ -153,7 +138,7 @@ func (e Float64Engine) FMA(a, x, y Tensor) (retVal Tensor, err error) {
 		return
 	}
 
-	mulIncrF64(dataA.Float64s(), dataB.Float64s(), dataReuse.Float64s())
+	vecf64.IncrMul(dataA.Float64s(), dataB.Float64s(), dataReuse.Float64s())
 	retVal = reuse
 	return
 }
@@ -211,18 +196,18 @@ func (e Float64Engine) Add(a Tensor, b Tensor, opts ...FuncOpt) (retVal Tensor, 
 
 	switch {
 	case incr:
-		addIncrF64(dataA, dataB, dataReuse)
+		vecf64.IncrAdd(dataA, dataB, dataReuse)
 		retVal = reuse
 	case toReuse:
 		copy(dataReuse, dataA)
-		vecAddF64(dataReuse, dataB)
+		vecf64.Add(dataReuse, dataB)
 		retVal = reuse
 	case !safe:
-		vecAddF64(dataA, dataB)
+		vecf64.Add(dataA, dataB)
 		retVal = a
 	default:
 		ret := a.Clone().(headerer)
-		vecAddF64(ret.hdr().Float64s(), dataB)
+		vecf64.Add(ret.hdr().Float64s(), dataB)
 		retVal = ret.(Tensor)
 	}
 	return

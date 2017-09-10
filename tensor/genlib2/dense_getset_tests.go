@@ -210,8 +210,7 @@ const denseEqTestRaw = `func TestDense_Eq(t *testing.T) {
 		}
 		return true
 	}
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	if err := quick.Check(eqFn, &quick.Config{Rand: r}); err != nil {
+	if err := quick.Check(eqFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 		t.Errorf("Failed to perform equality checks")
 	}
 }`

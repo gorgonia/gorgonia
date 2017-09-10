@@ -379,11 +379,6 @@ var nameMaps = map[string]string{
 	"DivIncr": "IncrDiv",
 	"PowIncr": "IncrPow",
 	"ModIncr": "IncrMod",
-
-	"AddIncrVS": "IncrTrans",
-	"AddIncrSV": "IncrTransR",
-	"SubIncrVS": "IncrTransInv",
-	"SubIncrSV": "IncrTransInvR",
 }
 
 var arithBinOps []arithOp

@@ -26,9 +26,9 @@ const (
 
 type ArithTest struct {
 	arithOp
-	scalars bool
-	lvl     Level
-	FuncOpt string
+	scalars             bool
+	lvl                 Level
+	FuncOpt             string
 	EqFailTypeClassName string
 }
 
@@ -147,7 +147,7 @@ func (fn *ArithTest) Write(w io.Writer) {
 	sig := fn.Signature()
 	w.Write([]byte("func "))
 	sig.Write(w)
-	w.Write([]byte("{\nvar r *rand.Rand\n"))
+	w.Write([]byte("{\n"))
 	fn.WriteBody(w)
 	w.Write([]byte("}\n"))
 }
@@ -156,11 +156,11 @@ func generateAPIArithTests(f io.Writer, ak Kinds) {
 	var tests []*ArithTest
 	for _, op := range arithBinOps {
 		t := &ArithTest{
-			arithOp: op,
-			lvl:     API,
+			arithOp:             op,
+			lvl:                 API,
 			EqFailTypeClassName: "nil",
 		}
-		if t.name == "Pow"{
+		if t.name == "Pow" {
 			t.EqFailTypeClassName = "complexTypes"
 		}
 		tests = append(tests, t)
@@ -198,16 +198,16 @@ func generateAPIArithScalarTests(f io.Writer, ak Kinds) {
 	var tests []*ArithTest
 	for _, op := range arithBinOps {
 		t := &ArithTest{
-			arithOp: op,
-			scalars: true,
-			lvl:     API,
+			arithOp:             op,
+			scalars:             true,
+			lvl:                 API,
 			EqFailTypeClassName: "nil",
 		}
-		switch t.name{
-			case "Pow":
-				t.EqFailTypeClassName = "complexTypes"
-			case "Sub":
-				t.EqFailTypeClassName = "unsignedTypes"
+		switch t.name {
+		case "Pow":
+			t.EqFailTypeClassName = "complexTypes"
+		case "Sub":
+			t.EqFailTypeClassName = "unsignedTypes"
 		}
 		tests = append(tests, t)
 	}
@@ -244,11 +244,11 @@ func generateDenseMethodArithTests(f io.Writer, ak Kinds) {
 	var tests []*ArithTest
 	for _, op := range arithBinOps {
 		t := &ArithTest{
-			arithOp: op,
-			lvl:     Dense,
+			arithOp:             op,
+			lvl:                 Dense,
 			EqFailTypeClassName: "nil",
 		}
-		if t.name == "Pow"{
+		if t.name == "Pow" {
 			t.EqFailTypeClassName = "complexTypes"
 		}
 		tests = append(tests, t)
@@ -286,16 +286,16 @@ func generateDenseMethodScalarTests(f io.Writer, ak Kinds) {
 	var tests []*ArithTest
 	for _, op := range arithBinOps {
 		t := &ArithTest{
-			arithOp: op,
-			scalars: true,
-			lvl:     Dense,
+			arithOp:             op,
+			scalars:             true,
+			lvl:                 Dense,
 			EqFailTypeClassName: "nil",
 		}
-		switch t.name{
-			case "Pow":
-				t.EqFailTypeClassName = "complexTypes"
-			case "Sub":
-				t.EqFailTypeClassName = "unsignedTypes"
+		switch t.name {
+		case "Pow":
+			t.EqFailTypeClassName = "complexTypes"
+		case "Sub":
+			t.EqFailTypeClassName = "unsignedTypes"
 		}
 		tests = append(tests, t)
 	}
