@@ -116,15 +116,20 @@ func (t *Dense) Vstack(others ...*Dense) (*Dense, error) {
 
 // Stack stacks the other tensors along the axis specified. It is like Numpy's stack function.
 func (t *Dense) Stack(axis int, others ...*Dense) (retVal *Dense, err error) {
-	e := t.Engine()
+	var ret DenseTensor
+	var ok bool
+	if ret, err = t.stackDense(axis, densesToDenseTensors(others)...); err != nil {
+		return nil, err
+	}
+	if retVal, ok = ret.(*Dense); !ok {
+		return nil, errors.Errorf("Return not *Dense")
+	}
+	return
+}
 
-	if ds, ok := e.(DenseStacker); ok {
-		var ret DenseTensor
-		ots := densesToDenseTensors(others)
-		if ret, err = ds.StackDense(t, axis, ots...); err != nil {
-			return
-		}
-		return ret.(*Dense), err
+func (t *Dense) stackDense(axis int, others ...DenseTensor) (retVal DenseTensor, err error) {
+	if ds, ok := t.Engine().(DenseStacker); ok {
+		return ds.StackDense(t, axis, others...)
 	}
 	return nil, errors.Errorf("Engine does not support DenseStacker")
 }

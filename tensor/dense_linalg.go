@@ -32,11 +32,11 @@ func (t *Dense) Inner(other Tensor) (retVal interface{}, err error) {
 
 	e := t.e
 	switch ip := e.(type) {
-	case InnerProder:
-		return ip.Inner(t, other)
 	case InnerProderF32:
 		return ip.Inner(t, other)
 	case InnerProderF64:
+		return ip.Inner(t, other)
+	case InnerProder:
 		return ip.Inner(t, other)
 	}
 

@@ -42,8 +42,7 @@ const unaryTestBodyRaw = `invFn := func(q *Dense) bool {
 	return true
 }
 
-r = rand.New(rand.NewSource(time.Now().UnixNano()))
-if err := quick.Check(invFn, &quick.Config{Rand:r}); err != nil{
+if err := quick.Check(invFn, &quick.Config{Rand:newRand(), MaxCount: quickchecks}); err != nil{
 	t.Errorf("Inv tests for {{.Name}} failed: %v", err)
 }
 `
@@ -90,7 +89,7 @@ func (fn *unaryTest) Write(w io.Writer) {
 	sig := fn.Signature()
 	w.Write([]byte("func "))
 	sig.Write(w)
-	w.Write([]byte("{\nvar r *rand.Rand\n"))
+	w.Write([]byte("{\n"))
 	fn.WriteBody(w)
 	w.Write([]byte("}\n"))
 }

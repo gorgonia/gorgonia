@@ -62,7 +62,7 @@ const transitivityBodyRaw = `transFn := func(q *Dense) bool {
 
 	{{template "funcoptdecl" . -}}
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := newRand()
 	a := q.Clone().(*Dense)
 	b := q.Clone().(*Dense)
 	c := q.Clone().(*Dense)
@@ -99,8 +99,7 @@ const transitivityBodyRaw = `transFn := func(q *Dense) bool {
 	{{template "transitivityCheck" .}}
 	return true
 }
-r = rand.New(rand.NewSource(time.Now().UnixNano()))
-if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 	t.Error("Transitivity test for {{.Name}} failed: %v", err)
 }
 `
@@ -111,7 +110,7 @@ const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
 
 	{{template "funcoptdecl" . -}}
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := newRand()
 	a := q.Clone().(*Dense)
 	bv, _ := quick.Value(a.Dtype().Type, r)
 	b := bv.Interface()
@@ -146,8 +145,7 @@ const transitivityMixedBodyRaw = `transFn := func(q *Dense) bool {
 	{{template "transitivityCheck" .}}
 	return true
 }
-r = rand.New(rand.NewSource(time.Now().UnixNano()))
-if err := quick.Check(transFn, &quick.Config{Rand: r}); err != nil {
+if err := quick.Check(transFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 	t.Error("Transitivity test for {{.Name}} failed: %v", err)
 }
 `
@@ -158,7 +156,7 @@ const symmetryBodyRaw = `symFn := func(q *Dense) bool {
 
 	{{template "funcoptdecl" . -}}
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := newRand()
 	a := q.Clone().(*Dense)
 	b := q.Clone().(*Dense)
 
@@ -183,8 +181,7 @@ const symmetryBodyRaw = `symFn := func(q *Dense) bool {
 	return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 }
-r = rand.New(rand.NewSource(time.Now().UnixNano()))
-if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 	t.Error("Transitivity test for {{.Name}} failed: %v", err)
 }
 `
@@ -195,7 +192,7 @@ const symmetryMixedBodyRaw = `symFn := func(q *Dense) bool {
 
 	{{template "funcoptdecl" . -}}
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r := newRand()
 	a := q.Clone().(*Dense)
 	bv, _ := quick.Value(a.Dtype().Type, r)
 	b := bv.Interface()
@@ -218,8 +215,7 @@ const symmetryMixedBodyRaw = `symFn := func(q *Dense) bool {
 	return reflect.DeepEqual(axb.Data(), bxa.Data())
 
 }
-r = rand.New(rand.NewSource(time.Now().UnixNano()))
-if err := quick.Check(symFn, &quick.Config{Rand: r}); err != nil {
+if err := quick.Check(symFn, &quick.Config{Rand: newRand(), MaxCount: quickchecks}); err != nil {
 	t.Error("Symmetry test for {{.Name}} failed: %v", err)
 }
 `
@@ -362,7 +358,7 @@ func (fn *CmpTest) Write(w io.Writer) {
 	sig := fn.Signature()
 	w.Write([]byte("func "))
 	sig.Write(w)
-	w.Write([]byte("{\nvar r *rand.Rand\n"))
+	w.Write([]byte("{\n"))
 	fn.WriteBody(w)
 	w.Write([]byte("}\n"))
 }

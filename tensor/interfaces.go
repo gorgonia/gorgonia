@@ -104,6 +104,7 @@ type DenseTensor interface {
 	MatMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 	MatVecMul(other Tensor, opts ...FuncOpt) (retVal *Dense, err error)
 	TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err error)
+	stackDense(axis int, others ...DenseTensor) (DenseTensor, error)
 }
 
 type SparseTensor interface {
