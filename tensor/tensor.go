@@ -1,6 +1,6 @@
 // Package tensor is a package that provides efficient, generic n-dimensional arrays in Go.
 // Also in this package are functions and methods that are used commonly in arithmetic, comparison and linear algebra operations.
-package tensor
+package tensor // import "gorgonia.org/tensor"
 
 import (
 	"encoding/gob"

@@ -1,4 +1,4 @@
-package gorgonia
+package gorgonia // import "gorgonia.org/gorgonia"
 
 import (
 	"fmt"
