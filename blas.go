@@ -4,8 +4,8 @@ import (
 	"sync"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/gonum/blas"
-	"github.com/gonum/blas/native"
+	"gonum.org/v1/gonum/blas"
+	"gonum.org/v1/gonum/blas/gonum"
 )
 
 var blasdoor sync.Mutex
@@ -52,5 +52,5 @@ func Use(b BLAS) {
 func WhichBLAS() BLAS { return whichblas }
 
 func init() {
-	whichblas = native.Implementation{}
+	whichblas = gonum.Implementation{}
 }

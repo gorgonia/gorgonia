@@ -42,7 +42,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/gonum/blas"
+	"gonum.org/v1/gonum/blas"
 )
 
 const rowMajor = 101 // rowMajor and rowMajor ONLY

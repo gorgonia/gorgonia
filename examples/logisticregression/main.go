@@ -14,7 +14,7 @@ import (
 
 	G "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/tensor"
-	// cblas "github.com/gonum/blas/cgo"
+	// cblas "gonum.org/v1/netlib/blas/netlib"
 )
 
 const (

@@ -6,8 +6,8 @@ import (
 
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/math32"
-	"github.com/gonum/graph"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
 )
 
 func graphNodeToNode(in []graph.Node) (out Nodes) {

@@ -3,13 +3,12 @@ package tensor
 import (
 	"testing"
 
-	"github.com/gonum/matrix"
-	"github.com/gonum/matrix/mat64"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/mat"
 )
 
 // tests for SVD adapted from Gonum's SVD tests.
-// Gonum's licence is listed at https://github.com/gonum/license
+// Gonum's licence is listed at https://gonum.org/v1/gonum/license
 
 var svdtestsThin = []struct {
 	data  []float64
@@ -169,15 +168,15 @@ func TestDense_SVD(t *testing.T) {
 			continue
 		}
 
-		var svd mat64.SVD
-		var mat *mat64.Dense
-		if mat, err = ToMat64(T); err != nil {
+		var svd mat.SVD
+		var m *mat.Dense
+		if m, err = ToMat64(T); err != nil {
 			t.Error(err)
 			continue
 		}
 
-		if !svd.Factorize(mat, matrix.SVDFull) {
-			t.Errorf("Unable to factorise %v", mat)
+		if !svd.Factorize(m, mat.SVDFull) {
+			t.Errorf("Unable to factorise %v", m)
 			continue
 		}
 

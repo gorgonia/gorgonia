@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
-	"github.com/gonum/graph"
-	"github.com/gonum/graph/topo"
 	"github.com/stretchr/testify/assert"
+	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/topo"
 )
 
 func TestGraphBasics(t *testing.T) {

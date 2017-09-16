@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/gonum/graph"
+	"gonum.org/v1/gonum/graph"
 )
 
 // ExprGraph is a data structure for a directed acyclic graph (of expressions). This structure is the main entry point
@@ -179,7 +179,7 @@ func (g *ExprGraph) addToAll(n *Node) {
 		panic("HELP! trying to add nil")
 	}
 	g.all = append(g.all, n)
-	n.id = int(g.counter)
+	n.id = int64(g.counter)
 	g.counter++
 }
 
@@ -488,7 +488,7 @@ func (g *ExprGraph) removeAllEdgesFrom(n *Node) {
 /* Graph interface */
 
 // Node returns the node in the graph with the given ID.
-func (g *ExprGraph) Node(id int) graph.Node {
+func (g *ExprGraph) Node(id int64) graph.Node {
 	// n := (*Node)(unsafe.Pointer(uintptr(id)))
 	for _, n := range g.all {
 		if n.id == id {

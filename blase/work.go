@@ -29,8 +29,8 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/gonum/blas"
-	"github.com/gonum/blas/cgo"
+	"gonum.org/v1/gonum/blas"
+	"gonum.org/v1/netlib/blas/netlib"
 )
 
 var impl = newContext()
@@ -90,7 +90,7 @@ type call struct {
 }
 
 type context struct {
-	cgo.Implementation
+	netlib.Implementation
 
 	workAvailable chan struct{}
 	work          chan call

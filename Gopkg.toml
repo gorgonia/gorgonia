@@ -48,15 +48,7 @@ ignored = ["github.com/alecthomas/assert"]
 
 [[constraint]]
   branch = "master"
-  name = "github.com/gonum/blas"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/gonum/graph"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/gonum/matrix"
+  name = "gonum.org/v1/gonum"
 
 [[constraint]]
   branch = "master"

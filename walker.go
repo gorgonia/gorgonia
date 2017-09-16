@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"sort"
 
-	"github.com/gonum/graph"
-	"github.com/gonum/graph/topo"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/topo"
 )
 
 // WalkGraph walks a graph. It returns a channel of *Nodes, so be sure to consume the channel or there may be a deadlock

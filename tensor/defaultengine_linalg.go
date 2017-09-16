@@ -3,10 +3,9 @@ package tensor
 import (
 	"reflect"
 
-	"github.com/gonum/blas"
-	"github.com/gonum/matrix"
-	"github.com/gonum/matrix/mat64"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/blas"
+	"gonum.org/v1/gonum/mat"
 )
 
 //  Trace returns the trace of a matrix (i.e. the sum of the diagonal elements). If the Tensor provided is not a matrix, it will return an error
@@ -326,18 +325,18 @@ func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 		return nil, nil, nil, errors.Errorf(dimMismatch, 2, t.Dims())
 	}
 
-	var mat *mat64.Dense
-	var svd mat64.SVD
+	var m *mat.Dense
+	var svd mat.SVD
 
-	if mat, err = ToMat64(t, UseUnsafe()); err != nil {
+	if m, err = ToMat64(t, UseUnsafe()); err != nil {
 		return
 	}
 
 	switch {
 	case full && uv:
-		ok = svd.Factorize(mat, matrix.SVDFull)
+		ok = svd.Factorize(m, mat.SVDFull)
 	case !full && uv:
-		ok = svd.Factorize(mat, matrix.SVDThin)
+		ok = svd.Factorize(m, mat.SVDThin)
 	case full && !uv:
 		// illogical state - if you specify "full", you WANT the UV matrices
 		// error
@@ -345,7 +344,7 @@ func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 		return
 	default:
 		// by default, we return only the singular values
-		ok = svd.Factorize(mat, matrix.SVDNone)
+		ok = svd.Factorize(m, mat.SVDNone)
 	}
 
 	if !ok {
@@ -355,12 +354,13 @@ func (e StdEng) SVD(a Tensor, uv, full bool) (s, u, v Tensor, err error) {
 	}
 
 	// extract values
-	var um, vm mat64.Dense
+	var um, vm mat.Dense
 	s = recycledDense(Float64, Shape{MinInt(t.Shape()[0], t.Shape()[1])})
 	svd.Values(s.Data().([]float64))
 	if uv {
-		um.UFromSVD(&svd)
-		vm.VFromSVD(&svd)
+		svd.UTo(&um)
+		svd.VTo(&vm)
+		// vm.VFromSVD(&svd)
 
 		u = FromMat64(&um, UseUnsafe(), As(t.t))
 		v = FromMat64(&vm, UseUnsafe(), As(t.t))

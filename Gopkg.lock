@@ -53,7 +53,7 @@
   branch = "master"
   name = "github.com/cznic/mathutil"
   packages = ["."]
-  revision = "6baf61e0317058e3207936f50e310bd500fbbdb0"
+  revision = "91af0ce59d1753e5eeaa6a3fd8f7aeeba01f1210"
 
 [[projects]]
   branch = "master"
@@ -72,42 +72,6 @@
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/gonum/blas"
-  packages = [".","blas64","cgo","native","native/internal/math32"]
-  revision = "37e82626499e1df7c54aeaba0959fd6e7e8dc1e4"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/gonum/floats"
-  packages = ["."]
-  revision = "f74b330d45c56584a6ea7a27f5c64ea2900631e9"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/gonum/graph"
-  packages = [".","internal/linear","internal/ordered","internal/set","topo","traverse"]
-  revision = "1ee3caba44244c8cf869cbec9a0079f8a1f2b1c0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/gonum/internal"
-  packages = ["asm/f32","asm/f64","binding"]
-  revision = "e57e4534cf9b3b00ef6c0175f59d8d2d34f60914"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/gonum/lapack"
-  packages = [".","lapack64","native"]
-  revision = "5ed4b826becd1807e09377508f51756586d1a98c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/gonum/matrix"
-  packages = [".","mat64"]
-  revision = "dd6034299e4242c9f0ea36735e6d4264dfcb3f9f"
 
 [[projects]]
   branch = "master"
@@ -142,12 +106,24 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/tools"
-  packages = ["container/intsets","go/ast/astutil","go/buildutil","go/loader"]
-  revision = "84a35ef54dff3c5596983e180ec10919fc432242"
+  packages = ["go/ast/astutil","go/buildutil","go/loader"]
+  revision = "e531a2a1c15f94033f6fa87666caeb19a688175f"
+
+[[projects]]
+  branch = "master"
+  name = "gonum.org/v1/gonum"
+  packages = ["blas","blas/blas64","blas/gonum","floats","graph","graph/internal/linear","graph/internal/ordered","graph/internal/set","graph/topo","graph/traverse","internal/asm/c128","internal/asm/f32","internal/asm/f64","internal/math32","lapack","lapack/gonum","lapack/lapack64","mat"]
+  revision = "f818f8f7a9e59de54e475b747a3dc9c86ed141f1"
+
+[[projects]]
+  branch = "master"
+  name = "gonum.org/v1/netlib"
+  packages = ["blas/netlib","internal/binding"]
+  revision = "d22599e22c25311208d69b30773390fc4d359d1f"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "371d92581bce95d05b0ebdafcc8d03d2597248793b0affeb981a17bd7a65f6f9"
+  inputs-digest = "f64585f59a5544373f157ab4db03f33522d4ed1a8348f4b0ad9b874258ea0729"
   solver-name = "gps-cdcl"
   solver-version = 1

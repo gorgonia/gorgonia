@@ -425,7 +425,7 @@ func (r register) String() string { return fmt.Sprintf("%s%d", r.device, r.id) }
 /* INSTRUCTIONS */
 
 type tapeInstr interface {
-	ID() int // ID is the node ID
+	ID() int64 // ID is the node ID
 	reads() []register
 	writes() register
 	exec(*tapeMachine) error
@@ -452,7 +452,7 @@ func (f fragment) has(want tapeInstr) bool {
 }
 
 type alloc struct {
-	id int // node ID
+	id int64 // node ID
 	t  hm.Type
 	s  tensor.Shape
 
@@ -469,7 +469,7 @@ func newAlloc(n *Node, writeTo register) alloc {
 	}
 }
 
-func (instr alloc) ID() int           { return instr.id }
+func (instr alloc) ID() int64         { return instr.id }
 func (instr alloc) reads() []register { return instr.readFrom }
 func (instr alloc) writes() register  { return instr.writeTo }
 
@@ -510,7 +510,7 @@ type free struct {
 	readsFrom register
 }
 
-func (instr free) ID() int           { return -1 }
+func (instr free) ID() int64         { return -1 }
 func (instr free) reads() []register { return []register{instr.readsFrom} }
 func (instr free) writes() register  { return register{-1, CPU} }
 func (instr free) exec(m *tapeMachine) error {
@@ -531,11 +531,11 @@ func (instr free) exec(m *tapeMachine) error {
 func (instr free) String() string { return fmt.Sprintf("Free %v", instr.readsFrom) }
 
 type loadArg struct {
-	index   int
+	index   int64
 	writeTo register
 }
 
-func (instr loadArg) ID() int           { return instr.index }
+func (instr loadArg) ID() int64         { return instr.index }
 func (instr loadArg) reads() []register { return nil }
 func (instr loadArg) writes() register  { return instr.writeTo }
 
@@ -570,7 +570,7 @@ func (instr loadArg) String() string {
 type execOp struct {
 	op Op
 
-	id int
+	id int64
 
 	readFrom []register
 	writeTo  register
@@ -581,7 +581,7 @@ type execOp struct {
 	useGPU       bool
 }
 
-func (instr *execOp) ID() int           { return instr.id }
+func (instr *execOp) ID() int64         { return instr.id }
 func (instr *execOp) reads() []register { return instr.readFrom }
 func (instr *execOp) writes() register  { return instr.writeTo }
 
@@ -619,7 +619,7 @@ func (instr flushInstr) exec(m *tapeMachine) error {
 	return nil
 }
 
-func (instr flushInstr) ID() int           { return -1 }
+func (instr flushInstr) ID() int64         { return -1 }
 func (instr flushInstr) reads() []register { return nil }
 func (instr flushInstr) writes() register  { return register{-1, CPU} }
 func (instr flushInstr) String() string    { return "DoWork" }
@@ -629,7 +629,7 @@ type letInstr struct {
 	writeTo  register
 }
 
-func (instr letInstr) ID() int                 { return -1 }
+func (instr letInstr) ID() int64               { return -1 }
 func (instr letInstr) reads() []register       { return []register{instr.readFrom} }
 func (instr letInstr) writes() register        { return instr.writeTo }
 func (instr letInstr) exec(*tapeMachine) error { return nil }
@@ -647,7 +647,7 @@ type readInstr struct {
 	s tensor.Shape
 }
 
-func (instr *readInstr) ID() int           { return -1 }
+func (instr *readInstr) ID() int64         { return -1 }
 func (instr *readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr *readInstr) writes() register  { return register{-1, CPU} }
 func (instr *readInstr) exec(m *tapeMachine) (err error) {
@@ -674,7 +674,7 @@ type deviceTransport struct {
 	from, to register
 }
 
-func (instr deviceTransport) ID() int { return -1 }
+func (instr deviceTransport) ID() int64 { return -1 }
 func (instr deviceTransport) reads() []register {
 	return []register{instr.from}
 }
