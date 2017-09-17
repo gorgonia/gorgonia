@@ -1,17 +1,19 @@
 # Significant Contributors #
 
-* Xuanyi Chew @chewxy - initial package
-* Naseer Dari @ndari - errors and error handling
-* Joe  Kabaka @kabaka0 - masked array functionality
+* Xuanyi Chew (@chewxy) - initial package
+* Naseer Dari (@ndari) - errors and error handling
+* Joe Kabaka (@kabaka0) - masked array functionality
 
 # Contributors
 
 
 * Andrew Murray | @radarhere
 * Ankit Raj | @aj0t
-* Yuanlin Lian | @alienchow
 * David Soller | @3ygun
+* Davor Kapsa | @dvrkps
 * James Michael DuPont | @h4ck3rm1k3
+* Jorge Landivar | @docmerlin
+* Yuanlin Lian | @alienchow
 
 
 

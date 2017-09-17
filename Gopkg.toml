@@ -33,18 +33,22 @@ ignored = ["github.com/alecthomas/assert"]
 [[constraint]]
   branch = "master"
   name = "github.com/chewxy/hm"
+  version = "~1.0.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/chewxy/math32"
+  version = "~1.0.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/chewxy/vecf32"
+  version = '~0.8.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/chewxy/vecf64"
+  version = '~0.8.0"
 
 [[constraint]]
   branch = "master"
