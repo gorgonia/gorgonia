@@ -43,6 +43,11 @@ func returnNode(n *Node) {
 	nodePool.Put(n)
 }
 
+func ReturnNode(n *Node) {
+	n.g = nil
+	returnNode(n)
+}
+
 // handles Returning of Values
 
 var dvpool = &sync.Pool{

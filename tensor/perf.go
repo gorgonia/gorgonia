@@ -230,6 +230,11 @@ func ReturnInts(is []int) {
 	if is == nil {
 		return
 	}
+	// if len(is) == 2 && is[0] == 52 && is[1] == 10 {
+	// 	log.Printf("ints %v", is)
+	// 	pc, _, _, _ := runtime.Caller(3)
+	// 	log.Printf("Called: %v", runtime.FuncForPC(pc).Name())
+	// }
 	size := cap(is)
 	if size > maxDims {
 		return
