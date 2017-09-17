@@ -5,10 +5,10 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 type errorStacker interface {

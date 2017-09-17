@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // Value represents a value that Gorgonia accepts. At this point it is implemented by:

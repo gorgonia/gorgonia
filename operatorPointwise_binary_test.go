@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err error) {

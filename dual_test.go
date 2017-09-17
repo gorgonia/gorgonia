@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func Test_dvBind0(t *testing.T) {

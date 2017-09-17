@@ -1,8 +1,8 @@
 package tensor
 
 import (
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 func (e StdEng) Transpose(a Tensor, expStrides []int) error {
@@ -257,4 +257,3 @@ func (e StdEng) denseTransposeArbitrary(a DenseTensor, expStrides []int) {
 		i = dest
 	}
 }
-

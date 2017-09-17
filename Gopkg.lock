@@ -14,16 +14,16 @@
   revision = "12e8b106ce46d83d03d2b597f8f180dd59e0ae6b"
 
 [[projects]]
-  branch = "master"
   name = "github.com/chewxy/hm"
   packages = ["."]
-  revision = "b848cc4452055ea6549d5a273911d6542180a276"
+  revision = "61efb3290a086d1335e8954b3734c102126818ba"
+  version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/chewxy/math32"
   packages = ["."]
   revision = "d1e7b22839c693f54edf7811dd9487623abf2cd2"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -121,9 +121,15 @@
   packages = ["blas/netlib","internal/binding"]
   revision = "d22599e22c25311208d69b30773390fc4d359d1f"
 
+[[projects]]
+  branch = "master"
+  name = "gorgonia.org/tensor"
+  packages = [".","internal/execution","internal/storage"]
+  revision = "4ae6e89fff61e8ddc694154f836f93bf56a642dc"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f64585f59a5544373f157ab4db03f33522d4ed1a8348f4b0ad9b874258ea0729"
+  inputs-digest = "26c3e71038f7bc8f8b63461af0b074f06c5081441cd7d9a726cb1583e6d40883"
   solver-name = "gps-cdcl"
   solver-version = 1

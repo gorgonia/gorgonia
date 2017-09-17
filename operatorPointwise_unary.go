@@ -1,8 +1,8 @@
 package gorgonia
 
 import (
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // a ʘUnaryOperator is essentially a function that takes a float32 or float64 and returns the same

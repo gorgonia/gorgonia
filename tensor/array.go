@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 // array is the underlying generic array.

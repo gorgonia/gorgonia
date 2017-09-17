@@ -1,6 +1,6 @@
 package gorgonia
 
-import "github.com/chewxy/gorgonia/tensor"
+import "gorgonia.org/tensor"
 
 var scalarShape = tensor.ScalarShape()
 

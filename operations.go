@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // contains all public operations that can be performed on nodes

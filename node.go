@@ -9,9 +9,9 @@ import (
 	"log"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // A Node is a node in the computation graph

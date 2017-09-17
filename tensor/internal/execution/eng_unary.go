@@ -5,8 +5,8 @@ package execution
 import (
 	"reflect"
 
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 func (e E) Neg(t reflect.Type, a *storage.Header) (err error) {

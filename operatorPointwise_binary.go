@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"math"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 type incrDoerBinOp interface {

@@ -20,9 +20,9 @@ import (
 	"hash"
 	"hash/fnv"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 /* ELEMENTWISE BINARY OPERATION */

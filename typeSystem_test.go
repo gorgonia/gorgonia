@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 // TODO: gather edge cases

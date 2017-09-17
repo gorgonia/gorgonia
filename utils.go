@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/math32"
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/tensor"
 )
 
 func graphNodeToNode(in []graph.Node) (out Nodes) {

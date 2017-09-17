@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 func loadStatic() (w, x, y []float64) {

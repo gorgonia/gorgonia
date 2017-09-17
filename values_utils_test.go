@@ -3,7 +3,7 @@ package gorgonia
 import (
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 var cloneValTests = []Value{

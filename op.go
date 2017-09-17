@@ -5,9 +5,9 @@ import (
 	"hash"
 	"hash/fnv"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // DimSizer is any type (typically a tensor.Shape) that allows querying for a dimension size given an input dimension.

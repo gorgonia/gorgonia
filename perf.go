@@ -3,8 +3,8 @@ package gorgonia
 import (
 	"sync"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
+	"gorgonia.org/tensor"
 )
 
 var nodePool = &sync.Pool{
@@ -43,6 +43,7 @@ func returnNode(n *Node) {
 	nodePool.Put(n)
 }
 
+// ReturnNode returns a node to the pool. It does not check that the *Node has been removed from the graph. USE WITH CAUTION.
 func ReturnNode(n *Node) {
 	n.g = nil
 	returnNode(n)
@@ -128,6 +129,7 @@ func returnTensorType(t *TensorType) {
 	tensorTypePool.Put(t)
 }
 
+// ReturnType
 func ReturnType(t hm.Type) {
 	switch tt := t.(type) {
 	case *TensorType:
@@ -136,5 +138,7 @@ func ReturnType(t hm.Type) {
 		// do nothing
 	case tensor.Dtype:
 		// do nothing
+	case *hm.FunctionType:
+		hm.ReturnFnType(tt)
 	}
 }

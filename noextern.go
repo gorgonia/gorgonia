@@ -2,7 +2,7 @@
 
 package gorgonia
 
-import "github.com/chewxy/gorgonia/tensor"
+import "gorgonia.org/tensor"
 
 // CUDA indicates if this build is using CUDA
 const CUDA = false

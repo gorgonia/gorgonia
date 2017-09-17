@@ -4,9 +4,9 @@ import (
 	"math"
 	"time"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // This file provides several weight initialization utility functions.

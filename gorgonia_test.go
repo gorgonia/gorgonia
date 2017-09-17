@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"testing"
 
-	nd "github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
+	nd "gorgonia.org/tensor"
 )
 
 func TestNewConstant(t *testing.T) {

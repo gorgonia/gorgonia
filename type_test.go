@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func TestDtypeBasics(t *testing.T) {

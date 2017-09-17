@@ -14,8 +14,8 @@ import (
 	"runtime/pprof"
 
 	T "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/tensor"
 	"gonum.org/v1/gonum/blas/gonum"
+	"gorgonia.org/tensor"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")

@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	. "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 type Neuron struct {

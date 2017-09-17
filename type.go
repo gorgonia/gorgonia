@@ -3,8 +3,8 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
+	"gorgonia.org/tensor"
 )
 
 var (

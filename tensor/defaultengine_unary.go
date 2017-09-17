@@ -3,8 +3,8 @@
 package tensor
 
 import (
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 func (e StdEng) Neg(a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // This file deals with the compilation from a expression graph into a program

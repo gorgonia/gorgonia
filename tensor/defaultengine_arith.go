@@ -3,8 +3,8 @@
 package tensor
 
 import (
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 // Add performs a + b elementwise. Both a and b must have the same shape.

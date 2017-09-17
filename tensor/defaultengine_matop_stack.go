@@ -1,8 +1,8 @@
 package tensor
 
 import (
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 // This file contains code for the execution engine to stack tensors

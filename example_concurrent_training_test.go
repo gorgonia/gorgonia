@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	. "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 const (

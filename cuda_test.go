@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 func TestDevCUDA(t *testing.T) {

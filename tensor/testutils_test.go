@@ -11,8 +11,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/chewxy/math32"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 func randomBool() bool {

@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	. "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 var hiddenSizes = []int{100}

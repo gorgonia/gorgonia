@@ -6,7 +6,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 func TestGeneraCUDA_init(t *testing.T) {

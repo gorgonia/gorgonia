@@ -9,7 +9,7 @@ import (
 	"os"
 
 	. "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 type StackedDA struct {

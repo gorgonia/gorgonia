@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 type tapeMachine struct {

@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 type lispMachine struct {

@@ -3,10 +3,10 @@ package gorgonia
 import (
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/stretchr/testify/assert"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/topo"
+	"gorgonia.org/tensor"
 )
 
 func TestGraphBasics(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func TestBroadcastPattern(t *testing.T) {

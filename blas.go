@@ -3,9 +3,9 @@ package gorgonia
 import (
 	"sync"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"gonum.org/v1/gonum/blas"
 	"gonum.org/v1/gonum/blas/gonum"
+	"gorgonia.org/tensor"
 )
 
 var blasdoor sync.Mutex

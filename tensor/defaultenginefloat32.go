@@ -3,9 +3,9 @@ package tensor
 import (
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor/internal/execution"
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/execution"
+	"gorgonia.org/tensor/internal/storage"
 
 	"github.com/chewxy/vecf32"
 )

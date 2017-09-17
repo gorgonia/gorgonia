@@ -8,7 +8,7 @@ import (
 	"math"
 	"os"
 
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 const numLabels = 10

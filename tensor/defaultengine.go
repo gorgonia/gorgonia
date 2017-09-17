@@ -3,8 +3,8 @@ package tensor
 import (
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor/internal/execution"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/execution"
 )
 
 // StdEng is the default execution engine that comes with the tensors. To use other execution engines, use the WithEngine construction option.

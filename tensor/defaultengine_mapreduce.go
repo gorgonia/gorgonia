@@ -3,9 +3,9 @@ package tensor
 import (
 	"reflect"
 
-	"github.com/chewxy/gorgonia/tensor/internal/execution"
-	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor/internal/execution"
+	"gorgonia.org/tensor/internal/storage"
 )
 
 func (e StdEng) Map(fn interface{}, a Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
