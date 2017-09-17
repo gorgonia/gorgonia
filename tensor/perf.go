@@ -235,9 +235,9 @@ func ReturnInts(is []int) {
 		return
 	}
 	is = is[:cap(is)]
-	// for i := range is {
-	// 	is[i] = 0
-	// }
+	for i := range is {
+		is[i] = 0
+	}
 
 	// if len(intsPool) < cap(intsPool) {
 	// 	intsPool <- is

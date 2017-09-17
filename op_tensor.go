@@ -26,7 +26,7 @@ func (op atOp) Arity() int { return 1 }
 //		op :: Tensor a → a
 func (op atOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	tt := newTensorType(op.d, a)
+	tt := makeTensorType(op.d, a)
 
 	return hm.NewFnType(tt, a)
 }
@@ -92,7 +92,7 @@ func (op sizeOp) Type() hm.Type {
 		return hm.NewFnType(a, a)
 	}
 
-	tt := newTensorType(op.d, a)
+	tt := makeTensorType(op.d, a)
 	return hm.NewFnType(tt, a)
 }
 
@@ -222,14 +222,14 @@ func (op repeatOp) Type() hm.Type {
 	if op.arg0Dim == 0 {
 		i0t = a
 	} else {
-		i0t = newTensorType(op.arg0Dim, a)
+		i0t = makeTensorType(op.arg0Dim, a)
 	}
 
 	// if we know the result already, then we know the return type as well
 	if op.d == 0 && op.inputShape != nil {
 		rt = a
 	} else {
-		rt = newTensorType(op.d, a)
+		rt = makeTensorType(op.d, a)
 	}
 
 	var ft hm.Types
@@ -518,7 +518,7 @@ func (op *sliceOp) Arity() int { return 1 }
 // The latter is in the case where the resulting dimensions is 0, returning a scalar
 func (op *sliceOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	tt := newTensorType(op.d, a)
+	tt := makeTensorType(op.d, a)
 
 	var selection int
 
@@ -533,7 +533,7 @@ func (op *sliceOp) Type() hm.Type {
 			return hm.NewFnType(tt, a)
 		}
 
-		tt2 := newTensorType(op.d-1, a)
+		tt2 := makeTensorType(op.d-1, a)
 		return hm.NewFnType(tt, tt2)
 	}
 
@@ -697,7 +697,7 @@ type sliceIncrOp struct {
 func (op sliceIncrOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	b := hm.TypeVariable('c')
-	tt := newTensorType(op.d, a)
+	tt := makeTensorType(op.d, a)
 
 	retVal := hm.NewFnType(tt, b, tt)
 	return retVal
@@ -899,7 +899,7 @@ func (op transposeOp) Arity() int { return 1 }
 // 		transpose :: Tensor a → Tensor a
 func (op transposeOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	tt := newTensorType(op.d, a)
+	tt := makeTensorType(op.d, a)
 
 	return hm.NewFnType(tt, tt)
 }
@@ -1035,7 +1035,7 @@ func (op concatOp) Arity() int { return -1 }
 // concat only works for Tensor types
 //		concat :: Tensor a → Tensor a → ... → Tensor a
 func (op concatOp) Type() hm.Type {
-	tt := newTensorType(op.d, hm.TypeVariable('a'))
+	tt := makeTensorType(op.d, hm.TypeVariable('a'))
 	fnt := make([]hm.Type, op.children+1)
 	for i := range fnt {
 		fnt[i] = tt

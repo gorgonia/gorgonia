@@ -53,7 +53,7 @@ func NewScalar(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewVector creates a Node representing a variable that holds a vector (nx1 matrix)
 func NewVector(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
-	tt := newTensorType(1, t)
+	tt := makeTensorType(1, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
@@ -62,7 +62,7 @@ func NewVector(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewMatrix creates a Node representing a variable that holds a matrix (nxm)
 func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
-	tt := newTensorType(2, t)
+	tt := makeTensorType(2, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
@@ -71,7 +71,7 @@ func NewMatrix(g *ExprGraph, t tensor.Dtype, opts ...NodeConsOpt) *Node {
 
 // NewTensor creates a Node representing a variable that holds a tensor (any n-dimensional array with dimensions greater than 2)
 func NewTensor(g *ExprGraph, t tensor.Dtype, dims int, opts ...NodeConsOpt) *Node {
-	tt := newTensorType(dims, t)
+	tt := makeTensorType(dims, t)
 	curOpts := []NodeConsOpt{WithType(tt), In(g)}
 	curOpts = append(curOpts, opts...)
 
@@ -120,7 +120,7 @@ func UniformRandomNode(g *ExprGraph, dt tensor.Dtype, low, high float64, shape .
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
-		t = newTensorType(s.Dims(), dt)
+		t = makeTensorType(s.Dims(), dt)
 	}
 
 	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
@@ -138,7 +138,7 @@ func GaussianRandomNode(g *ExprGraph, dt tensor.Dtype, mean, stdev float64, shap
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
-		t = newTensorType(s.Dims(), dt)
+		t = makeTensorType(s.Dims(), dt)
 	}
 
 	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))
@@ -159,7 +159,7 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 	if s.Eq(scalarShape) {
 		t = dt
 	} else {
-		t = newTensorType(s.Dims(), dt)
+		t = makeTensorType(s.Dims(), dt)
 	}
 
 	retVal := NewUniqueNode(WithType(t), WithOp(op), In(g), WithShape(shape...))

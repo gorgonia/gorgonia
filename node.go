@@ -134,7 +134,7 @@ func WithValue(any interface{}) NodeConsOpt {
 		if n.t == nil {
 			n.t = t
 		} else if !n.t.Eq(t) {
-			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead", n.t, t)) // yes this is a runtime error
+			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead (%T %T)", n.t, t, n.t, t)) // yes this is a runtime error
 		}
 
 		n.bind(v)
@@ -163,7 +163,8 @@ func WithInit(fn InitWFn) NodeConsOpt {
 // WithShape is a node construction option to initialize a *Node with a particular shape.
 // This function panics if the shape's dimensions do not match the specified dimensions of the *Node.
 func WithShape(shp ...int) NodeConsOpt {
-	s := tensor.Shape(shp)
+	s := tensor.Shape(tensor.BorrowInts(len(shp)))
+	copy(s, shp)
 	f := func(n *Node) {
 		nd := n.Dims()
 		// if nd == 1 && s.IsVector() {

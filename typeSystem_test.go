@@ -161,8 +161,8 @@ func init() {
 		panics   bool
 	}{
 		{"Float64", Float64, true, false},
-		{"Tensor Float64", newTensorType(1, Float64), false, false},
-		{"Tensor Float64 (special)", newTensorType(0, Float64), true, false},
+		{"Tensor Float64", makeTensorType(1, Float64), false, false},
+		{"Tensor Float64 (special)", makeTensorType(0, Float64), true, false},
 
 		// this is bad
 		{"a", hm.TypeVariable('a'), false, true},
@@ -176,12 +176,12 @@ func init() {
 		err     bool
 	}{
 		{Float64, Float64, false},
-		{newTensorType(1, Float64), Float64, false},
+		{makeTensorType(1, Float64), Float64, false},
 
 		// this is bad
 		// {hm.TypeVariable('a'), MAXDTYPE, true},
 		// {hm.TypeVariable('a'), MAXDTYPE, true},
-		// {newTensorType(1, hm.TypeVariable('a')), MAXDTYPE, true},
+		// {makeTensorType(1, hm.TypeVariable('a')), MAXDTYPE, true},
 		// {malformed{}, MAXDTYPE, true},
 	}
 }

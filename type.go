@@ -19,6 +19,17 @@ var (
 	Bool    = tensor.Bool
 
 	Ptr = tensor.UnsafePointer // equivalent to interface{}. Ugh Ugh Ugh
+
+	vecF64  = &TensorType{Dims: 1, Of: tensor.Float64}
+	vecF32  = &TensorType{Dims: 1, Of: tensor.Float32}
+	matF64  = &TensorType{Dims: 2, Of: tensor.Float64}
+	matF32  = &TensorType{Dims: 2, Of: tensor.Float32}
+	ten3F64 = &TensorType{Dims: 3, Of: tensor.Float64}
+	ten3F32 = &TensorType{Dims: 3, Of: tensor.Float32}
+
+	// removes the need for type checking
+	f64T hm.Type = tensor.Float64
+	f32T hm.Type = tensor.Float32
 )
 
 /*Tensor Type*/
@@ -36,16 +47,36 @@ type TensorType struct {
 	Of hm.Type
 }
 
-func fromTensorType(t TensorType, tv hm.TypeVariable) TensorType {
-	retVal := newTensorType(t.Dims, tv)
-	return retVal
+func makeFromTensorType(t TensorType, tv hm.TypeVariable) TensorType {
+	return makeTensorType(t.Dims, tv)
 }
 
-func newTensorType(dims int, typ hm.Type) TensorType {
+func makeTensorType(dims int, typ hm.Type) TensorType {
 	return TensorType{
 		Dims: dims,
 		Of:   typ,
 	}
+}
+
+func newTensorType(dims int, typ hm.Type) *TensorType {
+	switch {
+	case dims == 1 && typ == f64T:
+		return vecF64
+	case dims == 1 && typ == f32T:
+		return vecF32
+	case dims == 2 && typ == f64T:
+		return matF64
+	case dims == 2 && typ == f32T:
+		return matF32
+	case dims == 3 && typ == f64T:
+		return ten3F64
+	case dims == 3 && typ == f32T:
+		return ten3F32
+	}
+	t := borrowTensorType()
+	t.Dims = dims
+	t.Of = typ
+	return t
 }
 
 // Name returns the name of the type, which will always be "Tensor". Satisfies the hm.Type interface.
@@ -97,8 +128,11 @@ func (t TensorType) FreeTypeVar() hm.TypeVarSet {
 // Eq is the equality function of this type. The type of Tensor has to be the same, and for now, only the dimensions are compared.
 // Shape may be compared in the future for tighter type inference. Satisfies the hm.Type interface.
 func (t TensorType) Eq(other hm.Type) bool {
-	if ot, ok := other.(TensorType); ok {
-		return ot.Of.Eq(t.Of) && ot.Dims == t.Dims
+	switch ot := other.(type) {
+	case TensorType:
+		return t.Of.Eq(ot.Of) && t.Dims == ot.Dims
+	case *TensorType:
+		return t.Of.Eq(ot.Of) && t.Dims == ot.Dims
 	}
 	return false
 }

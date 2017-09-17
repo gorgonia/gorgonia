@@ -97,8 +97,8 @@ func (op elemBinOp) Type() hm.Type {
 	var a0, a1, retType hm.Type
 	switch arg0 := op.arg0.(type) {
 	case TensorType:
-		a0 = fromTensorType(arg0, a)
-		retType = fromTensorType(arg0, a)
+		a0 = makeFromTensorType(arg0, a)
+		retType = makeFromTensorType(arg0, a)
 	default:
 		a0 = a
 		retType = a
@@ -106,8 +106,8 @@ func (op elemBinOp) Type() hm.Type {
 
 	switch arg1 := op.arg1.(type) {
 	case TensorType:
-		a1 = fromTensorType(arg1, a)
-		retType = fromTensorType(arg1, a)
+		a1 = makeFromTensorType(arg1, a)
+		retType = makeFromTensorType(arg1, a)
 	default:
 		a1 = a
 	}

@@ -18,7 +18,7 @@ func TestNewConstant(t *testing.T) {
 	T := nd.New(nd.WithBacking(backing), nd.WithShape(3, 3))
 
 	ct := NewConstant(T)
-	expectedTT := newTensorType(2, Float64)
+	expectedTT := makeTensorType(2, Float64)
 	expectedType = expectedTT
 
 	assert.Equal(nd.Shape{3, 3}, ct.shape)

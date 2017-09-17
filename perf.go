@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/chewxy/gorgonia/tensor"
+	"github.com/chewxy/hm"
 )
 
 var nodePool = &sync.Pool{
@@ -19,6 +20,9 @@ func returnNode(n *Node) {
 	}
 
 	// zero out any data in the node
+	ReturnType(n.t)
+	tensor.ReturnInts(n.shape)
+
 	n.t = nil
 	n.shape = nil
 	n.op = nil
@@ -95,4 +99,37 @@ func returnDimSizers(ds []DimSizer) {
 		ds[i] = nil
 	}
 	pool.Put(ds)
+}
+
+var tensorTypePool = &sync.Pool{
+	New: func() interface{} { return new(TensorType) },
+}
+
+func borrowTensorType() *TensorType {
+	return tensorTypePool.Get().(*TensorType)
+}
+
+func returnTensorType(t *TensorType) {
+	switch t {
+	case vecF64, vecF32:
+		return
+	case matF64, matF32:
+		return
+	case ten3F64, ten3F32:
+		return
+	}
+	t.Of = nil
+	t.Dims = 0
+	tensorTypePool.Put(t)
+}
+
+func ReturnType(t hm.Type) {
+	switch tt := t.(type) {
+	case *TensorType:
+		returnTensorType(tt)
+	case TensorType:
+		// do nothing
+	case tensor.Dtype:
+		// do nothing
+	}
 }

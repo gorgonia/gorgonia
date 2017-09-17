@@ -122,7 +122,7 @@ func TestNodeBasics(t *testing.T) {
 
 	// shape type mismatch
 	f = func() {
-		n = newNode(In(g), WithType(newTensorType(1, Float64)), WithShape(2, 1))
+		n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
 	}
 	assert.Panics(t, f)
 }
