@@ -228,7 +228,7 @@ func newCharRNN(m *model) *charRNN {
 	return r
 }
 
-func (r *charRNN) inputs() (retVal Nodes) {
+func (r *charRNN) learnables() (retVal Nodes) {
 	for _, l := range r.ls {
 		lin := Nodes{
 			l.wix,
@@ -480,7 +480,7 @@ func run(r *charRNN, iter int, solver Solver) (retCost, retPerp float32, err err
 	}
 	machine.UnbindAll()
 
-	err = solver.Step(r.inputs())
+	err = solver.Step(r.learnables())
 	if err != nil {
 		return
 	}
