@@ -303,15 +303,12 @@ func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	default:
 		return nil, errors.Errorf("log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
-
-	if retVal, err = HadamardProd(x, log2); err == nil {
-		WithGroupName(gradClust)(retVal)
-		retVal, err = HadamardDiv(gradY, retVal)
-		if err != nil {
-			return nil, errors.Wrap(err, hadamardDivFail)
-		}
-	} else {
+	if retVal, err = HadamardDiv(x, log2); err != nil {
 		return nil, errors.Wrap(err, hadamardProdFail)
+	}
+	WithGroupName(gradClust)(retVal)
+	if retVal, err = HadamardDiv(gradY, retVal); err != nil {
+		return nil, errors.Wrap(err, hadamardDivFail)
 	}
 	return
 }
