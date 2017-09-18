@@ -145,3 +145,38 @@ func (op randomOp) Hashcode() uint32 {
 func (op randomOp) String() string {
 	return fmt.Sprintf("%v(%v, %v) - %v", op.which, op.a, op.b, op.shape)
 }
+
+// clampOp is a constant clamping operation
+type clampOp struct {
+	min, max Scalar
+}
+
+func (op *clampOp) Arity() int { return 1 }
+
+func (op *clampOp) Type() hm.Type {
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
+}
+
+func (op *clampOp) InferShape(shps ...DimSizer) (tensor.Shape, error) {
+	return shps[0].(tensor.Shape), nil
+}
+
+func (op *clampOp) Do(vals ...Value) (Value, error) {
+	return nil, nil
+}
+
+func (op *clampOp) ReturnsPtr() bool { return true }
+
+func (op *clampOp) CallsExtern() bool { return false }
+
+func (op *clampOp) OverwritesInput() int { return 0 }
+
+func (op *clampOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "ConstClamp{%f, %f}()", op.min, op.max) }
+
+func (op *clampOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op *clampOp) String() string { return fmt.Sprintf("ConstClamp{%f, %f}()", op.min, op.max) }

@@ -565,15 +565,18 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 	case matMulOperator:
 		if op.transA {
 			x = transpose2D(x)
+			defer tensor.ReturnInts(x)
 		}
 		if op.transB {
 			y = transpose2D(y)
+			defer tensor.ReturnInts(y)
 		}
 
 		retVal = tensor.Shape{x[0], y[1]}
 	case matVecMulOperator:
 		if op.transA {
 			x = transpose2D(x)
+			defer tensor.ReturnInts(x)
 		}
 		if x[0] != y[0] && x[1] != y[0] {
 			return nil, errors.Errorf("Incompatible shapes: %v and %v", x, y)
@@ -591,6 +594,27 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 	case outerProdOperator:
 		// outerprods only handles vec x vec for now
 		retVal = tensor.Shape{x.TotalSize(), y.TotalSize()}
+	case batchedMatMulOperator:
+		// check that x and y are 3
+		if x.Dims() != 3 {
+			return nil, errors.Errorf("BatchedMatMul only works with 3D tensors as x")
+		}
+		if y.Dims() != 3 {
+			return nil, errors.Errorf("BatchedMatMul only works with 3D tensors as y")
+		}
+		if x[0] != y[0] {
+			return nil, errors.Errorf("BatchedMatMul has encounted a batch mismatch: %v %v", x, y)
+		}
+		batchSize := x[0]
+		if op.transA {
+			x = transpose2D(x[1:])
+			defer tensor.ReturnInts(x)
+		}
+		if op.transB {
+			y = transpose2D(y[1:])
+			defer tensor.ReturnInts(y)
+		}
+		retVal = tensor.Shape{batchSize, x[0], y[1]}
 	}
 	return
 }
@@ -757,6 +781,8 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		retVal, _ = anyToScalar(ret)
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
+	case batchedMatMulOperator:
+		// do something
 	}
 	return
 

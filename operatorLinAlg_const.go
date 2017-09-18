@@ -17,6 +17,7 @@ var āBinOpDiffExprs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z, grad *Nod
 	matVecMulDiffExpr,
 	vecDotDiffExpr,
 	outerProdDiffExpr,
+	batchedMatMulDiffExpr,
 }
 
 var āBinOpDiffs = [maxĀBinaryOperator]func(ctx ExecutionContext, tA, tB bool, x, y, z *Node) error{
@@ -24,6 +25,7 @@ var āBinOpDiffs = [maxĀBinaryOperator]func(ctx ExecutionContext, tA, tB bool, 
 	matVecMulDiff,
 	vecDotDiff,
 	outerProdDiff,
+	batchedMatMulDiff,
 }
 
 var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
@@ -31,6 +33,7 @@ var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
 	matVecMulType,
 	vecDotType,
 	outerProdType,
+	batchedMatMulType,
 }
 
 /* TYPES FOR LINALG BINARY OP*/
@@ -79,4 +82,10 @@ func outerProdType() hm.Type {
 	m := makeTensorType(2, a)
 
 	return hm.NewFnType(v, v, m)
+}
+
+func batchedMatMulType() hm.Type {
+	a := hm.TypeVariable('a')
+	t := makeTensorType(3, a)
+	return hm.NewFnType(t, t, t)
 }

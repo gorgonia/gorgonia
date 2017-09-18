@@ -69,3 +69,11 @@ func nyi(what string, implFor interface{}) error {
 func nondiffErr(op Op) error {
 	return errors.Errorf("%s is a non-differentiable function", op)
 }
+
+// checkErrSetDeriv sets the deriv if the error is a Valuer. Helper function for linalg operations
+func checkErrSetDeriv(err error, dv *dualValue) error {
+	if ver, ok := err.(Valuer); ok {
+		return dv.SetDeriv(ver.Value())
+	}
+	return err
+}
