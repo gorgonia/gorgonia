@@ -7,10 +7,12 @@ import "gorgonia.org/tensor"
 // CUDA indicates if this build is using CUDA
 const CUDA = false
 
+var _ tensor.Engine = ExternMetadata{}
+
 // ExternMetadata is used to hold metadata about external execution devices.
 // In this build, it's an empty struct because the default build doesn't use external devices to execute the graph on
 type ExternMetadata struct {
-	tensor.StdEng
+	tensor.Engine
 	b             batchedBLAS
 	workAvailable chan bool
 	syncChan      chan struct{}
@@ -94,6 +96,8 @@ func (m *ExternMetadata) signal() {
 		m.workAvailable <- true
 	}
 }
+
+func (m *ExternMetadata) setEngine(e tensor.Engine) { m.Engine = e }
 
 // ValueOnDevice gets the value of the node as a Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Value()
 func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {

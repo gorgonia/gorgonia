@@ -13,7 +13,7 @@ import (
 )
 
 type tapeMachine struct {
-	*ExternMetadata
+	ExternMetadata
 
 	p      *program
 	locMap map[*Node]register
@@ -41,9 +41,9 @@ type tapeMachine struct {
 // NewTapeMachine creates a VM that compiles a graph into a prog.
 func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
-		ExternMetadata: new(ExternMetadata),
-		valueFmt:       "%3.3g",
+		valueFmt: "%3.3g",
 	}
+	m.Engine = tensor.StdEng{}
 
 	if b, ok := whichblas.(batchedBLAS); ok {
 		m.b = b
@@ -213,7 +213,6 @@ func (m *tapeMachine) RunAll() (err error) {
 				return err
 			}
 			return nil
-		default:
 		}
 	}
 	return

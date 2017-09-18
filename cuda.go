@@ -9,9 +9,12 @@ import (
 
 	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 const CUDA = true
+
+var _ tensor.Engine = ExternMetadata{}
 
 const (
 	// Any address of a variable residing in global memory or returned by one of the
@@ -474,6 +477,8 @@ func (m *ExternMetadata) signal() { m.workAvailable <- true }
 func calcBlocks(n, maxThreads int) int {
 	return (n + maxThreads - 1) / maxThreads
 }
+
+func (m *ExternMetadata) setEngine(e tensor.Engine) {}
 
 // AddToStdLib allows for custom ops to be included into the "stdlib" of CUDA functions, so that when the VMs are created, they're loaded automatically
 // without having to specify extra loading.

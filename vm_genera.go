@@ -13,7 +13,7 @@ import (
 )
 
 type lispMachine struct {
-	*ExternMetadata
+	ExternMetadata
 	g *ExprGraph
 	q []adInstr // a to-do list of differentiation instructions
 
@@ -44,14 +44,14 @@ type lispMachine struct {
 func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	runFlags := (byte(0) | (byte(1) << fwdOnly)) | (1 << bwdOnly) // run fwd and backwards
 	m := &lispMachine{
-		ExternMetadata: new(ExternMetadata),
-		g:              g,
-		fwd:            -1,
-		bwd:            -1,
-		valueFmt:       "%3.3f",
-		logFlags:       0x0,      // log nothing
-		runFlags:       runFlags, // run only fwd and bwd
+		g:        g,
+		fwd:      -1,
+		bwd:      -1,
+		valueFmt: "%3.3f",
+		logFlags: 0x0,      // log nothing
+		runFlags: runFlags, // run only fwd and bwd
 	}
+	m.Engine = tensor.StdEng{}
 
 	for _, opt := range opts {
 		opt(m)
