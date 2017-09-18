@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // ā and Ā are used to denote that it's a matrix/vector type.
@@ -427,4 +428,48 @@ func batchedMatMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node)
 	}
 
 	panic("unreachable")
+}
+
+func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal tensor.Tensor, err error) {
+	shapeA := a.Shape()
+	shapeB := b.Shape()
+
+	batchSize := shapeA[0]
+
+	if c == nil {
+		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(batchSize, shapeA[2], shapeB[1]))
+	}
+
+	var as, bs, cs tensor.Tensor
+	for i := 0; i < batchSize; i++ {
+		if as, err = a.Slice(S(i)); err != nil {
+
+		}
+		if bs, err = b.Slice(S(i)); err != nil {
+
+		}
+		if cs, err = c.Slice(S(i)); err != nil {
+
+		}
+
+		if transA {
+			as.T()
+		}
+		if transB {
+			bs.T()
+		}
+
+		var fo tensor.FuncOpt
+		if incr {
+			fo = tensor.WithIncr(cs)
+		} else {
+			fo = tensor.WithReuse(cs)
+		}
+
+		if _, err = tensor.MatMul(as, bs, fo); err != nil {
+
+		}
+	}
+
+	return c, nil
 }

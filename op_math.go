@@ -711,8 +711,12 @@ func (op linAlgBinOp) String() string {
 func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 	t, ok := incr.(tensor.Tensor)
 
-	if ok {
+	switch {
+	case ok && op.āBinaryOperator != batchedMatMulOperator:
 		_, err = op.do(inputs, tensor.WithIncr(t))
+		return
+	case ok && op.āBinaryOperator == batchedMatMulOperator:
+		_, err = op.preallocBatchMatMul(true, incr, inputs...)
 		return
 	}
 
@@ -736,7 +740,9 @@ func (op linAlgBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Val
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", prealloc, prealloc)
 	}
-
+	if op.āBinaryOperator == batchedMatMulOperator {
+		return op.preallocBatchMatMul(false, prealloc, inputs...)
+	}
 	return op.do(inputs, tensor.WithReuse(t))
 }
 
@@ -752,7 +758,7 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 
 	a, b := inputs[0].(tensor.Tensor), inputs[1].(tensor.Tensor)
 
-	if op.transA {
+	if op.transA && op.āBinaryOperator != batchedMatMulOperator {
 		if err = a.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
@@ -760,7 +766,7 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		defer a.T()
 	}
 
-	if op.transB {
+	if op.transB && op.āBinaryOperator != batchedMatMulOperator {
 		if err = b.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
@@ -782,8 +788,18 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
 	case batchedMatMulOperator:
-		// do something
+		// checks were done when the op was created
+		retVal, err = batchedMatMul(a, b, nil, op.transA, op.transB, false)
 	}
 	return
 
+}
+
+func (op linAlgBinOp) preallocBatchMatMul(incr bool, prealloc Value, inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	a, b := inputs[0].(tensor.Tensor), inputs[1].(tensor.Tensor)
+	c := prealloc.(tensor.Tensor)
+	return batchedMatMul(a, b, c, op.transA, op.transB, incr)
 }
