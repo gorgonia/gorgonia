@@ -3,10 +3,6 @@ set -ex
 go env
 
 go test -v -a -covermode=atomic -coverprofile=test.cover .
-go test -v -a -covermode=atomic -coverprofile=./tensor/test.cover ./tensor/
-
-go test -tags='avx' -a  ./tensor/
-go test -tags='sse' -a  ./tensor/
 go test -tags='avx' -a  .
 go test -tags='sse' -a  .
 
