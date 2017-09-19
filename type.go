@@ -32,6 +32,8 @@ var (
 	f32T hm.Type = tensor.Float32
 )
 
+var acceptableDtypes = [...]tensor.Dtype{tensor.Float64, tensor.Float32, tensor.Int, tensor.Int64, tensor.Int32, tensor.Byte, tensor.Bool}
+
 /*Tensor Type*/
 
 // TensorType is a type constructor for tensors.

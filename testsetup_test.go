@@ -3,6 +3,8 @@ package gorgonia
 import (
 	"fmt"
 	"log"
+	"math/rand"
+	"reflect"
 	"runtime"
 
 	"github.com/chewxy/hm"
@@ -269,4 +271,25 @@ func deepNodeEq(a, b *Node) bool {
 		}
 	}
 	return true
+}
+
+type ValueGenerator struct {
+	shapeConstraint tensor.Shape // [0, 6, 0] implies that the second dimension is the constraint. 0 is any.
+	typeConstraint  tensor.Dtype
+}
+
+func (g ValueGenerator) Generate(r *rand.Rand, size int) reflect.Value {
+	// generate scalar or tensor
+	// ri := r.Intn(2)
+	// of := acceptableDtypes[r.Intn(len(acceptableDtypes))]
+
+	var retVal Value
+	return reflect.ValueOf(retVal)
+}
+
+type NodeGenerator struct{}
+
+func (g NodeGenerator) Generate(r *rand.Rand, size int) reflect.Value {
+	var n *Node
+	return reflect.ValueOf(n)
 }

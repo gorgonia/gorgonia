@@ -54,10 +54,7 @@ var mulTests = []struct {
 
 func TestMul(t *testing.T) {
 	defer runtime.GC()
-
 	assert := assert.New(t)
-
-	t.Logf("Testing Mul with TapeMachine")
 	for _, mts := range mulTests {
 		g := NewGraph()
 		x := NewTensor(g, Float64, mts.xshape.Dims(), WithName(mts.name), WithShape(mts.xshape...), WithInit(RangedFrom(0)))

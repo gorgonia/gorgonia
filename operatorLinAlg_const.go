@@ -9,7 +9,7 @@ var āBinOpStrs = [maxĀBinaryOperator]string{
 	"×",
 	"⋅",
 	"⊗",
-	// "×××",
+	"×××",
 }
 
 var āBinOpDiffExprs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z, grad *Node) (Nodes, error){

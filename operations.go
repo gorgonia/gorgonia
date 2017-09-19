@@ -149,7 +149,12 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 	default:
 		return nil, errors.Errorf(nyiFail, "Mul", fmt.Sprintf("a %v b %v", a.shape, b.shape))
 	}
+}
 
+// BatchedMatMul returns a node representing the batched mat mul operation
+func BatchedMatMul(a, b *Node) (retVal *Node, err error) {
+	op := linAlgBinOp{āBinaryOperator: batchedMatMulOperator}
+	return binOpNode(op, a, b)
 }
 
 // OuterProd returns a Node representing the outer product of two vectors. This function will return an error if both input nodes are not vectors
