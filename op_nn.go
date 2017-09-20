@@ -15,6 +15,8 @@ import (
 var (
 	_ Op = im2colOp{}
 	_ Op = col2imOp{}
+	_ Op = &maxPoolOp{}
+	_ Op = &maxPoolDiffOp{}
 )
 
 /*
@@ -465,4 +467,56 @@ func (op col2imOp) f32s(channels, height, width int, col, im []float32) {
 			}
 		}
 	}
+}
+
+type maxPoolOp struct {
+	unpadded         tensor.Shape
+	h, w             int // patch height and width
+	padH, padW       int
+	strideH, strideW int
+}
+
+func (op *maxPoolOp) Arity() int                                     { return 1 }
+func (op *maxPoolOp) Type() hm.Type                                  { return nil }
+func (op *maxPoolOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
+func (op *maxPoolOp) Do(...Value) (Value, error)                     { return nil, nil }
+func (op *maxPoolOp) ReturnsPtr() bool                               { return true }
+func (op *maxPoolOp) CallsExtern() bool                              { return false }
+func (op *maxPoolOp) OverwritesInput() int                           { return -1 }
+func (op *maxPoolOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "MaxPool{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+}
+func (op *maxPoolOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+func (op *maxPoolOp) String() string {
+	return fmt.Sprintf("MaxPool{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+}
+
+type maxPoolDiffOp struct {
+	unpadded         tensor.Shape
+	h, w             int // patch height and width
+	padH, padW       int
+	strideH, strideW int
+}
+
+func (op *maxPoolDiffOp) Arity() int                                     { return 1 }
+func (op *maxPoolDiffOp) Type() hm.Type                                  { return nil }
+func (op *maxPoolDiffOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
+func (op *maxPoolDiffOp) Do(...Value) (Value, error)                     { return nil, nil }
+func (op *maxPoolDiffOp) ReturnsPtr() bool                               { return true }
+func (op *maxPoolDiffOp) CallsExtern() bool                              { return false }
+func (op *maxPoolDiffOp) OverwritesInput() int                           { return -1 }
+func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "MaxPoolDiff{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+}
+func (op *maxPoolDiffOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+func (op *maxPoolDiffOp) String() string {
+	return fmt.Sprintf("MaxPoolDiff{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
