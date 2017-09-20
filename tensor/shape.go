@@ -6,8 +6,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var scalarShape = Shape{}
+
 // ScalarShape represents a scalar. It has no dimensions, no sizes
-func ScalarShape() Shape { return Shape{} }
+func ScalarShape() Shape { return scalarShape }
 
 // Shape represents the dimensions of a Tensor. A (2,3) matrix has a shape of (2,3) - 2 rows, 3 columns.
 // Likewise, a shape of (2,3,4) means a Tensor has 3 dimensions: 2 layers, 3 rows, 4 columns.
@@ -23,13 +25,11 @@ func (s Shape) TotalSize() int {
 }
 
 func (s Shape) calcStrides() []int {
-	// retVal := make([]int, len(s))
-	retVal := BorrowInts(len(s))
-
 	if s.IsScalar() {
 		return nil
 	}
 
+	retVal := BorrowInts(len(s))
 	if s.IsVector() {
 		retVal[0] = 1
 		retVal = retVal[:1]
@@ -48,16 +48,14 @@ func (s Shape) calcStrides() []int {
 	return retVal
 }
 
-// calcStrideWithMask is similar to calcStrides, except that it has an argument, masks. It is used to mask out given dimensions
+// calcStridesWithMask is similar to calcStrides, except that it has an argument, masks. It is used to mask out given dimensions
 // during calculation of stride
 func (s Shape) calcStridesWithMask(mask []bool) []int {
-	// retVal := make([]int, len(s))
-	retVal := BorrowInts(len(s))
-
 	if s.IsScalar() {
 		return nil
 	}
 
+	retVal := BorrowInts(len(s))
 	if s.IsVector() {
 		retVal[0] = 1
 		retVal = retVal[:1]
@@ -83,6 +81,30 @@ func (s Shape) calcStridesWithMask(mask []bool) []int {
 		}
 	}
 
+	return retVal
+}
+
+func (s Shape) calcStridesColMajor() []int {
+	if s.IsScalar() {
+		return nil
+	}
+
+	retVal := BorrowInts(len(s))
+	if s.IsVector() {
+		retVal[0] = 1
+		retVal = retVal[:1]
+		return retVal
+	}
+
+	acc := 1
+	for i := 0; i < len(s); i++ {
+		retVal[i] = acc
+		d := s[i]
+		if d < 0 {
+			panic("negative dimension size does not make sense")
+		}
+		acc *= d
+	}
 	return retVal
 }
 
@@ -124,7 +146,7 @@ func (s Shape) Eq(other Shape) bool {
 
 // Clone clones a shape.
 func (s Shape) Clone() Shape {
-	retVal := make(Shape, len(s), len(s))
+	retVal := BorrowInts(len(s))
 	copy(retVal, s)
 	return retVal
 }

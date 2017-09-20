@@ -188,10 +188,10 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 			continue
 		}
 
-		assert.Equal([]float64{1, 4}, gradX.Data())
-		assert.Equal([]float64{0, 0, 0, 0, 1, 0}, gradY.Data())
-		assert.Equal([]float64{0, 1, 0}, gradZ.Data())
-		assert.Equal(1.0, gradC.Data())
+		assert.Equal([]float64{1, 4}, gradX.Data(), "run %d", i)
+		assert.Equal([]float64{0, 0, 0, 0, 1, 0}, gradY.Data(), "run %d", i)
+		assert.Equal([]float64{0, 1, 0}, gradZ.Data(), "run %d", i)
+		assert.Equal(1.0, gradC.Data(), "run %d", i)
 
 		// assert that the data has been unchanged
 		assert.Equal([]float64{0, 1}, x.Value().Data())

@@ -1,8 +1,9 @@
 package tensor
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMaskedInspection(t *testing.T) {
@@ -73,39 +74,39 @@ func TestMaskedInspection(t *testing.T) {
 
 	retT = T.MaskedAll(0).(*Dense)
 	assert.Equal([]int{3, 2}, []int(retT.shape))
-	assert.Equal([]bool{false, false, false, false, false, false}, retT.bools())
+	assert.Equal([]bool{false, false, false, false, false, false}, retT.Bools())
 	retT = T.MaskedAny(0).(*Dense)
 	assert.Equal([]int{3, 2}, []int(retT.shape))
-	assert.Equal([]bool{true, false, false, false, true, false}, retT.bools())
+	assert.Equal([]bool{true, false, false, false, true, false}, retT.Bools())
 	retT = T.MaskedCount(0).(*Dense)
 	assert.Equal([]int{3, 2}, []int(retT.shape))
-	assert.Equal([]int{1, 0, 0, 0, 1, 0}, retT.ints())
+	assert.Equal([]int{1, 0, 0, 0, 1, 0}, retT.Ints())
 	retT = T.NonMaskedCount(0).(*Dense)
-	assert.Equal([]int{1, 2, 2, 2, 1, 2}, retT.ints())
+	assert.Equal([]int{1, 2, 2, 2, 1, 2}, retT.Ints())
 
 	retT = T.MaskedAll(1).(*Dense)
 	assert.Equal([]int{2, 2}, []int(retT.shape))
-	assert.Equal([]bool{false, false, false, false}, retT.bools())
+	assert.Equal([]bool{false, false, false, false}, retT.Bools())
 	retT = T.MaskedAny(1).(*Dense)
 	assert.Equal([]int{2, 2}, []int(retT.shape))
-	assert.Equal([]bool{true, false, false, false}, retT.bools())
+	assert.Equal([]bool{true, false, false, false}, retT.Bools())
 	retT = T.MaskedCount(1).(*Dense)
 	assert.Equal([]int{2, 2}, []int(retT.shape))
-	assert.Equal([]int{2, 0, 0, 0}, retT.ints())
+	assert.Equal([]int{2, 0, 0, 0}, retT.Ints())
 	retT = T.NonMaskedCount(1).(*Dense)
-	assert.Equal([]int{1, 3, 3, 3}, retT.ints())
+	assert.Equal([]int{1, 3, 3, 3}, retT.Ints())
 
 	retT = T.MaskedAll(2).(*Dense)
 	assert.Equal([]int{2, 3}, []int(retT.shape))
-	assert.Equal([]bool{false, false, false, false, false, false}, retT.bools())
+	assert.Equal([]bool{false, false, false, false, false, false}, retT.Bools())
 	retT = T.MaskedAny(2).(*Dense)
 	assert.Equal([]int{2, 3}, []int(retT.shape))
-	assert.Equal([]bool{true, false, true, false, false, false}, retT.bools())
+	assert.Equal([]bool{true, false, true, false, false, false}, retT.Bools())
 	retT = T.MaskedCount(2).(*Dense)
 	assert.Equal([]int{2, 3}, []int(retT.shape))
-	assert.Equal([]int{1, 0, 1, 0, 0, 0}, retT.ints())
+	assert.Equal([]int{1, 0, 1, 0, 0, 0}, retT.Ints())
 	retT = T.NonMaskedCount(2).(*Dense)
-	assert.Equal([]int{1, 2, 1, 2, 2, 2}, retT.ints())
+	assert.Equal([]int{1, 2, 1, 2, 2, 2}, retT.Ints())
 
 }
 

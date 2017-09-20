@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
+	"log"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/gorgonia/tensor"
@@ -286,8 +287,18 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 	if n.g != nil && g == n.g {
 		return n
 	}
+	n2 := n.Clone().(*Node)
+	n2.g = g
+	n2 = g.AddNode(n2)
+	return n2
+}
 
-	n2 := newNode(In(g), WithOp(n.op), WithName(n.name), WithType(n.t))
+// Clone clones the node. There are some caveats:
+//		- the graph is not copied over - the node essentially does not belong to a collection
+//		- there is no ID
+// 		- the children are not cloned
+func (n *Node) Clone() (retVal interface{}) {
+	n2 := newNode(In(n.g), WithOp(n.op), WithName(n.name), WithType(n.t))
 	if n.shape != nil {
 		n2.shape = n.shape.Clone()
 		n2.inferredShape = n.inferredShape
@@ -296,10 +307,25 @@ func (n *Node) CloneTo(g *ExprGraph) *Node {
 	if n.boundTo != nil {
 		var err error
 		if n2.boundTo, err = CloneValue(n.boundTo); err != nil {
+			log.Printf("Unable to clone %v\n%T\n%v", n, n.boundTo, n.boundTo)
 			panic(err)
 		}
 	}
-	n2 = g.AddNode(n2)
+
+	// reset
+	n2.g = nil
+
+	// other things
+	n2.name = n.name
+	n2.group = n.group
+	n2.dataOn = n.dataOn
+	n2.hash = n.hash
+
+	n2.hashed = n.hashed
+	n2.inferredShape = n.inferredShape
+	n2.unchanged = n.unchanged
+	n2.isStmt = n.isStmt
+	n2.ofInterest = n.ofInterest
 	return n2
 }
 
@@ -496,6 +522,9 @@ func (n *Node) String() string {
 
 // TODO: check type, check shape, check if needsGrad -> promote to dualValue
 func (n *Node) bind(v Value) error {
+	// pc, _, _, _ := runtime.Caller(1)
+	// log.Printf("binding to %p. Called by %v", n, runtime.FuncForPC(pc).Name())
+
 	if n.boundTo == nil {
 		n.boundTo = v
 		return nil
@@ -511,7 +540,9 @@ func (n *Node) bind(v Value) error {
 				dv.Value = vdv.Value
 				return nil
 			}
-
+			// n.boundTo = vdv
+			// return nil
+			log.Printf("n %p", n)
 			panic("Undefined behaviour") // no seriously there literally is no defined behaviour of what should the right thing be. I'll come back to this TODO.
 		}
 		dv.Value = v

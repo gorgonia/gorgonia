@@ -51,23 +51,23 @@ func ProdInts(a []int) (retVal int) {
 }
 
 // EqInts returns true if slices have same value
-func EqInts(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
+// func EqInts(a, b []int) bool {
+// 	if len(a) != len(b) {
+// 		return false
+// 	}
 
-	if (a == nil) != (b == nil) {
-		return false
-	}
+// 	if (a == nil) != (b == nil) {
+// 		return false
+// 	}
 
-	b = b[:len(a)]
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
-}
+// 	b = b[:len(a)]
+// 	for i, v := range a {
+// 		if v != b[i] {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
 
 // IsMonotonicInts returns true if the slice of ints is monotonically increasing. It also returns true for incr1 if every succession is a succession of 1
 func IsMonotonicInts(a []int) (monotonic bool, incr1 bool) {
@@ -213,6 +213,109 @@ func UnsafePermute(pattern []int, xs ...[]int) (err error) {
 	return nil
 }
 
+
+// CheckSlice checks a slice to see if it's sane
+func CheckSlice(s Slice, size int) error {
+	start := s.Start()
+	end := s.End()
+	step := s.Step()
+
+	if start > end {
+		return errors.Errorf(invalidSliceIndex, start, end)
+	}
+
+	if start < 0 {
+		return errors.Errorf(invalidSliceIndex, start, 0)
+	}
+
+	if step == 0 && end-start > 1 {
+		return errors.Errorf("Slice has 0 steps. Start is %d and end is %d", start, end)
+	}
+
+	if start >= size {
+		return errors.Errorf("Start %d is greater than size %d", start, size)
+	}
+
+	return nil
+}
+
+// SliceDetails is a function that takes a slice and spits out its details. The whole reason for this is to handle the nil Slice, which is this: a[:]
+func SliceDetails(s Slice, size int) (start, end, step int, err error) {
+	if s == nil {
+		start = 0
+		end = size
+		step = 1
+	} else {
+		if err = CheckSlice(s, size); err != nil {
+			return
+		}
+
+		start = s.Start()
+		end = s.End()
+		step = s.Step()
+
+		if end > size {
+			end = size
+		}
+	}
+	return
+}
+
+// reuseDenseCheck checks a reuse tensor, and reshapes it to be the correct one
+func reuseDenseCheck(reuse DenseTensor, as DenseTensor) (err error) {
+	if reuse.DataSize() != as.Size() {
+		err = errors.Errorf("Reused Tensor %p does not have expected shape %v. Got %v instead. Reuse Size: %v, as Size %v (real: %d)", reuse, as.Shape(), reuse.Shape(), reuse.DataSize(), as.Size(), as.DataSize())
+		return
+	}
+	return reuseCheckShape(reuse, as.Shape())
+
+}
+
+// reuseCheckShape  checks the shape and reshapes it to be correct if the size fits but the shape doesn't.
+func reuseCheckShape(reuse DenseTensor, s Shape) (err error) {
+	throw := BorrowInts(len(s))
+	copy(throw, s)
+
+	if err = reuse.reshape(throw...); err != nil {
+		err = errors.Wrapf(err, reuseReshapeErr, s, reuse.DataSize())
+		return
+	}
+
+	// clean up any funny things that may be in the reuse
+	if oldAP :=  reuse.oldAP(); oldAP != nil {
+		ReturnAP(oldAP)
+		reuse.setOldAP(nil)
+	}
+
+	if axes := reuse.transposeAxes(); axes != nil {
+		ReturnInts(axes)
+	}
+
+	if viewOf := reuse.parentTensor(); viewOf != nil {
+		reuse.setParentTensor(nil)
+	}
+	return nil
+}
+
+// memsetBools sets boolean slice to value.
+// Reference http://stackoverflow.com/questions/30614165/is-there-analog-of-memset-in-go
+func memsetBools(a []bool, v bool) {
+	if len(a) == 0 {
+		return
+	}
+	a[0] = v
+	for bp := 1; bp < len(a); bp *= 2 {
+		copy(a[bp:], a[:bp])
+	}
+}
+
+
+/* FOR ILLUSTRATIVE PURPOSES */
+
+// Permute permutates a pattern according to xs. This function exists for illustrative purposes (i.e. the dumb, unoptimized version)
+//
+// In reality, the UnsafePermute function is used.
+/*
 func Permute(pattern []int, xs ...[]int) (retVal [][]int, err error) {
 	if len(xs) == 0 {
 		err = errors.New("Permute requires something to permute")
@@ -282,98 +385,4 @@ func Permute(pattern []int, xs ...[]int) (retVal [][]int, err error) {
 	}
 	return
 }
-
-// CheckSlice checks a slice to see if it's sane
-func CheckSlice(s Slice, size int) error {
-	start := s.Start()
-	end := s.End()
-	step := s.Step()
-
-	if start > end {
-		return errors.Errorf(invalidSliceIndex, start, end)
-	}
-
-	if start < 0 {
-		return errors.Errorf(invalidSliceIndex, start, 0)
-	}
-
-	if step == 0 && end-start > 1 {
-		return errors.Errorf("Slice has 0 steps. Start is %d and end is %d", start, end)
-	}
-
-	if start >= size {
-		return errors.Errorf("Start %d is greater than size %d", start, size)
-	}
-
-	return nil
-}
-
-// SliceDetails is a function that takes a slice and spits out its details. The whole reason for this is to handle the nil Slice, which is this: a[:]
-func SliceDetails(s Slice, size int) (start, end, step int, err error) {
-	if s == nil {
-		start = 0
-		end = size
-		step = 1
-	} else {
-		if err = CheckSlice(s, size); err != nil {
-			return
-		}
-
-		start = s.Start()
-		end = s.End()
-		step = s.Step()
-
-		if end > size {
-			end = size
-		}
-	}
-	return
-}
-
-// reuseDenseCheck checks a reuse tensor, and reshapes it to be the correct one
-func reuseDenseCheck(reuse *Dense, as *Dense) (err error) {
-	if reuse.DataSize() != as.Size() {
-		err = errors.Errorf("Reused Tensor %p does not have expected shape %v. Got %v instead. Reuse Size: %v, as Size %v (real: %d)", reuse, as.Shape(), reuse.Shape(), reuse.DataSize(), as.Size(), as.DataSize())
-		return
-	}
-	return reuseCheckShape(reuse, as.Shape())
-
-}
-
-// reuseCheckShape  checks the shape and reshapes it to be correct if the size fits but the shape doesn't.
-func reuseCheckShape(reuse *Dense, s Shape) (err error) {
-	throw := BorrowInts(len(s))
-	copy(throw, s)
-
-	if err = reuse.reshape(throw...); err != nil {
-		err = errors.Wrapf(err, reuseReshapeErr, s, reuse.DataSize())
-		return
-	}
-
-	// clean up any funny things that may be in the reuse
-	if reuse.old != nil {
-		ReturnAP(reuse.old)
-		reuse.old = nil
-	}
-
-	if reuse.transposeWith != nil {
-		ReturnInts(reuse.transposeWith)
-	}
-
-	if reuse.viewOf != nil {
-		reuse.viewOf = nil
-	}
-	return nil
-}
-
-// memsetBools sets boolean slice to value.
-// Reference http://stackoverflow.com/questions/30614165/is-there-analog-of-memset-in-go
-func memsetBools(a []bool, v bool) {
-	if len(a) == 0 {
-		return
-	}
-	a[0] = v
-	for bp := 1; bp < len(a); bp *= 2 {
-		copy(a[bp:], a[:bp])
-	}
-}
+*/

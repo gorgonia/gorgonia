@@ -97,8 +97,12 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 			ReturnInts(apStrides) // Borrowed in BroadcastStrides but returned here - dangerous pattern?
 			nBlocks++
 		}
+		ap2 := NewAP(it.shape[:maxDims], it.strides[offset:offset+maxDims])
+		ap2.o = ap.o
+		ap2.Δ = ap.Δ
+
 		it.whichBlock[i] = f
-		it.fitArr[nBlocks-1] = NewFlatIterator(NewAP(it.shape[:maxDims], it.strides[offset:offset+maxDims]))
+		it.fitArr[nBlocks-1] = NewFlatIterator(ap2)
 	}
 
 	it.fitArr = it.fitArr[:nBlocks]
@@ -115,7 +119,7 @@ func NewMultIterator(aps ...*AP) *MultIterator {
 }
 
 // MultIteratorFromDense creates a new MultIterator from a list of dense tensors
-func MultIteratorFromDense(tts ...*Dense) *MultIterator {
+func MultIteratorFromDense(tts ...DenseTensor) *MultIterator {
 	aps := BorrowAPList(len(tts))
 	hasMask := BorrowBools(len(tts))
 	defer ReturnBools(hasMask)
@@ -124,7 +128,9 @@ func MultIteratorFromDense(tts ...*Dense) *MultIterator {
 	numMasked := 0
 	for i, tt := range tts {
 		aps[i] = tt.Info()
-		hasMask[i] = tt.IsMasked()
+		if mt, ok := tt.(MaskedTensor); ok {
+			hasMask[i] = mt.IsMasked()
+		}
 		masked = masked || hasMask[i]
 		if hasMask[i] {
 			numMasked++
@@ -142,7 +148,7 @@ func MultIteratorFromDense(tts ...*Dense) *MultIterator {
 			for i, err := it.Start(); err == nil; i, err = it.Next() {
 				for j, k := range it.lastIndexArr {
 					if hasMask[j] {
-						it.mask[i] = it.mask[i] || tts[j].mask[k]
+						it.mask[i] = it.mask[i] || tts[j].(MaskedTensor).Mask()[k]
 					}
 				}
 			}
@@ -222,6 +228,18 @@ func (it *MultIterator) Next() (int, error) {
 		it.lastIndexArr[i] = it.fitArr[j].lastIndex
 	}
 	return it.fit0.lastIndex, nil
+}
+
+func (it *MultIterator) NextValidity() (int, bool, error) {
+	i, err := it.Next()
+	if err != nil {
+		return i, false, err
+	}
+
+	if len(it.mask) == 0 {
+		return i, true, err
+	}
+	return i, it.mask[i], err
 }
 
 // NextValid returns the index of the next valid coordinate
@@ -313,50 +331,4 @@ func (it *FlatIterator) Chan() (retVal chan int) {
 	return
 }
 
-/* TEMPORARILY REMOVED
-// SortedMultiStridePerm takes multiple input strides, and creates a sorted stride permutation.
-// It's based very closely on Numpy's PyArray_CreateMultiSortedStridePerm, where a stable insertion sort is used
-// to create the permutations.
-func SortedMultiStridePerm(dims int, aps []*AP) (retVal []int) {
-	retVal = BorrowInts(dims)
-	for i := 0; i < dims; i++ {
-		retVal[i] = i
-	}
-
-	for i := 1; i < dims; i++ {
-		ipos := i
-		axisi := retVal[i]
-
-		for j := i - 1; j >= 0; j-- {
-			var ambig, swap bool
-			ambig = true
-			axisj := retVal[j]
-
-			for _, ap := range aps {
-				if ap.shape[axisi] != 1 && ap.shape[axisj] != 1 {
-					if ap.strides[axisi] <= ap.strides[axisj] {
-						swap = true
-					} else if ambig {
-						swap = true
-					}
-					ambig = false
-				}
-			}
-
-			if !ambig && swap {
-				ipos = j
-			} else {
-				break
-			}
-
-		}
-		if ipos != i {
-			for j := i; j > ipos; j-- {
-				retVal[j] = retVal[j-1]
-			}
-			retVal[ipos] = axisi
-		}
-	}
-	return
-}
 */

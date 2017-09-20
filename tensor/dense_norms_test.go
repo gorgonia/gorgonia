@@ -1,17 +1,18 @@
 package tensor
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
 func testNormVal(T *Dense, ord NormOrder, want float64) error {
 	retVal, err := T.Norm(ord)
 	if err != nil {
+		err = errors.Wrap(err, "testNormVal")
 		return err
 	}
 
@@ -61,7 +62,7 @@ func TestTensor_Norm(t *testing.T) {
 		for _, b := range backings {
 			T = New(WithShape(len(backing)), WithBacking(b))
 			if err = testNormVal(T, ord, want); err != nil {
-				t.Error(err)
+				t.Error(errors.Cause(err))
 			}
 		}
 	}
@@ -83,7 +84,7 @@ func TestTensor_Norm(t *testing.T) {
 	T = New(WithShape(2, 2), WithBacking(backing))
 	for ord, want := range corrects {
 		if err = testNormVal(T, ord, want); err != nil {
-			t.Error(err)
+			t.Errorf("ORD %v: %v", ord, err)
 		}
 	}
 
@@ -148,7 +149,7 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		var expecteds []*Dense
 		for k := 0; k < T.Shape()[1]; k++ {
 			sliced, _ = T.Slice(nil, ss(k))
-			s = sliced.Materialize().(*Dense)
+			s = sliced.(View).Materialize().(*Dense)
 			expected, _ = s.Norm(ord)
 			expecteds = append(expecteds, expected)
 		}
@@ -161,7 +162,7 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		assert.Equal(len(expecteds), retVal.Shape()[0])
 		for i, e := range expecteds {
 			sliced, _ = retVal.Slice(ss(i))
-			sliced = sliced.Materialize()
+			sliced = sliced.(View).Materialize()
 			if !allClose(e.Data(), sliced.Data()) {
 				t.Errorf("Axis = 0; Ord = %v; Expected %v. Got %v instead. ret %v, i: %d", ord, e.Data(), sliced.Data(), retVal, i)
 			}
@@ -184,7 +185,7 @@ func TestTensor_Norm_Axis(t *testing.T) {
 		assert.Equal(len(expecteds), retVal.Shape()[0])
 		for i, e := range expecteds {
 			sliced, _ = retVal.Slice(ss(i))
-			sliced = sliced.Materialize().(*Dense)
+			sliced = sliced.(View).Materialize().(*Dense)
 			if !allClose(e.Data(), sliced.Data()) {
 				t.Errorf("Axis = 1; Ord = %v; Expected %v. Got %v instead", ord, e.Data(), sliced.Data())
 			}
@@ -248,7 +249,7 @@ func TestTensor_Norm_Axis(t *testing.T) {
 					if rowAxis > colAxis {
 						sliced.T()
 					}
-					sliced = sliced.Materialize().(*Dense)
+					sliced = sliced.(View).Materialize().(*Dense)
 					s = sliced.(*Dense)
 					expected, _ = s.Norm(ord)
 					expecteds = append(expecteds, expected)

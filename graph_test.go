@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"testing"
 
+	"github.com/chewxy/gorgonia/tensor"
 	"github.com/gonum/graph"
 	"github.com/gonum/graph/topo"
 	"github.com/stretchr/testify/assert"
@@ -206,4 +207,156 @@ func TestGraphSubgraphRoots(t *testing.T) {
 	assert.NotContains(ns, z)
 	assert.NotContains(ns, sz)
 	assert.NotContains(ns, readSZ)
+}
+
+func TestGraph_Constant(t *testing.T) {
+	g := NewGraph()
+
+	v1 := newF64(1.0)
+	c0 := g.Constant(v1)
+	c1 := g.Constant(v1)
+
+	if c0 != c1 {
+		t.Errorf("Expected c0 and c1 to be the same (pointer and all that)")
+	}
+}
+
+func TestGraph_Clone(t *testing.T) {
+	g, x, y, z := simpleVecEqn()
+	z2 := Must(Square(z))
+
+	// add a collided
+	delete(g.byHash, z2.hash)
+	g.byHash[0xdeadbeef] = z2
+	col := new(Node)
+	col.g = g
+	col.name = "COLIN THE COLLISION"
+	col.hash = 0xdeadbeef
+	col.hashed = true
+	col.boundTo = newF64(0)
+	g.AddNode(col)
+
+	colleen := new(Node)
+	colleen.g = g
+	colleen.name = "COLLEEN THE COLLISION"
+	colleen.hash = 0xdeadbeef
+	colleen.hashed = true
+	colleen.boundTo = newF64(0)
+	g.AddNode(colleen)
+
+	one := onef64
+	z2p1 := Must(Add(z2, one))                                    // add a constant
+	rando := UniformRandomNode(g, Float64, 0, 1, z2p1.Shape()...) // add a weird node
+	blah := Must(HadamardProd(z2p1, rando))
+	cost := Must(Sum(blah))
+	_, err := Grad(cost, x, y)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	g.Roots() // call it to populate the roots field
+
+	// clone with nil values
+	g2 := g.Clone().(*ExprGraph)
+	for i, n := range g.all {
+		cloned := g2.all[i]
+		if !deepNodeEq(n, cloned) {
+			t.Errorf("Expected %d of all to be %v. Got %v instead", i, n, cloned)
+			break
+		}
+	}
+	if len(g.evac) != len(g2.evac) && len(g.evac) > 0 {
+		t.Errorf("Expected the evacs to have the same length")
+	}
+	for k, v := range g.evac {
+		var v2 Nodes
+		var ok bool
+		if v2, ok = g2.evac[k]; !ok {
+			t.Errorf("Key %v not found in cloned evac", k)
+			break
+		}
+		for i, n := range v {
+			if !deepNodeEq(n, v2[i]) {
+				t.Errorf("Expected v[%d] to have equal values", i)
+				break
+			}
+		}
+		if t.Failed() {
+			break
+		}
+	}
+	if len(g.roots) != len(g2.roots) {
+		t.Errorf("Expected roots to be %d. Got %d instead", len(g.roots), len(g2.roots))
+	}
+	for i, root := range g.roots {
+		if !deepNodeEq(root, g2.roots[i]) {
+			t.Errorf("Expected roots[%d] to have equal nodes", i)
+			break
+		}
+	}
+
+	if len(g.leaves) != len(g2.leaves) {
+		t.Errorf("Expected leaves to be %d. Got %d instead", len(g.leaves), len(g2.leaves))
+	}
+	for i, leaf := range g.leaves {
+		if !deepNodeEq(leaf, g2.leaves[i]) {
+			t.Errorf("Expected leaves[%d] to be equal", i)
+			break
+		}
+	}
+
+	Let(x, tensor.New(tensor.WithBacking([]float64{1, 2})))
+	Let(y, tensor.New(tensor.WithBacking([]float64{3, 4})))
+	m := NewLispMachine(g, ExecuteFwdOnly()) // the gradient has been precalculated
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	g2 = g.Clone().(*ExprGraph)
+	for i, n := range g.all {
+		cloned := g2.all[i]
+		if !deepNodeEq(n, cloned) {
+			t.Errorf("Expected %d of all to be %v. Got %v instead", i, n, cloned)
+			break
+		}
+	}
+	if len(g.evac) != len(g2.evac) && len(g.evac) > 0 {
+		t.Errorf("Expected the evacs to have the same length")
+	}
+	for k, v := range g.evac {
+		var v2 Nodes
+		var ok bool
+		if v2, ok = g2.evac[k]; !ok {
+			t.Errorf("Key %v not found in cloned evac", k)
+			break
+		}
+		for i, n := range v {
+			if !deepNodeEq(n, v2[i]) {
+				t.Errorf("Expected v[%d] to have equal values", i)
+				break
+			}
+		}
+		if t.Failed() {
+			break
+		}
+	}
+	if len(g.roots) != len(g2.roots) {
+		t.Errorf("Expected roots to be %d. Got %d instead", len(g.roots), len(g2.roots))
+	}
+	for i, root := range g.roots {
+		if !deepNodeEq(root, g2.roots[i]) {
+			t.Errorf("Expected roots[%d] to have equal nodes", i)
+			break
+		}
+	}
+
+	if len(g.leaves) != len(g2.leaves) {
+		t.Errorf("Expected leaves to be %d. Got %d instead", len(g.leaves), len(g2.leaves))
+	}
+	for i, leaf := range g.leaves {
+		if !deepNodeEq(leaf, g2.leaves[i]) {
+			t.Errorf("Expected leaves[%d] to be equal", i)
+			break
+		}
+	}
 }

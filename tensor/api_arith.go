@@ -1,8 +1,6 @@
 package tensor
 
 import (
-	"reflect"
-
 	"github.com/pkg/errors"
 )
 
@@ -20,16 +18,50 @@ import (
 //		Add(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
+	var adder Adder
+	var oe standardEngine
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		oe = at.standardEngine()
+		switch bt := b.(type) {
+		case Tensor:
+			if oe != nil {
+				return oe.Add(at, bt, opts...)
+			}
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Add(at, bt, opts...)
+			}
+			if adder, ok = at.Engine().(Adder); ok {
+				return adder.Add(at, bt, opts...)
+			}
+			if adder, ok = bt.Engine().(Adder); ok {
+				return adder.Add(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Add")
 
-	switch {
-	case adok && bdok:
-		return ad.Add(bd, opts...)
-	case adok && !bdok:
-		return ad.Trans(b, opts...)
-	case !adok && bdok:
-		return bd.Trans(a, opts...)
+		default:
+			if oe != nil {
+				return oe.AddScalar(at, bt, true, opts...)
+			}
+			if adder, ok = at.Engine().(Adder); ok {
+				return adder.AddScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Add")
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.AddScalar(bt, at, false, opts...)
+			}
+			if adder, ok = bt.Engine().(Adder); ok {
+				return adder.AddScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Add")
+		default:
+			return nil, errors.Errorf("Cannot perform Add of %T and %T", a, b)
+		}
 	}
 	panic("Unreachable")
 }
@@ -40,16 +72,50 @@ func Add(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Sub(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
+	var suber Suber
+	var oe standardEngine
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		oe = at.standardEngine()
+		switch bt := b.(type) {
+		case Tensor:
+			if oe != nil {
+				return oe.Sub(at, bt, opts...)
+			}
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Sub(at, bt, opts...)
+			}
+			if suber, ok = at.Engine().(Suber); ok {
+				return suber.Sub(at, bt, opts...)
+			}
+			if suber, ok = bt.Engine().(Suber); ok {
+				return suber.Sub(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Sub")
 
-	switch {
-	case adok && bdok:
-		return ad.Sub(bd, opts...)
-	case adok && !bdok:
-		return ad.TransInv(b, opts...)
-	case !adok && bdok:
-		return bd.TransInvR(a, opts...)
+		default:
+			if oe != nil {
+				return oe.SubScalar(at, bt, true, opts...)
+			}
+			if suber, ok = at.Engine().(Suber); ok {
+				return suber.SubScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Sub")
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.SubScalar(bt, at, false, opts...)
+			}
+			if suber, ok = bt.Engine().(Suber); ok {
+				return suber.SubScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Sub")
+		default:
+			return nil, errors.Errorf("Cannot perform Sub of %T and %T", a, b)
+		}
 	}
 	panic("Unreachable")
 }
@@ -60,16 +126,50 @@ func Sub(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Mul(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
+	var muler Muler
+	var oe standardEngine
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		oe = at.standardEngine()
+		switch bt := b.(type) {
+		case Tensor:
+			if oe != nil {
+				return oe.Mul(at, bt, opts...)
+			}
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Mul(at, bt, opts...)
+			}
+			if muler, ok = at.Engine().(Muler); ok {
+				return muler.Mul(at, bt, opts...)
+			}
+			if muler, ok = bt.Engine().(Muler); ok {
+				return muler.Mul(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Mul")
 
-	switch {
-	case adok && bdok:
-		return ad.Mul(bd, opts...)
-	case adok && !bdok:
-		return ad.Scale(b, opts...)
-	case !adok && bdok:
-		return bd.Scale(a, opts...)
+		default:
+			if oe != nil {
+				return oe.MulScalar(at, bt, true, opts...)
+			}
+			if muler, ok = at.Engine().(Muler); ok {
+				return muler.MulScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Mul")
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.MulScalar(bt, at, false, opts...)
+			}
+			if muler, ok = bt.Engine().(Muler); ok {
+				return muler.MulScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Mul")
+		default:
+			return nil, errors.Errorf("Cannot perform Mul of %T and %T", a, b)
+		}
 	}
 	panic("Unreachable")
 }
@@ -80,16 +180,50 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Div(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
+	var diver Diver
+	var oe standardEngine
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		oe = at.standardEngine()
+		switch bt := b.(type) {
+		case Tensor:
+			if oe != nil {
+				return oe.Div(at, bt, opts...)
+			}
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Div(at, bt, opts...)
+			}
+			if diver, ok = at.Engine().(Diver); ok {
+				return diver.Div(at, bt, opts...)
+			}
+			if diver, ok = bt.Engine().(Diver); ok {
+				return diver.Div(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Div")
 
-	switch {
-	case adok && bdok:
-		return ad.Div(bd, opts...)
-	case adok && !bdok:
-		return ad.ScaleInv(b, opts...)
-	case !adok && bdok:
-		return bd.ScaleInvR(a, opts...)
+		default:
+			if oe != nil {
+				return oe.DivScalar(at, bt, true, opts...)
+			}
+			if diver, ok = at.Engine().(Diver); ok {
+				return diver.DivScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Div")
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.DivScalar(bt, at, false, opts...)
+			}
+			if diver, ok = bt.Engine().(Diver); ok {
+				return diver.DivScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Div")
+		default:
+			return nil, errors.Errorf("Cannot perform Div of %T and %T", a, b)
+		}
 	}
 	panic("Unreachable")
 }
@@ -100,16 +234,104 @@ func Div(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 //		Pow(*Dense, *Dense)
 // If the Unsafe flag is passed in, the data of the first tensor will be overwritten
 func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
-	ad, adok := a.(*Dense)
-	bd, bdok := b.(*Dense)
+	var power Power
+	var oe standardEngine
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		oe = at.standardEngine()
+		switch bt := b.(type) {
+		case Tensor:
+			if oe != nil {
+				return oe.Pow(at, bt, opts...)
+			}
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Pow(at, bt, opts...)
+			}
+			if power, ok = at.Engine().(Power); ok {
+				return power.Pow(at, bt, opts...)
+			}
+			if power, ok = bt.Engine().(Power); ok {
+				return power.Pow(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Pow")
 
-	switch {
-	case adok && bdok:
-		return ad.Pow(bd, opts...)
-	case adok && !bdok:
-		return ad.PowOf(b, opts...)
-	case !adok && bdok:
-		return bd.PowOfR(a, opts...)
+		default:
+			if oe != nil {
+				return oe.PowScalar(at, bt, true, opts...)
+			}
+			if power, ok = at.Engine().(Power); ok {
+				return power.PowScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Pow")
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.PowScalar(bt, at, false, opts...)
+			}
+			if power, ok = bt.Engine().(Power); ok {
+				return power.PowScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Pow")
+		default:
+			return nil, errors.Errorf("Cannot perform Pow of %T and %T", a, b)
+		}
+	}
+	panic("Unreachable")
+}
+
+// Mod performs elementwise exponentiation on the Tensor(s). These operations are supported:
+//		Mod(*Dense, scalar)
+//		Mod(scalar, *Dense)
+//		Mod(*Dense, *Dense)
+// If the Unsafe flag is passed in, the data of the first tensor will be overwritten
+func Mod(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
+	var moder Moder
+	var oe standardEngine
+	var ok bool
+	switch at := a.(type) {
+	case Tensor:
+		oe = at.standardEngine()
+		switch bt := b.(type) {
+		case Tensor:
+			if oe != nil {
+				return oe.Mod(at, bt, opts...)
+			}
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.Mod(at, bt, opts...)
+			}
+			if moder, ok = at.Engine().(Moder); ok {
+				return moder.Mod(at, bt, opts...)
+			}
+			if moder, ok = bt.Engine().(Moder); ok {
+				return moder.Mod(at, bt, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Mod")
+
+		default:
+			if oe != nil {
+				return oe.ModScalar(at, bt, true, opts...)
+			}
+			if moder, ok = at.Engine().(Moder); ok {
+				return moder.ModScalar(at, bt, true, opts...)
+			}
+			return nil, errors.New("Operand A's engine does not support Mod")
+		}
+	default:
+		switch bt := b.(type) {
+		case Tensor:
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.ModScalar(bt, at, false, opts...)
+			}
+			if moder, ok = bt.Engine().(Moder); ok {
+				return moder.ModScalar(bt, at, false, opts...)
+			}
+			return nil, errors.New("Operand B's engine does not support Mod")
+		default:
+			return nil, errors.Errorf("Cannot perform Mod of %T and %T", a, b)
+		}
 	}
 	panic("Unreachable")
 }
@@ -129,181 +351,53 @@ func Pow(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 // The main reason why this opinionated route was taken was due to the author's familiarity with NumPy, and general laziness in translating existing machine learning algorithms
 // to fit the API of the package.
 func Dot(x, y Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
-	// sparse tensors will have their own methods to handle Dot
-	if xdottir, ok := x.(Dotter); ok {
-		return xdottir.Dot(y)
+	if xdottir, ok := x.Engine().(Dotter); ok {
+		return xdottir.Dot(x, y, opts...)
 	}
-
-	var a, b *Dense
-	if a, err = getFloatDense(x); err != nil {
-		err = errors.Wrapf(err, opFail, "Dot")
-		return
+	if ydottir, ok := y.Engine().(Dotter); ok {
+		return ydottir.Dot(x, y, opts...)
 	}
-	if b, err = getFloatDense(y); err != nil {
-		err = errors.Wrapf(err, opFail, "Dot")
-		return
-	}
+	return nil, errors.New("Neither x's nor y's engines support Dot")
+}
 
-	fo := parseFuncOpts(opts...)
-
-	var reuse, incr *Dense
-	if reuse, err = getFloatDense(fo.reuse); err != nil {
-		err = errors.Wrapf(err, opFail, "Dot - reuse")
-		return
-
-	}
-
-	if incr, err = getFloatDense(fo.incr); err != nil {
-		err = errors.Wrapf(err, opFail, "Dot - incr")
-		return
-	}
-
-	switch {
-	case a.IsScalar() && b.IsScalar():
-		var res interface{}
-		switch a.t.Kind() {
-		case reflect.Float64:
-			res = a.getF64(0) * b.getF64(0)
-		case reflect.Float32:
-			res = a.getF32(0) * b.getF32(0)
+// FMA performs Y = A * X + Y.
+func FMA(a Tensor, x interface{}, y Tensor) (retVal Tensor, err error) {
+	if xTensor, ok := x.(Tensor); ok {
+		if oe := a.standardEngine(); oe != nil {
+			return oe.FMA(a, xTensor, y)
+		}
+		if oe := xTensor.standardEngine(); oe != nil {
+			return oe.FMA(a, xTensor, y)
+		}
+		if oe := y.standardEngine(); oe != nil {
+			return oe.FMA(a, xTensor, y)
 		}
 
-		switch {
-		case incr != nil:
-			if !incr.IsScalar() {
-				err = errors.Errorf(shapeMismatch, ScalarShape(), incr.Shape())
-				return
-			}
-			if _, err = incr.Trans(res, UseUnsafe()); err != nil {
-				err = errors.Wrapf(err, opFail, "Dot scalar incr")
-				return
-			}
-			retVal = incr
-		case reuse != nil:
-			reuse.Set(0, res)
-			reuse.reshape()
-			retVal = reuse
-		default:
-			retVal = New(FromScalar(res))
+		if e, ok := a.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
 		}
-		return
-	case a.IsScalar():
-		switch {
-		case incr != nil:
-			return Mul(a.ScalarValue(), b, WithIncr(incr))
-		case reuse != nil:
-			return Mul(a.ScalarValue(), b, WithReuse(reuse))
+		if e, ok := xTensor.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
 		}
-		// default moved out
-		return Mul(a.ScalarValue(), b)
-	case b.IsScalar():
-		switch {
-		case incr != nil:
-			return Mul(a, b.ScalarValue(), WithIncr(incr))
-		case reuse != nil:
-			return Mul(a, b.ScalarValue(), WithReuse(reuse))
+		if e, ok := y.Engine().(FMAer); ok {
+			return e.FMA(a, xTensor, y)
 		}
-		return Mul(a, b.ScalarValue())
-	}
-
-	switch {
-	case a.IsVector():
-		switch {
-		case b.IsVector():
-			// check size
-			if a.len() != b.len() {
-				err = errors.Errorf(shapeMismatch, a.Shape(), b.Shape())
-				return
-			}
-			return a.inner(b)
-		case b.IsMatrix():
-			b.T()
-			defer b.UT()
-			switch {
-			case reuse != nil && incr != nil:
-				return b.MatVecMul(a, WithReuse(reuse), WithIncr(incr))
-			case reuse != nil:
-				return b.MatVecMul(a, WithReuse(reuse))
-			case incr != nil:
-				return b.MatVecMul(a, WithIncr(incr))
-			default:
-			}
-			return b.MatVecMul(a)
-		default:
-
-		}
-	case a.IsMatrix():
-		switch {
-		case b.IsVector():
-			switch {
-			case reuse != nil && incr != nil:
-				return a.MatVecMul(b, WithReuse(reuse), WithIncr(incr))
-			case reuse != nil:
-				return a.MatVecMul(b, WithReuse(reuse))
-			case incr != nil:
-				return a.MatVecMul(b, WithIncr(incr))
-			default:
-			}
-			return a.MatVecMul(b)
-
-		case b.IsMatrix():
-			switch {
-			case reuse != nil && incr != nil:
-				return a.MatMul(b, WithReuse(reuse), WithIncr(incr))
-			case reuse != nil:
-				return a.MatMul(b, WithReuse(reuse))
-			case incr != nil:
-				return a.MatMul(b, WithIncr(incr))
-			default:
-			}
-			return a.MatMul(b)
-		default:
-		}
-	default:
-	}
-	as := a.Shape()
-	bs := b.Shape()
-	axesA := BorrowInts(1)
-	axesB := BorrowInts(1)
-	defer ReturnInts(axesA)
-	defer ReturnInts(axesB)
-
-	var lastA, secondLastB int
-
-	lastA = len(as) - 1
-	axesA[0] = lastA
-	if len(bs) >= 2 {
-		secondLastB = len(bs) - 2
 	} else {
-		secondLastB = 0
-	}
-	axesB[0] = secondLastB
+		if oe := a.standardEngine(); oe != nil {
+			return oe.FMAScalar(a, x, y)
+		}
+		if oe := y.standardEngine(); oe != nil {
+			return oe.FMAScalar(a, x, y)
+		}
 
-	if as[lastA] != bs[secondLastB] {
-		err = errors.Errorf(shapeMismatch, as, bs)
-		return
+		if e, ok := a.Engine().(FMAer); ok {
+			return e.FMAScalar(a, x, y)
+		}
+		if e, ok := y.Engine().(FMAer); ok {
+			return e.FMAScalar(a, x, y)
+		}
 	}
-
-	var rd *Dense
-	if rd, err = a.TensorMul(b, axesA, axesB); err != nil {
-		return
-	}
-
-	if reuse != nil {
-		copyDense(reuse, rd)
-		ReturnAP(reuse.AP)
-		reuse.AP = rd.AP.Clone()
-		defer ReturnTensor(rd)
-		// swap out the underlying data and metadata
-		// reuse.data, rd.data = rd.data, reuse.data
-		// reuse.AP, rd.AP = rd.AP, reuse.AP
-		// defer ReturnTensor(rd)
-
-		retVal = reuse
-	} else {
-		retVal = rd
-	}
-	return
+	return Mul(a, x, WithIncr(y))
 }
 
 // MatMul performs matrix-matrix multiplication between two Tensors
@@ -337,7 +431,7 @@ func MatVecMul(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // Inner finds the inner products of two vector Tensors. Both arguments to the functions are eexpected to be vectors.
-func Inner(a, b Tensor) (retVal Tensor, err error) {
+func Inner(a, b Tensor) (retVal interface{}, err error) {
 	if a.Dtype() != b.Dtype() {
 		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
 		return

@@ -27,14 +27,16 @@ func (dv *dualValue) SetValue(v Value) error {
 	return dv.sanity()
 }
 
-func (dv *dualValue) Clone() (retVal Value, err error) {
+func (dv *dualValue) Clone() (retVal interface{}, err error) {
 	var v, d Value
 	if v, err = CloneValue(dv.Value); err != nil {
 		return nil, errors.Wrap(err, cloneFail)
 	}
 
-	if d, err = CloneValue(dv.d); err != nil {
-		return nil, errors.Wrap(err, cloneFail)
+	if dv.d != nil {
+		if d, err = CloneValue(dv.d); err != nil {
+			return nil, errors.Wrap(err, cloneFail)
+		}
 	}
 
 	dv2 := borrowDV()
@@ -46,6 +48,22 @@ func (dv *dualValue) Clone() (retVal Value, err error) {
 
 func (dv *dualValue) Type() hm.Type       { return TypeOf(dv.Value) }
 func (dv *dualValue) Dtype() tensor.Dtype { return dv.Value.Dtype() }
+
+func (dv *dualValue) ValueEq(a Value) bool {
+	switch at := a.(type) {
+	case *dualValue:
+		if at == dv {
+			return true
+		}
+		veq := ValueEq(at.Value, dv.Value)
+		deq := ValueEq(at.d, dv.d)
+		return veq && deq
+	// case Value:
+	// 	return ValueEq(at, dv.Value)
+	default:
+		return false
+	}
+}
 
 func (dv *dualValue) String() string {
 	return fmt.Sprintf("%#+v", dv.Value)

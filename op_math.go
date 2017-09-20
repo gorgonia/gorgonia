@@ -575,12 +575,17 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 		if op.transA {
 			x = transpose2D(x)
 		}
-
 		if x[0] != y[0] && x[1] != y[0] {
 			return nil, errors.Errorf("Incompatible shapes: %v and %v", x, y)
 		}
 
-		retVal = tensor.Shape{x[0]}
+		switch {
+		case x[0] == y[0]:
+			retVal = tensor.Shape{x[1]}
+		case x[1] == y[0]:
+			retVal = tensor.Shape{x[0]}
+		}
+
 	case vecDotOperator:
 		retVal = scalarShape
 	case outerProdOperator:
@@ -745,11 +750,11 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 	case matVecMulOperator:
 		retVal, err = tensor.MatVecMul(a, b, opts...)
 	case vecDotOperator:
-		var ret tensor.Tensor
+		var ret interface{}
 		if ret, err = tensor.Inner(a, b); err != nil {
 			return nil, errors.Wrapf(err, "Failed to carry out linalgBinOp operation %v", op)
 		}
-		retVal, _ = anyToScalar(ret.ScalarValue())
+		retVal, _ = anyToScalar(ret)
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
 	}

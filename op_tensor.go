@@ -189,7 +189,8 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 		arg0Dim:  children[0].Dims(),
 	}
 
-	if s, err := retVal.InferShape(children.dimSizers()...); err == nil {
+	ds := children.dimSizers()
+	if s, err := retVal.InferShape(ds...); err == nil {
 		retVal.inputShape = s
 		if s.IsColVec() {
 			retVal.d = 1
@@ -199,6 +200,7 @@ func newRepeatOp(along axes, children Nodes) *repeatOp {
 	} else {
 		panic(err)
 	}
+	returnDimSizers(ds)
 
 	return retVal
 }
@@ -580,16 +582,16 @@ func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	ydv := output.boundTo.(*dualValue)
 	incrOp := sliceIncrOp{op}
 
-	var d Value
-	if d, err = incrOp.Do(xdv.Value, ydv.d); err != nil {
+	// var d Value
+	if _, err = incrOp.UsePreallocDo(xdv.d, xdv.d, ydv.d); err != nil {
 		return errors.Wrapf(err, doFail, incrOp)
 	}
 
 	// there is no need to handle scalars, because you can never slice a scalar
-	add := newElemBinOp(addOpType, inputs[0], output)
-	if _, err = add.UnsafeDo(xdv.d, d); err != nil {
-		return errors.Wrapf(err, unsafeDoFail, add)
-	}
+	// add := newElemBinOp(addOpType, inputs[0], output)
+	// if _, err = add.UnsafeDo(xdv.d, d); err != nil {
+	// 	return errors.Wrapf(err, unsafeDoFail, add)
+	// }
 
 	return
 }
@@ -722,6 +724,7 @@ func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 		return nil, errors.Wrap(err, operationError)
 	}
 	retVal = Nodes{gradNode, slicedRes}
+
 	return
 }
 
@@ -792,9 +795,44 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-// func (op sliceIncrOp) usePreallocDoer(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op sliceIncrOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+	machineLogf("Doing %v", op)
+	enterLoggingContext()
+	defer leaveLoggingContext()
 
-// }
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	incr := inputs[1]
+
+	// prep the slices
+	slices := make([]tensor.Slice, op.d)
+	if !op.all() {
+		slices[op.along] = op
+	}
+
+	switch T := prealloc.(type) {
+	case *tensor.Dense:
+		var v tensor.Tensor
+		if v, err = T.Slice(slices...); err != nil {
+			return nil, errors.Wrapf(err, sliceFail, slices)
+		}
+		switch i := incr.(type) {
+		case *F64:
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
+		case *F32:
+			tensor.Add(v, i.any(), tensor.UseUnsafe())
+		case *tensor.Dense:
+			tensor.Add(v, i, tensor.UseUnsafe())
+		}
+		retVal = T
+	case Scalar:
+		return nil, errors.New("Cannot slice a scalar value")
+	default:
+		return nil, errors.Errorf(nyiFail, "sliceIncrOp()", prealloc)
+	}
+	return
+}
 
 func (op sliceIncrOp) OverwritesInput() int { return 0 }
 
@@ -917,7 +955,7 @@ func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 		return errors.Wrap(err, "Failed to T()")
 	}
 
-	d := zdvdT.Materialize()
+	d := tensor.Materialize(zdvdT)
 	zdvdT.UT()
 
 	add := newEBOByType(addOpType, inputs[0].t, TypeOf(zdvdT))

@@ -71,3 +71,28 @@ func returnValue(v Value) {
 		returnTensor(t)
 	}
 }
+
+var dimSizerPool = make(map[int]*sync.Pool)
+
+func borrowDimSizers(size int) []DimSizer {
+	pool, ok := dimSizerPool[size]
+	if !ok {
+		s := size
+		pool = &sync.Pool{
+			New: func() interface{} { return make([]DimSizer, s, s) },
+		}
+		dimSizerPool[size] = pool
+	}
+	return pool.Get().([]DimSizer)
+}
+
+func returnDimSizers(ds []DimSizer) {
+	pool, ok := dimSizerPool[cap(ds)]
+	if !ok {
+		return
+	}
+	for i := range ds {
+		ds[i] = nil
+	}
+	pool.Put(ds)
+}

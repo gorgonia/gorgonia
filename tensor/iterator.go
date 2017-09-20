@@ -1,20 +1,65 @@
 package tensor
 
-import (
-	"runtime"
-)
+import "runtime"
 
-// Iterator is the generic iterator interface
+func requiresOrderedIterator(e Engine, t Tensor) bool {
+	if t.IsScalar() {
+		return false
+	}
+	if t.RequiresIterator() {
+		return true
+	}
+	switch tt := t.(type) {
+	case DenseTensor:
+		return !e.WorksWith(tt.DataOrder())
+	case SparseTensor:
+		return true
+	}
+	panic("Unreachable")
+}
+
+// Iterator is the generic iterator interface.
+// It's used to iterate across multi-dimensional slices, no matter the underlying data arrangement
 type Iterator interface {
+	// Start returns the first index
 	Start() (int, error)
+
+	// Next returns the next index. Next is defined as the next value in the coordinates
+	// For example: let x be a (5,5) matrix that is row-major. Current index is for the coordinate (3,3).
+	// Next() returns the index of (3,4).
+	//
+	// If there is no underlying data store for (3,4) - say for example, the matrix is a sparse matrix, it return an error.
+	// If however, there is an underlying data store for (3,4), but it's not valid (for example, masked tensors), it will not return an error.
+	//
+	// Second example: let x be a (5,5) matrix that is col-major. Current index is for coordinate (3,3).
+	// Next() returns the index of (4,3).
 	Next() (int, error)
+
+	// NextValidity is like Next, but returns the validity of the value at the index as well.
+	NextValidity() (int, bool, error)
+
+	// NextValid returns the next valid index, as well as a skip count.
 	NextValid() (int, int, error)
+
+	// NextInvalid returns the next invalid index, as well as a skip count.
 	NextInvalid() (int, int, error)
+
+	// Reset resets the iterator
 	Reset()
+
+	// SetReverse tells the iterator to iterate in reverse
 	SetReverse()
+
+	// SetForward tells the iterator to iterate forwards
 	SetForward()
+
+	// Coord returns the coordinates
 	Coord() []int
+
+	// Done returns true when the iterator is done iterating.
 	Done() bool
+
+	// Shape returns the shape of the multidimensional tensor it's iterating on.
 	Shape() Shape
 }
 
@@ -32,13 +77,13 @@ func NewIterator(aps ...*AP) Iterator {
 }
 
 // IteratorFromDense creates a new Iterator from a list of dense tensors
-func IteratorFromDense(tts ...*Dense) Iterator {
+func IteratorFromDense(tts ...DenseTensor) Iterator {
 	switch len(tts) {
 	case 0:
 		return nil
 	case 1:
-		if tts[0].IsMasked() {
-			return FlatMaskedIteratorFromDense(tts[0])
+		if mt, ok := tts[0].(MaskedTensor); ok && mt.IsMasked() {
+			return FlatMaskedIteratorFromDense(mt)
 		}
 		return FlatIteratorFromDense(tts[0])
 	default:
@@ -88,6 +133,8 @@ func NewFlatIterator(ap *AP) *FlatIterator {
 	var strides0 int
 	if ap.IsVector() {
 		strides0 = ap.strides[0]
+	} else if ap.o.isColMajor() {
+		strides0 = ap.strides[0]
 	}
 
 	return &FlatIterator{
@@ -99,7 +146,7 @@ func NewFlatIterator(ap *AP) *FlatIterator {
 }
 
 // FlatIteratorFromDense creates a new FlatIterator from a dense tensor
-func FlatIteratorFromDense(tt *Dense) *FlatIterator {
+func FlatIteratorFromDense(tt DenseTensor) *FlatIterator {
 	return NewFlatIterator(tt.Info())
 }
 
@@ -149,6 +196,12 @@ func (it *FlatIterator) Next() (int, error) {
 		}
 		return it.ndNext()
 	}
+}
+
+// NextValidity returns the index of the current coordinate, and whether or not it's valid. Identical to Next()
+func (it *FlatIterator) NextValidity() (int, bool, error) {
+	i, err := it.Next()
+	return i, true, err
 }
 
 // NextValid returns the index of the current coordinate. Identical to Next for FlatIterator
@@ -256,6 +309,10 @@ func (it *FlatIterator) ndNext() (int, error) {
 	return it.lastIndex, nil
 }
 
+func (it *FlatIterator) colMajorNDNext() (int, error) {
+	return 0, nil
+}
+
 func (it *FlatIterator) ndPrevious() (int, error) {
 	it.lastIndex = it.nextIndex
 	for i := len(it.shape) - 1; i >= 0; i-- {
@@ -272,6 +329,10 @@ func (it *FlatIterator) ndPrevious() (int, error) {
 		break
 	}
 	return it.lastIndex, nil
+}
+
+func (it *FlatIterator) colMajorNDPrevious() (int, error) {
+	return 0, nil
 }
 
 // Coord returns the next coordinate.
@@ -382,28 +443,32 @@ type FlatMaskedIterator struct {
 	mask []bool
 }
 
-// NewFlatMaskedIterator creates a new flat masked iterator
-func NewFlatMaskedIterator(ap *AP, mask []bool) *FlatMaskedIterator {
-	it := new(FlatMaskedIterator)
-	runtime.SetFinalizer(it, destroyIterator)
-	it.FlatIterator = NewFlatIterator(ap)
-	it.mask = mask
-	return it
-}
-
 // FlatMaskedIteratorFromDense creates a new FlatMaskedIterator from dense tensor
-func FlatMaskedIteratorFromDense(tt *Dense) *FlatMaskedIterator {
+func FlatMaskedIteratorFromDense(tt MaskedTensor) *FlatMaskedIterator {
 	it := new(FlatMaskedIterator)
 	runtime.SetFinalizer(it, destroyIterator)
 	it.FlatIterator = FlatIteratorFromDense(tt)
-	it.mask = tt.mask
+	it.mask = tt.Mask()
 	return it
+}
+
+func (it *FlatMaskedIterator) NextValidity() (int, bool, error) {
+	if len(it.mask) == 0 {
+		return it.FlatIterator.NextValidity()
+	}
+
+	var i int
+	var err error
+	if i, err = it.Next(); err == nil {
+		return i, !it.mask[i], err
+	}
+	return -1, false, err
 }
 
 // NextValid returns the index of the next valid element,
 // as well as the number of increments to get to next element
 func (it *FlatMaskedIterator) NextValid() (int, int, error) {
-	if it.mask == nil {
+	if len(it.mask) == 0 {
 		return it.FlatIterator.NextValid()
 	}
 	var count int
@@ -439,6 +504,113 @@ func (it *FlatMaskedIterator) NextInvalid() (int, int, error) {
 		}
 	}
 	return -1, mult * count, noopError{}
+}
+
+// FlatSparseIterator is an iterator that works very much in the same way as flatiterator, except for sparse tensors
+type FlatSparseIterator struct {
+	*CS
+
+	//state
+	nextIndex int
+	lastIndex int
+	track     []int
+	done      bool
+	reverse   bool
+}
+
+func NewFlatSparseIterator(t *CS) *FlatSparseIterator {
+	it := new(FlatSparseIterator)
+	it.CS = t
+	it.track = BorrowInts(len(t.s))
+	return it
+}
+
+func (it *FlatSparseIterator) Start() (int, error) {
+	it.Reset()
+	return it.Next()
+}
+
+func (it *FlatSparseIterator) Next() (int, error) {
+	if it.done {
+		return -1, noopError{}
+	}
+
+	// var ok bool
+	it.lastIndex, _ = it.at(it.track...)
+
+	// increment the coordinates
+	for i := len(it.s) - 1; i >= 0; i-- {
+		it.track[i]++
+		if it.track[i] == it.s[i] {
+			if i == 0 {
+				it.done = true
+			}
+			it.track[i] = 0
+			continue
+		}
+		break
+	}
+
+	return it.lastIndex, nil
+}
+
+func (it *FlatSparseIterator) NextValidity() (int, bool, error) {
+	i, err := it.Next()
+	if i == -1 {
+		return i, false, err
+	}
+	return i, true, err
+}
+
+func (it *FlatSparseIterator) NextValid() (int, int, error) {
+	var i int
+	var err error
+	for i, err = it.Next(); err == nil && i == -1; i, err = it.Next() {
+
+	}
+	return i, -1, err
+}
+
+func (it *FlatSparseIterator) NextInvalid() (int, int, error) {
+	var i int
+	var err error
+	for i, err = it.Next(); err == nil && i != -1; i, err = it.Next() {
+
+	}
+	return i, -1, err
+}
+
+func (it *FlatSparseIterator) Reset() {
+	if it.reverse {
+		for i := range it.track {
+			it.track[i] = it.s[i] - 1
+		}
+
+	} else {
+		it.nextIndex = 0
+		for i := range it.track {
+			it.track[i] = 0
+		}
+	}
+	it.done = false
+}
+
+func (it *FlatSparseIterator) SetReverse() {
+	it.reverse = true
+	it.Reset()
+}
+
+func (it *FlatSparseIterator) SetForward() {
+	it.reverse = false
+	it.Reset()
+}
+
+func (it *FlatSparseIterator) Coord() []int {
+	return it.track
+}
+
+func (it *FlatSparseIterator) Done() bool {
+	return it.done
 }
 
 /* TEMPORARILY REMOVED

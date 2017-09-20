@@ -10,10 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/*
-GENERATED FILE. DO NOT EDIT
-*/
-
 func TestSaveLoadNumpy(t *testing.T) {
 	if os.Getenv("TRAVISTEST") == "true" {
 		t.Skip("skipping test; This is being run on TravisCI")
@@ -83,7 +79,7 @@ func TestSaveLoadNumpy(t *testing.T) {
 	}
 	assert.Equal(T.Shape(), T3.Shape())
 	assert.Equal(T.Strides(), T3.Strides())
-	data := T.float64s()
+	data := T.Float64s()
 	data[0] = T.FillValue().(float64)
 	assert.Equal(data, T3.Data())
 }

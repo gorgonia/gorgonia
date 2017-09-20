@@ -158,9 +158,14 @@ func (m *lispMachine) RunAll() (err error) {
 			if synchronous {
 				syncChan <- struct{}{}
 			}
-		case err := <-errChan:
+		case err = <-errChan:
 			if m.fwd < len(m.sorted) {
-				return errors.Wrapf(err, "Running Node: %v", m.sorted[m.fwd])
+				err = vmContextualError{
+					error: errors.Wrapf(err, "Running Node: %v", m.sorted[m.fwd]),
+					node:  m.sorted[m.fwd],
+					instr: m.fwd,
+				}
+				return
 			}
 			return errors.Wrap(err, "RunAll")
 		case <-doneChan:
@@ -169,7 +174,6 @@ func (m *lispMachine) RunAll() (err error) {
 				return err
 			}
 			return nil
-		default:
 		}
 	}
 
@@ -285,7 +289,7 @@ func (m *lispMachine) forward() (err error) {
 	}
 	n := m.sorted[m.fwd]
 
-	m.watchedLogf("n: %v | (%x)", n, n.id)
+	m.watchedLogf("n: %v | (%x) | %p", n, n.id, n)
 	m.enterLoggingContext()
 	defer m.leaveLoggingContext()
 
@@ -330,11 +334,11 @@ func (m *lispMachine) forward() (err error) {
 
 	m.enterLoggingContext()
 	for i, child := range children {
+		m.logf("child!! %v %v", child, child.Shape())
 		if child.Device() == n.Device() {
 			inputs[i] = child.boundTo.(*dualValue)
-			continue
+			// continue
 		}
-		m.logf("child %v", child)
 		// if child.boundTo != nil {
 		// 	dv := child.boundTo.(*dualValue)
 		// 	if dv.d != nil {
@@ -372,7 +376,9 @@ func (m *lispMachine) forward() (err error) {
 			if allocD {
 				m.PutValue(dev, d)
 			}
-			returnDV(dv)
+			if allocV && allocD {
+				returnDV(dv)
+			}
 		}()
 	}
 	m.leaveLoggingContext()
@@ -387,6 +393,7 @@ func (m *lispMachine) forward() (err error) {
 			machineLogf("dvBindVar")
 			m.logf("dvBindVar")
 			if output, err = dvBindVar(op, inputs); err != nil {
+
 			}
 			if err = n.bind(output); err != nil {
 				return errors.Wrap(err, bindFail)
@@ -478,9 +485,9 @@ func (m *lispMachine) forward() (err error) {
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
-	if n.boundTo != nil {
-		m.watchedLogf("0x%x | 0x%x", n.boundTo.(*dualValue).Value.Uintptr(), n.boundTo.(*dualValue).d.Uintptr())
-	}
+	// if n.boundTo != nil {
+	// 	m.watchedLogf("0x%x | 0x%x", n.boundTo.(*dualValue).Value.Uintptr(), n.boundTo.(*dualValue).d.Uintptr())
+	// }
 
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
@@ -506,6 +513,9 @@ func (m *lispMachine) forward() (err error) {
 func (m *lispMachine) backward() (err error) {
 	if m.bwd < 0 {
 		return errors.New("no backprop queue")
+	}
+	if m.bwd >= len(m.q) {
+		return errors.New("Nothing to backprop")
 	}
 
 	instr := m.q[m.bwd]
