@@ -168,7 +168,26 @@ func BinomialRandomNode(g *ExprGraph, dt tensor.Dtype, trials, prob float64, sha
 
 // OneHotVector creates a node representing a one hot vector
 func OneHotVector(id, classes int, t tensor.Dtype, opts ...NodeConsOpt) *Node {
-	T := tensor.Ones(t, classes)
+	T := tensor.New(tensor.Of(t), tensor.WithShape(classes))
+	var err error
+	// This is stupid, I want generics. - docmerlin
+	switch t {
+	case tensor.Float32:
+		err = T.SetAt(float32(1), id)
+	case tensor.Float64:
+		err = T.SetAt(float64(1), id)
+	case tensor.Int64:
+		err = T.SetAt(int64(1), id)
+	case tensor.Int:
+		err = T.SetAt(int(1), id)
+	case tensor.Int32:
+		err = T.SetAt(int32(1), id)
+	default:
+		panic("tensor.Dtype not implemented")
+	}
+	if err != nil {
+		panic(err.Error())
+	}
 	return NewConstant(T, opts...)
 }
 

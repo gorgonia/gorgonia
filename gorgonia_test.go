@@ -64,3 +64,28 @@ func TestNodeFromAny(t *testing.T) {
 		assert.True(a.correctShape.Eq(n.shape), "%v shape error: Want %v. Got %v", a.name, a.correctShape, n.shape)
 	}
 }
+
+func TestOneHotVector(t *testing.T) {
+	assert := assert.New(t)
+	assert.EqualValues(
+		[]float32{0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+		OneHotVector(6, 10, nd.Float32).Value().Data())
+	assert.EqualValues(
+		[]float32{0, 1, 0, 0, 0},
+		OneHotVector(1, 5, nd.Float32).Value().Data())
+	assert.EqualValues(
+		[]float32{0, 1, 0, 0, 0, 0},
+		OneHotVector(1, 6, nd.Float32).Value().Data())
+	assert.EqualValues(
+		[]int{0, 0, 0, 1, 0},
+		OneHotVector(3, 5, nd.Int).Value().Data())
+	assert.EqualValues(
+		[]int32{0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+		OneHotVector(6, 10, nd.Int32).Value().Data())
+	assert.EqualValues(
+		[]float64{0, 1, 0, 0, 0},
+		OneHotVector(1, 5, nd.Float64).Value().Data())
+	assert.EqualValues(
+		[]int64{0, 1, 0, 0, 0, 0},
+		OneHotVector(1, 6, nd.Int64).Value().Data())
+}
