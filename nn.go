@@ -143,7 +143,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 	}
 
 	layer := filter.Shape()[0]
-	kernel := filter.Shape()(1)
+	kernel := filter.Shape()[1]
 	row := filter.Shape()[2]
 	col := filter.Shape()[3]
 
@@ -159,7 +159,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 	z := colIm.Shape()[3]
 
 	var patch, colImLayer *Node
-	if patch, err = Reshape(colIm, tensor.Shape{batch * m * n, layer}); err != nil {
+	if patch, err = Reshape(colIm, tensor.Shape{batch * m * n, z}); err != nil {
 		return
 	}
 

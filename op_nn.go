@@ -228,10 +228,10 @@ func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err 
 	}
 
 	var ret *Node
-	if ret, err = applyOp(op, grad); err != nil {
+	if ret, err = applyOp(diffOp, grad); err != nil {
 		return
 	}
-	retVal = Nods{ret}
+	retVal = Nodes{ret}
 	return
 }
 
