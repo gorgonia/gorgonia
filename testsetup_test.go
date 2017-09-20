@@ -273,17 +273,46 @@ func deepNodeEq(a, b *Node) bool {
 	return true
 }
 
+// TensorGenerator only generates Dense tensors for now
+type TensorGenerator struct {
+	ShapeConstraint tensor.Shape // [0, 6, 0] implies that the second dimension is the constraint. 0 is any.
+	DtypeConstraint tensor.Dtype
+}
+
+func (g TensorGenerator) Generate(r *rand.Rand, size int) reflect.Value {
+	shape := g.ShapeConstraint
+	of := g.DtypeConstraint
+
+	if g.ShapeConstraint == nil {
+		// generate
+	} else {
+		// generate for 0s in constraints
+	}
+
+	if g.DtypeConstraint == nil {
+		of = g.DtypeConstraint
+	}
+}
+
 type ValueGenerator struct {
-	shapeConstraint tensor.Shape // [0, 6, 0] implies that the second dimension is the constraint. 0 is any.
-	typeConstraint  tensor.Dtype
+	ShapeConstraint tensor.Shape // [0, 6, 0] implies that the second dimension is the constraint. 0 is any.
+	DtypeConstraint tensor.Dtype
 }
 
 func (g ValueGenerator) Generate(r *rand.Rand, size int) reflect.Value {
 	// generate scalar or tensor
-	// ri := r.Intn(2)
+	ri := r.Intn(2)
+	if ri == 0 {
+		gen := TensorGenerator{
+			ShapeConstraint: g.ShapeConstraint,
+			DtypeConstraint: g.DtypeConstraint,
+		}
+		return gen.Generate(r, size)
+
+	}
+	var retVal Value
 	// of := acceptableDtypes[r.Intn(len(acceptableDtypes))]
 
-	var retVal Value
 	return reflect.ValueOf(retVal)
 }
 

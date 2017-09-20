@@ -7,7 +7,7 @@ go test -tags='avx' -a  .
 go test -tags='sse' -a  .
 
 # because coveralls only accepts one coverage file at one time... we combine them into one gigantic one
-covers=(./test.cover ./tensor/test.cover)
+covers=(./test.cover)
 echo "mode: set" > ./final.cover
 tail -q -n +2 "${covers[@]}" >> ./final.cover
 goveralls -coverprofile=./final.cover -service=travis-ci
