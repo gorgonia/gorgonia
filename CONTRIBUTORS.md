@@ -3,6 +3,8 @@
 * Xuanyi Chew @chewxy - initial package
 * Naseer Dari @ndari - errors and error handling
 * Joe  Kabaka @kabaka0 - masked array functionality
+* Jorge Landivar @docmerlin - tests, bug finding and documentation
+* Matoko Ito @ynqa - tests, documentation and bug finding
 
 # Contributors
 
