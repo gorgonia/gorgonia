@@ -280,18 +280,21 @@ type TensorGenerator struct {
 }
 
 func (g TensorGenerator) Generate(r *rand.Rand, size int) reflect.Value {
-	shape := g.ShapeConstraint
-	of := g.DtypeConstraint
+	// shape := g.ShapeConstraint
+	// of := g.DtypeConstraint
 
-	if g.ShapeConstraint == nil {
-		// generate
-	} else {
-		// generate for 0s in constraints
-	}
+	// if g.ShapeConstraint == nil {
+	// 	// generate
+	// } else {
+	// 	// generate for 0s in constraints
+	// }
 
-	if g.DtypeConstraint == nil {
-		of = g.DtypeConstraint
-	}
+	// if g.DtypeConstraint == (tensor.Dtype{}) {
+	// 	of = g.DtypeConstraint
+	// }
+	var retVal Value
+
+	return reflect.ValueOf(retVal)
 }
 
 type ValueGenerator struct {
