@@ -334,8 +334,13 @@ func (op im2colOp) f32s(channels, height, width int, im, col []float32) {
 }
 
 type col2imOp struct {
-	unpadded         tensor.Shape // unpadded is basically the input shape (if we assume col2im as the inverse of im2col)
-	h, w             int          // patch height and width
+	// input shapes of im2col
+	unpaddedB int
+	unpaddedC int
+	unpaddedH int
+	unpaddedW int
+
+	h, w             int // patch height and width
 	padH, padW       int
 	strideH, strideW int
 }
@@ -348,11 +353,7 @@ func (op col2imOp) Type() hm.Type {
 }
 
 func (op col2imOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err error) {
-	if op.unpadded != nil {
-		return op.unpadded, nil
-	}
-
-	return nil, errors.Errorf(nyiFail, "col2impOp.InferShape", "calculate shapes")
+	return tensor.Shape{op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW}, nil
 }
 
 func (op col2imOp) Do(inputs ...Value) (retVal Value, err error) {
@@ -392,11 +393,18 @@ func (op col2imOp) String() string {
 	return fmt.Sprintf("col2im<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
+func (op col2imOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	return op.do(prealloc, inputs[0])
+}
+
 func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
-	b := op.unpadded[0]
-	c := op.unpadded[1]
-	h := op.unpadded[2]
-	w := op.unpadded[3]
+	b := op.unpaddedB
+	c := op.unpaddedC
+	h := op.unpaddedH
+	w := op.unpaddedW
 
 	switch input.Dtype() {
 	case tensor.Float64:
@@ -470,7 +478,12 @@ func (op col2imOp) f32s(channels, height, width int, col, im []float32) {
 }
 
 type maxPoolOp struct {
-	unpadded         tensor.Shape
+	// Shape of Input
+	unpaddedB int
+	unpaddedC int
+	unpaddedH int
+	unpaddedW int
+
 	h, w             int // patch height and width
 	padH, padW       int
 	strideH, strideW int
@@ -496,7 +509,12 @@ func (op *maxPoolOp) String() string {
 }
 
 type maxPoolDiffOp struct {
-	unpadded         tensor.Shape
+	// shape of input
+	unpaddedB int
+	unpaddedC int
+	unpaddedH int
+	unpaddedW int
+
 	h, w             int // patch height and width
 	padH, padW       int
 	strideH, strideW int
