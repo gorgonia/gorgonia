@@ -508,6 +508,10 @@ func (op *maxPoolOp) String() string {
 	return fmt.Sprintf("MaxPool{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
+func (op maxPoolOp) f32s(top, bottom Value) {
+
+}
+
 type maxPoolDiffOp struct {
 	// shape of input
 	unpaddedB int
