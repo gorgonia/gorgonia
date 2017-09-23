@@ -222,3 +222,7 @@ func minInt(a, b int) int {
 	}
 	return b
 }
+
+func ceilDivInt(a, b int) int {
+	return (a + b - 1) / b
+}

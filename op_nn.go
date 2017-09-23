@@ -483,6 +483,12 @@ func (op col2imOp) f32s(channels, height, width int, col, im []float32) {
 	}
 }
 
+// It's important to note that this op actually produces TWO values - one argmax, which will be used
+// as a mask, and the actual pooled value.
+//
+// The argmax is stored as an internal state and is not exposed to anything outside the op.
+// There are alternative ways of designing this op, but they all don't particularly seem nice.
+// Caffe's technique seemed the nicest.
 type maxPoolOp struct {
 	// Shape of Input
 	unpaddedB int
@@ -499,18 +505,36 @@ type maxPoolOp struct {
 	mask tensor.Tensor
 }
 
-func (op *maxPoolOp) Arity() int                                     { return 1 }
-func (op *maxPoolOp) Type() hm.Type                                  { return nil }
-func (op *maxPoolOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
-func (op *maxPoolOp) Do(...Value) (Value, error)                     { return nil, nil }
-func (op *maxPoolOp) ReturnsPtr() bool                               { return true }
-func (op *maxPoolOp) CallsExtern() bool                              { return false }
-func (op *maxPoolOp) OverwritesInput() int                           { return -1 }
+func (op *maxPoolOp) Arity() int { return 1 }
+
+// maxPoolOp has this type:
+// 		op :: (...) → (...)
+func (op *maxPoolOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	t := newTensorType(4, a)
+	return hm.NewFnType(t, t)
+}
+func (op *maxPoolOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+	s := inputs[0].(tensor.Shape)
+	b := s[0]
+	c := s[1]
+	h := s[2]
+	w := s[3]
+
+	pooledH := ceilDivInt((h + 2*op.padH - op.h), op.strideH)
+	pooledW := ceilDivInt((w + 2*op.padW - op.w), op.strideW)
+	return tensor.Shape{b, c, pooledH, pooledW}, nil
+}
+func (op *maxPoolOp) Do(...Value) (Value, error) { return nil, nil }
+func (op *maxPoolOp) ReturnsPtr() bool           { return true }
+func (op *maxPoolOp) CallsExtern() bool          { return false }
+func (op *maxPoolOp) OverwritesInput() int       { return -1 }
 func (op *maxPoolOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
+
 func (op *maxPoolOp) Hashcode() uint32 {
 	h := fnv.New32a()
 	op.WriteHash(h)
@@ -645,25 +669,33 @@ type maxPoolDiffOp struct {
 	mask tensor.Tensor
 }
 
-func (op *maxPoolDiffOp) Arity() int                                     { return 1 }
-func (op *maxPoolDiffOp) Type() hm.Type                                  { return nil }
-func (op *maxPoolDiffOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
-func (op *maxPoolDiffOp) Do(...Value) (Value, error)                     { return nil, nil }
-func (op *maxPoolDiffOp) ReturnsPtr() bool                               { return true }
-func (op *maxPoolDiffOp) CallsExtern() bool                              { return false }
-func (op *maxPoolDiffOp) OverwritesInput() int                           { return -1 }
+func (op *maxPoolDiffOp) Arity() int { return 1 }
+func (op *maxPoolDiffOp) Type() hm.Type {
+	a := hm.TypeVariable('a')
+	t := newTensorType(4, a)
+	return hm.NewFnType(t, t)
+
+}
+func (op *maxPoolDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
+	s := inputs[0].(tensor.Shape)
+	return s, nil
+}
+func (op *maxPoolDiffOp) Do(...Value) (Value, error) { return nil, nil }
+func (op *maxPoolDiffOp) ReturnsPtr() bool           { return true }
+func (op *maxPoolDiffOp) CallsExtern() bool          { return false }
+func (op *maxPoolDiffOp) OverwritesInput() int       { return -1 }
 func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 
 }
-func (op maxPoolDiffOp) Hashcode() uint32 {
+func (op *maxPoolDiffOp) Hashcode() uint32 {
 	h := fnv.New32a()
 	op.WriteHash(h)
 	return h.Sum32()
 }
-func (op maxPoolDiffOp) String() string {
+func (op *maxPoolDiffOp) String() string {
 	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
