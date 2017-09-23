@@ -20,10 +20,6 @@ type StackedDA struct {
 
 	input *Node
 	g     *ExprGraph
-
-	// execution
-	machines  []VM
-	costValue Value
 }
 
 func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hiddenSizes []int, corruptions []float64) *StackedDA {
@@ -87,25 +83,44 @@ func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hi
 }
 
 func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
-	verboseLog("Training epoch %d", epoch)
-	if len(sda.machines) != len(sda.autoencoders) {
-		sda.machines = nil
-		if err = sda.pretrainSetup(); err != nil {
+	var inputs, model Nodes
+	var machines []VM
+
+	inputs = Nodes{sda.input}
+	var costValue Value
+	for _, da := range sda.autoencoders {
+		var cost *Node
+		var grads Nodes
+		cost, err = da.Cost(sda.input)
+		readCost := Read(cost, &costValue)
+
+		if grads, err = Grad(cost, da.w, da.b, da.h.b); err != nil {
 			return
 		}
+
+		outputs := make(Nodes, len(grads)+1)
+		copy(outputs, grads)
+		outputs[len(outputs)-1] = readCost
+
+		prog, locMap, err := CompileFunction(sda.g, inputs, outputs)
+		if err != nil {
+			return err
+		}
+
+		var m VM
+		m = NewTapeMachine(sda.g, WithPrecompiled(prog, locMap))
+		machines = append(machines, m)
 	}
 
-	// solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
-	solver := NewVanillaSolver()
-	model := make(Nodes, 3)
+	solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
+	// solver := NewVanillaSolver()
+	model = make(Nodes, 3)
 
 	batches := x.Shape()[0] / sda.BatchSize
 	avgCosts := make([]float64, len(sda.autoencoders))
 
 	var start int
 	for i, da := range sda.autoencoders {
-		verboseLog("pretraining layer %d", i)
-
 		var layerCosts []float64
 		for batch := 0; batch < batches; batch++ {
 			var input tensor.Tensor
@@ -115,16 +130,16 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 
 			model = model[:0]
 			Let(sda.input, input)
-			if err = sda.machines[i].RunAll(); err != nil {
+			if err = machines[i].RunAll(); err != nil {
 				return
 			}
-			c := sda.costValue.Data().(float64)
+			c := costValue.Data().(float64)
 			layerCosts = append(layerCosts, c)
 			model = append(model, da.w, da.b, da.h.b)
 
-			solver.Step(model)
-			sda.machines[i].Reset()
+			machines[i].Reset()
 		}
+		solver.Step(model)
 		avgC := avgF64s(layerCosts)
 		avgCosts[i] = avgC
 	}
@@ -221,9 +236,9 @@ func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) 
 			return
 		}
 
-		solver.Step(model)
 		cvs = append(cvs, cost.Value().(Scalar).Data().(float64))
 	}
+	solver.Step(model)
 
 	trainingLog.Printf("%d\t%v", epoch, avgF64s(cvs))
 	return nil
@@ -298,32 +313,4 @@ func (sda *StackedDA) Load(filename string) (err error) {
 	}
 	f.Close()
 	return
-}
-
-func (sda *StackedDA) pretrainSetup() (err error) {
-	var inputs Nodes
-
-	inputs = Nodes{sda.input}
-	for _, da := range sda.autoencoders {
-		var cost *Node
-		var grads Nodes
-		cost, err = da.Cost(sda.input)
-		readCost := Read(cost, &sda.costValue)
-
-		if grads, err = Grad(cost, da.w, da.b, da.h.b); err != nil {
-			return
-		}
-		outputs := make(Nodes, len(grads)+1)
-		copy(outputs, grads)
-		outputs[len(outputs)-1] = readCost
-		prog, locMap, err := CompileFunction(sda.g, inputs, outputs)
-		if err != nil {
-			return err
-		}
-
-		var m VM
-		m = NewTapeMachine(sda.g, WithPrecompiled(prog, locMap))
-		sda.machines = append(sda.machines, m)
-	}
-	return nil
 }
