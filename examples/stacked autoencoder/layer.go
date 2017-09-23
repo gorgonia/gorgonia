@@ -61,11 +61,12 @@ func WithGraph(g *ExprGraph) LayerConsOpt {
 }
 
 type FC struct {
-	*Neuron
+	Neuron
 	LayerConfig
 
 	af ActivationFunction
 
+	// execution related
 	input  *Node
 	output *Node
 	g      *ExprGraph
@@ -81,7 +82,7 @@ func NewFC(opts ...LayerConsOpt) *FC {
 	u := func() InitWFn {
 		return GlorotU(1.0)
 	}
-	fc.Neuron = NewNeuron(fc.Inputs, fc.Outputs, fc.BatchSize, fc.g, u)
+	fc.Neuron = MakeNeuron(fc.Inputs, fc.Outputs, fc.BatchSize, fc.g, u)
 	return fc
 }
 
@@ -104,9 +105,10 @@ func (l *FC) Activate() (retVal *Node, err error) {
 }
 
 type SoftmaxLayer struct {
-	*Neuron
+	Neuron
 	LayerConfig
 
+	// execution related
 	input  *Node
 	output *Node
 	g      *ExprGraph
@@ -122,7 +124,7 @@ func NewSoftmaxLayer(opts ...LayerConsOpt) *SoftmaxLayer {
 		return GlorotU(1.0)
 	}
 
-	sm.Neuron = NewNeuron(sm.Inputs, sm.Outputs, sm.BatchSize, sm.g, u)
+	sm.Neuron = MakeNeuron(sm.Inputs, sm.Outputs, sm.BatchSize, sm.g, u)
 	return sm
 }
 

@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	. "github.com/chewxy/gorgonia"
@@ -93,14 +92,17 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 		var cost *Node
 		var grads Nodes
 		cost, err = da.Cost(sda.input)
-		Read(cost, &costValue)
+		readCost := Read(cost, &costValue)
 
 		if grads, err = Grad(cost, da.w, da.b, da.h.b); err != nil {
 			return
 		}
 
-		log.Printf("%v", sda.g.Nodes())
-		prog, locMap, err := CompileFunction(sda.g, inputs, grads)
+		outputs := make(Nodes, len(grads)+1)
+		copy(outputs, grads)
+		outputs[len(outputs)-1] = readCost
+
+		prog, locMap, err := CompileFunction(sda.g, inputs, outputs)
 		if err != nil {
 			return err
 		}
@@ -110,8 +112,8 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 		machines = append(machines, m)
 	}
 
-	// solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
-	solver := NewVanillaSolver()
+	solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
+	// solver := NewVanillaSolver()
 	model = make(Nodes, 3)
 
 	batches := x.Shape()[0] / sda.BatchSize
@@ -135,9 +137,9 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 			layerCosts = append(layerCosts, c)
 			model = append(model, da.w, da.b, da.h.b)
 
-			solver.Step(model)
 			machines[i].Reset()
 		}
+		solver.Step(model)
 		avgC := avgF64s(layerCosts)
 		avgCosts[i] = avgC
 	}
@@ -234,9 +236,9 @@ func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) 
 			return
 		}
 
-		solver.Step(model)
 		cvs = append(cvs, cost.Value().(Scalar).Data().(float64))
 	}
+	solver.Step(model)
 
 	trainingLog.Printf("%d\t%v", epoch, avgF64s(cvs))
 	return nil
