@@ -493,33 +493,141 @@ type maxPoolOp struct {
 	h, w             int // patch height and width
 	padH, padW       int
 	strideH, strideW int
+
+	// execution state
+	// the mask is only filled at execution time
+	mask tensor.Tensor
 }
 
-func (op maxPoolOp) Arity() int                                     { return 1 }
-func (op maxPoolOp) Type() hm.Type                                  { return nil }
-func (op maxPoolOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
-func (op maxPoolOp) Do(...Value) (Value, error)                     { return nil, nil }
-func (op maxPoolOp) ReturnsPtr() bool                               { return true }
-func (op maxPoolOp) CallsExtern() bool                              { return false }
-func (op maxPoolOp) OverwritesInput() int                           { return -1 }
-func (op maxPoolOp) WriteHash(h hash.Hash) {
+func (op *maxPoolOp) Arity() int                                     { return 1 }
+func (op *maxPoolOp) Type() hm.Type                                  { return nil }
+func (op *maxPoolOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
+func (op *maxPoolOp) Do(...Value) (Value, error)                     { return nil, nil }
+func (op *maxPoolOp) ReturnsPtr() bool                               { return true }
+func (op *maxPoolOp) CallsExtern() bool                              { return false }
+func (op *maxPoolOp) OverwritesInput() int                           { return -1 }
+func (op *maxPoolOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
-func (op maxPoolOp) Hashcode() uint32 {
+func (op *maxPoolOp) Hashcode() uint32 {
 	h := fnv.New32a()
 	op.WriteHash(h)
 	return h.Sum32()
 }
-func (op maxPoolOp) String() string {
+func (op *maxPoolOp) String() string {
 	return fmt.Sprintf("MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op maxPoolOp) f32s(top, bottom Value) {
+func (op *maxPoolOp) f32s(top, bottom tensor.Tensor) {
+	topData := top.Data().([]float32)
+	topShape := top.Shape()
+	topStride := top.Strides()[1]
+	bottomData := bottom.Data().([]float32)
+	bottomShape := bottom.Shape()
+	bottomStride := bottom.Strides()[1]
+	maskData := op.mask.Data().([]int)
 
+	// set values
+	for i := range topData {
+		topData[i] = -maxFloat32
+		maskData[i] = -1
+	}
+
+	batches := topShape[0]
+	channels := topShape[1]
+	pooledH := topShape[2]
+	pooledW := topShape[3]
+
+	h := bottomShape[2]
+	w := bottomShape[3]
+
+	for b := 0; b < batches; b++ {
+		for c := 0; c < channels; c++ {
+			for ph := 0; ph < pooledH; ph++ {
+				for pw := 0; pw < pooledW; pw++ {
+					hStart := ph*op.strideH - op.padH
+					wStart := pw*op.strideW - op.padW
+					hEnd := minInt(hStart+op.h, h)
+					wEnd := minInt(wStart+op.w, w)
+					hStart = maxInt(hStart, 0)
+					wStart = maxInt(wStart, 0)
+
+					poolIndex := ph*pooledW + pw
+
+					for hi := hStart; hi < hEnd; h++ {
+						for wi := wStart; wi < wEnd; w++ {
+							i := hi*w + wi
+							if bottomData[i] > topData[poolIndex] {
+								topData[poolIndex] = bottomData[i]
+								maskData[poolIndex] = i
+							}
+						}
+					}
+				}
+			}
+		}
+		// skip by strides
+		bottomData = bottomData[bottomStride:]
+		topData = topData[topStride:]
+	}
+}
+
+func (op *maxPoolOp) f64s(top, bottom tensor.Tensor) {
+	topData := top.Data().([]float64)
+	topShape := top.Shape()
+	topStride := top.Strides()[1]
+	bottomData := bottom.Data().([]float64)
+	bottomShape := bottom.Shape()
+	bottomStride := bottom.Strides()[1]
+	maskData := op.mask.Data().([]int)
+
+	// set values
+	for i := range topData {
+		topData[i] = -maxFloat64
+		maskData[i] = -1
+	}
+
+	batches := topShape[0]
+	channels := topShape[1]
+	pooledH := topShape[2]
+	pooledW := topShape[3]
+
+	h := bottomShape[2]
+	w := bottomShape[3]
+
+	for b := 0; b < batches; b++ {
+		for c := 0; c < channels; c++ {
+			for ph := 0; ph < pooledH; ph++ {
+				for pw := 0; pw < pooledW; pw++ {
+					hStart := ph*op.strideH - op.padH
+					wStart := pw*op.strideW - op.padW
+					hEnd := minInt(hStart+op.h, h)
+					wEnd := minInt(wStart+op.w, w)
+					hStart = maxInt(hStart, 0)
+					wStart = maxInt(wStart, 0)
+
+					poolIndex := ph*pooledW + pw
+
+					for hi := hStart; hi < hEnd; h++ {
+						for wi := wStart; wi < wEnd; w++ {
+							i := hi*w + wi
+							if bottomData[i] > topData[poolIndex] {
+								topData[poolIndex] = bottomData[i]
+								maskData[poolIndex] = i
+							}
+						}
+					}
+				}
+			}
+			// skip by strides
+			bottomData = bottomData[bottomStride:]
+			topData = topData[topStride:]
+		}
+	}
 }
 
 type maxPoolDiffOp struct {
@@ -532,16 +640,19 @@ type maxPoolDiffOp struct {
 	h, w             int // patch height and width
 	padH, padW       int
 	strideH, strideW int
+
+	// execution state
+	mask tensor.Tensor
 }
 
-func (op maxPoolDiffOp) Arity() int                                     { return 1 }
-func (op maxPoolDiffOp) Type() hm.Type                                  { return nil }
-func (op maxPoolDiffOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
-func (op maxPoolDiffOp) Do(...Value) (Value, error)                     { return nil, nil }
-func (op maxPoolDiffOp) ReturnsPtr() bool                               { return true }
-func (op maxPoolDiffOp) CallsExtern() bool                              { return false }
-func (op maxPoolDiffOp) OverwritesInput() int                           { return -1 }
-func (op maxPoolDiffOp) WriteHash(h hash.Hash) {
+func (op *maxPoolDiffOp) Arity() int                                     { return 1 }
+func (op *maxPoolDiffOp) Type() hm.Type                                  { return nil }
+func (op *maxPoolDiffOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
+func (op *maxPoolDiffOp) Do(...Value) (Value, error)                     { return nil, nil }
+func (op *maxPoolDiffOp) ReturnsPtr() bool                               { return true }
+func (op *maxPoolDiffOp) CallsExtern() bool                              { return false }
+func (op *maxPoolDiffOp) OverwritesInput() int                           { return -1 }
+func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
@@ -557,4 +668,70 @@ func (op maxPoolDiffOp) String() string {
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 
+}
+
+func (op *maxPoolDiffOp) f32s(bottom, top, bottomDiff, topDiff tensor.Tensor) {
+	topShape := top.Shape()
+	topStride := top.Strides()[1]
+	bottomStride := bottom.Strides()[1]
+	maskStride := op.mask.Strides()[1]
+
+	maskData := op.mask.Data().([]int)
+	topDiffData := topDiff.Data().([]float32)
+	bottomDiffData := bottomDiff.Data().([]float32)
+
+	ZeroValue(bottomDiff)
+
+	batches := topShape[0]
+	channels := topShape[1]
+	pooledH := topShape[2]
+	pooledW := topShape[3]
+
+	for b := 0; b < batches; b++ {
+		for c := 0; c < channels; c++ {
+			for ph := 0; ph < pooledH; ph++ {
+				for pw := 0; pw < pooledW; pw++ {
+					index := ph*pooledW + pw
+					bottomIndex := maskData[index]
+					bottomDiffData[bottomIndex] += topDiffData[index]
+				}
+			}
+			topDiffData = topDiffData[topStride:]
+			bottomDiffData = bottomDiffData[bottomStride:]
+			maskData = maskData[maskStride:]
+		}
+	}
+}
+
+func (op *maxPoolDiffOp) f64s(bottom, top, bottomDiff, topDiff tensor.Tensor) {
+	topShape := top.Shape()
+	topStride := top.Strides()[1]
+	bottomStride := bottom.Strides()[1]
+	maskStride := op.mask.Strides()[1]
+
+	maskData := op.mask.Data().([]int)
+	topDiffData := topDiff.Data().([]float64)
+	bottomDiffData := bottomDiff.Data().([]float64)
+
+	ZeroValue(bottomDiff)
+
+	batches := topShape[0]
+	channels := topShape[1]
+	pooledH := topShape[2]
+	pooledW := topShape[3]
+
+	for b := 0; b < batches; b++ {
+		for c := 0; c < channels; c++ {
+			for ph := 0; ph < pooledH; ph++ {
+				for pw := 0; pw < pooledW; pw++ {
+					index := ph*pooledW + pw
+					bottomIndex := maskData[index]
+					bottomDiffData[bottomIndex] += topDiffData[index]
+				}
+			}
+			topDiffData = topDiffData[topStride:]
+			bottomDiffData = bottomDiffData[bottomStride:]
+			maskData = maskData[maskStride:]
+		}
+	}
 }

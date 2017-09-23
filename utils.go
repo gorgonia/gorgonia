@@ -10,6 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	maxFloat32 = math32.MaxFloat32
+	maxFloat64 = math.MaxFloat64
+)
+
 func graphNodeToNode(in []graph.Node) (out Nodes) {
 	out = make(Nodes, len(in))
 	for i, n := range in {
@@ -206,6 +211,13 @@ func checkArity(op arityer, inputs int) error {
 
 func maxInt(a, b int) int {
 	if a > b {
+		return a
+	}
+	return b
+}
+
+func minInt(a, b int) int {
+	if a < b {
 		return a
 	}
 	return b
