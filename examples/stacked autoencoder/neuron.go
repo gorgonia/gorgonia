@@ -18,17 +18,17 @@ type Neuron struct {
 
 type initFn func() InitWFn
 
-func NewNeuron(inputs, outputs, batchSize int, g *ExprGraph, fn initFn) *Neuron {
-	w := NewMatrix(g, Float64, WithShape(inputs, outputs), WithInit(fn()))
+func MakeNeuron(inputs, outputs, batchSize int, g *ExprGraph, fn initFn) Neuron {
+	w := NewMatrix(g, dt, WithShape(inputs, outputs), WithInit(fn()))
 
 	var b *Node
 	if batchSize == 1 {
-		b = NewVector(g, Float64, WithShape(outputs), WithInit(Zeroes()))
+		b = NewVector(g, dt, WithShape(outputs), WithInit(Zeroes()))
 	} else {
-		b = NewMatrix(g, Float64, WithShape(batchSize, outputs), WithInit(Zeroes()))
+		b = NewMatrix(g, dt, WithShape(batchSize, outputs), WithInit(Zeroes()))
 	}
 
-	return &Neuron{
+	return Neuron{
 		w: w,
 		b: b,
 		g: g,

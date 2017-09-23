@@ -568,12 +568,22 @@ func (g *ExprGraph) To(n graph.Node) []graph.Node {
 
 // subgraph is basically a subset of nodes. This is useful for compiling sub sections of the graph
 func (g *ExprGraph) subgraph(ns Nodes, opts ...Nodes) *ExprGraph {
-	ns = ns.Set()
-	allset := ns.mapSet()
+	// ns = ns.Set()
 
-	// uniquify the froms and at the same time build a new roots
 	var roots Nodes
 
+	// add missing stuff first
+	for _, n := range ns {
+		for _, parent := range g.to[n] {
+			if parent.isStmt {
+				roots = append(roots, parent)
+				ns = append(ns, parent)
+			}
+		}
+	}
+
+	// uniquify the froms and at the same time build a new roots
+	allset := ns.mapSet()
 	if len(opts) == 0 {
 		for _, n := range ns {
 			if len(g.to[n]) == 0 {
@@ -605,9 +615,20 @@ func (g *ExprGraph) subgraph(ns Nodes, opts ...Nodes) *ExprGraph {
 				continue
 			}
 			roots[i] = n
+
 		}
 	}
+	var leaves Nodes
+	for _, n := range ns {
+		if len(n.children) == 0 {
+			leaves = append(leaves, n)
+		}
+	}
+
+	// uniquify all the things
 	roots = roots.Set()
+	leaves = leaves.Set()
+	ns = ns.Set()
 
 	retVal := &ExprGraph{
 		all:    ns,
@@ -615,7 +636,7 @@ func (g *ExprGraph) subgraph(ns Nodes, opts ...Nodes) *ExprGraph {
 		evac:   g.evac,
 		to:     g.to,
 
-		leaves:    g.leaves,
+		leaves:    leaves,
 		constants: g.constants,
 		roots:     roots,
 	}
@@ -649,7 +670,6 @@ func (g *ExprGraph) SubgraphRoots(ns ...*Node) *ExprGraph {
 			sub = append(sub, node)
 		}
 	}
-
 	return g.subgraph(sub, ns)
 }
 

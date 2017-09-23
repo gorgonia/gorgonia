@@ -10,13 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDense_shallowClone(t *testing.T) {
+func TestDense_ShallowClone(t *testing.T) {
 	T := New(Of(Float64), WithBacking([]float64{1, 2, 3, 4}))
-	T2 := T.shallowClone()
+	T2 := T.ShallowClone()
 	T2.slice(0, 2)
 	T2.Float64s()[0] = 1000
 
 	assert.Equal(t, T.Data().([]float64)[0:2], T2.Data())
+	assert.Equal(t, T.Engine(), T2.Engine())
+	assert.Equal(t, T.oe, T2.oe)
+	assert.Equal(t, T.flag, T2.flag)
 }
 
 func TestDense_Clone(t *testing.T) {
