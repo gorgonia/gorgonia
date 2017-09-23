@@ -1,5 +1,7 @@
 package main
 
+import "github.com/chewxy/gorgonia/tensor"
+
 type LayerConfig struct {
 	Inputs, Outputs int
 	BatchSize       int
@@ -12,3 +14,5 @@ type DeepConfig struct {
 	Layers            int
 	HiddenLayersSizes []int
 }
+
+var dt tensor.Dtype = tensor.Float64

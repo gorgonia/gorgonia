@@ -328,9 +328,11 @@ func (t *Dense) ostrides() []int {
 	return t.Strides()
 }
 
-// Shallow clone clones the *Dense without making a copy of the underlying array
-func (t *Dense) shallowClone() *Dense {
-	retVal := new(Dense)
+// ShallowClone clones the *Dense without making a copy of the underlying array
+func (t *Dense) ShallowClone() *Dense {
+	retVal := borrowDense()
+	retVal.e = t.e
+	retVal.oe = t.oe
 	retVal.AP = t.AP.Clone()
 	retVal.flag = t.flag
 	retVal.array = t.array

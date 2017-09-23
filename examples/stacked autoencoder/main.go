@@ -93,7 +93,12 @@ func predictBatch(logprobs tensor.Tensor, batchSize int) (guesses []int, err err
 	if err != nil {
 		return nil, err
 	}
-	guesses = argmax.Data().([]int)
+	switch g := argmax.Data().(type) {
+	case []int:
+		return g, nil
+	case int:
+		return []int{g}, nil
+	}
 	return
 }
 
@@ -102,12 +107,16 @@ func makeTargets(targets tensor.Tensor) []int {
 	ys = ys[:0]
 	for i := 0; i < targets.Shape()[0]; i++ {
 		ysl, _ := targets.Slice(T.S(i))
-		raw := ysl.Data().([]float64)
-		for i, v := range raw {
-			if v == 0.9 {
-				ys = append(ys, i)
-				break
+		switch raw := ysl.Data().(type) {
+		case []float64:
+			for i, v := range raw {
+				if v == 0.9 {
+					ys = append(ys, i)
+					break
+				}
 			}
+		case float64:
+			ys = append(ys, 0)
 		}
 	}
 	return ys
