@@ -218,15 +218,24 @@ func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err 
 		return
 	}
 	im := inputs[0]
-
+	s := im.Shape()
+	if s.TotalSize() != 4 {
+		return nil, errors.Errorf("Expected input to have a shape with 4 dims")
+	}
+	var unpaddedB, unpaddedC, unpaddedH, unpaddedW int
+	unpaddedB, unpaddedC, unpaddedH, unpaddedW = s[0], s[1], s[2], s[3]
 	diffOp := col2imOp{
-		unpadded: im.Shape(),
-		h:        op.h,
-		w:        op.w,
-		padH:     op.padH,
-		padW:     op.padW,
-		strideH:  op.strideH,
-		strideW:  op.strideW,
+		unpaddedB: unpaddedB,
+		unpaddedC: unpaddedC,
+		unpaddedH: unpaddedH,
+		unpaddedW: unpaddedW,
+
+		h:       op.h,
+		w:       op.w,
+		padH:    op.padH,
+		padW:    op.padW,
+		strideH: op.strideH,
+		strideW: op.strideW,
 	}
 
 	var ret *Node
@@ -365,11 +374,8 @@ func (op col2imOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	// todo type check values
 	// todo shape check values
-	if op.unpadded == nil || op.unpadded.TotalSize() != 4 {
-		return nil, errors.Errorf(nyiFail, "col2imOp.Do", "calculate shapes")
-	}
 
-	retShape := op.unpadded
+	retShape := tensor.Shape{op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW}
 	prealloc := tensor.New(tensor.Of(im.Dtype()), tensor.WithShape(retShape...))
 
 	return op.do(prealloc, im)
@@ -394,8 +400,8 @@ func (op col2imOp) String() string {
 }
 
 func (op col2imOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
-	if err = checkArity(op, len(inputs)); err != nil {
-		return
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
 	}
 	return op.do(prealloc, inputs[0])
 }
@@ -489,23 +495,27 @@ type maxPoolOp struct {
 	strideH, strideW int
 }
 
-func (op *maxPoolOp) Arity() int                                     { return 1 }
-func (op *maxPoolOp) Type() hm.Type                                  { return nil }
-func (op *maxPoolOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
-func (op *maxPoolOp) Do(...Value) (Value, error)                     { return nil, nil }
-func (op *maxPoolOp) ReturnsPtr() bool                               { return true }
-func (op *maxPoolOp) CallsExtern() bool                              { return false }
-func (op *maxPoolOp) OverwritesInput() int                           { return -1 }
-func (op *maxPoolOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "MaxPool{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+func (op maxPoolOp) Arity() int                                     { return 1 }
+func (op maxPoolOp) Type() hm.Type                                  { return nil }
+func (op maxPoolOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
+func (op maxPoolOp) Do(...Value) (Value, error)                     { return nil, nil }
+func (op maxPoolOp) ReturnsPtr() bool                               { return true }
+func (op maxPoolOp) CallsExtern() bool                              { return false }
+func (op maxPoolOp) OverwritesInput() int                           { return -1 }
+func (op maxPoolOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
+		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
-func (op *maxPoolOp) Hashcode() uint32 {
+func (op maxPoolOp) Hashcode() uint32 {
 	h := fnv.New32a()
 	op.WriteHash(h)
 	return h.Sum32()
 }
-func (op *maxPoolOp) String() string {
-	return fmt.Sprintf("MaxPool{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+func (op maxPoolOp) String() string {
+	return fmt.Sprintf("MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
+		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
 func (op maxPoolOp) f32s(top, bottom Value) {
@@ -524,21 +534,27 @@ type maxPoolDiffOp struct {
 	strideH, strideW int
 }
 
-func (op *maxPoolDiffOp) Arity() int                                     { return 1 }
-func (op *maxPoolDiffOp) Type() hm.Type                                  { return nil }
-func (op *maxPoolDiffOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
-func (op *maxPoolDiffOp) Do(...Value) (Value, error)                     { return nil, nil }
-func (op *maxPoolDiffOp) ReturnsPtr() bool                               { return true }
-func (op *maxPoolDiffOp) CallsExtern() bool                              { return false }
-func (op *maxPoolDiffOp) OverwritesInput() int                           { return -1 }
-func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "MaxPoolDiff{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+func (op maxPoolDiffOp) Arity() int                                     { return 1 }
+func (op maxPoolDiffOp) Type() hm.Type                                  { return nil }
+func (op maxPoolDiffOp) InferShape(s ...DimSizer) (tensor.Shape, error) { return nil, nil }
+func (op maxPoolDiffOp) Do(...Value) (Value, error)                     { return nil, nil }
+func (op maxPoolDiffOp) ReturnsPtr() bool                               { return true }
+func (op maxPoolDiffOp) CallsExtern() bool                              { return false }
+func (op maxPoolDiffOp) OverwritesInput() int                           { return -1 }
+func (op maxPoolDiffOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
+		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+
 }
-func (op *maxPoolDiffOp) Hashcode() uint32 {
+func (op maxPoolDiffOp) Hashcode() uint32 {
 	h := fnv.New32a()
 	op.WriteHash(h)
 	return h.Sum32()
 }
-func (op *maxPoolDiffOp) String() string {
-	return fmt.Sprintf("MaxPoolDiff{%v}(%d, %d %d, %d, %d %d)", op.unpadded, op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+func (op maxPoolDiffOp) String() string {
+	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
+		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+
 }
