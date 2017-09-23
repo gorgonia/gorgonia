@@ -651,7 +651,7 @@ func (instr *readInstr) ID() int           { return -1 }
 func (instr *readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr *readInstr) writes() register  { return register{-1, CPU} }
 func (instr *readInstr) exec(m *tapeMachine) (err error) {
-	m.logf("Executing READ - read from %v", instr.readFrom)
+	m.logf("Executing READ - read from %v into %v", instr.readFrom, instr.into)
 	v := m.getValue(instr.readFrom)
 	if v == nil {
 		return errors.Errorf(nyiFail, "Cannot read instruction")
@@ -663,6 +663,7 @@ func (instr *readInstr) exec(m *tapeMachine) (err error) {
 	}
 
 	*instr.into = v2
+	m.logf("instr.into %v", *instr.into)
 	return nil
 }
 
