@@ -31,7 +31,7 @@ var verbose = flag.Bool("v", false, "Verbose?")
 var trainingWriter io.Writer
 var trainingLog *log.Logger
 
-var Float tensor.Dtype = tensor.Float64
+var dt tensor.Dtype = tensor.Float64
 
 func init() {
 	var err error
