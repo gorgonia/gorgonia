@@ -546,20 +546,13 @@ func (op *maxPoolOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	return nil, errors.Errorf("Expected a shape")
 }
 
-func (op *maxPoolOp) Do(inputs ...Value) (Value, error) {
-	if err = checkArity(op, len(inputs)); err != nil {
-		return
+func (op *maxPoolOp) Do(inputs ...Value) (retVal Value, err error) {
+	var in, out tensor.Tensor
+	if in, err = op.checkInput(inputs...); err != nil {
+		return nil, err
 	}
 
-	var in, out tensor.Tensor
-	var ok bool
-	if in, ok = inputs[0].(tensor.Tensor); !ok {
-		return nil, errors.Errorf("Expected input to be a tensor")
-	}
 	inShp := in.Shape()
-	if inShp.Dims() != 4 {
-		return nil, errors.Errorf("Expected input to have 4 dimensions")
-	}
 
 	out = tensor.New(tensor.Of(in.Dtype()), tensor.WithShape(op.calcShape(inShp)...), tensor.WithEngine(in.Engine()))
 	op.do(out, in)
@@ -588,10 +581,50 @@ func (op *maxPoolOp) String() string {
 }
 
 func (op *maxPoolOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	var in tensor.Tensor
+	var err error
+	if in, err = op.checkInput(inputs...); err != nil {
+		return nil, err
+	}
+
+	if p, ok := prealloc.(tensor.Tensor); ok {
+		op.do(p, in)
+		return p, nil
+	}
+	return nil, errors.Errorf("Expected prealloc to be a tensor")
+}
+
+func (op *maxPoolOp) DiffWRT(inputs int) []bool { return []bool{true} }
+
+func (op *maxPoolOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error) {
+	input := inputs[0]
+
+	var op2 maxPoolOp
+	op2 = *op
+	diff := &maxPoolDiffOp{op2}
+
+	var ret *Node
+	if ret, err = applyOp(diff, input, output, grad); err != nil {
+		return nil, err
+	}
+	return Nodes{ret}, nil
+}
+
+func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
-	return op.do(prealloc, inputs[0])
+
+	var in tensor.Tensor
+	var ok bool
+	if in, ok = inputs[0].(tensor.Tensor); !ok {
+		return nil, errors.Errorf("Expected input to be a tensor")
+	}
+
+	if in.Shape().Dims() != 4 {
+		return nil, errors.Errorf("Expected input to have 4 dimensions")
+	}
+	return in, nil
 }
 
 // calcShape calculates the output shape given an input shape
@@ -629,7 +662,7 @@ func (op *maxPoolOp) do(out, in tensor.Tensor) {
 
 	maskData := op.mask.Data().([]int)
 
-	switch input.Dtype() {
+	switch in.Dtype() {
 	case tensor.Float64:
 		op.f64s(batches, channels, outH, outW, inH, inW,
 			outStride, inStride, maskStride,
@@ -729,35 +762,49 @@ func (op *maxPoolOp) f64s(batches, channels, outH, outW, inH, inW,
 }
 
 type maxPoolDiffOp struct {
-	// shape of input
-	unpaddedB int
-	unpaddedC int
-	unpaddedH int
-	unpaddedW int
-
-	h, w             int // patch height and width
-	padH, padW       int
-	strideH, strideW int
-
-	// execution state
-	mask tensor.Tensor
+	maxPoolOp
 }
 
-func (op *maxPoolDiffOp) Arity() int { return 1 }
+func (op *maxPoolDiffOp) Arity() int { return 3 }
 func (op *maxPoolDiffOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	t := newTensorType(4, a)
-	return hm.NewFnType(t, t)
+	return hm.NewFnType(t, t, t, t)
 }
 
 func (op *maxPoolDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	s := inputs[0].(tensor.Shape).Clone()
 	return s, nil
 }
-func (op *maxPoolDiffOp) Do(...Value) (Value, error) { return nil, nil }
-func (op *maxPoolDiffOp) ReturnsPtr() bool           { return true }
-func (op *maxPoolDiffOp) CallsExtern() bool          { return false }
-func (op *maxPoolDiffOp) OverwritesInput() int       { return -1 }
+func (op *maxPoolDiffOp) Do(inputs ...Value) (Value, error) {
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+
+	var in, out, pooled, pooledGrad tensor.Tensor
+	var ok bool
+	if in, ok = inputs[0].(tensor.Tensor); !ok {
+		return nil, errors.Errorf("Expected input to be a tensor")
+	}
+	inShp := in.Shape()
+	if inShp.Dims() != 4 {
+		return nil, errors.Errorf("Expected input to have 4 dimensions")
+	}
+	if pooled, ok = inputs[1].(tensor.Tensor); !ok {
+		return nil, errors.Errorf("Expected pooled to be a tensor")
+	}
+	if pooled, ok = inputs[2].(tensor.Tensor); !ok {
+		return nil, errors.Errorf("Expected pooledGrad to be a tensor")
+	}
+
+	// out is the gradient of in
+	out = tensor.New(tensor.Of(in.Dtype()), tensor.WithShape(in.Shape().Clone()...), tensor.WithEngine(in.Engine()))
+	op.do(out, in, pooled, pooledGrad)
+	return out, nil
+}
+func (op *maxPoolDiffOp) ReturnsPtr() bool     { return true }
+func (op *maxPoolDiffOp) CallsExtern() bool    { return false }
+func (op *maxPoolDiffOp) OverwritesInput() int { return -1 }
 func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
@@ -776,28 +823,47 @@ func (op *maxPoolDiffOp) String() string {
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op *maxPoolDiffOp) do() {
-
-}
-
-// in is the "bottom", while out is the "top" (bottom being the unpooled, and top being the pooled)
-func (op *maxPoolDiffOp) f32s(in, out, inDiff, outDiff tensor.Tensor) {
-	outShape := out.Shape()
-	outStride := out.Strides()[1]
+func (op *maxPoolDiffOp) do(inGrad, in, pooled, pooledGrad tensor.Tensor) {
+	pooledShape := pooled.Shape()
+	pooledStride := pooled.Strides()[1]
 	inStride := in.Strides()[1]
 	maskStride := op.mask.Strides()[1]
 
+	batches := pooledShape[0]
+	channels := pooledShape[1]
+	height := pooledShape[2]
+	width := pooledShape[3]
+
 	maskData := op.mask.Data().([]int)
-	outDiffData := outDiff.Data().([]float32)
-	inDiffData := inDiff.Data().([]float32)
 
-	ZeroValue(inDiff)
+	switch in.Dtype() {
+	case tensor.Float32:
+		inGradData := inGrad.Data().([]float32)
+		pooledGradData := pooledGrad.Data().([]float32)
+		op.f32s(batches, channels, height, width,
+			inStride, pooledStride, maskStride,
+			inGradData, pooledGradData, maskData)
+	case tensor.Float64:
+		inGradData := inGrad.Data().([]float64)
+		pooledGradData := pooledGrad.Data().([]float64)
+		op.f64s(batches, channels, height, width,
+			inStride, pooledStride, maskStride,
+			inGradData, pooledGradData, maskData)
+	}
+}
 
-	batches := outShape[0]
-	channels := outShape[1]
-	pooledH := outShape[2]
-	pooledW := outShape[3]
+// in is the "bottom", while out is the "top" (bottom being the unpooled, and top being the pooled)
+func (op *maxPoolDiffOp) f32s(batches, channels, pooledH, pooledW int,
+	inStride, outStride, maskStride int,
+	inDiffData, outDiffData []float32,
+	maskData []int) {
 
+	// zero out. let's hope go's optimizer is smart enought
+	for i := range inDiffData {
+		inDiffData[i] = 0
+	}
+
+	// this loop can be goroutine'd
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
 			for ph := 0; ph < pooledH; ph++ {
@@ -814,34 +880,29 @@ func (op *maxPoolDiffOp) f32s(in, out, inDiff, outDiff tensor.Tensor) {
 	}
 }
 
-func (op *maxPoolDiffOp) f64s(bottom, top, bottomDiff, topDiff tensor.Tensor) {
-	topShape := top.Shape()
-	topStride := top.Strides()[1]
-	bottomStride := bottom.Strides()[1]
-	maskStride := op.mask.Strides()[1]
+// in is the "bottom", while out is the "top" (bottom being the unpooled, and top being the pooled)
+func (op *maxPoolDiffOp) f64s(batches, channels, pooledH, pooledW int,
+	inStride, outStride, maskStride int,
+	inDiffData, outDiffData []float64,
+	maskData []int) {
 
-	maskData := op.mask.Data().([]int)
-	topDiffData := topDiff.Data().([]float64)
-	bottomDiffData := bottomDiff.Data().([]float64)
+	// zero out. let's hope go's optimizer is smart enought
+	for i := range inDiffData {
+		inDiffData[i] = 0
+	}
 
-	ZeroValue(bottomDiff)
-
-	batches := topShape[0]
-	channels := topShape[1]
-	pooledH := topShape[2]
-	pooledW := topShape[3]
-
+	// this loop can be goroutine'd
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
 			for ph := 0; ph < pooledH; ph++ {
 				for pw := 0; pw < pooledW; pw++ {
 					index := ph*pooledW + pw
-					bottomIndex := maskData[index]
-					bottomDiffData[bottomIndex] += topDiffData[index]
+					inIndex := maskData[index]
+					inDiffData[inIndex] += outDiffData[index]
 				}
 			}
-			topDiffData = topDiffData[topStride:]
-			bottomDiffData = bottomDiffData[bottomStride:]
+			outDiffData = outDiffData[outStride:]
+			inDiffData = inDiffData[inStride:]
 			maskData = maskData[maskStride:]
 		}
 	}
