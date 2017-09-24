@@ -154,9 +154,23 @@ func (op randomOp) String() string {
 }
 
 type im2colOp struct {
-	h, w             int // kernel height and width
-	padH, padW       int
-	strideH, strideW int
+	h, w                 int // kernel height and width
+	padH, padW           int
+	strideH, strideW     int
+	dilationH, dilationW int
+}
+
+func makeIm2ColOp(kernelHeight, kernelWidth, padHeight, padWidth, strideHeight, strideWidth int) im2colOp {
+	return im2colOp{
+		h:         kernelHeight,
+		w:         kernelWidth,
+		padH:      padHeight,
+		padW:      padWidth,
+		strideH:   strideHeight,
+		strideW:   strideWidth,
+		dilationH: 1,
+		dilationW: 1,
+	}
 }
 
 func (op im2colOp) Arity() int { return 1 }
@@ -272,15 +286,30 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	c := s[1]
 	h := s[2]
 	w := s[3]
+	batchStride := c * h * w
 
+	retHeight := (h+2*op.padH-((op.dilationH*op.h-1)+1))/op.strideH + 1
+	retWidth := (w+2*op.padW-((op.dilationW*op.w-1)+1))/op.strideW + 1
+	chanStride := h * w
+
+	var start, end int
+	end = start + batchStride
 	switch input.Dtype() {
 	case tensor.Float64:
+		inputData := input.Data().([]float64)
+		preallocData := prealloc.Data().([]float64)
 		for i := 0; i < b; i++ {
-			op.f64s(c, h, w, input.Data().([]float64), prealloc.Data().([]float64))
+			op.f64s(c, h, w, chanStride, retHeight, retWidth, inputData[start:end], preallocData[start:end])
+			start += batchStride
+			end += batchStride
 		}
 	case tensor.Float32:
+		inputData := input.Data().([]float32)
+		preallocData := prealloc.Data().([]float32)
 		for i := 0; i < b; i++ {
-			op.f32s(c, h, w, input.Data().([]float32), prealloc.Data().([]float32))
+			op.f32s(c, h, w, chanStride, retHeight, retWidth, inputData[start:end], preallocData[start:end])
+			start += batchStride
+			end += batchStride
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
@@ -288,57 +317,63 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	return prealloc, nil
 }
 
-func (op im2colOp) f64s(channels, height, width int, im, col []float64) {
-	retHeight := (height+2*op.padH-op.h)/op.strideH + 1
-	retWidth := (width+2*op.padW-op.w)/op.strideW + 1
-	retChans := channels * op.h * op.w
-
-	for c := 0; c < retChans; c++ {
-		widthOffset := c % op.w
-		heightOffset := (c / op.w) % op.h
-		imChan := c / op.h / op.w
-
-		for h := 0; h < retHeight; h++ {
-			for w := 0; w < retWidth; w++ {
-				padH := h*op.strideH - op.padH + heightOffset
-				padW := w*op.strideW - op.padW + widthOffset
-
-				idx := retChans*retWidth*h + retChans*w + c
-				if padH >= 0 && padH < height && padW >= 0 && padW < width {
-					imIdx := (imChan*height+padH)*width + padW
-					col[idx] = im[imIdx]
-				} else {
-					col[idx] = 0
+func (op im2colOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float64) {
+	lc := len(col)
+	for ch := chans; ch >= 0; ch++ {
+		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+				inRow := -op.padH + kernelRow*op.dilationH
+				for outRow := retHeight; outRow >= 0; outRow-- {
+					if !(inRow > 0 && inRow < height) {
+						for outCol := retWidth; outCol >= 0; outCol-- {
+							col[lc-outCol] = 0
+						}
+						continue
+					}
+					inCol := -op.padW + kernelCol*op.dilationW
+					for outCol := retWidth; outCol >= 0; outCol-- {
+						if inCol > 0 && inCol < width {
+							col[lc-outCol] = im[inRow*width+inCol]
+						} else {
+							col[lc-outCol] = 0
+						}
+						inCol += op.strideW
+					}
 				}
+				inRow += op.strideH
 			}
 		}
+		im = im[chanStride:]
 	}
 }
 
-func (op im2colOp) f32s(channels, height, width int, im, col []float32) {
-	retHeight := (height+2*op.padH-op.h)/op.strideH + 1
-	retWidth := (width+2*op.padW-op.w)/op.strideW + 1
-	retChans := channels * op.h * op.w
-
-	for c := 0; c < retChans; c++ {
-		widthOffset := c % op.w
-		heightOffset := (c / op.w) % op.h
-		imChan := c / op.h / op.w
-
-		for h := 0; h < retHeight; h++ {
-			for w := 0; w < retWidth; w++ {
-				padH := h*op.strideH - op.padH + heightOffset
-				padW := w*op.strideW - op.padW + widthOffset
-
-				idx := retChans*retWidth*h + retChans*w + c
-				if padH >= 0 && padH < height && padW >= 0 && padW < width {
-					imIdx := (imChan*height+padH)*width + padW
-					col[idx] = im[imIdx]
-				} else {
-					col[idx] = 0
+func (op im2colOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float32) {
+	lc := len(col)
+	for ch := chans; ch >= 0; ch++ {
+		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+				inRow := -op.padH + kernelRow*op.dilationH
+				for outRow := retHeight; outRow >= 0; outRow-- {
+					if !(inRow > 0 && inRow < height) {
+						for outCol := retWidth; outCol >= 0; outCol-- {
+							col[lc-outCol] = 0
+						}
+						continue
+					}
+					inCol := -op.padW + kernelCol*op.dilationW
+					for outCol := retWidth; outCol >= 0; outCol-- {
+						if inCol > 0 && inCol < width {
+							col[lc-outCol] = im[inRow*width+inCol]
+						} else {
+							col[lc-outCol] = 0
+						}
+						inCol += op.strideW
+					}
 				}
+				inRow += op.strideH
 			}
 		}
+		im = im[chanStride:]
 	}
 }
 
@@ -374,9 +409,10 @@ type col2imOp struct {
 	unpaddedH int
 	unpaddedW int
 
-	h, w             int // patch height and width
-	padH, padW       int
-	strideH, strideW int
+	h, w                 int // patch height and width
+	padH, padW           int
+	strideH, strideW     int
+	dilationH, dilationW int
 }
 
 func (op col2imOp) Arity() int { return 1 }

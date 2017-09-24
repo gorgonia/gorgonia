@@ -128,6 +128,34 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	return HadamardProd(x, retVal)
 }
 
+// Im2Col converts a BCHW image block to columns. The kernel, pad and stride parameter must be shape of size 2, no more no less
+// This poor naming scheme clearly comes from matlab
+func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error) {
+	if kernel.TotalSize() != 2 {
+		return nil, errors.Errorf("kernel shape is supposed to be 2")
+	}
+	if pad.TotalSize() != 2 {
+		return nil, errors.Errorf("pad is supposed to have a size of 2")
+	}
+	if stride.TotalSize() != 2 {
+		return nil, errors.Errorf("strides is supposed to have a size of 2")
+	}
+
+	if kernel[0] <= 0 || kernel[1] <= 0 {
+		return nil, errors.Errorf("cannot have negative or 0 in kernel shape")
+	}
+
+	if stride[0] <= 0 || stride[1] <= 0 {
+		return nil, errors.Errorf("cannot have negative or 0 in stride")
+	}
+
+	if pad[0] < 0 || pad[1] < 0 {
+		return nil, errors.Errorf("cannot have negative padding")
+	}
+	op := makeIm2ColOp(kernel[0], kernel[1], pad[0], pad[1], stride[0], stride[1])
+	return applyOp(op, n)
+}
+
 // Conv2d is a simple 2D convoution, to be used for CPU computation only. If CuDNN is used, use the CUDAConv2D function.
 // These are the properties the inputs must fulfil:
 //
