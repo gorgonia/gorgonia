@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"log"
 	"time"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -343,62 +342,64 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 }
 
 func (op im2colOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float64) {
-	lc := len(col)
-	for ch := chans; ch > 0; ch-- {
+	var colIdx int
+	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
 		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
 			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
 				inRow := -op.padH + kernelRow*op.dilationH
 				for outRow := retHeight; outRow > 0; outRow-- {
 					if !(inRow >= 0 && inRow < height) {
 						for outCol := retWidth; outCol > 0; outCol-- {
-							col[lc-outCol] = 0
+							col[colIdx] = 0
+							colIdx++
 						}
 						continue
 					}
 					inCol := -op.padW + kernelCol*op.dilationW
 					for outCol := retWidth; outCol > 0; outCol-- {
 						if inCol >= 0 && inCol < width {
-							col[lc-outCol] = im[inRow*width+inCol]
+							col[colIdx] = im[inRow*width+inCol]
 						} else {
-							col[lc-outCol] = 0
+							col[colIdx] = 0
 						}
+						colIdx++
 						inCol += op.strideW
 					}
+					inRow += op.strideH
 				}
-				inRow += op.strideH
 			}
 		}
-		im = im[chanStride:]
 	}
 }
 
 func (op im2colOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float32) {
-	lc := len(col)
-	for ch := chans; ch > 0; ch-- {
+	var colIdx int
+	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
 		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
 			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
 				inRow := -op.padH + kernelRow*op.dilationH
 				for outRow := retHeight; outRow > 0; outRow-- {
 					if !(inRow >= 0 && inRow < height) {
 						for outCol := retWidth; outCol > 0; outCol-- {
-							col[lc-outCol] = 0
+							col[colIdx] = 0
+							colIdx++
 						}
 						continue
 					}
 					inCol := -op.padW + kernelCol*op.dilationW
 					for outCol := retWidth; outCol > 0; outCol-- {
 						if inCol >= 0 && inCol < width {
-							col[lc-outCol] = im[inRow*width+inCol]
+							col[colIdx] = im[inRow*width+inCol]
 						} else {
-							col[lc-outCol] = 0
+							col[colIdx] = 0
 						}
+						colIdx++
 						inCol += op.strideW
 					}
+					inRow += op.strideH
 				}
-				inRow += op.strideH
 			}
 		}
-		im = im[chanStride:]
 	}
 }
 
@@ -501,7 +502,6 @@ func (op col2imOp) do(prealloc, input Value) (retVal Value, err error) {
 	w := s[2]
 	chanStride := retHeight * retWidth
 	batchStrideCol := h * w * s[3]
-	log.Printf("s %v batchStrdeCol %d", s, batchStrideCol)
 
 	var imStart, imEnd, colStart, colEnd int
 	imEnd = imStart + batchStrideIm
@@ -569,7 +569,6 @@ func (op col2imOp) f64s(chans, height, width, chanStride, retHeight, retWidth in
 						inCol := -op.padW + kernelCol*op.dilationW
 						for outCol := retWidth; outCol > 0; outCol-- {
 							lc := len(col)
-							log.Printf("lc %d, outCol %d, inRow %d, width %d, inCol %d", lc, outCol, inRow, width, inCol)
 							if inCol >= 0 && inCol < width {
 								im[inRow*width+inCol] += col[lc-outCol]
 							}

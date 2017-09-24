@@ -91,7 +91,8 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 	}
 	t.Logf("x: %v", x.Value())
 	t.Logf("y: %v", y.Value().Data().([]float64)[4])
-	t.Logf("c: %v", cost.Value())
+	t.Logf("y %v:", y.Value().Size())
+	t.Logf("c: %1.10f", cost.Value())
 	t.Logf("xG: %v", grads[0])
 }
 
