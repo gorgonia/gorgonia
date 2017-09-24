@@ -2,7 +2,6 @@ package gorgonia
 
 import (
 	"io/ioutil"
-	"log"
 	"runtime"
 	"testing"
 
@@ -75,7 +74,6 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 		t.Error(err)
 		return
 	}
-	log.Printf("y.Shape %v", y.Shape())
 	cost := Must(Sum(y))
 
 	grads, err := Grad(cost, x)
@@ -90,17 +88,15 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 		return
 	}
 	t.Logf("x: %v", x.Value())
-	t.Logf("y: %v", y.Value().Data().([]float64)[4])
-	t.Logf("y %v:", y.Value().Size())
-	t.Logf("c: %1.10f", cost.Value())
+	t.Logf("c: %3.3f", cost.Value())
 	t.Logf("xG: %v", grads[0])
 }
 
 func TestIm2Col(t *testing.T) {
 	// assert := assert.New(t)
-	dts := []tensor.Dtype{tensor.Float64}
-	for _, i2ct := range im2colTests {
-		for _, dt := range dts {
+	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
+	for _, dt := range dts {
+		for _, i2ct := range im2colTests {
 			im2colTest(t, dt, i2ct.kernel, i2ct.pad, i2ct.stride)
 		}
 	}
