@@ -131,14 +131,14 @@ func Rectify(x *Node) (retVal *Node, err error) {
 // Im2Col converts a BCHW image block to columns. The kernel, pad and stride parameter must be shape of size 2, no more no less
 // This poor naming scheme clearly comes from matlab
 func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error) {
-	if kernel.TotalSize() != 2 {
-		return nil, errors.Errorf("kernel shape is supposed to be 2")
+	if kernel.Dims() != 2 {
+		return nil, errors.Errorf("kernel shape is supposed to have a dim of 2")
 	}
-	if pad.TotalSize() != 2 {
-		return nil, errors.Errorf("pad is supposed to have a size of 2")
+	if pad.Dims() != 2 {
+		return nil, errors.Errorf("pad is supposed to have a dim of 2")
 	}
-	if stride.TotalSize() != 2 {
-		return nil, errors.Errorf("strides is supposed to have a size of 2")
+	if stride.Dims() != 2 {
+		return nil, errors.Errorf("strides is supposed to have a dim of 2")
 	}
 
 	if kernel[0] <= 0 || kernel[1] <= 0 {

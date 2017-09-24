@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
@@ -54,4 +55,52 @@ func TestDropout(t *testing.T) {
 
 	// visual inspection
 	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
+}
+
+var im2colTests = []struct {
+	kernel tensor.Shape
+	pad    tensor.Shape
+	stride tensor.Shape
+}{
+	{tensor.Shape{4, 4}, tensor.Shape{0, 0}, tensor.Shape{1, 1}},
+	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{2, 2}},
+	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{3, 3}},
+}
+
+func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape) {
+	g := NewGraph()
+	x := NewTensor(g, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0))) // mnist, in batches of 10
+	y, err := Im2Col(x, kernel, pad, stride)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	log.Printf("y.Shape %v", y.Shape())
+	cost := Must(Sum(y))
+
+	grads, err := Grad(cost, x)
+	if err != nil {
+		t.Errorf("error while Grad(): %v", err)
+		return
+	}
+
+	m := NewTapeMachine(g, BindDualValues())
+	if err := m.RunAll(); err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("x: %v", x.Value())
+	t.Logf("y: %v", y.Value().Data().([]float64)[4])
+	t.Logf("c: %v", cost.Value())
+	t.Logf("xG: %v", grads[0])
+}
+
+func TestIm2Col(t *testing.T) {
+	// assert := assert.New(t)
+	dts := []tensor.Dtype{tensor.Float64}
+	for _, i2ct := range im2colTests {
+		for _, dt := range dts {
+			im2colTest(t, dt, i2ct.kernel, i2ct.pad, i2ct.stride)
+		}
+	}
 }
