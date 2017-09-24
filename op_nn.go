@@ -776,25 +776,12 @@ func (op *maxPoolDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
 	s := inputs[0].(tensor.Shape).Clone()
 	return s, nil
 }
-func (op *maxPoolDiffOp) Do(inputs ...Value) (Value, error) {
-	if err := checkArity(op, len(inputs)); err != nil {
-		return nil, err
-	}
 
+func (op *maxPoolDiffOp) Do(inputs ...Value) (Value, error) {
 	var in, out, pooled, pooledGrad tensor.Tensor
-	var ok bool
-	if in, ok = inputs[0].(tensor.Tensor); !ok {
-		return nil, errors.Errorf("Expected input to be a tensor")
-	}
-	inShp := in.Shape()
-	if inShp.Dims() != 4 {
-		return nil, errors.Errorf("Expected input to have 4 dimensions")
-	}
-	if pooled, ok = inputs[1].(tensor.Tensor); !ok {
-		return nil, errors.Errorf("Expected pooled to be a tensor")
-	}
-	if pooled, ok = inputs[2].(tensor.Tensor); !ok {
-		return nil, errors.Errorf("Expected pooledGrad to be a tensor")
+	var err error
+	if in, pooled, pooledGrad, err = op.checkInput(inputs...); err != nil {
+		return nil, err
 	}
 
 	// out is the gradient of in
@@ -821,6 +808,45 @@ func (op *maxPoolDiffOp) String() string {
 	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+}
+
+func (op *maxPoolDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	var in, pooled, pooledGrad tensor.Tensor
+	var err error
+	if in, pooled, pooledGrad, err = op.checkInput(inputs...); err != nil {
+		return nil, err
+	}
+	if p, ok := prealloc.(tensor.Tensor); ok {
+		op.do(p, in, pooled, pooledGrad)
+		return prealloc, nil
+	}
+	return nil, errors.Errorf("Cannot do with PreallocDo - expected PreAlloc to be tensor")
+}
+
+func (op *maxPoolDiffOp) checkInput(inputs ...Value) (in, pooled, pooledGrad tensor.Tensor, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	var ok bool
+	if in, ok = inputs[0].(tensor.Tensor); !ok {
+		err = errors.Errorf("Expected input to be a tensor")
+		return
+	}
+	if in.Shape().Dims() != 4 {
+		err = errors.Errorf("Expected input to have 4 dimensions")
+		return
+	}
+
+	if pooled, ok = inputs[1].(tensor.Tensor); !ok {
+		err = errors.Errorf("Expected pooled to be a tensor")
+		return
+	}
+	if pooledGrad, ok = inputs[2].(tensor.Tensor); !ok {
+		err = errors.Errorf("Expected pooledGrad to be a tensor")
+		return
+	}
+	return
 }
 
 func (op *maxPoolDiffOp) do(inGrad, in, pooled, pooledGrad tensor.Tensor) {
