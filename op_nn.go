@@ -342,6 +342,31 @@ func (op im2colOp) f32s(channels, height, width int, im, col []float32) {
 	}
 }
 
+/*
+// Experimental fast(er) version... which may be premature optimization, so it's actually commented out
+// and it's not actually fully implemented. I'm quite sure there are some holes in my logics
+
+func (op im2colOp) f64s(channels, height, width int, im, col []float64){
+	for c := range col {
+		padH := c / (outHeight * outWidth)
+		padW := c % (outHeight * outWidth)
+
+		i := (padH /  op.h) / op.h
+		j := (padW / outWidth) + (padH / op.h) % op.w
+		k := padW % outWide + padH / op.h
+
+		idx :=
+		imIdx :=
+		if (j >= op.padH  &&j < op.padH+inHeight) && (k >= op.padW && k < op.padW + inWidth) {
+			col[idx] = im[imIdx]
+		} else {
+			col[idx]=0
+		}
+	}
+}
+
+*/
+
 type col2imOp struct {
 	// input shapes of im2col
 	unpaddedB int
@@ -515,20 +540,35 @@ func (op *maxPoolOp) Type() hm.Type {
 	return hm.NewFnType(t, t)
 }
 func (op *maxPoolOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
-	s := inputs[0].(tensor.Shape)
-	b := s[0]
-	c := s[1]
-	h := s[2]
-	w := s[3]
-
-	pooledH := ceilDivInt((h + 2*op.padH - op.h), op.strideH)
-	pooledW := ceilDivInt((w + 2*op.padW - op.w), op.strideW)
-	return tensor.Shape{b, c, pooledH, pooledW}, nil
+	if s, ok := inputs[0].(tensor.Shape); ok {
+		return op.calcShape(s), nil
+	}
+	return nil, errors.Errorf("Expected a shape")
 }
-func (op *maxPoolOp) Do(...Value) (Value, error) { return nil, nil }
-func (op *maxPoolOp) ReturnsPtr() bool           { return true }
-func (op *maxPoolOp) CallsExtern() bool          { return false }
-func (op *maxPoolOp) OverwritesInput() int       { return -1 }
+
+func (op *maxPoolOp) Do(inputs ...Value) (Value, error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	var in, out tensor.Tensor
+	var ok bool
+	if in, ok = inputs[0].(tensor.Tensor); !ok {
+		return nil, errors.Errorf("Expected input to be a tensor")
+	}
+	inShp := in.Shape()
+	if inShp.Dims() != 4 {
+		return nil, errors.Errorf("Expected input to have 4 dimensions")
+	}
+
+	out = tensor.New(tensor.Of(in.Dtype()), tensor.WithShape(op.calcShape(inShp)...), tensor.WithEngine(in.Engine()))
+	op.do(out, in)
+	return out, nil
+}
+
+func (op *maxPoolOp) ReturnsPtr() bool     { return true }
+func (op *maxPoolOp) CallsExtern() bool    { return false }
+func (op *maxPoolOp) OverwritesInput() int { return -1 }
 func (op *maxPoolOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
@@ -540,107 +580,97 @@ func (op *maxPoolOp) Hashcode() uint32 {
 	op.WriteHash(h)
 	return h.Sum32()
 }
+
 func (op *maxPoolOp) String() string {
 	return fmt.Sprintf("MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op *maxPoolOp) f32s(top, bottom tensor.Tensor) {
-	topData := top.Data().([]float32)
-	topShape := top.Shape()
-	topStride := top.Strides()[1]
-	bottomData := bottom.Data().([]float32)
-	bottomShape := bottom.Shape()
-	bottomStride := bottom.Strides()[1]
-	maskData := op.mask.Data().([]int)
+func (op *maxPoolOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+	return op.do(prealloc, inputs[0])
+}
 
-	// set values
-	for i := range topData {
-		topData[i] = -maxFloat32
-		maskData[i] = -1
+// calcShape calculates the output shape given an input shape
+func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
+	b := s[0]
+	c := s[1]
+	h := s[2]
+	w := s[3]
+
+	pooledH := ceilDivInt((h + 2*op.padH - op.h), op.strideH)
+	pooledW := ceilDivInt((w + 2*op.padW - op.w), op.strideW)
+	return tensor.Shape{b, c, pooledH, pooledW}
+}
+
+// do prepares the data, and then dispatches it to the correct (computation) kernel.
+// out is the preallocated tensor
+func (op *maxPoolOp) do(out, in tensor.Tensor) {
+	outShape := out.Shape()
+	outStride := out.Strides()[1]
+	inShape := in.Shape()
+	inStride := in.Strides()[1]
+	maskStride := op.mask.Strides()[1]
+
+	batches := outShape[0]
+	channels := outShape[1]
+	outH := outShape[2]
+	outW := outShape[3]
+
+	inH := inShape[2]
+	inW := inShape[3]
+
+	if op.mask == nil {
+		op.mask = tensor.New(tensor.Of(tensor.Int), tensor.WithShape(op.calcShape(inShape)...))
 	}
 
-	batches := topShape[0]
-	channels := topShape[1]
-	pooledH := topShape[2]
-	pooledW := topShape[3]
+	maskData := op.mask.Data().([]int)
 
-	h := bottomShape[2]
-	w := bottomShape[3]
-
-	for b := 0; b < batches; b++ {
-		for c := 0; c < channels; c++ {
-			for ph := 0; ph < pooledH; ph++ {
-				for pw := 0; pw < pooledW; pw++ {
-					hStart := ph*op.strideH - op.padH
-					wStart := pw*op.strideW - op.padW
-					hEnd := minInt(hStart+op.h, h)
-					wEnd := minInt(wStart+op.w, w)
-					hStart = maxInt(hStart, 0)
-					wStart = maxInt(wStart, 0)
-
-					poolIndex := ph*pooledW + pw
-
-					for hi := hStart; hi < hEnd; h++ {
-						for wi := wStart; wi < wEnd; w++ {
-							i := hi*w + wi
-							if bottomData[i] > topData[poolIndex] {
-								topData[poolIndex] = bottomData[i]
-								maskData[poolIndex] = i
-							}
-						}
-					}
-				}
-			}
-		}
-		// skip by strides
-		bottomData = bottomData[bottomStride:]
-		topData = topData[topStride:]
+	switch input.Dtype() {
+	case tensor.Float64:
+		op.f64s(batches, channels, outH, outW, inH, inW,
+			outStride, inStride, maskStride,
+			out.Data().([]float64), in.Data().([]float64),
+			maskData)
+	case tensor.Float32:
+		op.f32s(batches, channels, outH, outW, inH, inW,
+			outStride, inStride, maskStride,
+			out.Data().([]float32), in.Data().([]float32),
+			maskData)
 	}
 }
 
-func (op *maxPoolOp) f64s(top, bottom tensor.Tensor) {
-	topData := top.Data().([]float64)
-	topShape := top.Shape()
-	topStride := top.Strides()[1]
-	bottomData := bottom.Data().([]float64)
-	bottomShape := bottom.Shape()
-	bottomStride := bottom.Strides()[1]
-	maskData := op.mask.Data().([]int)
+func (op *maxPoolOp) f32s(batches, channels, outH, outW, inH, inW,
+	outStride, inStride, maskStride int,
+	outData, inData []float32,
+	maskData []int) {
 
 	// set values
-	for i := range topData {
-		topData[i] = -maxFloat64
+	for i := range outData {
+		outData[i] = -maxFloat32
 		maskData[i] = -1
 	}
 
-	batches := topShape[0]
-	channels := topShape[1]
-	pooledH := topShape[2]
-	pooledW := topShape[3]
-
-	h := bottomShape[2]
-	w := bottomShape[3]
-
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
-			for ph := 0; ph < pooledH; ph++ {
-				for pw := 0; pw < pooledW; pw++ {
+			for ph := 0; ph < outH; ph++ {
+				for pw := 0; pw < outW; pw++ {
 					hStart := ph*op.strideH - op.padH
 					wStart := pw*op.strideW - op.padW
-					hEnd := minInt(hStart+op.h, h)
-					wEnd := minInt(wStart+op.w, w)
+					hEnd := minInt(hStart+op.h, inH)
+					wEnd := minInt(wStart+op.w, inW)
 					hStart = maxInt(hStart, 0)
 					wStart = maxInt(wStart, 0)
 
-					poolIndex := ph*pooledW + pw
-
-					for hi := hStart; hi < hEnd; h++ {
-						for wi := wStart; wi < wEnd; w++ {
-							i := hi*w + wi
-							if bottomData[i] > topData[poolIndex] {
-								topData[poolIndex] = bottomData[i]
+					poolIndex := ph*outW + pw
+					for hi := hStart; hi < hEnd; hi++ {
+						for wi := wStart; wi < wEnd; wi++ {
+							i := hi*inW + wi
+							if inData[i] > outData[poolIndex] {
+								outData[poolIndex] = inData[i]
 								maskData[poolIndex] = i
 							}
 						}
@@ -648,8 +678,52 @@ func (op *maxPoolOp) f64s(top, bottom tensor.Tensor) {
 				}
 			}
 			// skip by strides
-			bottomData = bottomData[bottomStride:]
-			topData = topData[topStride:]
+			inData = inData[inStride:]
+			outData = outData[outStride:]
+			maskData = maskData[maskStride:]
+		}
+	}
+}
+
+func (op *maxPoolOp) f64s(batches, channels, outH, outW, inH, inW,
+	outStride, inStride, maskStride int,
+	outData, inData []float64,
+	maskData []int) {
+
+	// set values
+	for i := range outData {
+		outData[i] = -maxFloat64
+		maskData[i] = -1
+	}
+
+	for b := 0; b < batches; b++ {
+		for c := 0; c < channels; c++ {
+			for ph := 0; ph < outH; ph++ {
+				for pw := 0; pw < outW; pw++ {
+					hStart := ph*op.strideH - op.padH
+					wStart := pw*op.strideW - op.padW
+					hEnd := minInt(hStart+op.h, inH)
+					wEnd := minInt(wStart+op.w, inW)
+					hStart = maxInt(hStart, 0)
+					wStart = maxInt(wStart, 0)
+
+					poolIndex := ph*outW + pw
+
+					for hi := hStart; hi < hEnd; hi++ {
+						for wi := wStart; wi < wEnd; wi++ {
+							i := hi*inW + wi
+							if inData[i] > outData[poolIndex] {
+								outData[poolIndex] = inData[i]
+								maskData[poolIndex] = i
+							}
+						}
+					}
+				}
+			}
+			// skip by strides
+			inData = inData[inStride:]
+			outData = outData[outStride:]
+			maskData = maskData[maskStride:]
 		}
 	}
 }
@@ -674,10 +748,10 @@ func (op *maxPoolDiffOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 	t := newTensorType(4, a)
 	return hm.NewFnType(t, t)
-
 }
+
 func (op *maxPoolDiffOp) InferShape(inputs ...DimSizer) (tensor.Shape, error) {
-	s := inputs[0].(tensor.Shape)
+	s := inputs[0].(tensor.Shape).Clone()
 	return s, nil
 }
 func (op *maxPoolDiffOp) Do(...Value) (Value, error) { return nil, nil }
@@ -688,48 +762,53 @@ func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
-
 }
+
 func (op *maxPoolDiffOp) Hashcode() uint32 {
 	h := fnv.New32a()
 	op.WriteHash(h)
 	return h.Sum32()
 }
+
 func (op *maxPoolDiffOp) String() string {
 	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
+}
+
+func (op *maxPoolDiffOp) do() {
 
 }
 
-func (op *maxPoolDiffOp) f32s(bottom, top, bottomDiff, topDiff tensor.Tensor) {
-	topShape := top.Shape()
-	topStride := top.Strides()[1]
-	bottomStride := bottom.Strides()[1]
+// in is the "bottom", while out is the "top" (bottom being the unpooled, and top being the pooled)
+func (op *maxPoolDiffOp) f32s(in, out, inDiff, outDiff tensor.Tensor) {
+	outShape := out.Shape()
+	outStride := out.Strides()[1]
+	inStride := in.Strides()[1]
 	maskStride := op.mask.Strides()[1]
 
 	maskData := op.mask.Data().([]int)
-	topDiffData := topDiff.Data().([]float32)
-	bottomDiffData := bottomDiff.Data().([]float32)
+	outDiffData := outDiff.Data().([]float32)
+	inDiffData := inDiff.Data().([]float32)
 
-	ZeroValue(bottomDiff)
+	ZeroValue(inDiff)
 
-	batches := topShape[0]
-	channels := topShape[1]
-	pooledH := topShape[2]
-	pooledW := topShape[3]
+	batches := outShape[0]
+	channels := outShape[1]
+	pooledH := outShape[2]
+	pooledW := outShape[3]
 
 	for b := 0; b < batches; b++ {
 		for c := 0; c < channels; c++ {
 			for ph := 0; ph < pooledH; ph++ {
 				for pw := 0; pw < pooledW; pw++ {
 					index := ph*pooledW + pw
-					bottomIndex := maskData[index]
-					bottomDiffData[bottomIndex] += topDiffData[index]
+					inIndex := maskData[index]
+					inDiffData[inIndex] += outDiffData[index]
 				}
 			}
-			topDiffData = topDiffData[topStride:]
-			bottomDiffData = bottomDiffData[bottomStride:]
+			outDiffData = outDiffData[outStride:]
+			inDiffData = inDiffData[inStride:]
 			maskData = maskData[maskStride:]
 		}
 	}
