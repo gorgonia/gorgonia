@@ -209,3 +209,32 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 
 	return Transpose(res, 0, 3, 1, 2)
 }
+
+func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
+	// TODO Write checks
+	xShape := x.Shape()
+	h, w := xShape[2], xShape[3]
+	kh, kw := kernel[0], kernel[1]
+	ph, pw := pad[0], pad[1]
+
+	// check shape
+	if xShape.Dims() != 4 {
+		// error
+	}
+	if kernel.Dims() != 2 {
+		// error
+	}
+
+	if h-kh == 0 && ph == 0 {
+		// error
+		return nil, errors.New("Impossible height/kernel/pad combination")
+	}
+
+	if w-kw == 0 && pw == 0 {
+		// error
+		return nil, errors.New("Impossible width/kernel/pad combination")
+	}
+
+	op := newMaxPoolOp(xShape, kernel, pad, stride)
+	return applyOp(op, x)
+}

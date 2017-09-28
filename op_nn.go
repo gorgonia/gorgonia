@@ -634,6 +634,25 @@ type maxPoolOp struct {
 	mask tensor.Tensor
 }
 
+func newMaxPoolOp(inputShape, kernel tensor.Shape, pad, stride []int) *maxPoolOp {
+	return &maxPoolOp{
+		// Shape of Input
+		unpaddedB: inputShape[0],
+		unpaddedC: inputShape[1],
+		unpaddedH: inputShape[2],
+		unpaddedW: inputShape[3],
+
+		h:       kernel[0],
+		w:       kernel[1],
+		padH:    pad[0],
+		padW:    pad[1],
+		strideH: stride[0],
+		strideW: stride[1],
+
+		mask: tensor.New(tensor.Of(Int), tensor.WithShape(inputShape.Clone()...)),
+	}
+}
+
 func (op *maxPoolOp) Arity() int { return 1 }
 
 // maxPoolOp has this type:
@@ -655,9 +674,7 @@ func (op *maxPoolOp) Do(inputs ...Value) (retVal Value, err error) {
 	if in, err = op.checkInput(inputs...); err != nil {
 		return nil, err
 	}
-
 	inShp := in.Shape()
-
 	out = tensor.New(tensor.Of(in.Dtype()), tensor.WithShape(op.calcShape(inShp)...), tensor.WithEngine(in.Engine()))
 	op.do(out, in)
 	return out, nil
@@ -667,7 +684,7 @@ func (op *maxPoolOp) ReturnsPtr() bool     { return true }
 func (op *maxPoolOp) CallsExtern() bool    { return false }
 func (op *maxPoolOp) OverwritesInput() int { return -1 }
 func (op *maxPoolOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+	fmt.Fprintf(h, "MaxPool{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
@@ -679,7 +696,7 @@ func (op *maxPoolOp) Hashcode() uint32 {
 }
 
 func (op *maxPoolOp) String() string {
-	return fmt.Sprintf("MaxPool{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+	return fmt.Sprintf("MaxPool{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
@@ -897,7 +914,7 @@ func (op *maxPoolDiffOp) ReturnsPtr() bool     { return true }
 func (op *maxPoolDiffOp) CallsExtern() bool    { return false }
 func (op *maxPoolDiffOp) OverwritesInput() int { return -1 }
 func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
@@ -909,7 +926,7 @@ func (op *maxPoolDiffOp) Hashcode() uint32 {
 }
 
 func (op *maxPoolDiffOp) String() string {
-	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(%d, %d %d, %d, %d %d)",
+	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		op.unpaddedB, op.unpaddedC, op.unpaddedH, op.unpaddedW,
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }

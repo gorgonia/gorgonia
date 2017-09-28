@@ -101,3 +101,31 @@ func TestIm2Col(t *testing.T) {
 		}
 	}
 }
+
+func TestMaxPool2D(t *testing.T) {
+	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
+	for _, dt := range dts {
+		g := NewGraph()
+		x := NewTensor(g, dt, 4, WithShape(1, 2, 3, 4), WithInit(Uniform(0, 1)))
+		y, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		if err != nil {
+			t.Fatal(err)
+		}
+		cost := Must(Sum(y))
+		grads, err := Grad(cost, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		m := NewTapeMachine(g, BindDualValues())
+		if err := m.RunAll(); err != nil {
+			t.Fatal(err)
+		}
+
+		t.Logf("x %v", x.Value())
+		t.Logf("y: %v", y.Value())
+		t.Logf("c: %v", cost.Value())
+		t.Logf("xG: %v", grads[0])
+	}
+
+}
