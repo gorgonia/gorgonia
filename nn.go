@@ -206,12 +206,15 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 	if res, err = Reshape(colImLayer, tensor.Shape{batch, m, n, layer}); err != nil {
 		return
 	}
-
 	return Transpose(res, 0, 3, 1, 2)
 }
 
+// Conv1d is a 1D convlution. It relies on Conv2D
+func Conv1d(in, filter *Node, kernel, stride, pad int) {
+	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{1, stride}, []int{1, pad})
+}
+
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
-	// TODO Write checks
 	xShape := x.Shape()
 	h, w := xShape[2], xShape[3]
 	kh, kw := kernel[0], kernel[1]
@@ -219,10 +222,10 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 
 	// check shape
 	if xShape.Dims() != 4 {
-		// error
+		return nil, errors.Errorf("Expected input to have a shape with dimension 4")
 	}
 	if kernel.Dims() != 2 {
-		// error
+		return nil, errors.Errorf("Expected kernel to have a shape of dimension 2")
 	}
 
 	if h-kh == 0 && ph == 0 {
