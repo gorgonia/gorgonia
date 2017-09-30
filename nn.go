@@ -210,7 +210,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 }
 
 // Conv1d is a 1D convlution. It relies on Conv2D
-func Conv1d(in, filter *Node, kernel, stride, pad int) {
+func Conv1d(in, filter *Node, kernel, stride, pad int) (*Node, error) {
 	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{1, stride}, []int{1, pad})
 }
 
