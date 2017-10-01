@@ -1152,8 +1152,17 @@ type reshapeOp struct {
 	from, to tensor.Shape
 }
 
-func (op reshapeOp) Arity() int                                      { return 1 }
-func (op reshapeOp) Type() hm.Type                                   { return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a')) }
+func (op reshapeOp) Arity() int { return 1 }
+func (op reshapeOp) Type() hm.Type {
+	if op.from.Dims() != op.to.Dims() {
+		fr := op.from.Dims()
+		frT := newTensorType(fr, hm.TypeVariable('a'))
+		to := op.to.Dims()
+		toT := newTensorType(to, hm.TypeVariable('a'))
+		return hm.NewFnType(frT, toT)
+	}
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
+}
 func (op reshapeOp) InferShape(ds ...DimSizer) (tensor.Shape, error) { return op.to.Clone(), nil }
 
 func (op reshapeOp) Do(vals ...Value) (Value, error) {

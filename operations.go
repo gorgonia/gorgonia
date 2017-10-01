@@ -378,6 +378,26 @@ func StableSoftMax(a *Node) (retVal *Node, err error) {
 	return nil, errors.Wrap(err, operationError)
 }
 
+// LogSumExp performs addition in the log domain
+func LogSumExp(a *Node, axis int) (retVal *Node, err error) {
+	var max, exp, sum, logSum *Node
+	if max, err = Max(a, axis); err != nil {
+		return nil, errors.Wrap(err, operationError)
+	}
+	if retVal, err = Sub(a, max); err == nil {
+		if exp, err = Exp(retVal); err == nil {
+			if sum, err = Sum(exp, axis); err == nil {
+				if sum, err = Add(sum, max); err == nil {
+					if logSum, err = Log(sum); err == nil {
+						return Sum(logSum, axis)
+					}
+				}
+			}
+		}
+	}
+	return nil, errors.Wrap(err, operationError)
+}
+
 // Softplus performs a softplus on the input.
 func Softplus(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(softplusOpType, a)

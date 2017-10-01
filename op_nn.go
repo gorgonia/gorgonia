@@ -289,7 +289,7 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 
 	retHeight, retWidth := op.retHW(h, w)
 	batchStrideIm := c * h * w
-	batchStrideCol := (op.w * op.w * c) * retHeight * retWidth
+	batchStrideCol := (op.w * op.h * c) * retHeight * retWidth
 	chanStride := h * w
 
 	var imStart, imEnd, colStart, colEnd int

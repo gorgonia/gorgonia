@@ -129,3 +129,7 @@ func TestMaxPool2D(t *testing.T) {
 	}
 
 }
+
+func TestConv2d(t *testing.T) {
+
+}

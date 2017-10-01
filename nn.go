@@ -146,7 +146,7 @@ func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error)
 	}
 
 	if stride[0] <= 0 || stride[1] <= 0 {
-		return nil, errors.Errorf("cannot have negative or 0 in stride")
+		return nil, errors.Errorf("cannot have negative or 0 in stride: %v", stride)
 	}
 
 	if pad[0] < 0 || pad[1] < 0 {
@@ -160,7 +160,7 @@ func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error)
 // These are the properties the inputs must fulfil:
 //
 // im: must have 4D shape. Expected format is BCHW (batch, channel, height, width)
-// filter: must have 4D shape.
+// filter: must have 4D shape: (batch, kernel, height, width)
 // kernelShape: shape of the filter kernel
 // pad: len(pad) == 2
 // stride: len(stride) == 2
@@ -211,7 +211,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 
 // Conv1d is a 1D convlution. It relies on Conv2D
 func Conv1d(in, filter *Node, kernel, stride, pad int) (*Node, error) {
-	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{1, stride}, []int{1, pad})
+	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{1, stride}, []int{0, pad})
 }
 
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
