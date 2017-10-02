@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/chewxy/gorgonia/tensor"
+	"github.com/stretchr/testify/assert"
 )
 
 func dropoutTest(t *testing.T, dt tensor.Dtype) error {
@@ -67,6 +68,7 @@ var im2colTests = []struct {
 }
 
 func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape) {
+	assert := assert.New(t)
 	g := NewGraph()
 	x := NewTensor(g, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0))) // mnist, in batches of 10
 	y, err := Im2Col(x, kernel, pad, stride)
@@ -89,7 +91,34 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 	}
 	t.Logf("x: %v", x.Value())
 	t.Logf("c: %3.3f", cost.Value())
-	t.Logf("xG: %v", grads[0])
+	t.Logf("xG: %v", grads[0].Value())
+
+	h := NewGraph()
+	a := NewTensor(h, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0)))
+	b, err := Im2Col(a, kernel, pad, stride)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	cost2 := Must(Sum(b))
+	n := NewLispMachine(h)
+	if err = n.RunAll(); err != nil {
+		t.Error(err)
+		return
+	}
+	aG, err := a.Grad()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	t.Logf("a: %v", a.Value())
+	t.Logf("c: %3.3f", cost2.Value())
+	t.Logf("aG: %v", aG)
+
+	assert.Equal(x.Value().Data(), a.Value().Data())
+	assert.Equal(grads[0].Value().Data(), aG.Data())
+	assert.Equal(cost.Value().Data(), cost2.Value().Data())
 }
 
 func TestIm2Col(t *testing.T) {
@@ -103,10 +132,11 @@ func TestIm2Col(t *testing.T) {
 }
 
 func TestMaxPool2D(t *testing.T) {
+	assert := assert.New(t)
 	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
 	for _, dt := range dts {
 		g := NewGraph()
-		x := NewTensor(g, dt, 4, WithShape(1, 2, 3, 4), WithInit(Uniform(0, 1)))
+		x := NewTensor(g, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
 		y, err := MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
 		if err != nil {
 			t.Fatal(err)
@@ -126,10 +156,32 @@ func TestMaxPool2D(t *testing.T) {
 		t.Logf("y: %v", y.Value())
 		t.Logf("c: %v", cost.Value())
 		t.Logf("xG: %v", grads[0])
+
+		h := NewGraph()
+		a := NewTensor(h, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
+		b, err := MaxPool2D(a, tensor.Shape{2, 2}, []int{0, 0}, []int{1, 1})
+		if err != nil {
+			t.Fatal(err)
+		}
+		cost2 := Must(Sum(b))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		m2 := NewLispMachine(h)
+		if err = m2.RunAll(); err != nil {
+			t.Fatal(err)
+		}
+		aG, err := a.Grad()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		assert.Equal(x.Value().Data(), a.Value().Data())
+		assert.Equal(grads[0].Value().Data(), aG.Data())
+		assert.Equal(cost.Value().Data(), cost2.Value().Data())
+
 	}
-
-}
-
-func TestConv2d(t *testing.T) {
 
 }
