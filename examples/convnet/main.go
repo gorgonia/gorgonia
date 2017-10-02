@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 	"math/rand"
-	"os"
 
 	"github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/examples/mnist"
@@ -119,12 +118,14 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if p2, err = gorgonia.MaxPool2D(a2, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 2 Maxpooling failed")
 	}
+	log.Printf("p2 shape %v", p2.Shape())
 
 	var r2 *gorgonia.Node
 	b, c, h, w := p2.Shape()[0], p2.Shape()[1], p2.Shape()[2], p2.Shape()[3]
 	if r2, err = gorgonia.Reshape(p2, tensor.Shape{b, c * h * w}); err != nil {
 		return errors.Wrap(err, "Unable to reshape layer 2")
 	}
+	log.Printf("r2 shape %v", r2.Shape())
 	if l2, err = gorgonia.Dropout(r2, m.d2); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
@@ -197,13 +198,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// debug
+	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 	prog, _, _ := gorgonia.Compile(g)
 	log.Printf("%v", prog)
+	// logger := log.New(os.Stderr, "", 0)
+	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
 
-	logger := log.New(os.Stderr, "", 0)
-	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
-
-	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
+	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
 
 	for i := 0; i < *epochs; i++ {
@@ -226,11 +228,15 @@ func main() {
 			if yVal, err = targets.Slice(sli{start, end}); err != nil {
 				log.Fatal("Unable to slice y")
 			}
+			if err = xVal.(*tensor.Dense).Reshape(bs, 1, 28, 28); err != nil {
+				log.Fatal("Unable to reshape %v", err)
+			}
+			log.Printf("xVal %v", xVal.Shape())
 
 			gorgonia.Let(x, xVal)
 			gorgonia.Let(y, yVal)
 			if err = vm.RunAll(); err != nil {
-				log.Fatalf("Failed at epoch  %d: %v", err)
+				log.Fatalf("Failed at epoch  %d: %v", i, err)
 			}
 			log.Printf("Epoch: %v - Cost %v", i, costVal)
 			solver.Step(m.learnables())
