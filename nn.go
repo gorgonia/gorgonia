@@ -164,7 +164,20 @@ func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error)
 // kernelShape: shape of the filter kernel
 // pad: len(pad) == 2
 // stride: len(stride) == 2
-func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retVal *Node, err error) {
+func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride []int) (retVal *Node, err error) {
+	// checks
+	for _, s := range stride {
+		if s <= 0 {
+			return nil, errors.Errorf("Cannot use strides of less than or equal 0: %v", stride)
+		}
+	}
+
+	for _, p := range pad {
+		if p < 0 {
+			return nil, errors.Errorf("Cannot use padding of less than 0: %v", pad)
+		}
+	}
+
 	var colIm *Node
 	if colIm, err = Im2Col(im, kernelShape, pad, stride); err != nil {
 		return
@@ -210,8 +223,8 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 }
 
 // Conv1d is a 1D convlution. It relies on Conv2D
-func Conv1d(in, filter *Node, kernel, stride, pad int) (*Node, error) {
-	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{1, stride}, []int{0, pad})
+func Conv1d(in, filter *Node, kernel, pad, stride int) (*Node, error) {
+	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride})
 }
 
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
