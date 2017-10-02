@@ -1169,7 +1169,11 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 	if err := checkArity(op, len(vals)); err != nil {
 		return nil, err
 	}
-	val := vals[0]
+	var val Value
+	var err error
+	if val, err = CloneValue(vals[0]); err != nil {
+		return nil, errors.Wrapf(err, cloneFail, vals[0])
+	}
 	if !val.Shape().Eq(op.from) {
 		return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
 	}
@@ -1189,7 +1193,7 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 
 func (op reshapeOp) ReturnsPtr() bool     { return true }
 func (op reshapeOp) CallsExtern() bool    { return false }
-func (op reshapeOp) OverwritesInput() int { return -1 }
+func (op reshapeOp) OverwritesInput() int { return 0 }
 func (op reshapeOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("reshapeOp"))
 	fmt.Fprintf(h, "from: %v, dims: %v", op.from, op.to)

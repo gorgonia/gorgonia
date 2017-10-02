@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hash"
 	"hash/fnv"
-	"log"
 	"time"
 
 	"github.com/chewxy/gorgonia/tensor"
@@ -999,11 +998,6 @@ func (op *maxPoolDiffOp) do(inGrad, in, pooled, pooledGrad tensor.Tensor) {
 	pooledStride := pooled.Strides()[1]
 	inStride := in.Strides()[1]
 	maskStride := op.mask.Strides()[1]
-	log.Printf("pooledShape %v", pooledShape)
-	log.Printf("pooledGrad %v", pooledGrad.Shape())
-	log.Printf("pooledStride %v %v", pooledStride, pooledGrad.Strides()[1])
-	log.Printf("inSHape %v", in.Shape())
-	log.Printf("inGrad %v", inGrad.Shape())
 
 	batches := pooledShape[0]
 	channels := pooledShape[1]

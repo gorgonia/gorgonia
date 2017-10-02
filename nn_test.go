@@ -185,3 +185,23 @@ func TestMaxPool2D(t *testing.T) {
 	}
 
 }
+
+/*
+func TestDumb(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, Float32, 4, WithShape(10, 128, 6, 6), WithInit(RangedFrom(0)))
+	// x := NewTensor(g, Float32, 4, WithShape(10, 128, 6, 6), WithName("x"))
+	p := Must(MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}))
+	r := Must(Reshape(p, tensor.Shape{10, 512}))
+	c := Must(Sum(r))
+	Grad(c, x)
+	// ioutil.WriteFile("dumbdumb.dot", []byte(g.ToDot()), 0644)
+	// prog, _, _ := Compile(g)
+	// log.Printf("%v", prog)
+	logger := log.New(os.Stderr, "", 0)
+	m := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("%+s"))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+}
+*/

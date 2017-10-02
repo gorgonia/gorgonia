@@ -112,7 +112,6 @@ func CloneValue(v Value) (Value, error) {
 	default:
 		return nil, errors.Errorf("Unable to clone value of type %T", v)
 	}
-
 }
 
 // ZeroValue returns the zero value of a type

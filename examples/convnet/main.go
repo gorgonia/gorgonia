@@ -2,8 +2,16 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
+	"os/signal"
+	"runtime/pprof"
+	"syscall"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/examples/mnist"
@@ -12,10 +20,11 @@ import (
 )
 
 var (
-	epochs    = flag.Int("epochs", 100, "Number of epochs to train for")
-	dataset   = flag.String("dataset", "train", "Which dataset to train on? Valid options are \"train\" or \"test\"")
-	dtype     = flag.String("dtype", "float64", "Which dtype to use")
-	batchsize = flag.Int("batchsize", 100, "Batch size")
+	epochs     = flag.Int("epochs", 100, "Number of epochs to train for")
+	dataset    = flag.String("dataset", "train", "Which dataset to train on? Valid options are \"train\" or \"test\"")
+	dtype      = flag.String("dtype", "float64", "Which dtype to use")
+	batchsize  = flag.Int("batchsize", 100, "Batch size")
+	cpuprofile = flag.String("cpuprofile", "", "CPU profiling")
 )
 
 const loc = "../testdata/mnist/"
@@ -56,6 +65,7 @@ func newConvNet(g *gorgonia.ExprGraph) *convnet {
 	w3 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(128*2*2, 625), gorgonia.WithName("w3"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
 	w4 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(625, 10), gorgonia.WithName("w4"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
 	return &convnet{
+		g:  g,
 		w0: w0,
 		w1: w1,
 		w2: w2,
@@ -130,6 +140,8 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
 
+	ioutil.WriteFile("tmp.dot", []byte(m.g.ToDot()), 0644)
+
 	// Layer 3
 	if fc, err = gorgonia.Mul(l2, m.w3); err != nil {
 		return errors.Wrapf(err, "Unable to multiply l2 and w3")
@@ -155,8 +167,17 @@ func main() {
 	parseDtype()
 	rand.Seed(1337)
 
+	// intercept Ctrl+C
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	doneChan := make(chan bool, 1)
+
 	var inputs, targets tensor.Tensor
 	var err error
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	trainOn := *dataset
 	if inputs, targets, err = mnist.Load(trainOn, loc, dt); err != nil {
@@ -200,19 +221,23 @@ func main() {
 
 	// debug
 	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
-	prog, _, _ := gorgonia.Compile(g)
-	log.Printf("%v", prog)
+	// prog, _, _ := gorgonia.Compile(g)
+	// log.Printf("%v", prog)
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
 
 	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
 
+	// pprof
+	handlePprof(sigChan, doneChan)
 	for i := 0; i < *epochs; i++ {
 		batches := numExamples / bs
+		log.Printf("Batches %d", batches)
 		for b := 0; b < batches; b++ {
 			start := b * bs
 			end := start + bs
+			log.Printf("Working on batch: %d", b)
 			if start >= numExamples {
 				break
 			}
@@ -244,4 +269,32 @@ func main() {
 		}
 
 	}
+}
+
+func cleanup(sigChan chan os.Signal, doneChan chan bool, profiling bool) {
+	select {
+	case <-sigChan:
+		log.Println("EMERGENCY EXIT!")
+		if profiling {
+			pprof.StopCPUProfile()
+		}
+		os.Exit(1)
+
+	case <-doneChan:
+		return
+	}
+}
+
+func handlePprof(sigChan chan os.Signal, doneChan chan bool) {
+	var profiling bool
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		profiling = true
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+	go cleanup(sigChan, doneChan, profiling)
 }
