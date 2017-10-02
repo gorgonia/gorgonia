@@ -121,7 +121,7 @@ func Rectify(x *Node) (retVal *Node, err error) {
 	cmp := newElemBinOp(gteOpType, x, zero)
 	cmp.retSame = true
 
-	if retVal, err = applyOp(cmp, x, zero); err != nil {
+	if retVal, err = ApplyOp(cmp, x, zero); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
 
@@ -153,7 +153,7 @@ func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error)
 		return nil, errors.Errorf("cannot have negative padding")
 	}
 	op := makeIm2ColOp(kernel[0], kernel[1], pad[0], pad[1], stride[0], stride[1])
-	return applyOp(op, n)
+	return ApplyOp(op, n)
 }
 
 // Conv2d is a simple 2D convoution, to be used for CPU computation only. If CuDNN is used, use the CUDAConv2D function.
@@ -197,7 +197,7 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, stride, pad []int) (retV
 		transB:          true,
 	}
 
-	if colImLayer, err = applyOp(op, patch, flattened); err != nil {
+	if colImLayer, err = ApplyOp(op, patch, flattened); err != nil {
 		return
 	}
 
@@ -239,5 +239,5 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	}
 
 	op := newMaxPoolOp(xShape, kernel, pad, stride)
-	return applyOp(op, x)
+	return ApplyOp(op, x)
 }

@@ -248,7 +248,7 @@ func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err 
 	}
 
 	var ret *Node
-	if ret, err = applyOp(diffOp, grad); err != nil {
+	if ret, err = ApplyOp(diffOp, grad); err != nil {
 		return
 	}
 	retVal = Nodes{ret}
@@ -402,31 +402,6 @@ func (op im2colOp) f32s(chans, height, width, chanStride, retHeight, retWidth in
 		}
 	}
 }
-
-/*
-// Experimental fast(er) version... which may be premature optimization, so it's actually commented out
-// and it's not actually fully implemented. I'm quite sure there are some holes in my logics
-
-func (op im2colOp) f64s(channels, height, width int, im, col []float64){
-	for c := range col {
-		padH := c / (outHeight * outWidth)
-		padW := c % (outHeight * outWidth)
-
-		i := (padH /  op.h) / op.h
-		j := (padW / outWidth) + (padH / op.h) % op.w
-		k := padW % outWide + padH / op.h
-
-		idx :=
-		imIdx :=
-		if (j >= op.padH  &&j < op.padH+inHeight) && (k >= op.padW && k < op.padW + inWidth) {
-			col[idx] = im[imIdx]
-		} else {
-			col[idx]=0
-		}
-	}
-}
-
-*/
 
 type col2imOp struct {
 	// input shapes of im2col
@@ -725,7 +700,7 @@ func (op *maxPoolOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, er
 	diff := &maxPoolDiffOp{op2}
 
 	var ret *Node
-	if ret, err = applyOp(diff, input, output, grad); err != nil {
+	if ret, err = ApplyOp(diff, input, output, grad); err != nil {
 		return nil, err
 	}
 	return Nodes{ret}, nil

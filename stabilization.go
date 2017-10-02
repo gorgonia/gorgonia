@@ -84,7 +84,7 @@ func expStabilization(a, b *Node) (retVal *Node, err error) {
 	}
 
 	op := newElemUnaryOp(expm1OpType, a.children[0])
-	return applyOp(op, a.children[0])
+	return ApplyOp(op, a.children[0])
 }
 
 // oneMinusSigmoidStabilization stabilizes 1-sigmoid(x) by replacing it with sigmoid(-x)

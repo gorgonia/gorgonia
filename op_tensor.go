@@ -569,7 +569,7 @@ func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nod
 	incrOp := sliceIncrOp{op}
 
 	retVal = make(Nodes, 1)
-	retVal[0], err = applyOp(incrOp, t, gradNode)
+	retVal[0], err = ApplyOp(incrOp, t, gradNode)
 	return
 }
 
@@ -720,7 +720,7 @@ func (op sliceIncrOp) DiffWRT(i int) []bool {
 
 func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
 	var slicedRes *Node
-	if slicedRes, err = applyOp(op.sliceOp, gradNode); err != nil {
+	if slicedRes, err = ApplyOp(op.sliceOp, gradNode); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 	retVal = Nodes{gradNode, slicedRes}
@@ -932,7 +932,7 @@ func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	op2 := transposeOp{pattern: newPattern, d: op.d}
 
 	retVal = make(Nodes, 1)
-	retVal[0], err = applyOp(op2, gradNode)
+	retVal[0], err = ApplyOp(op2, gradNode)
 	return
 }
 
@@ -1106,7 +1106,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 		end := in.shape[op.axis] + start
 
 		s := newSliceOp(S(start, end), op.axis, op.d)
-		if retVal[i], err = applyOp(s, grad); err != nil {
+		if retVal[i], err = ApplyOp(s, grad); err != nil {
 			return
 		}
 		start = end
