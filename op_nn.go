@@ -255,6 +255,33 @@ func (op im2colOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err 
 	return
 }
 
+func (op im2colOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	im := inputs[0]
+	s := im.Shape()
+	imv := im.boundTo.(*dualValue)
+	colv := output.boundTo.(*dualValue)
+
+	var unpaddedB, unpaddedC, unpaddedH, unpaddedW int
+	unpaddedB, unpaddedC, unpaddedH, unpaddedW = s[0], s[1], s[2], s[3]
+	diffOp := col2imOp{
+		unpaddedB: unpaddedB,
+		unpaddedC: unpaddedC,
+		unpaddedH: unpaddedH,
+		unpaddedW: unpaddedW,
+
+		im2colOp: op,
+	}
+
+	if _, err = diffOp.UsePreallocDo(imv.d, colv.d); err != nil {
+		return errors.Wrapf(err, doFail, diffOp)
+	}
+	return
+}
+
 func (op im2colOp) calcShape(s tensor.Shape) (retVal tensor.Shape) {
 	b := s[0]
 	c := s[1]
@@ -693,6 +720,9 @@ func (op *maxPoolOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, erro
 func (op *maxPoolOp) DiffWRT(inputs int) []bool { return []bool{true} }
 
 func (op *maxPoolOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
 	input := inputs[0]
 
 	var op2 maxPoolOp
@@ -704,6 +734,24 @@ func (op *maxPoolOp) SymDiff(inputs Nodes, output, grad *Node) (retVal Nodes, er
 		return nil, err
 	}
 	return Nodes{ret}, nil
+}
+
+func (op *maxPoolOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	input := inputs[0]
+	inputDV := input.boundTo.(*dualValue)
+	outDV := output.boundTo.(*dualValue)
+
+	var op2 maxPoolOp
+	op2 = *op
+	diff := &maxPoolDiffOp{op2}
+
+	if _, err = diff.UsePreallocDo(inputDV.d, inputDV.Value, outDV.Value, outDV.d); err != nil {
+		return errors.Wrapf(err, doFail, diff)
+	}
+	return
 }
 
 func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
