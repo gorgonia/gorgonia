@@ -14,6 +14,8 @@ import (
 	"runtime/pprof"
 
 	T "github.com/chewxy/gorgonia"
+
+	"github.com/chewxy/gorgonia/examples/mnist"
 	"gonum.org/v1/gonum/blas/gonum"
 	"gorgonia.org/tensor"
 )
@@ -31,7 +33,7 @@ var verbose = flag.Bool("v", false, "Verbose?")
 var trainingWriter io.Writer
 var trainingLog *log.Logger
 
-var Float tensor.Dtype = tensor.Float64
+var dt tensor.Dtype = tensor.Float64
 
 func init() {
 	var err error
@@ -40,47 +42,6 @@ func init() {
 	}
 
 	trainingLog = log.New(trainingWriter, "", log.Ltime|log.Lmicroseconds)
-}
-
-func loadMNIST(t string) (inputs, targets tensor.Tensor) {
-	var labelData []Label
-	var imageData []RawImage
-	var height, width int
-	var err error
-
-	var labelFile, dataFile string
-	switch t {
-	case "train", "dev":
-		labelFile = "train-labels.idx1-ubyte"
-		dataFile = "train-images.idx3-ubyte"
-	case "test":
-		labelFile = "t10k-labels.idx1-ubyte"
-		dataFile = "t10k-images.idx3-ubyte"
-
-	}
-
-	if labelData, err = readLabelFile(open(labelFile)); err != nil {
-		log.Fatal(err)
-	}
-
-	if height, width, imageData, err = readImageFile(open(dataFile)); err != nil {
-		log.Fatal(err)
-	}
-
-	inputs = prepareX(imageData) // transform into floats
-	targets = prepareY(labelData)
-
-	if t == "dev" {
-		inputs, _ = inputs.Slice(T.S(0, 100))
-		targets, _ = targets.Slice(T.S(0, 100))
-	}
-
-	verboseLog("%s Images: %d. | Width: %d, Height: %d\n", t, len(imageData), width, height)
-	verboseLog("%s Labels: %d. ", t, len(labelData))
-	verboseLog("Inputs: %+s", inputs)
-	verboseLog("targets: %+s", targets)
-
-	return inputs, targets
 }
 
 func predictBatch(logprobs tensor.Tensor, batchSize int) (guesses []int, err error) {
@@ -123,9 +84,13 @@ func main() {
 	flag.Parse()
 	rand.Seed(1337)
 
-	/* EXAMPLE TIME */
+	loc := "../testdata/mnist/"
+
 	trainOn := *dataset
-	inputs, targets := loadMNIST(trainOn)
+	inputs, targets, err := mnist.Load(trainOn, loc, dt)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	size := inputs.Shape()[0]
 	inputSize := 784
@@ -152,7 +117,6 @@ func main() {
 
 	g := T.NewGraph()
 	sda := NewStackedDA(g, batchSize, size, inputSize, outputSize, layers, hiddenSizes, corruptions)
-	var err error
 
 	// start CPU profiling before we start training
 	if *cpuprofile != "" {
@@ -212,7 +176,10 @@ func main() {
 	// in real life you should probably be doing crossvalidations and whatnots
 	// but in this demo, we're going to skip all those
 	verboseLog("pred")
-	testX, testY := loadMNIST("test")
+	testX, testY, err := mnist.Load("test", loc, dt)
+	if err != nil {
+		log.Fatal(err)
+	}
 	var one, correct, lp tensor.Tensor
 	if one, err = testX.Slice(T.S(0, batchSize)); err != nil {
 		log.Fatal(err)

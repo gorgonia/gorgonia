@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
 )
@@ -11,64 +10,6 @@ import (
 // contains all public operations that can be performed on nodes
 // all the functions here have the signature:
 // 		func (...) (*Node, error)
-
-func applyOpWithName(op Op, name string, children ...*Node) (retVal *Node, err error) {
-	if retVal, err = applyOp(op, children...); err == nil {
-		WithName(name)(retVal)
-	} else {
-		return nil, errors.Wrap(err, applyOpFail)
-	}
-	return
-}
-
-// Generic apply function... for when you don't need to specialize
-func applyOp(op Op, children ...*Node) (retVal *Node, err error) {
-	var g *ExprGraph
-
-	for _, child := range children {
-		if child.g != nil {
-			g = child.g
-			break
-		}
-	}
-
-	if g == nil {
-		return nil, errors.New("No Graph Supplied")
-	}
-
-	if !Nodes(children).AllSameGraph() {
-		return nil, errors.New("Not all children have the same graph")
-	}
-
-	// typecheck  before creating
-	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
-	enterLoggingContext()
-	defer leaveLoggingContext()
-	var retType hm.Type
-	if retType, err = inferNodeType(op, children...); err != nil {
-		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
-	}
-	// retType = pruneCompletely(retType)
-	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
-
-	// infer shapes, but print errors instead of returning
-	shapeLogf("op: %v(%T) inferring shape", op, op)
-	if err = checkArity(op, len(children)); err != nil {
-		return
-	}
-
-	ds := Nodes(children).dimSizers()
-	var s tensor.Shape
-	if s, err = op.InferShape(ds...); err == nil {
-		shapeLogf("inferred shape %v", s)
-		retVal = NewUniqueNode(WithType(retType), WithOp(op), WithChildren(children), In(g), WithShape(s...))
-	} else {
-		err = errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
-		// retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
-	}
-	returnDimSizers(ds)
-	return
-}
 
 /* BINARY FUNCTIONS */
 func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
@@ -99,7 +40,7 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 	}
 	stabLogf("No bin op stabilization")
 
-	return applyOp(op, a, b)
+	return ApplyOp(op, a, b)
 }
 
 // Add performs pointwise a + b
@@ -235,7 +176,7 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 		stabLogf("No stabilizations - retVal: %v", retVal)
 	}
 
-	return applyOp(op, a)
+	return ApplyOp(op, a)
 }
 
 // Abs performs pointwise |a|
@@ -383,6 +324,26 @@ func StableSoftMax(a *Node) (retVal *Node, err error) {
 	return nil, errors.Wrap(err, operationError)
 }
 
+// LogSumExp performs addition in the log domain
+func LogSumExp(a *Node, axis int) (retVal *Node, err error) {
+	var max, exp, sum, logSum *Node
+	if max, err = Max(a, axis); err != nil {
+		return nil, errors.Wrap(err, operationError)
+	}
+	if retVal, err = Sub(a, max); err == nil {
+		if exp, err = Exp(retVal); err == nil {
+			if sum, err = Sum(exp, axis); err == nil {
+				if sum, err = Add(sum, max); err == nil {
+					if logSum, err = Log(sum); err == nil {
+						return Sum(logSum, axis)
+					}
+				}
+			}
+		}
+	}
+	return nil, errors.Wrap(err, operationError)
+}
+
 // Softplus performs a softplus on the input.
 func Softplus(a *Node) (retVal *Node, err error) {
 	op := newElemUnaryOp(softplusOpType, a)
@@ -409,7 +370,7 @@ func At(a *Node, coords ...int) (retVal *Node, err error) {
 		d:           dims,
 	}
 
-	return applyOp(op, a)
+	return ApplyOp(op, a)
 }
 
 // Max performs a max() on the input and the provided axes.
@@ -426,7 +387,7 @@ func Max(a *Node, along ...int) (retVal *Node, err error) {
 
 	op := newMaxOp(along, dims)
 
-	return applyOp(op, a)
+	return ApplyOp(op, a)
 }
 
 // Mean performs a mean() on the input and the provided axes.
@@ -481,7 +442,7 @@ func Sum(a *Node, along ...int) (retVal *Node, err error) {
 	}
 
 	op := newSumOp(along, a.shape, dims)
-	return applyOp(op, a)
+	return ApplyOp(op, a)
 }
 
 // Norm returns the p-norm of a Value. Use p=2 if you want to use unordered norms.
@@ -622,7 +583,7 @@ func SizeOf(axis int, x *Node) (retVal *Node, err error) {
 		op.val = x.shape[axis]
 	}
 
-	return applyOp(op, x)
+	return ApplyOp(op, x)
 }
 
 // Slice slices a *Node. For T[:] slices, pass in nil. Will error out if node's type is not a Tensor
@@ -649,7 +610,7 @@ func Slice(n *Node, slices ...tensor.Slice) (retVal *Node, err error) {
 		along = i - dimsChanged
 
 		op := newSliceOp(s, along, retVal.Dims())
-		if retVal, err = applyOp(op, retVal); err != nil {
+		if retVal, err = ApplyOp(op, retVal); err != nil {
 			return
 		}
 	}
@@ -680,7 +641,7 @@ func Transpose(n *Node, axes ...int) (retVal *Node, err error) {
 		d:       len(axes),
 	}
 
-	return applyOp(op, n)
+	return ApplyOp(op, n)
 }
 
 // Concat performs a concatenate on the provided axis and inputs.
@@ -710,5 +671,14 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 	}
 
 	op := concatOp{axis: axis, d: d, children: len(ns)}
-	return applyOp(op, ns...)
+	return ApplyOp(op, ns...)
+}
+
+// Reshape reshapes a node and returns a new node with the new shape
+func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
+	op := reshapeOp{
+		from: n.Shape(),
+		to:   to,
+	}
+	return ApplyOp(op, n)
 }

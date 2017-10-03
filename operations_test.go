@@ -24,7 +24,7 @@ func TestApplyOp(t *testing.T) {
 	t.Logf("g: %v", cpi.g)
 
 	op = newElemBinOp(addOpType, cpi, cpi)
-	added, err := applyOpWithName(op, "+ pi pi", cpi, cpi)
+	added, err := ApplyOpWithName(op, "+ pi pi", cpi, cpi)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestApplyOp(t *testing.T) {
 
 	ct = NewConstant(tensor.Ones(tensor.Float64, 3, 3)) // no graph set for ct
 	op = newElemBinOp(addOpType, cpi, ct)
-	added, err = applyOpWithName(op, "+ pi constTensor(3,3)_ones", cpi, ct)
+	added, err = ApplyOpWithName(op, "+ pi constTensor(3,3)_ones", cpi, ct)
 	if err != nil {
 		t.Error(err)
 	}

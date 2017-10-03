@@ -36,14 +36,14 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	g = NewGraph()
 	x = NewScalar(g, dt, WithName("x"))
 	y = NewScalar(g, dt, WithName("y"))
-	if z, err = applyOp(binOp, x, y); err != nil {
+	if z, err = ApplyOp(binOp, x, y); err != nil {
 		return err
 	}
 
 	g2 = NewGraph()
 	a = NewScalar(g2, dt, WithName("a"))
 	b = NewScalar(g2, dt, WithName("b"))
-	if c, err = applyOp(binOp, a, b); err != nil {
+	if c, err = ApplyOp(binOp, a, b); err != nil {
 		return err
 	}
 
@@ -137,10 +137,10 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	b = NewMatrix(g2, dt, WithName("b"), WithShape(2, 2))
 
 	binOp := newEBOByType(op, x.t, y.t)
-	if z, err = applyOp(binOp, x, y); err != nil {
+	if z, err = ApplyOp(binOp, x, y); err != nil {
 		return err
 	}
-	if c, err = applyOp(binOp, a, b); err != nil {
+	if c, err = ApplyOp(binOp, a, b); err != nil {
 		return err
 	}
 

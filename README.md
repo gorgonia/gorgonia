@@ -33,7 +33,7 @@ The package is go-gettable: `go get -u github.com/chewxy/gorgonia`. Additionally
 
 ## ⚠️ 👉IMPORTANT NOTICE👈 ⚠️  ## 
 
-As Gorgonia moves towards 1.0, the packages themselves are moving. The current version is 0.7.2. In the next release (v0.8.0), the package layouts will change. The table below enumerates the import path changes:
+As Gorgonia moves towards 1.0, the packages themselves are moving. The current version is 0.7.4. In the next release (v0.8.0), the package layouts will change. The table below enumerates the import path changes:
 
 |        | This Version (v0.7.0) | Next Version (v0.8.0) Onwards | 
 |--------|-----------------------|-----------------------|
@@ -46,6 +46,13 @@ The main reason for the major split in repositories is that `tensor` has found a
 
 There will be other repositories (like `cu`, `vecf64` and `vecf32`) that will be moved to the Gorgonia organization as well. Those will be enumerated in the README of their own repositories. All packages will be tagged with version numbers. Libraries that are "complete" like `math32` and `vecf32` and `vecf64` will be tagged with a major version - v1.0.0 and up. While libraries that have fairly malleable APIs will be v0.8.0 and up. `gorgonia`, `tensor` and `cu` will share the same version numbers until 1.0.
 
+
+## Versioning ## 
+
+We use [semver 2.0.0](http://semver.org/) for our versioning. Before 1.0, Gorgonia's APIs are expected to change quite a bit. API is defined by the exported functions, variables and methods. For the developers' sanity, there are minor differences to semver that we will apply prior to version 1.0. They are enumerated below:
+
+* The MINOR number will be incremented every time there is a deletrious break in API. This means any deletion, or any change in function signature or interface methods will lead to a change in MINOR number. 
+* Additive changes will NOT change the MINOR version number prior to version 1.0. This means that if new functionality were added that does not break the way you use Gorgonia, there will not be an increment in the MINOR version. There will be an increment in the PATCH version.  
 
 ## Dependencies ##
 
