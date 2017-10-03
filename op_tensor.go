@@ -569,7 +569,7 @@ func (op *sliceOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nod
 	incrOp := sliceIncrOp{op}
 
 	retVal = make(Nodes, 1)
-	retVal[0], err = applyOp(incrOp, t, gradNode)
+	retVal[0], err = ApplyOp(incrOp, t, gradNode)
 	return
 }
 
@@ -720,7 +720,7 @@ func (op sliceIncrOp) DiffWRT(i int) []bool {
 
 func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal Nodes, err error) {
 	var slicedRes *Node
-	if slicedRes, err = applyOp(op.sliceOp, gradNode); err != nil {
+	if slicedRes, err = ApplyOp(op.sliceOp, gradNode); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 	retVal = Nodes{gradNode, slicedRes}
@@ -932,7 +932,7 @@ func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 	op2 := transposeOp{pattern: newPattern, d: op.d}
 
 	retVal = make(Nodes, 1)
-	retVal[0], err = applyOp(op2, gradNode)
+	retVal[0], err = ApplyOp(op2, gradNode)
 	return
 }
 
@@ -1106,7 +1106,7 @@ func (op concatOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes
 		end := in.shape[op.axis] + start
 
 		s := newSliceOp(S(start, end), op.axis, op.d)
-		if retVal[i], err = applyOp(s, grad); err != nil {
+		if retVal[i], err = ApplyOp(s, grad); err != nil {
 			return
 		}
 		start = end
@@ -1146,4 +1146,89 @@ func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) erro
 		start = end
 	}
 	return nil
+}
+
+type reshapeOp struct {
+	from, to tensor.Shape
+}
+
+func (op reshapeOp) Arity() int { return 1 }
+func (op reshapeOp) Type() hm.Type {
+	if op.from.Dims() != op.to.Dims() {
+		fr := op.from.Dims()
+		frT := newTensorType(fr, hm.TypeVariable('a'))
+		to := op.to.Dims()
+		toT := newTensorType(to, hm.TypeVariable('a'))
+		return hm.NewFnType(frT, toT)
+	}
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
+}
+func (op reshapeOp) InferShape(ds ...DimSizer) (tensor.Shape, error) { return op.to.Clone(), nil }
+
+func (op reshapeOp) Do(vals ...Value) (Value, error) {
+	if err := checkArity(op, len(vals)); err != nil {
+		return nil, err
+	}
+	var val Value
+	var err error
+	if val, err = CloneValue(vals[0]); err != nil {
+		return nil, errors.Wrapf(err, cloneFail, vals[0])
+	}
+	if !val.Shape().Eq(op.from) {
+		return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
+	}
+
+	switch v := val.(type) {
+	case tensor.Tensor:
+		if err := v.Reshape(op.to...); err != nil {
+			return nil, err
+		}
+		return v, nil
+	case Scalar:
+		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
+	}
+
+	panic("Unreachable")
+}
+
+func (op reshapeOp) ReturnsPtr() bool     { return true }
+func (op reshapeOp) CallsExtern() bool    { return false }
+func (op reshapeOp) OverwritesInput() int { return 0 }
+func (op reshapeOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("reshapeOp"))
+	fmt.Fprintf(h, "from: %v, dims: %v", op.from, op.to)
+}
+
+func (op reshapeOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op reshapeOp) String() string {
+	return fmt.Sprintf("Reshape%v", op.to)
+}
+
+func (op reshapeOp) DiffWRT(i int) []bool { return []bool{true} }
+
+func (op reshapeOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	var ret *Node
+	if ret, err = Reshape(grad, op.from); err != nil {
+		return
+	}
+	return Nodes{ret}, nil
+}
+
+func (op reshapeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
+	var grad Value
+	if grad, err = output.Grad(); err != nil {
+		return
+	}
+	T := grad.(tensor.Tensor)
+	if err = T.Reshape(op.from...); err != nil {
+		return
+	}
+	input := inputs[0]
+	dv := input.boundTo.(*dualValue)
+	return dv.SetDeriv(T)
 }

@@ -150,7 +150,7 @@ func repeatOpDiff(repeatOn int, shape tensor.Shape, xV, yV interface{}) (g *Expr
 
 	repN := NewScalar(g, Float64, WithValue(2.0))
 	repeat := newRepeatOp([]int{repeatOn}, Nodes{x, repN})
-	if y, err = applyOp(repeat, x, repN); err != nil {
+	if y, err = ApplyOp(repeat, x, repN); err != nil {
 		return
 	}
 	xVal, _, _, _ := anyToValue(xV)
