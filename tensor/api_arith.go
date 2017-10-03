@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"github.com/pkg/errors"
+	//"golang.org/x/tools/go/gcimporter15/testdata"
 )
 
 // exported API for arithmetics and the stupidly crazy amount of overloaded semantics
@@ -458,4 +459,21 @@ func Outer(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 		return at.Outer(bt, opts...)
 	}
 	panic("Unreachable")
+}
+
+// Contract performs a contraction of given tensors along given axes
+func Contract(aAxes, bAxes []int, a, b Tensor) (retVal Tensor, err error) {
+	if a.Dtype() != b.Dtype() {
+		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
+		return
+	}
+
+	switch at := a.(type) {
+	case *Dense:
+		bt := b.(*Dense)
+		return at.TensorMul(bt, aAxes, bAxes)
+
+	default:
+		panic("Unreachable")
+	}
 }
