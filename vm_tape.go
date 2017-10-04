@@ -69,6 +69,9 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.gpumem = make([]Value, prog.gpulocs)
 	}
 	m.init()
+	for _, n := range m.p.g.AllNodes() {
+		setEngine(n.boundTo, m.Engine)
+	}
 
 	return m
 }

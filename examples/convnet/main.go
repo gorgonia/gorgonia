@@ -230,7 +230,20 @@ func main() {
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
 
 	// pprof
-	handlePprof(sigChan, doneChan)
+	// handlePprof(sigChan, doneChan)
+
+	var profiling bool
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		profiling = true
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+	go cleanup(sigChan, doneChan, profiling)
+
 	for i := 0; i < *epochs; i++ {
 		batches := numExamples / bs
 		log.Printf("Batches %d", batches)

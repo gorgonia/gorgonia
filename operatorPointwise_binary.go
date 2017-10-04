@@ -377,6 +377,7 @@ func (o tBinOp) do(vals []Value, opts ...tensor.FuncOpt) (retVal Value, err erro
 			return nil, errors.Errorf("Expected left value to be Tensor. Got %v of %T instead", vals[0], vals[0])
 		}
 		a = tensor.Materialize(t)
+		// a = t
 
 		switch other := vals[1].(type) {
 		case *F64:
