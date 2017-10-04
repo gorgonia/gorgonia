@@ -276,6 +276,7 @@ func cleanup(sigChan chan os.Signal, doneChan chan bool, profiling bool) {
 	case <-sigChan:
 		log.Println("EMERGENCY EXIT!")
 		if profiling {
+			log.Println("Stop profiling")
 			pprof.StopCPUProfile()
 		}
 		os.Exit(1)

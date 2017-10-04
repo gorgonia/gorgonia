@@ -43,7 +43,7 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
 		valueFmt: "%3.3g",
 	}
-	m.Engine = tensor.StdEng{}
+	m.Engine = StandardEngine{}
 
 	if b, ok := whichblas.(batchedBLAS); ok {
 		m.b = b
