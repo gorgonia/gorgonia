@@ -15,8 +15,8 @@ import (
 
 	"github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/examples/mnist"
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 var (
