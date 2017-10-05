@@ -1152,15 +1152,19 @@ func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) erro
 type tensordotOp struct {
 	aAxes   []int
 	bAxes   []int
+	aDims   int
+	bDims   int
 	retDims int // Dimension of the tensor resulting from operation
 }
 
 func (op tensordotOp) Arity() int { return 2 }
 
 func (op tensordotOp) Type() hm.Type {
-	tt := newTensorType(op.retDims, hm.TypeVariable('a')) // Todo: retDims is not what belongs here
+	tRet := newTensorType(op.retDims, hm.TypeVariable('a'))
+	ta := newTensorType(op.aDims, hm.TypeVariable('a'))
+	tb := newTensorType(op.bDims, hm.TypeVariable('a'))
 
-	return hm.NewFnType(tt, tt, tt)
+	return hm.NewFnType(ta, tb, tRet)
 }
 
 func (op tensordotOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
