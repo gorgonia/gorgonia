@@ -691,12 +691,12 @@ func TestMean(t *testing.T) {
 func TestTensordot(t *testing.T) {
 	assert := assert.New(t)
 
+	// Scalars
 	g := NewGraph()
+	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
+	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
 
-	a := NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2), WithInit(RangedFrom(0)))
-	b := NewTensor(g, Float64, 2, WithName("b"), WithShape(2, 2), WithInit(RangedFrom(0)))
-
-	tensordot, err := Tensordot([]int{1}, []int{1}, a, b)
+	tensordot, err := Tensordot([]int{0}, []int{0}, a, b)
 
 	if err != nil {
 		t.Fatal(err)
@@ -705,7 +705,43 @@ func TestTensordot(t *testing.T) {
 	m := NewTapeMachine(g)
 	m.RunAll()
 
-	correct := []float64{1, 3, 3, 13}
+	correctInt := float64(42)
+	value := tensordot.Value().Data()
+	assert.Equal(correctInt, value)
+
+	// Vector and Matrix
+	g = NewGraph()
+	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2), WithInit(RangedFrom(0)))
+	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(2), WithInit(RangedFrom(0)))
+
+	tensordot, err = Tensordot([]int{1}, []int{0}, a, b)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	m = NewTapeMachine(g)
+	m.RunAll()
+
+	correct := []float64{1, 3}
+	assert.Equal(correct, extractF64s(tensordot.Value()))
+
+	// Matrices
+	g = NewGraph()
+
+	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2), WithInit(RangedFrom(0)))
+	b = NewTensor(g, Float64, 2, WithName("b"), WithShape(2, 2), WithInit(RangedFrom(0)))
+
+	tensordot, err = Tensordot([]int{1}, []int{1}, a, b)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	m = NewTapeMachine(g)
+	m.RunAll()
+
+	correct = []float64{1, 3, 3, 13}
 	assert.Equal(correct, extractF64s(tensordot.Value()))
 
 }
