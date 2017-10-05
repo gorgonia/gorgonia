@@ -459,3 +459,20 @@ func Outer(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 	}
 	panic("Unreachable")
 }
+
+// Contract performs a contraction of given tensors along given axes
+func Contract(a, b Tensor, aAxes, bAxes []int) (retVal Tensor, err error) {
+	if a.Dtype() != b.Dtype() {
+		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
+		return
+	}
+
+	switch at := a.(type) {
+	case *Dense:
+		bt := b.(*Dense)
+		return at.TensorMul(bt, aAxes, bAxes)
+
+	default:
+		panic("Unreachable")
+	}
+}
