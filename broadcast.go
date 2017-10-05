@@ -75,7 +75,7 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 			children = append(children, size)
 		}
 		rep := newRepeatOp(broadcastOn[0], children)
-		if x, err = applyOp(rep, children...); err != nil {
+		if x, err = ApplyOp(rep, children...); err != nil {
 			return nil, errors.Wrap(err, operationError)
 		}
 	}
@@ -90,11 +90,11 @@ func Broadcast(binOp ʘBinaryOperatorType, a, b *Node, pattern BroadcastPattern)
 			children = append(children, size)
 		}
 		rep := newRepeatOp(broadcastOn[1], children)
-		if y, err = applyOp(rep, children...); err != nil {
+		if y, err = ApplyOp(rep, children...); err != nil {
 			return nil, errors.Wrap(err, operationError)
 		}
 	}
 
 	op := newElemBinOp(binOp, x, y)
-	return applyOp(op, x, y)
+	return ApplyOp(op, x, y)
 }
