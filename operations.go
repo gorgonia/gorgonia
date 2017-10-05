@@ -728,7 +728,7 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 
 	op := tensordotOp{aAxes: aAxes, bAxes: bAxes, aDims: aDims, bDims: bDims, retDims: retDims}
 
-	return applyOp(op, a, b)
+	return ApplyOp(op, a, b)
 }
 
 // Private functions
