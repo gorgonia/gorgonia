@@ -2,7 +2,6 @@ package tensor
 
 import (
 	"github.com/pkg/errors"
-	//"golang.org/x/tools/go/gcimporter15/testdata"
 )
 
 // exported API for arithmetics and the stupidly crazy amount of overloaded semantics
