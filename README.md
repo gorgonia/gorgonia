@@ -509,3 +509,4 @@ These are the packages and libraries which inspired and were adapted from in the
 |------|---|-------|
 | Numpy  | Inspired large portions. Directly adapted algorithms for a few methods (explicitly labelled in the docs) | MIT/BSD-like. [Numpy Licence](https://github.com/numpy/numpy/blob/master/LICENSE.txt) |
 | Theano | Inspired large portions. (Unsure: number of directly adapted algorithms) | MIT/BSD-like [Theano's licence](http://deeplearning.net/software/theano/LICENSE.html) |
+| Caffe | `im2col` and `col2im` directly taken from Caffe. Convolution algorithms inspired by the original Caffee methods | [Caffe Licence](https://github.com/BVLC/caffe/blob/master/LICENSE)
