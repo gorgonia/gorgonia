@@ -1216,7 +1216,7 @@ func (op tensordotOp) Do(vals ...Value) (Value, error) {
 		return nil, err
 	}
 
-	return tensor.Contract(op.aAxes, op.bAxes, ts[0], ts[1])
+	return tensor.Contract(ts[0], ts[1], op.aAxes, op.bAxes)
 }
 
 func (op tensordotOp) ReturnsPtr() bool { return true }

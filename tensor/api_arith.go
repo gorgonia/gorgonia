@@ -461,7 +461,7 @@ func Outer(a, b Tensor, opts ...FuncOpt) (retVal Tensor, err error) {
 }
 
 // Contract performs a contraction of given tensors along given axes
-func Contract(aAxes, bAxes []int, a, b Tensor) (retVal Tensor, err error) {
+func Contract(a, b Tensor, aAxes, bAxes []int) (retVal Tensor, err error) {
 	if a.Dtype() != b.Dtype() {
 		err = errors.Errorf(dtypeMismatch, a.Dtype(), b.Dtype())
 		return
