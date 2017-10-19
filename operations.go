@@ -677,3 +677,74 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 	}
 	return ApplyOp(op, n)
 }
+
+/* Contraction related operations */
+
+// Tensor contraction of a and b along specified axes.
+func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
+
+	// Check if input tensors actually have dim >= 1
+	if (len(a.Shape()) < 1) || (len(b.Shape()) < 1) || (a.Dims() < 1) || (b.Dims() < 1) {
+		return nil, errors.New("Input Node's shape should have length at least 1!")
+	}
+
+	// Check if number of specified axes for a and b matches
+	if len(aAxes) != len(bAxes) {
+		return nil, errors.New("Number of Axes supplied along which to contract tensors does not match")
+	}
+
+	// Check for dublicate indices
+	if containsDublicate(aAxes) || containsDublicate(bAxes) {
+		return nil, errors.New("Supplied axes to contract along contain dublicates")
+	}
+
+	// Check for more compatibility
+
+	aShape := a.Shape()
+	bShape := b.Shape()
+
+	for _, aAxis := range aAxes {
+		if aAxis >= len(aShape) {
+			return nil, errors.New("Supplied higher higher axes number to contract along than Tensor's actual number of axes")
+		}
+	}
+
+	for _, bAxis := range bAxes {
+		if bAxis >= len(bShape) {
+			return nil, errors.New("Supplied higher higher axes number to contract along than Tensor's actual number of axes")
+		}
+	}
+
+	for aAxis, aDim := range aAxes {
+		if aShape[aDim] != bShape[bAxes[aAxis]] {
+			return nil, errors.New("Dimension mismatch: Can't contract tensors along supplied axes")
+		}
+	}
+
+	// Otherwise, apply contraction
+	aDims := len(aShape)
+	bDims := len(bShape)
+	retDims := len(aShape) + len(bShape) - 2*len(aAxes)
+
+	op := tensordotOp{aAxes: aAxes, bAxes: bAxes, aDims: aDims, bDims: bDims, retDims: retDims}
+
+	return ApplyOp(op, a, b)
+}
+
+// Private functions
+
+func containsDublicate(slice []int) bool {
+	if nil == slice {
+		return false
+	}
+
+	for index1, value1 := range slice {
+		for index2, value2 := range slice {
+			if (value1 == value2) && (index1 != index2) {
+				return true
+			}
+		}
+	}
+
+	return false
+}

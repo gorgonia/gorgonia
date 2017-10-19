@@ -1087,6 +1087,7 @@ func (op concatOp) Hashcode() uint32 {
 func (op concatOp) String() string {
 	return fmt.Sprintf("Concat(axis=%d)", op.axis)
 }
+
 func (op concatOp) DiffWRT(inputs int) []bool {
 	retVal := make([]bool, inputs)
 	for i := range retVal {
@@ -1146,6 +1147,116 @@ func (op concatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) erro
 		start = end
 	}
 	return nil
+}
+
+type tensordotOp struct {
+	aAxes   []int
+	bAxes   []int
+	aDims   int
+	bDims   int
+	retDims int // Dimension of the tensor resulting from operation
+}
+
+func (op tensordotOp) Arity() int { return 2 }
+
+func (op tensordotOp) Type() hm.Type {
+	tRet := newTensorType(op.retDims, hm.TypeVariable('a'))
+	ta := newTensorType(op.aDims, hm.TypeVariable('a'))
+	tb := newTensorType(op.bDims, hm.TypeVariable('a'))
+
+	return hm.NewFnType(ta, tb, tRet)
+}
+
+func (op tensordotOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
+	if len(ds) != 2 {
+		return nil, errors.Errorf("Expected two shapes!")
+	}
+
+	shapes, err := DimSizersToShapes(ds)
+	if err != nil {
+		return nil, err
+	}
+
+	aShape := shapes[0]
+	bShape := shapes[1]
+
+	aAxes := op.aAxes
+	bAxes := op.bAxes
+
+	shapeBackingLen := op.retDims
+
+	shapeBacking := make([]int, shapeBackingLen, shapeBackingLen)
+
+	shapeBackingPos := 0
+
+	for aShapeIndex, aShapeValue := range aShape {
+		if false == contains(aAxes, aShapeIndex) {
+			shapeBacking[shapeBackingPos] = aShapeValue
+			shapeBackingPos++
+		}
+	}
+
+	for bShapeIndex, bShapeValue := range bShape {
+		if false == contains(bAxes, bShapeIndex) {
+			shapeBacking[shapeBackingPos] = bShapeValue
+			shapeBackingPos++
+		}
+	}
+
+	return tensor.Shape(shapeBacking), nil
+}
+
+func (op tensordotOp) Do(vals ...Value) (Value, error) {
+	if len(vals) != 2 {
+		return nil, errors.New("Expected two arguments!")
+	}
+
+	ts, err := valuesToTensors(vals)
+	if err != nil {
+		return nil, err
+	}
+
+	return tensor.Contract(ts[0], ts[1], op.aAxes, op.bAxes)
+}
+
+func (op tensordotOp) ReturnsPtr() bool { return true }
+
+func (op tensordotOp) CallsExtern() bool { return false }
+
+func (op tensordotOp) OverwritesInput() int { return -1 }
+
+func (op tensordotOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("tensordotOp"))
+	fmt.Fprintf(h, "aAxes: %d, bAxes: %d, dims: %d", op.aAxes, op.bAxes, op.retDims)
+
+	return
+}
+
+func (op tensordotOp) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+
+	return h.Sum32()
+}
+
+func (op tensordotOp) String() string {
+	return fmt.Sprintf("Tensordot(aAxes=%d, bAxes=%d)", op.aAxes, op.bAxes)
+}
+
+/* PRIVATE FUNCTIONS */
+
+func contains(slice []int, value int) bool {
+	if nil == slice {
+		return false
+	}
+
+	for _, sliceValue := range slice {
+		if value == sliceValue {
+			return true
+		}
+	}
+
+	return false
 }
 
 type reshapeOp struct {
