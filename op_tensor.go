@@ -10,6 +10,7 @@ import (
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"sort"
 )
 
 /* This file contains tensor related Ops */
@@ -1190,14 +1191,14 @@ func (op tensordotOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
 	shapeBackingPos := 0
 
 	for aShapeIndex, aShapeValue := range aShape {
-		if false == contains(aAxes, aShapeIndex) {
+		if 0 > contains(aAxes, aShapeIndex) {
 			shapeBacking[shapeBackingPos] = aShapeValue
 			shapeBackingPos++
 		}
 	}
 
 	for bShapeIndex, bShapeValue := range bShape {
-		if false == contains(bAxes, bShapeIndex) {
+		if 0 > contains(bAxes, bShapeIndex) {
 			shapeBacking[shapeBackingPos] = bShapeValue
 			shapeBackingPos++
 		}
@@ -1243,20 +1244,177 @@ func (op tensordotOp) String() string {
 	return fmt.Sprintf("Tensordot(aAxes=%d, bAxes=%d)", op.aAxes, op.bAxes)
 }
 
-/* PRIVATE FUNCTIONS */
+func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+	odv := output.boundTo.(*dualValue)
+	odvd := odv.d.(tensor.Tensor)
 
-func contains(slice []int, value int) bool {
-	if nil == slice {
-		return false
-	}
+	for inNr, in := range inputs {
+		// abuse of language below: "i" up front will refer to current "in"
+		// "other" for the other input (there are only two)
 
-	for _, sliceValue := range slice {
-		if value == sliceValue {
-			return true
+		// Who's derivative are we calculating?
+		var iAxes []int
+		var otherAxes []int
+		var otherdv *dualValue
+		var iWasFirstArgument bool
+
+		if 0 == inNr {
+			iAxes = op.aAxes
+			otherAxes = op.bAxes
+			otherdv = inputs[1].boundTo.(*dualValue)
+			iWasFirstArgument = true
+		} else {
+			iAxes = op.bAxes
+			otherAxes = op.aAxes
+			otherdv = inputs[0].boundTo.(*dualValue)
+			iWasFirstArgument = false
+		}
+
+		idv := in.boundTo.(*dualValue)
+		idvd := idv.d.(tensor.Tensor)
+
+		otherdvv := otherdv.Value.(tensor.Tensor)
+
+		// Below a tensordot will be performed: Its output axes will be in the wrong order w.r.t to the input.
+		// What is the correct permutation/pattern?
+		iAxesCoSorted := make([]int, len(iAxes))
+		for index, value := range iAxes {
+			iAxesCoSorted[index] = value
+		}
+
+		otherAxesSorted := make([]int, len(otherAxes))
+		for index, value := range otherAxes {
+			otherAxesSorted[index] = value
+		}
+
+		sortUniqueIntWithImitator(otherAxesSorted, iAxesCoSorted)
+
+		pattern := make([]int, len(in.shape))
+		counter := len(iAxes)
+
+		for patternIndex := 0; patternIndex < len(pattern); patternIndex++ {
+			iAxesCoSortedIndex := contains(iAxesCoSorted, patternIndex)
+			if 0 <= iAxesCoSortedIndex {
+				pattern[patternIndex] = iAxesCoSortedIndex
+			} else {
+				pattern[patternIndex] = counter
+				counter++
+			}
+		}
+
+		// Which axes of the other tensor and the output should be contracted?
+		// Other tensor: All axes that weren't contracted (with i ;-) ) in the original tensordot
+		// With the exception of scalars
+		dOtherAxes := make([]int, otherdvv.Dims())
+
+		if !otherdvv.IsScalar() {
+			var dOtherAxesIndex int
+
+			for axis := 0; axis < otherdvv.Dims(); axis++ {
+				if 0 > contains(otherAxes, axis) {
+					dOtherAxes[dOtherAxesIndex] = axis
+					dOtherAxesIndex++
+				}
+			}
+
+			dOtherAxes = dOtherAxes[0:dOtherAxesIndex]
+		}
+
+		// Output: All axes which belong to other in the output of original tensordot, so this depends on input ordering
+		dOutputAxes := make([]int, len(dOtherAxes))
+		if iWasFirstArgument {
+			outputOtherAxesStart := odvd.Dims() - len(dOtherAxes)
+
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dOutputAxes[axis] = outputOtherAxesStart + axis
+			}
+		} else {
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dOutputAxes[axis] = axis
+			}
+		}
+
+		// perform tensordot
+		switch st := odvd.(type) {
+		case *tensor.Dense:
+
+			otherdvvDense := otherdvv.(*tensor.Dense)
+			odvdDense := odvd.(*tensor.Dense)
+			var tensordot *tensor.Dense
+			var err error
+
+			switch {
+			case odvdDense.IsScalar():
+				tensordot, err = otherdvvDense.MulScalar(odvdDense, true)
+
+			case otherdvvDense.IsVector() && odvdDense.IsVector() && 0 == len(dOtherAxes): // TensorMul does not support creating matrix from two vectors
+				// Reformat vectors, so that MatMul will create a matrix from them
+				var otherdvvDenseShapeOld tensor.Shape
+				var odvdDenseShapeOld tensor.Shape
+
+				otherdvvDenseReshaped := false
+				if !otherdvvDense.IsColVec() {
+					otherdvvDenseShapeOld = otherdvvDense.Shape().Clone()
+
+					otherdvvVecDims, err := (otherdvvDense.AP.Shape()).DimSize(0)
+
+					if nil != err {
+						return err
+					}
+
+					otherdvvDenseReshaped = true
+					otherdvvDense.Reshape(otherdvvVecDims, 1)
+				}
+
+				odvdDenseReshaped := false
+				if !odvdDense.IsRowVec() {
+					odvdDenseShapeOld = odvdDense.Shape().Clone()
+					odvdDenseVecDims, err := (odvdDense.AP.Shape()).DimSize(0)
+
+					if nil != err {
+						return err
+					}
+
+					odvdDenseReshaped = true
+					odvdDense.Reshape(1, odvdDenseVecDims)
+				}
+
+				tensordot, err = otherdvvDense.MatMul(odvdDense)
+
+				// Undo Reshape
+				if otherdvvDenseReshaped {
+					otherdvvDense.Reshape(otherdvvDenseShapeOld...)
+				}
+
+				if odvdDenseReshaped {
+					odvdDense.Reshape(odvdDenseShapeOld...)
+				}
+
+			default:
+				tensordot, err = otherdvvDense.TensorMul(odvdDense, dOtherAxes, dOutputAxes)
+			}
+
+			if err != nil {
+				return err
+			}
+
+			tensordotPerm, err := tensor.T(tensordot, pattern...)
+
+			if err != nil {
+				return err
+			}
+
+			tensordotPermDense := tensordotPerm.(*tensor.Dense)
+
+			d := idvd.(*tensor.Dense)
+			d.Add(tensordotPermDense, tensor.UseUnsafe()) // TODO: Should output directly into d and save the add
+
+		default:
+			return errors.Errorf(nyiTypeFail, "Do Diff (hack)", st)
 		}
 	}
 
-	return false
+	return nil
 }
 
 type reshapeOp struct {
@@ -1342,4 +1500,45 @@ func (op reshapeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (er
 	input := inputs[0]
 	dv := input.boundTo.(*dualValue)
 	return dv.SetDeriv(T)
+}
+
+/* PRIVATE FUNCTIONS */
+
+// if value is contained in slice, contains returns the corresp. index in slice, -1 otherwise
+func contains(slice []int, value int) int {
+	if nil == slice {
+		return -1
+	}
+
+	for sliceIndex, sliceValue := range slice {
+		if value == sliceValue {
+			return sliceIndex
+		}
+	}
+
+	return -1
+}
+
+// TODO: This function is an overkill for a small number of axes...
+func sortUniqueIntWithImitator(toBeSorted, imitator []int) {
+	toBeSortedBackup := make([]int, len(toBeSorted))
+	for index, value := range toBeSorted {
+		toBeSortedBackup[index] = value
+	}
+
+	imitatorBackup := make([]int, len(imitator))
+	for index, value := range imitator {
+		imitatorBackup[index] = value
+	}
+
+	sort.Ints(toBeSorted)
+
+	// Permutate the imitator accordingly
+	for originalIndex, originalValue := range toBeSortedBackup {
+		sortedIndex := sort.SearchInts(toBeSorted, originalValue)
+
+		imitator[sortedIndex] = imitatorBackup[originalIndex]
+	}
+
+	return
 }
