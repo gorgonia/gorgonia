@@ -443,7 +443,7 @@ func (e StdEng) MatMul(a, b, prealloc Tensor) (err error) {
 		tA = blas.Trans
 	}
 
-	adp := bd.(*Dense)
+	adp := ad.(*Dense)
 	if adp.IsRowVec() {
 		tA = blas.Trans
 	}
