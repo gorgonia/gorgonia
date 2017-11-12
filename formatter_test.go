@@ -33,7 +33,7 @@ func TestMapFormat(t *testing.T) {
 	// 	t.Errorf("Case 2 failed. Expected : %q. Got %q instead", expected0, s)
 	// }
 
-	s = fmt.Sprintf("%-d", FmtNodeMap(m2))
+	s = fmt.Sprintf("%#-d", FmtNodeMap(m2))
 	expected0 = fmt.Sprintf("map[Node.ID]*gorgonia.Node {\n\t%x: %x\n\t%x: %x\n}", x.ID(), x.ID(), y.ID(), y.ID())
 	expected1 = fmt.Sprintf("map[Node.ID]*gorgonia.Node {\n\t%x: %x\n\t%x: %x\n}", y.ID(), y.ID(), x.ID(), x.ID())
 	if s != expected0 && s != expected1 {
