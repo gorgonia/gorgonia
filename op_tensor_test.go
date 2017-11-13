@@ -268,20 +268,20 @@ func TestTransposeOp(t *testing.T) {
 
 	var ag, bg Value
 	if ag, err = A.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of A", err)
+		t.Fatalf("Cannot get grad of A. Err: %v", err)
 	}
 
 	if bg, err = B.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of B", err)
+		t.Fatalf("Cannot get grad of B. Err: %v", err)
 	}
 
 	var costGrad1, costGrad2 Value
 	if costGrad1, err = cost1.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of Cost1")
+		t.Fatalf("Cannot get grad of Cost1. Err %v", err)
 	}
 
 	if costGrad2, err = cost2.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of Cost2")
+		t.Fatalf("Cannot get grad of Cost2. Err %v", err)
 	}
 
 	t.Logf("%v %v", cost1.Value(), cost2.Value())

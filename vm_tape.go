@@ -143,8 +143,7 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 	breg := m.locMap[b]
 	v := m.getValue(breg)
 	if v == nil {
-		err = errors.Errorf(nyiFail, "handling of Memory -> Value")
-		return
+		return nyi("handling of Memory -> Value", "tapeMachine.Set")
 	}
 
 	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
@@ -173,8 +172,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 
 		v := m.getValue(r)
 		if v == nil {
-			err = errors.Errorf(nyiFail, "converting Memory to Value")
-			return
+			return nyi("converting Memory to Value", "TapeMachine.Run")
 		}
 
 		if err = n.bind(m.cpumem[r.id]); err != nil {
@@ -213,7 +211,6 @@ func (m *tapeMachine) RunAll() (err error) {
 				return err
 			}
 			return nil
-		default:
 		}
 	}
 	return
@@ -654,7 +651,7 @@ func (instr *readInstr) exec(m *tapeMachine) (err error) {
 	m.logf("Executing READ - read from %v into %v", instr.readFrom, instr.into)
 	v := m.getValue(instr.readFrom)
 	if v == nil {
-		return errors.Errorf(nyiFail, "Cannot read instruction")
+		return nyi("value of nil", "readInstr.exec")
 	}
 
 	v2, err := CloneValue(v)
