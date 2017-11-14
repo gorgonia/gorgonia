@@ -40,7 +40,7 @@ const (
 	nyiFail             = "%s not yet implemented for %v"
 	dtypeOfFail         = "Failed to carry dtypeOf()"
 	mulFail             = "Failed to carry Mul()"
-	applyOpFail         = "Failed to carry applyOp()"
+	applyOpFail         = "Failed to carryApplyOp()"
 	opDoFail            = "Failed to carry op.Do()"
 	binOpDoFail         = "Failed to carry binOp.Do()"
 	binOpNodeFail       = "Failed to carry binary operation %T"

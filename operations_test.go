@@ -24,7 +24,7 @@ func TestApplyOp(t *testing.T) {
 	t.Logf("g: %v", cpi.g)
 
 	op = newElemBinOp(addOpType, cpi, cpi)
-	added, err := applyOpWithName(op, "+ pi pi", cpi, cpi)
+	added, err := ApplyOpWithName(op, "+ pi pi", cpi, cpi)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestApplyOp(t *testing.T) {
 
 	ct = NewConstant(tensor.Ones(tensor.Float64, 3, 3)) // no graph set for ct
 	op = newElemBinOp(addOpType, cpi, ct)
-	added, err = applyOpWithName(op, "+ pi constTensor(3,3)_ones", cpi, ct)
+	added, err = ApplyOpWithName(op, "+ pi constTensor(3,3)_ones", cpi, ct)
 	if err != nil {
 		t.Error(err)
 	}
@@ -683,4 +683,62 @@ func TestMean(t *testing.T) {
 	if !m.IsScalar() {
 		t.Error("Expected result to be scalar")
 	}
+}
+
+func TestTensordot(t *testing.T) {
+	assert := assert.New(t)
+
+	// Scalars
+	g := NewGraph()
+	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1), WithInit(RangedFrom(2)))
+	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1), WithInit(RangedFrom(21)))
+
+	tensordot, err := Tensordot([]int{0}, []int{0}, a, b)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	m := NewTapeMachine(g)
+	m.RunAll()
+
+	correctInt := float64(42)
+	value := tensordot.Value().Data()
+	assert.Equal(correctInt, value)
+
+	// Vector and Matrix
+	g = NewGraph()
+	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2), WithInit(RangedFrom(0)))
+	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(2), WithInit(RangedFrom(0)))
+
+	tensordot, err = Tensordot([]int{1}, []int{0}, a, b)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	m = NewTapeMachine(g)
+	m.RunAll()
+
+	correct := []float64{1, 3}
+	assert.Equal(correct, extractF64s(tensordot.Value()))
+
+	// Matrices
+	g = NewGraph()
+
+	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2), WithInit(RangedFrom(0)))
+	b = NewTensor(g, Float64, 2, WithName("b"), WithShape(2, 2), WithInit(RangedFrom(0)))
+
+	tensordot, err = Tensordot([]int{1}, []int{1}, a, b)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	m = NewTapeMachine(g)
+	m.RunAll()
+
+	correct = []float64{1, 3, 3, 13}
+	assert.Equal(correct, extractF64s(tensordot.Value()))
+
 }

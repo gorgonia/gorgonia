@@ -165,6 +165,64 @@ type CUDAADOp interface {
 	CUDADoDiff(extern External, dev Device, inputs Nodes, output *Node) error
 }
 
+// ApplyOp is the generic function application - for when no specialization is required
+func ApplyOp(op Op, children ...*Node) (retVal *Node, err error) {
+	var g *ExprGraph
+
+	for _, child := range children {
+		if child.g != nil {
+			g = child.g
+			break
+		}
+	}
+
+	if g == nil {
+		return nil, errors.New("No Graph Supplied")
+	}
+
+	if !Nodes(children).AllSameGraph() {
+		return nil, errors.New("Not all children have the same graph")
+	}
+
+	// typecheck  before creating
+	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
+	enterLoggingContext()
+	defer leaveLoggingContext()
+	var retType hm.Type
+	if retType, err = inferNodeType(op, children...); err != nil {
+		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())
+	}
+	typeSysLogf("Done inferring. Return type is: %#v(%T)", retType, retType)
+
+	// infer shapes, but print errors instead of returning
+	shapeLogf("op: %v(%T) inferring shape", op, op)
+	if err = checkArity(op, len(children)); err != nil {
+		return
+	}
+
+	ds := Nodes(children).dimSizers()
+	var s tensor.Shape
+	if s, err = op.InferShape(ds...); err == nil {
+		shapeLogf("inferred shape %v", s)
+		retVal = NewUniqueNode(WithType(retType), WithOp(op), WithChildren(children), In(g), WithShape(s...))
+	} else {
+		err = errors.Wrapf(err, "Failed to infer shape. Op: %v", op)
+		// retVal = newUniqueNode(withType(retType), withOp(op), withChildren(children), withGraph(g))
+	}
+	returnDimSizers(ds)
+	return
+}
+
+// ApplyOpWithName applies the op, and then gives the node the given name
+func ApplyOpWithName(op Op, name string, children ...*Node) (retVal *Node, err error) {
+	if retVal, err = ApplyOp(op, children...); err == nil {
+		WithName(name)(retVal)
+	} else {
+		return nil, errors.Wrap(err, applyOpFail)
+	}
+	return
+}
+
 // a constant is an unchanging value. I think everyone would know what a constant is
 // a constant op is an op that creates a constant. It is also a Value of a constant value
 type constant interface {
