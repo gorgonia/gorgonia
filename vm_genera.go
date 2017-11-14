@@ -51,7 +51,7 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 		logFlags: 0x0,      // log nothing
 		runFlags: runFlags, // run only fwd and bwd
 	}
-	m.Engine = tensor.StdEng{}
+	m.Engine = StandardEngine{}
 
 	for _, opt := range opts {
 		opt(m)

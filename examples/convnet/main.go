@@ -15,8 +15,8 @@ import (
 
 	"github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/examples/mnist"
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 var (
@@ -230,7 +230,20 @@ func main() {
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
 
 	// pprof
-	handlePprof(sigChan, doneChan)
+	// handlePprof(sigChan, doneChan)
+
+	var profiling bool
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		profiling = true
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+	go cleanup(sigChan, doneChan, profiling)
+
 	for i := 0; i < *epochs; i++ {
 		batches := numExamples / bs
 		log.Printf("Batches %d", batches)
@@ -276,6 +289,7 @@ func cleanup(sigChan chan os.Signal, doneChan chan bool, profiling bool) {
 	case <-sigChan:
 		log.Println("EMERGENCY EXIT!")
 		if profiling {
+			log.Println("Stop profiling")
 			pprof.StopCPUProfile()
 		}
 		os.Exit(1)
