@@ -6,6 +6,7 @@ import (
 
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/stretchr/testify/assert"
+	"log"
 )
 
 var repeatOpTests = []struct {
@@ -268,20 +269,20 @@ func TestTransposeOp(t *testing.T) {
 
 	var ag, bg Value
 	if ag, err = A.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of A", err)
+		t.Fatal("Cannot get grad of A", err)
 	}
 
 	if bg, err = B.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of B", err)
+		t.Fatal("Cannot get grad of B", err)
 	}
 
 	var costGrad1, costGrad2 Value
 	if costGrad1, err = cost1.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of Cost1")
+		t.Fatal("Cannot get grad of Cost1")
 	}
 
 	if costGrad2, err = cost2.Grad(); err != nil {
-		t.Fatalf("Cannot get grad of Cost2")
+		t.Fatal("Cannot get grad of Cost2")
 	}
 
 	t.Logf("%v %v", cost1.Value(), cost2.Value())
@@ -335,5 +336,261 @@ func TestConcatOp(t *testing.T) {
 	aG, _ := a.Grad()
 	assert.True(ValueEq(xG, aG))
 	assert.True(ValueEq(xx.Value(), aa.Value()))
+
+}
+
+func TestTensordotOpDoDiff(t *testing.T) {
+	assert := assert.New(t)
+
+	// Scalars
+	g := NewGraph()
+	a := NewTensor(g, Float64, 1, WithName("a"), WithShape(1))
+	b := NewTensor(g, Float64, 1, WithName("b"), WithShape(1))
+
+	tensordot := tensordotOp{
+		aAxes:   []int{0},
+		bAxes:   []int{0},
+		aDims:   0,
+		bDims:   0,
+		retDims: 0,
+	}
+
+	c, err := ApplyOp(tensordot, a, b)
+
+	if err != nil {
+		log.Fatal("scalars: Cannot ApplyOp:", err)
+		return
+	}
+
+	aT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{2}))
+	bT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{21}))
+	cT := tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{1})) // Backing doesn't matter as long as it is set
+
+	aVal, _, _, _ := anyToValue(aT)
+	bVal, _, _, _ := anyToValue(bT)
+	cVal, _, _, _ := anyToValue(cT)
+
+	a.bind(dvUnit(aVal))
+	b.bind(dvUnit(bVal))
+	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
+
+	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+		log.Fatal("scalars: Cannot DoDiff:", err)
+		return
+	}
+
+	aG, _ := a.Grad()
+	aGfloat := aG.Data()
+
+	bG, _ := b.Grad()
+	bGfloat := bG.Data()
+
+	aGcorrect := 21.0
+	bGcorrect := 2.0
+
+	assert.Equal(aGcorrect, aGfloat)
+	assert.Equal(bGcorrect, bGfloat)
+
+	// Vectors
+
+	g = NewGraph()
+	a = NewTensor(g, Float64, 1, WithName("a"), WithShape(2))
+	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(2))
+
+	tensordot = tensordotOp{
+		aAxes:   []int{0},
+		bAxes:   []int{0},
+		aDims:   1,
+		bDims:   1,
+		retDims: 1,
+	}
+
+	c, err = ApplyOp(tensordot, a, b)
+
+	if err != nil {
+		log.Fatal("vectors: Cannot ApplyOp:", err)
+		return
+	}
+
+	aT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{1, 2}))
+	bT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{3, 4}))
+	cT = tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{1})) // Backing doesn't matter as long as it is set
+
+	aVal, _, _, _ = anyToValue(aT)
+	bVal, _, _, _ = anyToValue(bT)
+	cVal, _, _, _ = anyToValue(cT)
+
+	a.bind(dvUnit(aVal))
+	b.bind(dvUnit(bVal))
+	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
+
+	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+		log.Fatal("vectors: Cannot DoDiff:", err)
+		return
+	}
+
+	aG, _ = a.Grad()
+	bG, _ = b.Grad()
+
+	aGfloats := extractF64s(aG)
+	bGfloats := extractF64s(bG)
+
+	aGcorrectFloats := []float64{3, 4}
+	bGcorrectFloats := []float64{1, 2}
+
+	assert.Equal(aGcorrectFloats, aGfloats)
+	assert.Equal(bGcorrectFloats, bGfloats)
+
+	// Matrix and Vector
+
+	g = NewGraph()
+	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2))
+	b = NewTensor(g, Float64, 1, WithName("b"), WithShape(2))
+
+	tensordot = tensordotOp{
+		aAxes:   []int{1},
+		bAxes:   []int{0},
+		aDims:   2,
+		bDims:   1,
+		retDims: 1,
+	}
+
+	c, err = ApplyOp(tensordot, a, b)
+
+	if err != nil {
+		log.Fatal("matrix vector: Cannot ApplyOp:", err)
+		return
+	}
+
+	aT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4}))
+	bT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{1, 2}))
+	cT = tensor.New(tensor.WithShape(2), tensor.WithBacking([]float64{1, 1})) // Backing doesn't matter as long as it is set
+
+	aVal, _, _, _ = anyToValue(aT)
+	bVal, _, _, _ = anyToValue(bT)
+	cVal, _, _, _ = anyToValue(cT)
+
+	a.bind(dvUnit(aVal))
+	b.bind(dvUnit(bVal))
+	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
+
+	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+		log.Fatal("matrix vector: Cannot DoDiff:", err)
+		return
+	}
+
+	aG, _ = a.Grad()
+	bG, _ = b.Grad()
+
+	aGfloats = extractF64s(aG)
+	bGfloats = extractF64s(bG)
+
+	aGcorrectFloats = []float64{1, 2, 1, 2}
+	bGcorrectFloats = []float64{4, 6}
+
+	assert.Equal(aGcorrectFloats, aGfloats)
+	assert.Equal(bGcorrectFloats, bGfloats)
+
+	// Matrix multiplication
+
+	g = NewGraph()
+
+	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2))
+	b = NewTensor(g, Float64, 2, WithName("b"), WithShape(2, 2))
+
+	tensordot = tensordotOp{
+		aAxes:   []int{1},
+		bAxes:   []int{0},
+		aDims:   2,
+		bDims:   2,
+		retDims: 2,
+	}
+
+	c, err = ApplyOp(tensordot, a, b)
+
+	if err != nil {
+		log.Fatal("matrices: Cannot ApplyOp:", err)
+		return
+	}
+
+	aT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4}))
+	bT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4}))
+	cT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 1, 1, 1})) // Backing doesn't matter as long as it is set
+
+	aVal, _, _, _ = anyToValue(aT)
+	bVal, _, _, _ = anyToValue(bT)
+	cVal, _, _, _ = anyToValue(cT)
+
+	a.bind(dvUnit(aVal))
+	b.bind(dvUnit(bVal))
+	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
+
+	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+		log.Fatal("matrices: Cannot DoDiff:", err)
+		return
+	}
+
+	aG, _ = a.Grad()
+	bG, _ = b.Grad()
+
+	aGfloats = extractF64s(aG)
+	bGfloats = extractF64s(bG)
+
+	aGcorrectFloats = []float64{3, 7, 3, 7}
+	bGcorrectFloats = []float64{4, 4, 6, 6}
+
+	assert.Equal(aGcorrectFloats, aGfloats)
+	assert.Equal(bGcorrectFloats, bGfloats)
+
+	// Total matrix contraction
+
+	g = NewGraph()
+
+	a = NewTensor(g, Float64, 2, WithName("a"), WithShape(2, 2))
+	b = NewTensor(g, Float64, 2, WithName("b"), WithShape(2, 2))
+
+	tensordot = tensordotOp{
+		aAxes:   []int{1, 0},
+		bAxes:   []int{0, 1},
+		aDims:   2,
+		bDims:   2,
+		retDims: 1,
+	}
+
+	c, err = ApplyOp(tensordot, a, b)
+
+	if err != nil {
+		log.Fatal("matrices total contraction: Cannot ApplyOp:", err)
+		return
+	}
+
+	aT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{1, 2, 3, 4}))
+	bT = tensor.New(tensor.WithShape(2, 2), tensor.WithBacking([]float64{5, 6, 7, 8}))
+	cT = tensor.New(tensor.WithShape(1), tensor.WithBacking([]float64{1})) // Backing doesn't matter as long as it is set
+
+	aVal, _, _, _ = anyToValue(aT)
+	bVal, _, _, _ = anyToValue(bT)
+	cVal, _, _, _ = anyToValue(cT)
+
+	a.bind(dvUnit(aVal))
+	b.bind(dvUnit(bVal))
+	c.bind(dvUnitVar(cVal)) // Will set Output derivative to all ones
+
+	if err := tensordot.DoDiff(ExecutionContext{}, Nodes{a, b}, c); err != nil {
+		log.Fatal("matrices total contraction: Cannot DoDiff:", err)
+		return
+	}
+
+	aG, _ = a.Grad()
+	bG, _ = b.Grad()
+
+	aGfloats = extractF64s(aG)
+	bGfloats = extractF64s(bG)
+
+	aGcorrectFloats = []float64{5, 7, 6, 8}
+	bGcorrectFloats = []float64{1, 3, 2, 4}
+
+	assert.Equal(aGcorrectFloats, aGfloats)
+	assert.Equal(bGcorrectFloats, bGfloats)
 
 }

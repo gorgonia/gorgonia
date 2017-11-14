@@ -329,6 +329,10 @@ func (t *Dense) TensorMul(other Tensor, axesA, axesB []int) (retVal *Dense, err 
 	retShape = append(retShape, retShape1...)
 	retShape = append(retShape, retShape2...)
 
+	if 0 == len(retShape) { // In case a scalar is returned, it should be returned as shape = {1}
+		retShape = append(retShape, 1)
+	}
+
 	if err = retVal.Reshape(retShape...); err != nil {
 		return
 	}
