@@ -6,10 +6,10 @@ import (
 	"hash/fnv"
 	"time"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
-	"github.com/leesper/go_rng"
+	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 var (
