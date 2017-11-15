@@ -1,6 +1,4 @@
-dist: trusty
 sudo: required
-
 language: go
 
 branches:
@@ -35,3 +33,7 @@ install:
 
 script: 
 - source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/test.sh
+
+matrix:
+  allow_failures:
+    - go: tip
