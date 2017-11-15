@@ -11,7 +11,6 @@ import (
 )
 
 func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Node) (*Node, error)) (x, y, a, b *Node, v Value, err error) {
-
 	var xV, aV Value
 	var any interface{}
 	if shape.IsScalar() {
@@ -57,13 +56,13 @@ func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Nod
 
 	Let(x, xV)
 	if err = m0.RunAll(); err != nil {
-		t.Error("m0 failed:", err)
+		t.Errorf("m0 failed: %v", err)
 		return
 	}
 
 	Let(a, aV)
 	if err = m1.RunAll(); err != nil {
-		t.Error("m1 failed:", err)
+		t.Errorf("m1 failed: %v", err)
 		return
 	}
 
