@@ -260,6 +260,28 @@ var matMulTests = []linalgTest{
 		Range(Float32, 52, 56), Range(Float32, 100, 104), Shape{2, 2}, Shape{2, 2},
 		[]float32{10, 13, 28, 40}, []float32{110, 114, 130, 143}, []float32{120, 127, 158, 183}, Shape{2, 2}, false, false, false},
 
+	// Edge cases - Row Vecs (Float64)
+	{Range(Float64, 0, 2), Range(Float64, 0, 3), Shape{2, 1}, Shape{1, 3},
+		Range(Float64, 10, 16), Range(Float64, 100, 106), Shape{2, 3}, Shape{2, 3},
+		[]float64{0, 0, 0, 0, 1, 2}, []float64{100, 101, 102, 103, 105, 107}, []float64{100, 101, 102, 103, 106, 109}, Shape{2, 3}, false, false, false},
+	{Range(Float64, 0, 2), Range(Float64, 0, 6), Shape{1, 2}, Shape{2, 3},
+		Range(Float64, 10, 13), Range(Float64, 100, 103), Shape{1, 3}, Shape{1, 3},
+		[]float64{3, 4, 5}, []float64{103, 105, 107}, []float64{106, 109, 112}, Shape{1, 3}, false, false, false},
+	{Range(Float64, 0, 2), Range(Float64, 0, 2), Shape{1, 2}, Shape{2, 1},
+		Range(Float64, 0, 1), Range(Float64, 100, 101), Shape{1, 1}, Shape{1, 1},
+		[]float64{1}, []float64{101}, []float64{102}, Shape{1, 1}, false, false, false},
+
+	// Edge cases - Row Vecs (Float32)
+	{Range(Float32, 0, 2), Range(Float32, 0, 3), Shape{2, 1}, Shape{1, 3},
+		Range(Float32, 10, 16), Range(Float32, 100, 106), Shape{2, 3}, Shape{2, 3},
+		[]float32{0, 0, 0, 0, 1, 2}, []float32{100, 101, 102, 103, 105, 107}, []float32{100, 101, 102, 103, 106, 109}, Shape{2, 3}, false, false, false},
+	{Range(Float32, 0, 2), Range(Float32, 0, 6), Shape{1, 2}, Shape{2, 3},
+		Range(Float32, 10, 13), Range(Float32, 100, 103), Shape{1, 3}, Shape{1, 3},
+		[]float32{3, 4, 5}, []float32{103, 105, 107}, []float32{106, 109, 112}, Shape{1, 3}, false, false, false},
+	{Range(Float32, 0, 2), Range(Float32, 0, 2), Shape{1, 2}, Shape{2, 1},
+		Range(Float32, 0, 1), Range(Float32, 100, 101), Shape{1, 1}, Shape{1, 1},
+		[]float32{1}, []float32{101}, []float32{102}, Shape{1, 1}, false, false, false},
+
 	// stupids - bad shape (not matrices):
 	{Range(Float64, 0, 6), Range(Float64, 0, 6), Shape{2, 3}, Shape{6},
 		Range(Float64, 52, 56), Range(Float64, 100, 104), Shape{2, 2}, Shape{2, 2},

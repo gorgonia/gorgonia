@@ -77,8 +77,10 @@ type DenseTensor interface {
 	Info() *AP
 
 	DataOrder() DataOrder
-	IsVector() bool
 	IsMatrix() bool
+	IsVector() bool
+	IsRowVec() bool
+	IsColVec() bool
 
 	// headerer
 	// arrayer
