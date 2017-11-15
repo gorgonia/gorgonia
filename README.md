@@ -44,7 +44,7 @@ As Gorgonia moves towards 1.0, the packages themselves are moving. The current v
 
 The main reason for the major split in repositories is that `tensor` has found a life outside being used by Gorgonia proper. Quite a bit of attention and care has been given to the package and as a result it's fairly performant on its own, and is highly extensible on its own right, and no longer needs Gorgonia to provide it the structure/metainfo it requires.
 
-There will be other repositories (like `cu`, `vecf64` and `vecf32`) that will be moved to the Gorgonia organization as well. Those will be enumerated in the README of their own repositories. All packages will be tagged with version numbers. Libraries that are "complete" like `math32` and `vecf32` and `vecf64` will be tagged with a major version - v1.0.0 and up. While libraries that have fairly malleable APIs will be v0.8.0 and up. `gorgonia`, `tensor` and `cu` will share the same version numbers until 1.0.
+There will be other repositories (like `cu`, `vecf64` and `vecf32`) that will be moved to the Gorgonia organization as well. Those will be enumerated in the README of their own repositories. All packages will be tagged with version numbers. Libraries that are "complete" like `math32` and `hm` will be tagged with a major version - v1.0.0 and up. While libraries that have fairly malleable APIs will be v0.8.0 and up. `gorgonia`, `tensor`  `cu`, `vecf32`, and `vecf64` will share the same version numbers until 1.0.
 
 
 ## Versioning ## 
@@ -53,6 +53,12 @@ We use [semver 2.0.0](http://semver.org/) for our versioning. Before 1.0, Gorgon
 
 * The MINOR number will be incremented every time there is a deletrious break in API. This means any deletion, or any change in function signature or interface methods will lead to a change in MINOR number. 
 * Additive changes will NOT change the MINOR version number prior to version 1.0. This means that if new functionality were added that does not break the way you use Gorgonia, there will not be an increment in the MINOR version. There will be an increment in the PATCH version.  
+
+## Go Version Support ##
+
+Gorgonia aims to support 5 versions below the Master branch of Go. This means Gorgonia will support the current released version of Go, and up to 4 previous versions - providing something doesn't break. Where possible a shim will be provided (for things like new `sort` APIs or `math/bits` which came out in Go 1.9).
+
+The current version of Go is 1.9.2. The earliest version Gorgonia supports is Go 1.6.x. 
 
 ## Dependencies ##
 
