@@ -132,8 +132,9 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 	switch at := a.(type) {
 	case Tensor:
 		oe = at.standardEngine()
-		switch bt := b.(type) {
-		case Tensor:
+		bt, bIsTensor := b.(Tensor)
+		switch {
+		case bIsTensor && !bt.Shape().IsScalar() && !at.Shape().IsScalar(): // Tensor multiplication
 			if oe != nil {
 				return oe.Mul(at, bt, opts...)
 			}
@@ -148,7 +149,22 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return nil, errors.New("Neither engines of either operand support Mul")
 
-		default:
+		case bIsTensor && at.Shape().IsScalar(): // b Tensor * a Scalar Tensor
+			if oe != nil {
+				return oe.MulScalar(bt, at, true, opts...)
+			}
+			if oe = bt.standardEngine(); oe != nil {
+				return oe.MulScalar(bt, at, true, opts...)
+			}
+			if muler, ok = at.Engine().(Muler); ok {
+				return muler.MulScalar(bt, at, true, opts...)
+			}
+			if muler, ok = bt.Engine().(Muler); ok {
+				return muler.MulScalar(bt, at, true, opts...)
+			}
+			return nil, errors.New("Neither engines of either operand support Mul")
+
+		default: // a Tensor * b interface OR a Tensor * b Scalar Tensor
 			if oe != nil {
 				return oe.MulScalar(at, bt, true, opts...)
 			}
@@ -157,9 +173,10 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 			}
 			return nil, errors.New("Operand A's engine does not support Mul")
 		}
+
 	default:
 		switch bt := b.(type) {
-		case Tensor:
+		case Tensor: // b Tensor * a interface
 			if oe = bt.standardEngine(); oe != nil {
 				return oe.MulScalar(bt, at, false, opts...)
 			}
@@ -167,7 +184,7 @@ func Mul(a, b interface{}, opts ...FuncOpt) (retVal Tensor, err error) {
 				return muler.MulScalar(bt, at, false, opts...)
 			}
 			return nil, errors.New("Operand B's engine does not support Mul")
-		default:
+		default: // b interface * a interface
 			return nil, errors.Errorf("Cannot perform Mul of %T and %T", a, b)
 		}
 	}
