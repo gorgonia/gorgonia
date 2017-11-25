@@ -280,6 +280,9 @@ func (n *Node) IsMatrix() bool {
 
 // methods
 
+// Graph returns the graph of the node
+func (n *Node) Graph() *ExprGraph { return n.g }
+
 // CloneTo clones the node into a new graph. If CloneTo() is called on the same graph as the n, it will return n. The reason this is done is because
 // at any given time, every node  should be unique in the *ExprGraph.
 //
