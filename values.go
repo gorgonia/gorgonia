@@ -15,7 +15,7 @@ import (
 // 		- *dualValue
 //
 // A Value is essentially any thing that knows its own type and shape.
-// Most importantly though, a Value is a pointer - and can be converted into a Memory.
+// Most importantly though, a Value is a pointer - and can be converted into a tensor.Memory.
 // This is done for the sake of interoperability with external devices like cgo or CUDA or OpenCL.
 // This also means for the most part most Values will be allocated on the heap.
 // There are some performance tradeoffs made in this decision, but ultimately this is better than having to manually manage blocks of memory
@@ -25,7 +25,7 @@ type Value interface {
 	Data() interface{}   // Data returns the original representation of the Value
 	Dtype() tensor.Dtype // Dtype returns the Dtype of the value
 
-	Memory
+	tensor.Memory
 	fmt.Formatter
 }
 
@@ -127,7 +127,7 @@ func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 	panic("Unreachable")
 }
 
-func makeValueFromMem(t hm.Type, s tensor.Shape, mem Memory) (retVal Value, err error) {
+func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(t); err != nil {
 		return
@@ -149,7 +149,7 @@ func makeValueFromMem(t hm.Type, s tensor.Shape, mem Memory) (retVal Value, err 
 	panic("Unreachable")
 }
 
-func makeScalarFromMem(dt tensor.Dtype, mem Memory) (retVal Value, err error) {
+func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal Value, err error) {
 	switch dt {
 	case tensor.Float64:
 		retVal = (*F64)(unsafe.Pointer(mem.Uintptr()))

@@ -146,7 +146,7 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 	breg := m.locMap[b]
 	v := m.getValue(breg)
 	if v == nil {
-		return nyi("handling of Memory -> Value", "tapeMachine.Set")
+		return nyi("handling of tensor.Memory -> Value", "tapeMachine.Set")
 	}
 
 	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
@@ -175,7 +175,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 
 		v := m.getValue(r)
 		if v == nil {
-			return nyi("converting Memory to Value", "TapeMachine.Run")
+			return nyi("converting tensor.Memory to Value", "TapeMachine.Run")
 		}
 
 		if err = n.bind(m.cpumem[r.id]); err != nil {
@@ -235,7 +235,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchNaN")
+					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
 					errChan <- err
 					return
 				}
@@ -255,7 +255,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchInf")
+					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
 					errChan <- err
 					return
 				}
@@ -487,7 +487,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	case CPU:
 		v, err = makeValue(instr.t, instr.s)
 	default:
-		var mem Memory
+		var mem tensor.Memory
 		memsize := calcMemSize(dt, instr.s)
 		if mem, err = m.ExternMetadata.Get(dev, memsize); err != nil {
 			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
@@ -642,7 +642,7 @@ type readInstr struct {
 	readFrom register
 	into     *Value
 
-	// required to convert Memory to Value
+	// required to convert tensor.Memory to Value
 	t hm.Type
 	s tensor.Shape
 }

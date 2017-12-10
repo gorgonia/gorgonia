@@ -48,13 +48,15 @@ func (m *ExternMetadata) DoWork() error {
 }
 
 // Get allocates a memory of the size. In this build it returns a NoOpError.
-func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) { return nil, noopError{} }
+func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) { return nil, noopError{} }
 
 // GetFromValue allocates a memory of the size of v. In this build it returns a NoOpError, and v itself
-func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) { return v, noopError{} }
+func (m *ExternMetadata) GetFromValue(dev Device, v Value) (tensor.Memory, error) {
+	return v, noopError{}
+}
 
 // Put puts a previously allocated memory slab of the provided size back into the pool. Currently this is a No-op in this build.
-func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {}
+func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {}
 
 // PutValue puts a previously allocated value into the pool. In this build,  it is a noop.
 func (m *ExternMetadata) PutValue(dev Device, v Value) {}

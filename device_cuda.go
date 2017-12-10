@@ -2,7 +2,10 @@
 
 package gorgonia
 
-import "gorgonia.org/cu"
+import (
+	"gorgonia.org/cu"
+	"gorgonia.org/tensor"
+)
 
 // Device represents the device where the code will be executed on. It can either be a GPU or CPU
 type Device cu.Device
@@ -14,7 +17,7 @@ const CPU = Device(cu.CPU)
 func (d Device) String() string { return cu.Device(d).String() }
 
 // Alloc allocates memory on the device. If the device is CPU, the allocations is a NO-OP because Go handles all the allocations in the CPU
-func (d Device) Alloc(extern External, size int64) (Memory, error) {
+func (d Device) Alloc(extern External, size int64) (tensor.Memory, error) {
 	if d == CPU {
 		cudaLogf("device is CPU")
 		return nil, nil // well there should be an error because this wouldn't be called
@@ -32,7 +35,7 @@ func (d Device) Alloc(extern External, size int64) (Memory, error) {
 	return ctx.MemAlloc(size)
 }
 
-func (d Device) Free(extern External, mem Memory, size int64) (err error) {
+func (d Device) Free(extern External, mem tensor.Memory, size int64) (err error) {
 	var devptr cu.DevicePtr
 	var ok bool
 	if devptr, ok = mem.(cu.DevicePtr); !ok {

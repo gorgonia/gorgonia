@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/tensor"
 )
 
 func finalizeTapeMachine(m *tapeMachine) {
@@ -246,7 +247,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 					shp := dv.d.Shape()
 					memsize := calcMemSize(dt, shp)
 
-					var mem Memory
+					var mem tensor.Memory
 					if mem, err = m.Get(dev, memsize); err != nil {
 						return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
 					}

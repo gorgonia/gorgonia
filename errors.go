@@ -36,7 +36,7 @@ type noIncrErr struct {
 func (noIncrErr) Error() string  { return incrErr }
 func (e noIncrErr) Value() Value { return e.v }
 
-// oomError represents an Out of Memory error. It is typically used for CUDA related machine work
+// oomError represents an Out of tensor.Memory error. It is typically used for CUDA related machine work
 type oomError struct {
 	res       int64
 	allocated int64

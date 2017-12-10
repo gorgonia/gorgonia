@@ -442,7 +442,7 @@ func (m *lispMachine) forward() (err error) {
 				return errors.Wrapf(err, dtypeExtractionFail, n.t)
 			}
 
-			var mem Memory
+			var mem tensor.Memory
 			memsize := calcMemSize(dt, n.shape)
 			if mem, err = m.Get(dev, memsize); err != nil {
 				return errors.Wrapf(err, allocFail, memsize)

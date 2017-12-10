@@ -139,7 +139,7 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 			return
 		}
 	} else {
-		var mem Memory
+		var mem tensor.Memory
 		if mem, err = m.Get(op.to, calcMemSize(cv.Dtype(), child.shape)); err != nil {
 			return
 		}

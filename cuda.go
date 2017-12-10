@@ -185,7 +185,7 @@ func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
 
 // Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
-func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
+func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
 	d := int(dev)
 	if d >= len(m.a) {
 		return nil, noopError{} // this should not be a noopError
@@ -201,7 +201,7 @@ func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
 }
 
 // GetFromValue allocates a memory on the GPU, and then copies the data over. v MUST be on CPU.
-func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) {
+func (m *ExternMetadata) GetFromValue(dev Device, v Value) (tensor.Memory, error) {
 	d := int(dev)
 	if d >= len(m.a) {
 		return nil, noopError{}
@@ -219,7 +219,7 @@ func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) {
 }
 
 // Put puts a previously allocated memory slab of the provided size back into the pool
-func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
+func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {
 	d := int(dev)
 	if d >= len(m.a) {
 		return // wat??
@@ -258,7 +258,7 @@ func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bo
 		}
 		ctx := m.c[d]
 
-		var mem Memory
+		var mem tensor.Memory
 		if mem, err = m.Get(toDev, memsize); err != nil {
 			return
 		}
@@ -353,7 +353,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 		ctx, err := dev.MakeContext(cu.SchedAuto)
 		// ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
 		if err != nil {
-			if err == cu.OutOfMemory {
+			if err == cu.OutOftensor.Memory {
 				var free, total int64
 				if free, total, err = cu.MemInfo(); err != nil {
 					cudaLogf("Error while getting mem info: %v", err)

@@ -463,7 +463,7 @@ func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	// if x is scalar, an additional vector needs to be acquired
 	if x.IsScalar() && dev != CPU {
-		var mem Memory
+		var mem tensor.Memory
 		var xd2 Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
@@ -507,7 +507,7 @@ func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	// if y is scalar, an additional vector needs to be acquired
 	if y.IsScalar() && dev != CPU {
-		var mem Memory
+		var mem tensor.Memory
 		var yd2 Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
@@ -576,7 +576,7 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 	// if y is scalar an additional vector needs to be allocated for the prelloc
 	switch {
 	case y.IsScalar() && dev != CPU:
-		var mem Memory
+		var mem tensor.Memory
 		var yd2 Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
@@ -619,7 +619,7 @@ func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	switch {
 	case x.IsScalar() && dev != CPU:
-		var mem Memory
+		var mem tensor.Memory
 		var xd2 Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem, err = ctx.Get(dev, memsize); err != nil {
@@ -704,7 +704,7 @@ func hadamardProdDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
 
 	// if y is Scalar, then it needs to be broadcasted across to the
 	if x.IsScalar() && dev != CPU && !zd.Shape().IsScalar() {
-		var memIncr, mem2 Memory
+		var memIncr, mem2 tensor.Memory
 		var xdIncr, xd2 Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem2, err = ctx.Get(dev, memsize); err != nil {
@@ -772,7 +772,7 @@ dzdy:
 
 	// if y is Scalar, then it needs to be broadcasted across to the
 	if y.IsScalar() && dev != CPU && !zd.Shape().IsScalar() {
-		var memIncr, mem2 Memory
+		var memIncr, mem2 tensor.Memory
 		var ydIncr, yd2 Value
 		memsize := calcMemSize(zd.Dtype(), zd.Shape())
 		if mem2, err = ctx.Get(dev, memsize); err != nil {
