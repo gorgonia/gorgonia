@@ -436,8 +436,8 @@ func generateGenericVecVecArith(f io.Writer, ak Kinds) {
 	// import (
 	// 	_ "unsafe"
 
-	// _ "github.com/chewxy/vecf32"
-	// _ "github.com/chewxy/vecf64")
+	// _ "gorgonia.org/vecf32"
+	// _ "gorgonia.org/vecf64")
 	// `
 	// f.Write([]byte(importStmt))
 

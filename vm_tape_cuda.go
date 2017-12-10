@@ -5,8 +5,8 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
+	"gorgonia.org/cu"
 )
 
 func finalizeTapeMachine(m *tapeMachine) {

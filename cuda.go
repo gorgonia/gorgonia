@@ -7,8 +7,8 @@ package gorgonia
 import (
 	"log"
 
-	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
+	"gorgonia.org/cu"
 )
 
 const CUDA = true

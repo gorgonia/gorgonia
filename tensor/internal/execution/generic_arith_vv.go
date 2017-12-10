@@ -7,8 +7,8 @@ import (
 	"math/cmplx"
 
 	"github.com/chewxy/math32"
-	"github.com/chewxy/vecf32"
-	"github.com/chewxy/vecf64"
+	"gorgonia.org/vecf32"
+	"gorgonia.org/vecf64"
 )
 
 func VecAddI(a []int, b []int) {
