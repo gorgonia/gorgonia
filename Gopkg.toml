@@ -27,7 +27,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/chewxy/cu"
+  name = "gorgonia.org/cu"
 
 [[constraint]]
   name = "github.com/chewxy/hm"

@@ -9,7 +9,7 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/chewxy/cu"
+  name = "gorgonia.org/cu"
   packages = ["."]
   revision = "12e8b106ce46d83d03d2b597f8f180dd59e0ae6b"
 
