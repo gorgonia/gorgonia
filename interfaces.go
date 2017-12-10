@@ -10,7 +10,7 @@ import (
 )
 
 type Tensor interface {
-	// info about the ndarray
+	// info about the ndarrayN
 	Shape() tensor.Shape
 	Strides() []int
 	Dtype() tensor.Dtype
