@@ -3,7 +3,7 @@ package tensor
 import (
 	"testing"
 
-	"github.com/chewxy/vecf64"
+	"gorgonia.org/vecf64"
 )
 
 func BenchmarkDense_Mul_Unsafe(b *testing.B) {

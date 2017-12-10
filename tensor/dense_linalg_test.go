@@ -3,8 +3,8 @@ package tensor
 import (
 	"testing"
 
-	"github.com/chewxy/vecf64"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/vecf64"
 )
 
 type linalgTest struct {

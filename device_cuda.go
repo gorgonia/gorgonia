@@ -2,7 +2,7 @@
 
 package gorgonia
 
-import "github.com/chewxy/cu"
+import "gorgonia.org/cu"
 
 // Device represents the device where the code will be executed on. It can either be a GPU or CPU
 type Device cu.Device

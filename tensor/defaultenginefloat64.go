@@ -7,7 +7,7 @@ import (
 	"github.com/chewxy/gorgonia/tensor/internal/storage"
 	"github.com/pkg/errors"
 
-	"github.com/chewxy/vecf64"
+	"gorgonia.org/vecf64"
 )
 
 func handleFuncOptsF64(expShape Shape, opts ...FuncOpt) (reuse DenseTensor, safe, toReuse, incr bool, err error) {
