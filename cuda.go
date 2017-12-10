@@ -353,7 +353,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 		ctx, err := dev.MakeContext(cu.SchedAuto)
 		// ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
 		if err != nil {
-			if err == cu.OutOftensor.Memory {
+			if err == cu.OutOfMemory {
 				var free, total int64
 				if free, total, err = cu.MemInfo(); err != nil {
 					cudaLogf("Error while getting mem info: %v", err)
@@ -435,7 +435,7 @@ func (m *ExternMetadata) initFail() {
 func (m *ExternMetadata) cleanup() {
 	for i, c := range m.c {
 		c.Cleanup()
-		cu.SetCurrent(c.Context)
+		cu.SetCurrentContext(c.Context)
 		for _, v := range m.m {
 			mod := v[i]
 			cu.Unload(mod)

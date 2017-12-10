@@ -62,7 +62,7 @@ func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 	mods := make([]cu.Module, len(m.c))
 	fns := make(map[string][]cu.Function)
 	for i, c := range m.c {
-		if err = cu.SetCurrent(c.Context); err != nil {
+		if err = cu.SetCurrentContext(c.Context); err != nil {
 			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
 			return
 		}
@@ -94,7 +94,7 @@ func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 
 	// set the first to current
 	if len(m.c) > 0 {
-		if err = cu.SetCurrent(m.c[0].Context); err != nil {
+		if err = cu.SetCurrentContext(m.c[0].Context); err != nil {
 			err = errors.Wrapf(err, "Unable to set current")
 			return
 		}
