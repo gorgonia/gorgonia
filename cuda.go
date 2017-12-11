@@ -6,6 +6,7 @@ package gorgonia
 
 import (
 	"log"
+	"sync"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
@@ -65,6 +66,9 @@ type ExternMetadata struct {
 
 	m map[string][]cu.Module
 	f map[string][]cu.Function
+
+	sync.Mutex           // lock to protect using
+	u          cu.Device // using which device?
 
 	blasHasWork bool
 	initialzed  bool
@@ -142,16 +146,6 @@ func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
-
-	// for i, hw := range m.hasWork {
-	// if hw {
-	// m.c[i].DoWork()
-	// if err := m.c[i].Errors(); err != nil {
-	// 	return err
-	// }
-	// m.hasWork[i] = false
-	// }
-	// }
 	for _, c := range m.c {
 		c.DoWork()
 		if err := c.Errors(); err != nil {
@@ -304,10 +298,28 @@ func (m *ExternMetadata) Reset() {
 		for _, ptr := range used {
 			a.free(ptr + a.start)
 		}
-
 		a.coalesce()
 	}
 }
+
+func (m *ExternMetadata) Use(dev Device) {
+	m.Lock()
+	m.u = dev
+	m.Unlock()
+}
+
+func (m *ExternMetadata) AllocAccessible() bool                    { return false }
+func (m *ExternMetadata) Alloc(size int64) (tensor.Memory, error)  { return m.Get(m.u, size) }
+func (m *ExternMetadata) Free(mem tensor.Memory, size int64) error { return m.Put(m.u, mem, size) }
+func (m *ExternMetadata) Memset(mem tensor.Memory, val interface{}) error {
+	return errors.Errorf("Cannot set memory")
+}
+func (m *ExternMetadata) Memclr(tensor.Memory)                {}
+func (m *ExternMetadata) Memcpy(dst, src tensor.Memory) error { return errors.New("NYI") }
+func (m *ExternMetadata) Accessible(mem tensor.Memory) (tensor.Memory, error) {
+	return nil, errors.New("NYI")
+}
+func (m *ExternMetadata) WorksWith(order tensor.DataOrder) bool { return true }
 
 func (m *ExternMetadata) init(sizes []int64) {
 	if m.initialzed {
