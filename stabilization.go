@@ -15,8 +15,8 @@ func init() {
 // place before log; a should be +
 func logStabilization(a *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing log(1+a) of %v", a)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	var x *Node
 	var aop elemBinOp
@@ -72,8 +72,8 @@ func logStabilization(a *Node) (retVal *Node, err error) {
 // place before sub; i0 should be exp(x); i1 should be 1
 func expStabilization(a, b *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing exp(x)-1 to expm1(x) of %v and %v", a, b)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if cnst, ok := b.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp) && !constEq(cnst, onef64ConstOp)) {
 		return nil, noStabilizationErr{}
@@ -91,8 +91,8 @@ func expStabilization(a, b *Node) (retVal *Node, err error) {
 // place before sub
 func oneMinusSigmoidStabilization(a, b *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing 1-sigmoid(x) to sigmoid(-x) of %v and %v", a, b)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if cnst, ok := a.op.(constant); !ok || (ok && !constEq(cnst, onef32ConstOp) && !constEq(cnst, onef64ConstOp)) {
 		return nil, noStabilizationErr{}
@@ -113,8 +113,8 @@ func oneMinusSigmoidStabilization(a, b *Node) (retVal *Node, err error) {
 // place before log; a should be sigmoid(x)
 func logSigmoidStabilization(a *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing log sigmoid of %v", a)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if euo, ok := a.op.(elemUnaryOp); !ok || (ok && euo.unaryOpType() != sigmoidOpType) {
 		return a, noStabilizationErr{}
@@ -140,8 +140,8 @@ func logSigmoidStabilization(a *Node) (retVal *Node, err error) {
 // place before log1p; a should be exp(x)
 func log1pExpStabilization(a *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing log1p(exp(x)) of %v", a)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if euo, ok := a.op.(elemUnaryOp); !ok || (ok && euo.unaryOpType() != expOpType) {
 		stabLogf("op: %v; %v", a.op, a.children)
@@ -157,8 +157,8 @@ func log1pExpStabilization(a *Node) (retVal *Node, err error) {
 // place before log1p;  a should be -sigmoid(x)
 func log1pNegSigmoidStabilization(a *Node) (retVal *Node, err error) {
 	stabLogf("Stabilizing log1p(-sigmoid(x)) : %v", a)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if euo, ok := a.op.(elemUnaryOp); !ok || (ok && euo.unaryOpType() != negOpType) {
 		return a, noStabilizationErr{}
@@ -188,8 +188,8 @@ func log1pNegSigmoidStabilization(a *Node) (retVal *Node, err error) {
 // place before neg
 func NegNegOptimization(a *Node) (retVal *Node, err error) {
 	stabLogf("Optimizing -(-x)")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if euo, ok := a.op.(elemUnaryOp); !ok || (ok && euo.unaryOpType() != negOpType) {
 		return a, noStabilizationErr{}

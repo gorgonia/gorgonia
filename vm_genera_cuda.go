@@ -61,8 +61,8 @@ func (m *lispMachine) WorkAvailable() <-chan bool {
 
 func (m *lispMachine) calcMemSize() (err error) {
 	compileLogf("calcmemsize")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	var cpumem int64
 	var gpumem []int64
 	for _, n := range m.sorted {

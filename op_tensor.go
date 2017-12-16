@@ -756,8 +756,8 @@ func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 
 func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 	machineLogf("Doing %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
@@ -798,8 +798,8 @@ func (op sliceIncrOp) Do(inputs ...Value) (retVal Value, err error) {
 
 func (op sliceIncrOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
 	machineLogf("Doing %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
@@ -968,8 +968,8 @@ func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 
 func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 	machineLogf("Doing %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if err = checkArity(op, len(inputs)); err != nil {
 		return

@@ -41,14 +41,14 @@ func tabcount() int {
 	return int(atomic.LoadUint32(&TABCOUNT))
 }
 
-func enterLoggingContext() {
+func enterLogScope() {
 	atomic.AddUint32(&TABCOUNT, 1)
 	tabcount := tabcount()
 	_logger_.SetPrefix(strings.Repeat("\t", tabcount))
 	replacement = "\n" + strings.Repeat("\t", tabcount)
 }
 
-func leaveLoggingContext() {
+func leaveLogScope() {
 	tabcount := tabcount()
 	tabcount--
 

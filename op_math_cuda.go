@@ -23,8 +23,8 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	}
 
 	cudaLogf("CUDADoing %v | prealloc %v | %v", op, prealloc, inputs)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	// check
 	cudaLogf("checking if input is scalar")
@@ -86,8 +86,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		return
 	}
 	cudaLogf("CUDADoing %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	a := inputs[0]
 	b := inputs[1]

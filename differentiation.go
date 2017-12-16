@@ -17,8 +17,8 @@ see also: http://colah.github.io/posts/2015-08-Backprop/
 // Given a list of outputs, we want to know which nodes will affect the output
 func forwardDiffAnalysis(outputs, sortedNodes Nodes) (retVal NodeSet, err error) {
 	symdiffLogf("Forward analysis. Already sorted?")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	sane := outputs.AllSameGraph()
 	if !sane {
@@ -52,8 +52,8 @@ func forwardDiffAnalysis(outputs, sortedNodes Nodes) (retVal NodeSet, err error)
 // Given a list of WRTs, we want to find a list of nodes that will be affected when backpropagating.
 func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 	symdiffLogf("Backwards analysis")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	sane := wrt.AllSameGraph()
 	if !sane {
@@ -67,7 +67,7 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 	symdiffLogf("%v", diffSet)
 	symdiffLogf("sorted: %d", sortedNodes)
 
-	enterLoggingContext()
+	enterLogScope()
 	// for _, n := range sortedNodes {
 	for i := len(sortedNodes) - 1; i >= 0; i-- {
 		n := sortedNodes[i]
@@ -81,21 +81,21 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 		}
 
 		symdiffLogf("differentiable WRT: %v", diffs)
-		enterLoggingContext()
+		enterLogScope()
 		symdiffLogf("Children: %v", n.children)
 		if len(diffs) == 0 {
 			// check if this makes nodes unreachable. If it does, then error out
 			if n.isStmt {
 				symdiffLogf("Statement nodes are Non differentiable!")
-				leaveLoggingContext()
+				leaveLogScope()
 				continue
 			} else if n.isInput() {
 				symdiffLogf("Input nodes are Non differentiable")
-				leaveLoggingContext()
+				leaveLogScope()
 				continue
 			} else if len(n.children) == 0 {
 				symdiffLogf("Leaf nodes have no children")
-				leaveLoggingContext()
+				leaveLogScope()
 				continue
 			}
 			g := n.g
@@ -104,12 +104,12 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 
 				symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
 				if len(parents) == 1 && len(child.children) > 0 {
-					leaveLoggingContext()
+					leaveLogScope()
 					return nil, errors.Errorf("Being unable to differentiate %v would leave a portion of the graph unreachable. Unable to continue", n)
 				}
 			}
 			symdiffLogf("SKIPPING... Non differentiable!")
-			leaveLoggingContext()
+			leaveLogScope()
 			continue
 		}
 
@@ -123,9 +123,9 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 				break inner
 			}
 		}
-		leaveLoggingContext()
+		leaveLogScope()
 	}
-	leaveLoggingContext()
+	leaveLogScope()
 	return diffSet, nil
 }
 
@@ -145,14 +145,14 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	symdiffLogf("gradOutputs: %d", gradOutputs)
 	symdiffLogf("WRT: %d", wrt)
 
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	g := outputs[0].g
 
 	// this entire section about removing foreveralone nodes need a rethink
 	symdiffLogf("removing foreveralone nodes")
-	enterLoggingContext()
+	enterLogScope()
 	for i := 0; i < len(g.AllNodes()); i++ {
 		n := g.AllNodes()[i]
 
@@ -164,7 +164,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 			symdiffLogf("removed %v(%p); %x; %s", n, n, n.ID(), n.Name())
 		}
 	}
-	leaveLoggingContext()
+	leaveLogScope()
 
 	var sortedNodes Nodes
 	if sortedNodes, err = Sort(g); err != nil {
@@ -217,7 +217,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 
 	symdiffLogf("Sorted: %d", sortedNodes)
 	symdiffLogf("nodeGradMap: %+#d", FmtNodeMap(nodeGradMap))
-	enterLoggingContext()
+	enterLogScope()
 
 	for _, node := range sortedNodes {
 		if _, ok := activeNodes[node]; !ok {
@@ -232,11 +232,11 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		}
 
 		symdiffLogf("Working on %x %v", node.ID(), node)
-		enterLoggingContext()
+		enterLogScope()
 
 		// Check if there is any grads coming into this node
 		if len(nodeGradMap[node]) < 1 {
-			leaveLoggingContext()
+			leaveLogScope()
 			return nil, errors.Errorf("No gradient node found for Node ID %x - %v", node.ID(), node)
 		}
 
@@ -248,7 +248,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 			var n *Node
 			symdiffLogf("reduce adding")
 			if n, err = ReduceAdd(nodeGradMap[node], WithGroupName(gradClust)); err != nil {
-				leaveLoggingContext()
+				leaveLogScope()
 				return nil, errors.Wrap(err, "ReduceAdd failed during differentiation")
 			}
 			symdiffLogf("reduced to... %x", n.ID())
@@ -266,7 +266,7 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		gradNode := nodeGradMap[node][0]
 		if !node.isInput() {
 			symdiffLogf("differentiating %x (%v)", node.ID(), node.op)
-			enterLoggingContext()
+			enterLogScope()
 
 			var op SDOp
 			var childrenGrads Nodes
@@ -278,12 +278,12 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 
 			symdiffLogf("op: %v || optype: %v ||  node: %v || Children: %#Y || Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
 			if childrenGrads, err = op.SymDiff(node.children, node, gradNode); err != nil {
-				leaveLoggingContext()
+				leaveLogScope()
 				return nil, errors.Wrapf(err, "SymDiff for %v. OpType: %v. Node Type: %v. Children: %#v. Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
 			}
 
 			symdiffLogf("Derived(%d): %P", len(childrenGrads), childrenGrads)
-			leaveLoggingContext()
+			leaveLogScope()
 
 			diffs := node.diffWRT()
 			for i, child := range node.children {
@@ -310,10 +310,10 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 			symdiffLogf("iz input")
 			symdiffLogf("%d ", nodeGradMap[node])
 		}
-		leaveLoggingContext()
+		leaveLogScope()
 
 	}
-	leaveLoggingContext()
+	leaveLogScope()
 	// only we already summed up the gradients for the input nodes, so just take
 	// 0th element
 	for _, n := range wrt {

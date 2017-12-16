@@ -290,8 +290,8 @@ func (m *lispMachine) forward() (err error) {
 	n := m.sorted[m.fwd]
 
 	m.watchedLogf("n: %v | (%x) | %p", n, n.id, n)
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	if !n.isStmt {
 		switch {
@@ -332,7 +332,7 @@ func (m *lispMachine) forward() (err error) {
 	inputs := make([]*dualValue, len(n.children))
 	children := n.children
 
-	m.enterLoggingContext()
+	m.enterLogScope()
 	for i, child := range children {
 		m.logf("child!! %v %v", child, child.Shape())
 		if child.Device() == n.Device() {
@@ -381,7 +381,7 @@ func (m *lispMachine) forward() (err error) {
 			}
 		}()
 	}
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	m.watchedLogf("Before:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
@@ -520,15 +520,15 @@ func (m *lispMachine) backward() (err error) {
 
 	instr := m.q[m.bwd]
 	m.watchedLogf("Differentiating op %v. Output: %v (%x)", instr, instr.output, instr.output.Hashcode())
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	m.watchedLogf("Inputs: %v", instr.inputs)
-	m.enterLoggingContext()
+	m.enterLogScope()
 	for _, in := range instr.inputs {
 		m.watchedLogf(m.valueFmt, in.boundTo.(*dualValue).d)
 	}
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	// actual differentiation
 	if err = instr.do(); err != nil {
@@ -536,12 +536,12 @@ func (m *lispMachine) backward() (err error) {
 	}
 
 	m.watchedLogf("After:")
-	m.enterLoggingContext()
+	m.enterLogScope()
 	for _, in := range instr.inputs {
 		m.watchedLogf(m.valueFmt, in.boundTo.(*dualValue).d)
 	}
 
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	if m.watchNaN() {
 		if hasNaN(instr.output.boundTo) {
@@ -618,9 +618,9 @@ func (m *lispMachine) logf(format string, attrs ...interface{}) {
 	}
 }
 
-func (m *lispMachine) enterLoggingContext() {
+func (m *lispMachine) enterLogScope() {
 	if DEBUG && machineDev {
-		enterLoggingContext()
+		enterLogScope()
 	}
 	m.tabcount++
 	if m.logger != nil {
@@ -632,9 +632,9 @@ func (m *lispMachine) enterLoggingContext() {
 	}
 }
 
-func (m *lispMachine) leaveLoggingContext() {
+func (m *lispMachine) leaveLogScope() {
 	if DEBUG && machineDev {
-		leaveLoggingContext()
+		leaveLogScope()
 	}
 	m.tabcount--
 	if m.tabcount < 0 {

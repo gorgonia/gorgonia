@@ -19,8 +19,8 @@ const (
 
 func tabcount() int { return 0 }
 
-func enterLoggingContext()                             {}
-func leaveLoggingContext()                             {}
+func enterLogScope()                                   {}
+func leaveLogScope()                                   {}
 func logf(format string, others ...interface{})        {}
 func compileLogf(format string, attrs ...interface{})  {}
 func shapeLogf(format string, attrs ...interface{})    {}

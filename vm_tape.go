@@ -167,7 +167,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 		}
 	}
 	machineLogf("Binding values based on final output")
-	enterLoggingContext()
+	enterLogScope()
 	for n, r := range m.locMap {
 		if n.isInput() {
 			continue
@@ -182,7 +182,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 			return errors.Wrap(err, bindFail)
 		}
 	}
-	leaveLoggingContext()
+	leaveLogScope()
 	return
 }
 
@@ -347,9 +347,9 @@ func (m *tapeMachine) logf(format string, attrs ...interface{}) {
 	}
 }
 
-func (m *tapeMachine) enterLoggingContext() {
+func (m *tapeMachine) enterLogScope() {
 	if DEBUG && machineDev {
-		enterLoggingContext()
+		enterLogScope()
 	}
 	m.tabcount++
 	if m.logger != nil {
@@ -361,9 +361,9 @@ func (m *tapeMachine) enterLoggingContext() {
 	}
 }
 
-func (m *tapeMachine) leaveLoggingContext() {
+func (m *tapeMachine) leaveLogScope() {
 	if DEBUG && machineDev {
-		leaveLoggingContext()
+		leaveLogScope()
 	}
 	m.tabcount--
 	if m.tabcount < 0 {
@@ -541,8 +541,8 @@ func (instr loadArg) writes() register  { return instr.writeTo }
 
 func (instr loadArg) exec(m *tapeMachine) error {
 	m.logf("Executing %v", instr)
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	node := m.p.g.Node(instr.index).(*Node)
 

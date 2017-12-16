@@ -186,8 +186,8 @@ func ApplyOp(op Op, children ...*Node) (retVal *Node, err error) {
 
 	// typecheck  before creating
 	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	var retType hm.Type
 	if retType, err = inferNodeType(op, children...); err != nil {
 		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())

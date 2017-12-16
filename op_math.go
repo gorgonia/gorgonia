@@ -133,8 +133,8 @@ func (op elemBinOp) Type() hm.Type {
 //		op :: (...) → () → (...)
 func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if inputs[0] == nil || inputs[1] == nil {
 		return nil, errors.Errorf(nyiFail, "elemBinOp.inferShape", "runtime impl")
@@ -546,8 +546,8 @@ func (op linAlgBinOp) Arity() int { return 2 }
 
 func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if inputs[0] == nil || inputs[1] == nil {
 		return nil, nyi("InferShape for linalgBinOp", "runtime impl")

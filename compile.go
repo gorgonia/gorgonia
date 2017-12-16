@@ -15,8 +15,8 @@ import (
 // Compile takes a graph and outputs a program suitable for *tapeMachine to run
 func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("Compiling")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if len(g.Nodes()) == 0 {
 		err = errors.Errorf("Cannot compile an empty graph")
@@ -59,8 +59,8 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 // It is analogous to theano.Function().
 func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("CompileFunctionNEW. Inputs: %d; outputs: %d", inputs, outputs)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	subgraph := g.SubgraphRoots(outputs...)
 	var unused Nodes
@@ -242,8 +242,8 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 
 func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
 	compileLogf("Add Statement")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	writeTo := interv.result
 
@@ -330,8 +330,8 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
 func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i int) {
 	compileLogf("AddNode: %x %v", node.ID(), node.op)
 	compileLogf("interval %v", interv)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	writeTo := interv.result
 
@@ -346,8 +346,8 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 		cInterv := cg.df.intervals[cReplacement]
 		reads = append(reads, cInterv.result)
 	}
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	var prealloc bool
 	var useUnsafe bool
@@ -482,8 +482,8 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 
 func (cg *codegenerator) insertFree(instrID int, node *Node) {
 	compileLogf("Inserting Free for instrID %d | instr: %v | op: %v", instrID, node, node.op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	var reads []register
 	var children Nodes
@@ -569,8 +569,8 @@ func (cg *codegenerator) insertLastFrees() int {
 
 func (cg *codegenerator) gen() (*program, map[*Node]register) {
 	compileLogf("Generating from SORTED: %v", cg.sorted)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	for i, node := range cg.sorted {
 		// for i := len(cg.sorted) - 1; i >= 0; i-- {
 		// node := cg.sorted[i]

@@ -13,19 +13,19 @@ func UseCudaFor(ops ...string) VMOpt {
 
 func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	// Read
 	m.watchedLogf("Inputs:")
-	m.enterLoggingContext()
+	m.enterLogScope()
 	var inputs []Value
 	for _, reg := range instr.readFrom {
 		v := m.cpumem[reg.id]
 		inputs = append(inputs, v)
 		m.watchedLogf(m.valueFmt, v)
 	}
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	// Execute
 	var v Value
@@ -60,9 +60,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	}
 
 	m.watchedLogf("Result:")
-	m.enterLoggingContext()
+	m.enterLogScope()
 	m.watchedLogf(m.valueFmt, v)
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 	// TODO: type and shape checks
 
 	// Write
@@ -102,9 +102,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	}
 
 	m.watchedLogf("Written To: %v", instr.writeTo)
-	m.enterLoggingContext()
+	m.enterLogScope()
 	m.watchedLogf(m.valueFmt, v)
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 	return nil
 }
 
