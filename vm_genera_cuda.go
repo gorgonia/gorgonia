@@ -5,9 +5,9 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/cu"
 	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/cu"
 )
 
 func (m *lispMachine) init() error {

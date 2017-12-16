@@ -6,9 +6,9 @@ import (
 	"math/rand"
 	"reflect"
 
-	"github.com/chewxy/vecf32"
-	"github.com/chewxy/vecf64"
 	"github.com/pkg/errors"
+	"gorgonia.org/vecf32"
+	"gorgonia.org/vecf64"
 )
 
 // Range creates a ranged array with a given type. It panics if the Dtype is not supported or does not represent a naturally orderable type (strings, pointers etc)

@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/chewxy/cu"
+	"gorgonia.org/cu"
 )
 
 var debug = flag.Bool("debug", false, "compile with debug mode (-linelinfo is added to nvcc call)")

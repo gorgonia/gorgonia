@@ -9,7 +9,7 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/chewxy/cu"
+  name = "gorgonia.org/cu"
   packages = ["."]
   revision = "12e8b106ce46d83d03d2b597f8f180dd59e0ae6b"
 
@@ -27,7 +27,7 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/chewxy/vecf32"
+  name = "gorgonia.org/vecf32"
   packages = ["."]
   revision = "1f59516136c1a7f1c19871d3dc5f0d9928ffbd7c"
 

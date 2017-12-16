@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/chewxy/cu"
+	"gorgonia.org/cu"
 )
 
 // module names
