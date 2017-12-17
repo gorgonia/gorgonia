@@ -30,21 +30,7 @@ Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently 
 
 The package is go-gettable: `go get -u github.com/chewxy/gorgonia`. Additionally, Gorgonia uses [dep](https://github.com/golang/dep) as its vendoring tool.
 
-
-## ⚠️ 👉IMPORTANT NOTICE👈 ⚠️  ## 
-
-As Gorgonia moves towards 1.0, the packages themselves are moving. The current version is 0.7.4. In the next release (v0.8.0), the package layouts will change. The table below enumerates the import path changes:
-
-|        | This Version (v0.7.0) | Next Version (v0.8.0) Onwards | 
-|--------|-----------------------|-----------------------|
-|Importing `gorgonia`| `import "github.com/chewxy/gorgonia"` | `import "gorgonia.org/gorgonia"` |
-|Importing `tensor`  | `import "github.com/chewxy/gorgonia/tensor"` | `import "gorgonia.org/tensor"` |
-|Repository for Gorgonia | https://github.com/chewxy/gorgonia | https://github.com/gorgonia/gorgonia |
-|Repository for Tensor | https://github.com/chewxy/gorgonia | https://github.com/gorgonia/tensor |
-
-The main reason for the major split in repositories is that `tensor` has found a life outside being used by Gorgonia proper. Quite a bit of attention and care has been given to the package and as a result it's fairly performant on its own, and is highly extensible on its own right, and no longer needs Gorgonia to provide it the structure/metainfo it requires.
-
-There will be other repositories (like `cu`, `vecf64` and `vecf32`) that will be moved to the Gorgonia organization as well. Those will be enumerated in the README of their own repositories. All packages will be tagged with version numbers. Libraries that are "complete" like `math32` and `hm` will be tagged with a major version - v1.0.0 and up. While libraries that have fairly malleable APIs will be v0.8.0 and up. `gorgonia`, `tensor`  `cu`, `vecf32`, and `vecf64` will share the same version numbers until 1.0.
+The current version is 0.8.x
 
 
 ## Versioning ## 

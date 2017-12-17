@@ -28,7 +28,6 @@ before_install:
   - go get github.com/mattn/goveralls
 
 
-
 # Install the appropriate blas library (if any) and associated gonum software.
 install:
 - travis_wait source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/install.sh
