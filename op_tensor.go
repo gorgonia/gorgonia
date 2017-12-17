@@ -1417,6 +1417,166 @@ func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) e
 	return nil
 }
 
+func (op tensordotOp) DiffWRT(inputs int) []bool {
+	retVal := make([]bool, inputs)
+	for i := range retVal {
+		retVal[i] = true
+	}
+	return retVal
+}
+
+func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	retVal = make(Nodes, len(inputs))
+
+	for inNr, in := range inputs {
+		// abuse of language below: "i" up front will refer to current "in"
+		// "other" for the other input (there are only two)
+
+		// Who's derivative are we calculating?
+		var iAxes []int
+		var otherAxes []int
+		var iWasFirstArgument bool
+		var other *Node
+
+		if 0 == inNr {
+			iAxes = op.aAxes
+			otherAxes = op.bAxes
+			other = inputs[1]
+			iWasFirstArgument = true
+		} else {
+			iAxes = op.bAxes
+			otherAxes = op.aAxes
+			other = inputs[0]
+			iWasFirstArgument = false
+		}
+
+		// Below a tensordot will be performed: Its output axes will be in the wrong order w.r.t to the input.
+		// What is the correct permutation/pattern?
+		iAxesCoSorted := make([]int, len(iAxes))
+		for index, value := range iAxes {
+			iAxesCoSorted[index] = value
+		}
+
+		otherAxesSorted := make([]int, len(otherAxes))
+		for index, value := range otherAxes {
+			otherAxesSorted[index] = value
+		}
+
+		sortUniqueIntWithImitator(otherAxesSorted, iAxesCoSorted)
+
+		pattern := make([]int, len(in.shape))
+		counter := len(iAxes)
+
+		for patternIndex := 0; patternIndex < len(pattern); patternIndex++ {
+			iAxesCoSortedIndex := contains(iAxesCoSorted, patternIndex)
+			if 0 <= iAxesCoSortedIndex {
+				pattern[patternIndex] = iAxesCoSortedIndex
+			} else {
+				pattern[patternIndex] = counter
+				counter++
+			}
+		}
+
+		// Which axes of the other tensor and the output should be contracted?
+		// Other tensor: All axes that weren't contracted (with i ;-) ) in the original tensordot
+		// With the exception of scalars
+		dOtherAxes := make([]int, other.Dims())
+
+		if !other.IsScalar() {
+			var dOtherAxesIndex int
+
+			for axis := 0; axis < other.Dims(); axis++ {
+				if 0 > contains(otherAxes, axis) {
+					dOtherAxes[dOtherAxesIndex] = axis
+					dOtherAxesIndex++
+				}
+			}
+
+			dOtherAxes = dOtherAxes[0:dOtherAxesIndex]
+		}
+
+		// Grad: All axes which belong to other in the output of original tensordot, so this depends on input ordering
+		dGradAxes := make([]int, len(dOtherAxes))
+		if iWasFirstArgument {
+			gradAxesStart := grad.Dims() - len(dOtherAxes)
+
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dGradAxes[axis] = gradAxesStart + axis
+			}
+		} else {
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dGradAxes[axis] = axis
+			}
+		}
+
+		// perform tensordot
+		var tensordot *Node
+		switch {
+		case grad.Shape().IsScalar():
+			tensordot, err = HadamardProd(other, grad)
+
+			if nil != err {
+				return nil, err
+			}
+
+		case other.Shape().IsVector() && grad.Shape().IsVector() && 0 == len(dOtherAxes): // TensorMul does not support creating matrix from two vectors
+			// Reformat vectors, so that MatMul will create a matrix from them
+			otherCorrectShape := other
+			if !other.IsColVec() {
+				otherVecDims, err := (other.Shape()).DimSize(0)
+
+				if nil != err {
+					return nil, err
+				}
+
+				otherCorrectShape, err = Reshape(other, tensor.Shape{otherVecDims, 1})
+				if nil != err {
+					return nil, err
+				}
+			}
+
+			gradCorrectShape := grad
+			if !grad.IsRowVec() {
+				gradVecDims, err := (grad.Shape()).DimSize(0)
+
+				if nil != err {
+					return nil, err
+				}
+
+				if gradCorrectShape, err = Reshape(grad, tensor.Shape{1, gradVecDims}); err != nil {
+					return nil, err
+				}
+			}
+
+			op := linAlgBinOp{āBinaryOperator: matMulOperator}
+			if tensordot, err = binOpNode(op, otherCorrectShape, gradCorrectShape); err != nil {
+				return nil, err
+			}
+
+		default:
+			tensordot, err = Tensordot(dOtherAxes, dGradAxes, other, grad)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		ret, err := Transpose(tensordot, pattern...)
+
+		if err != nil {
+			return nil, err
+		}
+
+		retVal[inNr] = ret
+	}
+
+	return retVal, nil
+}
+
 type reshapeOp struct {
 	from, to tensor.Shape
 }
