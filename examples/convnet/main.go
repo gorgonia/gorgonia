@@ -13,9 +13,9 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/examples/mnist"
 	"github.com/pkg/errors"
+	"gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
 )
 

@@ -12,7 +12,7 @@ import (
 	"runtime/pprof"
 	"time"
 
-	G "github.com/chewxy/gorgonia"
+	G "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 	// cblas "gonum.org/v1/netlib/blas/netlib"
 )

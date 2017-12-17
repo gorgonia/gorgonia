@@ -1,6 +1,6 @@
 # Contributing #
 
-We want to make contributing as easy as possible. There are a number of [issues](https://github.com/chewxy/gorgonia/issues) that can be solved. Most of the issues are labelled.
+We want to make contributing as easy as possible. There are a number of [issues](https://github.com/gorgonia/gorgonia/issues) that can be solved. Most of the issues are labelled.
 
 ## Labels ##
 

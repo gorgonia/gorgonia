@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	. "github.com/chewxy/gorgonia"
+	. "gorgonia.org/gorgonia"
 )
 
 // SymbolicDiff showcases symbolic differentiation

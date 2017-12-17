@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	. "github.com/chewxy/gorgonia"
+	. "gorgonia.org/gorgonia"
 )
 
 type ActivationFunction func(*Node) (*Node, error)

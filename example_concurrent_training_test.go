@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"sync"
 
-	. "github.com/chewxy/gorgonia"
+	. "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 

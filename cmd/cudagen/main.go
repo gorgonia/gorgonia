@@ -90,7 +90,7 @@ func main() {
 	}
 
 	gopath := os.Getenv("GOPATH")
-	gorgoniaLoc := path.Join(gopath, "src/github.com/chewxy/gorgonia")
+	gorgoniaLoc := path.Join(gopath, "src/gorgonia.org/gorgonia")
 	cuLoc := path.Join(gorgoniaLoc, "cuda modules/src")
 	ptxLoc := path.Join(gorgoniaLoc, "cuda modules/target")
 

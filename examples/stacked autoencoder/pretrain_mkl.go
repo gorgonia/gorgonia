@@ -3,8 +3,8 @@
 package main
 
 import (
-	. "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/blase"
+	. "gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/blase"
 )
 
 func init() {

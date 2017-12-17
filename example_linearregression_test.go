@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"runtime"
 
-	. "github.com/chewxy/gorgonia"
+	. "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 

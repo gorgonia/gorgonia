@@ -5,7 +5,7 @@ import (
 	"log"
 	"runtime"
 
-	. "github.com/chewxy/gorgonia"
+	. "gorgonia.org/gorgonia"
 )
 
 // Basic example of representing mathematical equations as graphs.

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	. "github.com/chewxy/gorgonia"
+	. "gorgonia.org/gorgonia"
 )
 
 type DenoisingAutoencoder struct {

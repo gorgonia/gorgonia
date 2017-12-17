@@ -13,9 +13,9 @@ import (
 	"os"
 	"runtime/pprof"
 
-	T "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/examples/mnist"
 	"gonum.org/v1/gonum/blas/gonum"
+	T "gorgonia.org/gorgonia"
+	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
 )
 

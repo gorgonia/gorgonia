@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"strconv"
 
-	. "github.com/chewxy/gorgonia"
+	. "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	T "github.com/chewxy/gorgonia"
+	T "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 

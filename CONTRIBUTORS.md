@@ -22,4 +22,4 @@
 
 
 
-For more contributors, check out the [github contributors page](https://github.com/chewxy/gorgonia/graphs/contributors)
+For more contributors, check out the [github contributors page](https://github.com/gorgonia/graphs/contributors)

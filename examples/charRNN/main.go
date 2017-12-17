@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	T "github.com/chewxy/gorgonia"
+	T "gorgonia.org/gorgonia"
 
 	"net/http"
 	_ "net/http/pprof"
