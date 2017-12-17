@@ -8,12 +8,6 @@
   version = "v2.0"
 
 [[projects]]
-  branch = "master"
-  name = "gorgonia.org/cu"
-  packages = ["."]
-  revision = "12e8b106ce46d83d03d2b597f8f180dd59e0ae6b"
-
-[[projects]]
   name = "github.com/chewxy/hm"
   packages = ["."]
   revision = "61efb3290a086d1335e8954b3734c102126818ba"
@@ -24,18 +18,6 @@
   packages = ["."]
   revision = "d1e7b22839c693f54edf7811dd9487623abf2cd2"
   version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
-  name = "gorgonia.org/vecf32"
-  packages = ["."]
-  revision = "1f59516136c1a7f1c19871d3dc5f0d9928ffbd7c"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/chewxy/vecf64"
-  packages = ["."]
-  revision = "a97a4d31b6c9343b1860ef8ce583069671265b81"
 
 [[projects]]
   branch = "master"
@@ -80,6 +62,12 @@
   revision = "edc201f107a87fc2a2dc965f334c89e50fcd682a"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/petar/GoMNIST"
+  packages = ["."]
+  revision = "2fbe10d0fa631498b80acb2b7d8546e5229d57b0"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -105,12 +93,6 @@
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/tools"
-  packages = ["go/ast/astutil","go/buildutil","go/loader"]
-  revision = "e531a2a1c15f94033f6fa87666caeb19a688175f"
-
-[[projects]]
-  branch = "master"
   name = "gonum.org/v1/gonum"
   packages = ["blas","blas/blas64","blas/gonum","floats","graph","graph/internal/linear","graph/internal/ordered","graph/internal/set","graph/topo","graph/traverse","internal/asm/c128","internal/asm/f32","internal/asm/f64","internal/math32","lapack","lapack/gonum","lapack/lapack64","mat"]
   revision = "f818f8f7a9e59de54e475b747a3dc9c86ed141f1"
@@ -122,14 +104,32 @@
   revision = "d22599e22c25311208d69b30773390fc4d359d1f"
 
 [[projects]]
-  branch = "master"
+  name = "gorgonia.org/cu"
+  packages = ["."]
+  revision = "0148e5fae1ae087f8000a19fdbfb0b2da75d5ca0"
+  version = "v0.8.0"
+
+[[projects]]
   name = "gorgonia.org/tensor"
   packages = [".","internal/execution","internal/storage"]
-  revision = "4ae6e89fff61e8ddc694154f836f93bf56a642dc"
+  revision = "863b76853934d224104ae8cc08f2d27202521242"
+  version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  name = "gorgonia.org/vecf32"
+  packages = ["."]
+  revision = "1f59516136c1a7f1c19871d3dc5f0d9928ffbd7c"
+
+[[projects]]
+  branch = "master"
+  name = "gorgonia.org/vecf64"
+  packages = ["."]
+  revision = "92cacded62a76710546770b2b86b1ca82ff76614"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "26c3e71038f7bc8f8b63461af0b074f06c5081441cd7d9a726cb1583e6d40883"
+  inputs-digest = "5645ce4bb5cb3738047b9a29ddb1c6eb83beb2ee97136d7315a3e73b9a8ec3ae"
   solver-name = "gps-cdcl"
   solver-version = 1
