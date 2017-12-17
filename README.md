@@ -52,7 +52,6 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 
 |Package|Used For|Vitality|Notes|Licence|
 |-------|--------|--------|-----|-------|
-
 |[gonum/graph](https://github.com/gonum/gonum/tree/master/graph)| Sorting `*ExprGraph`| Vital. Removal means Gorgonia will not work | Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[gonum/blas](https://github.com/gonum/gonum/tree/master/blas)|Tensor subpackage linear algebra operations|Vital. Removal means Gorgonial will not work|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[cu](https://gorgonia.org/cu)| CUDA drivers | Needed for CUDA operations | Same maintainer as Gorgonia | MIT/BSD-like|
@@ -64,7 +63,7 @@ There are very few dependencies that Gorgonia uses - and they're all pretty stab
 |[gographviz](https://github.com/awalterschulze/gographviz)|Used for printing graphs|Graph printing is only vital to debugging. Gorgonia can survive without, but with a major (but arguably nonvital) feature loss|Last update 12th April 2017|[gographviz licence](https://github.com/awalterschulze/gographviz/blob/master/LICENSE) (Apache 2.0)|
 |[rng](https://github.com/leesper/go_rng)|Used to implement helper functions to generate initial weights|Can be replaced fairly easily. Gorgonia can do without the convenience functions too||[rng licence](https://github.com/leesper/go_rng/blob/master/LICENSE) (Apache 2.0)|
 |[errors](https://github.com/pkg/errors)|Error wrapping|Gorgonia won't die without it. In fact Gorgonia has also used [goerrors/errors](https://github.com/go-errors/errors) in the past.|Stable API for the past 6 months|[errors licence](https://github.com/pkg/errors/blob/master/LICENSE) (MIT/BSD-like)|
-|[gonum/mat](http://github.com/gonum/gonum)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version|[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
+|[gonum/mat](http://github.com/gonum/gonum)|Compatibility between `Tensor` and Gonum's Matrix|Development of Gorgonia is committed to keeping up with the most updated version||[gonum license](https://github.com/gonum/license) (MIT/BSD-like)|
 |[testify/assert](https://github.com/stretchr/testify)|Testing|Can do without but will be a massive pain in the ass to test||[testify licence](https://github.com/stretchr/testify/blob/master/LICENSE) (MIT/BSD-like)|
 
 # Keeping Updated #
