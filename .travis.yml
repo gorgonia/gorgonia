@@ -16,7 +16,7 @@ env:
     - GOARCH=amd64
     - BLAS_LIB=OpenBLAS
     - TRAVISTEST=true
-    - CUDA=9.1.85-1
+    - CUDA=8.0.61-1
 
 # Cache used to persist the compiled BLAS library between CI calls.
 cache:
