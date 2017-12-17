@@ -20,9 +20,9 @@ import (
 	"hash"
 	"hash/fnv"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 /* ELEMENTWISE BINARY OPERATION */
@@ -99,8 +99,8 @@ func (op elemBinOp) Type() hm.Type {
 	switch arg0 := op.arg0.(type) {
 	case TensorType:
 		arg0Dims = arg0.Dims
-		a0 = fromTensorType(arg0, a)
-		retType = fromTensorType(arg0, a)
+		a0 = makeFromTensorType(arg0, a)
+		retType = makeFromTensorType(arg0, a)
 	default:
 		a0 = a
 		retType = a
@@ -109,9 +109,9 @@ func (op elemBinOp) Type() hm.Type {
 	switch arg1 := op.arg1.(type) {
 	case TensorType:
 		if arg1.Dims >= arg0Dims {
-			retType = fromTensorType(arg1, a)
+			retType = makeFromTensorType(arg1, a)
 		}
-		a1 = fromTensorType(arg1, a)
+		a1 = makeFromTensorType(arg1, a)
 	default:
 		a1 = a
 	}
@@ -137,8 +137,8 @@ func (op elemBinOp) Type() hm.Type {
 //		op :: (...) → () → (...)
 func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if inputs[0] == nil || inputs[1] == nil {
 		return nil, errors.Errorf(nyiFail, "elemBinOp.inferShape", "runtime impl")
@@ -555,8 +555,8 @@ func (op linAlgBinOp) Arity() int { return 2 }
 
 func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err error) {
 	shapeLogf("Inferring shape of %v", op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	if inputs[0] == nil || inputs[1] == nil {
 		return nil, nyi("InferShape for linalgBinOp", "runtime impl")
@@ -574,15 +574,18 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 	case matMulOperator:
 		if op.transA {
 			x = transpose2D(x)
+			defer tensor.ReturnInts(x)
 		}
 		if op.transB {
 			y = transpose2D(y)
+			defer tensor.ReturnInts(y)
 		}
 
 		retVal = tensor.Shape{x[0], y[1]}
 	case matVecMulOperator:
 		if op.transA {
 			x = transpose2D(x)
+			defer tensor.ReturnInts(x)
 		}
 		if x[0] != y[0] && x[1] != y[0] {
 			return nil, errors.Errorf("Incompatible shapes: %v and %v", x, y)
@@ -600,6 +603,27 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 	case outerProdOperator:
 		// outerprods only handles vec x vec for now
 		retVal = tensor.Shape{x.TotalSize(), y.TotalSize()}
+	case batchedMatMulOperator:
+		// check that x and y are 3
+		if x.Dims() != 3 {
+			return nil, errors.Errorf("BatchedMatMul only works with 3D tensors as x")
+		}
+		if y.Dims() != 3 {
+			return nil, errors.Errorf("BatchedMatMul only works with 3D tensors as y")
+		}
+		if x[0] != y[0] {
+			return nil, errors.Errorf("BatchedMatMul has encounted a batch mismatch: %v %v", x, y)
+		}
+		batchSize := x[0]
+		if op.transA {
+			x = transpose2D(x[1:])
+			defer tensor.ReturnInts(x)
+		}
+		if op.transB {
+			y = transpose2D(y[1:])
+			defer tensor.ReturnInts(y)
+		}
+		retVal = tensor.Shape{batchSize, x[0], y[1]}
 	}
 	return
 }
@@ -696,8 +720,12 @@ func (op linAlgBinOp) String() string {
 func (op linAlgBinOp) IncrDo(incr Value, inputs ...Value) (err error) {
 	t, ok := incr.(tensor.Tensor)
 
-	if ok {
+	switch {
+	case ok && op.āBinaryOperator != batchedMatMulOperator:
 		_, err = op.do(inputs, tensor.WithIncr(t))
+		return
+	case ok && op.āBinaryOperator == batchedMatMulOperator:
+		_, err = op.preallocBatchMatMul(true, incr, inputs...)
 		return
 	}
 
@@ -721,7 +749,9 @@ func (op linAlgBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Val
 	if !ok {
 		return nil, errors.Errorf("Expected Tensor as preallocated value. Got %v of %T instead", prealloc, prealloc)
 	}
-
+	if op.āBinaryOperator == batchedMatMulOperator {
+		return op.preallocBatchMatMul(false, prealloc, inputs...)
+	}
 	return op.do(inputs, tensor.WithReuse(t))
 }
 
@@ -737,7 +767,7 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 
 	a, b := inputs[0].(tensor.Tensor), inputs[1].(tensor.Tensor)
 
-	if op.transA {
+	if op.transA && op.āBinaryOperator != batchedMatMulOperator {
 		if err = a.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
@@ -745,7 +775,7 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		defer a.T()
 	}
 
-	if op.transB {
+	if op.transB && op.āBinaryOperator != batchedMatMulOperator {
 		if err = b.T(); err != nil {
 			return nil, errors.Wrap(err, tFail)
 		}
@@ -766,7 +796,19 @@ func (op linAlgBinOp) do(inputs []Value, opts ...tensor.FuncOpt) (retVal Value, 
 		retVal, _ = anyToScalar(ret)
 	case outerProdOperator:
 		retVal, err = tensor.Outer(a, b, opts...)
+	case batchedMatMulOperator:
+		// checks were done when the op was created
+		retVal, err = batchedMatMul(a, b, nil, op.transA, op.transB, false)
 	}
 	return
 
+}
+
+func (op linAlgBinOp) preallocBatchMatMul(incr bool, prealloc Value, inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+	a, b := inputs[0].(tensor.Tensor), inputs[1].(tensor.Tensor)
+	c := prealloc.(tensor.Tensor)
+	return batchedMatMul(a, b, c, op.transA, op.transB, incr)
 }

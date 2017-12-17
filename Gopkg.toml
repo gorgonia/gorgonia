@@ -20,7 +20,6 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-ignored = ["github.com/alecthomas/assert"]
 
 [[constraint]]
   name = "github.com/awalterschulze/gographviz"
@@ -31,12 +30,12 @@ ignored = ["github.com/alecthomas/assert"]
   name = "gorgonia.org/cu"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/chewxy/hm"
+  version = "~1.0.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/chewxy/math32"
+  version = "~1.0.0"
 
 [[constraint]]
   branch = "master"
@@ -48,23 +47,11 @@ ignored = ["github.com/alecthomas/assert"]
 
 [[constraint]]
   branch = "master"
-  name = "github.com/gonum/blas"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/gonum/graph"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/gonum/matrix"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/leesper/go_rng"
 
 [[constraint]]
   name = "github.com/pkg/errors"
-  version = ">=0.8.0, <1.0.0"
+  version = "~0.8.0"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
@@ -77,3 +64,15 @@ ignored = ["github.com/alecthomas/assert"]
 [[constraint]]
   branch = "master"
   name = "golang.org/x/tools"
+
+[[constraint]]
+  branch = "master"
+  name = "gonum.org/v1/gonum"
+
+[[constraint]]
+  branch = "master"
+  name = "gonum.org/v1/netlib"
+
+[[constraint]]
+  branch = "master"
+  name = "gorgonia.org/tensor"

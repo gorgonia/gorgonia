@@ -30,8 +30,8 @@ func newdataflow() *dataflow {
 // it returns true if it is unique
 func (df *dataflow) vn(n *Node) (retVal *Node, unique bool) {
 	compileLogf("Value numbering")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	node, ok := df.uniques[n.Hashcode()]
 
@@ -82,8 +82,8 @@ func (df *dataflow) fixIntervalDevices(sorted Nodes) {
 
 func analyze(g *ExprGraph, sorted Nodes) *dataflow {
 	compileLogf("Performing dataflow analysis")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	compileLogf("Finding unique leaves")
 	df := newdataflow()
@@ -135,8 +135,8 @@ func newDevTransNode(read, write *Node, from, to Device) *Node {
 
 func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 	compileLogf("Inserting Device Transport Instructions")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	// input -> output
 	for i := 0; i < len(sorted); i++ {
 		node := sorted[i]
@@ -147,7 +147,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 		var incr int
 		var useReplacement bool
 		replacementChildren := make(Nodes, len(n.children))
-		enterLoggingContext()
+		enterLogScope()
 		for j, child := range n.children {
 			c := df.replacements[child]
 			childDev := c.dataOn
@@ -174,7 +174,7 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 				replacementChildren[j] = child
 			}
 		}
-		leaveLoggingContext()
+		leaveLogScope()
 
 		if useReplacement {
 			df.devTransChildren[n] = replacementChildren
@@ -221,8 +221,8 @@ func (df *dataflow) insertDeviceInstr(sorted Nodes) Nodes {
 // It's like the above, but without basic blocks, phi nodes, etc, making it a LOT simpler
 func (df *dataflow) buildIntervals(sorted Nodes) {
 	compileLogf("Building intervals for %v", sorted)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	intervals := make(map[*Node]*interval)
 

@@ -8,12 +8,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 type lispMachine struct {
-	*ExternMetadata
+	ExternMetadata
 	g *ExprGraph
 	q []adInstr // a to-do list of differentiation instructions
 
@@ -44,14 +44,14 @@ type lispMachine struct {
 func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	runFlags := (byte(0) | (byte(1) << fwdOnly)) | (1 << bwdOnly) // run fwd and backwards
 	m := &lispMachine{
-		ExternMetadata: new(ExternMetadata),
-		g:              g,
-		fwd:            -1,
-		bwd:            -1,
-		valueFmt:       "%3.3f",
-		logFlags:       0x0,      // log nothing
-		runFlags:       runFlags, // run only fwd and bwd
+		g:        g,
+		fwd:      -1,
+		bwd:      -1,
+		valueFmt: "%3.3f",
+		logFlags: 0x0,      // log nothing
+		runFlags: runFlags, // run only fwd and bwd
 	}
+	m.Engine = StandardEngine{}
 
 	for _, opt := range opts {
 		opt(m)
@@ -102,6 +102,7 @@ func (m *lispMachine) Reset() {
 	m.bwd = len(m.q) - 1
 }
 
+// RunAll traverses a graph and executes every node. Backpropagation is done if necessary
 func (m *lispMachine) RunAll() (err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -115,11 +116,6 @@ func (m *lispMachine) RunAll() (err error) {
 			m.q = nil // this needs to be nil'd or else there would still be references to m. Then there won't be any garbage being collected
 		}()
 	}
-
-	// m.logf("SORTED:")
-	// for i, n := range m.sorted {
-	// 	m.logf("%d: %v (%d)", i, n, n.ID())
-	// }
 
 	workAvailable := m.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
@@ -180,6 +176,7 @@ func (m *lispMachine) RunAll() (err error) {
 	return nil
 }
 
+// UnbindAll detaches the values from the node, allowing for them to be cleaned up the next GC cycle.
 func (m *lispMachine) UnbindAll() {
 	// if m.dealloc() {
 	for _, n := range m.sorted {
@@ -191,6 +188,7 @@ func (m *lispMachine) UnbindAll() {
 	// }
 }
 
+// LastRun returns the nodes and results from the last run. Additionally it returns whether backprop was done.
 func (m *lispMachine) LastRun() (n *Node, backprop bool) {
 	if m.fwd < 0 && m.runBwd() {
 		goto backward
@@ -290,8 +288,8 @@ func (m *lispMachine) forward() (err error) {
 	n := m.sorted[m.fwd]
 
 	m.watchedLogf("n: %v | (%x) | %p", n, n.id, n)
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	if !n.isStmt {
 		switch {
@@ -322,7 +320,6 @@ func (m *lispMachine) forward() (err error) {
 
 	// other wise it's time to execute the op
 	m.logf("execute Op")
-
 	dev := n.dataOn
 	op := NewExternalOp(n.op, ExecutionContext{m, dev}, nil)
 
@@ -332,23 +329,13 @@ func (m *lispMachine) forward() (err error) {
 	inputs := make([]*dualValue, len(n.children))
 	children := n.children
 
-	m.enterLoggingContext()
+	m.enterLogScope()
 	for i, child := range children {
-		m.logf("child!! %v %v", child, child.Shape())
+		m.logf("child %d: %v %v", i, child, child.Shape())
 		if child.Device() == n.Device() {
 			inputs[i] = child.boundTo.(*dualValue)
 			// continue
 		}
-		// if child.boundTo != nil {
-		// 	dv := child.boundTo.(*dualValue)
-		// 	if dv.d != nil {
-		// 		m.logf("0x%x | 0x%x", child.boundTo.(*dualValue).Value.Uintptr(), child.boundTo.(*dualValue).d.Uintptr())
-		// 	} else {
-		// 		m.logf("0x%x | NIL", child.boundTo.(*dualValue).Value.Uintptr())
-		// 	}
-		// } else {
-		// 	m.logf("no boundto")
-		// }
 
 		var allocV, allocD bool
 		var v, d Value
@@ -370,7 +357,7 @@ func (m *lispMachine) forward() (err error) {
 
 		defer func() {
 			if allocV {
-				m.logf("Putting 0x%x", v.Uintptr())
+				m.logf("Putting 0x%x |%T", v.Uintptr(), v)
 				m.PutValue(dev, v)
 			}
 			if allocD {
@@ -381,8 +368,7 @@ func (m *lispMachine) forward() (err error) {
 			}
 		}()
 	}
-	m.leaveLoggingContext()
-
+	m.leaveLogScope()
 	m.watchedLogf("Before:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
 
@@ -442,7 +428,7 @@ func (m *lispMachine) forward() (err error) {
 				return errors.Wrapf(err, dtypeExtractionFail, n.t)
 			}
 
-			var mem Memory
+			var mem tensor.Memory
 			memsize := calcMemSize(dt, n.shape)
 			if mem, err = m.Get(dev, memsize); err != nil {
 				return errors.Wrapf(err, allocFail, memsize)
@@ -485,9 +471,6 @@ func (m *lispMachine) forward() (err error) {
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
-	// if n.boundTo != nil {
-	// 	m.watchedLogf("0x%x | 0x%x", n.boundTo.(*dualValue).Value.Uintptr(), n.boundTo.(*dualValue).d.Uintptr())
-	// }
 
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{
@@ -520,15 +503,15 @@ func (m *lispMachine) backward() (err error) {
 
 	instr := m.q[m.bwd]
 	m.watchedLogf("Differentiating op %v. Output: %v (%x)", instr, instr.output, instr.output.Hashcode())
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	m.watchedLogf("Inputs: %v", instr.inputs)
-	m.enterLoggingContext()
+	m.enterLogScope()
 	for _, in := range instr.inputs {
 		m.watchedLogf(m.valueFmt, in.boundTo.(*dualValue).d)
 	}
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	// actual differentiation
 	if err = instr.do(); err != nil {
@@ -536,12 +519,12 @@ func (m *lispMachine) backward() (err error) {
 	}
 
 	m.watchedLogf("After:")
-	m.enterLoggingContext()
+	m.enterLogScope()
 	for _, in := range instr.inputs {
 		m.watchedLogf(m.valueFmt, in.boundTo.(*dualValue).d)
 	}
 
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	if m.watchNaN() {
 		if hasNaN(instr.output.boundTo) {
@@ -618,9 +601,9 @@ func (m *lispMachine) logf(format string, attrs ...interface{}) {
 	}
 }
 
-func (m *lispMachine) enterLoggingContext() {
+func (m *lispMachine) enterLogScope() {
 	if DEBUG && machineDev {
-		enterLoggingContext()
+		enterLogScope()
 	}
 	m.tabcount++
 	if m.logger != nil {
@@ -632,9 +615,9 @@ func (m *lispMachine) enterLoggingContext() {
 	}
 }
 
-func (m *lispMachine) leaveLoggingContext() {
+func (m *lispMachine) leaveLogScope() {
 	if DEBUG && machineDev {
-		leaveLoggingContext()
+		leaveLogScope()
 	}
 	m.tabcount--
 	if m.tabcount < 0 {

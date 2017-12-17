@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"log"
 	"os"
+
+	"gorgonia.org/tensor"
 )
 
 // VM represents a structure that can execute a graph or program. There are two VMs (both unexported):
@@ -274,6 +276,18 @@ func WithManualGradient() VMOpt {
 			v.allowSetRootGrad()
 		default:
 			// noop
+		}
+	}
+	return f
+}
+
+func WithEngine(e tensor.Engine) VMOpt {
+	f := func(m VM) {
+		switch v := m.(type) {
+		case *lispMachine:
+			v.setEngine(e)
+		case *tapeMachine:
+			v.setEngine(e)
 		}
 	}
 	return f

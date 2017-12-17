@@ -1,9 +1,9 @@
 package gorgonia
 
 import (
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // inferType infers the type of the expression

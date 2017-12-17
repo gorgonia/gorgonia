@@ -9,9 +9,9 @@ import (
 	"log"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // A Node is a node in the computation graph
@@ -41,7 +41,7 @@ type Node struct {
 	deriv   *Node
 
 	// for hashing nodes
-	id   int // id is the ID at which the node is added to the graph
+	id   int64 // id is the ID at which the node is added to the graph
 	hash uint32
 
 	hashed        bool
@@ -134,7 +134,7 @@ func WithValue(any interface{}) NodeConsOpt {
 		if n.t == nil {
 			n.t = t
 		} else if !n.t.Eq(t) {
-			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead", n.t, t)) // yes this is a runtime error
+			panic(fmt.Sprintf("TypeError: Want %v, Got %v instead (%T %T)", n.t, t, n.t, t)) // yes this is a runtime error
 		}
 
 		n.bind(v)
@@ -163,7 +163,8 @@ func WithInit(fn InitWFn) NodeConsOpt {
 // WithShape is a node construction option to initialize a *Node with a particular shape.
 // This function panics if the shape's dimensions do not match the specified dimensions of the *Node.
 func WithShape(shp ...int) NodeConsOpt {
-	s := tensor.Shape(shp)
+	s := tensor.Shape(tensor.BorrowInts(len(shp)))
+	copy(s, shp)
 	f := func(n *Node) {
 		nd := n.Dims()
 		// if nd == 1 && s.IsVector() {
@@ -219,7 +220,7 @@ func NewUniqueNode(opts ...NodeConsOpt) *Node {
 }
 
 // ID returns the ID of the node. This satisfies the gonum/graph.Node interface
-func (n *Node) ID() int { return n.id }
+func (n *Node) ID() int64 { return n.id }
 
 // helper functions to help compilation process
 func (n *Node) isArg() bool      { return n.op == nil }
@@ -278,6 +279,9 @@ func (n *Node) IsMatrix() bool {
 }
 
 // methods
+
+// Graph returns the graph of the node
+func (n *Node) Graph() *ExprGraph { return n.g }
 
 // CloneTo clones the node into a new graph. If CloneTo() is called on the same graph as the n, it will return n. The reason this is done is because
 // at any given time, every node  should be unique in the *ExprGraph.

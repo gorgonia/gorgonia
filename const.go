@@ -3,7 +3,7 @@ package gorgonia
 import (
 	"math"
 
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 const (

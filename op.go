@@ -5,9 +5,9 @@ import (
 	"hash"
 	"hash/fnv"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // DimSizer is any type (typically a tensor.Shape) that allows querying for a dimension size given an input dimension.
@@ -186,8 +186,8 @@ func ApplyOp(op Op, children ...*Node) (retVal *Node, err error) {
 
 	// typecheck  before creating
 	typeSysLogf("Inferring node type of %v :: %v with children: %#Y", op, op.Type(), Nodes(children))
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	var retType hm.Type
 	if retType, err = inferNodeType(op, children...); err != nil {
 		return nil, errors.Wrapf(err, "Type inference error. Op: %v. Children: %#Y, OpType:%v", op, Nodes(children), op.Type())

@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Node) (*Node, error)) (x, y, a, b *Node, v Value, err error) {

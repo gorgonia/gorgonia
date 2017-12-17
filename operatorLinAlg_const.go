@@ -9,7 +9,7 @@ var āBinOpStrs = [maxĀBinaryOperator]string{
 	"×",
 	"⋅",
 	"⊗",
-	// "×××",
+	"×××",
 }
 
 var āBinOpDiffExprs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z, grad *Node) (Nodes, error){
@@ -17,6 +17,7 @@ var āBinOpDiffExprs = [maxĀBinaryOperator]func(tA, tB bool, x, y, z, grad *Nod
 	matVecMulDiffExpr,
 	vecDotDiffExpr,
 	outerProdDiffExpr,
+	batchedMatMulDiffExpr,
 }
 
 var āBinOpDiffs = [maxĀBinaryOperator]func(ctx ExecutionContext, tA, tB bool, x, y, z *Node) error{
@@ -24,6 +25,7 @@ var āBinOpDiffs = [maxĀBinaryOperator]func(ctx ExecutionContext, tA, tB bool, 
 	matVecMulDiff,
 	vecDotDiff,
 	outerProdDiff,
+	batchedMatMulDiff,
 }
 
 var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
@@ -31,6 +33,7 @@ var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
 	matVecMulType,
 	vecDotType,
 	outerProdType,
+	batchedMatMulType,
 }
 
 /* TYPES FOR LINALG BINARY OP*/
@@ -41,8 +44,8 @@ var āBinOpTypes = [maxĀBinaryOperator]func() hm.Type{
 // For the moment only floats are allowed
 func matVecMulType() hm.Type {
 	a := hm.TypeVariable('a')
-	v := newTensorType(1, a)
-	m := newTensorType(2, a)
+	v := makeTensorType(1, a)
+	m := makeTensorType(2, a)
 
 	return hm.NewFnType(m, v, v)
 }
@@ -53,7 +56,7 @@ func matVecMulType() hm.Type {
 // For the moment only floats are allowed
 func matMulType() hm.Type {
 	a := hm.TypeVariable('a')
-	m := newTensorType(2, a)
+	m := makeTensorType(2, a)
 
 	return hm.NewFnType(m, m, m)
 }
@@ -64,7 +67,7 @@ func matMulType() hm.Type {
 // For the moment only floats are allowed
 func vecDotType() hm.Type {
 	a := hm.TypeVariable('a')
-	v := newTensorType(1, a)
+	v := makeTensorType(1, a)
 
 	return hm.NewFnType(v, v, a)
 }
@@ -75,8 +78,14 @@ func vecDotType() hm.Type {
 // For the moment only floats are allowed
 func outerProdType() hm.Type {
 	a := hm.TypeVariable('a')
-	v := newTensorType(1, a)
-	m := newTensorType(2, a)
+	v := makeTensorType(1, a)
+	m := makeTensorType(2, a)
 
 	return hm.NewFnType(v, v, m)
+}
+
+func batchedMatMulType() hm.Type {
+	a := hm.TypeVariable('a')
+	t := makeTensorType(3, a)
+	return hm.NewFnType(t, t, t)
 }

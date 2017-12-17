@@ -13,8 +13,8 @@ import (
 	"time"
 
 	G "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/tensor"
-	// cblas "github.com/gonum/blas/cgo"
+	"gorgonia.org/tensor"
+	// cblas "gonum.org/v1/netlib/blas/netlib"
 )
 
 const (

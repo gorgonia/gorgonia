@@ -7,13 +7,13 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 type tapeMachine struct {
-	*ExternMetadata
+	ExternMetadata
 
 	p      *program
 	locMap map[*Node]register
@@ -41,9 +41,9 @@ type tapeMachine struct {
 // NewTapeMachine creates a VM that compiles a graph into a prog.
 func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m := &tapeMachine{
-		ExternMetadata: new(ExternMetadata),
-		valueFmt:       "%3.3g",
+		valueFmt: "%3.3g",
 	}
+	m.Engine = StandardEngine{}
 
 	if b, ok := whichblas.(batchedBLAS); ok {
 		m.b = b
@@ -69,6 +69,9 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.gpumem = make([]Value, prog.gpulocs)
 	}
 	m.init()
+	for _, n := range m.p.g.AllNodes() {
+		setEngine(n.boundTo, m.Engine)
+	}
 
 	return m
 }
@@ -143,7 +146,7 @@ func (m *tapeMachine) Set(a, b *Node) (err error) {
 	breg := m.locMap[b]
 	v := m.getValue(breg)
 	if v == nil {
-		return nyi("handling of Memory -> Value", "tapeMachine.Set")
+		return nyi("handling of tensor.Memory -> Value", "tapeMachine.Set")
 	}
 
 	machineLogf("Setting %v to %v. Read from %v Value is %v", b, a, breg, v)
@@ -164,7 +167,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 		}
 	}
 	machineLogf("Binding values based on final output")
-	enterLoggingContext()
+	enterLogScope()
 	for n, r := range m.locMap {
 		if n.isInput() {
 			continue
@@ -172,14 +175,14 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 
 		v := m.getValue(r)
 		if v == nil {
-			return nyi("converting Memory to Value", "TapeMachine.Run")
+			return nyi("converting tensor.Memory to Value", "TapeMachine.Run")
 		}
 
 		if err = n.bind(m.cpumem[r.id]); err != nil {
 			return errors.Wrap(err, bindFail)
 		}
 	}
-	leaveLoggingContext()
+	leaveLogScope()
 	return
 }
 
@@ -232,7 +235,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchNaN")
+					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
 					errChan <- err
 					return
 				}
@@ -252,7 +255,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			if writeTo > 0 && id > 0 {
 				v := m.getValue(instr.writes())
 				if v == nil {
-					err := errors.Errorf(nyiFail, "converting Memory to Value", "watchInf")
+					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
 					errChan <- err
 					return
 				}
@@ -344,9 +347,9 @@ func (m *tapeMachine) logf(format string, attrs ...interface{}) {
 	}
 }
 
-func (m *tapeMachine) enterLoggingContext() {
+func (m *tapeMachine) enterLogScope() {
 	if DEBUG && machineDev {
-		enterLoggingContext()
+		enterLogScope()
 	}
 	m.tabcount++
 	if m.logger != nil {
@@ -358,9 +361,9 @@ func (m *tapeMachine) enterLoggingContext() {
 	}
 }
 
-func (m *tapeMachine) leaveLoggingContext() {
+func (m *tapeMachine) leaveLogScope() {
 	if DEBUG && machineDev {
-		leaveLoggingContext()
+		leaveLogScope()
 	}
 	m.tabcount--
 	if m.tabcount < 0 {
@@ -422,7 +425,7 @@ func (r register) String() string { return fmt.Sprintf("%s%d", r.device, r.id) }
 /* INSTRUCTIONS */
 
 type tapeInstr interface {
-	ID() int // ID is the node ID
+	ID() int64 // ID is the node ID
 	reads() []register
 	writes() register
 	exec(*tapeMachine) error
@@ -449,7 +452,7 @@ func (f fragment) has(want tapeInstr) bool {
 }
 
 type alloc struct {
-	id int // node ID
+	id int64 // node ID
 	t  hm.Type
 	s  tensor.Shape
 
@@ -466,7 +469,7 @@ func newAlloc(n *Node, writeTo register) alloc {
 	}
 }
 
-func (instr alloc) ID() int           { return instr.id }
+func (instr alloc) ID() int64         { return instr.id }
 func (instr alloc) reads() []register { return instr.readFrom }
 func (instr alloc) writes() register  { return instr.writeTo }
 
@@ -484,7 +487,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	case CPU:
 		v, err = makeValue(instr.t, instr.s)
 	default:
-		var mem Memory
+		var mem tensor.Memory
 		memsize := calcMemSize(dt, instr.s)
 		if mem, err = m.ExternMetadata.Get(dev, memsize); err != nil {
 			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
@@ -507,7 +510,7 @@ type free struct {
 	readsFrom register
 }
 
-func (instr free) ID() int           { return -1 }
+func (instr free) ID() int64         { return -1 }
 func (instr free) reads() []register { return []register{instr.readsFrom} }
 func (instr free) writes() register  { return register{-1, CPU} }
 func (instr free) exec(m *tapeMachine) error {
@@ -528,18 +531,18 @@ func (instr free) exec(m *tapeMachine) error {
 func (instr free) String() string { return fmt.Sprintf("Free %v", instr.readsFrom) }
 
 type loadArg struct {
-	index   int
+	index   int64
 	writeTo register
 }
 
-func (instr loadArg) ID() int           { return instr.index }
+func (instr loadArg) ID() int64         { return instr.index }
 func (instr loadArg) reads() []register { return nil }
 func (instr loadArg) writes() register  { return instr.writeTo }
 
 func (instr loadArg) exec(m *tapeMachine) error {
 	m.logf("Executing %v", instr)
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	node := m.p.g.Node(instr.index).(*Node)
 
@@ -567,7 +570,7 @@ func (instr loadArg) String() string {
 type execOp struct {
 	op Op
 
-	id int
+	id int64
 
 	readFrom []register
 	writeTo  register
@@ -578,7 +581,7 @@ type execOp struct {
 	useGPU       bool
 }
 
-func (instr *execOp) ID() int           { return instr.id }
+func (instr *execOp) ID() int64         { return instr.id }
 func (instr *execOp) reads() []register { return instr.readFrom }
 func (instr *execOp) writes() register  { return instr.writeTo }
 
@@ -616,7 +619,7 @@ func (instr flushInstr) exec(m *tapeMachine) error {
 	return nil
 }
 
-func (instr flushInstr) ID() int           { return -1 }
+func (instr flushInstr) ID() int64         { return -1 }
 func (instr flushInstr) reads() []register { return nil }
 func (instr flushInstr) writes() register  { return register{-1, CPU} }
 func (instr flushInstr) String() string    { return "DoWork" }
@@ -626,7 +629,7 @@ type letInstr struct {
 	writeTo  register
 }
 
-func (instr letInstr) ID() int                 { return -1 }
+func (instr letInstr) ID() int64               { return -1 }
 func (instr letInstr) reads() []register       { return []register{instr.readFrom} }
 func (instr letInstr) writes() register        { return instr.writeTo }
 func (instr letInstr) exec(*tapeMachine) error { return nil }
@@ -639,12 +642,12 @@ type readInstr struct {
 	readFrom register
 	into     *Value
 
-	// required to convert Memory to Value
+	// required to convert tensor.Memory to Value
 	t hm.Type
 	s tensor.Shape
 }
 
-func (instr *readInstr) ID() int           { return -1 }
+func (instr *readInstr) ID() int64         { return -1 }
 func (instr *readInstr) reads() []register { return []register{instr.readFrom} }
 func (instr *readInstr) writes() register  { return register{-1, CPU} }
 func (instr *readInstr) exec(m *tapeMachine) (err error) {
@@ -672,7 +675,7 @@ type deviceTransport struct {
 	from, to register
 }
 
-func (instr deviceTransport) ID() int { return -1 }
+func (instr deviceTransport) ID() int64 { return -1 }
 func (instr deviceTransport) reads() []register {
 	return []register{instr.from}
 }

@@ -3,8 +3,8 @@ package gorgonia
 import (
 	"testing"
 
-	"github.com/gonum/graph/topo"
 	"github.com/stretchr/testify/assert"
+	"gonum.org/v1/gonum/graph/topo"
 )
 
 func TestForwardDiffAnalysis(t *testing.T) {

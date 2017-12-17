@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/math32"
-	"github.com/gonum/graph"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/graph"
+	"gorgonia.org/tensor"
 )
 
 const (
@@ -43,7 +43,7 @@ func cloneNodes(node Nodes, replacements map[*Node]*Node) Nodes {
 
 // valuesToInts will FORCIBLY cast floats to ints.
 func valuesToInts(values []Value) (retVal []int, err error) {
-	retVal = make([]int, len(values))
+	retVal = tensor.BorrowInts(len(values))
 	for i, v := range values {
 		var intV int
 		switch sv := v.(type) {

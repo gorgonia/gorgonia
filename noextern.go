@@ -2,15 +2,17 @@
 
 package gorgonia
 
-import "github.com/chewxy/gorgonia/tensor"
+import "gorgonia.org/tensor"
 
 // CUDA indicates if this build is using CUDA
 const CUDA = false
 
+var _ tensor.Engine = ExternMetadata{}
+
 // ExternMetadata is used to hold metadata about external execution devices.
 // In this build, it's an empty struct because the default build doesn't use external devices to execute the graph on
 type ExternMetadata struct {
-	tensor.StdEng
+	tensor.Engine
 	b             batchedBLAS
 	workAvailable chan bool
 	syncChan      chan struct{}
@@ -46,13 +48,15 @@ func (m *ExternMetadata) DoWork() error {
 }
 
 // Get allocates a memory of the size. In this build it returns a NoOpError.
-func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) { return nil, noopError{} }
+func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) { return nil, noopError{} }
 
 // GetFromValue allocates a memory of the size of v. In this build it returns a NoOpError, and v itself
-func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) { return v, noopError{} }
+func (m *ExternMetadata) GetFromValue(dev Device, v Value) (tensor.Memory, error) {
+	return v, noopError{}
+}
 
 // Put puts a previously allocated memory slab of the provided size back into the pool. Currently this is a No-op in this build.
-func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {}
+func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {}
 
 // PutValue puts a previously allocated value into the pool. In this build,  it is a noop.
 func (m *ExternMetadata) PutValue(dev Device, v Value) {}
@@ -94,6 +98,8 @@ func (m *ExternMetadata) signal() {
 		m.workAvailable <- true
 	}
 }
+
+func (m *ExternMetadata) setEngine(e tensor.Engine) { m.Engine = e }
 
 // ValueOnDevice gets the value of the node as a Value but on the desired device. In this build the device is always CPU, so it's equivalent to calling .Value()
 func (n *Node) ValueOnDevice(dev Device, extern External) (retVal Value, allocOnExtern bool, err error) {

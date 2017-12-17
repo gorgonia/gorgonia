@@ -5,8 +5,8 @@ import (
 	"hash"
 	"hash/fnv"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
+	"gorgonia.org/tensor"
 )
 
 /*

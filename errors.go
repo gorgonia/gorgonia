@@ -36,7 +36,7 @@ type noIncrErr struct {
 func (noIncrErr) Error() string  { return incrErr }
 func (e noIncrErr) Value() Value { return e.v }
 
-// oomError represents an Out of Memory error. It is typically used for CUDA related machine work
+// oomError represents an Out of tensor.Memory error. It is typically used for CUDA related machine work
 type oomError struct {
 	res       int64
 	allocated int64
@@ -68,4 +68,12 @@ func nyi(what string, implFor interface{}) error {
 
 func nondiffErr(op Op) error {
 	return errors.Errorf("%s is a non-differentiable function", op)
+}
+
+// checkErrSetDeriv sets the deriv if the error is a Valuer. Helper function for linalg operations
+func checkErrSetDeriv(err error, dv *dualValue) error {
+	if ver, ok := err.(Valuer); ok {
+		return dv.SetDeriv(ver.Value())
+	}
+	return err
 }

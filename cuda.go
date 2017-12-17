@@ -6,12 +6,16 @@ package gorgonia
 
 import (
 	"log"
+	"sync"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/tensor"
 )
 
 const CUDA = true
+
+var _ tensor.Engine = &ExternMetadata{}
 
 const (
 	// Any address of a variable residing in global memory or returned by one of the
@@ -40,6 +44,8 @@ type CUDAMachine interface {
 // ExternMetadata holds any metadata for CUDA related stuff.
 // The slices in there are indexed by deviceID
 type ExternMetadata struct {
+	tensor.Engine
+
 	warp []int // WarpSize
 	mtpb []int // MaxThreadsPerBlock
 	mgdx []int // MaxGridDimX
@@ -62,6 +68,9 @@ type ExternMetadata struct {
 
 	m map[string][]cu.Module
 	f map[string][]cu.Function
+
+	sync.Mutex        // lock to protect using
+	u          Device // using which device?
 
 	blasHasWork bool
 	initialzed  bool
@@ -139,16 +148,6 @@ func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
-
-	// for i, hw := range m.hasWork {
-	// if hw {
-	// m.c[i].DoWork()
-	// if err := m.c[i].Errors(); err != nil {
-	// 	return err
-	// }
-	// m.hasWork[i] = false
-	// }
-	// }
 	for _, c := range m.c {
 		c.DoWork()
 		if err := c.Errors(); err != nil {
@@ -182,7 +181,7 @@ func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
 
 // Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
-func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
+func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
 	d := int(dev)
 	if d >= len(m.a) {
 		return nil, noopError{} // this should not be a noopError
@@ -198,7 +197,7 @@ func (m *ExternMetadata) Get(dev Device, size int64) (Memory, error) {
 }
 
 // GetFromValue allocates a memory on the GPU, and then copies the data over. v MUST be on CPU.
-func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) {
+func (m *ExternMetadata) GetFromValue(dev Device, v Value) (tensor.Memory, error) {
 	d := int(dev)
 	if d >= len(m.a) {
 		return nil, noopError{}
@@ -216,7 +215,7 @@ func (m *ExternMetadata) GetFromValue(dev Device, v Value) (Memory, error) {
 }
 
 // Put puts a previously allocated memory slab of the provided size back into the pool
-func (m *ExternMetadata) Put(dev Device, mem Memory, size int64) {
+func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {
 	d := int(dev)
 	if d >= len(m.a) {
 		return // wat??
@@ -255,7 +254,7 @@ func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bo
 		}
 		ctx := m.c[d]
 
-		var mem Memory
+		var mem tensor.Memory
 		if mem, err = m.Get(toDev, memsize); err != nil {
 			return
 		}
@@ -301,10 +300,29 @@ func (m *ExternMetadata) Reset() {
 		for _, ptr := range used {
 			a.free(ptr + a.start)
 		}
-
 		a.coalesce()
 	}
 }
+
+func (m *ExternMetadata) Use(dev Device) {
+	m.Lock()
+	m.u = dev
+	m.Unlock()
+}
+
+func (m *ExternMetadata) AllocAccessible() bool                    { return false }
+func (m *ExternMetadata) Alloc(size int64) (tensor.Memory, error)  { return m.Get(m.u, size) }
+func (m *ExternMetadata) Free(mem tensor.Memory, size int64) error { m.Put(m.u, mem, size); return nil }
+func (m *ExternMetadata) Memset(mem tensor.Memory, val interface{}) error {
+	return errors.Errorf("Cannot set memory")
+}
+func (m *ExternMetadata) Memclr(tensor.Memory)                {}
+func (m *ExternMetadata) Memcpy(dst, src tensor.Memory) error { return errors.New("NYI") }
+func (m *ExternMetadata) Accessible(mem tensor.Memory) (tensor.Memory, error) {
+	// TODO
+	return nil, errors.New("NYI")
+}
+func (m *ExternMetadata) WorksWith(order tensor.DataOrder) bool { return true }
 
 func (m *ExternMetadata) init(sizes []int64) {
 	if m.initialzed {
@@ -347,7 +365,9 @@ func (m *ExternMetadata) init(sizes []int64) {
 			m.initFail()
 			return
 		}
-		ctx, err := dev.MakeContext(cu.SchedAuto)
+
+		ctxFlag := cu.SchedAuto
+		cuctx, err := dev.MakeContext(ctxFlag)
 		// ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
 		if err != nil {
 			if err == cu.OutOfMemory {
@@ -363,6 +383,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 			m.initFail()
 			return
 		}
+		ctx := cu.CtxFromCUContext(dev, cuctx, ctxFlag)
 
 		var attrs []int
 		if attrs, err = dev.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
@@ -432,12 +453,11 @@ func (m *ExternMetadata) initFail() {
 func (m *ExternMetadata) cleanup() {
 	for i, c := range m.c {
 		c.Cleanup()
-		cu.SetCurrent(c.Context)
+		cu.SetCurrentContext(c.Context.CUDAContext())
 		for _, v := range m.m {
 			mod := v[i]
 			cu.Unload(mod)
 		}
-		cu.DestroyContext(&c.Context)
 	}
 
 	for _, a := range m.a {
@@ -447,6 +467,11 @@ func (m *ExternMetadata) cleanup() {
 		if a.start != 0 {
 			cu.MemFree(cu.DevicePtr(a.start))
 		}
+	}
+
+	// destory contexts
+	for i := range m.c {
+		m.c[i] = nil // tell gc to collect. ctx.finalizeCtx will run
 	}
 }
 
@@ -474,6 +499,8 @@ func (m *ExternMetadata) signal() { m.workAvailable <- true }
 func calcBlocks(n, maxThreads int) int {
 	return (n + maxThreads - 1) / maxThreads
 }
+
+func (m *ExternMetadata) setEngine(e tensor.Engine) {}
 
 // AddToStdLib allows for custom ops to be included into the "stdlib" of CUDA functions, so that when the VMs are created, they're loaded automatically
 // without having to specify extra loading.

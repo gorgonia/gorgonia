@@ -164,8 +164,8 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	// create new write to if overwriteInput and the used register is stil live
 	compileLogf("Allocating MutableOp NodeID: %x returns pointer", node.ID())
 	compileLogf("Op: %v", node.op)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	var writeTo register
 	var reads []*interval
@@ -260,8 +260,8 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 
 func (ra *regalloc) allocImmutableOp(node *Node, nInterv *interval) {
 	compileLogf("Allocating Immutable Op")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	var writeTo register
 	var reads []*interval
@@ -301,8 +301,8 @@ func (ra *regalloc) allocStatement(node *Node, nInterv *interval) {
 
 func (ra *regalloc) alloc(sorted Nodes) {
 	compileLogf("Allocating registers")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	for i, node := range sorted {
 		ra.instructionID = i

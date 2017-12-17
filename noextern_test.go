@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 func BenchmarkOneMil(b *testing.B) {

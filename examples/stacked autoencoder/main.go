@@ -15,8 +15,8 @@ import (
 
 	T "github.com/chewxy/gorgonia"
 	"github.com/chewxy/gorgonia/examples/mnist"
-	"github.com/chewxy/gorgonia/tensor"
-	"github.com/gonum/blas/native"
+	"gonum.org/v1/gonum/blas/gonum"
+	"gorgonia.org/tensor"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -138,7 +138,7 @@ func main() {
 	// Because for now LispMachine doesn't support batched BLAS
 	verboseLog("Starting to finetune now")
 
-	T.Use(native.Implementation{})
+	T.Use(gonum.Implementation{})
 	ys := makeTargets(targets)
 	for i := 0; i < finetuneEpoch; i++ {
 		if err = sda.Finetune(inputs, ys, i); err != nil {

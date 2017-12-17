@@ -108,7 +108,7 @@ func TestBFC(t *testing.T) {
 		t.Errorf("Expected addr1 to be reused")
 	}
 	if bfc.freelist.Len() != 3 {
-		t.Error("Expected free list to be size of 3 after reusing a block. Got %v", bfc.freelist)
+		t.Errorf("Expected free list to be size of 3 after reusing a block. Got %v", bfc.freelist)
 	}
 
 	// memory's getting fragmented now... let's coalesce

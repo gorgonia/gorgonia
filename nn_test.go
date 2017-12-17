@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func dropoutTest(t *testing.T, dt tensor.Dtype) error {

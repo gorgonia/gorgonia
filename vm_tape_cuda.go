@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/tensor"
 )
 
 func finalizeTapeMachine(m *tapeMachine) {
@@ -61,7 +62,7 @@ func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 	mods := make([]cu.Module, len(m.c))
 	fns := make(map[string][]cu.Function)
 	for i, c := range m.c {
-		if err = cu.SetCurrent(c.Context); err != nil {
+		if err = cu.SetCurrentContext(c.Context.CUDAContext()); err != nil {
 			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
 			return
 		}
@@ -93,7 +94,7 @@ func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 
 	// set the first to current
 	if len(m.c) > 0 {
-		if err = cu.SetCurrent(m.c[0].Context); err != nil {
+		if err = cu.SetCurrentContext(m.c[0].Context.CUDAContext()); err != nil {
 			err = errors.Wrapf(err, "Unable to set current")
 			return
 		}
@@ -142,21 +143,21 @@ func (m *tapeMachine) loadDummyStdLib() {
 
 func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLoggingContext()
-	defer m.leaveLoggingContext()
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 
 	m.watchedLogf("Inputs:")
-	m.enterLoggingContext()
+	m.enterLogScope()
 	var inputs []Value
 	for _, reg := range instr.readFrom {
 		v := m.getValue(reg)
 		inputs = append(inputs, v)
 		m.watchedLogf(m.valueFmt, v)
 	}
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	toDev := instr.writeTo.device
 	var v Value
@@ -200,9 +201,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	}
 	m.watchedLogf("Result:")
-	m.enterLoggingContext()
+	m.enterLogScope()
 	m.watchedLogf(m.valueFmt, v)
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 	// TODO: type and shape checks
 
 	// Write
@@ -246,7 +247,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 					shp := dv.d.Shape()
 					memsize := calcMemSize(dt, shp)
 
-					var mem Memory
+					var mem tensor.Memory
 					if mem, err = m.Get(dev, memsize); err != nil {
 						return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
 					}
@@ -277,9 +278,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	}
 
 	m.watchedLogf("Written To: %v", instr.writeTo)
-	m.enterLoggingContext()
+	m.enterLogScope()
 	m.watchedLogf(m.valueFmt, v)
-	m.leaveLoggingContext()
+	m.leaveLogScope()
 
 	return nil
 }

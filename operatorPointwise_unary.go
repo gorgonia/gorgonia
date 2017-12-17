@@ -1,8 +1,8 @@
 package gorgonia
 
 import (
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // a ʘUnaryOperator is essentially a function that takes a float32 or float64 and returns the same
@@ -162,9 +162,8 @@ func absDiff(x, y *Node) (err error) {
 
 		mul := newElemBinOp(mulOpType, y, x)
 		err = mul.IncrDo(xdv.d, d, ydv.d)
-		if ver, ok := err.(Valuer); ok {
-			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-			return nil
+		if err = checkErrSetDeriv(err, xdv); err != nil {
+			return errors.Wrapf(err, autodiffFail, x)
 		}
 	}
 	return
@@ -199,9 +198,8 @@ func sinDiff(x, y *Node) (err error) {
 
 		mul := newElemBinOp(mulOpType, x, y)
 		err = mul.IncrDo(xdv.d, d, ydv.d)
-		if ver, ok := err.(Valuer); ok {
-			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-			return nil
+		if err = checkErrSetDeriv(err, xdv); err != nil {
+			return errors.Wrapf(err, autodiffFail, x)
 		}
 	}
 	return
@@ -243,9 +241,8 @@ func cosDiff(x, y *Node) (err error) {
 		if d, err = neg.UnsafeDo(d); err == nil {
 			mul := newElemBinOp(mulOpType, x, y)
 			err = mul.IncrDo(xdv.d, d, ydv.d)
-			if ver, ok := err.(Valuer); ok {
-				xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-				return nil
+			if err = checkErrSetDeriv(err, xdv); err != nil {
+				return errors.Wrapf(err, autodiffFail, x)
 			}
 
 		}
@@ -263,9 +260,8 @@ func expDiff(x, y *Node) (err error) {
 
 	mul := newElemBinOp(mulOpType, x, y)
 	err = mul.IncrDo(xdv.d, ydv.Value, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -283,9 +279,8 @@ func lnDiff(x, y *Node) (err error) {
 	div := newElemBinOp(divOpType, y, x)
 
 	err = div.IncrDo(xdv.d, ydv.d, xdv.Value)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 
 	return
@@ -308,15 +303,12 @@ func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	default:
 		return nil, errors.Errorf("log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
 	}
-
-	if retVal, err = HadamardProd(x, log2); err == nil {
-		WithGroupName(gradClust)(retVal)
-		retVal, err = HadamardDiv(gradY, retVal)
-		if err != nil {
-			return nil, errors.Wrap(err, hadamardDivFail)
-		}
-	} else {
+	if retVal, err = HadamardDiv(x, log2); err != nil {
 		return nil, errors.Wrap(err, hadamardProdFail)
+	}
+	WithGroupName(gradClust)(retVal)
+	if retVal, err = HadamardDiv(gradY, retVal); err != nil {
+		return nil, errors.Wrap(err, hadamardDivFail)
 	}
 	return
 }
@@ -353,9 +345,8 @@ func log2Diff(x, y *Node) (err error) {
 
 	div := newElemBinOp(divOpType, y, x)
 	err = div.IncrDo(xdv.d, ydv.d, d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 
 	return
@@ -371,8 +362,8 @@ func negDiff(x, y *Node) (err error) {
 
 	sub := newElemBinOp(subOpType, x, y)
 	_, err = sub.UnsafeDo(xdv.d, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		return xdv.SetDeriv(ver.Value())
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -437,9 +428,8 @@ func squareDiff(x, y *Node) (err error) {
 		}
 
 		err = mul.IncrDo(xdv.d, d, ydv.d)
-		if ver, ok := err.(Valuer); ok {
-			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-			return nil
+		if err = checkErrSetDeriv(err, xdv); err != nil {
+			return errors.Wrapf(err, autodiffFail, x)
 		}
 	}
 	return
@@ -504,9 +494,8 @@ func sqrtDiff(x, y *Node) (err error) {
 
 		div := newElemBinOp(divOpType, y, x)
 		err = div.IncrDo(xdv.d, ydv.d, d)
-		if ver, ok := err.(Valuer); ok {
-			xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-			return nil
+		if err = checkErrSetDeriv(err, xdv); err != nil {
+			return errors.Wrapf(err, autodiffFail, x)
 		}
 	}
 	return
@@ -551,9 +540,8 @@ func inverseDiff(x, y *Node) (err error) {
 
 	mul := newElemBinOp(mulOpType, y, y)
 	err = mul.IncrDo(xdv.d, d, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -627,9 +615,8 @@ func cubeDiff(x, y *Node) (err error) {
 	}
 
 	err = mul.IncrDo(xdv.d, d, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -706,9 +693,8 @@ func tanhDiff(x, y *Node) (err error) {
 
 	mul := newElemBinOp(mulOpType, x, y)
 	err = mul.IncrDo(xdv.d, d, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -784,9 +770,8 @@ func sigmoidDiff(x, y *Node) (err error) {
 	}
 
 	err = mul.IncrDo(xdv.d, d, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -854,9 +839,8 @@ func log1pDiff(x, y *Node) (err error) {
 
 	div := newElemBinOp(divOpType, y, x)
 	err = div.IncrDo(xdv.d, ydv.d, d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -886,9 +870,8 @@ func expm1Diff(x, y *Node) (err error) {
 
 	mul := newElemBinOp(mulOpType, x, y)
 	err = mul.IncrDo(xdv.d, d, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }
@@ -918,9 +901,8 @@ func softplusDiff(x, y *Node) (err error) {
 
 	mul := newElemBinOp(mulOpType, x, y)
 	err = mul.IncrDo(xdv.d, d, ydv.d)
-	if ver, ok := err.(Valuer); ok {
-		xdv.SetDeriv(ver.Value()) // ignore errors on purpose
-		return nil
+	if err = checkErrSetDeriv(err, xdv); err != nil {
+		return errors.Wrapf(err, autodiffFail, x)
 	}
 	return
 }

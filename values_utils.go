@@ -3,13 +3,28 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // TypeOf returns the Type of the value
 func TypeOf(v Value) hm.Type {
+	switch t := v.(type) {
+	case tensor.Tensor:
+		dt, dim := tensorInfo(t)
+		return makeTensorType(dim, dt)
+	case Scalar:
+		return t.Dtype()
+	case Typer:
+		return t.Type()
+
+	default:
+		panic(fmt.Sprintf("TypeOf Not yet implemented for %v %T", v, v))
+	}
+}
+
+func typeCheckTypeOf(v Value) hm.Type {
 	switch t := v.(type) {
 	case tensor.Tensor:
 		dt, dim := tensorInfo(t)
@@ -218,5 +233,15 @@ func Copy(dest, src Value) (Value, error) {
 			return dest, err
 		}
 		return nil, errors.Errorf("Unable to copy value of type %T into value of type %T", src, dest)
+	}
+}
+
+func setEngine(v Value, e tensor.Engine) {
+	switch vv := v.(type) {
+	case *dualValue:
+		setEngine(vv.Value, e)
+		setEngine(vv.d, e)
+	case tensor.Tensor:
+		tensor.WithEngine(e)(vv)
 	}
 }

@@ -1,29 +1,16 @@
 package gorgonia
 
 import (
-	"unsafe"
-
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
-// Memory is a representation of memory of the value.
-//
-// The main reason for requiring both Uintptr() and Pointer() methods is because while Go currently does not have a compacting
-// garbage collector, from the docs of `unsafe`:
-//		Even if a uintptr holds the address of some object, the garbage collector, will not update that uintptr's value if the object moves,
-//		nor will that uintptr keep the object from being reclaimed.
-type Memory interface {
-	Uintptr() uintptr
-	MemSize() uintptr
-	Pointer() unsafe.Pointer
-}
-
-// Arena is a representation of a pool of Memory
+// Arena is a representation of a pool of tensor.Memory
 type Arena interface {
-	Get(dev Device, size int64) (Memory, error)       // Get returns a NoOpError when it cannot get a memory. Please allocate
-	GetFromValue(dev Device, v Value) (Memory, error) // Gets a memory and copies the values into the memory and returns it.
-	Put(dev Device, mem Memory, size int64)           // puts the memory back into the arena
-	PutValue(dev Device, v Value)                     // puts the memory back into the arena
+	Get(dev Device, size int64) (tensor.Memory, error)       // Get returns a NoOpError when it cannot get a memory. Please allocate
+	GetFromValue(dev Device, v Value) (tensor.Memory, error) // Gets a memory and copies the values into the memory and returns it.
+	Put(dev Device, mem tensor.Memory, size int64)           // puts the memory back into the arena
+	PutValue(dev Device, v Value)                            // puts the memory back into the arena
 
 	// Transfers memory from device to device
 	Transfer(toDev, fromDev Device, v Value, synchronous bool) (retVal Value, err error)

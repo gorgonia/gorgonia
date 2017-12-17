@@ -1,6 +1,6 @@
 package gorgonia
 
-import "github.com/chewxy/gorgonia/tensor"
+import "gorgonia.org/tensor"
 
 // sli is slice. It's named sli to prevent confusion over naming
 type sli struct {

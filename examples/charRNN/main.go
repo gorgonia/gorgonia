@@ -12,6 +12,9 @@ import (
 	"time"
 
 	T "github.com/chewxy/gorgonia"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -55,6 +58,11 @@ func cleanup(sigChan chan os.Signal, doneChan chan bool, profiling bool) {
 func main() {
 	flag.Parse()
 	rand.Seed(1337)
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	// intercept Ctrl+C
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -78,6 +86,7 @@ func main() {
 	go cleanup(sigChan, doneChan, profiling)
 
 	m := NewLSTMModel(inputSize, embeddingSize, outputSize, hiddenSizes)
+	r := newCharRNN(m)
 
 	solver := T.NewRMSPropSolver(T.WithLearnRate(learnrate), T.WithL2Reg(l2reg), T.WithClip(clipVal))
 	start := time.Now()
@@ -85,21 +94,27 @@ func main() {
 	for i := 0; i <= 100000; i++ {
 		// log.Printf("Iter: %d", i)
 		// _, _, err := m.run(i, solver)
-		cost, perp, err := m.run(i, solver)
+		cost, perp, err := run(r, i, solver)
 		if err != nil {
 			panic(fmt.Sprintf("%+v", err))
+		}
+
+		if i%1000 == 0 {
+			log.Printf("Going to predict now")
+			r.predict()
+			log.Printf("Done predicting")
+
+			old := r
+			r = newCharRNN(m)
+			old.cleanup()
+			log.Printf("New RNN - m.embeddint %v", m.embedding.Shape())
 		}
 
 		if i%100 == 0 {
 			timetaken := time.Since(eStart)
 			fmt.Printf("Time Taken: %v\tCost: %v\tPerplexity: %v\n", timetaken, cost, perp)
 			eStart = time.Now()
-		}
 
-		if i%1000 == 0 {
-			log.Printf("Going to predict now")
-			m.predict()
-			log.Printf("Done predicting")
 		}
 
 		if *memprofile != "" && i == 1000 {
@@ -116,5 +131,5 @@ func main() {
 
 	end := time.Now()
 	fmt.Printf("%v", end.Sub(start))
-	fmt.Printf("%+3.3s", m.embedding.Value())
+	fmt.Printf("%+3.3s", m.embedding)
 }

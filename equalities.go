@@ -1,6 +1,6 @@
 package gorgonia
 
-import "github.com/chewxy/gorgonia/tensor"
+import "gorgonia.org/tensor"
 
 func scalarEq(a, b Scalar) bool {
 	switch at := a.(type) {

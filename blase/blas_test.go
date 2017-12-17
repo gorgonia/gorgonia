@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/gonum/blas"
 	"github.com/stretchr/testify/assert"
+	"gonum.org/v1/gonum/blas"
 )
 
 const EPSILON float64 = 1e-10

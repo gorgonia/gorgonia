@@ -4,9 +4,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func clampFloat64(v, min, max float64) float64 {

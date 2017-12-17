@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func TestDtypeBasics(t *testing.T) {
@@ -92,14 +92,14 @@ func TestTensorTypeBasics(t *testing.T) {
 		assert.Equal(fmt.Sprintf("Tensor-%d %v", ttts.a.Dims, ttts.a.Of), fmt.Sprintf("%#v", ttts.a))
 	}
 
-	tt := newTensorType(1, hm.TypeVariable('x'))
+	tt := makeTensorType(1, hm.TypeVariable('x'))
 	k := hm.TypeVarSet{'x', 'y'}
 	v := hm.TypeVarSet{'a', 'b'}
 	tt2, err := tt.Normalize(k, v)
 	if err != nil {
 		t.Error(err)
 	}
-	assert.True(tt2.Eq(newTensorType(1, hm.TypeVariable('a'))))
+	assert.True(tt2.Eq(makeTensorType(1, hm.TypeVariable('a'))))
 
 }
 
@@ -137,11 +137,11 @@ func init() {
 		format string
 	}{
 
-		{newTensorType(1, Float64), newTensorType(1, Float64), true, hm.Types{Float64}, "Vector float64"},
-		{newTensorType(1, Float64), newTensorType(1, Float32), false, hm.Types{Float64}, "Vector float64"},
-		{newTensorType(1, Float64), newTensorType(2, Float64), false, hm.Types{Float64}, "Vector float64"},
-		{newTensorType(1, hm.TypeVariable('a')), newTensorType(1, hm.TypeVariable('a')), true, hm.Types{hm.TypeVariable('a')}, "Vector a"},
-		{newTensorType(1, hm.TypeVariable('a')), newTensorType(1, hm.TypeVariable('b')), false, hm.Types{hm.TypeVariable('a')}, "Vector a"},
+		{makeTensorType(1, Float64), makeTensorType(1, Float64), true, hm.Types{Float64}, "Vector float64"},
+		{makeTensorType(1, Float64), makeTensorType(1, Float32), false, hm.Types{Float64}, "Vector float64"},
+		{makeTensorType(1, Float64), makeTensorType(2, Float64), false, hm.Types{Float64}, "Vector float64"},
+		{makeTensorType(1, hm.TypeVariable('a')), makeTensorType(1, hm.TypeVariable('a')), true, hm.Types{hm.TypeVariable('a')}, "Vector a"},
+		{makeTensorType(1, hm.TypeVariable('a')), makeTensorType(1, hm.TypeVariable('b')), false, hm.Types{hm.TypeVariable('a')}, "Vector a"},
 	}
 
 	tensorOpsTest = []struct {
@@ -152,9 +152,9 @@ func init() {
 
 		aSub hm.Type
 	}{
-		{"a ~ Tensor Float64", hm.TypeVariable('a'), newTensorType(1, Float64), newTensorType(1, Float64)},
-		{"Tensor Float64 ~ a", newTensorType(1, Float64), hm.TypeVariable('a'), newTensorType(1, Float64)},
-		{"Tensor a ~ Tensor Float64", newTensorType(1, hm.TypeVariable('a')), newTensorType(1, Float64), Float64},
-		{"Tensor a ~ Tensor Float64", newTensorType(1, Float64), newTensorType(1, hm.TypeVariable('a')), Float64},
+		{"a ~ Tensor Float64", hm.TypeVariable('a'), makeTensorType(1, Float64), makeTensorType(1, Float64)},
+		{"Tensor Float64 ~ a", makeTensorType(1, Float64), hm.TypeVariable('a'), makeTensorType(1, Float64)},
+		{"Tensor a ~ Tensor Float64", makeTensorType(1, hm.TypeVariable('a')), makeTensorType(1, Float64), Float64},
+		{"Tensor a ~ Tensor Float64", makeTensorType(1, Float64), makeTensorType(1, hm.TypeVariable('a')), Float64},
 	}
 }

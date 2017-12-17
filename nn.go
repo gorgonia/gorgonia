@@ -1,8 +1,8 @@
 package gorgonia
 
 import (
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // BinaryXent is a convenience function for doing binary crossentropy stuff.

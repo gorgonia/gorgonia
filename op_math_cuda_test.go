@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/tensor"
 )
 
 func TestCUDACube(t *testing.T) {

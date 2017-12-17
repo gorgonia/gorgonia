@@ -3,8 +3,8 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // contains all public operations that can be performed on nodes
@@ -14,29 +14,29 @@ import (
 /* BINARY FUNCTIONS */
 func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 	stabLogf("Creating node for %v, a: %p, b: %p", op, a, b)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	// maybe make stabilization a build tag?
 	if stabilization {
-		enterLoggingContext()
+		enterLogScope()
 		if ebo, ok := op.(elemBinOp); ok {
 			ot := ebo.binOpType()
 
-			enterLoggingContext()
+			enterLogScope()
 			for _, fn := range binOpStabilizationFns[ot] {
 				if retVal, err = fn(a, b); err == nil {
-					leaveLoggingContext()
+					leaveLogScope()
 					return
 				}
 
 				if _, ok := err.(errNoStabilization); !ok {
-					leaveLoggingContext()
+					leaveLogScope()
 					return
 				}
 			}
-			leaveLoggingContext()
+			leaveLogScope()
 		}
-		leaveLoggingContext()
+		leaveLogScope()
 	}
 	stabLogf("No bin op stabilization")
 
@@ -90,7 +90,12 @@ func Mul(a, b *Node) (retVal *Node, err error) {
 	default:
 		return nil, errors.Errorf(nyiFail, "Mul", fmt.Sprintf("a %v b %v", a.shape, b.shape))
 	}
+}
 
+// BatchedMatMul returns a node representing the batched mat mul operation
+func BatchedMatMul(a, b *Node) (retVal *Node, err error) {
+	op := linAlgBinOp{āBinaryOperator: batchedMatMulOperator}
+	return binOpNode(op, a, b)
 }
 
 // OuterProd returns a Node representing the outer product of two vectors. This function will return an error if both input nodes are not vectors
@@ -145,29 +150,29 @@ func Gte(a, b *Node, retSame bool) (retVal *Node, err error) {
 
 func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 	stabLogf("Creating node for %v, a: %p %v", op, a, a)
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	if stabilization {
 
 		// do optimization/stabilization
 		// TODO: maybe recursively stabilize?
-		enterLoggingContext()
+		enterLogScope()
 		ot := op.(elemUnaryOp).unaryOpType()
 		for _, fn := range unaryOpStabilizationFns[ot] {
 			if retVal, err = fn(a); err == nil {
 				stabLogf("stabilized")
-				leaveLoggingContext()
+				leaveLogScope()
 				return
 			}
 
 			if _, ok := err.(errNoStabilization); !ok {
 				stabLogf("Actual error")
-				leaveLoggingContext()
+				leaveLogScope()
 				return
 			}
 			stabLogf("No stabilization found")
 		}
-		leaveLoggingContext()
+		leaveLogScope()
 		stabLogf("No stabilizations - retVal: %v", retVal)
 	}
 

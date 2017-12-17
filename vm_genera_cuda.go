@@ -5,9 +5,9 @@ package gorgonia
 import (
 	"fmt"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/tensor"
 )
 
 func (m *lispMachine) init() error {
@@ -61,8 +61,8 @@ func (m *lispMachine) WorkAvailable() <-chan bool {
 
 func (m *lispMachine) calcMemSize() (err error) {
 	compileLogf("calcmemsize")
-	enterLoggingContext()
-	defer leaveLoggingContext()
+	enterLogScope()
+	defer leaveLogScope()
 	var cpumem int64
 	var gpumem []int64
 	for _, n := range m.sorted {
@@ -139,7 +139,7 @@ func (m *lispMachine) execDevTrans(op devTrans, n *Node, children Nodes) (err er
 			return
 		}
 	} else {
-		var mem Memory
+		var mem tensor.Memory
 		if mem, err = m.Get(op.to, calcMemSize(cv.Dtype(), child.shape)); err != nil {
 			return
 		}
@@ -191,7 +191,7 @@ func (m *lispMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 	mods := make([]cu.Module, len(m.c))
 	fns := make(map[string][]cu.Function)
 	for i, c := range m.c {
-		if err = cu.SetCurrent(c.Context); err != nil {
+		if err = cu.SetCurrentContext(c.Context.CUDAContext()); err != nil {
 			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
 			return
 		}
@@ -223,7 +223,7 @@ func (m *lispMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 
 	// set the first to current
 	if len(m.c) > 0 {
-		if err = cu.SetCurrent(m.c[0].Context); err != nil {
+		if err = cu.SetCurrentContext(m.c[0].Context.CUDAContext()); err != nil {
 			err = errors.Wrapf(err, "Unable to set current")
 			return
 		}

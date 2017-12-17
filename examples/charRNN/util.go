@@ -2,7 +2,7 @@ package main
 
 import (
 	. "github.com/chewxy/gorgonia"
-	"github.com/chewxy/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 func sample(val Value) int {

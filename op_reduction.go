@@ -13,9 +13,9 @@ import (
 	"hash"
 	"hash/fnv"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 type maxOp struct {
@@ -34,14 +34,14 @@ func (op maxOp) Arity() int { return 1 }
 
 func (op maxOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := newTensorType(op.d, a)
+	t := makeTensorType(op.d, a)
 
 	var retType hm.Type
 	if op.d == 1 || len(op.along) == 0 || len(op.along) == op.d {
 		// then it redueces down
 		return hm.NewFnType(t, a)
 	}
-	retType = newTensorType(op.d-1, a)
+	retType = makeTensorType(op.d-1, a)
 	return hm.NewFnType(t, retType)
 }
 
@@ -140,7 +140,7 @@ func (op sumOp) Arity() int { return 1 }
 //		sumOp :: (Summable a) ⇒ Tensor d a → Tensor d-1 a
 func (op sumOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
-	t := newTensorType(op.d, a)
+	t := makeTensorType(op.d, a)
 
 	if op.inputShape.IsVector() {
 		return hm.NewFnType(t, a)
@@ -151,7 +151,8 @@ func (op sumOp) Type() hm.Type {
 		return hm.NewFnType(t, a)
 	}
 
-	return hm.NewFnType(t, newTensorType(op.d-1, a))
+	retType := makeTensorType(op.d-1, a)
+	return hm.NewFnType(t, retType)
 }
 
 func (op sumOp) InferShape(inputs ...DimSizer) (shape tensor.Shape, err error) {

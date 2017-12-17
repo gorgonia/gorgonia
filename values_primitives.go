@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/chewxy/gorgonia/tensor"
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
 )
 
 // Scalar represents a scalar(non-array-based) value. Do note that it's the pointers of the scalar types (F64, F32, etc) that implement
@@ -180,71 +180,71 @@ func (v *B) isScalar() bool   { return true }
 
 /* Uintptr */
 
-// Uintptr satisfies the Memory interface
+// Uintptr satisfies the tensor.Memory interface
 func (v *F64) Uintptr() uintptr { return uintptr(unsafe.Pointer(v)) }
 
-// Uintptr satisfies the Memory interface
+// Uintptr satisfies the tensor.Memory interface
 func (v *F32) Uintptr() uintptr { return uintptr(unsafe.Pointer(v)) }
 
-// Uintptr satisfies the Memory interface
+// Uintptr satisfies the tensor.Memory interface
 func (v *I) Uintptr() uintptr { return uintptr(unsafe.Pointer(v)) }
 
-// Uintptr satisfies the Memory interface
+// Uintptr satisfies the tensor.Memory interface
 func (v *I64) Uintptr() uintptr { return uintptr(unsafe.Pointer(v)) }
 
-// Uintptr satisfies the Memory interface
+// Uintptr satisfies the tensor.Memory interface
 func (v *I32) Uintptr() uintptr { return uintptr(unsafe.Pointer(v)) }
 
-// Uintptr satisfies the Memory interface
+// Uintptr satisfies the tensor.Memory interface
 func (v *U8) Uintptr() uintptr { return uintptr(unsafe.Pointer(v)) }
 
-// Uintptr satisfies the Memory interface
+// Uintptr satisfies the tensor.Memory interface
 func (v *B) Uintptr() uintptr { return uintptr(unsafe.Pointer(v)) }
 
 /* MemSize */
 
-// MemSize satisfies the Memory interface
+// MemSize satisfies the tensor.Memory interface
 func (v *F64) MemSize() uintptr { return 8 }
 
-// MemSize satisfies the Memory interface
+// MemSize satisfies the tensor.Memory interface
 func (v *F32) MemSize() uintptr { return 4 }
 
-// MemSize satisfies the Memory interface
+// MemSize satisfies the tensor.Memory interface
 func (v *I) MemSize() uintptr { return reflect.TypeOf(*v).Size() }
 
-// MemSize satisfies the Memory interface
+// MemSize satisfies the tensor.Memory interface
 func (v *I64) MemSize() uintptr { return 8 }
 
-// MemSize satisfies the Memory interface
+// MemSize satisfies the tensor.Memory interface
 func (v *I32) MemSize() uintptr { return 4 }
 
-// MemSize satisfies the Memory interface
+// MemSize satisfies the tensor.Memory interface
 func (v *U8) MemSize() uintptr { return 1 }
 
-// MemSize satisfies the Memory interface
+// MemSize satisfies the tensor.Memory interface
 func (v *B) MemSize() uintptr { return reflect.TypeOf(*v).Size() }
 
 /* Pointer */
 
-// Pointer returns the pointer as an unsafe.Pointer. Satisfies the Memory interface
+// Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *F64) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
-// Pointer returns the pointer as an unsafe.Pointer. Satisfies the Memory interface
+// Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *F32) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
-// Pointer returns the pointer as an unsafe.Pointer. Satisfies the Memory interface
+// Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *I) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
-// Pointer returns the pointer as an unsafe.Pointer. Satisfies the Memory interface
+// Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *I64) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
-// Pointer returns the pointer as an unsafe.Pointer. Satisfies the Memory interface
+// Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *I32) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
-// Pointer returns the pointer as an unsafe.Pointer. Satisfies the Memory interface
+// Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *U8) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
-// Pointer returns the pointer as an unsafe.Pointer. Satisfies the Memory interface
+// Pointer returns the pointer as an unsafe.Pointer. Satisfies the tensor.Memory interface
 func (v *B) Pointer() unsafe.Pointer { return unsafe.Pointer(v) }
 
 func formatScalar(v Scalar, s fmt.State, c rune) {
