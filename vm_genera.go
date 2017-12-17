@@ -102,6 +102,7 @@ func (m *lispMachine) Reset() {
 	m.bwd = len(m.q) - 1
 }
 
+// RunAll traverses a graph and executes every node. Backpropagation is done if necessary
 func (m *lispMachine) RunAll() (err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -115,11 +116,6 @@ func (m *lispMachine) RunAll() (err error) {
 			m.q = nil // this needs to be nil'd or else there would still be references to m. Then there won't be any garbage being collected
 		}()
 	}
-
-	// m.logf("SORTED:")
-	// for i, n := range m.sorted {
-	// 	m.logf("%d: %v (%d)", i, n, n.ID())
-	// }
 
 	workAvailable := m.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
@@ -180,6 +176,7 @@ func (m *lispMachine) RunAll() (err error) {
 	return nil
 }
 
+// UnbindAll detaches the values from the node, allowing for them to be cleaned up the next GC cycle.
 func (m *lispMachine) UnbindAll() {
 	// if m.dealloc() {
 	for _, n := range m.sorted {
@@ -191,6 +188,7 @@ func (m *lispMachine) UnbindAll() {
 	// }
 }
 
+// LastRun returns the nodes and results from the last run. Additionally it returns whether backprop was done.
 func (m *lispMachine) LastRun() (n *Node, backprop bool) {
 	if m.fwd < 0 && m.runBwd() {
 		goto backward
@@ -359,7 +357,7 @@ func (m *lispMachine) forward() (err error) {
 
 		defer func() {
 			if allocV {
-				m.logf("Putting 0x%x", v.Uintptr())
+				m.logf("Putting 0x%x |%T", v.Uintptr(), v)
 				m.PutValue(dev, v)
 			}
 			if allocD {
