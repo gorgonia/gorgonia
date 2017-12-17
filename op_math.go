@@ -95,8 +95,10 @@ func (op elemBinOp) Type() hm.Type {
 	a := hm.TypeVariable('a')
 
 	var a0, a1, retType hm.Type
+	var arg0Dims int
 	switch arg0 := op.arg0.(type) {
 	case TensorType:
+		arg0Dims = arg0.Dims
 		a0 = fromTensorType(arg0, a)
 		retType = fromTensorType(arg0, a)
 	default:
@@ -106,8 +108,10 @@ func (op elemBinOp) Type() hm.Type {
 
 	switch arg1 := op.arg1.(type) {
 	case TensorType:
+		if arg1.Dims >= arg0Dims {
+			retType = fromTensorType(arg1, a)
+		}
 		a1 = fromTensorType(arg1, a)
-		retType = fromTensorType(arg1, a)
 	default:
 		a1 = a
 	}
@@ -146,7 +150,12 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 		case tensor.Shape:
 			switch {
 			case x.IsScalar() && y.IsScalar():
-				retVal = scalarShape
+				// preserve ambiguous scalar shape
+				if (len(x) > 0) && (1 == x[0]) && (len(y) > 0) && (1 == y[0]) {
+					retVal = x
+				} else {
+					retVal = scalarShape
+				}
 			case x.IsScalar() && !y.IsScalar():
 				retVal = y
 			case !x.IsScalar() && y.IsScalar():
