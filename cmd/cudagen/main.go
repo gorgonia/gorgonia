@@ -43,7 +43,7 @@ func compileCUDA(src, targetLoc string, maj, min int) {
 
 	slow.Stderr = &stderr
 	if err := slow.Run(); err != nil {
-		log.Fatalf("Failed to compile with nvcc: %v.", stderr.String())
+		log.Fatalf("Failed to compile with nvcc. Error: %v. nvcc error: %v", err, stderr.String())
 	}
 
 	// fast := exec.Command("nvcc", output, arch, "-ptx", "-Xptxas", "-allow-expensive-optimizations", "-fmad=false", "-use_fast_math", src)

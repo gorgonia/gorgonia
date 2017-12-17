@@ -15,7 +15,7 @@ import (
 
 const CUDA = true
 
-var _ tensor.Engine = ExternMetadata{}
+var _ tensor.Engine = &ExternMetadata{}
 
 const (
 	// Any address of a variable residing in global memory or returned by one of the
@@ -44,6 +44,8 @@ type CUDAMachine interface {
 // ExternMetadata holds any metadata for CUDA related stuff.
 // The slices in there are indexed by deviceID
 type ExternMetadata struct {
+	tensor.Engine
+
 	warp []int // WarpSize
 	mtpb []int // MaxThreadsPerBlock
 	mgdx []int // MaxGridDimX
@@ -67,8 +69,8 @@ type ExternMetadata struct {
 	m map[string][]cu.Module
 	f map[string][]cu.Function
 
-	sync.Mutex           // lock to protect using
-	u          cu.Device // using which device?
+	sync.Mutex        // lock to protect using
+	u          Device // using which device?
 
 	blasHasWork bool
 	initialzed  bool
@@ -310,13 +312,14 @@ func (m *ExternMetadata) Use(dev Device) {
 
 func (m *ExternMetadata) AllocAccessible() bool                    { return false }
 func (m *ExternMetadata) Alloc(size int64) (tensor.Memory, error)  { return m.Get(m.u, size) }
-func (m *ExternMetadata) Free(mem tensor.Memory, size int64) error { return m.Put(m.u, mem, size) }
+func (m *ExternMetadata) Free(mem tensor.Memory, size int64) error { m.Put(m.u, mem, size); return nil }
 func (m *ExternMetadata) Memset(mem tensor.Memory, val interface{}) error {
 	return errors.Errorf("Cannot set memory")
 }
 func (m *ExternMetadata) Memclr(tensor.Memory)                {}
 func (m *ExternMetadata) Memcpy(dst, src tensor.Memory) error { return errors.New("NYI") }
 func (m *ExternMetadata) Accessible(mem tensor.Memory) (tensor.Memory, error) {
+	// TODO
 	return nil, errors.New("NYI")
 }
 func (m *ExternMetadata) WorksWith(order tensor.DataOrder) bool { return true }
@@ -362,7 +365,9 @@ func (m *ExternMetadata) init(sizes []int64) {
 			m.initFail()
 			return
 		}
-		ctx, err := dev.MakeContext(cu.SchedAuto)
+
+		ctxFlag := cu.SchedAuto
+		cuctx, err := dev.MakeContext(ctxFlag)
 		// ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
 		if err != nil {
 			if err == cu.OutOfMemory {
@@ -378,6 +383,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 			m.initFail()
 			return
 		}
+		ctx := cu.CtxFromCUContext(dev, cuctx, ctxFlag)
 
 		var attrs []int
 		if attrs, err = dev.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
@@ -447,12 +453,11 @@ func (m *ExternMetadata) initFail() {
 func (m *ExternMetadata) cleanup() {
 	for i, c := range m.c {
 		c.Cleanup()
-		cu.SetCurrentContext(c.Context)
+		cu.SetCurrentContext(c.Context.CUDAContext())
 		for _, v := range m.m {
 			mod := v[i]
 			cu.Unload(mod)
 		}
-		cu.DestroyContext(&c.Context)
 	}
 
 	for _, a := range m.a {
@@ -462,6 +467,11 @@ func (m *ExternMetadata) cleanup() {
 		if a.start != 0 {
 			cu.MemFree(cu.DevicePtr(a.start))
 		}
+	}
+
+	// destory contexts
+	for i := range m.c {
+		m.c[i] = nil // tell gc to collect. ctx.finalizeCtx will run
 	}
 }
 

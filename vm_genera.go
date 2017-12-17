@@ -322,7 +322,6 @@ func (m *lispMachine) forward() (err error) {
 
 	// other wise it's time to execute the op
 	m.logf("execute Op")
-
 	dev := n.dataOn
 	op := NewExternalOp(n.op, ExecutionContext{m, dev}, nil)
 
@@ -334,21 +333,11 @@ func (m *lispMachine) forward() (err error) {
 
 	m.enterLogScope()
 	for i, child := range children {
-		m.logf("child!! %v %v", child, child.Shape())
+		m.logf("child %d: %v %v", i, child, child.Shape())
 		if child.Device() == n.Device() {
 			inputs[i] = child.boundTo.(*dualValue)
 			// continue
 		}
-		// if child.boundTo != nil {
-		// 	dv := child.boundTo.(*dualValue)
-		// 	if dv.d != nil {
-		// 		m.logf("0x%x | 0x%x", child.boundTo.(*dualValue).Value.Uintptr(), child.boundTo.(*dualValue).d.Uintptr())
-		// 	} else {
-		// 		m.logf("0x%x | NIL", child.boundTo.(*dualValue).Value.Uintptr())
-		// 	}
-		// } else {
-		// 	m.logf("no boundto")
-		// }
 
 		var allocV, allocD bool
 		var v, d Value
@@ -382,7 +371,6 @@ func (m *lispMachine) forward() (err error) {
 		}()
 	}
 	m.leaveLogScope()
-
 	m.watchedLogf("Before:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
 
@@ -485,9 +473,6 @@ func (m *lispMachine) forward() (err error) {
 	}
 	m.watchedLogf("After:")
 	m.watchedLogf(m.valueFmt, n.boundTo)
-	// if n.boundTo != nil {
-	// 	m.watchedLogf("0x%x | 0x%x", n.boundTo.(*dualValue).Value.Uintptr(), n.boundTo.(*dualValue).d.Uintptr())
-	// }
 
 	if aop, ok := op.Op.(ADOp); ok && m.runBwd() {
 		instr := adInstr{

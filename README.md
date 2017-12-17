@@ -327,11 +327,13 @@ go build -tags='cuda' .
 
 Furthermore, there are some additional requirements:
 
-1. [CUDA toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is required. Installing this installs the `nvcc` compiler which is required to run your code with CUDA
+1. [CUDA toolkit 9.0](https://developer.nvidia.com/cuda-toolkit) is required. Installing this installs the `nvcc` compiler which is required to run your code with CUDA.
+2. Be sure to follow the [post-installation steps](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#post-installation-actions)
 2. `go install github.com/chewxy/gorgonia/cmd/cudagen`. This installs the `cudagen` program. Running `cudagen` will generate the relevant CUDA related code for Gorgonia.
 3. The CUDA ops must be manually enabled in your code with the `UseCudaFor` option.
 4. `runtime.LockOSThread()` must be called in the main function where the VM is running. CUDA requires thread affinity, and therefore the OS thread must be locked.
 
+Because `nvcc` only plays well with `gcc` version 6 and below (the current version is 7), this is also quite helpful: `sudo ln -s /path/to/gcc-6 /usr/local/cuda-9.0/bin/gcc` 
 
 ### Example ###
 
