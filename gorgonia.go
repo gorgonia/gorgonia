@@ -86,7 +86,6 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var s tensor.Shape
 	var val Value
 
-	name = fmt.Sprintf("%v", v)
 	val, t, _, err := anyToValue(v)
 	if err != nil {
 		panic(err)
