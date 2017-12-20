@@ -201,10 +201,6 @@ func newNode(opts ...NodeConsOpt) *Node {
 	}
 	n.fix()
 
-	if n.name == "" {
-		panic(fmt.Sprintf("Node %v, failed constructing node. Name field is empty", n))
-	}
-
 	incrNN()
 	return n
 }
