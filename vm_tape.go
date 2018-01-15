@@ -413,6 +413,9 @@ func (p *program) String() string {
 	return buf.String()
 }
 
+// Graph enables the end user to inspect the graph (typically useful for debugging)
+func (p *program) Graph() *ExprGraph { return p.g }
+
 /* REGISTER */
 
 type register struct {
