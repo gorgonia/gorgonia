@@ -242,8 +242,8 @@ func (df *dataflow) buildIntervals(sorted Nodes) {
 		nInter := intervals[n]
 		compileLogf("n %v | %v", n, nInter)
 
-		// inputs will be live the entire program
-		if n.isInput() {
+		// inputs and constants will be live the entire program
+		if n.isInput() || n.isConstant() {
 			nInter.addRange(instrNum, instructions)
 			repl, ok := df.devTransRepl[n]
 			if ok {
