@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"bytes"
 	"fmt"
-	"log"
 
 	"github.com/awalterschulze/gographviz"
 	"gonum.org/v1/gonum/graph"
@@ -577,7 +576,6 @@ func (g *ExprGraph) subgraph(ns Nodes, findMissing bool, opts ...Nodes) *ExprGra
 		for _, n := range ns {
 			for _, parent := range g.to[n] {
 				if parent.isStmt {
-					log.Printf("adding parent %v", parent)
 					roots = append(roots, parent)
 					ns = append(ns, parent)
 				}
