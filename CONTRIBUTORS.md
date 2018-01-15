@@ -7,7 +7,7 @@
 * Jorge Landivar @docmerlin - tests, bug finding and documentation
 * Matoko Ito @ynqa - tests, documentation and bug finding
 * Siquus (@siquus) - TensorDot, contraction
-* Tan Chen(@tantanchen) - Bug finding and documentation
+* Tan Chen (@tantanchen) - Bug finding and documentation
 
 
 # Contributors
@@ -20,7 +20,7 @@
 * James Michael DuPont | @h4ck3rm1k3
 * Jorge Landivar | @docmerlin
 * Yuanlin Lian | @alienchow
-
+* Bart Fokker | @barthr
 
 
 For more contributors, check out the [github contributors page](https://github.com/gorgonia/graphs/contributors)

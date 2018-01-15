@@ -135,7 +135,13 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 			g.to[retVal] = nil
 		}
 	}()
-
+	// check for node with the same name in the graph
+	// we don't update the graph if this is the case
+	for _, node := range g.constants {
+		if node.name == n.name && n.isConstant() {
+			return node
+		}
+	}
 	hash := n.Hashcode()
 	if existing, ok := g.byHash[hash]; ok {
 		if existing == nil {
