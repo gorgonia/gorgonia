@@ -116,9 +116,7 @@ func In(g *ExprGraph) NodeConsOpt {
 // WithName is a node construction option that gives the *Node the provided name. This is especially useful in debugging graphs.
 func WithName(name string) NodeConsOpt {
 	f := func(n *Node) {
-		if name != "" {
-			n.name = name
-		}
+		n.name = name
 	}
 	return f
 }
