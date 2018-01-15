@@ -165,7 +165,7 @@ func TestGraphSubgraph(t *testing.T) {
 	g, x, y, z := simpleVecEqn()
 
 	sub := Nodes{x, y}
-	g2 := g.subgraph(sub)
+	g2 := g.subgraph(sub, true)
 
 	t.Logf("%v", g2.AllNodes())
 
@@ -178,7 +178,7 @@ func TestGraphSubgraph(t *testing.T) {
 	assert.Equal(2, len(g2.roots))
 }
 
-func TestGraphSubgraphRoots(t *testing.T) {
+func TestGraph_SubgraphRoots(t *testing.T) {
 	assert := assert.New(t)
 	g, x, y, z := simpleVecEqn()
 	sz := Must(Sum(z))
@@ -207,6 +207,25 @@ func TestGraphSubgraphRoots(t *testing.T) {
 	assert.NotContains(ns, z)
 	assert.NotContains(ns, sz)
 	assert.NotContains(ns, readSZ)
+}
+
+func TestGraph_ExactSubgraphRoots(t *testing.T) {
+	assert := assert.New(t)
+	g, x, y, z := simpleVecEqn()
+	sz := Must(Sum(z))
+	setXtoZ := Set(x, z) // setting x = z
+
+	sg0 := g.SubgraphRoots(sz)
+	sg1 := g.ExactSubgraphRoots(sz)
+	ns0 := sg0.AllNodes()
+	ns1 := sg1.AllNodes()
+	assert.Contains(ns0, setXtoZ)
+	assert.NotContains(ns1, setXtoZ)
+	assert.Contains(ns0, x)
+	assert.Contains(ns0, y)
+	assert.Contains(ns0, z)
+	assert.Contains(ns0, sz)
+
 }
 
 func TestGraph_Constant(t *testing.T) {

@@ -57,12 +57,13 @@ func Compile(g *ExprGraph) (prog *program, locMap map[*Node]register, err error)
 
 // CompileFunction takes a graph, subsets it based on the input and output nodes provided and outputs a program suitable for *tapeMachine to run.
 // It is analogous to theano.Function().
+// If some input nodes are not used or is not reachable, this function will return an error
 func CompileFunction(g *ExprGraph, inputs, outputs Nodes) (prog *program, locMap map[*Node]register, err error) {
 	compileLogf("CompileFunctionNEW. Inputs: %d; outputs: %d", inputs, outputs)
 	enterLogScope()
 	defer leaveLogScope()
 
-	subgraph := g.SubgraphRoots(outputs...)
+	subgraph := g.ExactSubgraphRoots(outputs...)
 	var unused Nodes
 	for _, in := range inputs {
 		if !subgraph.all.Contains(in) {

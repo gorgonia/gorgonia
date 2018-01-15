@@ -567,17 +567,18 @@ func (g *ExprGraph) To(n graph.Node) []graph.Node {
 }
 
 // subgraph is basically a subset of nodes. This is useful for compiling sub sections of the graph
-func (g *ExprGraph) subgraph(ns Nodes, opts ...Nodes) *ExprGraph {
+func (g *ExprGraph) subgraph(ns Nodes, findMissing bool, opts ...Nodes) *ExprGraph {
 	// ns = ns.Set()
 
 	var roots Nodes
-
 	// add missing stuff first
-	for _, n := range ns {
-		for _, parent := range g.to[n] {
-			if parent.isStmt {
-				roots = append(roots, parent)
-				ns = append(ns, parent)
+	if findMissing {
+		for _, n := range ns {
+			for _, parent := range g.to[n] {
+				if parent.isStmt {
+					roots = append(roots, parent)
+					ns = append(ns, parent)
+				}
 			}
 		}
 	}
@@ -650,11 +651,31 @@ func (g *ExprGraph) Subgraph(ns ...*Node) *ExprGraph {
 	if len(ns) == 1 {
 		g.SubgraphRoots(ns[0])
 	}
-	return g.subgraph(ns)
+	return g.subgraph(ns, true)
 }
 
 // SubgraphRoots creates a subgraph, assuming the provided nodes are roots to the new subgraph.
 func (g *ExprGraph) SubgraphRoots(ns ...*Node) *ExprGraph {
+	sub := g.walkFromRoots(ns...)
+	return g.subgraph(sub, true, ns)
+}
+
+// ExactSubgraphRoots creates a subgraph from the roots provided.
+// The difference between SubgraphRoots and ExactSubgraphRoots is that ExactSubGraphRoots
+// will not attempt to discover if any nodes are missing.
+//
+// Given a function like the following:
+//		z = x + y
+//		set(x, -x.Grad) // setting the value of x to the negative of the gradient
+//
+// When SubgraphRoots is used on z, the `-x.Grad` will be included.
+// When using ExactSubgraphRoots, only `x` and `y` are included in the subgraph
+func (g *ExprGraph) ExactSubgraphRoots(ns ...*Node) *ExprGraph {
+	sub := g.walkFromRoots(ns...)
+	return g.subgraph(sub, false, ns)
+}
+
+func (g *ExprGraph) walkFromRoots(ns ...*Node) Nodes {
 	sub := make(Nodes, len(ns))
 	copy(sub, ns)
 
@@ -670,7 +691,7 @@ func (g *ExprGraph) SubgraphRoots(ns ...*Node) *ExprGraph {
 			sub = append(sub, node)
 		}
 	}
-	return g.subgraph(sub, ns)
+	return sub
 }
 
 type edge struct {

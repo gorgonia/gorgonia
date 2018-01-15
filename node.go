@@ -497,7 +497,7 @@ func (n *Node) RestrictedToDot(up, down int) string {
 		downQ = downQ[origLen:]
 	}
 
-	sg := g.subgraph(ns)
+	sg := g.subgraph(ns, false)
 
 	n.ofInterest = true
 	defer func() {

@@ -7,6 +7,7 @@
 * Jorge Landivar @docmerlin - tests, bug finding and documentation
 * Matoko Ito @ynqa - tests, documentation and bug finding
 * Siquus (@siquus) - TensorDot, contraction
+* Tan Chen(@tantanchen) - Bug finding and documentation
 
 
 # Contributors
