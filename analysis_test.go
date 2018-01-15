@@ -12,12 +12,13 @@ func TestBuildIntervals(t *testing.T) {
 	assert := assert.New(t)
 	var err error
 	g, x, y, z := simpleVecEqn()
-
 	var readVal Value
 	r := Read(z, &readVal)
 
 	z2 := Must(Square(z))
 	z2y := Must(HadamardProd(z2, y))
+	c := NewConstant(1.0, WithName("FOOO")) // const
+	g.addToAll(c)                           // this is a hack because there is no good way to get a constant into a graph since In() won't work on constatns
 
 	// because sorting is unstable, we need to test many times
 	var sorted Nodes
@@ -31,7 +32,7 @@ func TestBuildIntervals(t *testing.T) {
 
 		df := analyze(g, sorted)
 		df.buildIntervals(sorted)
-		df.debugIntervals(sorted)
+		df.debugIntervals(sorted) // prints intervals on debug mode
 		intervals = df.intervals
 
 		// inputs are live until the last instruction
@@ -44,6 +45,9 @@ func TestBuildIntervals(t *testing.T) {
 		if intervals[y].start != 1 && intervals[y].start != 0 {
 			t.Errorf("y starts at 1 or 0 (depending on how the sort allocates it)")
 		}
+
+		// constants should be live until the last instruction
+		assert.Equal(len(intervals), intervals[c].end, "%v", len(sorted))
 
 		assert.Equal(2, intervals[z].start)
 		if intervals[z2].start > intervals[z].end {
