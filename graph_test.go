@@ -165,7 +165,7 @@ func TestGraphSubgraph(t *testing.T) {
 	g, x, y, z := simpleVecEqn()
 
 	sub := Nodes{x, y}
-	g2 := g.subgraph(sub)
+	g2 := g.subgraph(sub, true)
 
 	t.Logf("%v", g2.AllNodes())
 
