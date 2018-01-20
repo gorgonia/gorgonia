@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -17,6 +18,9 @@ import (
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
+
+	"gopkg.in/cheggaaa/pb.v1"
+	"time"
 )
 
 var (
@@ -246,10 +250,15 @@ func main() {
 
 	batches := numExamples / bs
 	log.Printf("Batches %d", batches)
+	bar := pb.New(batches)
+	bar.SetRefreshRate(time.Second)
+	bar.SetMaxWidth(80)
+
 	for i := 0; i < *epochs; i++ {
-		log.Printf("Epoch %d", i)
+		bar.Prefix(fmt.Sprintf("Epoch %d", i))
+		bar.Set(0)
+		bar.Start()
 		for b := 0; b < batches; b++ {
-			log.Printf("Batch %d", b)
 			start := b * bs
 			end := start + bs
 			if start >= numExamples {
@@ -278,7 +287,9 @@ func main() {
 			}
 			solver.Step(m.learnables())
 			vm.Reset()
+			bar.Increment()
 		}
+		log.Printf("Epoch %d | cost %v", i, costVal)
 
 	}
 }
