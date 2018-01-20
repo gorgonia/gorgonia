@@ -244,13 +244,14 @@ func main() {
 	}
 	go cleanup(sigChan, doneChan, profiling)
 
+	batches := numExamples / bs
+	log.Printf("Batches %d", batches)
 	for i := 0; i < *epochs; i++ {
-		batches := numExamples / bs
-		log.Printf("Batches %d", batches)
+		log.Printf("Epoch %d", i)
 		for b := 0; b < batches; b++ {
+			log.Printf("Batch %d", b)
 			start := b * bs
 			end := start + bs
-			log.Printf("Working on batch: %d", b)
 			if start >= numExamples {
 				break
 			}
@@ -269,14 +270,12 @@ func main() {
 			if err = xVal.(*tensor.Dense).Reshape(bs, 1, 28, 28); err != nil {
 				log.Fatal("Unable to reshape %v", err)
 			}
-			log.Printf("xVal %v", xVal.Shape())
 
 			gorgonia.Let(x, xVal)
 			gorgonia.Let(y, yVal)
 			if err = vm.RunAll(); err != nil {
 				log.Fatalf("Failed at epoch  %d: %v", i, err)
 			}
-			log.Printf("Epoch: %v - Cost %v", i, costVal)
 			solver.Step(m.learnables())
 			vm.Reset()
 		}
