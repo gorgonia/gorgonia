@@ -18,8 +18,11 @@ import (
 )
 
 const (
-	N         = 26733
-	feats     = 10
+	// N is the number of rows in our dataset
+	N = 26733
+	// feats is the number of features (x) in our dataset
+	feats = 10
+	// trainIter is the number of interations for which to train
 	trainIter = 5000
 )
 
@@ -29,14 +32,16 @@ var static = flag.Bool("static", false, "Use static test file")
 var wT tensor.Tensor
 var yT tensor.Tensor
 var xT tensor.Tensor
-var Float = tensor.Float64
+
+// in this example, we will generate random float64 values
+var float = tensor.Float64
 
 // init generates random values for x, w, and y for demo purposes
 func init() {
-	xBacking := tensor.Random(Float, N*feats)
-	wBacking := tensor.Random(Float, feats)
+	xBacking := tensor.Random(float, N*feats)
+	wBacking := tensor.Random(float, feats)
 	var yBacking interface{}
-	switch Float {
+	switch float {
 	case tensor.Float64:
 		backing := make([]float64, N)
 		for i := range backing {
@@ -62,12 +67,17 @@ func main() {
 	log.SetFlags(0)
 
 	if *static {
-		Float = tensor.Float64 // because the loadStatck function only loads []float64
+		float = tensor.Float64 // because the loadStatck function only loads []float64
 		wBacking, xBacking, yBacking := loadStatic()
 		xT = tensor.New(tensor.WithBacking(xBacking), tensor.WithShape(N, feats))
 		yT = tensor.New(tensor.WithBacking(yBacking), tensor.WithShape(N))
 		wT = tensor.New(tensor.WithBacking(wBacking), tensor.WithShape(feats))
 	}
+
+	// To start, we need to create a graph and construct all the nodes.
+	// Everything from the input to the prediction needs to be a node.
+
+	// We start by creating nodes for the training
 	// create a new graph and add x, y, w, b, and one as Nodes
 	g := G.NewGraph()
 	x := G.NewMatrix(g, Float, G.WithName("x"), G.WithShape(N, feats))
@@ -75,20 +85,22 @@ func main() {
 
 	w := G.NewVector(g, Float, G.WithName("w"), G.WithShape(feats))
 	b := G.NewScalar(g, Float, G.WithName("bias"))
-	// Why do we need a node with the constant one?
+	// Add a constant node 1 to be used later in the loss function
 	one := G.NewConstant(1.0)
 
+	// Here we create the nodes that will do the prediction operations
 	// create a node that has the operation: (x*w + b)
-	xwmb := G.Must(G.Add(G.Must(G.Mul(x, w)), b)) // since we know we have a matrix*vector, why do we call Mul() here?
+	xwmb := G.Must(G.Add(G.Must(G.Mul(x, w)), b))
 	// create a node that has the operation: sigmoid(xwmb)
 	prob := G.Must(G.Sigmoid(xwmb))
-	G.WithName("prob")(prob) // why do we assign the name on a separate line? x, y, w, and b were named in one line
-
+	G.WithName("prob")(prob)
 	// create a "pred" node that has the operation (prod > 0.5)
 	// this ensures that our prediction output is {0,1}
 	pred := G.Must(G.Gt(prob, G.NewConstant(0.5), false))
 	G.WithName("pred")(pred)
 
+	// Here we create the nodes that contain the operations that
+	// will calculate the cost function.
 	// binary cross entropy: -y * log(prob) - (1-y)*log(1-prob)
 	logProb := G.Must(G.Log(prob))
 	fstTerm := G.Must(G.HadamardProd(G.Must(G.Neg(y)), logProb))
@@ -110,33 +122,40 @@ func main() {
 	cost := G.Must(G.Add(loss, regTerm))
 	G.WithName("cost")(cost)
 
-	// calculate gradient
+	// calculate gradient by backpropagation https://en.wikipedia.org/wiki/Backpropagation
 	grads, err := G.Grad(cost, w, b)
 	handleError(err)
-
+	// "dcost/dw" == derivative of cost with respect to w
 	G.WithName("dcost/dw")(grads[0])
+	// "dcost/db" == derivative of cost with respect to b
 	G.WithName("dcost/db")(grads[1])
 
-	// gradient updates
-	learnRate := G.NewConstant(0.1)
+	// create the nodes for calculating the gradient
+	learnRate := G.NewConstant(0.1) // be careful not to set a learnRate too high
 	gwlr := G.Must(G.Mul(learnRate, grads[0]))
 	wUpd := G.Must(G.Sub(w, gwlr))
 	gblr := G.Must(G.Mul(learnRate, grads[1]))
 	bUpd := G.Must(G.Sub(b, gblr))
-	// why do we set w to wUpd here? doesn't the set need to one of the instructions in the program after the gradients are applied?
+
+	// create the nodes that do the final operation of updating w and b
 	G.Set(w, wUpd)
 	G.Set(b, bUpd)
-
+	// write to the gographviz file for debugging https://github.com/awalterschulze/gographviz
 	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 
+	// Now that we have created all the notes, we can compile a program.
+	// We are essentially creating a list of instructions to get from our inputs {x, y}
+	// to our outputs {wUpd, bUpd}. Note that we only need to create the progam once.
 	prog, locMap, err := G.CompileFunction(g, G.Nodes{x, y}, G.Nodes{wUpd, bUpd})
 	handleError(err)
-	fmt.Printf("%v", prog)
+	fmt.Printf("%v", prog) // print the instructions
+	// With our program, we initialize a new TapeMachine that will execute our program
 	machine := G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
 
+	// we allocated the node w before, but we never set it's initial value
 	machine.Let(w, wT)
 	machine.Let(b, 0.0)
-
+	// ?? Why do we need to profile the CPU?
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -146,13 +165,18 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	// Now that we have our graph, program, and machine, we can start training
 	start := time.Now()
 	for i := 0; i < trainIter; i++ {
+		// move the pointer back to the beginning of the prog. Reset() does not delete any values
 		machine.Reset()
+		// ?? why do we need to reinitialize the values the nodes {x,y}?
 		machine.Let(x, xT)
 		machine.Let(y, yT)
 		handleError(machine.RunAll())
-
+		// ?? Shouldn't the program have already done this? The last node has this Set() operation
+		//	G.Set(w, wUpd)
+		//	G.Set(b, bUpd)
 		machine.Set(w, wUpd)
 		machine.Set(b, bUpd)
 	}
@@ -161,13 +185,18 @@ func main() {
 
 	fmt.Printf("Target values: %#v\n", yT)
 	fmt.Printf("START\n")
+
+	// Now that we have our final model, we need to write a new program
+	// that goes from the input {x} to the prediction {pred}
 	prog, locMap, err = G.CompileFunction(g, G.Nodes{x}, G.Nodes{pred})
 	fmt.Printf("%+v", err)
 	handleError(err)
 	machine = G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
 
+	// ?? Don't we want to use the weight and bias that we trained? not reset them?
 	machine.Let(w, wT)
 	machine.Let(b, 0.0)
+	// ?? Shouldn't we create a new tensor xT so that we can predict?
 	machine.Let(x, xT)
 	handleError(machine.RunAll())
 	fmt.Printf("Predicted: %#v\n", pred.Value())
