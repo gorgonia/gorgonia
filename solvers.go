@@ -89,6 +89,10 @@ func WithClip(clip float64) SolverOpt {
 		case *VanillaSolver:
 			st.clip = clip
 			st.useClip = true
+
+		case *BarzilaiBorweinSolver:
+			st.clip = clip
+			st.useClip = true
 		}
 	}
 	return f
@@ -103,6 +107,8 @@ func WithLearnRate(eta float64) SolverOpt {
 		case *AdamSolver:
 			st.eta = eta
 		case *VanillaSolver:
+			st.eta = eta
+		case *BarzilaiBorweinSolver:
 			st.eta = eta
 		}
 	}
@@ -1062,4 +1068,178 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 	}
 
 	return
+}
+
+// Barzilai-Borwein performs Gradient Descent in steepest descend direction
+// Solves 0 = F(x), by
+// x_{i+1} = x_i - eta * Grad(F)(x_i)
+// Where the learn rate eta is calculated by the Barzilai-Borwein method:
+// eta(x_i) = <(x_i - x_{i-1}), (Grad(F)(x_i) - Grad(F)(x_{i-1}))> /
+//                            ||(Grad(F)(x_i) - Grad(F)(x_{i-1}))||^2
+// The input learn rate is used for the first iteration.
+// TODO: Check out stochastic implementations, e.g. "Barzilai-Borwein Step Size for Stochastic Gradient Descent" https://arxiv.org/abs/1605.04131
+type BarzilaiBorweinSolver struct {
+	eta     float64 // initial learn rate
+	clip    float64 // clip value
+	useClip bool
+	prevDV  []*dualValue // dual value for x_{i-1} step
+}
+
+func NewBarzilaiBorweinSolver(opts ...SolverOpt) *BarzilaiBorweinSolver {
+	s := &BarzilaiBorweinSolver{
+		eta:     0.001,
+		useClip: false,
+	}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+// Step steps through each node in the model and applies the Barzilai-Borwein gradient descent algorithm on the value.
+//
+// This function will error out if the nodes do not have an associated Grad value.
+func (s *BarzilaiBorweinSolver) Step(model Nodes) error {
+
+	firstRun := false
+	if s.prevDV == nil {
+		firstRun = true
+		s.prevDV = make([]*dualValue, len(model))
+	}
+
+	// Update the learning rate
+	if false == firstRun {
+		nominator := float64(0.0)
+		denominator := float64(0.0)
+
+		for nodeNr, node := range model {
+			dv, ok := node.boundTo.(*dualValue)
+			if !ok {
+				return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", node, node.Hashcode(), node.boundTo)
+			}
+
+			weights := dv.Value
+			grad := dv.d
+
+			switch w := weights.(type) {
+			case *tensor.Dense:
+				g, ok := grad.(*tensor.Dense)
+				if !ok {
+					return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+				}
+
+				wOld, ok := s.prevDV[nodeNr].Value.(*tensor.Dense)
+				if !ok {
+					return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+				}
+
+				gOld, ok := s.prevDV[nodeNr].d.(*tensor.Dense)
+				if !ok {
+					return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+				}
+
+				valueDiff, err := tensor.Sub(w, wOld)
+				defer returnTensor(valueDiff)
+				if err != nil {
+					return errors.Wrap(err, subFail)
+				}
+
+				gradDiff, err := tensor.Sub(g, gOld)
+				defer returnTensor(gradDiff)
+				if err != nil {
+					return errors.Wrap(err, subFail)
+				}
+
+				// <(x_i - x_{i-1}), (Grad(F)(x_i) - Grad(F)(x_{i-1}))>
+
+				// Scalar Product == Total tensor contraction
+				dims := valueDiff.Dims()
+				contractionAxes := make([]int, dims, dims)
+				for axis := 0; axis < len(contractionAxes); axis++ {
+					contractionAxes[axis] = axis
+				}
+
+				valGradDiffscalarProd, err := tensor.Contract(valueDiff, gradDiff, contractionAxes, contractionAxes)
+				defer returnTensor(valGradDiffscalarProd)
+
+				nominator += valGradDiffscalarProd.Data().(float64)
+
+				// ||(Grad(F)(x_i) - Grad(F)(x_{i-1}))||^2
+				gradDiffscalarProd, err := tensor.Contract(gradDiff, gradDiff, contractionAxes, contractionAxes)
+				defer returnTensor(gradDiffscalarProd)
+
+				denominator += gradDiffscalarProd.Data().(float64)
+
+			default:
+				return errors.Errorf(nyiFail, "Barizai-Borwein step", w)
+			}
+		}
+
+		s.eta = nominator / denominator
+
+		if s.useClip && (math.Abs(s.eta) > s.clip) {
+			if math.Signbit(s.eta) {
+				s.eta = -s.clip
+			} else {
+				s.eta = s.clip
+			}
+		}
+	}
+
+	// Save this iteration's values for the next run
+	for nodeNr, node := range model {
+		dv, ok := node.boundTo.(*dualValue)
+		if !ok {
+			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", node, node.Hashcode(), node.boundTo)
+		}
+
+		if false == firstRun {
+			// return memory for the old dual value used in this iteration
+			returnDV(s.prevDV[nodeNr])
+		}
+
+		oldDV, err := dv.Clone()
+		if err != nil {
+			return errors.Wrap(err, cloneFail)
+		}
+		s.prevDV[nodeNr] = oldDV.(*dualValue)
+	}
+
+	// Update the weights
+	for _, node := range model {
+		dv, ok := node.boundTo.(*dualValue)
+		if !ok {
+			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", node, node.Hashcode(), node.boundTo)
+		}
+
+		weights := dv.Value
+		grad := dv.d
+
+		switch w := weights.(type) {
+		case *tensor.Dense:
+			g, ok := grad.(*tensor.Dense)
+			if !ok {
+				return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+			}
+
+			upd, err := tensor.Mul(g, s.eta)
+			defer returnTensor(upd)
+
+			if err != nil {
+				return errors.Wrap(err, pointWiseMulFail)
+			}
+
+			if _, err = tensor.Sub(w, upd, tensor.UseUnsafe()); err != nil {
+				return errors.Wrap(err, subFail)
+			}
+
+			g.Zero()
+
+		default:
+			return errors.Errorf(nyiFail, "Barizai-Borwein step", w)
+		}
+	}
+
+	return nil
 }

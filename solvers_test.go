@@ -158,6 +158,7 @@ func TestRMSPropSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	const costThreshold = 0.68
 	if nil != err {
 		t.Fatal(err)
 	}
@@ -166,11 +167,17 @@ func TestRMSPropSolver(t *testing.T) {
 
 	maxIterations := 1000
 
+	costFloat := 42.0
 	for 0 != maxIterations {
 		m.Reset()
 		err = m.RunAll()
 		if nil != err {
 			t.Fatal(err)
+		}
+
+		costFloat = cost.Value().Data().(float64)
+		if costThreshold > math.Abs(costFloat) {
+			break
 		}
 
 		err = solver.Step(Nodes{z})
@@ -181,27 +188,33 @@ func TestRMSPropSolver(t *testing.T) {
 		maxIterations--
 	}
 
-	costFloat := cost.Value().Data().(float64)
-	assert.InDelta(0, costFloat, 0.68)
+	assert.InDelta(0, costFloat, costThreshold)
 }
 
 func TestAdaGradSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dSquare(-0.5, 0.5)
+	const costThreshold = 0.39
 	if nil != err {
 		t.Fatal(err)
 	}
 
-	solver := NewAdaGradSolver(WithLearnRate(0.1))
+	solver := NewAdaGradSolver()
 
 	maxIterations := 1000
 
+	costFloat := 42.0
 	for 0 != maxIterations {
 		m.Reset()
 		err = m.RunAll()
 		if nil != err {
 			t.Fatal(err)
+		}
+
+		costFloat = cost.Value().Data().(float64)
+		if costThreshold > math.Abs(costFloat) {
+			break
 		}
 
 		err = solver.Step(Nodes{z})
@@ -212,14 +225,14 @@ func TestAdaGradSolver(t *testing.T) {
 		maxIterations--
 	}
 
-	costFloat := cost.Value().Data().(float64)
-	assert.InDelta(0, costFloat, 0.39)
+	assert.InDelta(0, costFloat, costThreshold)
 }
 
 func TestVanillaSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	const costThreshold = 0.185
 	if nil != err {
 		t.Fatal(err)
 	}
@@ -228,11 +241,17 @@ func TestVanillaSolver(t *testing.T) {
 
 	maxIterations := 1000
 
+	costFloat := 42.0
 	for 0 != maxIterations {
 		m.Reset()
 		err = m.RunAll()
 		if nil != err {
 			t.Fatal(err)
+		}
+
+		costFloat = cost.Value().Data().(float64)
+		if costThreshold > math.Abs(costFloat) {
+			break
 		}
 
 		err = solver.Step(Nodes{z})
@@ -243,14 +262,14 @@ func TestVanillaSolver(t *testing.T) {
 		maxIterations--
 	}
 
-	costFloat := cost.Value().Data().(float64)
-	assert.InDelta(0, costFloat, 0.185)
+	assert.InDelta(0, costFloat, costThreshold)
 }
 
 func TestAdamSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	const costThreshold = 0.113
 	if nil != err {
 		t.Fatal(err)
 	}
@@ -259,11 +278,17 @@ func TestAdamSolver(t *testing.T) {
 
 	maxIterations := 1000
 
+	costFloat := 42.0
 	for 0 != maxIterations {
 		m.Reset()
 		err = m.RunAll()
 		if nil != err {
 			t.Fatal(err)
+		}
+
+		costFloat = cost.Value().Data().(float64)
+		if costThreshold > math.Abs(costFloat) {
+			break
 		}
 
 		err = solver.Step(Nodes{z})
@@ -274,8 +299,44 @@ func TestAdamSolver(t *testing.T) {
 		maxIterations--
 	}
 
-	costFloat := cost.Value().Data().(float64)
-	assert.InDelta(0, costFloat, 0.113)
+	assert.InDelta(0, costFloat, costThreshold)
+}
+
+func TestBarzilaiBorweinSolver(t *testing.T) {
+	assert := assert.New(t)
+
+	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	const costThreshold = 0.00002
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	solver := NewBarzilaiBorweinSolver(WithLearnRate(0.0001))
+
+	maxIterations := 200
+
+	costFloat := 42.0
+	for 0 != maxIterations {
+		m.Reset()
+		err = m.RunAll()
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		costFloat = cost.Value().Data().(float64)
+		if costThreshold > math.Abs(costFloat) {
+			break
+		}
+
+		err = solver.Step(Nodes{z})
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		maxIterations--
+	}
+
+	assert.InDelta(0, costFloat, costThreshold)
 }
 
 // The Rosenbrock function is a non-convex function,
