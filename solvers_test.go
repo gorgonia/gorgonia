@@ -153,3 +153,156 @@ func TestRMSPropSolver(t *testing.T) {
 	manualRMSProp32(t, s, model)
 
 }
+
+func TestRMSPropSolver(t *testing.T) {
+	assert := assert.New(t)
+
+	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	solver := NewRMSPropSolver()
+
+	maxIterations := 1000
+
+	for 0 != maxIterations {
+		m.Reset()
+		err = m.RunAll()
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		err = solver.Step(Nodes{z})
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		maxIterations--
+	}
+
+	costFloat := cost.Value().Data().(float64)
+	assert.InEpsilon(0.67, costFloat, 0.02)
+}
+
+func TestAdaGradSolver(t *testing.T) {
+	assert := assert.New(t)
+
+	z, cost, m, err := model2dSquare(-0.5, 0.5)
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	solver := NewAdaGradSolver(WithLearnRate(0.1))
+
+	maxIterations := 1000
+
+	for 0 != maxIterations {
+		m.Reset()
+		err = m.RunAll()
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		err = solver.Step(Nodes{z})
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		maxIterations--
+	}
+
+	costFloat := cost.Value().Data().(float64)
+	assert.InEpsilon(0.38, costFloat, 0.02)
+}
+
+// The Rosenbrock function is a non-convex function,
+// which is used as a performance test problem for optimization algorithms.
+// https://en.wikipedia.org/wiki/Rosenbrock_function
+//
+// f(x,y) = (a-x)^2 + b(y-x^2)^2
+// Usually a = 1, b = 100, then the minimum is at x = y = 1
+// TODO: There is also an n-dimensional version...see wiki
+func model2dRosenbrock(a, b, xInit, yInit float64) (z, cost *Node, machine *tapeMachine, err error) {
+	g := NewGraph()
+
+	z = NewTensor(g, Float64, 1, WithShape(2), WithName("z"))
+
+	aN := NewConstant(a, WithName("a"))
+	bN := NewConstant(b, WithName("b"))
+
+	xProjFloat := []float64{1, 0}
+	xProj := NewConstant(tensor.New(tensor.WithBacking(xProjFloat), tensor.WithShape(2)))
+
+	yProjFloat := []float64{0, 1}
+	yProj := NewConstant(tensor.New(tensor.WithBacking(yProjFloat), tensor.WithShape(2)))
+
+	x := Must(Mul(z, xProj))
+	y := Must(Mul(z, yProj))
+
+	// First term
+
+	sqrt1stTerm := Must(Sub(aN, x))
+
+	firstTerm := Must(Square(sqrt1stTerm))
+
+	// Second term
+
+	xSquared := Must(Square(x))
+
+	yMinusxSquared := Must(Sub(y, xSquared))
+
+	yMinusxSquaredSqu := Must(Square(yMinusxSquared))
+
+	secondTerm := Must(Mul(bN, yMinusxSquaredSqu))
+
+	// cost
+	cost = Must(Add(firstTerm, secondTerm))
+
+	dcost, err := Grad(cost, z)
+	if nil != err {
+		return nil, nil, nil, err
+	}
+
+	prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
+	if nil != err {
+		return nil, nil, nil, err
+	}
+
+	machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
+
+	err = machine.Let(z, tensor.New(tensor.WithBacking([]float64{xInit, yInit}), tensor.WithShape(2)))
+	if nil != err {
+		return nil, nil, nil, err
+	}
+
+	return
+}
+
+func model2dSquare(xInit, yInit float64) (z, cost *Node, machine *tapeMachine, err error) {
+	g := NewGraph()
+
+	z = NewTensor(g, Float64, 1, WithShape(2), WithName("z"))
+
+	// cost
+	cost = Must(Mul(z, z))
+
+	dcost, err := Grad(cost, z)
+	if nil != err {
+		return nil, nil, nil, err
+	}
+
+	prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
+	if nil != err {
+		return nil, nil, nil, err
+	}
+
+	machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
+
+	err = machine.Let(z, tensor.New(tensor.WithBacking([]float64{xInit, yInit}), tensor.WithShape(2)))
+	if nil != err {
+		return nil, nil, nil, err
+	}
+
+	return
+}
