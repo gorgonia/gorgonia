@@ -135,7 +135,7 @@ func manualRMSProp32(t *testing.T, s *RMSPropSolver, model Nodes) {
 	}
 }
 
-func TestRMSPropSolver(t *testing.T) {
+func TestRMSPropSolverManual(t *testing.T) {
 
 	stepSize := 0.01
 	l2Reg := 0.000001
@@ -182,7 +182,7 @@ func TestRMSPropSolver(t *testing.T) {
 	}
 
 	costFloat := cost.Value().Data().(float64)
-	assert.InEpsilon(0.67, costFloat, 0.02)
+	assert.InDelta(0, costFloat, 0.68)
 }
 
 func TestAdaGradSolver(t *testing.T) {
@@ -213,7 +213,69 @@ func TestAdaGradSolver(t *testing.T) {
 	}
 
 	costFloat := cost.Value().Data().(float64)
-	assert.InEpsilon(0.38, costFloat, 0.02)
+	assert.InDelta(0, costFloat, 0.39)
+}
+
+func TestVanillaSolver(t *testing.T) {
+	assert := assert.New(t)
+
+	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	solver := NewVanillaSolver()
+
+	maxIterations := 1000
+
+	for 0 != maxIterations {
+		m.Reset()
+		err = m.RunAll()
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		err = solver.Step(Nodes{z})
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		maxIterations--
+	}
+
+	costFloat := cost.Value().Data().(float64)
+	assert.InDelta(0, costFloat, 0.185)
+}
+
+func TestAdamSolver(t *testing.T) {
+	assert := assert.New(t)
+
+	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	solver := NewAdamSolver()
+
+	maxIterations := 1000
+
+	for 0 != maxIterations {
+		m.Reset()
+		err = m.RunAll()
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		err = solver.Step(Nodes{z})
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		maxIterations--
+	}
+
+	costFloat := cost.Value().Data().(float64)
+	assert.InDelta(0, costFloat, 0.113)
 }
 
 // The Rosenbrock function is a non-convex function,
@@ -221,6 +283,7 @@ func TestAdaGradSolver(t *testing.T) {
 // https://en.wikipedia.org/wiki/Rosenbrock_function
 //
 // f(x,y) = (a-x)^2 + b(y-x^2)^2
+// It has a global minimum at (x, y) = (a, a^2), where f(x,y) = 0.
 // Usually a = 1, b = 100, then the minimum is at x = y = 1
 // TODO: There is also an n-dimensional version...see wiki
 func model2dRosenbrock(a, b, xInit, yInit float64) (z, cost *Node, machine *tapeMachine, err error) {
