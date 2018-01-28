@@ -245,3 +245,22 @@ func setEngine(v Value, e tensor.Engine) {
 		tensor.WithEngine(e)(vv)
 	}
 }
+
+func Accuracy(target, predicted Value) (float64, error){
+	if target.Dtype() != predicted.Dtype(){
+		return 0.0, errors.Errorf("Not the same Dtype, target is: %T and predicted is: %T", target.Dtype(), predicted.Dtype())
+	}
+	if target.Shape().Eq(predicted.Shape()) {
+		return 0.0, errors.Errorf("Not the same Shape, target is: %T and predicted is: %T", target.Shape(), predicted.Shape())
+	}
+	if target.Size() != predicted.Size(){
+		return 0.0, errors.Errorf("Not the same Size, target is: %T and predicted is: %T", target.Size(), predicted.Size())
+	}
+	count := 0.0
+	for i:=0;i<target.Size();i++{
+		if target.Data()[i] == predicted.Data()[i]{
+			count++
+		}
+	}
+	return count/float64(target.Size()), nil
+}
