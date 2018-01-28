@@ -62,10 +62,10 @@
   revision = "edc201f107a87fc2a2dc965f334c89e50fcd682a"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/petar/GoMNIST"
+  name = "github.com/mattn/go-runewidth"
   packages = ["."]
-  revision = "2fbe10d0fa631498b80acb2b7d8546e5229d57b0"
+  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
+  version = "v0.0.2"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -93,6 +93,12 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "2c42eef0765b9837fbdab12011af7830f55f88f0"
+
+[[projects]]
+  branch = "master"
   name = "gonum.org/v1/gonum"
   packages = ["blas","blas/blas64","blas/gonum","floats","graph","graph/internal/linear","graph/internal/ordered","graph/internal/set","graph/topo","graph/traverse","internal/asm/c128","internal/asm/f32","internal/asm/f64","internal/math32","lapack","lapack/gonum","lapack/lapack64","mat"]
   revision = "f818f8f7a9e59de54e475b747a3dc9c86ed141f1"
@@ -104,6 +110,12 @@
   revision = "d22599e22c25311208d69b30773390fc4d359d1f"
 
 [[projects]]
+  name = "gopkg.in/cheggaaa/pb.v1"
+  packages = ["."]
+  revision = "43d64de27312b32812ca7e994fa0bb03ccf08fdf"
+  version = "v1.0.20"
+
+[[projects]]
   name = "gorgonia.org/cu"
   packages = ["."]
   revision = "0148e5fae1ae087f8000a19fdbfb0b2da75d5ca0"
@@ -112,8 +124,8 @@
 [[projects]]
   name = "gorgonia.org/tensor"
   packages = [".","internal/execution","internal/storage"]
-  revision = "863b76853934d224104ae8cc08f2d27202521242"
-  version = "v0.8.0"
+  revision = "2ab2564f998fe504b94a1679c1c95277cdedea47"
+  version = "v0.8.1"
 
 [[projects]]
   branch = "master"
@@ -130,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5645ce4bb5cb3738047b9a29ddb1c6eb83beb2ee97136d7315a3e73b9a8ec3ae"
+  inputs-digest = "4d62c0e5e926f7c0b600bbd0e54265038fce3fd34c499e923e5db630a1979a0d"
   solver-name = "gps-cdcl"
   solver-version = 1
