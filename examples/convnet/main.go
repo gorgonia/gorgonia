@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -17,6 +18,9 @@ import (
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
+
+	"gopkg.in/cheggaaa/pb.v1"
+	"time"
 )
 
 var (
@@ -244,13 +248,19 @@ func main() {
 	}
 	go cleanup(sigChan, doneChan, profiling)
 
+	batches := numExamples / bs
+	log.Printf("Batches %d", batches)
+	bar := pb.New(batches)
+	bar.SetRefreshRate(time.Second)
+	bar.SetMaxWidth(80)
+
 	for i := 0; i < *epochs; i++ {
-		batches := numExamples / bs
-		log.Printf("Batches %d", batches)
+		bar.Prefix(fmt.Sprintf("Epoch %d", i))
+		bar.Set(0)
+		bar.Start()
 		for b := 0; b < batches; b++ {
 			start := b * bs
 			end := start + bs
-			log.Printf("Working on batch: %d", b)
 			if start >= numExamples {
 				break
 			}
@@ -269,17 +279,17 @@ func main() {
 			if err = xVal.(*tensor.Dense).Reshape(bs, 1, 28, 28); err != nil {
 				log.Fatal("Unable to reshape %v", err)
 			}
-			log.Printf("xVal %v", xVal.Shape())
 
 			gorgonia.Let(x, xVal)
 			gorgonia.Let(y, yVal)
 			if err = vm.RunAll(); err != nil {
 				log.Fatalf("Failed at epoch  %d: %v", i, err)
 			}
-			log.Printf("Epoch: %v - Cost %v", i, costVal)
 			solver.Step(m.learnables())
 			vm.Reset()
+			bar.Increment()
 		}
+		log.Printf("Epoch %d | cost %v", i, costVal)
 
 	}
 }

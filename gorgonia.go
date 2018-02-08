@@ -86,7 +86,6 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 	var s tensor.Shape
 	var val Value
 
-	name = fmt.Sprintf("%v", v)
 	val, t, _, err := anyToValue(v)
 	if err != nil {
 		panic(err)
@@ -104,8 +103,20 @@ func NewConstant(v interface{}, opts ...NodeConsOpt) *Node {
 		panic(fmt.Sprintf("HELP. Op: %v, t: %v", op, t))
 	}
 
-	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithName(name), WithShape(s...), WithValue(val)}
+	dummy := borrowNode()
+	consOpts := []NodeConsOpt{WithOp(op), WithType(t), WithShape(s...), WithValue(val)}
 	consOpts = append(consOpts, opts...)
+	for i := range opts {
+		opts[i](dummy)
+	}
+	if dummy.name == "" {
+		name = fmt.Sprintf("%v", v)
+	} else {
+		name = dummy.name
+	}
+	returnNode(dummy)
+
+	consOpts = append(consOpts, WithName(name))
 	return newNode(consOpts...)
 }
 
