@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -23,7 +22,7 @@ const (
 	// feats is the number of features (x) in our dataset
 	feats = 10
 	// trainIter is the number of interations for which to train
-	trainIter = 5000
+	trainIter = 500
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -37,6 +36,7 @@ var xT tensor.Tensor
 var float = tensor.Float64
 
 // init generates random values for x, w, and y for demo purposes
+// Use the static flag to load your own data
 func init() {
 	xBacking := tensor.Random(float, N*feats)
 	wBacking := tensor.Random(float, feats)
@@ -80,11 +80,11 @@ func main() {
 	// We start by creating nodes for the training
 	// create a new graph and add x, y, w, b, and one as Nodes
 	g := G.NewGraph()
-	x := G.NewMatrix(g, Float, G.WithName("x"), G.WithShape(N, feats))
-	y := G.NewVector(g, Float, G.WithName("y"), G.WithShape(N))
+	x := G.NewMatrix(g, float, G.WithName("x"), G.WithShape(N, feats))
+	y := G.NewVector(g, float, G.WithName("y"), G.WithShape(N))
 
-	w := G.NewVector(g, Float, G.WithName("w"), G.WithShape(feats))
-	b := G.NewScalar(g, Float, G.WithName("bias"))
+	w := G.NewVector(g, float, G.WithName("w"), G.WithShape(feats))
+	b := G.NewScalar(g, float, G.WithName("bias"))
 	// Add a constant node 1 to be used later in the loss function
 	one := G.NewConstant(1.0)
 
@@ -94,10 +94,16 @@ func main() {
 	// create a node that has the operation: sigmoid(xwmb)
 	prob := G.Must(G.Sigmoid(xwmb))
 	G.WithName("prob")(prob)
-	// create a "pred" node that has the operation (prod > 0.5)
-	// this ensures that our prediction output is {0,1}
+	// create a "pred" node that has the operation that checks if prob is 
+	// greater than 0.5. This ensures that our prediction output returns 
+	// {true, false}
 	pred := G.Must(G.Gt(prob, G.NewConstant(0.5), false))
 	G.WithName("pred")(pred)
+
+	// Gorgonia might delete values from nodes so we are going to save it
+	// and print it out later
+	var predicted G.Value
+	readNode := G.Read(pred, &predicted)
 
 	// Here we create the nodes that contain the operations that
 	// will calculate the cost function.
@@ -111,12 +117,13 @@ func main() {
 	crossEntropy := G.Must(G.Sub(fstTerm, sndTerm))
 	G.WithName("crossEntropy")(crossEntropy)
 	loss := G.Must(G.Mean(crossEntropy))
+	G.WithName("loss")(loss)
 
-	// regularization term
+	// In order to prevent overfitting, we add a L2 regularization term
 	weightSq := G.Must(G.Square(w))
 	sumSq := G.Must(G.Sum(weightSq))
-	l1reg := G.NewConstant(0.01, G.WithName("l1reg"))
-	regTerm := G.Must(G.Mul(l1reg, sumSq))
+	l2reg := G.NewConstant(0.01, G.WithName("l2reg"))
+	regTerm := G.Must(G.Mul(l2reg, sumSq))
 
 	// cost we want to minimize
 	cost := G.Must(G.Add(loss, regTerm))
@@ -137,25 +144,29 @@ func main() {
 	gblr := G.Must(G.Mul(learnRate, grads[1]))
 	bUpd := G.Must(G.Sub(b, gblr))
 
-	// create the nodes that do the final operation of updating w and b
-	G.Set(w, wUpd)
-	G.Set(b, bUpd)
-	// write to the gographviz file for debugging https://github.com/awalterschulze/gographviz
-	ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
+	// Run the following line to write to the gographviz file for debugging https://github.com/awalterschulze/gographviz
+	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
 
-	// Now that we have created all the notes, we can compile a program.
+	// Now that we have created all the notes, we should compile a training program.
 	// We are essentially creating a list of instructions to get from our inputs {x, y}
-	// to our outputs {wUpd, bUpd}. Note that we only need to create the progam once.
-	prog, locMap, err := G.CompileFunction(g, G.Nodes{x, y}, G.Nodes{wUpd, bUpd})
+	// to our outputs {wUpd, bUpd, readNode}. Note that we need to tell gorgonia that
+	// readNode is one of our outputs so that we can access it.
+	prog, locMap, err := G.CompileFunction(g, G.Nodes{x, y}, G.Nodes{wUpd, bUpd, readNode})
 	handleError(err)
 	fmt.Printf("%v", prog) // print the instructions
 	// With our program, we initialize a new TapeMachine that will execute our program
 	machine := G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
+	// Note that NewTapeMachine() will compile if WithPrecomiled() is not provided.
+	// Internally, Gorgonia will figure out that a compilation process needs to happen, 
+	// so it will call Compile(g), which will output the prog and locMap internally.
+	// When nodes are added to the graph to Gorgonia, nodes that have no precedents 
+	// and have a nil Op are marked as input nodes. So Gorgonia knows to start there.
+	// But since our graph contains the training and prediction nodes, we manually compiled.
 
 	// we allocated the node w before, but we never set it's initial value
 	machine.Let(w, wT)
 	machine.Let(b, 0.0)
-	// ?? Why do we need to profile the CPU?
+
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -170,36 +181,36 @@ func main() {
 	for i := 0; i < trainIter; i++ {
 		// move the pointer back to the beginning of the prog. Reset() does not delete any values
 		machine.Reset()
-		// ?? why do we need to reinitialize the values the nodes {x,y}?
+		// We should reinitialize the values {x,y}. This is a good practice.
+		// Think of the machine as a function(x,y) and we are providing the input values
 		machine.Let(x, xT)
 		machine.Let(y, yT)
 		handleError(machine.RunAll())
-		// ?? Shouldn't the program have already done this? The last node has this Set() operation
-		//	G.Set(w, wUpd)
-		//	G.Set(b, bUpd)
+		// After running the machine, we want to update w and b
 		machine.Set(w, wUpd)
 		machine.Set(b, bUpd)
-	}
+		
+		accuracy := accuracy(y.Value(), predicted)
+		fmt.Printf("Interation #%v, Training accuracy: %#v\n", i, accuracy)
+
+		}
 	fmt.Printf("Time taken: %v\n", time.Since(start))
 	fmt.Printf("Final Model: \nw: %3.3s\nb: %+3.3s\n", w.Value(), b.Value())
 
-	fmt.Printf("Target values: %#v\n", yT)
 	fmt.Printf("START\n")
 
 	// Now that we have our final model, we need to write a new program
 	// that goes from the input {x} to the prediction {pred}
 	prog, locMap, err = G.CompileFunction(g, G.Nodes{x}, G.Nodes{pred})
-	fmt.Printf("%+v", err)
 	handleError(err)
 	machine = G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
 
-	// ?? Don't we want to use the weight and bias that we trained? not reset them?
 	machine.Let(w, wT)
-	machine.Let(b, 0.0)
-	// ?? Shouldn't we create a new tensor xT so that we can predict?
+	machine.Let(b, 0.0)	
 	machine.Let(x, xT)
 	handleError(machine.RunAll())
-	fmt.Printf("Predicted: %#v\n", pred.Value())
+	handleError(err)
+
 }
 func loadStatic() (w, x, y []float64) {
 	d0, err := os.Open("testdata/X_ds1.10.csv")
@@ -225,7 +236,7 @@ func loadStatic() (w, x, y []float64) {
 		}
 	} else {
 		log.Println("could not read from file")
-		x = tensor.Random(Float, N*feats).([]float64)
+		x = tensor.Random(float, N*feats).([]float64)
 	}
 
 	w0, err := os.Open("testdata/W_ds1.10.csv")
@@ -249,7 +260,7 @@ func loadStatic() (w, x, y []float64) {
 			log.Fatalf("Expected %d rows. Got %d instead", feats, len(w))
 		}
 	} else {
-		w = tensor.Random(Float, feats).([]float64)
+		w = tensor.Random(float, feats).([]float64)
 	}
 
 	y0, err := os.Open("testdata/Y_ds1.10.csv")
@@ -280,7 +291,23 @@ func loadStatic() (w, x, y []float64) {
 	}
 	return
 }
-
+func accuracy(target, predicted G.Value) (float64){
+	count := 0.0
+	targetArray := target.Data().([]float64)
+	predictedArray := predicted.Data().([]bool)
+	targetBool := false
+	for i:=0;i<target.Size();i++{
+		if targetArray[i] == 1.0{
+			targetBool = true
+		}else{
+			targetBool = false
+		}
+		if targetBool == predictedArray[i]{
+			count++
+		}
+	}
+	return count/float64(target.Size())
+}
 func handleError(err error) {
 	if err != nil {
 		log.Fatalf("%+v", err)
