@@ -1,16 +1,12 @@
-
 package main
 
 import (
-	"encoding/csv"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"os"
 	"runtime/pprof"
-	"strconv"
 	"time"
 
 	G "gorgonia.org/gorgonia"
@@ -34,15 +30,15 @@ var yT tensor.Tensor
 var xT tensor.Tensor
 
 // in this example, we will generate random float64 values
-var float = tensor.Float64
+var Float = tensor.Float64
 
 // init generates random values for x, w, and y for demo purposes
 // Use the static flag to load your own data
 func init() {
-	xBacking := tensor.Random(float, N*feats)
-	wBacking := tensor.Random(float, feats)
+	xBacking := tensor.Random(Float, N*feats)
+	wBacking := tensor.Random(Float, feats)
 	var yBacking interface{}
-	switch float {
+	switch Float {
 	case tensor.Float64:
 		backing := make([]float64, N)
 		for i := range backing {
@@ -68,7 +64,7 @@ func main() {
 	log.SetFlags(0)
 
 	if *static {
-		float = tensor.Float64 // because the loadStatck function only loads []float64
+		Float = tensor.Float64 // because the loadStatck function only loads []float64
 		wBacking, xBacking, yBacking := loadStatic()
 		xT = tensor.New(tensor.WithBacking(xBacking), tensor.WithShape(N, feats))
 		yT = tensor.New(tensor.WithBacking(yBacking), tensor.WithShape(N))
@@ -81,11 +77,11 @@ func main() {
 	// We start by creating nodes for the training
 	// create a new graph and add x, y, w, b, and one as Nodes
 	g := G.NewGraph()
-	x := G.NewMatrix(g, float, G.WithName("x"), G.WithShape(N, feats))
-	y := G.NewVector(g, float, G.WithName("y"), G.WithShape(N))
+	x := G.NewMatrix(g, Float, G.WithName("x"), G.WithShape(N, feats))
+	y := G.NewVector(g, Float, G.WithName("y"), G.WithShape(N))
 
-	w := G.NewVector(g, float, G.WithName("w"), G.WithShape(feats))
-	b := G.NewScalar(g, float, G.WithName("bias"))
+	w := G.NewVector(g, Float, G.WithName("w"), G.WithShape(feats))
+	b := G.NewScalar(g, Float, G.WithName("bias"))
 	// Add a constant node 1 to be used later in the loss function
 	one := G.NewConstant(1.0)
 
@@ -191,6 +187,8 @@ func main() {
 		machine.Set(w, wUpd)
 		machine.Set(b, bUpd)
 		
+		// After each iteration, we print out the training accuracy to see 
+		// how our algorithm is doing
 		accuracy := accuracy(y.Value(), predicted)
 		fmt.Printf("Interation #%v, Training accuracy: %#v\n", i, accuracy)
 
@@ -212,85 +210,6 @@ func main() {
 	handleError(machine.RunAll())
 	handleError(err)
 
-}
-func loadStatic() (w, x, y []float64) {
-	d0, err := os.Open("testdata/X_ds1.10.csv")
-	if err == nil {
-		r := csv.NewReader(d0)
-		r.Comma = ','
-		for {
-			record, err := r.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			for _, f := range record {
-				fl, _ := strconv.ParseFloat(f, 64)
-				x = append(x, fl)
-			}
-		}
-		if len(x) != N*feats {
-			log.Fatalf("Expected %d*%d. Got %d instead", N, feats, len(x))
-		}
-	} else {
-		log.Println("could not read from file")
-		x = tensor.Random(float, N*feats).([]float64)
-	}
-
-	w0, err := os.Open("testdata/W_ds1.10.csv")
-	if err == nil {
-		r := csv.NewReader(w0)
-		r.Comma = ' '
-		for {
-			record, err := r.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fl, _ := strconv.ParseFloat(record[0], 64)
-			w = append(w, fl)
-		}
-
-		if len(w) != feats {
-			log.Fatalf("Expected %d rows. Got %d instead", feats, len(w))
-		}
-	} else {
-		w = tensor.Random(float, feats).([]float64)
-	}
-
-	y0, err := os.Open("testdata/Y_ds1.10.csv")
-	if err == nil {
-		r := csv.NewReader(y0)
-		r.Comma = ','
-		for {
-			record, err := r.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			fl, _ := strconv.ParseFloat(record[0], 64)
-			y = append(y, fl)
-		}
-		if len(y) != N {
-			log.Fatalf("Expected %d rows. Got %d instead", N, len(y))
-		}
-	} else {
-		y = make([]float64, N)
-		for i := range y {
-			y[i] = float64(rand.Intn(2))
-		}
-
-	}
-	return
 }
 func accuracy(target, predicted G.Value) (float64){
 	count := 0.0
