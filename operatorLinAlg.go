@@ -437,7 +437,7 @@ func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal ten
 	batchSize := shapeA[0]
 
 	if c == nil {
-		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(batchSize, shapeA[2], shapeB[1]))
+		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(batchSize, shapeA[2], shapeB[1]), tensor.WithEngine(a.Engine()))
 	}
 
 	var as, bs, cs tensor.Tensor

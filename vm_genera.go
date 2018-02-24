@@ -59,6 +59,11 @@ func NewLispMachine(g *ExprGraph, opts ...VMOpt) *lispMachine {
 	if err := m.init(); err != nil {
 		panic(err)
 	}
+
+	for _, n := range g.AllNodes() {
+		setEngine(n.boundTo, m.Engine)
+	}
+
 	runtime.SetFinalizer(m, finalizeLispMachine)
 	return m
 }
@@ -239,7 +244,6 @@ func (m *lispMachine) prepGraph() (err error) {
 			return errors.Wrap(err, sortFail)
 		}
 		reverseNodes(m.sorted)
-
 		m.fwd = 0
 	}
 	return
@@ -291,6 +295,8 @@ func (m *lispMachine) forward() (err error) {
 	m.enterLogScope()
 	defer m.leaveLogScope()
 
+	defer setEngine(n.boundTo, m.Engine)
+
 	if !n.isStmt {
 		switch {
 		case n.isArg():
@@ -301,7 +307,6 @@ func (m *lispMachine) forward() (err error) {
 			return
 		case n.isRandom():
 			machineLogf("binding value of random node")
-
 			var v Value
 			if v, err = n.op.Do(); err != nil {
 				return errors.Wrapf(err, execFail, n.op, n)
@@ -311,6 +316,7 @@ func (m *lispMachine) forward() (err error) {
 			if err = n.bind(dvUnit0(v)); err != nil {
 				return errors.Wrap(err, bindFail)
 			}
+
 			return
 		default:
 			// do nothihng
@@ -517,6 +523,12 @@ func (m *lispMachine) backward() (err error) {
 	if err = instr.do(); err != nil {
 		return errors.Wrapf(err, autodiffFail, instr.ADOp)
 	}
+
+	// Make sure that all the engines of all the values are set to use the correct engine
+	for _, in := range instr.inputs {
+		setEngine(in.boundTo, m.Engine)
+	}
+	setEngine(instr.output.boundTo, m.Engine)
 
 	m.watchedLogf("After:")
 	m.enterLogScope()

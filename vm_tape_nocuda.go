@@ -66,6 +66,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	// TODO: type and shape checks
 
 	// Write
+	setEngine(v, m.Engine)
 	dest := instr.writeTo.id
 	m.cpumem[dest] = v
 	node := m.p.g.Node(instr.id).(*Node)

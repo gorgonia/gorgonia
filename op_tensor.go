@@ -378,6 +378,8 @@ func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 
 func (op repeatOp) String() string { return fmt.Sprintf("Repeat%v", op.along) }
 
+// Do performs a repeat on the value.
+// TODO(anyone): implement for other types
 func (op repeatOp) Do(inputs ...Value) (retVal Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return

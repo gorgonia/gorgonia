@@ -131,7 +131,7 @@ func manualRMSProp32(t *testing.T, s *RMSPropSolver, model Nodes) {
 
 		sCache := s.cache[0].Value.(tensor.Tensor)
 		assert.True(floatsEqual32(correct, backingV))
-		assert.True(floatsEqual32(cached, sCache.Data().([]float32)))
+		assert.True(floatsEqual32(cached, sCache.Data().([]float32)), "%v %v", cached, sCache.Data())
 	}
 }
 

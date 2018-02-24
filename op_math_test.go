@@ -385,6 +385,7 @@ func TestBasicArithmetic(t *testing.T) {
 		}
 
 		if assertGraphEngine(t, g, stdengType); t.Failed() {
+			t.Errorf("BasicArithmetic - TapeMachine failure")
 			t.FailNow()
 		}
 
@@ -393,7 +394,7 @@ func TestBasicArithmetic(t *testing.T) {
 
 	for i, bot := range binOpTests {
 		// log.Printf("i: %d", i)
-		// if i != 0 {
+		// if i != 1 {
 		// 	continue
 		// }
 		g := NewGraph()
@@ -445,6 +446,11 @@ func TestBasicArithmetic(t *testing.T) {
 		as.Equal(bot.correctDerivB.Data(), yG.Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, yG)
 		if !as.cont {
 			t.Errorf("an error occured")
+		}
+
+		if assertGraphEngine(t, g, stdengType); t.Failed() {
+			t.Errorf("Test %d  - LispMachine failure in test", i)
+			t.FailNow()
 		}
 
 		runtime.GC()

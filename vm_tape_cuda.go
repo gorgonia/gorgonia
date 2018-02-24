@@ -207,6 +207,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	// TODO: type and shape checks
 
 	// Write
+	setEngine(v, m.Engine)
 	m.writeValue(instr.writeTo, v)
 	node := m.p.g.Node(instr.id).(*Node)
 

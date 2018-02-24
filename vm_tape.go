@@ -55,8 +55,6 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 
 	m.doAlloc()
 
-	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
-
 	if m.p == nil || m.locMap == nil {
 		prog, locMap, err := Compile(g)
 		if err != nil {
@@ -73,6 +71,7 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		setEngine(n.boundTo, m.Engine)
 	}
 
+	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
 }
 
