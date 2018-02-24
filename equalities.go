@@ -1,6 +1,9 @@
 package gorgonia
 
-import "gorgonia.org/tensor"
+import (
+	"gorgonia.org/dawson"
+	"gorgonia.org/tensor"
+)
 
 func scalarEq(a, b Scalar) bool {
 	switch at := a.(type) {
@@ -68,33 +71,17 @@ func scalarClose(a, b Scalar) bool {
 	switch at := a.(type) {
 	case *F64:
 		if bt, ok := b.(*F64); ok {
-			return closeF64(float64(*at), float64(*bt))
+			return dawson.CloseF64(float64(*at), float64(*bt))
 		}
 		return false
 	case *F32:
 		if bt, ok := b.(*F32); ok {
-			return closeF32(float32(*at), float32(*bt))
+			return dawson.CloseF32(float32(*at), float32(*bt))
 		}
 		return false
 	default:
 		return scalarEq(a, b)
 	}
-}
-
-func closeF32(a, b float32) bool {
-	const EPSILON32 = 1e-5
-	if (a-b) < EPSILON32 && (b-a) < EPSILON32 {
-		return true
-	}
-	return false
-}
-
-func closeF64(a, b float64) bool {
-	const EPSILON64 = 1e-10
-	if (a-b) < EPSILON64 && (b-a) < EPSILON64 {
-		return true
-	}
-	return false
 }
 
 func tensorClose(a, b tensor.Tensor) bool {
@@ -114,7 +101,7 @@ func tensorClose(a, b tensor.Tensor) bool {
 		aFs = aFs[:len(aFs)]
 		bFs = bFs[:len(aFs)]
 		for i, v := range aFs {
-			if !closeF64(v, bFs[i]) {
+			if !dawson.CloseF64(v, bFs[i]) {
 				return false
 			}
 		}
@@ -128,7 +115,7 @@ func tensorClose(a, b tensor.Tensor) bool {
 		aFs = aFs[:len(aFs)]
 		bFs = bFs[:len(aFs)]
 		for i, v := range aFs {
-			if !closeF32(v, bFs[i]) {
+			if !dawson.CloseF32(v, bFs[i]) {
 				return false
 			}
 		}

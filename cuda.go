@@ -304,6 +304,7 @@ func (m *ExternMetadata) Reset() {
 	}
 }
 
+// Use tells the system which device to use
 func (m *ExternMetadata) Use(dev Device) {
 	m.Lock()
 	m.u = dev

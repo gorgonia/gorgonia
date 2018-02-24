@@ -37,6 +37,8 @@ func (m *ExternMetadata) WorkAvailable() <-chan bool {
 
 	return nil
 }
+
+// Sync returns the sync channel
 func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 
 // DoWork flushes any batched cgo calls. In this build it only flushes the batched BLAS calls.

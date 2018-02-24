@@ -200,7 +200,7 @@ func LogBwd() VMOpt {
 		case *lispMachine:
 			v.doLogBwd()
 		default:
-			panic(nyi("LogFwdOnly", v))
+			panic(nyi("LogBwdOnly", v))
 		}
 	}
 	return f
@@ -215,7 +215,7 @@ func LogBothDir() VMOpt {
 			v.doLogFwd()
 			v.doLogBwd()
 		default:
-			panic(nyi("LogFwdOnly", v))
+			panic(nyi("LogBothDir", v))
 		}
 	}
 	return f
@@ -229,7 +229,7 @@ func TraceExec() VMOpt {
 		case *tapeMachine:
 			v.doTrace()
 		default:
-			panic(nyi("LogFwdOnly", v))
+			panic(nyi("TraceExec", v))
 		}
 	}
 	return f

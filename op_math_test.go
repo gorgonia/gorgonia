@@ -384,6 +384,10 @@ func TestBasicArithmetic(t *testing.T) {
 			t.Logf("Test %d failed. Prog: %v", i, prog)
 		}
 
+		if assertGraphEngine(t, g, stdengType); t.Failed() {
+			t.FailNow()
+		}
+
 		runtime.GC()
 	}
 

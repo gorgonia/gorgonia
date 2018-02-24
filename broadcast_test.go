@@ -40,7 +40,11 @@ func TestBroadcastPattern(t *testing.T) {
 	assert.Equal([]int{1}, bcpat.on()[1])
 }
 
-func TestBroadcast2(t *testing.T) {
+func TestBroadcast(t *testing.T) {
+	if CUDA {
+		t.SkipNow()
+	}
+
 	assert := assert.New(t)
 	var g *ExprGraph
 	var x, y, z *Node
@@ -79,5 +83,4 @@ func TestBroadcast2(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal([]float64{100, 101, 102, 203, 204, 205}, extractF64s(z.Value()))
-
 }
