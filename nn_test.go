@@ -89,9 +89,9 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 		t.Error(err)
 		return
 	}
-	t.Logf("x: %v", x.Value())
-	t.Logf("c: %3.3f", cost.Value())
-	t.Logf("xG: %v", grads[0].Value())
+	// t.Logf("x: %v", x.Value())
+	// t.Logf("c: %3.3f", cost.Value())
+	// t.Logf("xG: %v", grads[0].Value())
 
 	h := NewGraph()
 	a := NewTensor(h, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0)))
@@ -112,9 +112,9 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 		return
 	}
 
-	t.Logf("a: %v", a.Value())
-	t.Logf("c: %3.3f", cost2.Value())
-	t.Logf("aG: %v", aG)
+	// t.Logf("a: %v", a.Value())
+	// t.Logf("c: %3.3f", cost2.Value())
+	// t.Logf("aG: %v", aG)
 
 	assert.Equal(x.Value().Data(), a.Value().Data())
 	assert.Equal(grads[0].Value().Data(), aG.Data())
@@ -152,10 +152,10 @@ func TestMaxPool2D(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		t.Logf("x %v", x.Value())
-		t.Logf("y: %v", y.Value())
-		t.Logf("c: %v", cost.Value())
-		t.Logf("xG: %v", grads[0])
+		// t.Logf("x %v", x.Value())
+		// t.Logf("y: %v", y.Value())
+		// t.Logf("c: %v", cost.Value())
+		// t.Logf("xG: %v", grads[0])
 
 		h := NewGraph()
 		a := NewTensor(h, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
