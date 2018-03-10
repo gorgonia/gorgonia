@@ -676,6 +676,34 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 // Reshape reshapes a node and returns a new node with the new shape
 func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
+	// check shape
+	var negs int
+	var infer int
+	for i, s := range to {
+		if s < 0 {
+			negs++
+			infer = i
+		}
+	}
+	if negs > 1 {
+		return nil, errors.Errorf("Unfortunately, inference of reshape parameters only allow for one variable (a negative number). Got %v instead", to)
+	}
+
+	if negs == 1 {
+		prod := 1
+		for i, s := range to {
+			if i == infer {
+				continue
+			}
+			prod *= s
+		}
+		inferred, rem := divmod(n.Shape().TotalSize(), prod)
+		if rem != 0 {
+			return nil, errors.Errorf("Cannot reshape %v to %v", n.Shape(), to)
+		}
+		to[infer] = inferred
+	}
+
 	op := reshapeOp{
 		from: n.Shape(),
 		to:   to,

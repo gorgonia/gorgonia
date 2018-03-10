@@ -889,3 +889,36 @@ func TestTensordot(t *testing.T) {
 	assert.Equal(dcorrect, extractF64s(dtensordot1.Value()))
 
 }
+
+var reshapeTests = []struct {
+	input  tensor.Shape
+	to     tensor.Shape
+	output tensor.Shape
+	err    bool
+}{
+	{tensor.Shape{2, 2}, tensor.Shape{4}, tensor.Shape{4}, false},
+	{tensor.Shape{3, 2}, tensor.Shape{6, -1}, tensor.Shape{6, 1}, false},
+	{tensor.Shape{3, 2}, tensor.Shape{2, -1}, tensor.Shape{2, 3}, false},
+	{tensor.Shape{3, 2}, tensor.Shape{-1, 3}, tensor.Shape{2, 3}, false},
+	{tensor.Shape{3, 2}, tensor.Shape{-1, -1}, nil, true},
+	{tensor.Shape{3, 2}, tensor.Shape{4, -1}, nil, true},
+}
+
+func TestReshape(t *testing.T) {
+	for _, rst := range reshapeTests {
+		g := NewGraph()
+		T := NewTensor(g, Float64, len(rst.input), WithShape(rst.input.Clone()...))
+		T2, err := Reshape(T, rst.output.Clone())
+		switch {
+		case rst.err && err != nil:
+			t.Fatal("Expected Error when testing %v", rst)
+		case rst.err:
+			continue
+		case err != nil:
+			t.Fatal(err)
+		default:
+			assert.True(t, rst.output.Eq(T2.Shape()), "expected both to be the same")
+		}
+
+	}
+}
