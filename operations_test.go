@@ -911,7 +911,7 @@ func TestReshape(t *testing.T) {
 		T2, err := Reshape(T, rst.output.Clone())
 		switch {
 		case rst.err && err != nil:
-			t.Fatal("Expected Error when testing %v", rst)
+			t.Fatalf("Expected Error when testing %v", rst)
 		case rst.err:
 			continue
 		case err != nil:

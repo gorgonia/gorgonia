@@ -23,7 +23,7 @@
   branch = "master"
   name = "github.com/cznic/cc"
   packages = ["."]
-  revision = "b98d4a758e7bcca3eabdbc1ae0139db6e52252ab"
+  revision = "4b6ffb9b78274da2e22ebec3c84c7603ac6c21f8"
 
 [[projects]]
   branch = "master"
@@ -35,13 +35,13 @@
   branch = "master"
   name = "github.com/cznic/mathutil"
   packages = ["."]
-  revision = "91af0ce59d1753e5eeaa6a3fd8f7aeeba01f1210"
+  revision = "7764e6a2216aaa02c36f75aad62538d39c2962c2"
 
 [[projects]]
   branch = "master"
   name = "github.com/cznic/strutil"
   packages = ["."]
-  revision = "43a89592ed56c227c7fdb1fcaf7d1d08be02ec54"
+  revision = "529a34b1c186b483642a7a230c67521d9aa4b0fb"
 
 [[projects]]
   branch = "master"
@@ -59,7 +59,7 @@
   branch = "master"
   name = "github.com/leesper/go_rng"
   packages = ["."]
-  revision = "edc201f107a87fc2a2dc965f334c89e50fcd682a"
+  revision = "5344a9259b21627d94279721ab1f27eb029194e7"
 
 [[projects]]
   name = "github.com/mattn/go-runewidth"
@@ -86,40 +86,46 @@
   version = "v1.1.4"
 
 [[projects]]
-  branch = "master"
   name = "github.com/xtgo/set"
   packages = ["."]
-  revision = "4431f6b51265b1e0b76af4dafc09d6f12c2bdcd0"
+  revision = "708d80f4a27458f99f8ca12bd0e638c6ee65627f"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "2c42eef0765b9837fbdab12011af7830f55f88f0"
+  revision = "7dca6fe1f43775aa6d1334576870ff63f978f539"
 
 [[projects]]
   branch = "master"
   name = "gonum.org/v1/gonum"
   packages = ["blas","blas/blas64","blas/gonum","floats","graph","graph/internal/linear","graph/internal/ordered","graph/internal/set","graph/topo","graph/traverse","internal/asm/c128","internal/asm/f32","internal/asm/f64","internal/math32","lapack","lapack/gonum","lapack/lapack64","mat"]
-  revision = "f818f8f7a9e59de54e475b747a3dc9c86ed141f1"
+  revision = "052ff404ed7bcbcf5c326f45dd2e8021cef6af9f"
 
 [[projects]]
   branch = "master"
   name = "gonum.org/v1/netlib"
   packages = ["blas/netlib","internal/binding"]
-  revision = "d22599e22c25311208d69b30773390fc4d359d1f"
+  revision = "2930667cbeaa66fe9a41ef1955d751339ba1fc54"
 
 [[projects]]
   name = "gopkg.in/cheggaaa/pb.v1"
   packages = ["."]
-  revision = "43d64de27312b32812ca7e994fa0bb03ccf08fdf"
-  version = "v1.0.20"
+  revision = "72b964305fba1230d3d818711138195f22b9ceea"
+  version = "v1.0.22"
 
 [[projects]]
   name = "gorgonia.org/cu"
   packages = ["."]
-  revision = "0148e5fae1ae087f8000a19fdbfb0b2da75d5ca0"
+  revision = "32f165836e285c14a4f78c455872d069e0cc5a7d"
   version = "v0.8.0"
+
+[[projects]]
+  name = "gorgonia.org/dawson"
+  packages = ["."]
+  revision = "533b0e96b43fab42278a9b8cb04b8a1f5ca566b3"
+  version = "v1.0.0"
 
 [[projects]]
   name = "gorgonia.org/tensor"
@@ -131,17 +137,17 @@
   branch = "master"
   name = "gorgonia.org/vecf32"
   packages = ["."]
-  revision = "1f59516136c1a7f1c19871d3dc5f0d9928ffbd7c"
+  revision = "da24147133d9b1c7aa847b9e9d77d6ffa3980e0b"
 
 [[projects]]
   branch = "master"
   name = "gorgonia.org/vecf64"
   packages = ["."]
-  revision = "92cacded62a76710546770b2b86b1ca82ff76614"
+  revision = "6314d1b6cefc75ece7e9b787afabac009c892b1e"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4d62c0e5e926f7c0b600bbd0e54265038fce3fd34c499e923e5db630a1979a0d"
+  inputs-digest = "de22ff6398b8e12e011839b5f6030a3ece63c08462c043c9f8993e8ead721c52"
   solver-name = "gps-cdcl"
   solver-version = 1
