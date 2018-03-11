@@ -1223,5 +1223,65 @@ func (op *batchnorm) doFused(input, output *tensor.Dense) (err error) {
 	}
 
 	return nil
+}
 
+type batchnormDiffOp struct{}
+
+func (op *batchnormDiffOp) Arity() int { return 1 }
+
+func (op *batchnormDiffOp) Type() hm.Type {
+	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
+	return hm.NewFnType(t, t)
+}
+
+func (op *batchnormDiffOp) InferShape(...DimSizer) (tensor.Shape, error) {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) Do(...Value) (Value, error) {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) ReturnsPtr() bool {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) CallsExtern() bool {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) OverwritesInput() int {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) WriteHash(h hash.Hash) {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) Hashcode() uint32 {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) String() string {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) DiffWRT(inputs int) []bool {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) UnsafeDo(inputs ...Value) (Value, error) {
+	panic("not implemented")
+}
+
+func (op *batchnormDiffOp) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	panic("not implemented")
 }

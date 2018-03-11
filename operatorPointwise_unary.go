@@ -210,14 +210,13 @@ func nondiffUnaryOp(x, y *Node) error {
 
 // apparently abs is differentiable
 func absDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
-	if retVal, err = Sign(x); err == nil {
-		WithGroupName(gradClust)(retVal)
-		retVal, err = HadamardProd(gradY, retVal)
-		if err != nil {
-			return nil, errors.Wrap(err, hadamardProdFail)
-		}
-	} else {
+	if retVal, err = Sign(x); err != nil {
 		return nil, errors.Wrap(err, "Failed to call Sign()")
+	}
+	WithGroupName(gradClust)(retVal)
+
+	if retVal, err = HadamardProd(gradY, retVal); err != nil {
+		return nil, errors.Wrap(err, hadamardProdFail)
 	}
 	return
 }
@@ -225,9 +224,8 @@ func absDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 func absDiff(x, y *Node) (err error) {
 	xdv, ydv := getDV(x, y)
 
-	sign := newElemUnaryOp(signOpType, x)
-
 	var d Value
+	sign := newElemUnaryOp(signOpType, x)
 	if d, err = sign.Do(xdv.Value); err == nil {
 		if dT, ok := d.(tensor.Tensor); ok {
 			defer returnTensor(dT)
