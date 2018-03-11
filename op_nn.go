@@ -1111,3 +1111,114 @@ func (op *clampOp) Hashcode() uint32 {
 	return h.Sum32()
 }
 func (op *clampOp) String() string { return fmt.Sprintf("ConstClamp{%f, %f}()", op.min, op.max) }
+
+// batchnorm is a batch normalization process as described by Ioffe and Szegedy (2015) -
+// http://arxiv.org/abs/1502.03167
+//
+// Normalization is done as:
+// 	γ(x - μ) / σ + β
+// The scaling factor γ and offset factor  β are optional
+type batchnorm struct {
+	axis     int
+	momentum float64 // momentum for the moving average
+	epsilon  float64 // small variance to be added to avoid dividing by 0
+
+	// if beta != nil -> center
+	// if gamma != nil -> scale
+	beta, gamma *tensor.Dense
+
+	// if both of these are != nil -> renorm
+	movingMean, movingVar *tensor.Dense
+
+	// training? if training then update movingMean and movingVar
+	training bool
+
+	// use tensorflow's fused_v2 algorithm
+	fused bool
+}
+
+func newBatchNorm(axis int) *batchnorm {
+	if axis < 0 {
+		panic("This is Go. There ain't no negative indexing.")
+	}
+	retVal := &batchnorm{
+		axis: axis,
+	}
+	return retVal
+}
+
+func (op *batchnorm) Arity() int { return 1 }
+
+func (op *batchnorm) Type() hm.Type {
+	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
+	return hm.NewFnType(t, t)
+}
+
+func (op *batchnorm) InferShape(ns ...DimSizer) (tensor.Shape, error) {
+	if len(ns) != 1 {
+		return nil, errors.Errorf("Expected 1")
+	}
+	return ns[0].(tensor.Shape).Clone(), nil
+}
+
+func (op *batchnorm) Do(values ...Value) (Value, error) {
+	panic("not implemented")
+}
+
+func (op *batchnorm) ReturnsPtr() bool { return true }
+
+func (op *batchnorm) CallsExtern() bool { return false }
+
+func (op *batchnorm) OverwritesInput() int { return -1 }
+
+func (op *batchnorm) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "batchnorm-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
+}
+
+func (op *batchnorm) Hashcode() uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func (op *batchnorm) String() string {
+	return fmt.Sprintf("batchnorm-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
+}
+
+func (op *batchnorm) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+	panic("not implemented")
+}
+
+func (op *batchnorm) DiffWRT(inputs int) []bool {
+	panic("not implemented")
+}
+
+func (op *batchnorm) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	panic("not implemented")
+}
+func (op *batchnorm) UnsafeDo(inputs ...Value) (Value, error) {
+	panic("not implemented")
+}
+
+func (op *batchnorm) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+	panic("not implemented")
+}
+
+func (op *batchnorm) doFused(input, output *tensor.Dense) (err error) {
+	depth := 1
+	restSize := input.DataSize() / depth
+	restByDepth := [2]int{restSize, depth}
+	// restByOne := [2]int{restSize, 1}
+	// oneByDepth := [2]int{1, depth}
+	// depthByOne := [2]int{depth, 1}
+
+	if err = tensor.Copy(output, input); err != nil {
+		return
+	}
+	if err = output.Reshape(restByDepth[:]...); err != nil {
+		return
+	}
+
+	return nil
+
+}

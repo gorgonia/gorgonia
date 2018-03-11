@@ -254,3 +254,7 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	op := newMaxPoolOp(xShape, kernel, pad, stride)
 	return ApplyOp(op, x)
 }
+
+// func BatchNorm(x, mean, variance, scale, offset *Node) (*Node, error) {
+// 	inv := Sqrt()
+// }
