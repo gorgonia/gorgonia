@@ -120,6 +120,76 @@ func (f *sf64UnaryOperator) unaryOpType() ʘUnaryOperatorType {
 
 func (f *sf64UnaryOperator) String() string { return f.unaryOpType().String() }
 
+// unaryCheckApply checks in a interface is fulfilled. If it is, that engine is used instead
+func unaryCheckApply(op ʘUnaryOperator, t tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
+	e := t.Engine()
+	switch op.unaryOpType() {
+	case absOpType:
+		if oe, ok := e.(tensor.Abser); ok {
+			return oe.Abs(t, opts...)
+		}
+	case signOpType:
+		if oe, ok := e.(tensor.Signer); ok {
+			return oe.Sign(t, opts...)
+		}
+	case ceilOpType:
+	case floorOpType:
+	case sinOpType:
+	case cosOpType:
+	case expOpType:
+		if oe, ok := e.(tensor.Exper); ok {
+			return oe.Exp(t, opts...)
+		}
+	case lnOpType:
+		if oe, ok := e.(tensor.Loger); ok {
+			return oe.Log(t, opts...)
+		}
+	case log2OpType:
+		if oe, ok := e.(tensor.Log2er); ok {
+			return oe.Log2(t, opts...)
+		}
+	case negOpType:
+		if oe, ok := e.(tensor.Neger); ok {
+			return oe.Neg(t, opts...)
+		}
+	case squareOpType:
+		if oe, ok := e.(tensor.Squarer); ok {
+			return oe.Square(t, opts...)
+		}
+	case sqrtOpType:
+		if oe, ok := e.(tensor.Sqrter); ok {
+			return oe.Sqrt(t, opts...)
+		}
+	case inverseOpType:
+		if oe, ok := e.(tensor.Inver); ok {
+			return oe.Inv(t, opts...)
+		}
+	case cubeOpType:
+		if oe, ok := e.(tensor.Cuber); ok {
+			return oe.Cube(t, opts...)
+		}
+	case tanhOpType:
+		if oe, ok := e.(tensor.Tanher); ok {
+			return oe.Tanh(t, opts...)
+		}
+	case sigmoidOpType:
+	case log1pOpType:
+	case expm1OpType:
+	case softplusOpType:
+	}
+
+	//default case:
+	var fn interface{}
+	switch opFn := op.(type) {
+	case *sf64UnaryOperator:
+		fn = (func(float64) float64)(*opFn)
+	case *sf32UnaryOperator:
+		fn = (func(float32) float32)(*opFn)
+	}
+
+	return t.Apply(fn, opts...)
+}
+
 /*
 DIFFERENTIATION EXPRESSIONS
 

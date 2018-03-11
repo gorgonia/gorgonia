@@ -511,19 +511,7 @@ func (op elemUnaryOp) isUnary() bool { return true }
 func (op elemUnaryOp) do(a Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
 	switch v := a.(type) {
 	case tensor.Tensor:
-		var t tensor.Tensor
-		var fn interface{}
-		switch opFn := op.ʘUnaryOperator.(type) {
-		case *sf64UnaryOperator:
-			fn = (func(float64) float64)(*opFn)
-		case *sf32UnaryOperator:
-			fn = (func(float32) float32)(*opFn)
-		}
-
-		if t, err = v.Apply(fn, opts...); err != nil {
-			return nil, errors.Wrap(err, applyFail)
-		}
-		retVal = t
+		return unaryCheckApply(op.ʘUnaryOperator, v, opts...)
 	case Scalar:
 		vt := v.Dtype()
 		switch vt {
