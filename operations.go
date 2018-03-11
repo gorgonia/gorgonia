@@ -179,108 +179,6 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 	return ApplyOp(op, a)
 }
 
-// Abs performs pointwise |a|
-func Abs(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(absOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sign performs pointwise sign() on the input. Returns -1 for a negative, +1 for positive
-func Sign(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(signOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Ceil performs pointwise ceil() on the input.
-func Ceil(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(ceilOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Floor performs pointwise floor() on the input.
-func Floor(a *Node) (retval *Node, err error) {
-	op := newElemUnaryOp(floorOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sin performs pointwise sin() on the input.
-func Sin(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(sinOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Cos performs pointwise cos() on the input.
-func Cos(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(cosOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Exp performs pointwise exp() on the input.
-func Exp(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(expOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Log performs pointwise log() on the input. Note that this is the natural logarithm.
-func Log(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(lnOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Log2 performs pointwise log2() on the input.
-func Log2(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(log2OpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Neg performs pointwise neg() on the input.
-func Neg(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(negOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Square performs pointwise ^2 on the input.
-func Square(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(squareOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sqrt performs pointwise sqrt on the input.
-func Sqrt(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(sqrtOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Inverse performs pointwise inverse() on the input. Note this means the reciprocal.
-func Inverse(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(inverseOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Cube performs pointwise ^3 on the input.
-func Cube(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(cubeOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sigmoid performs pointwise sigmoid() on the input.
-func Sigmoid(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(sigmoidOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Tanh performs pointwise tanh() on the input.
-func Tanh(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(tanhOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Log1p performs pointwise log1p() on the input.
-func Log1p(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(log1pOpType, a)
-	return unaryOpNode(op, a)
-}
-
 // more complex unaries
 
 // SoftMax performs softmax on the input. Specifically this is used:
@@ -342,12 +240,6 @@ func LogSumExp(a *Node, axis int) (retVal *Node, err error) {
 		}
 	}
 	return nil, errors.Wrap(err, operationError)
-}
-
-// Softplus performs a softplus on the input.
-func Softplus(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(softplusOpType, a)
-	return unaryOpNode(op, a)
 }
 
 /* Aggregate Functions */

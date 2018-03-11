@@ -164,6 +164,10 @@ func unaryCheckApply(op ʘUnaryOperator, t tensor.Tensor, opts ...tensor.FuncOpt
 		if oe, ok := e.(tensor.Inver); ok {
 			return oe.Inv(t, opts...)
 		}
+	case inverseSqrtOpType:
+		if oe, ok := e.(tensor.InvSqrter); ok {
+			return oe.InvSqrt(t, opts...)
+		}
 	case cubeOpType:
 		if oe, ok := e.(tensor.Cuber); ok {
 			return oe.Cube(t, opts...)
@@ -188,6 +192,24 @@ func unaryCheckApply(op ʘUnaryOperator, t tensor.Tensor, opts ...tensor.FuncOpt
 	}
 
 	return t.Apply(fn, opts...)
+}
+
+func getDV(x, y *Node) (xdv, ydv *dualValue) {
+	return x.boundTo.(*dualValue), y.boundTo.(*dualValue)
+}
+
+func getConst(x *Node, constant string) (retVal *Node, err error) {
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(x.t); err != nil {
+		return nil, errors.Wrap(err, dtypeOfFail)
+	}
+
+	if m, ok := constmap[constant]; ok {
+		if n, ok := m[dt]; ok {
+			return n, nil
+		}
+	}
+	return nil, errors.Errorf("constant %d not provided for %v", constant, dt)
 }
 
 /*
@@ -219,8 +241,7 @@ func absDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func absDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	sign := newElemUnaryOp(signOpType, x)
 
@@ -255,8 +276,7 @@ func sinDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func sinDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	cos := newElemUnaryOp(cosOpType, x)
 
@@ -296,8 +316,7 @@ func cosDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func cosDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	sin := newElemUnaryOp(sinOpType, x)
 
@@ -325,8 +344,7 @@ func expDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func expDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	mul := newElemBinOp(mulOpType, x, y)
 	err = mul.IncrDo(xdv.d, ydv.Value, ydv.d)
@@ -343,8 +361,7 @@ func lnDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func lnDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	div := newElemBinOp(divOpType, y, x)
 
@@ -359,20 +376,10 @@ func lnDiff(x, y *Node) (err error) {
 // 1/(x*ln(2))
 func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var log2 *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
+	if log2, err = getConst(x, "log2"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
 	}
 
-	switch dt {
-	case Float32:
-		log2 = ln2f32
-	case Float64:
-		log2 = ln2f64
-	default:
-		return nil, errors.Errorf("log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-	}
 	if retVal, err = HadamardDiv(x, log2); err != nil {
 		return nil, errors.Wrap(err, hadamardProdFail)
 	}
@@ -384,23 +391,11 @@ func log2DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func log2Diff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var log2 *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		log2 = ln2f32
-	case Float64:
-		log2 = ln2f64
-	default:
-		return errors.Errorf("log2DiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if log2, err = getConst(x, "log2"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
 
 	mul := newElemBinOp(mulOpType, x, log2)
@@ -427,8 +422,7 @@ func negDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func negDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	sub := newElemBinOp(subOpType, x, y)
 	_, err = sub.UnsafeDo(xdv.d, ydv.d)
@@ -440,19 +434,8 @@ func negDiff(x, y *Node) (err error) {
 
 func squareDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var two *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		two = twof32
-	case Float64:
-		two = twof64
-	default:
-		return nil, errors.Errorf("squareDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if two, err = getConst(x, "two"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
 	}
 
 	if retVal, err = HadamardProd(x, two); err == nil {
@@ -470,28 +453,15 @@ func squareDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func squareDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var two *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return errors.Wrap(err, dtypeOfFail)
+	if two, err = getConst(x, "two"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
-
-	switch dt {
-	case Float32:
-		two = twof32
-	case Float64:
-		two = twof64
-	default:
-		return errors.Errorf("squareDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
-	}
-
-	mul := newElemBinOp(mulOpType, x, y)
 
 	var d Value
+	mul := newElemBinOp(mulOpType, x, y)
 	if d, err = mul.Do(xdv.Value, two.boundTo); err == nil {
 		if dT, ok := d.(tensor.Tensor); ok {
 			defer returnTensor(dT)
@@ -507,19 +477,8 @@ func squareDiff(x, y *Node) (err error) {
 
 func sqrtDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var two *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		two = twof32
-	case Float64:
-		two = twof64
-	default:
-		return nil, errors.Errorf("sqrtDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if two, err = getConst(x, "two"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
 	}
 
 	if retVal, err = HadamardProd(two, y); err == nil {
@@ -535,23 +494,11 @@ func sqrtDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func sqrtDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var two *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		two = twof32
-	case Float64:
-		two = twof64
-	default:
-		return errors.Errorf("sqrtDiff does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if two, err = getConst(x, "two"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
@@ -590,8 +537,7 @@ func inverseDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func inverseDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	sq := newElemUnaryOp(squareOpType, y)
 
@@ -616,21 +562,57 @@ func inverseDiff(x, y *Node) (err error) {
 	return
 }
 
-func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
-	var three *Node
-	var dt tensor.Dtype
+func inverseSqrtDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
+	var two *Node
+	if two, err = getConst(x, "two"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
+	}
+	if retVal, err = Cube(y); err != nil {
+		return nil, errors.Wrapf(err, cubeFail)
+	}
+	if retVal, err = HadamardProd(two, retVal); err != nil {
+		return nil, errors.Wrapf(err, hadamardProdFail)
+	}
+	if retVal, err = HadamardDiv(gradY, retVal); err != nil {
+		return nil, errors.Wrapf(err, hadamardDivFail)
+	}
+	return Neg(retVal)
+}
 
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
+func inverseSqrtDiff(x, y *Node) (err error) {
+	xdv, ydv := getDV(x, y)
+	var two *Node
+	if two, err = getConst(x, "two"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
 
-	switch dt {
-	case Float32:
-		three = threef32
-	case Float64:
-		three = threef64
-	default:
-		return nil, errors.Errorf("cubeDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	cb := newElemUnaryOp(cubeOpType, y)
+	var d Value
+	if d, err = cb.Do(ydv.Value); err != nil {
+		return errors.Wrapf(err, doFail, cb)
+	}
+
+	mul := newElemBinOp(mulOpType, x, y)
+	if d, err = mul.Do(two.boundTo, d); err != nil {
+		return errors.Wrapf(err, doFail, mul)
+	}
+
+	div := newElemBinOp(divOpType, y, x)
+	if d, err = div.Do(ydv.d, d); err != nil {
+		return errors.Wrapf(err, doFail, div)
+	}
+
+	sub := newElemBinOp(subOpType, x, y)
+	if d, err = sub.Do(xdv.d, d); err != nil {
+		return errors.Wrapf(err, doFail, sub)
+	}
+	return nil
+}
+
+func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
+	var three *Node
+	if three, err = getConst(x, "three"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
 	}
 
 	if retVal, err = HadamardProd(x, x); err == nil {
@@ -651,23 +633,11 @@ func cubeDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func cubeDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var three *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		three = threef32
-	case Float64:
-		three = threef64
-	default:
-		return errors.Errorf("cubeDiff does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if three, err = getConst(x, "three"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
 
 	mul := newElemBinOp(mulOpType, x, y)
@@ -693,19 +663,8 @@ func cubeDiff(x, y *Node) (err error) {
 
 func tanhDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var one *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		one = onef32
-	case Float64:
-		one = onef64
-	default:
-		return nil, errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if one, err = getConst(x, "one"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
 	}
 
 	if retVal, err = HadamardProd(y, y); err == nil {
@@ -726,23 +685,11 @@ func tanhDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func tanhDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var one *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		one = onef32
-	case Float64:
-		one = onef64
-	default:
-		return errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if one, err = getConst(x, "one"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
 
 	sq := newElemUnaryOp(squareOpType, y)
@@ -771,19 +718,8 @@ func tanhDiff(x, y *Node) (err error) {
 
 func sigmoidDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var one *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		one = onef32
-	case Float64:
-		one = onef64
-	default:
-		return nil, errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if one, err = getConst(x, "one"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
 	}
 
 	if retVal, err = Sub(one, y); err == nil {
@@ -804,23 +740,11 @@ func sigmoidDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func sigmoidDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var one *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		one = onef32
-	case Float64:
-		one = onef64
-	default:
-		return errors.Errorf("tanhDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if one, err = getConst(x, "one"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
 
 	sub := newElemBinOp(subOpType, one, y)
@@ -849,19 +773,8 @@ func sigmoidDiff(x, y *Node) (err error) {
 // 1/(x+1)
 func log1pDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 	var one *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		one = onef32
-	case Float64:
-		one = onef64
-	default:
-		return nil, errors.Errorf("log1pDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if one, err = getConst(x, "one"); err != nil {
+		return nil, errors.Wrap(err, "getConst failed")
 	}
 
 	if retVal, err = Add(x, one); err == nil {
@@ -877,23 +790,11 @@ func log1pDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func log1pDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var one *Node
-	var dt tensor.Dtype
-
-	if dt, err = dtypeOf(x.t); err != nil {
-		return errors.Wrap(err, dtypeOfFail)
-	}
-
-	switch dt {
-	case Float32:
-		one = onef32
-	case Float64:
-		one = onef64
-	default:
-		return errors.Errorf("log1pDiffExpr does not handle Dtypes other than Float32 and Float64. Got %v instead", dt)
+	if one, err = getConst(x, "one"); err != nil {
+		return errors.Wrap(err, "getConst failed")
 	}
 
 	add := newElemBinOp(addOpType, x, one)
@@ -924,8 +825,7 @@ func expm1DiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func expm1Diff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	exp := newElemUnaryOp(expOpType, x)
 
@@ -955,8 +855,7 @@ func softplusDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 }
 
 func softplusDiff(x, y *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	sigmoid := newElemUnaryOp(sigmoidOpType, x)
 
