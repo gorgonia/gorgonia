@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"hash/fnv"
 	"sort"
 
 	"github.com/chewxy/hm"
@@ -68,11 +67,7 @@ func (op atOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "at%v", op.coordinates)
 }
 
-func (op atOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op atOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op atOp) isStmt() bool { return true }
 
@@ -160,11 +155,7 @@ func (op sizeOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op sizeOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op sizeOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op sizeOp) DimSize(d int) (int, error) {
 	if d != op.axis {
@@ -301,9 +292,7 @@ func (op repeatOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-
-	xdv := inputs[0].boundTo.(*dualValue)
-	ydv := output.boundTo.(*dualValue)
+	xdv, ydv := getDV(inputs[0], output)
 
 	var reps []int
 	var repeats []Value
@@ -488,11 +477,7 @@ func (op repeatOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op repeatOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op repeatOp) Hashcode() uint32 { return simpleHash(op) }
 
 // sliceOp represents a slicing operation. If end <= start, it means ":"
 type sliceOp struct {
@@ -580,12 +565,10 @@ func (op *sliceOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
-
-	xdv := inputs[0].boundTo.(*dualValue)
-	ydv := output.boundTo.(*dualValue)
-	incrOp := sliceIncrOp{op}
+	xdv, ydv := getDV(inputs[0], output)
 
 	// var d Value
+	incrOp := sliceIncrOp{op}
 	if _, err = incrOp.UsePreallocDo(xdv.d, xdv.d, ydv.d); err != nil {
 		return errors.Wrapf(err, doFail, incrOp)
 	}
@@ -634,7 +617,7 @@ func (op *sliceOp) Do(inputs ...Value) (retVal Value, err error) {
 func (op *sliceOp) ReturnsPtr() bool     { return true }
 func (op *sliceOp) CallsExtern() bool    { return true }
 func (op *sliceOp) OverwritesInput() int { return -1 }
-func (op *sliceOp) WriteHash(h hash.Hash) {
+func (op sliceOp) WriteHash(h hash.Hash) {
 	h.Write([]byte("slice"))
 	if err := binary.Write(h, binary.LittleEndian, byte(op.d)); err != nil {
 		panic(err)
@@ -656,11 +639,7 @@ func (op *sliceOp) WriteHash(h hash.Hash) {
 	}
 
 }
-func (op sliceOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op sliceOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op sliceOp) String() string {
 	var buf bytes.Buffer
@@ -732,13 +711,10 @@ func (op sliceIncrOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 }
 
 func (op sliceIncrOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
-	xdv := inputs[0].boundTo.(*dualValue)
-	ydv := inputs[1].boundTo.(*dualValue)
-	zdv := output.boundTo.(*dualValue)
+	xdv, ydv, zdv := getDV3(inputs[0], inputs[1], output)
 
 	// dzdx
 	add := newElemBinOp(addOpType, inputs[0], output)
-
 	if _, err = add.UnsafeDo(xdv.d, zdv.d); err != nil {
 		return errors.Wrapf(err, unsafeDoFail, add)
 	}
@@ -864,11 +840,7 @@ func (op sliceIncrOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op sliceIncrOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op sliceIncrOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op sliceIncrOp) String() string {
 	var buf bytes.Buffer
@@ -940,8 +912,7 @@ func (op transposeOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (retVal 
 }
 
 func (op transposeOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err error) {
-	xdv := inputs[0].boundTo.(*dualValue)
-	zdv := output.boundTo.(*dualValue)
+	xdv, zdv := getDV(inputs[0], output)
 
 	newPattern := make([]int, len(op.pattern))
 	for i, p := range op.pattern {
@@ -1007,11 +978,7 @@ func (op transposeOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op transposeOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op transposeOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op transposeOp) String() string {
 	var buf bytes.Buffer
@@ -1081,11 +1048,7 @@ func (op concatOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "axis: %d, dims: %d", op.axis, op.d)
 }
 
-func (op concatOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op concatOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op concatOp) String() string {
 	return fmt.Sprintf("Concat(axis=%d)", op.axis)
@@ -1235,12 +1198,7 @@ func (op tensordotOp) WriteHash(h hash.Hash) {
 	return
 }
 
-func (op tensordotOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-
-	return h.Sum32()
-}
+func (op tensordotOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op tensordotOp) String() string {
 	return fmt.Sprintf("Tensordot(aAxes=%d, bAxes=%d)", op.aAxes, op.bAxes)
@@ -1630,11 +1588,7 @@ func (op reshapeOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "from: %v, dims: %v", op.from, op.to)
 }
 
-func (op reshapeOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op reshapeOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op reshapeOp) String() string {
 	return fmt.Sprintf("Reshape%v", op.to)

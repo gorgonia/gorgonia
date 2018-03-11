@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"hash/fnv"
 	"math"
 
 	"github.com/chewxy/math32"
@@ -198,10 +199,6 @@ func setZero(val Value) (retVal Value) {
 	}
 }
 
-type arityer interface {
-	Arity() int
-}
-
 func checkArity(op arityer, inputs int) error {
 	if inputs != op.Arity() && op.Arity() >= 0 {
 		return errors.Errorf("%v has an arity of %d. Got %d instead", op, op.Arity(), inputs)
@@ -225,4 +222,32 @@ func minInt(a, b int) int {
 
 func ceilDivInt(a, b int) int {
 	return (a + b - 1) / b
+}
+
+func simpleHash(op hashWriter) uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func getDV(x, y *Node) (xdv, ydv *dualValue) {
+	return x.boundTo.(*dualValue), y.boundTo.(*dualValue)
+}
+
+func getDV3(x, y, z *Node) (xdv, ydv, zdv *dualValue) {
+	return x.boundTo.(*dualValue), y.boundTo.(*dualValue), z.boundTo.(*dualValue)
+}
+
+func getConst(x *Node, constant string) (retVal *Node, err error) {
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(x.t); err != nil {
+		return nil, errors.Wrap(err, dtypeOfFail)
+	}
+
+	if m, ok := constmap[constant]; ok {
+		if n, ok := m[dt]; ok {
+			return n, nil
+		}
+	}
+	return nil, errors.Errorf("constant %d not provided for %v", constant, dt)
 }

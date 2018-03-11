@@ -11,7 +11,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"hash/fnv"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -99,11 +98,7 @@ func (op maxOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "%v->%v", op.d, op.along)
 }
 
-func (op maxOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op maxOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op maxOp) String() string { return fmt.Sprintf("MaxAlong%v", op.along) }
 func (op maxOp) isUnary() bool  { return true }
@@ -235,8 +230,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	}
 
 	x := inputs[0]
-	xdv := x.boundTo.(*dualValue)
-	ydv := output.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, output)
 	xShape := xdv.Value.Shape()
 
 	var T tensor.Tensor
@@ -349,11 +343,7 @@ func (op sumOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "%v->%v", op.along, op.inputShape)
 }
 
-func (op sumOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op sumOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op sumOp) String() string { return fmt.Sprintf("Σ%v", op.along) }
 func (op sumOp) isUnary() bool  { return true }

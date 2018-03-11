@@ -18,7 +18,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"hash/fnv"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -306,11 +305,7 @@ func (op elemBinOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "%v,%v", op.arg0, op.arg1)
 }
 
-func (op elemBinOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op elemBinOp) Hashcode() uint32 { return simpleHash(op) }
 
 // Fulfils UsePreallocDoer interface
 func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
@@ -488,11 +483,7 @@ func (op elemUnaryOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op elemUnaryOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op elemUnaryOp) Hashcode() uint32 { return simpleHash(op) }
 
 // fulfils UnsafeDoer interface
 func (op elemUnaryOp) UnsafeDo(inputs ...Value) (Value, error) {
@@ -670,11 +661,7 @@ func (op linAlgBinOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op linAlgBinOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op linAlgBinOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op linAlgBinOp) String() string {
 	var buf bytes.Buffer

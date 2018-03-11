@@ -194,24 +194,6 @@ func unaryCheckApply(op ʘUnaryOperator, t tensor.Tensor, opts ...tensor.FuncOpt
 	return t.Apply(fn, opts...)
 }
 
-func getDV(x, y *Node) (xdv, ydv *dualValue) {
-	return x.boundTo.(*dualValue), y.boundTo.(*dualValue)
-}
-
-func getConst(x *Node, constant string) (retVal *Node, err error) {
-	var dt tensor.Dtype
-	if dt, err = dtypeOf(x.t); err != nil {
-		return nil, errors.Wrap(err, dtypeOfFail)
-	}
-
-	if m, ok := constmap[constant]; ok {
-		if n, ok := m[dt]; ok {
-			return n, nil
-		}
-	}
-	return nil, errors.Errorf("constant %d not provided for %v", constant, dt)
-}
-
 /*
 DIFFERENTIATION EXPRESSIONS
 

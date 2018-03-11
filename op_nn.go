@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"hash/fnv"
 	"time"
 
 	"github.com/chewxy/hm"
@@ -143,11 +142,7 @@ func (op randomOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "%d%v%f%f", op.which, op.shape, op.a, op.b)
 }
 
-func (op randomOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op randomOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op randomOp) String() string {
 	return fmt.Sprintf("%v(%v, %v) - %v", op.which, op.a, op.b, op.shape)
@@ -175,9 +170,10 @@ func makeIm2ColOp(kernelHeight, kernelWidth, padHeight, padWidth, strideHeight, 
 
 func (op im2colOp) Arity() int { return 1 }
 
-// im2col :: (Floats a) ⇒ a →  a
+// im2col :: (Floats a) ⇒ Tensor a →  Tensor a
 func (op im2colOp) Type() hm.Type {
-	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
+	t := makeTensorType(4, hm.TypeVariable('a'))
+	return hm.NewFnType(t, t)
 }
 
 func (op im2colOp) InferShape(shapes ...DimSizer) (retVal tensor.Shape, err error) {
@@ -215,11 +211,7 @@ func (op im2colOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "im2col:%d-%d-%d-%d-%d-%d", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op im2colOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op im2colOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op im2colOp) String() string {
 	return fmt.Sprintf("im2col<(%d,%d), (%d, %d), (%d,%d) (%d, %d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW, op.dilationH, op.dilationW)
@@ -262,8 +254,7 @@ func (op im2colOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err
 
 	im := inputs[0]
 	s := im.Shape()
-	imv := im.boundTo.(*dualValue)
-	colv := output.boundTo.(*dualValue)
+	imv, colv := getDV(im, output)
 
 	var unpaddedB, unpaddedC, unpaddedH, unpaddedW int
 	unpaddedB, unpaddedC, unpaddedH, unpaddedW = s[0], s[1], s[2], s[3]
@@ -475,11 +466,7 @@ func (op col2imOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "col2im:%d-%d-%d-%d-%d-%d", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op col2imOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op col2imOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op col2imOp) String() string {
 	return fmt.Sprintf("col2im<(%d,%d), (%d, %d), (%d,%d)>", op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
@@ -691,11 +678,7 @@ func (op *maxPoolOp) WriteHash(h hash.Hash) {
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op *maxPoolOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op *maxPoolOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op *maxPoolOp) String() string {
 	return fmt.Sprintf("MaxPool{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
@@ -741,8 +724,7 @@ func (op *maxPoolOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (e
 		return
 	}
 	input := inputs[0]
-	inputDV := input.boundTo.(*dualValue)
-	outDV := output.boundTo.(*dualValue)
+	inputDV, outDV := getDV(input, output)
 
 	var op2 maxPoolOp
 	op2 = *op
@@ -942,11 +924,7 @@ func (op *maxPoolDiffOp) WriteHash(h hash.Hash) {
 		op.h, op.w, op.padH, op.padW, op.strideH, op.strideW)
 }
 
-func (op *maxPoolDiffOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op *maxPoolDiffOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op *maxPoolDiffOp) String() string {
 	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
@@ -1105,12 +1083,8 @@ func (op *clampOp) OverwritesInput() int { return 0 }
 
 func (op *clampOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "ConstClamp{%f, %f}()", op.min, op.max) }
 
-func (op *clampOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
-func (op *clampOp) String() string { return fmt.Sprintf("ConstClamp{%f, %f}()", op.min, op.max) }
+func (op *clampOp) Hashcode() uint32 { return simpleHash(op) }
+func (op *clampOp) String() string   { return fmt.Sprintf("ConstClamp{%f, %f}()", op.min, op.max) }
 
 // batchnorm is a batch normalization process as described by Ioffe and Szegedy (2015) -
 // http://arxiv.org/abs/1502.03167
@@ -1161,8 +1135,42 @@ func (op *batchnorm) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 	return ns[0].(tensor.Shape).Clone(), nil
 }
 
-func (op *batchnorm) Do(values ...Value) (Value, error) {
-	panic("not implemented")
+func (op *batchnorm) Do(values ...Value) (retVal Value, err error) {
+	x := values[0].(tensor.Tensor)
+	var T tensor.Tensor
+	if T, err = tensor.Add(op.movingVar, op.epsilon); err != nil {
+		return nil, errors.Wrap(err, "batchnorm failed")
+	}
+	if T, err = tensor.InvSqrt(T, tensor.UseUnsafe()); err != nil {
+		return nil, errors.Wrap(err, "batchnorm invsqrt failed")
+	}
+
+	var xinv tensor.Tensor
+	if xinv, err = tensor.Mul(T, x); err != nil {
+		return nil, errors.Wrap(err, "xinv")
+	}
+
+	if op.gamma != nil {
+		if T, err = tensor.Mul(T, op.gamma, tensor.UseUnsafe()); err != nil {
+			return nil, errors.Wrap(err, "Scaling in batchnorm")
+		}
+	}
+
+	if T, err = tensor.Mul(T, op.movingMean, tensor.UseUnsafe()); err != nil {
+		return nil, errors.Wrap(err, "* mean failed")
+	}
+
+	if op.beta != nil {
+		if T, err = tensor.Sub(op.beta, T, tensor.WithReuse(T)); err != nil {
+			return nil, errors.Wrapf(err, "Failed")
+		}
+	} else {
+		if T, err = tensor.Neg(T, tensor.UseUnsafe()); err != nil {
+			return nil, errors.Wrapf(err, "failed")
+		}
+	}
+
+	return tensor.Add(xinv, T, tensor.UseUnsafe())
 }
 
 func (op *batchnorm) ReturnsPtr() bool { return true }
@@ -1175,11 +1183,7 @@ func (op *batchnorm) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "batchnorm-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
 }
 
-func (op *batchnorm) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op *batchnorm) Hashcode() uint32 { return simpleHash(op) }
 
 func (op *batchnorm) String() string {
 	return fmt.Sprintf("batchnorm-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
@@ -1189,20 +1193,19 @@ func (op *batchnorm) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) er
 	panic("not implemented")
 }
 
-func (op *batchnorm) DiffWRT(inputs int) []bool {
-	panic("not implemented")
-}
+func (op *batchnorm) DiffWRT(inputs int) []bool { return []bool{true} }
 
 func (op *batchnorm) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
 	panic("not implemented")
 }
-func (op *batchnorm) UnsafeDo(inputs ...Value) (Value, error) {
-	panic("not implemented")
-}
 
-func (op *batchnorm) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
-	panic("not implemented")
-}
+// func (op *batchnorm) UnsafeDo(inputs ...Value) (Value, error) {
+// 	panic("not implemented")
+// }
+
+// func (op *batchnorm) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
+// 	panic("not implemented")
+// }
 
 func (op *batchnorm) doFused(input, output *tensor.Dense) (err error) {
 	depth := 1
