@@ -560,7 +560,7 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 
 /* Contraction related operations */
 
-// Tensor contraction of a and b along specified axes.
+// Tensordot performs a tensor contraction of a and b along specified axes.
 func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 
 	// Check if input tensors actually have dim >= 1
@@ -573,9 +573,9 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 		return nil, errors.New("Number of Axes supplied along which to contract tensors does not match")
 	}
 
-	// Check for dublicate indices
-	if containsDublicate(aAxes) || containsDublicate(bAxes) {
-		return nil, errors.New("Supplied axes to contract along contain dublicates")
+	// Check for duplicate indices
+	if containsDuplicate(aAxes) || containsDuplicate(bAxes) {
+		return nil, errors.New("Supplied axes to contract along contain duplicates")
 	}
 
 	// Check for more compatibility
@@ -613,7 +613,7 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 
 // Private functions
 
-func containsDublicate(slice []int) bool {
+func containsDuplicate(slice []int) bool {
 	if nil == slice {
 		return false
 	}
