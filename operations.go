@@ -43,24 +43,6 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 	return ApplyOp(op, a, b)
 }
 
-// Add performs pointwise a + b
-func Add(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(addOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
-// Sub performs pointwise a - b
-func Sub(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(subOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
-// HadamardProd performs pointwise a * b
-func HadamardProd(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(mulOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
 // Mul is the general handler for multiplication of nodes. It is extremely overloaded. Only use if you know what you're doing
 //
 // If any of the nodes are ScalarType, then it'll be redirected to HadamardProd() instead
@@ -109,12 +91,6 @@ func OuterProd(a, b *Node) (retVal *Node, err error) {
 	return binOpNode(op, a, b)
 }
 
-// HadamardDiv performs pointwise a / b
-func HadamardDiv(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(divOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
 // Div is a shortcut function for HadamardDiv for scalar values. For matrix/tensor values, the matrix division operation is not yet handled, and will panic.
 func Div(a, b *Node) (retVal *Node, err error) {
 	if a.IsScalar() || b.IsScalar() {
@@ -123,27 +99,6 @@ func Div(a, b *Node) (retVal *Node, err error) {
 
 	// otherwise, matrix division
 	panic("Unhandled")
-}
-
-// Pow performs pointwise exponentiation
-func Pow(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(powOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
-// Gt performs a pointwise comparison a > b. retSame indicates if the return value should be the same type as the input values
-func Gt(a, b *Node, retSame bool) (retVal *Node, err error) {
-	op := newElemBinOp(gtOpType, a, b)
-	op.retSame = retSame
-	retVal, err = binOpNode(op, a, b)
-	return
-}
-
-// Gte performs pointwise comparison a >= b. retSame indicates if the return value should be the same type as the input values
-func Gte(a, b *Node, retSame bool) (retVal *Node, err error) {
-	op := newElemBinOp(gteOpType, a, b)
-	op.retSame = retSame
-	return binOpNode(op, a, b)
 }
 
 /* UNARY STUFF */
