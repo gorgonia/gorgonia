@@ -3,12 +3,15 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"math"
 	"time"
 
 	"github.com/chewxy/hm"
+	"github.com/chewxy/math32"
 	rng "github.com/leesper/go_rng"
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
+	"gorgonia.org/tensor/native"
 )
 
 var (
@@ -1101,8 +1104,10 @@ type batchnorm struct {
 	// if gamma != nil -> scale
 	beta, gamma *tensor.Dense
 
-	// if both of these are != nil -> renorm
-	movingMean, movingVar *tensor.Dense
+	means, vars *tensor.Dense
+
+	//
+	runningMean, runningVar *tensor.Dense
 
 	// training? if training then update movingMean and movingVar
 	training bool
@@ -1129,48 +1134,32 @@ func (op *batchnorm) Type() hm.Type {
 }
 
 func (op *batchnorm) InferShape(ns ...DimSizer) (tensor.Shape, error) {
-	if len(ns) != 1 {
-		return nil, errors.Errorf("Expected 1")
+	if err := checkArity(op, len(ns)); err != nil {
+		return nil, errors.Wrapf(err, "batchNorm")
 	}
+
 	return ns[0].(tensor.Shape).Clone(), nil
 }
 
 func (op *batchnorm) Do(values ...Value) (retVal Value, err error) {
-	x := values[0].(tensor.Tensor)
-	var T tensor.Tensor
-	if T, err = tensor.Add(op.movingVar, op.epsilon); err != nil {
-		return nil, errors.Wrap(err, "batchnorm failed")
+	if err := checkArity(op, len(values)); err != nil {
+		return nil, errors.Wrapf(err, "batchNorm Do")
 	}
-	if T, err = tensor.InvSqrt(T, tensor.UseUnsafe()); err != nil {
-		return nil, errors.Wrap(err, "batchnorm invsqrt failed")
-	}
-
-	var xinv tensor.Tensor
-	if xinv, err = tensor.Mul(T, x); err != nil {
-		return nil, errors.Wrap(err, "xinv")
+	var v, out Value
+	v = values[0]
+	if out, err = CloneValue(v); err != nil {
+		return nil, err
 	}
 
-	if op.gamma != nil {
-		if T, err = tensor.Mul(T, op.gamma, tensor.UseUnsafe()); err != nil {
-			return nil, errors.Wrap(err, "Scaling in batchnorm")
-		}
+	switch v.Dtype() {
+	case Float64:
+		err = op.f64s(v.(*tensor.Dense), out.(*tensor.Dense))
+	case Float32:
+		err = op.f32s(v.(*tensor.Dense), out.(*tensor.Dense))
+	default:
+		return nil, nyi("BatchNorm Do", v.Dtype())
 	}
-
-	if T, err = tensor.Mul(T, op.movingMean, tensor.UseUnsafe()); err != nil {
-		return nil, errors.Wrap(err, "* mean failed")
-	}
-
-	if op.beta != nil {
-		if T, err = tensor.Sub(op.beta, T, tensor.WithReuse(T)); err != nil {
-			return nil, errors.Wrapf(err, "Failed")
-		}
-	} else {
-		if T, err = tensor.Neg(T, tensor.UseUnsafe()); err != nil {
-			return nil, errors.Wrapf(err, "failed")
-		}
-	}
-
-	return tensor.Add(xinv, T, tensor.UseUnsafe())
+	return out, err
 }
 
 func (op *batchnorm) ReturnsPtr() bool { return true }
@@ -1203,29 +1192,197 @@ func (op *batchnorm) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nod
 // 	panic("not implemented")
 // }
 
-// func (op *batchnorm) UsePreallocDo(prealloc Value, inputs ...Value) (Value, error) {
-// 	panic("not implemented")
-// }
-
-func (op *batchnorm) doFused(input, output *tensor.Dense) (err error) {
-	depth := 1
-	restSize := input.DataSize() / depth
-	restByDepth := [2]int{restSize, depth}
-	// restByOne := [2]int{restSize, 1}
-	// oneByDepth := [2]int{1, depth}
-	// depthByOne := [2]int{depth, 1}
-
-	if err = tensor.Copy(output, input); err != nil {
-		return
+func (op *batchnorm) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+	v := inputs[0]
+	switch v.Dtype() {
+	case Float64:
+		err = op.f64s(v.(*tensor.Dense), prealloc.(*tensor.Dense))
+	case Float32:
+		err = op.f32s(v.(*tensor.Dense), prealloc.(*tensor.Dense))
+	default:
+		return nil, nyi("BatchNorm Do", v.Dtype())
 	}
-	if err = output.Reshape(restByDepth[:]...); err != nil {
-		return
+	return prealloc, err
+}
+
+func (op *batchnorm) f64s(input, output *tensor.Dense) (err error) {
+	channels := input.Shape()[1]
+	n := float64(input.DataSize()) / float64(channels)
+
+	means := op.means.Float64s()
+	vars := op.vars.Float64s()
+
+	var inxx, outxx [][]float64
+	if inxx, err = native.SelectF64(input, 1); err != nil {
+		return err
+	}
+	if outxx, err = native.SelectF64(output, 1); err != nil {
+		return err
 	}
 
+	var rm, rv, beta, gamma []float64
+	if op.runningMean != nil {
+		rm = op.runningMean.Float64s()
+	}
+	if op.runningVar != nil {
+		rv = op.runningVar.Float64s()
+	}
+	if op.beta != nil {
+		beta = op.beta.Float64s()
+	}
+	if op.gamma != nil {
+		gamma = op.gamma.Float64s()
+	}
+
+	// TODO: goroutinize this
+	for c := 0; c < channels; c++ {
+		in := inxx[c]
+		out := outxx[c]
+
+		var mean, invstd float64
+		if op.training {
+			// compute mean
+			var sum float64
+			for _, v := range in {
+				sum += v
+			}
+			mean = sum / n
+			means[c] = mean
+
+			// compute variance
+			sum = 0
+			for _, v := range in {
+				sum += (v - mean) * (v - mean)
+			}
+
+			if sum == 0 && op.epsilon == 0 {
+				invstd = 0
+			} else {
+				invstd = 1.0 / math.Sqrt(sum/n+op.epsilon)
+			}
+			vars[c] = invstd
+
+			// update running mean
+			if op.runningMean != nil {
+				rm[c] = op.momentum*mean + (1.0-op.momentum)*rm[c]
+			}
+			if op.runningVar != nil {
+				unbiased := sum / (n - 1)
+				rv[c] = op.momentum*unbiased + (1.0-op.momentum)*rv[c]
+			}
+		} else {
+			mean = rm[c]
+			invstd = 1.0 / math.Sqrt(rv[c]+op.epsilon)
+		}
+
+		// compute output
+		var w, b float64 = 1, 0
+		if beta != nil {
+			w = beta[c]
+		}
+		if gamma != nil {
+			b = gamma[c]
+		}
+
+		for i, v := range in {
+			out[i] = ((v-mean)*invstd)*w + b
+		}
+	}
 	return nil
 }
 
-type batchnormDiffOp struct{}
+func (op *batchnorm) f32s(input, output *tensor.Dense) (err error) {
+	channels := input.Shape()[1]
+	n := float32(input.DataSize()) / float32(channels)
+
+	means := op.means.Float32s()
+	vars := op.vars.Float32s()
+
+	var inxx, outxx [][]float32
+	if inxx, err = native.SelectF32(input, 1); err != nil {
+		return err
+	}
+	if outxx, err = native.SelectF32(output, 1); err != nil {
+		return err
+	}
+
+	var rm, rv, beta, gamma []float32
+	if op.runningMean != nil {
+		rm = op.runningMean.Float32s()
+	}
+	if op.runningVar != nil {
+		rv = op.runningVar.Float32s()
+	}
+	if op.beta != nil {
+		beta = op.beta.Float32s()
+	}
+	if op.gamma != nil {
+		gamma = op.gamma.Float32s()
+	}
+
+	eps := float32(op.epsilon)
+	mom := float32(op.momentum)
+
+	// TODO: goroutinize this
+	for c := 0; c < channels; c++ {
+		in := inxx[c]
+		out := outxx[c]
+
+		var mean, invstd float32
+		if op.training {
+			// compute mean
+			var sum float32
+			for _, v := range in {
+				sum += v
+			}
+			mean = sum / n
+			means[c] = mean
+
+			// compute variance
+			sum = 0
+			for _, v := range in {
+				sum += (v - mean) * (v - mean)
+			}
+
+			if sum == 0 && op.epsilon == 0 {
+				invstd = 0
+			} else {
+				invstd = 1.0 / math32.Sqrt(sum/n+eps)
+			}
+			vars[c] = invstd
+
+			// update running mean
+			if op.runningMean != nil {
+				rm[c] = mom*mean + (1.0-mom)*rm[c]
+			}
+			if op.runningVar != nil {
+				unbiased := sum / (n - 1)
+				rv[c] = mom*unbiased + (1.0-mom)*rv[c]
+			}
+		} else {
+			mean = rm[c]
+			invstd = 1.0 / math32.Sqrt(rv[c]+eps)
+		}
+
+		// compute output
+		var w, b float32 = 1, 0
+		if beta != nil {
+			w = beta[c]
+		}
+		if gamma != nil {
+			b = gamma[c]
+		}
+
+		for i, v := range in {
+			out[i] = ((v-mean)*invstd)*w + b
+		}
+	}
+	return nil
+}
+
+type batchnormDiffOp struct {
+	batchnorm
+}
 
 func (op *batchnormDiffOp) Arity() int { return 1 }
 
