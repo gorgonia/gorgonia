@@ -6,6 +6,7 @@ import (
 	"log"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -22,7 +23,7 @@ type tapeMachine struct {
 	cpumem []Value // Value - knows its own type and shape
 	gpumem []Value // Value of which the memories are stored in GPU memory
 
-	// state stuff, to allow continuation
+	// state stuff, to allow continuation after failure handling
 	pc int
 
 	// operational stuff
@@ -35,7 +36,7 @@ type tapeMachine struct {
 	tabcount    int
 	logFlags    byte
 
-	runFlags byte //  spare2: trace(copy values and put into nodes)
+	runFlags byte //  spare2: trace (copy values and put into nodes)
 }
 
 // NewTapeMachine creates a VM that compiles a graph into a prog.
@@ -66,7 +67,7 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.cpumem = make([]Value, prog.cpulocs)
 		m.gpumem = make([]Value, prog.gpulocs)
 	}
-	m.init()
+	m.init() // init ExternalMetadata
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 	}
@@ -111,6 +112,12 @@ func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
+	for i := range m.cpumem {
+		m.cpumem[i] = nil
+	}
+	for i := range m.gpumem {
+		m.gpumem[i] = nil
+	}
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions
@@ -219,57 +226,73 @@ func (m *tapeMachine) RunAll() (err error) {
 }
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
-	for ; m.pc < len(m.p.instructions); m.pc++ {
-		instr := m.p.instructions[m.pc]
-		m.logf("PC %d", m.pc)
-		if err := instr.exec(m); err != nil {
-			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
-			errChan <- err
-			return
-		}
+	workers := make(chan struct{}, runtime.NumCPU())
 
-		if m.watchNaN() {
-			writeTo := instr.writes().id
-			id := instr.ID()
-			if writeTo > 0 && id > 0 {
-				v := m.getValue(instr.writes())
-				if v == nil {
-					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
-					errChan <- err
-					return
-				}
-
-				if hasNaN(v) {
-					n := m.p.g.Node(id).(*Node)
-					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
-					errChan <- err
-					return
-				}
+	for _, root := range m.p.g.Roots() {
+		groups := walkLOT(root)
+		for _, grp := range groups {
+			var wg sync.WaitGroup
+			wg.Add(len(grp))
+			for _, n := range grp {
+				go m.executeOneNode(n, workers, errChan, &wg)
 			}
+			wg.Wait()
 		}
+	}
+	doneChan <- struct{}{}
+}
 
-		if m.watchInf() {
-			writeTo := instr.writes().id
-			id := instr.ID()
-			if writeTo > 0 && id > 0 {
-				v := m.getValue(instr.writes())
-				if v == nil {
-					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
-					errChan <- err
-					return
-				}
+func (m *tapeMachine) executeOneNode(n *Node, workers chan struct{}, errChan chan error, wg *sync.WaitGroup) {
+	workers <- struct{}{}
 
-				if hasInf(v) {
-					n := m.p.g.Node(id).(*Node)
-					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
-					errChan <- err
-					return
-				}
+	instrs := m.p.m[n]
+	for _, instr := range instrs {
+		if err := m.executeOneInstr(instr); err != nil {
+			errChan <- err
+			break
+		}
+	}
+	<-workers
+	wg.Done()
+}
+
+func (m *tapeMachine) executeOneInstr(instr tapeInstr) error {
+	if err := instr.exec(m); err != nil {
+		return errors.Wrapf(err, "Failed to execute instruction %v", instr)
+	}
+
+	if m.watchNaN() {
+		writeTo := instr.writes().id
+		id := instr.ID()
+		if writeTo > 0 && id > 0 {
+			v := m.getValue(instr.writes())
+			if v == nil {
+				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
+			}
+
+			if hasNaN(v) {
+				n := m.p.g.Node(id).(*Node)
+				return errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 			}
 		}
 	}
 
-	doneChan <- struct{}{}
+	if m.watchInf() {
+		writeTo := instr.writes().id
+		id := instr.ID()
+		if writeTo > 0 && id > 0 {
+			v := m.getValue(instr.writes())
+			if v == nil {
+				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
+			}
+
+			if hasInf(v) {
+				n := m.p.g.Node(id).(*Node)
+				return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
+			}
+		}
+	}
+	return nil
 }
 
 func (m *tapeMachine) getValue(r register) Value {
@@ -290,8 +313,30 @@ func (m *tapeMachine) writeValue(r register, v Value) {
 	}
 }
 
+// func (m *tapeMachine) unlockRegister(r register) {
+// 	switch r.device {
+// 	case CPU:
+// 		m.cpulocks[r.id].Unlock()
+// 	default:
+// 		m.gpulocks[r.id].Unlock()
+// 	}
+// }
+
+// func (m *tapeMachine) lockRegister(r register) {
+// 	switch r.device {
+// 	case CPU:
+// 		m.cpulocks[r.id].Lock()
+// 	default:
+// 		m.gpulocks[r.id].Lock()
+// 	}
+// }
+
 func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
-	instr := m.p.instructions[m.pc]
+	m.watchedPCLogf(m.pc, format, attrs...)
+}
+
+func (m *tapeMachine) watchedPCLogf(pc int, format string, attrs ...interface{}) {
+	instr := m.p.instructions[pc]
 	reads := instr.reads()
 	writes := instr.writes()
 
@@ -560,8 +605,6 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	}
 
 	m.writeValue(instr.writeTo, v)
-	// m.watchedLogf("Write To: %v", instr.writeTo)
-	// m.watchedLogf(m.valueFmt, m.cpumem[instr.writeTo.id])
 	return nil
 }
 
@@ -602,6 +645,27 @@ func newExecOp(n *Node) *execOp {
 		useGPU: useGPU,
 		size:   size,
 	}
+}
+
+func (instr *execOp) exec(m *tapeMachine) error {
+	m.logf("Executing %v. Node is: %x", instr, instr.id)
+	m.enterLogScope()
+	defer m.leaveLogScope()
+
+	// Read
+	pc := int(instr.ID())
+	m.watchedPCLogf(pc, "Inputs:")
+	m.enterLogScope()
+	inputs := make([]Value, 0, len(instr.readFrom))
+	for _, reg := range instr.readFrom {
+		v := m.getValue(reg)
+		inputs = append(inputs, v)
+		m.watchedPCLogf(pc, m.valueFmt, v)
+	}
+	m.leaveLogScope()
+
+	err := instr.execKernel(m, inputs)
+	return err
 }
 
 func (instr *execOp) String() string {

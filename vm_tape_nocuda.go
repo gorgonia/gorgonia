@@ -11,22 +11,8 @@ func UseCudaFor(ops ...string) VMOpt {
 	return func(m VM) {}
 }
 
-func (instr *execOp) exec(m *tapeMachine) (err error) {
-	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLogScope()
-	defer m.leaveLogScope()
-
-	// Read
-	m.watchedLogf("Inputs:")
-	m.enterLogScope()
-	var inputs []Value
-	for _, reg := range instr.readFrom {
-		v := m.cpumem[reg.id]
-		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v)
-	}
-	m.leaveLogScope()
-
+func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
+	pc := int(instr.ID())
 	// Execute
 	var v Value
 	switch {
@@ -59,18 +45,18 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		}
 	}
 
-	m.watchedLogf("Result:")
+	m.watchedPCLogf(pc, "Result:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedPCLogf(pc, m.valueFmt, v)
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
 	// Write
 	setEngine(v, m.Engine)
-	dest := instr.writeTo.id
-	m.cpumem[dest] = v
-	node := m.p.g.Node(instr.id).(*Node)
+	m.writeValue(instr.writeTo, v)
 
+	// additional processing
+	node := m.p.g.Node(instr.id).(*Node)
 	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
 		if err = node.bindCopy(v); err != nil {
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
@@ -88,9 +74,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 			if src.boundTo != nil {
 				dv := dvUnit(src.boundTo)
-
 				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
-
 				if d, err := add.UnsafeDo(dv.d, v); err == nil {
 					dv.SetDeriv(d)
 					src.bind(dv)
@@ -102,9 +86,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	}
 
-	m.watchedLogf("Written To: %v", instr.writeTo)
+	m.watchedPCLogf(pc, "Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedPCLogf(pc, m.valueFmt, v)
 	m.leaveLogScope()
 	return nil
 }

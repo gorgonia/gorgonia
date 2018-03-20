@@ -141,24 +141,8 @@ func (m *tapeMachine) loadDummyStdLib() {
 	}
 }
 
-func (instr *execOp) exec(m *tapeMachine) (err error) {
-	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLogScope()
-	defer m.leaveLogScope()
-
-	enterLogScope()
-	defer leaveLogScope()
-
-	m.watchedLogf("Inputs:")
-	m.enterLogScope()
-	var inputs []Value
-	for _, reg := range instr.readFrom {
-		v := m.getValue(reg)
-		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v)
-	}
-	m.leaveLogScope()
-
+func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
+	pc := int(instr.id)
 	toDev := instr.writeTo.device
 	var v Value
 	switch op := instr.op.(type) {
@@ -200,17 +184,18 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		}
 
 	}
-	m.watchedLogf("Result:")
+	m.watchedPCLogf(pc, "Result:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedPCLogf(pc, m.valueFmt, v)
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
 	// Write
 	setEngine(v, m.Engine)
 	m.writeValue(instr.writeTo, v)
-	node := m.p.g.Node(instr.id).(*Node)
 
+	// additional processing
+	node := m.p.g.Node(instr.id).(*Node)
 	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
 		m.Signal()
 		if err = node.bindCopy(v); err != nil {
@@ -278,9 +263,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	}
 
-	m.watchedLogf("Written To: %v", instr.writeTo)
+	m.watchedPCLogf("Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedPCLogf(m.valueFmt, v)
 	m.leaveLogScope()
 
 	return nil

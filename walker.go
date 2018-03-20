@@ -33,7 +33,41 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 	for _, child := range start.children {
 		walkGraph(child, ch, walked)
 	}
+}
 
+// los stores the state of level order traversal
+type lot struct {
+	data []Nodes
+}
+
+func walkLOT(root *Node) []Nodes {
+	s := new(lot)
+	s.data = make([]Nodes, len(root.children))
+	s.dfs(root, 0)
+
+	// reverse
+	for i, j := 0, len(s.data)-1; i < j; i, j = i+1, j-1 {
+		s.data[i], s.data[j] = s.data[j], s.data[i]
+	}
+	return s.data
+}
+
+func (s *lot) dfs(n *Node, level int) {
+	if n == nil {
+		return
+	}
+
+	// if leevel >= levels {
+	// 	s.data = append(s.data, make(Nodes, 0, 8)...)
+	// }
+	s.data[level] = append(s.data[level], n)
+	if len(s.data) <= level+1 {
+		s.data = append(s.data, make(Nodes, 0, len(n.children)))
+	}
+
+	for _, child := range n.children {
+		s.dfs(child, level+1)
+	}
 }
 
 // Sort topologically sorts a ExprGraph: root of graph will be first
