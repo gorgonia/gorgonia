@@ -112,12 +112,6 @@ func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
-	for i := range m.cpumem {
-		m.cpumem[i] = nil
-	}
-	for i := range m.gpumem {
-		m.gpumem[i] = nil
-	}
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions
@@ -231,18 +225,39 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for _, root := range m.p.g.Roots() {
 		groups := walkLOT(root)
 		for _, grp := range groups {
-			var wg sync.WaitGroup
-			wg.Add(len(grp))
-			for _, n := range grp {
-				go m.executeOneNode(n, workers, errChan, &wg)
+			switch len(grp) {
+			case 0:
+				continue
+			case 1:
+				if err := m.executeOneNode(grp[0]); err != nil {
+					errChan <- err
+					return
+				}
+				continue
+			default:
+				var wg sync.WaitGroup
+				wg.Add(len(grp))
+				for _, n := range grp {
+					go m.executeOneNodePar(n, workers, errChan, &wg)
+				}
+				wg.Wait()
 			}
-			wg.Wait()
 		}
 	}
 	doneChan <- struct{}{}
 }
 
-func (m *tapeMachine) executeOneNode(n *Node, workers chan struct{}, errChan chan error, wg *sync.WaitGroup) {
+func (m *tapeMachine) executeOneNode(n *Node) error {
+	instrs := m.p.m[n]
+	for _, instr := range instrs {
+		if err := m.executeOneInstr(instr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *tapeMachine) executeOneNodePar(n *Node, workers chan struct{}, errChan chan error, wg *sync.WaitGroup) {
 	workers <- struct{}{}
 
 	instrs := m.p.m[n]

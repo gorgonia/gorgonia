@@ -38,17 +38,24 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 // los stores the state of level order traversal
 type lot struct {
 	data []Nodes
+	seen NodeSet
 }
 
 func walkLOT(root *Node) []Nodes {
 	s := new(lot)
 	s.data = make([]Nodes, len(root.children))
+	s.seen = make(NodeSet)
 	s.dfs(root, 0)
 
 	// reverse
 	for i, j := 0, len(s.data)-1; i < j; i, j = i+1, j-1 {
 		s.data[i], s.data[j] = s.data[j], s.data[i]
 	}
+	// set
+	for i, grp := range s.data {
+		s.data[i] = grp.Set()
+	}
+
 	return s.data
 }
 
@@ -57,9 +64,6 @@ func (s *lot) dfs(n *Node, level int) {
 		return
 	}
 
-	// if leevel >= levels {
-	// 	s.data = append(s.data, make(Nodes, 0, 8)...)
-	// }
 	s.data[level] = append(s.data[level], n)
 	if len(s.data) <= level+1 {
 		s.data = append(s.data, make(Nodes, 0, len(n.children)))
