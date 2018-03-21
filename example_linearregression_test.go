@@ -68,7 +68,7 @@ func linregSetup(Float tensor.Dtype) (m, c *Node, machine VM) {
 	cost := Must(Mean(se))
 
 	if _, err := Grad(cost, m, c); err != nil {
-		log.Fatal("Failed to backpropagate: %v", err)
+		log.Fatalf("Failed to backpropagate: %v", err)
 	}
 
 	// machine := NewLispMachine(g)  // you can use a LispMachine, but it'll be VERY slow.
