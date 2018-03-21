@@ -39,39 +39,62 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 type lot struct {
 	data []Nodes
 	seen NodeSet
+	prev NodeSet
+	l    Nodes
 }
 
-func walkLOT(root *Node) []Nodes {
+func walkLOT(p *program) []Nodes {
 	s := new(lot)
-	s.data = make([]Nodes, len(root.children))
+	s.data = make([]Nodes, 1, 8)
 	s.seen = make(NodeSet)
-	s.dfs(root, 0)
+	s.prev = make(NodeSet)
 
-	// reverse
-	for i, j := 0, len(s.data)-1; i < j; i, j = i+1, j-1 {
-		s.data[i], s.data[j] = s.data[j], s.data[i]
-	}
-	// set
-	for i, grp := range s.data {
-		s.data[i] = grp.Set()
-	}
+	s.l = make(Nodes, len(p.sorted))
+	copy(s.l, p.sorted)
 
+	l0 := make(Nodes, len(p.g.leaves)+len(p.g.constants))
+	copy(l0, p.g.leaves)
+	copy(l0[len(p.g.leaves):], p.g.constants)
+	s.data[0] = l0
+
+	for _, n := range l0 {
+		s.seen.Add(n)
+		s.prev.Add(n)
+	}
+	i := 1
+	for {
+		if s.do(i) {
+			break
+		}
+		i++
+	}
 	return s.data
 }
 
-func (s *lot) dfs(n *Node, level int) {
-	if n == nil {
-		return
+func (s *lot) do(level int) bool {
+	// log.Printf("level %d", level)
+	if len(s.data) <= level {
+		s.data = append(s.data, make(Nodes, 0, 4))
 	}
-
-	s.data[level] = append(s.data[level], n)
-	if len(s.data) <= level+1 {
-		s.data = append(s.data, make(Nodes, 0, len(n.children)))
+	for _, n := range s.l {
+		if s.seen.Contains(n) {
+			continue
+		}
+		var seenCount int
+		for _, child := range n.children {
+			if s.prev.Contains(child) {
+				seenCount++
+			}
+		}
+		if seenCount == len(n.children) {
+			s.data[level] = append(s.data[level], n)
+			s.seen.Add(n)
+		}
 	}
-
-	for _, child := range n.children {
-		s.dfs(child, level+1)
+	for _, n := range s.data[level] {
+		s.prev.Add(n)
 	}
+	return len(s.seen) == len(s.l)
 }
 
 // Sort topologically sorts a ExprGraph: root of graph will be first

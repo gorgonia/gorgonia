@@ -219,31 +219,51 @@ func (m *tapeMachine) RunAll() (err error) {
 	return
 }
 
+var print11 bool
+
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	workers := make(chan struct{}, runtime.NumCPU())
 
-	for _, root := range m.p.g.Roots() {
-		groups := walkLOT(root)
-		for _, grp := range groups {
-			switch len(grp) {
-			case 0:
-				continue
-			case 1:
-				if err := m.executeOneNode(grp[0]); err != nil {
-					errChan <- err
-					return
-				}
-				continue
-			default:
-				var wg sync.WaitGroup
-				wg.Add(len(grp))
-				for _, n := range grp {
-					go m.executeOneNodePar(n, workers, errChan, &wg)
-				}
-				wg.Wait()
+	// for _, root := range m.p.g.Roots() {
+	// 	groups := walkLOT(root)
+
+	// }
+	groups := walkLOT(m.p)
+	// if !print11 {
+	// 	print11 = true
+	// 	log.Printf("%v", m.p.instructions)
+
+	// 	for i, grp := range groups {
+	// 		log.Printf("Group %d:", i)
+	// 		for _, n := range grp {
+	// 			log.Printf("\t%d: %v", n.ID(), n)
+	// 			instrs := m.p.m[n]
+	// 			for _, instr := range instrs {
+	// 				log.Printf("\t\t%v", instr)
+	// 			}
+	// 		}
+	// 	}
+	// }
+	for _, grp := range groups {
+		switch len(grp) {
+		case 0:
+			continue
+		case 1:
+			if err := m.executeOneNode(grp[0]); err != nil {
+				errChan <- err
+				return
 			}
+			continue
+		default:
+			var wg sync.WaitGroup
+			wg.Add(len(grp))
+			for _, n := range grp {
+				go m.executeOneNodePar(n, workers, errChan, &wg)
+			}
+			wg.Wait()
 		}
 	}
+
 	doneChan <- struct{}{}
 }
 

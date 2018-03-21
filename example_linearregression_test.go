@@ -117,11 +117,11 @@ func linearRegression(Float tensor.Dtype, iter int) (retM, retC Value) {
 func Example_linearRegression() {
 	var m, c Value
 	// Float32
-	m, c = linearRegression(Float32, 50)
+	m, c = linearRegression(Float32, 500)
 	fmt.Printf("float32: y = %3.3fx + %3.3f\n", m, c)
 
 	// Float64
-	m, c = linearRegression(Float64, 50)
+	m, c = linearRegression(Float64, 500)
 	fmt.Printf("float64: y = %3.3fx + %3.3f\n", m, c)
 
 	// Output:
