@@ -49,8 +49,7 @@ func walkLOT(p *program) []Nodes {
 	s.seen = make(NodeSet)
 	s.prev = make(NodeSet)
 
-	s.l = make(Nodes, len(p.sorted))
-	copy(s.l, p.sorted)
+	s.l = p.sorted
 
 	l0 := make(Nodes, len(p.g.leaves)+len(p.g.constants))
 	copy(l0, p.g.leaves)
