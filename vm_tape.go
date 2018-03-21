@@ -230,7 +230,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	// }
 	groups := walkLOT(m.p)
 	// if !print11 {
-	// 	print11 = true
+	// print11 = true
 	// 	log.Printf("%v", m.p.instructions)
 
 	// 	for i, grp := range groups {

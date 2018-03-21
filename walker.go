@@ -1,6 +1,7 @@
 package gorgonia
 
 import (
+	"log"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -41,6 +42,7 @@ type lot struct {
 	seen NodeSet
 	prev NodeSet
 	l    Nodes
+	last int
 }
 
 func walkLOT(p *program) []Nodes {
@@ -60,6 +62,16 @@ func walkLOT(p *program) []Nodes {
 		s.seen.Add(n)
 		s.prev.Add(n)
 	}
+	for i, n := range s.l {
+		if !s.seen.Contains(n) {
+			break
+		}
+		if i > s.last {
+			s.last = i
+		}
+	}
+	log.Printf("s.last %v | %v", s.last, len(s.l))
+
 	i := 1
 	for {
 		if s.do(i) {
@@ -71,11 +83,12 @@ func walkLOT(p *program) []Nodes {
 }
 
 func (s *lot) do(level int) bool {
-	// log.Printf("level %d", level)
+	log.Printf("level %d", level)
 	if len(s.data) <= level {
 		s.data = append(s.data, make(Nodes, 0, 4))
 	}
-	for _, n := range s.l {
+	for i, n := range s.l {
+		log.Printf("\t%d: %v | %d", i, n, s.last)
 		if s.seen.Contains(n) {
 			continue
 		}
@@ -85,10 +98,12 @@ func (s *lot) do(level int) bool {
 				seenCount++
 			}
 		}
-		if seenCount == len(n.children) {
-			s.data[level] = append(s.data[level], n)
-			s.seen.Add(n)
+		if seenCount != len(n.children) {
+			s.last = i
+			break
 		}
+		s.data[level] = append(s.data[level], n)
+		s.seen.Add(n)
 	}
 	for _, n := range s.data[level] {
 		s.prev.Add(n)
