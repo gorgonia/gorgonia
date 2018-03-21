@@ -230,7 +230,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	// }
 	groups := walkLOT(m.p)
 	// if !print11 {
-	// print11 = true
+	// 	print11 = true
 	// 	log.Printf("%v", m.p.instructions)
 
 	// 	for i, grp := range groups {
@@ -239,7 +239,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	// 			log.Printf("\t%d: %v", n.ID(), n)
 	// 			instrs := m.p.m[n]
 	// 			for _, instr := range instrs {
-	// 				log.Printf("\t\t%v", instr)
+	// 				log.Printf("\t\t%d: %v", instr.ID(), instr)
 	// 			}
 	// 		}
 	// 	}
@@ -366,15 +366,9 @@ func (m *tapeMachine) writeValue(r register, v Value) {
 // 	}
 // }
 
-func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
-	m.watchedPCLogf(m.pc, format, attrs...)
-}
-
-func (m *tapeMachine) watchedPCLogf(pc int, format string, attrs ...interface{}) {
-	instr := m.p.instructions[pc]
+func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...interface{}) {
 	reads := instr.reads()
 	writes := instr.writes()
-
 	watched := m.watchAll()
 
 	if !watched {
@@ -688,14 +682,13 @@ func (instr *execOp) exec(m *tapeMachine) error {
 	defer m.leaveLogScope()
 
 	// Read
-	pc := int(instr.ID())
-	m.watchedPCLogf(pc, "Inputs:")
+	m.watchedInstrLogf(instr, "Inputs:")
 	m.enterLogScope()
 	inputs := make([]Value, 0, len(instr.readFrom))
 	for _, reg := range instr.readFrom {
 		v := m.getValue(reg)
 		inputs = append(inputs, v)
-		m.watchedPCLogf(pc, m.valueFmt, v)
+		m.watchedInstrLogf(instr, m.valueFmt, v)
 	}
 	m.leaveLogScope()
 

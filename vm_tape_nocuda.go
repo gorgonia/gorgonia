@@ -12,7 +12,6 @@ func UseCudaFor(ops ...string) VMOpt {
 }
 
 func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
-	pc := int(instr.ID())
 	// Execute
 	var v Value
 	switch {
@@ -45,9 +44,9 @@ func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
 		}
 	}
 
-	m.watchedPCLogf(pc, "Result:")
+	m.watchedInstrLogf(instr, "Result:")
 	m.enterLogScope()
-	m.watchedPCLogf(pc, m.valueFmt, v)
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
@@ -86,9 +85,9 @@ func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
 
 	}
 
-	m.watchedPCLogf(pc, "Written To: %v", instr.writeTo)
+	m.watchedInstrLogf(instr, "Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedPCLogf(pc, m.valueFmt, v)
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 	return nil
 }
