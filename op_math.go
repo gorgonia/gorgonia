@@ -150,9 +150,12 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 			switch {
 			case x.IsScalar() && y.IsScalar():
 				// preserve ambiguous scalar shape
-				if (len(x) > 0) && (1 == x[0]) && (len(y) > 0) && (1 == y[0]) {
+				switch {
+				case len(x) > 0 && x[0] == 1 && len(y) == 0:
 					retVal = x
-				} else {
+				case len(y) > 0 && y[0] == 1 && len(x) == 0:
+					retVal = y
+				default:
 					retVal = scalarShape
 				}
 			case x.IsScalar() && !y.IsScalar():
@@ -456,13 +459,7 @@ func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) {
 	return op.do(inputs[0])
 }
 
-func (op elemUnaryOp) ReturnsPtr() bool {
-	// if op.argTensor {
-	// 	return true
-	// }
-	// return false
-	return true
-}
+func (op elemUnaryOp) ReturnsPtr() bool { return true }
 
 func (op elemUnaryOp) OverwritesInput() int {
 	if op.argTensor {

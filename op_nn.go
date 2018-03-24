@@ -1089,14 +1089,13 @@ func (op *clampOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "ConstClamp{%f, %f}()
 func (op *clampOp) Hashcode() uint32 { return simpleHash(op) }
 func (op *clampOp) String() string   { return fmt.Sprintf("ConstClamp{%f, %f}()", op.min, op.max) }
 
-// batchnorm is a batch normalization process as described by Ioffe and Szegedy (2015) -
+// BatchNormOp is a batch normalization process as described by Ioffe and Szegedy (2015) -
 // http://arxiv.org/abs/1502.03167
 //
 // Normalization is done as:
 // 	γ(x - μ) / σ + β
 // The scaling factor γ and offset factor  β are optional
-type batchnormOp struct {
-	axis     int
+type BatchNormOp struct {
 	momentum float64 // momentum for the moving average
 	epsilon  float64 // small variance to be added to avoid dividing by 0
 
@@ -1105,8 +1104,8 @@ type batchnormOp struct {
 	gamma, beta         *tensor.Dense
 	gammaGrad, betaGrad *tensor.Dense
 
-	means, vars        *tensor.Dense
-	meansGrad, varGrad *tensor.Dense
+	// training means/vars
+	means, vars *tensor.Dense
 
 	// if not training, then update runninng
 	runningMean, runningVar *tensor.Dense
@@ -1115,24 +1114,22 @@ type batchnormOp struct {
 	training bool
 }
 
-func newBatchNorm(axis int) *batchnormOp {
-	if axis < 0 {
-		panic("This is Go. There ain't no negative indexing.")
-	}
-	retVal := &batchnormOp{
-		axis: axis,
+func newBatchNorm(momentum, epsilon float64) *BatchNormOp {
+	retVal := &BatchNormOp{
+		momentum: momentum,
+		epsilon:  epsilon,
 	}
 	return retVal
 }
 
-func (op *batchnormOp) Arity() int { return 1 }
+func (op *BatchNormOp) Arity() int { return 1 }
 
-func (op *batchnormOp) Type() hm.Type {
+func (op *BatchNormOp) Type() hm.Type {
 	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
 	return hm.NewFnType(t, t)
 }
 
-func (op *batchnormOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
+func (op *BatchNormOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 	if err := checkArity(op, len(ns)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm")
 	}
@@ -1140,7 +1137,7 @@ func (op *batchnormOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 	return ns[0].(tensor.Shape).Clone(), nil
 }
 
-func (op *batchnormOp) Do(values ...Value) (retVal Value, err error) {
+func (op *BatchNormOp) Do(values ...Value) (retVal Value, err error) {
 	if err := checkArity(op, len(values)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm Do")
 	}
@@ -1152,29 +1149,29 @@ func (op *batchnormOp) Do(values ...Value) (retVal Value, err error) {
 	return op.UsePreallocDo(out, v)
 }
 
-func (op *batchnormOp) ReturnsPtr() bool { return true }
+func (op *BatchNormOp) ReturnsPtr() bool { return true }
 
-func (op *batchnormOp) CallsExtern() bool { return false }
+func (op *BatchNormOp) CallsExtern() bool { return false }
 
-func (op *batchnormOp) OverwritesInput() int { return -1 }
+func (op *BatchNormOp) OverwritesInput() int { return -1 }
 
-func (op *batchnormOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "batchnorm-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
+func (op *BatchNormOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "batchnorm-%1.1f-%1.1f", op.momentum, op.epsilon)
 }
 
-func (op *batchnormOp) Hashcode() uint32 { return simpleHash(op) }
+func (op *BatchNormOp) Hashcode() uint32 { return simpleHash(op) }
 
-func (op *batchnormOp) String() string {
-	return fmt.Sprintf("batchnorm-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
+func (op *BatchNormOp) String() string {
+	return fmt.Sprintf("batchnorm-%1.1f-%1.1f", op.momentum, op.epsilon)
 }
 
-func (op *batchnormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
 	panic("not implemented")
 }
 
-func (op *batchnormOp) DiffWRT(inputs int) []bool { return []bool{true} }
+func (op *BatchNormOp) DiffWRT(inputs int) []bool { return []bool{true} }
 
-func (op *batchnormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+func (op *BatchNormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
@@ -1188,7 +1185,7 @@ func (op *batchnormOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal N
 	return Nodes{ret}, nil
 }
 
-func (op *batchnormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
+func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
 	v := inputs[0]
 	switch v.Dtype() {
 	case Float64:
@@ -1201,7 +1198,10 @@ func (op *batchnormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 	return prealloc, err
 }
 
-func (op *batchnormOp) f64s(input, output *tensor.Dense) (err error) {
+func (op *BatchNormOp) SetTraining() { op.training = true }
+func (op *BatchNormOp) SetTesting()  { op.training = false }
+
+func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	channels := input.Shape()[1]
 	n := float64(input.DataSize()) / float64(channels)
 
@@ -1288,7 +1288,7 @@ func (op *batchnormOp) f64s(input, output *tensor.Dense) (err error) {
 	return nil
 }
 
-func (op *batchnormOp) f32s(input, output *tensor.Dense) (err error) {
+func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	channels := input.Shape()[1]
 	n := float32(input.DataSize()) / float32(channels)
 
@@ -1378,7 +1378,7 @@ func (op *batchnormOp) f32s(input, output *tensor.Dense) (err error) {
 }
 
 type batchnormDiffOp struct {
-	*batchnormOp
+	*BatchNormOp
 }
 
 func (op *batchnormDiffOp) Arity() int { return 2 }
@@ -1402,13 +1402,13 @@ func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
 // OverwritesInput is the same exact characteristics of batchnorm
 
 func (op *batchnormDiffOp) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "batchnormdiff-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
+	fmt.Fprintf(h, "batchnormdiff-%1.1f-%1.1f", op.momentum, op.epsilon)
 }
 
 func (op *batchnormDiffOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op *batchnormDiffOp) String() string {
-	return fmt.Sprintf("batchnormdiff-%d-%1.1f-%1.1f", op.axis, op.momentum, op.epsilon)
+	return fmt.Sprintf("batchnormdiff-%1.1f-%1.1f", op.momentum, op.epsilon)
 }
 
 func (op *batchnormDiffOp) DiffWRT(inputs int) []bool {

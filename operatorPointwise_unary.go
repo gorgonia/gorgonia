@@ -418,6 +418,7 @@ func squareDiffExpr(x, y, gradY *Node) (retVal *Node, err error) {
 		return nil, errors.Wrap(err, "getConst failed")
 	}
 
+	// symdiffLogf("X %v and TWO %v", x.Shape(), two.Shape())
 	if retVal, err = HadamardProd(x, two); err == nil {
 		symdiffLogf("Spawned: %d", retVal.ID())
 		WithGroupName(gradClust)(retVal)

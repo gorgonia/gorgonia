@@ -255,6 +255,28 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	return ApplyOp(op, x)
 }
 
-// func BatchNorm(x, mean, variance, scale, offset *Node) (*Node, error) {
-// 	inv := Sqrt()
-// }
+func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
+	var gamma, beta, gammaGrad, betaGrad, means, vars, runningMean, runningVar *tensor.Dense
+	if auto {
+		// create these
+	}
+
+	op := &BatchNormOp{
+		momentum: momentum,
+		epsilon:  epsilon,
+
+		gamma:     gamma,
+		beta:      beta,
+		gammaGrad: gammaGrad,
+		betaGrad:  betaGrad,
+
+		means: means,
+		vars:  vars,
+
+		runningMean: runningMean,
+		runningVar:  runningVar,
+	}
+
+	retVal, err := ApplyOp(op, x)
+	return retVal, op, err
+}

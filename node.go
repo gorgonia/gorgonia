@@ -236,6 +236,9 @@ func (n *Node) isRoot() bool {
 	return len(n.g.to[n]) == 0
 }
 
+// IsVar returns true if  the node represents a differentiable variable (i.e. it's an argument to the function that is not a statement)
+func (n *Node) IsVar() bool { return n.isArg() && !n.isStmt && !n.isConstant() }
+
 // type related isX() helper methods
 
 // IsScalar indicates if a node represents a a scalar value. This is based on the type of the node, not the actual value associated with the node
