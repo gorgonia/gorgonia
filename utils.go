@@ -251,3 +251,15 @@ func getConst(x *Node, constant string) (retVal *Node, err error) {
 	}
 	return nil, errors.Errorf("constant %d not provided for %v", constant, dt)
 }
+
+func scalarEquiv(s tensor.Shape) bool {
+	if len(s) == 0 {
+		return true
+	}
+	prod := 1
+	for _, v := range s {
+		prod *= v
+	}
+
+	return prod == 1
+}
