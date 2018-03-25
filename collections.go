@@ -64,7 +64,7 @@ func (ns Nodes) Format(s fmt.State, c rune) {
 	case 'd':
 		s.Write([]byte("["))
 		for i, n := range ns {
-			fmt.Fprintf(s, "%x", n.Hashcode())
+			fmt.Fprintf(s, "%x", n.ID())
 			if i < len(ns)-1 {
 				fmt.Fprintf(s, "%s", delimiter)
 			}

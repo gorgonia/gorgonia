@@ -1385,10 +1385,17 @@ func (op *batchnormDiffOp) Arity() int { return 2 }
 
 func (op *batchnormDiffOp) Type() hm.Type {
 	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
-	return hm.NewFnType(t, t)
+	return hm.NewFnType(t, t, t)
 }
 
 // InferShape is the same exact function as batchnorm
+func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
+	if err := checkArity(op, len(ns)); err != nil {
+		return nil, errors.Wrapf(err, "batchNorm")
+	}
+
+	return ns[0].(tensor.Shape).Clone(), nil
+}
 
 func (op *batchnormDiffOp) Do(values ...Value) (Value, error) {
 	input := values[0].(*tensor.Dense)

@@ -205,3 +205,19 @@ func TestDumb(t *testing.T) {
 	}
 }
 */
+
+func TestBatchNorm(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, Float64, 4, WithShape(2, 3, 4, 5))
+	y, _, err := BatchNorm(x, 0.9, 1e-5, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, _ := Mean(y)
+
+	if _, err := Grad(c, x); err != nil {
+		ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
+		t.Fatal(err)
+	}
+
+}

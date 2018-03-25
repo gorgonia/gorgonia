@@ -151,9 +151,9 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 			case x.IsScalar() && y.IsScalar():
 				// preserve ambiguous scalar shape
 				switch {
-				case len(x) > 0 && x[0] == 1 && len(y) == 0:
+				case len(x) > 0 && x[0] == 1:
 					retVal = x
-				case len(y) > 0 && y[0] == 1 && len(x) == 0:
+				case len(y) > 0 && y[0] == 1:
 					retVal = y
 				default:
 					retVal = scalarShape
@@ -278,16 +278,7 @@ func (op elemBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (er
 	return
 }
 
-func (op elemBinOp) ReturnsPtr() bool {
-	// if _, ok := op.arg0.(TensorType); ok {
-	// 	return true
-	// } else if _, ok := op.arg1.(TensorType); ok {
-	// 	return true
-	// }
-
-	// return false
-	return true
-}
+func (op elemBinOp) ReturnsPtr() bool { return true }
 
 func (op elemBinOp) OverwritesInput() int {
 	if _, ok := op.arg0.(TensorType); ok {
@@ -555,6 +546,10 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 		if op.transB {
 			y = transpose2D(y)
 			defer tensor.ReturnInts(y)
+		}
+
+		if x[1] != y[0] {
+			return nil, errors.Errorf("Inner dimensions do not match up")
 		}
 
 		retVal = tensor.Shape{x[0], y[1]}
