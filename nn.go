@@ -259,6 +259,22 @@ func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNorm
 	var gamma, beta, gammaGrad, betaGrad, means, vars, runningMean, runningVar *tensor.Dense
 	if auto {
 		// create these
+		dt, err := dtypeOf(x.Type())
+		if err != nil {
+			return nil, nil, err
+		}
+		gamma = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		beta = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		gammaGrad = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		betaGrad = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		means = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		vars = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		runningMean = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		runningVar = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+
+		beta.Zero()
+		means.Zero()
+		runningMean.Zero()
 	}
 
 	op := &BatchNormOp{

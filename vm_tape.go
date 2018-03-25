@@ -415,6 +415,14 @@ func (p *program) String() string {
 // Graph enables the end user to inspect the graph (typically useful for debugging)
 func (p *program) Graph() *ExprGraph { return p.g }
 
+func (p *program) CPUMemReq() int64 { return p.cpumem }
+
+func (p *program) GPUMemReq() []int64 {
+	retVal := make([]int64, len(p.gpumem))
+	copy(retVal, p.gpumem)
+	return retVal
+}
+
 /* REGISTER */
 
 type register struct {

@@ -1166,7 +1166,10 @@ func (op *BatchNormOp) String() string {
 }
 
 func (op *BatchNormOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
-	panic("not implemented")
+	diff := &batchnormDiffOp{op}
+	xdv, ydv := getDV(inputs[0], output)
+	_, err := diff.UsePreallocDo(xdv.d, xdv.Value, ydv.d)
+	return err
 }
 
 func (op *BatchNormOp) DiffWRT(inputs int) []bool { return []bool{true} }
