@@ -713,3 +713,17 @@ func TestTensordotOpDoDiff(t *testing.T) {
 	assert.Equal(bGcorrectFloats, bGfloats)
 
 }
+
+func TestLinearAlgebraOps(t *testing.T) {
+	g := NewGraph()
+	x := NewMatrix(g, Float64, WithShape(2, 3), WithName("x"))
+	y := NewMatrix(g, Float64, WithShape(3, 5), WithName("y"))
+	if _, err := Mul(x, y); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := Mul(y, x); err == nil {
+		t.Error("Expect an error")
+	}
+
+}

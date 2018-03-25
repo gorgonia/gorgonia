@@ -170,7 +170,7 @@ func WithShape(shp ...int) NodeConsOpt {
 		// if nd == 1 && s.IsVector() {
 		// 	goto safe
 		// }
-		if nd != s.Dims() && !(nd == 0 && s.IsScalar()) {
+		if nd != s.Dims() && !(nd == 0 && scalarEquiv(s)) {
 			panic(fmt.Sprintf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims()))
 		}
 		// safe:
