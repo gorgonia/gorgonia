@@ -172,6 +172,7 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 	if n.isConstant() {
 		n = n.clone()
 		g.constants = g.constants.Add(n)
+		g.leaves = g.leaves.Add(n)
 		n.g = g
 	}
 
@@ -224,7 +225,7 @@ func (g *ExprGraph) SetEdge(e graph.Edge) {
 	}
 
 	// g.to[to] = g.to[to].Add(from)
-	g.to[to] = append(g.to[to], from)
+	g.to[to] = g.to[to].Add(from)
 }
 
 // Roots returns a list of nodes that are not children of any other nodes

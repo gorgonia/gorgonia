@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -222,72 +223,57 @@ func (m *tapeMachine) RunAll() (err error) {
 var print11 bool
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
-	workers := make(chan struct{}, runtime.NumCPU())
-
-	// for _, root := range m.p.g.Roots() {
-	// 	groups := walkLOT(root)
-
-	// }
-	groups := walkLOT(m.p)
-	// if !print11 {
-	// 	print11 = true
-	// 	log.Printf("%v", m.p.instructions)
-
-	// 	for i, grp := range groups {
-	// 		log.Printf("Group %d:", i)
-	// 		for _, n := range grp {
-	// 			log.Printf("\t%d: %v", n.ID(), n)
-	// 			instrs := m.p.m[n]
-	// 			for _, instr := range instrs {
-	// 				log.Printf("\t\t%d: %v", instr.ID(), instr)
-	// 			}
-	// 		}
-	// 	}
-	// }
-	for _, grp := range groups {
-		switch len(grp) {
-		case 0:
-			continue
-		case 1:
-			if err := m.executeOneNode(grp[0]); err != nil {
-				errChan <- err
-				return
-			}
-			continue
-		default:
-			var wg sync.WaitGroup
-			wg.Add(len(grp))
-			for _, n := range grp {
-				go m.executeOneNodePar(n, workers, errChan, &wg)
-			}
-			wg.Wait()
-		}
+	s := newExecState(m.p.g, m.p.sorted)
+	var wg sync.WaitGroup
+	threads := runtime.NumCPU()
+	workers := make(chan struct{}, threads)
+	for t := 0; t < threads; t++ {
+		wg.Add(1)
+		go m.execute(s, workers, errChan, &wg)
 	}
-
+	wg.Wait()
 	doneChan <- struct{}{}
 }
 
-func (m *tapeMachine) executeOneNode(n *Node) error {
-	instrs := m.p.m[n]
-	for _, instr := range instrs {
-		if err := m.executeOneInstr(instr); err != nil {
-			return err
+func (m *tapeMachine) execute(s *execState, workers chan struct{}, errChan chan error, wg *sync.WaitGroup) {
+	runtime.LockOSThread()
+execloop:
+	for {
+		// <-workers
+		if s.check() {
+			break execloop
 		}
-	}
-	return nil
-}
 
-func (m *tapeMachine) executeOneNodePar(n *Node, workers chan struct{}, errChan chan error, wg *sync.WaitGroup) {
-	workers <- struct{}{}
-
-	instrs := m.p.m[n]
-	for _, instr := range instrs {
-		if err := m.executeOneInstr(instr); err != nil {
-			errChan <- err
-			break
+		node := s.next()
+		if node == nil {
+			// workers <- struct{}{}
+			continue
 		}
+		// s.Lock()
+		// log.Printf("Executing %v %d %d", node, s.nodes, len(s.q))
+
+		// for k, v := range s.m {
+		// 	if v.priority == 0 {
+		// 		k.ofInterest = true
+		// 	}
+		// }
+		// ioutil.WriteFile("lookie.dot", []byte(m.p.g.ToDot()), 0644)
+		// s.Unlock()
+
+		// now do work
+		instrs := m.p.m[node]
+		for _, instr := range instrs {
+			if err := m.executeOneInstr(instr); err != nil {
+				errChan <- err
+				s.error()
+				// workers <- struct{}{}
+				break execloop
+			}
+		}
+
+		s.finish(node)
+		// workers <- struct{}{}
 	}
-	<-workers
 	wg.Done()
 }
 
@@ -785,4 +771,98 @@ func (instr deviceTransport) writes() register { return instr.to }
 
 func (instr deviceTransport) String() string {
 	return fmt.Sprintf("memcpy(%v, %v)", instr.to, instr.from)
+}
+
+type execState struct {
+	sync.Mutex
+	m map[*Node]*priorityNode
+	q Nodes
+	t map[*Node]Nodes
+
+	workers int
+	nodes   int
+	done    bool
+	err     bool
+}
+
+func newExecState(g *ExprGraph, sorted Nodes) *execState {
+	m := make(map[*Node]*priorityNode, len(sorted))
+	for _, n := range sorted {
+		m[n] = &priorityNode{
+			Node:     n,
+			priority: int32(len(n.children)),
+		}
+	}
+	q := make(Nodes, len(g.leaves))
+	copy(q, g.leaves)
+	return &execState{
+		m:     m,
+		q:     q,
+		t:     g.to,
+		nodes: len(sorted),
+	}
+}
+
+func (s *execState) finish(node *Node) {
+	// log.Printf("FINISHED %v", node)
+	s.Lock()
+	to := s.t[node]
+	log.Printf("Finished %v. To %v", node, to)
+	s.Unlock()
+	for _, n := range to {
+		if atomic.AddInt32(&s.m[n].priority, -1) == 0 {
+			s.Lock()
+			s.q = append(s.q, n)
+			s.Unlock()
+
+		}
+	}
+	// var nodes, workers, q int
+	s.Lock()
+	// delete(s.m, node)
+	s.nodes--
+	s.workers--
+	if s.nodes == 0 && s.workers == 0 {
+		s.done = true
+	}
+	// nodes = s.nodes
+	// workers = s.workers
+	// q = len(s.q)
+	// log.Printf("Done Waitin %d %d %d", nodes, workers, q)
+	// for k, v := range s.m {
+	// 	log.Printf("\t%v: %v", k, v.priority)
+	// }
+	s.Unlock()
+}
+
+func (s *execState) next() (retVal *Node) {
+	s.Lock()
+	if len(s.q) > 0 {
+		// log.Printf("next lock")
+		retVal = s.q[len(s.q)-1]
+		s.q = s.q[:len(s.q)-1]
+		s.workers++
+		// log.Printf("next unlock")
+	}
+	s.Unlock()
+	return retVal
+}
+
+func (s *execState) error() {
+	s.Lock()
+	s.err = true
+	s.Unlock()
+}
+
+func (s *execState) check() bool {
+	s.Lock()
+	retVal := s.done || s.err
+	s.Unlock()
+	return retVal
+}
+
+type priorityNode struct {
+	*Node
+	priority int32
+	index    int
 }
