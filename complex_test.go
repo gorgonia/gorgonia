@@ -1,6 +1,8 @@
 package gorgonia
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestWeirdNetwork(t *testing.T) {
 	const (

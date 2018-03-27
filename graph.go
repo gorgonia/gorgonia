@@ -172,7 +172,6 @@ func (g *ExprGraph) AddNode(n *Node) (retVal *Node) {
 	if n.isConstant() {
 		n = n.clone()
 		g.constants = g.constants.Add(n)
-		g.leaves = g.leaves.Add(n)
 		n.g = g
 	}
 
