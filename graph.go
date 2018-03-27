@@ -215,11 +215,11 @@ func (g *ExprGraph) SetEdge(e graph.Edge) {
 		panic(fmt.Sprintf("cannot add self edge: from %v to %v", from, to))
 	}
 
-	if !g.Has(from) {
+	if !g.Has(from.ID()) {
 		from = g.AddNode(from)
 	}
 
-	if !g.Has(to) {
+	if !g.Has(to.ID()) {
 		to = g.AddNode(to)
 	}
 
@@ -504,11 +504,19 @@ func (g *ExprGraph) Node(id int64) graph.Node {
 	return nil
 }
 
+func (g *ExprGraph) node(id int64) *Node {
+	for _, n := range g.all {
+		if n.id == id {
+			return n
+		}
+	}
+	return nil
+}
+
 // Has returns whether the node exists within the graph.
-func (g *ExprGraph) Has(node graph.Node) bool {
-	n := node.(*Node)
-	_, ok := g.to[n]
-	return ok
+func (g *ExprGraph) Has(nodeid int64) bool {
+	n := g.node(nodeid)
+	return n != nil
 }
 
 // Nodes returns all the nodes in the graph.
@@ -522,30 +530,37 @@ func (g *ExprGraph) Nodes() []graph.Node {
 
 // AllNodes is like Nodes, but returns Nodes instead of []graph.Node.
 // Nodes() has been reserved for the graph.Directed interface, so this one is named AllNodes instead
-func (g *ExprGraph) AllNodes() Nodes {
-	return g.all
-}
+func (g *ExprGraph) AllNodes() Nodes { return g.all }
 
 // From returns all nodes in g that can be reached directly from n.
-func (g *ExprGraph) From(node graph.Node) []graph.Node {
-	n := node.(*Node)
-	return nodeToGraphNode(n.children)
+func (g *ExprGraph) From(nodeid int64) []graph.Node {
+	if n := g.node(nodeid); n != nil {
+		return nodeToGraphNode(n.children)
+	}
+	return nil
 }
 
 // HasEdgeBetween returns whether an edge exists between nodes x and y without
 // considering direction.
-func (g *ExprGraph) HasEdgeBetween(x, y graph.Node) bool {
-	xid := x.(*Node)
-	yid := y.(*Node)
+func (g *ExprGraph) HasEdgeBetween(x, y int64) bool {
+	xid := g.node(x)
+	yid := g.node(y)
+	if xid == nil || yid == nil {
+		return false
+	}
 
 	return xid.children.Contains(yid) || yid.children.Contains(xid)
 }
 
 // Edge returns the edge from u to v if such an edge exists and nil otherwise.
 // The node v must be directly reachable from u as defined by the From method.
-func (g *ExprGraph) Edge(u, v graph.Node) graph.Edge {
-	uid := u.(*Node)
-	vid := v.(*Node)
+func (g *ExprGraph) Edge(u, v int64) graph.Edge {
+	uid := g.node(u)
+	vid := g.node(v)
+
+	if uid == nil || vid == nil {
+		return nil
+	}
 
 	if !uid.children.Contains(vid) {
 		return nil
@@ -557,18 +572,26 @@ func (g *ExprGraph) Edge(u, v graph.Node) graph.Edge {
 /* Directed interface */
 
 // HasEdgeFromTo returns whether an edge exists in the graph from u to v.
-func (g *ExprGraph) HasEdgeFromTo(u, v graph.Node) bool {
-	uid := u.(*Node)
-	vid := v.(*Node)
+func (g *ExprGraph) HasEdgeFromTo(u, v int64) bool {
+	uid := g.node(u)
+	vid := g.node(v)
+	if uid == nil || vid == nil {
+		return false
+	}
 
 	return uid.children.Contains(vid)
 }
 
 // To returns all nodes in g that can reach directly to n.
-func (g *ExprGraph) To(n graph.Node) []graph.Node {
-	ns := g.to[n.(*Node)]
+func (g *ExprGraph) To(nid int64) []graph.Node {
+	n := g.node(nid)
+	if n == nil {
+		return nil
+	}
+
+	ns := g.to[n]
 	ns = ns.Set()
-	g.to[n.(*Node)] = ns
+	g.to[n] = ns
 	return nodeToGraphNode(ns)
 }
 
