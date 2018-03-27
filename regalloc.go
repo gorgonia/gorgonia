@@ -184,7 +184,7 @@ func (ra *regalloc) allocMutableOp(node *Node, nInterv *interval) {
 	compileLogf("Read %v", reads)
 
 	var letStmts Nodes
-	for _, parent := range node.g.To(node) {
+	for _, parent := range node.g.To(node.ID()) {
 		n := parent.(*Node)
 		compileLogf("Parent: %v | %T", n, n.op)
 		if n.isStmt {

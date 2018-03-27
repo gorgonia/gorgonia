@@ -19,8 +19,9 @@ import (
 	"gorgonia.org/gorgonia/examples/mnist"
 	"gorgonia.org/tensor"
 
-	"gopkg.in/cheggaaa/pb.v1"
 	"time"
+
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 var (
