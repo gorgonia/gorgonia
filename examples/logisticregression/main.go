@@ -91,8 +91,8 @@ func main() {
 	// create a node that has the operation: sigmoid(xwmb)
 	prob := G.Must(G.Sigmoid(xwmb))
 	G.WithName("prob")(prob)
-	// create a "pred" node that has the operation that checks if prob is 
-	// greater than 0.5. This ensures that our prediction output returns 
+	// create a "pred" node that has the operation that checks if prob is
+	// greater than 0.5. This ensures that our prediction output returns
 	// {true, false}
 	pred := G.Must(G.Gt(prob, G.NewConstant(0.5), false))
 	G.WithName("pred")(pred)
@@ -154,9 +154,9 @@ func main() {
 	// With our program, we initialize a new TapeMachine that will execute our program
 	machine := G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
 	// Note that NewTapeMachine() will compile if WithPrecomiled() is not provided.
-	// Internally, Gorgonia will figure out that a compilation process needs to happen, 
+	// Internally, Gorgonia will figure out that a compilation process needs to happen,
 	// so it will call Compile(g), which will output the prog and locMap internally.
-	// When nodes are added to the graph to Gorgonia, nodes that have no precedents 
+	// When nodes are added to the graph to Gorgonia, nodes that have no precedents
 	// and have a nil Op are marked as input nodes. So Gorgonia knows to start there.
 	// But since our graph contains the training and prediction nodes, we manually compiled.
 
@@ -186,13 +186,13 @@ func main() {
 		// After running the machine, we want to update w and b
 		machine.Set(w, wUpd)
 		machine.Set(b, bUpd)
-		
-		// After each iteration, we print out the training accuracy to see 
+
+		// After each iteration, we print out the training accuracy to see
 		// how our algorithm is doing
 		accuracy := accuracy(y.Value(), predicted)
 		fmt.Printf("Interation #%v, Training accuracy: %#v\n", i, accuracy)
 
-		}
+	}
 	fmt.Printf("Time taken: %v\n", time.Since(start))
 	fmt.Printf("Final Model: \nw: %3.3s\nb: %+3.3s\n", w.Value(), b.Value())
 
@@ -205,28 +205,28 @@ func main() {
 	machine = G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
 
 	machine.Let(w, wT)
-	machine.Let(b, 0.0)	
+	machine.Let(b, 0.0)
 	machine.Let(x, xT)
 	handleError(machine.RunAll())
 	handleError(err)
 
 }
-func accuracy(target, predicted G.Value) (float64){
+func accuracy(target, predicted G.Value) float64 {
 	count := 0.0
 	targetArray := target.Data().([]float64)
 	predictedArray := predicted.Data().([]bool)
 	targetBool := false
-	for i:=0;i<target.Size();i++{
-		if targetArray[i] == 1.0{
+	for i := 0; i < target.Size(); i++ {
+		if targetArray[i] == 1.0 {
 			targetBool = true
-		}else{
+		} else {
 			targetBool = false
 		}
-		if targetBool == predictedArray[i]{
+		if targetBool == predictedArray[i] {
 			count++
 		}
 	}
-	return count/float64(target.Size())
+	return count / float64(target.Size())
 }
 func handleError(err error) {
 	if err != nil {
