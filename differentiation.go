@@ -100,7 +100,7 @@ func backwardDiffAnalysis(wrt, sortedNodes Nodes) (retVal NodeSet, err error) {
 			}
 			g := n.g
 			for _, child := range n.children {
-				parents := g.To(child)
+				parents := g.To(child.ID())
 
 				symdiffLogf("parents of %v: %v", child, graphNodeToNode(parents))
 				if len(parents) == 1 && len(child.children) > 0 {
@@ -156,8 +156,8 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	for i := 0; i < len(g.AllNodes()); i++ {
 		n := g.AllNodes()[i]
 
-		fr := len(g.From(n))
-		to := len(g.To(n))
+		fr := len(g.From(n.ID()))
+		to := len(g.To(n.ID()))
 
 		if fr == 0 && to == 0 && !n.isConstant() && !n.isInput() {
 			g.RemoveNode(n)

@@ -481,7 +481,7 @@ func (n *Node) RestrictedToDot(up, down int) string {
 		origLen := len(upQ)
 		for i := 0; i < origLen; i++ {
 			qn := upQ[i]
-			toQN := graphNodeToNode(g.To(qn))
+			toQN := graphNodeToNode(g.To(qn.ID()))
 			upQ = append(upQ, toQN...)
 			ns = append(ns, toQN...)
 		}
