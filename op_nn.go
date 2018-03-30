@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"log"
 	"math"
 	"time"
 
@@ -1300,9 +1301,11 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 
 	var inxx, outxx [][]float32
 	if inxx, err = native.SelectF32(input, 1); err != nil {
+		log.Printf("input.Strides %v %v", input.Shape(), input.Strides())
 		return err
 	}
 	if outxx, err = native.SelectF32(output, 1); err != nil {
+		log.Printf("output.Strides %v %v", output.Shape(), output.Strides())
 		return err
 	}
 
