@@ -16,6 +16,15 @@ const (
 	maxFloat64 = math.MaxFloat64
 )
 
+// NodesToValueGrads is a utility function that converts a Nodes to a slice of ValueGrad for the solvers
+func NodesToValueGrads(in Nodes) (out []ValueGrad) {
+	out = make([]ValueGrad, len(in))
+	for i := range in {
+		out[i] = in[i]
+	}
+	return out
+}
+
 func graphNodeToNode(in []graph.Node) (out Nodes) {
 	out = make(Nodes, len(in))
 	for i, n := range in {

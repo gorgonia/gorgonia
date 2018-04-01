@@ -11,7 +11,50 @@ import (
 // Solver is anything that does gradient updates.
 // The name solvers is stolen from Caffe. A much shorter name than GradientUpdaters
 type Solver interface {
-	Step(Nodes) error
+	Step([]ValueGrad) error
+}
+
+// ValueGrad is any type that has a value and a grad. This is used for Solvers
+type ValueGrad interface {
+	Valuer
+	Grad() (Value, error)
+}
+
+// Namer is anything that has a name
+type Namer interface {
+	Name() string
+}
+
+func newCachedDV(n ValueGrad, weights, grad Value, zero bool) (cached *dualValue, err error) {
+	cached = new(dualValue)
+	if cached.Value, err = CloneValue(weights); err != nil {
+		if nm, ok := n.(Namer); ok {
+			return nil, errors.Errorf("Failed to clone weights of %v", nm.Name())
+		}
+		return nil, errors.New("Failed to clone weights")
+	}
+	if cached.d, err = CloneValue(grad); err != nil {
+		if nm, ok := n.(Namer); ok {
+			return nil, errors.Errorf("Failed to clone grad of %v", nm.Name())
+		}
+		return nil, errors.New("Failed to clone grad")
+	}
+	if zero {
+		cached.Value = ZeroValue(cached.Value)
+		cached.d = ZeroValue(cached.d)
+	}
+	return
+}
+
+func extractWeightGrad(n ValueGrad) (weights, grad Value, err error) {
+	weights = n.Value()
+	if grad, err = n.Grad(); err != nil {
+		if nm, ok := n.(Namer); ok {
+			return weights, nil, errors.Wrapf(err, "No Grad found for %v", nm.Name())
+		}
+		return weights, nil, errors.Wrap(err, "No Grad found")
+	}
+	return
 }
 
 // SolverOpt is a function that provides construction options for a Solver
@@ -183,28 +226,24 @@ func NewRMSPropSolver(opts ...SolverOpt) *RMSPropSolver {
 // Step steps through each node in the model and applies the RMSProp gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *RMSPropSolver) Step(model Nodes) (err error) {
+func (s *RMSPropSolver) Step(model []ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
 
 	for i, n := range model {
-		solverLogf("BEFORE (%v %p) : %+1.1s", n, n, n.boundTo)
-		dv, ok := n.boundTo.(*dualValue)
-		if !ok {
-			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", n, n.Hashcode(), n.boundTo)
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(n); err != nil {
+			return err
 		}
 
 		var cached *dualValue
 		if cached = s.cache[i]; cached == nil {
-			if cached, err = dv.clone0(); err != nil {
-				return errors.Wrap(err, "Failed to carry out clone0()")
+			if cached, err = newCachedDV(n, weights, grad, true); err != nil {
+				return err
 			}
 			s.cache[i] = cached
 		}
-
-		grad := dv.d
-		weights := dv.Value
 
 		cv := cached.Value
 		// cw = cw*decay + (1-decay) * grad^2
@@ -300,8 +339,8 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			dv.Value, _ = anyToScalar(w)
-			dv.d = zero(Float32)
+			*(weights.(*F32)) = F32(w)
+			*(grad.(*F32)) = F32(0.0)
 		case *F64:
 			decay := s.decay
 			omdecay := 1.0 - s.decay
@@ -320,11 +359,11 @@ func (s *RMSPropSolver) Step(model Nodes) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			dv.Value, _ = anyToScalar(w)
-			dv.d = zero(Float64)
+			*(weights.(*F64)) = F64(w)
+			*(grad.(*F64)) = F64(0.0)
 		default:
 		}
-		solverLogf("AFTER (%v): %+1.1s", n, n.boundTo)
+		solverLogf("AFTER %1.1s", n)
 	}
 	return nil
 }
@@ -375,7 +414,7 @@ func NewAdamSolver(opts ...SolverOpt) *AdamSolver {
 // Step steps through each node in the model and applies the Adaptive Moment Estimation gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *AdamSolver) Step(model Nodes) (err error) {
+func (s *AdamSolver) Step(model []ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
@@ -385,21 +424,18 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 	correction2 := (1 - math.Pow(s.beta2, float64(s.iter)))
 
 	for i, n := range model {
-		dv, ok := n.boundTo.(*dualValue)
-		if !ok {
-			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", n, n.Hashcode(), n.boundTo)
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(n); err != nil {
+			return err
 		}
 
 		var cached *dualValue
 		if cached = s.cache[i]; cached == nil {
-			if cached, err = dv.clone0(); err != nil {
-				return errors.Wrap(err, "Failed to carry clone0()")
+			if cached, err = newCachedDV(n, weights, grad, true); err != nil {
+				return err
 			}
 			s.cache[i] = cached
 		}
-
-		grad := dv.d
-		weights := dv.Value
 
 		cvm := cached.Value // means of gradients
 		cvv := cached.d     // variances of gradients
@@ -606,8 +642,8 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			upd := -eta * mHat / (float32(math.Sqrt(float64(vHat))) + eps)
 			w += upd
 
-			dv.Value, _ = anyToScalar(w)
-			dv.d = zero(Float32)
+			*(weights.(*F32)) = F32(w)
+			*(grad.(*F32)) = F32(0.0)
 		case *F64:
 			g := grad.(*F64).any()
 			w := weights.(*F64).any()
@@ -659,8 +695,8 @@ func (s *AdamSolver) Step(model Nodes) (err error) {
 			upd := -eta * mHat / (math.Sqrt(vHat) + eps)
 			w += upd
 
-			dv.Value, _ = anyToScalar(w)
-			dv.d = zero(Float64)
+			*(weights.(*F64)) = F64(w)
+			*(grad.(*F64)) = F64(0.0)
 
 		default:
 			err = errors.Errorf(nyiTypeFail, "AdamSolver", cvm)
@@ -697,16 +733,12 @@ func NewVanillaSolver(opts ...SolverOpt) *VanillaSolver {
 // Step steps through each node in the model and applies the most basic gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *VanillaSolver) Step(model Nodes) (err error) {
+func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 	for _, n := range model {
-		dv, ok := n.boundTo.(*dualValue)
-		if !ok {
-			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", n, n.Hashcode(), n.boundTo)
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(n); err != nil {
+			return err
 		}
-
-		grad := dv.d
-		weights := dv.Value
-
 		switch w := weights.(type) {
 		case *tensor.Dense:
 			g := grad.(*tensor.Dense)
@@ -818,8 +850,8 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			upd := -eta * g
 			wv += upd
 
-			dv.Value, _ = anyToScalar(wv)
-			dv.d = zero(Float32)
+			*(weights.(*F32)) = F32(wv)
+			*(grad.(*F32)) = F32(0.0)
 		case *F64:
 			g := grad.(*F64).any()
 			wv := w.any()
@@ -857,8 +889,8 @@ func (s *VanillaSolver) Step(model Nodes) (err error) {
 			upd := -eta * g
 			wv += upd
 
-			dv.Value, _ = anyToScalar(wv)
-			dv.d = zero(Float64)
+			*(weights.(*F64)) = F64(wv)
+			*(grad.(*F64)) = F64(0.0)
 		default:
 			return errors.Errorf(nyiFail, "VanillaSolver.step", w)
 		}
@@ -895,27 +927,24 @@ func NewAdaGradSolver(opts ...SolverOpt) *AdaGradSolver {
 // Step steps through each node in the model and applies the Adaptive Gradient gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *AdaGradSolver) Step(model Nodes) (err error) {
+func (s *AdaGradSolver) Step(model []ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
 
 	for i, n := range model {
-		dv, ok := n.boundTo.(*dualValue)
-		if !ok {
-			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", n, n.Hashcode(), n.boundTo)
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(n); err != nil {
+			return err
 		}
 
 		var cached *dualValue
 		if cached = s.cache[i]; cached == nil {
-			if cached, err = dv.clone0(); err != nil {
-				return errors.Wrap(err, clone0Fail)
+			if cached, err = newCachedDV(n, weights, grad, true); err != nil {
+				return err
 			}
 			s.cache[i] = cached
 		}
-
-		grad := dv.d
-		weights := dv.Value
 
 		cv := cached.Value
 
@@ -1026,8 +1055,8 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			dv.Value, _ = anyToScalar(w)
-			dv.d = zero(Float32)
+			*(weights.(*F32)) = F32(w)
+			*(grad.(*F32)) = F32(0.0)
 		case *F64:
 			var w, g, c float64
 
@@ -1058,8 +1087,8 @@ func (s *AdaGradSolver) Step(model Nodes) (err error) {
 			w += upd
 
 			// because scalar values are copies, and not pointers, we have to actually re-update the dualValu in model[i]
-			dv.Value, _ = anyToScalar(w)
-			dv.d = zero(Float64)
+			*(weights.(*F64)) = F64(w)
+			*(grad.(*F64)) = F64(0.0)
 
 		default:
 			return errors.Errorf(nyiFail, "Adagrad step", cv)
@@ -1100,7 +1129,7 @@ func NewBarzilaiBorweinSolver(opts ...SolverOpt) *BarzilaiBorweinSolver {
 // Step steps through each node in the model and applies the Barzilai-Borwein gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *BarzilaiBorweinSolver) Step(model Nodes) error {
+func (s *BarzilaiBorweinSolver) Step(model []ValueGrad) (err error) {
 
 	firstRun := false
 	if s.prevDV == nil {
@@ -1114,29 +1143,26 @@ func (s *BarzilaiBorweinSolver) Step(model Nodes) error {
 		denominator := float64(0.0)
 
 		for nodeNr, node := range model {
-			dv, ok := node.boundTo.(*dualValue)
-			if !ok {
-				return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", node, node.Hashcode(), node.boundTo)
+			var weights, grad Value
+			if weights, grad, err = extractWeightGrad(node); err != nil {
+				return err
 			}
-
-			weights := dv.Value
-			grad := dv.d
 
 			switch w := weights.(type) {
 			case *tensor.Dense:
 				g, ok := grad.(*tensor.Dense)
 				if !ok {
-					return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+					return errors.Errorf("Expected a *tensor.Dense in %v. Got %T instead", node, grad)
 				}
 
 				wOld, ok := s.prevDV[nodeNr].Value.(*tensor.Dense)
 				if !ok {
-					return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+					return errors.Errorf("Expected a *tensor.Dense in %v. Got %T instead", node, s.prevDV[nodeNr].Value)
 				}
 
 				gOld, ok := s.prevDV[nodeNr].d.(*tensor.Dense)
 				if !ok {
-					return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+					return errors.Errorf("Expected a *tensor.Dense in %v. Got %T instead", node, s.prevDV[nodeNr].d)
 				}
 
 				valueDiff, err := tensor.Sub(w, wOld)
@@ -1189,38 +1215,34 @@ func (s *BarzilaiBorweinSolver) Step(model Nodes) error {
 
 	// Save this iteration's values for the next run
 	for nodeNr, node := range model {
-		dv, ok := node.boundTo.(*dualValue)
-		if !ok {
-			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", node, node.Hashcode(), node.boundTo)
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(node); err != nil {
+			return err
 		}
 
 		if false == firstRun {
 			// return memory for the old dual value used in this iteration
 			returnDV(s.prevDV[nodeNr])
 		}
-
-		oldDV, err := dv.Clone()
-		if err != nil {
-			return errors.Wrap(err, cloneFail)
+		var oldDV *dualValue
+		if oldDV, err = newCachedDV(node, weights, grad, false); err != nil {
+			return err
 		}
-		s.prevDV[nodeNr] = oldDV.(*dualValue)
+		s.prevDV[nodeNr] = oldDV
 	}
 
 	// Update the weights
 	for _, node := range model {
-		dv, ok := node.boundTo.(*dualValue)
-		if !ok {
-			return errors.Errorf("Expected a *dualValue in %v (%x). Got %T instead", node, node.Hashcode(), node.boundTo)
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(node); err != nil {
+			return err
 		}
-
-		weights := dv.Value
-		grad := dv.d
 
 		switch w := weights.(type) {
 		case *tensor.Dense:
 			g, ok := grad.(*tensor.Dense)
 			if !ok {
-				return errors.Errorf("Expected a *tensor.Dense in %v (%x). Got %T instead", node, node.Hashcode(), dv)
+				return errors.Errorf("Expected a *tensor.Dense in %v. Got %T instead", node, grad)
 			}
 
 			upd, err := tensor.Mul(g, s.eta)
