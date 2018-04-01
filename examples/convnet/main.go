@@ -84,7 +84,9 @@ func newConvNet(g *gorgonia.ExprGraph) *convnet {
 	}
 }
 
-func (m *convnet) learnables() gorgonia.Nodes { return gorgonia.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4} }
+func (m *convnet) learnables() []gorgonia.ValueGrad {
+	return []gorgonia.ValueGrad{m.w0, m.w1, m.w2, m.w3, m.w4}
+}
 
 // This function is particularly verbose for educational reasons. In reality, you'd wrap up the layers within a layer struct type and perform per-layer activations
 func (m *convnet) fwd(x *gorgonia.Node) (err error) {
