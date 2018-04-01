@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
 	"math"
 	"time"
 
@@ -1102,6 +1101,8 @@ type BatchNormOp struct {
 
 	// if gamma != nil -> center
 	// if beta != nil -> scale
+	// gamma, beta *Node
+
 	gamma, beta         *tensor.Dense
 	gammaGrad, betaGrad *tensor.Dense
 
@@ -1301,11 +1302,9 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 
 	var inxx, outxx [][]float32
 	if inxx, err = native.SelectF32(input, 1); err != nil {
-		log.Printf("input.Strides %v %v", input.Shape(), input.Strides())
 		return err
 	}
 	if outxx, err = native.SelectF32(output, 1); err != nil {
-		log.Printf("output.Strides %v %v", output.Shape(), output.Strides())
 		return err
 	}
 
@@ -1383,9 +1382,7 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	return nil
 }
 
-type batchnormDiffOp struct {
-	*BatchNormOp
-}
+type batchnormDiffOp struct{ *BatchNormOp }
 
 func (op *batchnormDiffOp) Arity() int { return 2 }
 
@@ -1394,7 +1391,6 @@ func (op *batchnormDiffOp) Type() hm.Type {
 	return hm.NewFnType(t, t, t)
 }
 
-// InferShape is the same exact function as batchnorm
 func (op *batchnormDiffOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {
 	if err := checkArity(op, len(ns)); err != nil {
 		return nil, errors.Wrapf(err, "batchNorm")
