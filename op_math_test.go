@@ -345,7 +345,10 @@ var binOpTests = []struct {
 func TestBasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		log.Printf("TEST %d", i)
+		// log.Printf("TEST %d", i)
+		// if i != 22 {
+		// 	continue
+		// }
 		g := NewGraph()
 		xV, _ := CloneValue(bot.a)
 		yV, _ := CloneValue(bot.b)
@@ -367,9 +370,16 @@ func TestBasicArithmetic(t *testing.T) {
 			t.Errorf("Test %d: error while symbolic op: %v", i, err)
 			continue
 		}
+		// WithName("GGGG")(grads[1])
+
+		// if i == 22 {
+		// 	ioutil.WriteFile("22.dot", []byte(g.ToDot()), 0644)
+		// }
 
 		m1 := NewTapeMachine(g)
+		// log.Printf("%v", m1.Prog())
 		if err = m1.RunAll(); err != nil {
+			log.Printf("m.buf \n%v", m1.buf.String())
 			t.Errorf("Test %d: error while running %v", i, err)
 			runtime.GC()
 			continue
