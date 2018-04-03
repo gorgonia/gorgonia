@@ -880,6 +880,12 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 		q = append(q, m[c])
 	}
 
+	// at this point, the graph should be static. So it's fair game to actually
+	// modify the graph's \.to
+	for k, v := range g.to {
+		g.to[k] = v.Set()
+	}
+
 	return &execState{
 		sorted: s,
 		p:      p,

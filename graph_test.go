@@ -9,7 +9,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
-func ATestGraphBasics(t *testing.T) {
+func TestGraphBasics(t *testing.T) {
 	assert := assert.New(t)
 	g, x, y, xy := simpleEqn()
 

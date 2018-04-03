@@ -114,7 +114,7 @@ func linearRegression(Float tensor.Dtype, iter int) (retM, retC Value) {
 // The formula for a straight line is
 //		y = mx + c
 // We want to find an `m` and a `c` that fits the equation well. We'll do it in both float32 and float64 to showcase the extensibility of Gorgonia
-func EXxampleXX_linearRegression() {
+func Example_linearRegression() {
 	var m, c Value
 	// Float32
 	m, c = linearRegression(Float32, 500)
