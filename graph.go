@@ -225,7 +225,6 @@ func (g *ExprGraph) SetEdge(e graph.Edge) {
 
 	// g.to[to] = g.to[to].Add(from)
 	g.to[to] = append(g.to[to], from)
-
 }
 
 // Roots returns a list of nodes that are not children of any other nodes
