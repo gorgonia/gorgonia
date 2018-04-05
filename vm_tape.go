@@ -357,30 +357,6 @@ func (m *tapeMachine) writeValue(r register, v Value) {
 	}
 }
 
-// func (m *tapeMachine) unlockRegister(r register) {
-// 	if r.id < 0 {
-// 		return
-// 	}
-// 	switch r.device {
-// 	case CPU:
-// 		m.cpulocks[r.id].Unlock()
-// 	default:
-// 		m.gpulocks[r.id].Unlock()
-// 	}
-// }
-
-// func (m *tapeMachine) lockRegister(r register) {
-// 	if r.id < 0 {
-// 		return
-// 	}
-// 	switch r.device {
-// 	case CPU:
-// 		m.cpulocks[r.id].Lock()
-// 	default:
-// 		m.gpulocks[r.id].Lock()
-// 	}
-// }
-
 func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...interface{}) {
 	reads := instr.reads()
 	writes := instr.writes()
@@ -832,6 +808,9 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 			Node:     n,
 			priority: int32(len(n.children)),
 			index:    i,
+
+			reads:  makeRegisterSet(),
+			writes: makeRegisterSet(),
 		}
 		m[n] = i
 	}
@@ -856,14 +835,17 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 	writes := make(map[register][]int)
 
 	for i := range s {
-		n := s[i].Node
+		pn := &s[i]
+		n := pn.Node
 		instrs := p.m[n]
 		for _, instr := range instrs {
 			for _, r := range instr.reads() {
 				reads[r] = append(reads[r], i)
+				pn.reads.Add(r)
 			}
 			w := instr.writes()
 			writes[w] = append(writes[w], i)
+			pn.writes.Add(w)
 		}
 	}
 
@@ -988,39 +970,36 @@ func (s *execState) check() bool {
 	return retVal
 }
 
-func (s *execState) incrWrite(r register) {
-	if r.id == -1 {
-		return
-	}
-	switch r.device {
-	case CPU:
-		atomic.AddInt32(&s.cpuWrites[r.id], 1)
-	default:
-		atomic.AddInt32(&s.gpuWrites[r.id], 1)
-	}
-}
+// func (s *execState) incrWrite(r register) {
+// 	if r.id == -1 {
+// 		return
+// 	}
+// 	switch r.device {
+// 	case CPU:
+// 		atomic.AddInt32(&s.cpuWrites[r.id], 1)
+// 	default:
+// 		atomic.AddInt32(&s.gpuWrites[r.id], 1)
+// 	}
+// }
 
-func (s *execState) registerWrites(r register) int32 {
-	switch r.device {
-	case CPU:
-		return atomic.LoadInt32(&s.cpuWrites[r.id])
-	default:
-		return atomic.LoadInt32(&s.gpuWrites[r.id])
-	}
-}
+// func (s *execState) registerWrites(r register) int32 {
+// 	switch r.device {
+// 	case CPU:
+// 		return atomic.LoadInt32(&s.cpuWrites[r.id])
+// 	default:
+// 		return atomic.LoadInt32(&s.gpuWrites[r.id])
+// 	}
+// }
 
 func (s *execState) checkRegisterDependency(n *priorityNode) bool {
 	var allread = true
-	instrs := s.p.m[n.Node]
-	for _, instr := range instrs {
-		for _, r := range instr.reads() {
-			for _, nid := range s.r[r] { // check to see each node has finished
-				if nid >= n.index || nid <= s.donecount {
-					continue
-				}
-				if !s.sorted[nid].finished {
-					return false
-				}
+	for r := range n.reads {
+		for _, nid := range s.r[r] {
+			if nid >= n.index || nid <= s.donecount {
+				continue
+			}
+			if !s.sorted[nid].finished {
+				return false
 			}
 		}
 	}
@@ -1032,4 +1011,21 @@ type priorityNode struct {
 	priority int32
 	index    int
 	finished bool
+
+	reads  registerSet
+	writes registerSet
+}
+
+type registerSet map[register]struct{}
+
+func makeRegisterSet() registerSet { return make(map[register]struct{}) }
+
+func (s registerSet) Add(r register) registerSet {
+	s[r] = struct{}{}
+	return s
+}
+
+func (s registerSet) Contains(r register) bool {
+	_, ok := s[r]
+	return ok
 }
