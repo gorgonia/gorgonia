@@ -12,6 +12,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"github.com/xtgo/set"
 	"gorgonia.org/tensor"
 )
 
@@ -804,11 +805,12 @@ type execState struct {
 	sync.Mutex
 	sorted    []priorityNode
 	p         *program
-	m         map[*Node]*priorityNode
-	q         []*priorityNode
-	q2        []*priorityNode
-	t         map[*Node]Nodes
-	r         map[*Node]map[register]int32 // compared against
+	m         map[*Node]int
+	q         []int // queue where all the dependents are ready
+	q2        []int // quque where all the registers are ready
+	t         [][]int
+	r         map[register][]int
+	w         map[register][]int
 	cpuWrites []int32
 	gpuWrites []int32
 
@@ -821,7 +823,7 @@ type execState struct {
 
 func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 	s := make([]priorityNode, len(sorted))
-	m := make(map[*Node]*priorityNode, len(sorted))
+	m := make(map[*Node]int, len(sorted))
 	for i := range s {
 		n := sorted[i]
 		s[i] = priorityNode{
@@ -829,38 +831,50 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 			priority: int32(len(n.children)),
 			index:    i,
 		}
-		m[n] = &s[i]
+		m[n] = i
+	}
+
+	// "lift" tos
+	t := make([][]int, len(s))
+	for k, v := range g.to {
+		id := m[k]
+		t[id] = make([]int, 0, len(v))
+		for _, n := range v {
+			nid := m[n]
+			t[id] = append(t[id], nid)
+		}
 	}
 
 	// this part forms a "virtual" execution  of the instructions
 	// the actual state is tracked by the writes map.
 	// the writeCounter at this point simulates the counts of register writing
 	// the reads map holds the correct count at which the instruction is ready to be executed.
-	writeCounter := make(map[register]int) // to keep track of state
-	reads := make(map[*Node]map[register]int32)
-	var instrCounter int
+	// writeCounter := make(map[register]int) // to keep track of state
+	reads := make(map[register][]int)
+	writes := make(map[register][]int)
+
 	for i := range s {
-		n := (&s[i]).Node
-		reads[n] = make(map[register]int32)
+		n := s[i].Node
 		instrs := p.m[n]
 		for _, instr := range instrs {
-			s[i].start = instrCounter
-			if _, ok := instr.(free); ok {
-				continue
+			for _, r := range instr.reads() {
+				reads[r] = append(reads[r], i)
 			}
 			w := instr.writes()
-			for _, r := range instr.reads() {
-				reads[n][r] = int32(writeCounter[r])
-			}
-			writeCounter[w]++
-			instrCounter++
+			writes[w] = append(writes[w], i)
 		}
 	}
-	cpuWrites := make([]int32, p.cpulocs)
-	gpuWrites := make([]int32, p.gpulocs)
+
+	// uniquify the reads and writes
+	for k, v := range reads {
+		reads[k] = set.Ints(v)
+	}
+	for k, v := range writes {
+		writes[k] = set.Ints(v)
+	}
 
 	// prefill the queue
-	q := make([]*priorityNode, 0, len(g.leaves)+len(g.constants))
+	q := make([]int, 0, len(g.leaves)+len(g.constants))
 	for _, leaf := range g.leaves {
 		q = append(q, m[leaf])
 	}
@@ -875,26 +889,26 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 	}
 
 	return &execState{
-		sorted:    s,
-		p:         p,
-		m:         m,
-		q:         q,
-		t:         g.to,
-		r:         reads,
-		cpuWrites: cpuWrites,
-		gpuWrites: gpuWrites,
-		nodes:     len(sorted),
+		sorted: s,
+		p:      p,
+		m:      m,
+		q:      q,
+		t:      t,
+		r:      reads,
+		w:      writes,
+		nodes:  len(sorted),
 	}
 }
 
 func (s *execState) finish(node *priorityNode) {
 	// log.Printf("FINISHED %x: %v", node.id, node)
 	s.Lock()
-	to := s.t[node.Node]
+	to := s.t[node.index]
 	s.Unlock()
 
-	for _, n := range to {
-		// this loop is necessary because to only records a single edge. There may be multiple edges
+	for _, i := range to {
+		n := &s.sorted[i]
+		// this loop is necessary because to only records a single edge. There may be multiple edges to the same node
 		var reduction int32
 		for _, c := range n.children {
 			if c == node.Node {
@@ -902,13 +916,12 @@ func (s *execState) finish(node *priorityNode) {
 			}
 		}
 
-		toNodePriority := atomic.AddInt32(&s.m[n].priority, reduction)
+		toNodePriority := atomic.AddInt32(&n.priority, reduction)
 		if toNodePriority == 0 {
 			s.Lock()
-			dependent := s.m[n]
-			if !dependent.finished {
+			if !n.finished { // this line shouldn't be necessary
 				// log.Printf("\t %v added to queue", n)
-				s.q = append(s.q, s.m[n])
+				s.q = append(s.q, n.index)
 			}
 			s.Unlock()
 		}
@@ -916,19 +929,14 @@ func (s *execState) finish(node *priorityNode) {
 	// var nodes, workers, q int
 	s.Lock()
 	node.finished = true
+	for i := node.index; i >= s.donecount; i-- {
+
+	}
 	s.donecount = node.index
-	// }
 	s.nodes--
 	s.workers--
 	if s.nodes == 0 && s.workers == 0 {
 		s.done = true
-	}
-
-	// increment the counts for the writes
-	instrs := s.p.m[node.Node]
-	for _, instr := range instrs {
-		w := instr.writes()
-		s.incrWrite(w)
 	}
 	s.Unlock()
 }
@@ -937,11 +945,11 @@ func (s *execState) next() (retVal *priorityNode) {
 	s.Lock()
 	for i := 0; i < len(s.q); i++ {
 		n := s.q[i]
-		if s.checkRegisterDependency(n) {
+		if s.checkRegisterDependency(&s.sorted[n]) {
 			s.q2 = append(s.q2, n)
 
 			copy(s.q[i:], s.q[i+1:])
-			s.q[len(s.q)-1] = nil
+			s.q[len(s.q)-1] = 0
 			s.q = s.q[:len(s.q)-1]
 			i--
 		}
@@ -951,9 +959,9 @@ func (s *execState) next() (retVal *priorityNode) {
 	}
 
 	if len(s.q2) >= 2 {
-		sort.Slice(s.q2, func(i, j int) bool { return s.q2[i].start > s.q2[j].start })
+		sort.Slice(s.q2, func(i, j int) bool { return s.sorted[s.q2[i]].start > s.sorted[s.q2[j]].start })
 	}
-	retVal = s.q2[len(s.q2)-1]
+	retVal = &s.sorted[s.q2[len(s.q2)-1]]
 	s.q2 = s.q2[:len(s.q2)-1]
 	s.workers++
 end:
@@ -1000,10 +1008,13 @@ func (s *execState) checkRegisterDependency(n *priorityNode) bool {
 	instrs := s.p.m[n.Node]
 	for _, instr := range instrs {
 		for _, r := range instr.reads() {
-			correct := s.r[n.Node][r]
-			wrote := s.registerWrites(r)
-			if wrote < correct {
-				return false
+			for _, nid := range s.r[r] { // check to see each node has finished
+				if nid >= n.index {
+					continue
+				}
+				if !s.sorted[nid].finished {
+					return false
+				}
 			}
 		}
 	}
