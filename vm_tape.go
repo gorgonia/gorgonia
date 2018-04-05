@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -247,6 +246,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 
 func (m *tapeMachine) execute(s *execState, workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
 	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 
 execloop:
 	for {
@@ -260,14 +260,14 @@ execloop:
 			// workers <- struct{}{}
 			continue
 		}
-		m.Lock()
-		fmt.Fprintf(m.buf, "\t%d: %v\n", id, pnode)
+		// m.Lock()
+		// fmt.Fprintf(m.buf, "\t%d: %v\n", id, pnode)
 		// m.Unlock()
 		// now do work
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
 			// m.Lock()
-			fmt.Fprintf(m.buf, "\t\t%d: %v\n", id, instr)
+			// fmt.Fprintf(m.buf, "\t\t%d: %v\n", id, instr)
 			// log.Printf("Doing %v", instr)
 			if err := m.executeOneInstr(instr); err != nil {
 				errChan <- err
@@ -276,9 +276,11 @@ execloop:
 				break execloop
 			}
 		}
-		m.Unlock()
+		// m.Unlock()
 
 		s.finish(pnode)
+		// break execloop
+		// }
 		// workers <- struct{}{}
 	}
 	wg.Done()
@@ -802,7 +804,7 @@ func (instr deviceTransport) String() string {
 }
 
 type execState struct {
-	sync.Mutex
+	sync.RWMutex
 	sorted    []priorityNode
 	p         *program
 	m         map[*Node]int
@@ -929,10 +931,15 @@ func (s *execState) finish(node *priorityNode) {
 	// var nodes, workers, q int
 	s.Lock()
 	node.finished = true
+	allFinished := true
 	for i := node.index; i >= s.donecount; i-- {
-
+		if !s.sorted[i].finished {
+			allFinished = false
+		}
 	}
-	s.donecount = node.index
+	if allFinished {
+		s.donecount = node.index
+	}
 	s.nodes--
 	s.workers--
 	if s.nodes == 0 && s.workers == 0 {
@@ -947,7 +954,6 @@ func (s *execState) next() (retVal *priorityNode) {
 		n := s.q[i]
 		if s.checkRegisterDependency(&s.sorted[n]) {
 			s.q2 = append(s.q2, n)
-
 			copy(s.q[i:], s.q[i+1:])
 			s.q[len(s.q)-1] = 0
 			s.q = s.q[:len(s.q)-1]
@@ -958,9 +964,9 @@ func (s *execState) next() (retVal *priorityNode) {
 		goto end
 	}
 
-	if len(s.q2) >= 2 {
-		sort.Slice(s.q2, func(i, j int) bool { return s.sorted[s.q2[i]].start > s.sorted[s.q2[j]].start })
-	}
+	// if len(s.q2) >= 2 {
+	// 	sort.Slice(s.q2, func(i, j int) bool { return s.sorted[s.q2[i]].index > s.sorted[s.q2[j]].index })
+	// }
 	retVal = &s.sorted[s.q2[len(s.q2)-1]]
 	s.q2 = s.q2[:len(s.q2)-1]
 	s.workers++
@@ -976,9 +982,9 @@ func (s *execState) error() {
 }
 
 func (s *execState) check() bool {
-	s.Lock()
+	s.RLock()
 	retVal := s.done || s.err
-	s.Unlock()
+	s.RUnlock()
 	return retVal
 }
 
@@ -1009,7 +1015,7 @@ func (s *execState) checkRegisterDependency(n *priorityNode) bool {
 	for _, instr := range instrs {
 		for _, r := range instr.reads() {
 			for _, nid := range s.r[r] { // check to see each node has finished
-				if nid >= n.index {
+				if nid >= n.index || nid <= s.donecount {
 					continue
 				}
 				if !s.sorted[nid].finished {
@@ -1026,5 +1032,4 @@ type priorityNode struct {
 	priority int32
 	index    int
 	finished bool
-	start    int
 }
