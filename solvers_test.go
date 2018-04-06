@@ -30,7 +30,7 @@ func clampFloat32(v, min, max float32) float32 {
 	return v
 }
 
-func tf64Node() Nodes {
+func tf64Node() []ValueGrad {
 	backingV := []float64{1, 2, 3, 4}
 	backingD := []float64{0.5, -10, 10, 0.5}
 	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
@@ -42,11 +42,11 @@ func tf64Node() Nodes {
 	n := new(Node)
 	n.boundTo = dv
 
-	model := Nodes{n}
+	model := []ValueGrad{n}
 	return model
 }
 
-func tf32Node() Nodes {
+func tf32Node() []ValueGrad {
 	backingV := []float32{1, 2, 3, 4}
 	backingD := []float32{0.5, -10, 10, 0.5}
 
@@ -59,11 +59,11 @@ func tf32Node() Nodes {
 	n := new(Node)
 	n.boundTo = dv
 
-	model := Nodes{n}
+	model := []ValueGrad{n}
 	return model
 }
 
-func manualRMSProp64(t *testing.T, s *RMSPropSolver, model Nodes) {
+func manualRMSProp64(t *testing.T, s *RMSPropSolver, model []ValueGrad) {
 	assert := assert.New(t)
 	correct := make([]float64, 4)
 	cached := make([]float64, 4)
@@ -97,7 +97,7 @@ func manualRMSProp64(t *testing.T, s *RMSPropSolver, model Nodes) {
 	}
 }
 
-func manualRMSProp32(t *testing.T, s *RMSPropSolver, model Nodes) {
+func manualRMSProp32(t *testing.T, s *RMSPropSolver, model []ValueGrad) {
 	assert := assert.New(t)
 	correct := make([]float32, 4)
 	cached := make([]float32, 4)
@@ -148,7 +148,7 @@ func TestRMSPropSolverManual(t *testing.T) {
 	clip := 5.0
 
 	var s *RMSPropSolver
-	var model Nodes
+	var model []ValueGrad
 
 	s = NewRMSPropSolver(WithLearnRate(stepSize), WithL2Reg(l2Reg), WithClip(clip))
 	model = tf64Node()
@@ -186,7 +186,7 @@ func TestRMSPropSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -223,7 +223,7 @@ func TestAdaGradSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -260,7 +260,7 @@ func TestVanillaSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -296,7 +296,7 @@ func TestAdamSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -333,7 +333,7 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}

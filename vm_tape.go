@@ -602,6 +602,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	defer m.leaveLogScope()
 
 	node := m.p.g.Node(instr.index).(*Node)
+	m.logf("node %v", node)
 
 	if node.boundTo == nil {
 		return errors.Errorf("No value bound to node %v (%x)", node, node.ID())

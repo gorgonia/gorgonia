@@ -952,7 +952,9 @@ func (op transposeOp) Do(inputs ...Value) (retVal Value, err error) {
 
 	throwaway := tensor.BorrowInts(len(op.pattern))
 	copy(throwaway, op.pattern)
-	return tensor.T(t, throwaway...)
+	// return tensor.T(t, throwaway...)
+
+	return tensor.Transpose(t, throwaway...)
 
 	// DEPRECATED
 	// the reason for this is because the .T() method of a Tensor

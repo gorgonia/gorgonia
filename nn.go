@@ -263,14 +263,14 @@ func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNorm
 		if err != nil {
 			return nil, nil, err
 		}
-		gamma = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
-		beta = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
-		gammaGrad = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
-		betaGrad = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
-		means = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
-		vars = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
-		runningMean = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
-		runningVar = tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape()...))
+		gamma = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+		beta = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+		gammaGrad = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+		betaGrad = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+		means = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+		vars = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+		runningMean = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+		runningVar = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
 
 		beta.Zero()
 		means.Zero()
