@@ -2,6 +2,7 @@ package gorgonia
 
 import (
 	"io/ioutil"
+	"log"
 	"runtime"
 	"testing"
 
@@ -37,6 +38,7 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 	cudaLogf("%v", m.Prog())
 	defer runtime.GC()
 	if err := m.RunAll(); err != nil {
+		log.Printf("%v", m.buf.String())
 		return err
 	}
 	return nil

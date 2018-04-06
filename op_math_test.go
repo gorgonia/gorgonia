@@ -370,11 +370,6 @@ func TestBasicArithmetic(t *testing.T) {
 			t.Errorf("Test %d: error while symbolic op: %v", i, err)
 			continue
 		}
-		// WithName("GGGG")(grads[1])
-
-		// if i == 22 {
-		// 	ioutil.WriteFile("22.dot", []byte(g.ToDot()), 0644)
-		// }
 
 		m1 := NewTapeMachine(g)
 		// log.Printf("%v", m1.Prog())
@@ -394,6 +389,7 @@ func TestBasicArithmetic(t *testing.T) {
 		if !as.cont {
 			prog := m1.Prog()
 			t.Logf("Test %d failed. Prog: %v", i, prog)
+			t.Logf("Exec Log \n%v", m1.buf.String())
 		}
 
 		if assertGraphEngine(t, g, stdengType); t.Failed() {

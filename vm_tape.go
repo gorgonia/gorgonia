@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -260,15 +261,11 @@ execloop:
 			// workers <- struct{}{}
 			continue
 		}
-		// m.Lock()
-		// fmt.Fprintf(m.buf, "\t%d: %v\n", id, pnode)
-		// m.Unlock()
-		// now do work
+		m.Lock()
+		fmt.Fprintf(m.buf, "Executing %v\n", pnode)
+		m.Unlock()
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
-			// m.Lock()
-			// fmt.Fprintf(m.buf, "\t\t%d: %v\n", id, instr)
-			// log.Printf("Doing %v", instr)
 			if err := m.executeOneInstr(instr); err != nil {
 				errChan <- err
 				s.error()
@@ -276,34 +273,16 @@ execloop:
 				break execloop
 			}
 		}
-		// m.Unlock()
-
 		s.finish(pnode)
-		// break execloop
-		// }
 		// workers <- struct{}{}
 	}
 	wg.Done()
 }
 
 func (m *tapeMachine) executeOneInstr(instr tapeInstr) error {
-	// m.lockRegister(instr.writes())
-	// for _, r := range instr.reads() {
-	// 	if r == instr.writes() {
-	// 		continue
-	// 	}
-	// 	m.lockRegister(r)
-	// }
 	if err := instr.exec(m); err != nil {
 		return errors.Wrapf(err, "Failed to execute instruction %v", instr)
 	}
-	// for _, r := range instr.reads() {
-	// 	if r == instr.writes() {
-	// 		continue
-	// 	}
-	// 	m.unlockRegister(r)
-	// }
-	// m.unlockRegister(instr.writes())
 
 	if m.watchNaN() {
 		writeTo := instr.writes().id
@@ -785,8 +764,8 @@ type execState struct {
 	p         *program
 	m         map[*Node]int
 	q         []int // queue where all the dependents are ready
-	q2        []int // quque where all the registers are ready
 	t         [][]int
+	f         [][]int
 	r         map[register][]int
 	w         map[register][]int
 	cpuWrites []int32
@@ -815,22 +794,26 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 		m[n] = i
 	}
 
-	// "lift" tos
+	// "lift" tos and froms
 	t := make([][]int, len(s))
+	f := make([][]int, len(s))
 	for k, v := range g.to {
 		id := m[k]
-		t[id] = make([]int, 0, len(v))
+		t[id] = make([]int, 0, len(v)+4) // 4 is spare
 		for _, n := range v {
 			nid := m[n]
 			t[id] = append(t[id], nid)
 		}
 	}
+	for _, n := range s {
+		id := n.index
+		f[id] = make([]int, 0, len(n.children)+4) // 4 is spare
+		for _, child := range n.children {
+			nid := m[child]
+			f[id] = append(f[id], nid)
+		}
+	}
 
-	// this part forms a "virtual" execution  of the instructions
-	// the actual state is tracked by the writes map.
-	// the writeCounter at this point simulates the counts of register writing
-	// the reads map holds the correct count at which the instruction is ready to be executed.
-	// writeCounter := make(map[register]int) // to keep track of state
 	reads := make(map[register][]int)
 	writes := make(map[register][]int)
 
@@ -857,6 +840,60 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 		writes[k] = set.Ints(v)
 	}
 
+	for i := range s {
+		pn := &s[i]
+		n := pn.Node
+		instrs := p.m[n]
+		for _, instr := range instrs {
+			if _, ok := instr.(free); ok {
+				continue
+			}
+			for _, r := range instr.reads() {
+				var j, nid int
+				for j, nid = range reads[r] {
+					if nid == i {
+						break
+					}
+				}
+				if j == 0 {
+					break
+				}
+				nid = reads[r][j-1]
+				if nid > i {
+					break
+				}
+
+				// log.Printf("r %v nid %d, adding %d | %v | %v", r, nid, i, reads[r], writes[r])
+				// check if the instruction is writing the register
+				for _, wid := range writes[r] {
+					// if the writing instruction is the same as the reading instruction, we need to actually add a dependency
+					if wid == i {
+						pn.priority++
+						t[nid] = append(t[nid], i)
+						f[i] = append(f[i], nid)
+					}
+				}
+
+				// t[nid] = append(t[nid], i)
+			}
+		}
+	}
+	for i, v := range t {
+		t[i] = set.Ints(v)
+	}
+
+	// var buf bytes.Buffer
+	// fmt.Fprintf(&buf, "PROG\n%v", p)
+	// fmt.Fprintf(&buf, "SORTED:\n")
+	// for i, v := range s {
+	// 	fmt.Fprintf(&buf, "%d: %v\n", i, v)
+	// }
+	// fmt.Fprintf(&buf, "To\n")
+	// for i, v := range t {
+	// 	fmt.Fprintf(&buf, "%d: %v\n", i, v)
+	// }
+	// log.Printf("%v", buf.String())
+
 	// prefill the queue
 	q := make([]int, 0, len(g.leaves)+len(g.constants))
 	for _, leaf := range g.leaves {
@@ -866,18 +903,13 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program) *execState {
 		q = append(q, m[c])
 	}
 
-	// at this point, the graph should be static. So it's fair game to actually
-	// modify the graph's \.to
-	for k, v := range g.to {
-		g.to[k] = v.Set()
-	}
-
 	return &execState{
 		sorted: s,
 		p:      p,
 		m:      m,
 		q:      q,
 		t:      t,
+		f:      f,
 		r:      reads,
 		w:      writes,
 		nodes:  len(sorted),
@@ -894,11 +926,16 @@ func (s *execState) finish(node *priorityNode) {
 		n := &s.sorted[i]
 		// this loop is necessary because to only records a single edge. There may be multiple edges to the same node
 		var reduction int32
-		for _, c := range n.children {
-			if c == node.Node {
-				reduction -= 1
+		for _, j := range s.f[i] {
+			if j == node.index {
+				reduction--
 			}
 		}
+		// for _, c := range n.children {
+		// 	if c == node.Node {
+		// 		reduction -= 1
+		// 	}
+		// }
 
 		toNodePriority := atomic.AddInt32(&n.priority, reduction)
 		if toNodePriority == 0 {
@@ -909,22 +946,26 @@ func (s *execState) finish(node *priorityNode) {
 			}
 			s.Unlock()
 		}
+		// } else {
+		// 	log.Printf("\t%v | %d", n, toNodePriority)
+		// }
 	}
 	// var nodes, workers, q int
 	s.Lock()
 	node.finished = true
-	allFinished := true
-	for i := node.index; i >= s.donecount; i-- {
-		if !s.sorted[i].finished {
-			allFinished = false
-		}
-	}
-	if allFinished {
-		s.donecount = node.index
-	}
+	s.donecount++
+	// allFinished := true
+	// for i := node.index; i >= s.donecount; i-- {
+	// 	if !s.sorted[i].finished {
+	// 		allFinished = false
+	// 	}
+	// }
+	// if allFinished {
+	// 	s.donecount = node.index
+	// }
 	s.nodes--
 	s.workers--
-	if s.nodes == 0 && s.workers == 0 {
+	if s.nodes == 0 && s.workers == 0 && s.donecount == len(s.sorted) {
 		s.done = true
 	}
 	s.Unlock()
@@ -932,25 +973,33 @@ func (s *execState) finish(node *priorityNode) {
 
 func (s *execState) next() (retVal *priorityNode) {
 	s.Lock()
-	for i := 0; i < len(s.q); i++ {
-		n := s.q[i]
-		if s.checkRegisterDependency(&s.sorted[n]) {
-			s.q2 = append(s.q2, n)
-			copy(s.q[i:], s.q[i+1:])
-			s.q[len(s.q)-1] = 0
-			s.q = s.q[:len(s.q)-1]
-			i--
-		}
-	}
-	if len(s.q2) == 0 {
+	if len(s.q) == 0 {
 		goto end
 	}
+	if len(s.q) > 1 {
+		sort.Slice(s.q, func(i, j int) bool { return s.sorted[s.q[i]].index > s.sorted[s.q[j]].index })
+	}
+	retVal = &s.sorted[s.q[len(s.q)-1]]
+	s.q = s.q[:len(s.q)-1]
+	// for i := 0; i < len(s.q); i++ {
+	// 	n := s.q[i]
+	// 	if s.checkRegisterDependency(&s.sorted[n]) {
+	// 		s.q2 = append(s.q2, n)
+	// 		copy(s.q[i:], s.q[i+1:])
+	// 		s.q[len(s.q)-1] = 0
+	// 		s.q = s.q[:len(s.q)-1]
+	// 		i--
+	// 	}
+	// }
+	// if len(s.q2) == 0 {
+	// 	goto end
+	// }
 
 	// if len(s.q2) >= 2 {
 	// 	sort.Slice(s.q2, func(i, j int) bool { return s.sorted[s.q2[i]].index > s.sorted[s.q2[j]].index })
 	// }
-	retVal = &s.sorted[s.q2[len(s.q2)-1]]
-	s.q2 = s.q2[:len(s.q2)-1]
+	// retVal = &s.sorted[s.q2[len(s.q2)-1]]
+	// s.q2 = s.q2[:len(s.q2)-1]
 	s.workers++
 end:
 	s.Unlock()
@@ -970,47 +1019,27 @@ func (s *execState) check() bool {
 	return retVal
 }
 
-// func (s *execState) incrWrite(r register) {
-// 	if r.id == -1 {
-// 		return
-// 	}
-// 	switch r.device {
-// 	case CPU:
-// 		atomic.AddInt32(&s.cpuWrites[r.id], 1)
-// 	default:
-// 		atomic.AddInt32(&s.gpuWrites[r.id], 1)
-// 	}
-// }
-
-// func (s *execState) registerWrites(r register) int32 {
-// 	switch r.device {
-// 	case CPU:
-// 		return atomic.LoadInt32(&s.cpuWrites[r.id])
-// 	default:
-// 		return atomic.LoadInt32(&s.gpuWrites[r.id])
-// 	}
-// }
-
 func (s *execState) checkRegisterDependency(n *priorityNode) bool {
 	var allread = true
-	for r := range n.reads {
-		for _, nid := range s.r[r] {
-			if nid >= n.index || nid <= s.donecount {
-				continue
-			}
-			if !s.sorted[nid].finished {
-				return false
-			}
-		}
-	}
+	// for r := range n.reads {
+	// 	for _, nid := range s.r[r] {
+	// 		if nid >= n.index || nid <= s.donecount {
+	// 			continue
+	// 		}
+	// 		if !s.sorted[nid].finished {
+	// 			return false
+	// 		}
+	// 	}
+	// }
 	return allread
 }
 
 type priorityNode struct {
 	*Node
-	priority int32
-	index    int
-	finished bool
+	priority  int32
+	priority2 int32
+	index     int
+	finished  bool
 
 	reads  registerSet
 	writes registerSet
