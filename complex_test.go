@@ -139,6 +139,7 @@ func TestWeirdNetwork(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		if err = m.RunAll(); err != nil {
 			t.Errorf("%d %v", i, err)
+			t.Logf("%v", m.buf.String())
 			break
 		}
 
