@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"github.com/xtgo/set"
 	"gorgonia.org/tensor"
 )
 
@@ -19,10 +23,12 @@ type tapeMachine struct {
 	locMap map[*Node]register
 
 	// "register" banks
-	cpumem []Value // Value - knows its own type and shape
-	gpumem []Value // Value of which the memories are stored in GPU memory
+	cpumem   []Value // Value - knows its own type and shape
+	gpumem   []Value // Value of which the memories are stored in GPU memory
+	cpulocks []sync.RWMutex
+	gpulocks []sync.RWMutex
 
-	// state stuff, to allow continuation
+	// state stuff, to allow continuation after failure handling
 	pc int
 
 	// operational stuff
@@ -35,7 +41,9 @@ type tapeMachine struct {
 	tabcount    int
 	logFlags    byte
 
-	runFlags byte //  spare2: trace(copy values and put into nodes)
+	sync.Mutex
+
+	runFlags byte //  spare2: trace (copy values and put into nodes)
 }
 
 // NewTapeMachine creates a VM that compiles a graph into a prog.
@@ -65,8 +73,10 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.locMap = locMap
 		m.cpumem = make([]Value, prog.cpulocs)
 		m.gpumem = make([]Value, prog.gpulocs)
+		m.cpulocks = make([]sync.RWMutex, prog.cpulocs)
+		m.gpulocks = make([]sync.RWMutex, prog.gpulocs)
 	}
-	m.init()
+	m.init() // init ExternalMetadata
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 	}
@@ -218,58 +228,96 @@ func (m *tapeMachine) RunAll() (err error) {
 	return
 }
 
+var print11 bool
+
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
-	for ; m.pc < len(m.p.instructions); m.pc++ {
-		instr := m.p.instructions[m.pc]
-		m.logf("PC %d", m.pc)
-		if err := instr.exec(m); err != nil {
-			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
-			errChan <- err
-			return
+	m.buf = new(bytes.Buffer)
+	s := newExecState(m.p.g, m.p.sorted, m.p, m.buf)
+	var wg sync.WaitGroup
+	threads := runtime.NumCPU()
+	workers := make(chan struct{}, threads)
+	for t := 0; t < threads; t++ {
+		wg.Add(1)
+		go m.execute(s, workers, errChan, &wg, t)
+	}
+	wg.Wait()
+	// log.Println(m.buf.String())
+	doneChan <- struct{}{}
+}
+
+func (m *tapeMachine) execute(s *execState, workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+execloop:
+	for {
+		// <-workers
+		if s.check() {
+			break execloop
 		}
 
-		if m.watchNaN() {
-			writeTo := instr.writes().id
-			id := instr.ID()
-			if writeTo > 0 && id > 0 {
-				v := m.getValue(instr.writes())
-				if v == nil {
-					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
-					errChan <- err
-					return
-				}
+		pnode := s.next()
+		if pnode == nil {
+			// workers <- struct{}{}
+			continue
+		}
+		instrs := m.p.m[pnode.Node]
+		for _, instr := range instrs {
 
-				if hasNaN(v) {
-					n := m.p.g.Node(id).(*Node)
-					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
-					errChan <- err
-					return
-				}
+			fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
+			// log.Printf("Executing %d %v\n", pnode.index, pnode)
+
+			if err := m.executeOneInstr(instr); err != nil {
+				err = errors.Wrapf(err, "pnode %d: %v", pnode.index, pnode)
+				errChan <- err
+				s.error()
+				// workers <- struct{}{}
+				break execloop
 			}
 		}
+		s.finish(pnode)
+		// workers <- struct{}{}
+	}
+	wg.Done()
+}
 
-		if m.watchInf() {
-			writeTo := instr.writes().id
-			id := instr.ID()
-			if writeTo > 0 && id > 0 {
-				v := m.getValue(instr.writes())
-				if v == nil {
-					err := errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
-					errChan <- err
-					return
-				}
+func (m *tapeMachine) executeOneInstr(instr tapeInstr) error {
+	if err := instr.exec(m); err != nil {
+		return errors.Wrapf(err, "Failed to execute instruction %v", instr)
+	}
 
-				if hasInf(v) {
-					n := m.p.g.Node(id).(*Node)
-					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
-					errChan <- err
-					return
-				}
+	if m.watchNaN() {
+		writeTo := instr.writes().id
+		id := instr.ID()
+		if writeTo > 0 && id > 0 {
+			v := m.getValue(instr.writes())
+			if v == nil {
+				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
+			}
+
+			if hasNaN(v) {
+				n := m.p.g.Node(id).(*Node)
+				return errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 			}
 		}
 	}
 
-	doneChan <- struct{}{}
+	if m.watchInf() {
+		writeTo := instr.writes().id
+		id := instr.ID()
+		if writeTo > 0 && id > 0 {
+			v := m.getValue(instr.writes())
+			if v == nil {
+				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
+			}
+
+			if hasInf(v) {
+				n := m.p.g.Node(id).(*Node)
+				return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
+			}
+		}
+	}
+	return nil
 }
 
 func (m *tapeMachine) getValue(r register) Value {
@@ -290,11 +338,9 @@ func (m *tapeMachine) writeValue(r register, v Value) {
 	}
 }
 
-func (m *tapeMachine) watchedLogf(format string, attrs ...interface{}) {
-	instr := m.p.instructions[m.pc]
+func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...interface{}) {
 	reads := instr.reads()
 	writes := instr.writes()
-
 	watched := m.watchAll()
 
 	if !watched {
@@ -389,6 +435,7 @@ type program struct {
 	g            *ExprGraph         // original dag
 	df           *dataflow          // dataflow analysis
 	m            map[*Node]fragment // store which nodes create which instructions
+	r            map[*Node]intervalRange
 	sorted       Nodes
 }
 
@@ -569,8 +616,6 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	}
 
 	m.writeValue(instr.writeTo, v)
-	// m.watchedLogf("Write To: %v", instr.writeTo)
-	// m.watchedLogf(m.valueFmt, m.cpumem[instr.writeTo.id])
 	return nil
 }
 
@@ -611,6 +656,26 @@ func newExecOp(n *Node) *execOp {
 		useGPU: useGPU,
 		size:   size,
 	}
+}
+
+func (instr *execOp) exec(m *tapeMachine) error {
+	m.logf("Executing %v. Node is: %x", instr, instr.id)
+	m.enterLogScope()
+	defer m.leaveLogScope()
+
+	// Read
+	m.watchedInstrLogf(instr, "Inputs:")
+	m.enterLogScope()
+	inputs := make([]Value, 0, len(instr.readFrom))
+	for _, reg := range instr.readFrom {
+		v := m.getValue(reg)
+		inputs = append(inputs, v)
+		m.watchedInstrLogf(instr, m.valueFmt, v)
+	}
+	m.leaveLogScope()
+
+	err := instr.execKernel(m, inputs)
+	return err
 }
 
 func (instr *execOp) String() string {
@@ -694,4 +759,337 @@ func (instr deviceTransport) writes() register { return instr.to }
 
 func (instr deviceTransport) String() string {
 	return fmt.Sprintf("memcpy(%v, %v)", instr.to, instr.from)
+}
+
+type execState struct {
+	sync.RWMutex
+	sorted    []priorityNode
+	p         *program
+	m         map[*Node]int
+	q         []int // queue where all the dependents are ready
+	t         [][]int
+	f         [][]int
+	r         map[register][]int
+	w         map[register][]int
+	cpuWrites []int32
+	gpuWrites []int32
+
+	donecount int
+	workers   int
+	nodes     int
+	done      bool
+	err       bool
+
+	buf *bytes.Buffer
+}
+
+func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *execState {
+	s := make([]priorityNode, len(sorted))
+	m := make(map[*Node]int, len(sorted))
+	for i := range s {
+		n := sorted[i]
+		s[i] = priorityNode{
+			Node:     n,
+			priority: int32(len(n.children)),
+			index:    i,
+		}
+		m[n] = i
+	}
+
+	// "lift" tos and froms
+	t := make([][]int, len(s))
+	f := make([][]int, len(s))
+	for k, v := range g.to {
+		id := m[k]
+		t[id] = make([]int, 0, len(v)+4) // 4 is spare
+		for _, n := range v {
+			nid := m[n]
+			t[id] = append(t[id], nid)
+		}
+	}
+	for _, n := range s {
+		id := n.index
+		f[id] = make([]int, 0, len(n.children)+4) // 4 is spare
+		for _, child := range n.children {
+			nid := m[child]
+			f[id] = append(f[id], nid)
+		}
+	}
+
+	reads := make(map[register][]int)
+	writes := make(map[register][]int)
+
+	for i := range s {
+		pn := &s[i]
+		n := pn.Node
+		instrs := p.m[n]
+		for _, instr := range instrs {
+			for _, r := range instr.reads() {
+				reads[r] = append(reads[r], i)
+				// pn.reads.Add(r)
+			}
+			w := instr.writes()
+			writes[w] = append(writes[w], i)
+			// pn.writes.Add(w)
+
+			if ri, ok := instr.(*readInstr); ok {
+				writes[ri.readFrom] = append(writes[ri.readFrom], i)
+			}
+		}
+	}
+
+	// uniquify the reads and writes
+	for k, v := range reads {
+		reads[k] = set.Ints(v)
+	}
+	for k, v := range writes {
+		writes[k] = set.Ints(v)
+	}
+	/*
+		for i := range s {
+			pn := &s[i]
+			n := pn.Node
+			instrs := p.m[n]
+			for _, instr := range instrs {
+				if _, ok := instr.(free); ok {
+					continue
+				}
+
+				for _, r := range instr.reads() {
+					rs := reads[r]
+					var atI int
+					for j := len(rs) - 1; j >= 0; j-- {
+						nid := rs[j]
+						if nid > i {
+							continue
+						}
+						if nid == i {
+							atI = j
+							continue
+						}
+
+						log.Printf("\tnid %v, i %d", nid, i)
+
+						for _, wid := range writes[r] {
+							var hasReadInstr bool
+							log.Printf("\t\t%v", s[wid].Node)
+							for _, in := range p.m[s[wid].Node] {
+								// log.Printf("\t\t\t%v", in)
+								if _, ok := in.(*readInstr); ok {
+									log.Printf("\t\tHAS READ")
+									hasReadInstr = true
+									break
+								}
+							}
+
+							// if the writing instruction is the same as the reading instruction, we need to actually add a dependency
+							if wid == i && (hasReadInstr || j == atI-1) {
+							// if wid == i {
+								log.Printf("\t\tadding %d | %d | %v %v", nid, i, hasReadInstr, atI)
+								pn.priority++
+								t[nid] = append(t[nid], i)
+								f[i] = append(f[i], nid)
+							}
+						}
+					}
+					// var j, nid int
+					// for j, nid = range reads[r] {
+					// 	if nid == i {
+					// 		break
+					// 	}
+					// }
+					// if j == 0 {
+					// 	break
+					// }
+					// nid = reads[r][j-1]
+					// if nid > i {
+					// break
+					// }
+
+					// log.Printf("r %v nid %d, adding %d | %v | %v", r, nid, i, reads[r], writes[r])
+					// check if the instruction is writing the register
+
+					// t[nid] = append(t[nid], i)
+				}
+			}
+		}
+	*/
+
+	for reg, wnids := range writes {
+		if reg.id == -1 {
+			continue
+		}
+		// log.Printf("nodes that write %v | %v", reg, wnids)
+		for _, nid := range wnids {
+			rnids := reads[reg]
+			for _, rid := range rnids {
+				if rid >= nid {
+					continue
+				}
+				// log.Printf("\t%d reads %v: %v | %v", nid, reg, rid, t[rid])
+				s[nid].priority++
+				f[nid] = append(f[nid], rid)
+				t[rid] = append(t[rid], nid)
+			}
+		}
+	}
+
+	for i, v := range t {
+		t[i] = set.Ints(v)
+	}
+
+	// var buf bytes.Buffer
+	fmt.Fprintf(buf, "PROG\n%v", p)
+	fmt.Fprintf(buf, "SORTED:\n")
+	for i, v := range s {
+		fmt.Fprintf(buf, "%d: %v\n", i, v)
+	}
+	fmt.Fprintf(buf, "To\n")
+	for i, v := range t {
+		fmt.Fprintf(buf, "%d: %v\n", i, v)
+	}
+	fmt.Fprintf(buf, "From\n")
+	for i, v := range f {
+		fmt.Fprintf(buf, "%d: %v\n", i, v)
+	}
+	// log.Printf("%v", buf.String())
+
+	// prefill the queue
+	q := make([]int, 0, len(g.leaves)+len(g.constants))
+	for _, leaf := range g.leaves {
+		q = append(q, m[leaf])
+	}
+	for _, c := range g.constants {
+		q = append(q, m[c])
+	}
+
+	return &execState{
+		sorted: s,
+		p:      p,
+		m:      m,
+		q:      q,
+		t:      t,
+		f:      f,
+		r:      reads,
+		w:      writes,
+		nodes:  len(sorted),
+
+		buf: buf,
+	}
+}
+
+func (s *execState) finish(node *priorityNode) {
+	// log.Printf("FINISHED %x: %v", node.id, node)
+	s.Lock()
+	fmt.Fprintf(s.buf, "FINISHED %d: %v\n", node.index, node)
+	to := s.t[node.index]
+	s.Unlock()
+
+	for _, i := range to {
+		n := &s.sorted[i]
+		// this loop is necessary because to only records a single edge. There may be multiple edges to the same node
+		var reduction int32
+		for _, j := range s.f[i] {
+			if j == node.index {
+				reduction--
+			}
+		}
+
+		toNodePriority := atomic.AddInt32(&n.priority, reduction)
+		if toNodePriority == 0 {
+			s.Lock()
+			if !n.finished { // this line shouldn't be necessary
+				// log.Printf("\t %v added to queue", n)
+				s.q = append(s.q, n.index)
+			}
+			s.Unlock()
+		}
+		// } else {
+		// 	log.Printf("\t%v | %d", n, toNodePriority)
+		// }
+	}
+	// var nodes, workers, q int
+	s.Lock()
+	node.finished = true
+	s.donecount++
+	s.nodes--
+	s.workers--
+	if s.nodes == 0 && s.workers == 0 && s.donecount == len(s.sorted) {
+		s.done = true
+	}
+	s.Unlock()
+}
+
+func (s *execState) next() (retVal *priorityNode) {
+	s.Lock()
+	if len(s.q) == 0 {
+		goto end
+	}
+	if len(s.q) > 1 {
+		sort.Slice(s.q, func(i, j int) bool { return s.sorted[s.q[i]].index > s.sorted[s.q[j]].index })
+	}
+	fmt.Fprintf(s.buf, "Next. State: %v\n", s.q)
+	retVal = &s.sorted[s.q[len(s.q)-1]]
+	s.q = s.q[:len(s.q)-1]
+	// for i := 0; i < len(s.q); i++ {
+	// 	n := s.q[i]
+	// 	if s.checkRegisterDependency(&s.sorted[n]) {
+	// 		s.q2 = append(s.q2, n)
+	// 		copy(s.q[i:], s.q[i+1:])
+	// 		s.q[len(s.q)-1] = 0
+	// 		s.q = s.q[:len(s.q)-1]
+	// 		i--
+	// 	}
+	// }
+	// if len(s.q2) == 0 {
+	// 	goto end
+	// }
+
+	// if len(s.q2) >= 2 {
+	// 	sort.Slice(s.q2, func(i, j int) bool { return s.sorted[s.q2[i]].index > s.sorted[s.q2[j]].index })
+	// }
+	// retVal = &s.sorted[s.q2[len(s.q2)-1]]
+	// s.q2 = s.q2[:len(s.q2)-1]
+	s.workers++
+end:
+	s.Unlock()
+	return retVal
+}
+
+func (s *execState) error() {
+	s.Lock()
+	s.err = true
+	s.Unlock()
+}
+
+func (s *execState) check() bool {
+	s.RLock()
+	retVal := s.done || s.err
+	s.RUnlock()
+	return retVal
+}
+
+type priorityNode struct {
+	*Node
+	priority  int32
+	priority2 int32
+	index     int
+	finished  bool
+
+	reads  registerSet
+	writes registerSet
+}
+
+type registerSet map[register]struct{}
+
+func makeRegisterSet() registerSet { return make(map[register]struct{}) }
+
+func (s registerSet) Add(r register) registerSet {
+	s[r] = struct{}{}
+	return s
+}
+
+func (s registerSet) Contains(r register) bool {
+	_, ok := s[r]
+	return ok
 }

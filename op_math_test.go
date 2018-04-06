@@ -345,6 +345,10 @@ var binOpTests = []struct {
 func TestBasicArithmetic(t *testing.T) {
 	assert := assert.New(t)
 	for i, bot := range binOpTests {
+		// log.Printf("TEST %d", i)
+		// if i != 22 {
+		// 	continue
+		// }
 		g := NewGraph()
 		xV, _ := CloneValue(bot.a)
 		yV, _ := CloneValue(bot.b)
@@ -368,7 +372,9 @@ func TestBasicArithmetic(t *testing.T) {
 		}
 
 		m1 := NewTapeMachine(g)
+		// log.Printf("%v", m1.Prog())
 		if err = m1.RunAll(); err != nil {
+			log.Printf("m.buf \n%v", m1.buf.String())
 			t.Errorf("Test %d: error while running %v", i, err)
 			runtime.GC()
 			continue
@@ -383,6 +389,7 @@ func TestBasicArithmetic(t *testing.T) {
 		if !as.cont {
 			prog := m1.Prog()
 			t.Logf("Test %d failed. Prog: %v", i, prog)
+			t.Logf("Exec Log \n%v", m1.buf.String())
 		}
 
 		if assertGraphEngine(t, g, stdengType); t.Failed() {
