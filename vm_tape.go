@@ -22,13 +22,12 @@ type tapeMachine struct {
 	locMap map[*Node]register
 
 	// "register" banks
-	cpumem   []Value // Value - knows its own type and shape
-	gpumem   []Value // Value of which the memories are stored in GPU memory
-	cpulocks []sync.RWMutex
-	gpulocks []sync.RWMutex
+	cpumem []Value // Value - knows its own type and shape
+	gpumem []Value // Value of which the memories are stored in GPU memory
 
 	// state stuff, to allow continuation after failure handling
 	pc int
+	execState
 
 	// operational stuff
 	bindNodesDV Nodes // nodes that require binding of DV
@@ -72,13 +71,12 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.locMap = locMap
 		m.cpumem = make([]Value, prog.cpulocs)
 		m.gpumem = make([]Value, prog.gpulocs)
-		m.cpulocks = make([]sync.RWMutex, prog.cpulocs)
-		m.gpulocks = make([]sync.RWMutex, prog.gpulocs)
 	}
 	m.init() // init ExternalMetadata
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 	}
+	m.execState = makeExecState(m.p)
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
@@ -120,6 +118,7 @@ func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
+	m.execState.reset()
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions
@@ -231,34 +230,34 @@ var print11 bool
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	m.buf = new(bytes.Buffer)
-	s := newExecState(m.p.g, m.p.sorted, m.p, m.buf)
+	m.initExecState()
 	var wg sync.WaitGroup
 	threads := runtime.NumCPU()
-	workers := make(chan struct{}, 1000)
+	workers := make(chan struct{}, runtime.NumCPU())
 	workers <- struct{}{}
 	// log.Printf("New Exec State %v", s)
 	for t := 0; t < threads; t++ {
 		wg.Add(1)
-		go m.execute(s, workers, errChan, &wg, t)
+		go m.execute(workers, errChan, &wg, t)
 	}
 	wg.Wait()
 	// log.Println(m.buf.String())
 	doneChan <- struct{}{}
 }
 
-func (m *tapeMachine) execute(s *execState, workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
+func (m *tapeMachine) execute(workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
 execloop:
 	for {
 		<-workers
-		if s.check() {
+		if m.execState.check() {
 			workers <- struct{}{}
 			break execloop
 		}
 
-		pnode := s.next()
+		pnode := m.execState.next()
 		if pnode == nil {
 			workers <- struct{}{}
 			continue
@@ -273,12 +272,12 @@ execloop:
 			if err := m.executeOneInstr(instr); err != nil {
 				err = errors.Wrapf(err, "pnode %d: %v", pnode.index, pnode)
 				errChan <- err
-				s.error()
+				m.execState.error()
 				workers <- struct{}{}
 				break execloop
 			}
 		}
-		s.finish(pnode)
+		m.execState.finish(pnode)
 		workers <- struct{}{}
 	}
 	wg.Done()
@@ -765,32 +764,24 @@ func (instr deviceTransport) String() string {
 type execState struct {
 	sync.RWMutex
 	sorted []priorityNode
-	// p      *program
-	// m      map[*Node]int
-	// q []int // queue where all the dependents are ready
-	t [][]int
-	f [][]int
-	// r         map[register][]int
-	// w         map[register][]int
-	// cpuWrites []int32
-	// gpuWrites []int32
+	m      map[*Node]int
+	t      [][]int
+	f      [][]int
 
-	// donecount  int
+	q2      chan int
 	workers int
 	nodes   int
 	done    bool
 	err     bool
-	q2      chan int
-	// inprogress map[int]struct{}
 
 	buf *bytes.Buffer
 }
 
-func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *execState {
-	s := make([]priorityNode, len(sorted))
-	m := make(map[*Node]int, len(sorted))
+func makeExecState(p *program) execState {
+	s := make([]priorityNode, len(p.sorted))
+	m := make(map[*Node]int, len(p.sorted))
 	for i := range s {
-		n := sorted[i]
+		n := p.sorted[i]
 		s[i] = priorityNode{
 			Node:     n,
 			priority: int32(len(n.children)),
@@ -802,7 +793,7 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 	// "lift" tos and froms
 	t := make([][]int, len(s))
 	f := make([][]int, len(s))
-	for k, v := range g.to {
+	for k, v := range p.g.to {
 		id := m[k]
 		t[id] = make([]int, 0, len(v)+4) // 4 is spare
 		for _, n := range v {
@@ -872,50 +863,32 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 		t[i] = set.Ints(v)
 	}
 
-	// // var buf bytes.Buffer
-	// fmt.Fprintf(buf, "PROG\n%v", p)
-	// fmt.Fprintf(buf, "SORTED:\n")
-	// for i, v := range s {
-	// 	fmt.Fprintf(buf, "\t%d: %v\n", i, v)
-	// }
-	// fmt.Fprintf(buf, "To\n")
-	// for i, v := range t {
-	// 	fmt.Fprintf(buf, "\t%d: %v\n", i, v)
-	// }
-	// fmt.Fprintf(buf, "From\n")
-	// for i, v := range f {
-	// 	fmt.Fprintf(buf, "\t%d: %v\n", i, v)
-	// }
-	// log.Printf("%v", buf.String())
-
-	// prefill the queue
-
-	// q2 := make(chan int, len(g.leaves)+len(g.constants)+1)
-	q2 := make(chan int, len(s))
-	for _, leaf := range g.leaves {
-		// q = append(q, m[leaf])
-		q2 <- m[leaf]
-		// inprogress[m[leaf]] = struct{}{}
-	}
-	for _, c := range g.constants {
-		// q = append(q, m[c])
-		q2 <- m[c]
-		// inprogress[m[c]] = struct{}{}
-	}
-
-	return &execState{
+	return execState{
 		sorted: s,
-		// p:      p,
-		// m:      m,
-		t: t,
-		f: f,
-		// r:      reads,
-		// w:      writes,
-		q2:    q2,
-		nodes: len(sorted),
-
-		buf: buf,
+		m:      m,
+		t:      t,
+		f:      f,
+		nodes:  len(s),
 	}
+}
+
+func (m *tapeMachine) initExecState() {
+	m.execState.q2 = nil                                     // gc previous
+	m.execState.q2 = make(chan int, len(m.execState.sorted)) // make new one
+	m.execState.buf = m.buf
+	for _, leaf := range m.p.g.leaves {
+		m.execState.q2 <- m.execState.m[leaf]
+	}
+	for _, c := range m.p.g.constants {
+		m.execState.q2 <- m.execState.m[c]
+	}
+}
+
+func (s *execState) reset() {
+	// s.q2 = nil
+	// s.workers = 0
+	// s.done = false
+	// s.err = false
 }
 
 func (s *execState) finish(node *priorityNode) {
