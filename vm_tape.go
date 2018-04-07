@@ -263,7 +263,9 @@ execloop:
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
 
-			// fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
+			m.Lock()
+			fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
+			m.Unlock()
 			// log.Printf("Executing %d %v\n", pnode.index, pnode)
 
 			if err := m.executeOneInstr(instr); err != nil {
@@ -452,9 +454,7 @@ func (p *program) String() string {
 				fmt.Fprintf(&buf, "\t\t%v\n", instr)
 			}
 		}
-
 	}
-
 	return buf.String()
 }
 
@@ -773,12 +773,13 @@ type execState struct {
 	cpuWrites []int32
 	gpuWrites []int32
 
-	donecount int
-	workers   int
-	nodes     int
-	done      bool
-	err       bool
-	q2        chan int
+	donecount  int
+	workers    int
+	nodes      int
+	done       bool
+	err        bool
+	q2         chan int
+	inprogress map[int]struct{}
 
 	buf *bytes.Buffer
 }
@@ -870,31 +871,35 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 	}
 
 	// // var buf bytes.Buffer
-	// fmt.Fprintf(buf, "PROG\n%v", p)
-	// fmt.Fprintf(buf, "SORTED:\n")
-	// for i, v := range s {
-	// 	fmt.Fprintf(buf, "%d: %v\n", i, v)
-	// }
-	// fmt.Fprintf(buf, "To\n")
-	// for i, v := range t {
-	// 	fmt.Fprintf(buf, "%d: %v\n", i, v)
-	// }
-	// fmt.Fprintf(buf, "From\n")
-	// for i, v := range f {
-	// 	fmt.Fprintf(buf, "%d: %v\n", i, v)
-	// }
+	fmt.Fprintf(buf, "PROG\n%v", p)
+	fmt.Fprintf(buf, "SORTED:\n")
+	for i, v := range s {
+		fmt.Fprintf(buf, "\t%d: %v\n", i, v)
+	}
+	fmt.Fprintf(buf, "To\n")
+	for i, v := range t {
+		fmt.Fprintf(buf, "\t%d: %v\n", i, v)
+	}
+	fmt.Fprintf(buf, "From\n")
+	for i, v := range f {
+		fmt.Fprintf(buf, "\t%d: %v\n", i, v)
+	}
 	// log.Printf("%v", buf.String())
 
 	// prefill the queue
+	inprogress := make(map[int]struct{})
 	q := make([]int, 0, len(g.leaves)+len(g.constants))
-	q2 := make(chan int, len(g.leaves)+len(g.constants)+1)
+	// q2 := make(chan int, len(g.leaves)+len(g.constants)+1)
+	q2 := make(chan int, len(s))
 	for _, leaf := range g.leaves {
 		q = append(q, m[leaf])
 		q2 <- m[leaf]
+		// inprogress[m[leaf]] = struct{}{}
 	}
 	for _, c := range g.constants {
 		q = append(q, m[c])
 		q2 <- m[c]
+		// inprogress[m[c]] = struct{}{}
 	}
 
 	return &execState{
@@ -909,14 +914,15 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 		q2:     q2,
 		nodes:  len(sorted),
 
-		buf: buf,
+		buf:        buf,
+		inprogress: inprogress,
 	}
 }
 
 func (s *execState) finish(node *priorityNode) {
 	// log.Printf("FINISHED %x: %v", node.id, node)
 	// s.Lock()
-	// fmt.Fprintf(s.buf, "FINISHED %d: %v\n", node.index, node)
+	fmt.Fprintf(s.buf, "FINISHED %d\n", node.index)
 	// log.Printf("FINISHED %d: %v\n", node.index, node)
 	to := s.t[node.index]
 	// s.Unlock()
@@ -944,6 +950,7 @@ func (s *execState) finish(node *priorityNode) {
 	}
 	// var nodes, workers, q int
 	s.Lock()
+	delete(s.inprogress, node.index)
 	node.finished = true
 	s.donecount++
 	s.nodes--
@@ -956,35 +963,19 @@ func (s *execState) finish(node *priorityNode) {
 }
 
 func (s *execState) next() (retVal *priorityNode) {
-	select {
-	case id := <-s.q2:
-		s.Lock()
-		s.workers++
-		s.Unlock()
-		return &s.sorted[id]
+	id := <-s.q2
+	s.RLock()
+	if _, ok := s.inprogress[id]; ok {
+		s.RUnlock()
+		return nil
 	}
-	return nil
-	// log.Printf("id %v", id)
-	// if s.sorted[id].finished {
-	// 	return nil
-	// }
-	// s.RLock()
-	// if len(s.q) == 0 {
-	// 	s.RUnlock()
-	// 	return
-	// }
-	// s.RUnlock()
-	// s.Lock()
-	// if len(s.q) > 1 {
-	// 	sort.Slice(s.q, func(i, j int) bool { return s.sorted[s.q[i]].index > s.sorted[s.q[j]].index })
-	// }
-	// fmt.Fprintf(s.buf, "Next. State: %v\n", s.q)
-	// retVal = &s.sorted[s.q[len(s.q)-1]]
-	// s.q = s.q[:len(s.q)-1]
-	// s.workers++
-	// // end:
-	// s.Unlock()
-	// return retVal
+	s.RUnlock()
+
+	s.Lock()
+	s.workers++
+	s.inprogress[id] = struct{}{}
+	s.Unlock()
+	return &s.sorted[id]
 }
 
 func (s *execState) error() {
