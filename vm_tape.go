@@ -232,9 +232,9 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	var wg sync.WaitGroup
 	threads := runtime.NumCPU()
 	workers := make(chan struct{}, runtime.NumCPU())
-	workers <- struct{}{}
 
 	for t := 0; t < threads; t++ {
+		workers <- struct{}{}
 		wg.Add(1)
 		go m.execute(workers, errChan, &wg, t)
 	}
@@ -682,8 +682,6 @@ func (instr *execOp) String() string {
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
-	// m.logf("Executing DoWork")
-	// m.ExternMetadata.DoWork()
 	if m.WorkAvailable() == nil {
 		return nil
 	}
@@ -765,8 +763,8 @@ type execState struct {
 	f      [][]int
 
 	q2      chan int
-	workers int
-	nodes   int
+	workers int32 // atomic only kthxbai
+	nodes   int32 // atomic only kthaxbai
 	done    bool
 	err     bool
 
@@ -866,7 +864,7 @@ func makeExecState(p *program) execState {
 		m:      m,
 		t:      t,
 		f:      f,
-		nodes:  len(s),
+		nodes:  int32(len(s)),
 	}
 }
 
@@ -887,7 +885,7 @@ func (m *tapeMachine) resetExecState() {
 	m.execState.workers = 0
 	m.execState.done = false
 	m.execState.err = false
-	m.execState.nodes = len(m.execState.sorted)
+	m.execState.nodes = int32(len(m.execState.sorted))
 
 	for i := range m.execState.sorted {
 		m.execState.sorted[i].priority = m.execState.sorted[i]._p
@@ -896,15 +894,11 @@ func (m *tapeMachine) resetExecState() {
 }
 
 func (s *execState) finish(node *priorityNode) {
-	// s.Lock()
-	// fmt.Fprintf(s.buf, "FINISHED %d\n", node.index)
-	// log.Printf("FINISHED %d: %v\n", node.index, node)
-	// s.Unlock()
 	to := s.t[node.index]
-
 	for _, i := range to {
 		n := &s.sorted[i]
-		// this loop is necessary because to only records a single edge. There may be multiple edges to the same node
+		// this loop is necessary because to only records a single edge.
+		// There may be multiple edges to the same node
 		var reduction int32
 		for _, j := range s.f[i] {
 			if j == node.index {
@@ -914,26 +908,25 @@ func (s *execState) finish(node *priorityNode) {
 
 		toNodePriority := atomic.AddInt32(&n.priority, reduction)
 		if toNodePriority == 0 {
+			// this check shouldn't be necessary
+			// but I have found that the analysis algorithm
+			// may lead to leaky nodes.
 			status := atomic.LoadInt32(&n.status)
-			if status == waiting { // this line shouldn't be necessary
-				// log.Printf("\t %v added to queue", n)
-				// s.Lock()
-				// s.q = append(s.q, n.index)
+			if status == waiting {
 				s.q2 <- n.index
-				// s.Unlock()
 			}
 		}
 	}
 	// var nodes, workers, q int
 	atomic.StoreInt32(&node.status, executed)
-	s.Lock()
-	s.nodes--
-	s.workers--
-	if s.nodes == 0 && s.workers == 0 {
+	workers := atomic.AddInt32(&s.workers, -1)
+	nodes := atomic.AddInt32(&s.nodes, -1)
+	if nodes == 0 && workers == 0 {
+		s.Lock()
 		s.done = true
 		close(s.q2)
+		s.Unlock()
 	}
-	s.Unlock()
 }
 
 func (s *execState) next() (retVal *priorityNode) {
@@ -942,9 +935,7 @@ func (s *execState) next() (retVal *priorityNode) {
 		return nil
 	}
 	atomic.StoreInt32(&(s.sorted[id]).status, executing)
-	s.Lock()
-	s.workers++
-	s.Unlock()
+	atomic.AddInt32(&s.workers, 1)
 	return &s.sorted[id]
 }
 
