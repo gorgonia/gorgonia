@@ -231,10 +231,10 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 
 	var wg sync.WaitGroup
 	threads := runtime.NumCPU()
-	workers := make(chan struct{}, runtime.NumCPU())
+	workers := make(chan struct{}, threads)
 
 	for t := 0; t < threads; t++ {
-		workers <- struct{}{}
+		workers <- struct{}{} // ensures that at any given time, there are actually THREADS available workers
 		wg.Add(1)
 		go m.execute(workers, errChan, &wg, t)
 	}
@@ -285,35 +285,16 @@ func (m *tapeMachine) executeOneInstr(instr tapeInstr) error {
 	}
 
 	if m.watchNaN() {
-		writeTo := instr.writes().id
-		id := instr.ID()
-		if writeTo > 0 && id > 0 {
-			v := m.getValue(instr.writes())
-			if v == nil {
-				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
-			}
-
-			if hasNaN(v) {
-				n := m.p.g.Node(id).(*Node)
-				return errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
-			}
+		if err := m.naughtyValues(instr, "NaN", hasNaN); err != nil {
+			return err
 		}
 	}
 
 	if m.watchInf() {
-		writeTo := instr.writes().id
-		id := instr.ID()
-		if writeTo > 0 && id > 0 {
-			v := m.getValue(instr.writes())
-			if v == nil {
-				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
-			}
-
-			if hasInf(v) {
-				n := m.p.g.Node(id).(*Node)
-				return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
-			}
+		if err := m.naughtyValues(instr, "Inf", hasInf); err != nil {
+			return err
 		}
+
 	}
 	return nil
 }
@@ -334,6 +315,23 @@ func (m *tapeMachine) writeValue(r register, v Value) {
 	default:
 		m.gpumem[r.id] = v
 	}
+}
+
+func (m *tapeMachine) naughtyValues(instr tapeInstr, typ string, fn func(v Value) bool) error {
+	writeTo := instr.writes().id
+	id := instr.ID()
+	if writeTo > 0 && id > 0 {
+		v := m.getValue(instr.writes())
+		if v == nil {
+			return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watch"+typ)
+		}
+
+		if fn(v) {
+			n := m.p.g.Node(id).(*Node)
+			return errors.Errorf("%v found in value. Node: %v(%x)", typ, n, n.ID())
+		}
+	}
+	return nil
 }
 
 func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...interface{}) {
@@ -622,7 +620,7 @@ func (instr loadArg) String() string {
 type execOp struct {
 	op Op
 
-	id int64
+	id int64 // node id
 
 	readFrom []register
 	writeTo  register
@@ -745,11 +743,9 @@ type deviceTransport struct {
 	from, to register
 }
 
-func (instr deviceTransport) ID() int64 { return -1 }
-func (instr deviceTransport) reads() []register {
-	return []register{instr.from}
-}
-func (instr deviceTransport) writes() register { return instr.to }
+func (instr deviceTransport) ID() int64         { return -1 }
+func (instr deviceTransport) reads() []register { return []register{instr.from} }
+func (instr deviceTransport) writes() register  { return instr.to }
 
 func (instr deviceTransport) String() string {
 	return fmt.Sprintf("memcpy(%v, %v)", instr.to, instr.from)
@@ -764,7 +760,7 @@ type execState struct {
 
 	q2      chan int
 	workers int32 // atomic only kthxbai
-	nodes   int32 // atomic only kthaxbai
+	nodes   int32 // atomic only kthxbai
 	done    bool
 	err     bool
 
@@ -917,7 +913,10 @@ func (s *execState) finish(node *priorityNode) {
 			}
 		}
 	}
-	// var nodes, workers, q int
+
+	// atomic work that things are done:
+	// status is set to executed
+	// workers and nodesleft decremented
 	atomic.StoreInt32(&node.status, executed)
 	workers := atomic.AddInt32(&s.workers, -1)
 	nodes := atomic.AddInt32(&s.nodes, -1)
