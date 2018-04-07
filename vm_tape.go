@@ -40,7 +40,6 @@ type tapeMachine struct {
 	logFlags    byte
 
 	sync.Mutex
-
 	runFlags byte //  spare2: trace (copy values and put into nodes)
 }
 
@@ -118,7 +117,7 @@ func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
-	m.execState.reset()
+	m.resetExecState()
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions
@@ -226,16 +225,15 @@ func (m *tapeMachine) RunAll() (err error) {
 	return
 }
 
-var print11 bool
-
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	m.buf = new(bytes.Buffer)
 	m.initExecState()
+
 	var wg sync.WaitGroup
 	threads := runtime.NumCPU()
 	workers := make(chan struct{}, runtime.NumCPU())
 	workers <- struct{}{}
-	// log.Printf("New Exec State %v", s)
+
 	for t := 0; t < threads; t++ {
 		wg.Add(1)
 		go m.execute(workers, errChan, &wg, t)
@@ -248,7 +246,6 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 func (m *tapeMachine) execute(workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-
 execloop:
 	for {
 		<-workers
@@ -264,7 +261,6 @@ execloop:
 		}
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
-
 			// m.Lock()
 			// fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
 			// m.Unlock()
@@ -785,6 +781,7 @@ func makeExecState(p *program) execState {
 		s[i] = priorityNode{
 			Node:     n,
 			priority: int32(len(n.children)),
+			_p:       int32(len(n.children)),
 			index:    i,
 		}
 		m[n] = i
@@ -853,6 +850,7 @@ func makeExecState(p *program) execState {
 				}
 				// log.Printf("\t%d reads %v: %v | %v", nid, reg, rid, t[rid])
 				s[nid].priority++
+				s[nid]._p++
 				f[nid] = append(f[nid], rid)
 				t[rid] = append(t[rid], nid)
 			}
@@ -884,11 +882,17 @@ func (m *tapeMachine) initExecState() {
 	}
 }
 
-func (s *execState) reset() {
+func (m *tapeMachine) resetExecState() {
 	// s.q2 = nil
-	// s.workers = 0
-	// s.done = false
-	// s.err = false
+	m.execState.workers = 0
+	m.execState.done = false
+	m.execState.err = false
+	m.execState.nodes = len(m.execState.sorted)
+
+	for i := range m.execState.sorted {
+		m.execState.sorted[i].priority = m.execState.sorted[i]._p
+		m.execState.sorted[i].status = waiting
+	}
 }
 
 func (s *execState) finish(node *priorityNode) {
@@ -961,6 +965,7 @@ type priorityNode struct {
 	*Node
 	priority int32 // atomic only kthxbai
 	status   int32 // atomic only kthxbai
+	_p       int32 // original priority
 	index    int
 }
 
