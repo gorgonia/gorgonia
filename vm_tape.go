@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -264,7 +263,7 @@ execloop:
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
 
-			fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
+			// fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
 			// log.Printf("Executing %d %v\n", pnode.index, pnode)
 
 			if err := m.executeOneInstr(instr); err != nil {
@@ -779,6 +778,7 @@ type execState struct {
 	nodes     int
 	done      bool
 	err       bool
+	q2        chan int
 
 	buf *bytes.Buffer
 }
@@ -845,75 +845,6 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 	for k, v := range writes {
 		writes[k] = set.Ints(v)
 	}
-	/*
-		for i := range s {
-			pn := &s[i]
-			n := pn.Node
-			instrs := p.m[n]
-			for _, instr := range instrs {
-				if _, ok := instr.(free); ok {
-					continue
-				}
-
-				for _, r := range instr.reads() {
-					rs := reads[r]
-					var atI int
-					for j := len(rs) - 1; j >= 0; j-- {
-						nid := rs[j]
-						if nid > i {
-							continue
-						}
-						if nid == i {
-							atI = j
-							continue
-						}
-
-						log.Printf("\tnid %v, i %d", nid, i)
-
-						for _, wid := range writes[r] {
-							var hasReadInstr bool
-							log.Printf("\t\t%v", s[wid].Node)
-							for _, in := range p.m[s[wid].Node] {
-								// log.Printf("\t\t\t%v", in)
-								if _, ok := in.(*readInstr); ok {
-									log.Printf("\t\tHAS READ")
-									hasReadInstr = true
-									break
-								}
-							}
-
-							// if the writing instruction is the same as the reading instruction, we need to actually add a dependency
-							if wid == i && (hasReadInstr || j == atI-1) {
-							// if wid == i {
-								log.Printf("\t\tadding %d | %d | %v %v", nid, i, hasReadInstr, atI)
-								pn.priority++
-								t[nid] = append(t[nid], i)
-								f[i] = append(f[i], nid)
-							}
-						}
-					}
-					// var j, nid int
-					// for j, nid = range reads[r] {
-					// 	if nid == i {
-					// 		break
-					// 	}
-					// }
-					// if j == 0 {
-					// 	break
-					// }
-					// nid = reads[r][j-1]
-					// if nid > i {
-					// break
-					// }
-
-					// log.Printf("r %v nid %d, adding %d | %v | %v", r, nid, i, reads[r], writes[r])
-					// check if the instruction is writing the register
-
-					// t[nid] = append(t[nid], i)
-				}
-			}
-		}
-	*/
 
 	for reg, wnids := range writes {
 		if reg.id == -1 {
@@ -938,29 +869,32 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 		t[i] = set.Ints(v)
 	}
 
-	// var buf bytes.Buffer
-	fmt.Fprintf(buf, "PROG\n%v", p)
-	fmt.Fprintf(buf, "SORTED:\n")
-	for i, v := range s {
-		fmt.Fprintf(buf, "%d: %v\n", i, v)
-	}
-	fmt.Fprintf(buf, "To\n")
-	for i, v := range t {
-		fmt.Fprintf(buf, "%d: %v\n", i, v)
-	}
-	fmt.Fprintf(buf, "From\n")
-	for i, v := range f {
-		fmt.Fprintf(buf, "%d: %v\n", i, v)
-	}
+	// // var buf bytes.Buffer
+	// fmt.Fprintf(buf, "PROG\n%v", p)
+	// fmt.Fprintf(buf, "SORTED:\n")
+	// for i, v := range s {
+	// 	fmt.Fprintf(buf, "%d: %v\n", i, v)
+	// }
+	// fmt.Fprintf(buf, "To\n")
+	// for i, v := range t {
+	// 	fmt.Fprintf(buf, "%d: %v\n", i, v)
+	// }
+	// fmt.Fprintf(buf, "From\n")
+	// for i, v := range f {
+	// 	fmt.Fprintf(buf, "%d: %v\n", i, v)
+	// }
 	// log.Printf("%v", buf.String())
 
 	// prefill the queue
 	q := make([]int, 0, len(g.leaves)+len(g.constants))
+	q2 := make(chan int, len(g.leaves)+len(g.constants)+1)
 	for _, leaf := range g.leaves {
 		q = append(q, m[leaf])
+		q2 <- m[leaf]
 	}
 	for _, c := range g.constants {
 		q = append(q, m[c])
+		q2 <- m[c]
 	}
 
 	return &execState{
@@ -972,6 +906,7 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 		f:      f,
 		r:      reads,
 		w:      writes,
+		q2:     q2,
 		nodes:  len(sorted),
 
 		buf: buf,
@@ -980,10 +915,11 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 
 func (s *execState) finish(node *priorityNode) {
 	// log.Printf("FINISHED %x: %v", node.id, node)
-	s.Lock()
-	fmt.Fprintf(s.buf, "FINISHED %d: %v\n", node.index, node)
+	// s.Lock()
+	// fmt.Fprintf(s.buf, "FINISHED %d: %v\n", node.index, node)
+	// log.Printf("FINISHED %d: %v\n", node.index, node)
 	to := s.t[node.index]
-	s.Unlock()
+	// s.Unlock()
 
 	for _, i := range to {
 		n := &s.sorted[i]
@@ -1001,12 +937,10 @@ func (s *execState) finish(node *priorityNode) {
 			if !n.finished { // this line shouldn't be necessary
 				// log.Printf("\t %v added to queue", n)
 				s.q = append(s.q, n.index)
+				s.q2 <- n.index
 			}
 			s.Unlock()
 		}
-		// } else {
-		// 	log.Printf("\t%v | %d", n, toNodePriority)
-		// }
 	}
 	// var nodes, workers, q int
 	s.Lock()
@@ -1016,44 +950,41 @@ func (s *execState) finish(node *priorityNode) {
 	s.workers--
 	if s.nodes == 0 && s.workers == 0 && s.donecount == len(s.sorted) {
 		s.done = true
+		close(s.q2)
 	}
 	s.Unlock()
 }
 
 func (s *execState) next() (retVal *priorityNode) {
-	s.Lock()
-	if len(s.q) == 0 {
-		goto end
+	select {
+	case id := <-s.q2:
+		s.Lock()
+		s.workers++
+		s.Unlock()
+		return &s.sorted[id]
 	}
-	if len(s.q) > 1 {
-		sort.Slice(s.q, func(i, j int) bool { return s.sorted[s.q[i]].index > s.sorted[s.q[j]].index })
-	}
-	fmt.Fprintf(s.buf, "Next. State: %v\n", s.q)
-	retVal = &s.sorted[s.q[len(s.q)-1]]
-	s.q = s.q[:len(s.q)-1]
-	// for i := 0; i < len(s.q); i++ {
-	// 	n := s.q[i]
-	// 	if s.checkRegisterDependency(&s.sorted[n]) {
-	// 		s.q2 = append(s.q2, n)
-	// 		copy(s.q[i:], s.q[i+1:])
-	// 		s.q[len(s.q)-1] = 0
-	// 		s.q = s.q[:len(s.q)-1]
-	// 		i--
-	// 	}
+	return nil
+	// log.Printf("id %v", id)
+	// if s.sorted[id].finished {
+	// 	return nil
 	// }
-	// if len(s.q2) == 0 {
-	// 	goto end
+	// s.RLock()
+	// if len(s.q) == 0 {
+	// 	s.RUnlock()
+	// 	return
 	// }
-
-	// if len(s.q2) >= 2 {
-	// 	sort.Slice(s.q2, func(i, j int) bool { return s.sorted[s.q2[i]].index > s.sorted[s.q2[j]].index })
+	// s.RUnlock()
+	// s.Lock()
+	// if len(s.q) > 1 {
+	// 	sort.Slice(s.q, func(i, j int) bool { return s.sorted[s.q[i]].index > s.sorted[s.q[j]].index })
 	// }
-	// retVal = &s.sorted[s.q2[len(s.q2)-1]]
-	// s.q2 = s.q2[:len(s.q2)-1]
-	s.workers++
-end:
-	s.Unlock()
-	return retVal
+	// fmt.Fprintf(s.buf, "Next. State: %v\n", s.q)
+	// retVal = &s.sorted[s.q[len(s.q)-1]]
+	// s.q = s.q[:len(s.q)-1]
+	// s.workers++
+	// // end:
+	// s.Unlock()
+	// return retVal
 }
 
 func (s *execState) error() {
