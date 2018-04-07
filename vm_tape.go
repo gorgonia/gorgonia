@@ -234,7 +234,9 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	s := newExecState(m.p.g, m.p.sorted, m.p, m.buf)
 	var wg sync.WaitGroup
 	threads := runtime.NumCPU()
-	workers := make(chan struct{}, threads)
+	workers := make(chan struct{}, 1000)
+	workers <- struct{}{}
+	// log.Printf("New Exec State %v", s)
 	for t := 0; t < threads; t++ {
 		wg.Add(1)
 		go m.execute(s, workers, errChan, &wg, t)
@@ -250,14 +252,15 @@ func (m *tapeMachine) execute(s *execState, workers chan struct{}, errChan chan 
 
 execloop:
 	for {
-		// <-workers
+		<-workers
 		if s.check() {
+			workers <- struct{}{}
 			break execloop
 		}
 
 		pnode := s.next()
 		if pnode == nil {
-			// workers <- struct{}{}
+			workers <- struct{}{}
 			continue
 		}
 		instrs := m.p.m[pnode.Node]
@@ -271,12 +274,12 @@ execloop:
 				err = errors.Wrapf(err, "pnode %d: %v", pnode.index, pnode)
 				errChan <- err
 				s.error()
-				// workers <- struct{}{}
+				workers <- struct{}{}
 				break execloop
 			}
 		}
 		s.finish(pnode)
-		// workers <- struct{}{}
+		workers <- struct{}{}
 	}
 	wg.Done()
 }
