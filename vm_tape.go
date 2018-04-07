@@ -263,10 +263,9 @@ execloop:
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
 
-			m.Lock()
-			fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
-			m.Unlock()
-			// log.Printf("Executing %d %v\n", pnode.index, pnode)
+			// m.Lock()
+			// fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
+			// m.Unlock()
 
 			if err := m.executeOneInstr(instr); err != nil {
 				err = errors.Wrapf(err, "pnode %d: %v", pnode.index, pnode)
@@ -762,24 +761,24 @@ func (instr deviceTransport) String() string {
 
 type execState struct {
 	sync.RWMutex
-	sorted    []priorityNode
-	p         *program
-	m         map[*Node]int
-	q         []int // queue where all the dependents are ready
-	t         [][]int
-	f         [][]int
-	r         map[register][]int
-	w         map[register][]int
-	cpuWrites []int32
-	gpuWrites []int32
+	sorted []priorityNode
+	// p      *program
+	// m      map[*Node]int
+	// q []int // queue where all the dependents are ready
+	t [][]int
+	f [][]int
+	// r         map[register][]int
+	// w         map[register][]int
+	// cpuWrites []int32
+	// gpuWrites []int32
 
-	donecount  int
-	workers    int
-	nodes      int
-	done       bool
-	err        bool
-	q2         chan int
-	inprogress map[int]struct{}
+	// donecount  int
+	workers int
+	nodes   int
+	done    bool
+	err     bool
+	q2      chan int
+	// inprogress map[int]struct{}
 
 	buf *bytes.Buffer
 }
@@ -871,61 +870,57 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 	}
 
 	// // var buf bytes.Buffer
-	fmt.Fprintf(buf, "PROG\n%v", p)
-	fmt.Fprintf(buf, "SORTED:\n")
-	for i, v := range s {
-		fmt.Fprintf(buf, "\t%d: %v\n", i, v)
-	}
-	fmt.Fprintf(buf, "To\n")
-	for i, v := range t {
-		fmt.Fprintf(buf, "\t%d: %v\n", i, v)
-	}
-	fmt.Fprintf(buf, "From\n")
-	for i, v := range f {
-		fmt.Fprintf(buf, "\t%d: %v\n", i, v)
-	}
+	// fmt.Fprintf(buf, "PROG\n%v", p)
+	// fmt.Fprintf(buf, "SORTED:\n")
+	// for i, v := range s {
+	// 	fmt.Fprintf(buf, "\t%d: %v\n", i, v)
+	// }
+	// fmt.Fprintf(buf, "To\n")
+	// for i, v := range t {
+	// 	fmt.Fprintf(buf, "\t%d: %v\n", i, v)
+	// }
+	// fmt.Fprintf(buf, "From\n")
+	// for i, v := range f {
+	// 	fmt.Fprintf(buf, "\t%d: %v\n", i, v)
+	// }
 	// log.Printf("%v", buf.String())
 
 	// prefill the queue
-	inprogress := make(map[int]struct{})
-	q := make([]int, 0, len(g.leaves)+len(g.constants))
+
 	// q2 := make(chan int, len(g.leaves)+len(g.constants)+1)
 	q2 := make(chan int, len(s))
 	for _, leaf := range g.leaves {
-		q = append(q, m[leaf])
+		// q = append(q, m[leaf])
 		q2 <- m[leaf]
 		// inprogress[m[leaf]] = struct{}{}
 	}
 	for _, c := range g.constants {
-		q = append(q, m[c])
+		// q = append(q, m[c])
 		q2 <- m[c]
 		// inprogress[m[c]] = struct{}{}
 	}
 
 	return &execState{
 		sorted: s,
-		p:      p,
-		m:      m,
-		q:      q,
-		t:      t,
-		f:      f,
-		r:      reads,
-		w:      writes,
-		q2:     q2,
-		nodes:  len(sorted),
+		// p:      p,
+		// m:      m,
+		t: t,
+		f: f,
+		// r:      reads,
+		// w:      writes,
+		q2:    q2,
+		nodes: len(sorted),
 
-		buf:        buf,
-		inprogress: inprogress,
+		buf: buf,
 	}
 }
 
 func (s *execState) finish(node *priorityNode) {
-	// log.Printf("FINISHED %x: %v", node.id, node)
 	// s.Lock()
-	fmt.Fprintf(s.buf, "FINISHED %d\n", node.index)
+	// fmt.Fprintf(s.buf, "FINISHED %d\n", node.index)
 	// log.Printf("FINISHED %d: %v\n", node.index, node)
-	to := s.t[node.index]
 	// s.Unlock()
+	to := s.t[node.index]
 
 	for _, i := range to {
 		n := &s.sorted[i]
@@ -939,23 +934,22 @@ func (s *execState) finish(node *priorityNode) {
 
 		toNodePriority := atomic.AddInt32(&n.priority, reduction)
 		if toNodePriority == 0 {
-			s.Lock()
-			if !n.finished { // this line shouldn't be necessary
+			status := atomic.LoadInt32(&n.status)
+			if status == waiting { // this line shouldn't be necessary
 				// log.Printf("\t %v added to queue", n)
-				s.q = append(s.q, n.index)
+				// s.Lock()
+				// s.q = append(s.q, n.index)
 				s.q2 <- n.index
+				// s.Unlock()
 			}
-			s.Unlock()
 		}
 	}
 	// var nodes, workers, q int
+	atomic.StoreInt32(&node.status, executed)
 	s.Lock()
-	delete(s.inprogress, node.index)
-	node.finished = true
-	s.donecount++
 	s.nodes--
 	s.workers--
-	if s.nodes == 0 && s.workers == 0 && s.donecount == len(s.sorted) {
+	if s.nodes == 0 && s.workers == 0 {
 		s.done = true
 		close(s.q2)
 	}
@@ -964,16 +958,12 @@ func (s *execState) finish(node *priorityNode) {
 
 func (s *execState) next() (retVal *priorityNode) {
 	id := <-s.q2
-	s.RLock()
-	if _, ok := s.inprogress[id]; ok {
-		s.RUnlock()
+	if atomic.LoadInt32(&(s.sorted[id]).status) == executing {
 		return nil
 	}
-	s.RUnlock()
-
+	atomic.StoreInt32(&(s.sorted[id]).status, executing)
 	s.Lock()
 	s.workers++
-	s.inprogress[id] = struct{}{}
 	s.Unlock()
 	return &s.sorted[id]
 }
@@ -993,25 +983,13 @@ func (s *execState) check() bool {
 
 type priorityNode struct {
 	*Node
-	priority  int32
-	priority2 int32
-	index     int
-	finished  bool
-
-	reads  registerSet
-	writes registerSet
+	priority int32 // atomic only kthxbai
+	status   int32 // atomic only kthxbai
+	index    int
 }
 
-type registerSet map[register]struct{}
-
-func makeRegisterSet() registerSet { return make(map[register]struct{}) }
-
-func (s registerSet) Add(r register) registerSet {
-	s[r] = struct{}{}
-	return s
-}
-
-func (s registerSet) Contains(r register) bool {
-	_, ok := s[r]
-	return ok
-}
+const (
+	waiting   int32 = 0
+	executed  int32 = -1
+	executing int32 = 1
+)
