@@ -21,6 +21,7 @@ func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
 			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
 			}
+
 		} else {
 			// TODO: maybe warn?
 			if v, err = instr.op.Do(inputs...); err != nil {

@@ -7,6 +7,7 @@ import (
 	"hash"
 	"hash/fnv"
 	"log"
+	"sync"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
@@ -49,6 +50,8 @@ type Node struct {
 	unchanged     bool // has this node been modified
 	isStmt        bool // is this a statement node
 	ofInterest    bool // is this node of particular interest? (for debugging)
+
+	sync.Mutex
 }
 
 // NodeConsOpt is a function that provides construction options for any Node.

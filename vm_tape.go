@@ -22,8 +22,10 @@ type tapeMachine struct {
 	locMap map[*Node]register
 
 	// "register" banks
-	cpumem []Value // Value - knows its own type and shape
-	gpumem []Value // Value of which the memories are stored in GPU memory
+	cpumem   []Value // Value - knows its own type and shape
+	gpumem   []Value // Value of which the memories are stored in GPU memory
+	cpuLocks []sync.Mutex
+	gpuLocks []sync.Mutex
 
 	// state stuff, to allow continuation after failure handling
 	pc int
@@ -70,6 +72,8 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.locMap = locMap
 		m.cpumem = make([]Value, prog.cpulocs)
 		m.gpumem = make([]Value, prog.gpulocs)
+		m.cpuLocks = make([]sync.Mutex, prog.cpulocs)
+		m.gpuLocks = make([]sync.Mutex, prog.gpulocs)
 	}
 	m.init() // init ExternalMetadata
 	for _, n := range m.p.g.AllNodes() {
@@ -299,21 +303,31 @@ func (m *tapeMachine) executeOneInstr(instr tapeInstr) error {
 	return nil
 }
 
-func (m *tapeMachine) getValue(r register) Value {
+func (m *tapeMachine) getValue(r register) (retVal Value) {
 	switch r.device {
 	case CPU:
-		return m.cpumem[r.id]
+		m.cpuLocks[r.id].Lock()
+		retVal = m.cpumem[r.id]
+		m.cpuLocks[r.id].Unlock()
+		return retVal
 	default:
-		return m.gpumem[r.id]
+		m.gpuLocks[r.id].Lock()
+		retVal = m.gpumem[r.id]
+		m.gpuLocks[r.id].Unlock()
+		return retVal
 	}
 }
 
 func (m *tapeMachine) writeValue(r register, v Value) {
 	switch r.device {
 	case CPU:
+		m.cpuLocks[r.id].Lock()
 		m.cpumem[r.id] = v
+		m.cpuLocks[r.id].Unlock()
 	default:
+		m.gpuLocks[r.id].Lock()
 		m.gpumem[r.id] = v
+		m.gpuLocks[r.id].Unlock()
 	}
 }
 
@@ -831,6 +845,7 @@ func makeExecState(p *program) execState {
 		writes[k] = set.Ints(v)
 	}
 
+	// add edges for shared registers
 	for reg, wnids := range writes {
 		if reg.id == -1 {
 			continue
@@ -855,6 +870,22 @@ func makeExecState(p *program) execState {
 		t[i] = set.Ints(v)
 	}
 
+	// add edges for deriv
+	for i := range s {
+		pn := &s[i]
+		for _, deriv := range pn.derivOf {
+			derivID := m[deriv]
+			tos := t[derivID]
+			froms := f[i]
+			if contains(tos, i) == -1 {
+				t[derivID] = append(tos, i)
+				f[i] = append(froms, derivID)
+				pn.priority++
+				pn._p++
+			}
+		}
+	}
+
 	return execState{
 		sorted: s,
 		m:      m,
@@ -868,6 +899,23 @@ func (m *tapeMachine) initExecState() {
 	m.execState.q2 = nil                                     // gc previous
 	m.execState.q2 = make(chan int, len(m.execState.sorted)) // make new one
 	m.execState.buf = m.buf
+
+	// loggging for failure
+	fmt.Fprintf(m.buf, "%v\n", m.p)
+	fmt.Fprintf(m.buf, "Priorities: \n")
+	for i, s := range m.execState.sorted {
+		fmt.Fprintf(m.buf, "\t%d: %d\n", i, s._p)
+	}
+	fmt.Fprintf(m.buf, "To:\n")
+	for i, v := range m.execState.t {
+		fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
+	}
+	fmt.Fprintf(m.buf, "From:\n")
+	for i, v := range m.execState.f {
+		fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
+	}
+	log.Printf("%v", m.buf.String())
+
 	for _, leaf := range m.p.g.leaves {
 		m.execState.q2 <- m.execState.m[leaf]
 	}
