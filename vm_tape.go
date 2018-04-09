@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -23,13 +22,12 @@ type tapeMachine struct {
 	locMap map[*Node]register
 
 	// "register" banks
-	cpumem   []Value // Value - knows its own type and shape
-	gpumem   []Value // Value of which the memories are stored in GPU memory
-	cpulocks []sync.RWMutex
-	gpulocks []sync.RWMutex
+	cpumem []Value // Value - knows its own type and shape
+	gpumem []Value // Value of which the memories are stored in GPU memory
 
 	// state stuff, to allow continuation after failure handling
 	pc int
+	execState
 
 	// operational stuff
 	bindNodesDV Nodes // nodes that require binding of DV
@@ -42,7 +40,6 @@ type tapeMachine struct {
 	logFlags    byte
 
 	sync.Mutex
-
 	runFlags byte //  spare2: trace (copy values and put into nodes)
 }
 
@@ -73,13 +70,12 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.locMap = locMap
 		m.cpumem = make([]Value, prog.cpulocs)
 		m.gpumem = make([]Value, prog.gpulocs)
-		m.cpulocks = make([]sync.RWMutex, prog.cpulocs)
-		m.gpulocks = make([]sync.RWMutex, prog.gpulocs)
 	}
 	m.init() // init ExternalMetadata
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 	}
+	m.execState = makeExecState(m.p)
 
 	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
@@ -121,6 +117,7 @@ func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
+	m.resetExecState()
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions
@@ -228,55 +225,56 @@ func (m *tapeMachine) RunAll() (err error) {
 	return
 }
 
-var print11 bool
-
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	m.buf = new(bytes.Buffer)
-	s := newExecState(m.p.g, m.p.sorted, m.p, m.buf)
+	m.initExecState()
+
 	var wg sync.WaitGroup
 	threads := runtime.NumCPU()
 	workers := make(chan struct{}, threads)
+
 	for t := 0; t < threads; t++ {
+		workers <- struct{}{} // ensures that at any given time, there are actually THREADS available workers
 		wg.Add(1)
-		go m.execute(s, workers, errChan, &wg, t)
+		go m.execute(workers, errChan, &wg, t)
 	}
 	wg.Wait()
 	// log.Println(m.buf.String())
 	doneChan <- struct{}{}
 }
 
-func (m *tapeMachine) execute(s *execState, workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
+func (m *tapeMachine) execute(workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-
 execloop:
 	for {
-		// <-workers
-		if s.check() {
+		<-workers
+		if m.execState.check() {
+			workers <- struct{}{}
 			break execloop
 		}
 
-		pnode := s.next()
+		pnode := m.execState.next()
 		if pnode == nil {
-			// workers <- struct{}{}
+			workers <- struct{}{}
 			continue
 		}
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
-
-			fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
-			// log.Printf("Executing %d %v\n", pnode.index, pnode)
+			// m.Lock()
+			// fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
+			// m.Unlock()
 
 			if err := m.executeOneInstr(instr); err != nil {
 				err = errors.Wrapf(err, "pnode %d: %v", pnode.index, pnode)
 				errChan <- err
-				s.error()
-				// workers <- struct{}{}
+				m.execState.error()
+				workers <- struct{}{}
 				break execloop
 			}
 		}
-		s.finish(pnode)
-		// workers <- struct{}{}
+		m.execState.finish(pnode)
+		workers <- struct{}{}
 	}
 	wg.Done()
 }
@@ -287,35 +285,16 @@ func (m *tapeMachine) executeOneInstr(instr tapeInstr) error {
 	}
 
 	if m.watchNaN() {
-		writeTo := instr.writes().id
-		id := instr.ID()
-		if writeTo > 0 && id > 0 {
-			v := m.getValue(instr.writes())
-			if v == nil {
-				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchNaN")
-			}
-
-			if hasNaN(v) {
-				n := m.p.g.Node(id).(*Node)
-				return errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
-			}
+		if err := m.naughtyValues(instr, "NaN", hasNaN); err != nil {
+			return err
 		}
 	}
 
 	if m.watchInf() {
-		writeTo := instr.writes().id
-		id := instr.ID()
-		if writeTo > 0 && id > 0 {
-			v := m.getValue(instr.writes())
-			if v == nil {
-				return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watchInf")
-			}
-
-			if hasInf(v) {
-				n := m.p.g.Node(id).(*Node)
-				return errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
-			}
+		if err := m.naughtyValues(instr, "Inf", hasInf); err != nil {
+			return err
 		}
+
 	}
 	return nil
 }
@@ -336,6 +315,23 @@ func (m *tapeMachine) writeValue(r register, v Value) {
 	default:
 		m.gpumem[r.id] = v
 	}
+}
+
+func (m *tapeMachine) naughtyValues(instr tapeInstr, typ string, fn func(v Value) bool) error {
+	writeTo := instr.writes().id
+	id := instr.ID()
+	if writeTo > 0 && id > 0 {
+		v := m.getValue(instr.writes())
+		if v == nil {
+			return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watch"+typ)
+		}
+
+		if fn(v) {
+			n := m.p.g.Node(id).(*Node)
+			return errors.Errorf("%v found in value. Node: %v(%x)", typ, n, n.ID())
+		}
+	}
+	return nil
 }
 
 func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...interface{}) {
@@ -453,9 +449,7 @@ func (p *program) String() string {
 				fmt.Fprintf(&buf, "\t\t%v\n", instr)
 			}
 		}
-
 	}
-
 	return buf.String()
 }
 
@@ -626,7 +620,7 @@ func (instr loadArg) String() string {
 type execOp struct {
 	op Op
 
-	id int64
+	id int64 // node id
 
 	readFrom []register
 	writeTo  register
@@ -686,8 +680,6 @@ func (instr *execOp) String() string {
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
-	// m.logf("Executing DoWork")
-	// m.ExternMetadata.DoWork()
 	if m.WorkAvailable() == nil {
 		return nil
 	}
@@ -751,11 +743,9 @@ type deviceTransport struct {
 	from, to register
 }
 
-func (instr deviceTransport) ID() int64 { return -1 }
-func (instr deviceTransport) reads() []register {
-	return []register{instr.from}
-}
-func (instr deviceTransport) writes() register { return instr.to }
+func (instr deviceTransport) ID() int64         { return -1 }
+func (instr deviceTransport) reads() []register { return []register{instr.from} }
+func (instr deviceTransport) writes() register  { return instr.to }
 
 func (instr deviceTransport) String() string {
 	return fmt.Sprintf("memcpy(%v, %v)", instr.to, instr.from)
@@ -763,34 +753,29 @@ func (instr deviceTransport) String() string {
 
 type execState struct {
 	sync.RWMutex
-	sorted    []priorityNode
-	p         *program
-	m         map[*Node]int
-	q         []int // queue where all the dependents are ready
-	t         [][]int
-	f         [][]int
-	r         map[register][]int
-	w         map[register][]int
-	cpuWrites []int32
-	gpuWrites []int32
+	sorted []priorityNode
+	m      map[*Node]int
+	t      [][]int
+	f      [][]int
 
-	donecount int
-	workers   int
-	nodes     int
-	done      bool
-	err       bool
+	q2      chan int
+	workers int32 // atomic only kthxbai
+	nodes   int32 // atomic only kthxbai
+	done    bool
+	err     bool
 
 	buf *bytes.Buffer
 }
 
-func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *execState {
-	s := make([]priorityNode, len(sorted))
-	m := make(map[*Node]int, len(sorted))
+func makeExecState(p *program) execState {
+	s := make([]priorityNode, len(p.sorted))
+	m := make(map[*Node]int, len(p.sorted))
 	for i := range s {
-		n := sorted[i]
+		n := p.sorted[i]
 		s[i] = priorityNode{
 			Node:     n,
 			priority: int32(len(n.children)),
+			_p:       int32(len(n.children)),
 			index:    i,
 		}
 		m[n] = i
@@ -799,7 +784,7 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 	// "lift" tos and froms
 	t := make([][]int, len(s))
 	f := make([][]int, len(s))
-	for k, v := range g.to {
+	for k, v := range p.g.to {
 		id := m[k]
 		t[id] = make([]int, 0, len(v)+4) // 4 is spare
 		for _, n := range v {
@@ -845,75 +830,6 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 	for k, v := range writes {
 		writes[k] = set.Ints(v)
 	}
-	/*
-		for i := range s {
-			pn := &s[i]
-			n := pn.Node
-			instrs := p.m[n]
-			for _, instr := range instrs {
-				if _, ok := instr.(free); ok {
-					continue
-				}
-
-				for _, r := range instr.reads() {
-					rs := reads[r]
-					var atI int
-					for j := len(rs) - 1; j >= 0; j-- {
-						nid := rs[j]
-						if nid > i {
-							continue
-						}
-						if nid == i {
-							atI = j
-							continue
-						}
-
-						log.Printf("\tnid %v, i %d", nid, i)
-
-						for _, wid := range writes[r] {
-							var hasReadInstr bool
-							log.Printf("\t\t%v", s[wid].Node)
-							for _, in := range p.m[s[wid].Node] {
-								// log.Printf("\t\t\t%v", in)
-								if _, ok := in.(*readInstr); ok {
-									log.Printf("\t\tHAS READ")
-									hasReadInstr = true
-									break
-								}
-							}
-
-							// if the writing instruction is the same as the reading instruction, we need to actually add a dependency
-							if wid == i && (hasReadInstr || j == atI-1) {
-							// if wid == i {
-								log.Printf("\t\tadding %d | %d | %v %v", nid, i, hasReadInstr, atI)
-								pn.priority++
-								t[nid] = append(t[nid], i)
-								f[i] = append(f[i], nid)
-							}
-						}
-					}
-					// var j, nid int
-					// for j, nid = range reads[r] {
-					// 	if nid == i {
-					// 		break
-					// 	}
-					// }
-					// if j == 0 {
-					// 	break
-					// }
-					// nid = reads[r][j-1]
-					// if nid > i {
-					// break
-					// }
-
-					// log.Printf("r %v nid %d, adding %d | %v | %v", r, nid, i, reads[r], writes[r])
-					// check if the instruction is writing the register
-
-					// t[nid] = append(t[nid], i)
-				}
-			}
-		}
-	*/
 
 	for reg, wnids := range writes {
 		if reg.id == -1 {
@@ -928,6 +844,7 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 				}
 				// log.Printf("\t%d reads %v: %v | %v", nid, reg, rid, t[rid])
 				s[nid].priority++
+				s[nid]._p++
 				f[nid] = append(f[nid], rid)
 				t[rid] = append(t[rid], nid)
 			}
@@ -938,56 +855,46 @@ func newExecState(g *ExprGraph, sorted Nodes, p *program, buf *bytes.Buffer) *ex
 		t[i] = set.Ints(v)
 	}
 
-	// var buf bytes.Buffer
-	fmt.Fprintf(buf, "PROG\n%v", p)
-	fmt.Fprintf(buf, "SORTED:\n")
-	for i, v := range s {
-		fmt.Fprintf(buf, "%d: %v\n", i, v)
-	}
-	fmt.Fprintf(buf, "To\n")
-	for i, v := range t {
-		fmt.Fprintf(buf, "%d: %v\n", i, v)
-	}
-	fmt.Fprintf(buf, "From\n")
-	for i, v := range f {
-		fmt.Fprintf(buf, "%d: %v\n", i, v)
-	}
-	// log.Printf("%v", buf.String())
-
-	// prefill the queue
-	q := make([]int, 0, len(g.leaves)+len(g.constants))
-	for _, leaf := range g.leaves {
-		q = append(q, m[leaf])
-	}
-	for _, c := range g.constants {
-		q = append(q, m[c])
-	}
-
-	return &execState{
+	return execState{
 		sorted: s,
-		p:      p,
 		m:      m,
-		q:      q,
 		t:      t,
 		f:      f,
-		r:      reads,
-		w:      writes,
-		nodes:  len(sorted),
+		nodes:  int32(len(s)),
+	}
+}
 
-		buf: buf,
+func (m *tapeMachine) initExecState() {
+	m.execState.q2 = nil                                     // gc previous
+	m.execState.q2 = make(chan int, len(m.execState.sorted)) // make new one
+	m.execState.buf = m.buf
+	for _, leaf := range m.p.g.leaves {
+		m.execState.q2 <- m.execState.m[leaf]
+	}
+	for _, c := range m.p.g.constants {
+		m.execState.q2 <- m.execState.m[c]
+	}
+}
+
+func (m *tapeMachine) resetExecState() {
+	// s.q2 = nil
+	m.execState.workers = 0
+	m.execState.done = false
+	m.execState.err = false
+	m.execState.nodes = int32(len(m.execState.sorted))
+
+	for i := range m.execState.sorted {
+		m.execState.sorted[i].priority = m.execState.sorted[i]._p
+		m.execState.sorted[i].status = waiting
 	}
 }
 
 func (s *execState) finish(node *priorityNode) {
-	// log.Printf("FINISHED %x: %v", node.id, node)
-	s.Lock()
-	fmt.Fprintf(s.buf, "FINISHED %d: %v\n", node.index, node)
 	to := s.t[node.index]
-	s.Unlock()
-
 	for _, i := range to {
 		n := &s.sorted[i]
-		// this loop is necessary because to only records a single edge. There may be multiple edges to the same node
+		// this loop is necessary because to only records a single edge.
+		// There may be multiple edges to the same node
 		var reduction int32
 		for _, j := range s.f[i] {
 			if j == node.index {
@@ -997,63 +904,38 @@ func (s *execState) finish(node *priorityNode) {
 
 		toNodePriority := atomic.AddInt32(&n.priority, reduction)
 		if toNodePriority == 0 {
-			s.Lock()
-			if !n.finished { // this line shouldn't be necessary
-				// log.Printf("\t %v added to queue", n)
-				s.q = append(s.q, n.index)
+			// this check shouldn't be necessary
+			// but I have found that the analysis algorithm
+			// may lead to leaky nodes.
+			status := atomic.LoadInt32(&n.status)
+			if status == waiting {
+				s.q2 <- n.index
 			}
-			s.Unlock()
 		}
-		// } else {
-		// 	log.Printf("\t%v | %d", n, toNodePriority)
-		// }
 	}
-	// var nodes, workers, q int
-	s.Lock()
-	node.finished = true
-	s.donecount++
-	s.nodes--
-	s.workers--
-	if s.nodes == 0 && s.workers == 0 && s.donecount == len(s.sorted) {
+
+	// atomic work that things are done:
+	// status is set to executed
+	// workers and nodesleft decremented
+	atomic.StoreInt32(&node.status, executed)
+	workers := atomic.AddInt32(&s.workers, -1)
+	nodes := atomic.AddInt32(&s.nodes, -1)
+	if nodes == 0 && workers == 0 {
+		s.Lock()
 		s.done = true
+		close(s.q2)
+		s.Unlock()
 	}
-	s.Unlock()
 }
 
 func (s *execState) next() (retVal *priorityNode) {
-	s.Lock()
-	if len(s.q) == 0 {
-		goto end
+	id := <-s.q2
+	if atomic.LoadInt32(&(s.sorted[id]).status) == executing {
+		return nil
 	}
-	if len(s.q) > 1 {
-		sort.Slice(s.q, func(i, j int) bool { return s.sorted[s.q[i]].index > s.sorted[s.q[j]].index })
-	}
-	fmt.Fprintf(s.buf, "Next. State: %v\n", s.q)
-	retVal = &s.sorted[s.q[len(s.q)-1]]
-	s.q = s.q[:len(s.q)-1]
-	// for i := 0; i < len(s.q); i++ {
-	// 	n := s.q[i]
-	// 	if s.checkRegisterDependency(&s.sorted[n]) {
-	// 		s.q2 = append(s.q2, n)
-	// 		copy(s.q[i:], s.q[i+1:])
-	// 		s.q[len(s.q)-1] = 0
-	// 		s.q = s.q[:len(s.q)-1]
-	// 		i--
-	// 	}
-	// }
-	// if len(s.q2) == 0 {
-	// 	goto end
-	// }
-
-	// if len(s.q2) >= 2 {
-	// 	sort.Slice(s.q2, func(i, j int) bool { return s.sorted[s.q2[i]].index > s.sorted[s.q2[j]].index })
-	// }
-	// retVal = &s.sorted[s.q2[len(s.q2)-1]]
-	// s.q2 = s.q2[:len(s.q2)-1]
-	s.workers++
-end:
-	s.Unlock()
-	return retVal
+	atomic.StoreInt32(&(s.sorted[id]).status, executing)
+	atomic.AddInt32(&s.workers, 1)
+	return &s.sorted[id]
 }
 
 func (s *execState) error() {
@@ -1071,25 +953,14 @@ func (s *execState) check() bool {
 
 type priorityNode struct {
 	*Node
-	priority  int32
-	priority2 int32
-	index     int
-	finished  bool
-
-	reads  registerSet
-	writes registerSet
+	priority int32 // atomic only kthxbai
+	status   int32 // atomic only kthxbai
+	_p       int32 // original priority
+	index    int
 }
 
-type registerSet map[register]struct{}
-
-func makeRegisterSet() registerSet { return make(map[register]struct{}) }
-
-func (s registerSet) Add(r register) registerSet {
-	s[r] = struct{}{}
-	return s
-}
-
-func (s registerSet) Contains(r register) bool {
-	_, ok := s[r]
-	return ok
-}
+const (
+	waiting   int32 = 0
+	executed  int32 = -1
+	executing int32 = 1
+)

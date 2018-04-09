@@ -228,9 +228,9 @@ func newCharRNN(m *model) *charRNN {
 	return r
 }
 
-func (r *charRNN) learnables() (retVal Nodes) {
+func (r *charRNN) learnables() (retVal []ValueGrad) {
 	for _, l := range r.ls {
-		lin := Nodes{
+		lin := []ValueGrad{
 			l.wix,
 			l.wih,
 			l.bias_i,
