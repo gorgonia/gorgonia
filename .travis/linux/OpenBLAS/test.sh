@@ -5,6 +5,7 @@ go env
 go test -v -a -covermode=atomic -coverprofile=test.cover .
 go test -tags='avx' -a  .
 go test -tags='sse' -a  .
+go test -a -race .
 
 # because coveralls only accepts one coverage file at one time... we combine them into one gigantic one
 covers=(./test.cover)
