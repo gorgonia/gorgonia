@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -383,55 +382,59 @@ func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...
 	}
 }
 
-func (m *tapeMachine) logf(format string, attrs ...interface{}) {
-	switch {
-	case machineDev:
-		if m.logger != nil {
-			goto loggercase
-		}
+func (m *tapeMachine) logf(format string, attrs ...interface{}) {}
+func (m *tapeMachine) enterLogScope()                           {}
+func (m *tapeMachine) leaveLogScope()                           {}
 
-		machineLogf(format, attrs...)
-		break
+// func (m *tapeMachine) logf(format string, attrs ...interface{}) {
+// 	switch {
+// 	case machineDev:
+// 		if m.logger != nil {
+// 			goto loggercase
+// 		}
 
-	loggercase:
-		fallthrough
-	case m.logger != nil:
-		s := fmt.Sprintf(format, attrs...)
-		s = strings.Replace(s, "\n", m.buf.String(), -1)
-		m.logger.Println(s)
-	}
-}
+// 		machineLogf(format, attrs...)
+// 		break
 
-func (m *tapeMachine) enterLogScope() {
-	if DEBUG && machineDev {
-		enterLogScope()
-	}
-	m.tabcount++
-	if m.logger != nil {
-		reps := strings.Repeat("\t", m.tabcount)
-		m.logger.SetPrefix(reps)
-		m.buf.Reset()
-		m.buf.WriteString("\n")
-		m.buf.WriteString(reps)
-	}
-}
+// 	loggercase:
+// 		fallthrough
+// 	case m.logger != nil:
+// 		s := fmt.Sprintf(format, attrs...)
+// 		s = strings.Replace(s, "\n", m.buf.String(), -1)
+// 		m.logger.Println(s)
+// 	}
+// }
 
-func (m *tapeMachine) leaveLogScope() {
-	if DEBUG && machineDev {
-		leaveLogScope()
-	}
-	m.tabcount--
-	if m.tabcount < 0 {
-		m.tabcount = 0
-	}
-	if m.logger != nil {
-		reps := strings.Repeat("\t", m.tabcount)
-		m.logger.SetPrefix(reps)
-		m.buf.Reset()
-		m.buf.WriteString("\n")
-		m.buf.WriteString(reps)
-	}
-}
+// func (m *tapeMachine) enterLogScope() {
+// 	if DEBUG && machineDev {
+// 		enterLogScope()
+// 	}
+// 	m.tabcount++
+// 	if m.logger != nil {
+// 		reps := strings.Repeat("\t", m.tabcount)
+// 		m.logger.SetPrefix(reps)
+// 		m.buf.Reset()
+// 		m.buf.WriteString("\n")
+// 		m.buf.WriteString(reps)
+// 	}
+// }
+
+// func (m *tapeMachine) leaveLogScope() {
+// 	if DEBUG && machineDev {
+// 		leaveLogScope()
+// 	}
+// 	m.tabcount--
+// 	if m.tabcount < 0 {
+// 		m.tabcount = 0
+// 	}
+// 	if m.logger != nil {
+// 		reps := strings.Repeat("\t", m.tabcount)
+// 		m.logger.SetPrefix(reps)
+// 		m.buf.Reset()
+// 		m.buf.WriteString("\n")
+// 		m.buf.WriteString(reps)
+// 	}
+// }
 
 /* PROGRAM */
 
@@ -845,23 +848,47 @@ func makeExecState(p *program) execState {
 		writes[k] = set.Ints(v)
 	}
 
-	// add edges for shared registers
+	// extend the "tos" and "froms"
 	for reg, wnids := range writes {
 		if reg.id == -1 {
 			continue
 		}
-		// log.Printf("nodes that write %v | %v", reg, wnids)
 		for _, nid := range wnids {
 			rnids := reads[reg]
 			for _, rid := range rnids {
 				if rid >= nid {
 					continue
 				}
-				// log.Printf("\t%d reads %v: %v | %v", nid, reg, rid, t[rid])
-				s[nid].priority++
-				s[nid]._p++
 				f[nid] = append(f[nid], rid)
 				t[rid] = append(t[rid], nid)
+			}
+		}
+	}
+
+	// add edges for deriv
+	// for i := range s {
+	// 	pn := &s[i]
+	// 	for _, deriv := range pn.derivOf {
+	// 		derivID := m[deriv]
+	// 		tos := t[derivID]
+	// 		froms := f[i]
+	// 		t[derivID] = append(tos, i)
+	// 		f[i] = append(froms, derivID)
+
+	// 	}
+	// }
+
+	for i := range s {
+		n := &s[i]
+		for _, deriv := range n.derivOf {
+			id := m[deriv]
+			tos := t[id]
+			for _, tid := range tos {
+				if tid >= i {
+					continue
+				}
+				t[tid] = append(t[tid], i)
+				f[i] = append(f[i], tid)
 			}
 		}
 	}
@@ -869,21 +896,13 @@ func makeExecState(p *program) execState {
 	for i, v := range t {
 		t[i] = set.Ints(v)
 	}
+	for i, v := range f {
+		f[i] = set.Ints(v)
+	}
 
-	// add edges for deriv
 	for i := range s {
-		pn := &s[i]
-		for _, deriv := range pn.derivOf {
-			derivID := m[deriv]
-			tos := t[derivID]
-			froms := f[i]
-			if contains(tos, i) == -1 {
-				t[derivID] = append(tos, i)
-				f[i] = append(froms, derivID)
-				pn.priority++
-				pn._p++
-			}
-		}
+		s[i].priority = int32(len(f[i]))
+		s[i]._p = int32(len(f[i]))
 	}
 
 	return execState{
@@ -901,20 +920,20 @@ func (m *tapeMachine) initExecState() {
 	m.execState.buf = m.buf
 
 	// loggging for failure
-	fmt.Fprintf(m.buf, "%v\n", m.p)
-	fmt.Fprintf(m.buf, "Priorities: \n")
-	for i, s := range m.execState.sorted {
-		fmt.Fprintf(m.buf, "\t%d: %d\n", i, s._p)
-	}
-	fmt.Fprintf(m.buf, "To:\n")
-	for i, v := range m.execState.t {
-		fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
-	}
-	fmt.Fprintf(m.buf, "From:\n")
-	for i, v := range m.execState.f {
-		fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
-	}
-	log.Printf("%v", m.buf.String())
+	// fmt.Fprintf(m.buf, "%v\n", m.p)
+	// fmt.Fprintf(m.buf, "Priorities: \n")
+	// for i, s := range m.execState.sorted {
+	// 	fmt.Fprintf(m.buf, "\t%d: %d\n", i, s._p)
+	// }
+	// fmt.Fprintf(m.buf, "To:\n")
+	// for i, v := range m.execState.t {
+	// 	fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
+	// }
+	// fmt.Fprintf(m.buf, "From:\n")
+	// for i, v := range m.execState.f {
+	// 	fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
+	// }
+	// log.Printf("%v", m.buf.String())
 
 	for _, leaf := range m.p.g.leaves {
 		m.execState.q2 <- m.execState.m[leaf]
