@@ -866,17 +866,34 @@ func makeExecState(p *program) execState {
 	}
 
 	// add edges for deriv
-	// for i := range s {
-	// 	pn := &s[i]
-	// 	for _, deriv := range pn.derivOf {
-	// 		derivID := m[deriv]
-	// 		tos := t[derivID]
-	// 		froms := f[i]
-	// 		t[derivID] = append(tos, i)
-	// 		f[i] = append(froms, derivID)
+	for i := range s {
+		pn := &s[i]
+		for _, deriv := range pn.derivOf {
+			derivID := m[deriv]
+			tos := t[derivID]
+			froms := f[i]
+			t[derivID] = append(tos, i)
 
-	// 	}
-	// }
+			// SUBTLE ISSUE
+			// ============
+			// this is here instead of before t[deriveID] =
+			// because putting this here will break cycles
+			// but also creates a dependency, which will be enforced by t.
+			//
+			// To understand more, try moving the guard around,
+			// and run TestRMSProp.
+			//
+			// If this guard is removed, TestRMSProp will essentially hang
+			// because there is a cycle.
+			// If this guard is placed before t[derivID] =...
+			// then a data race will happen.
+			if derivID >= i {
+				continue
+			}
+			f[i] = append(froms, derivID)
+
+		}
+	}
 
 	for i := range s {
 		n := &s[i]
@@ -936,10 +953,20 @@ func (m *tapeMachine) initExecState() {
 	// log.Printf("%v", m.buf.String())
 
 	for _, leaf := range m.p.g.leaves {
-		m.execState.q2 <- m.execState.m[leaf]
+		id := m.execState.m[leaf]
+		if m.execState.sorted[id].priority > 0 {
+			// there are dependencies.. not "pure" leaves
+			continue
+		}
+		m.execState.q2 <- id
 	}
 	for _, c := range m.p.g.constants {
-		m.execState.q2 <- m.execState.m[c]
+		id := m.execState.m[c]
+		if m.execState.sorted[id].priority > 0 {
+			// there are dependencies.. not "pure" leaves
+			continue
+		}
+		m.execState.q2 <- id
 	}
 }
 
