@@ -1,3 +1,5 @@
+// +build !race
+
 package gorgonia_test
 
 import (

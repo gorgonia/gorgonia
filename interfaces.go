@@ -72,3 +72,9 @@ type hashWriter interface {
 type arityer interface {
 	Arity() int
 }
+
+type atomicValue interface {
+	Value
+	Lock()
+	Unlock()
+}

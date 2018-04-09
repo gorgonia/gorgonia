@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -22,8 +21,10 @@ type tapeMachine struct {
 	locMap map[*Node]register
 
 	// "register" banks
-	cpumem []Value // Value - knows its own type and shape
-	gpumem []Value // Value of which the memories are stored in GPU memory
+	cpumem   []Value // Value - knows its own type and shape
+	gpumem   []Value // Value of which the memories are stored in GPU memory
+	cpuLocks []sync.Mutex
+	gpuLocks []sync.Mutex
 
 	// state stuff, to allow continuation after failure handling
 	pc int
@@ -70,6 +71,8 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 		m.locMap = locMap
 		m.cpumem = make([]Value, prog.cpulocs)
 		m.gpumem = make([]Value, prog.gpulocs)
+		m.cpuLocks = make([]sync.Mutex, prog.cpulocs)
+		m.gpuLocks = make([]sync.Mutex, prog.gpulocs)
 	}
 	m.init() // init ExternalMetadata
 	for _, n := range m.p.g.AllNodes() {
@@ -299,21 +302,31 @@ func (m *tapeMachine) executeOneInstr(instr tapeInstr) error {
 	return nil
 }
 
-func (m *tapeMachine) getValue(r register) Value {
+func (m *tapeMachine) getValue(r register) (retVal Value) {
 	switch r.device {
 	case CPU:
-		return m.cpumem[r.id]
+		m.cpuLocks[r.id].Lock()
+		retVal = m.cpumem[r.id]
+		m.cpuLocks[r.id].Unlock()
+		return retVal
 	default:
-		return m.gpumem[r.id]
+		m.gpuLocks[r.id].Lock()
+		retVal = m.gpumem[r.id]
+		m.gpuLocks[r.id].Unlock()
+		return retVal
 	}
 }
 
 func (m *tapeMachine) writeValue(r register, v Value) {
 	switch r.device {
 	case CPU:
+		m.cpuLocks[r.id].Lock()
 		m.cpumem[r.id] = v
+		m.cpuLocks[r.id].Unlock()
 	default:
+		m.gpuLocks[r.id].Lock()
 		m.gpumem[r.id] = v
+		m.gpuLocks[r.id].Unlock()
 	}
 }
 
@@ -369,55 +382,59 @@ func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...
 	}
 }
 
-func (m *tapeMachine) logf(format string, attrs ...interface{}) {
-	switch {
-	case machineDev:
-		if m.logger != nil {
-			goto loggercase
-		}
+func (m *tapeMachine) logf(format string, attrs ...interface{}) {}
+func (m *tapeMachine) enterLogScope()                           {}
+func (m *tapeMachine) leaveLogScope()                           {}
 
-		machineLogf(format, attrs...)
-		break
+// func (m *tapeMachine) logf(format string, attrs ...interface{}) {
+// 	switch {
+// 	case machineDev:
+// 		if m.logger != nil {
+// 			goto loggercase
+// 		}
 
-	loggercase:
-		fallthrough
-	case m.logger != nil:
-		s := fmt.Sprintf(format, attrs...)
-		s = strings.Replace(s, "\n", m.buf.String(), -1)
-		m.logger.Println(s)
-	}
-}
+// 		machineLogf(format, attrs...)
+// 		break
 
-func (m *tapeMachine) enterLogScope() {
-	if DEBUG && machineDev {
-		enterLogScope()
-	}
-	m.tabcount++
-	if m.logger != nil {
-		reps := strings.Repeat("\t", m.tabcount)
-		m.logger.SetPrefix(reps)
-		m.buf.Reset()
-		m.buf.WriteString("\n")
-		m.buf.WriteString(reps)
-	}
-}
+// 	loggercase:
+// 		fallthrough
+// 	case m.logger != nil:
+// 		s := fmt.Sprintf(format, attrs...)
+// 		s = strings.Replace(s, "\n", m.buf.String(), -1)
+// 		m.logger.Println(s)
+// 	}
+// }
 
-func (m *tapeMachine) leaveLogScope() {
-	if DEBUG && machineDev {
-		leaveLogScope()
-	}
-	m.tabcount--
-	if m.tabcount < 0 {
-		m.tabcount = 0
-	}
-	if m.logger != nil {
-		reps := strings.Repeat("\t", m.tabcount)
-		m.logger.SetPrefix(reps)
-		m.buf.Reset()
-		m.buf.WriteString("\n")
-		m.buf.WriteString(reps)
-	}
-}
+// func (m *tapeMachine) enterLogScope() {
+// 	if DEBUG && machineDev {
+// 		enterLogScope()
+// 	}
+// 	m.tabcount++
+// 	if m.logger != nil {
+// 		reps := strings.Repeat("\t", m.tabcount)
+// 		m.logger.SetPrefix(reps)
+// 		m.buf.Reset()
+// 		m.buf.WriteString("\n")
+// 		m.buf.WriteString(reps)
+// 	}
+// }
+
+// func (m *tapeMachine) leaveLogScope() {
+// 	if DEBUG && machineDev {
+// 		leaveLogScope()
+// 	}
+// 	m.tabcount--
+// 	if m.tabcount < 0 {
+// 		m.tabcount = 0
+// 	}
+// 	if m.logger != nil {
+// 		reps := strings.Repeat("\t", m.tabcount)
+// 		m.logger.SetPrefix(reps)
+// 		m.buf.Reset()
+// 		m.buf.WriteString("\n")
+// 		m.buf.WriteString(reps)
+// 	}
+// }
 
 /* PROGRAM */
 
@@ -831,28 +848,78 @@ func makeExecState(p *program) execState {
 		writes[k] = set.Ints(v)
 	}
 
+	// extend the "tos" and "froms"
 	for reg, wnids := range writes {
 		if reg.id == -1 {
 			continue
 		}
-		// log.Printf("nodes that write %v | %v", reg, wnids)
 		for _, nid := range wnids {
 			rnids := reads[reg]
 			for _, rid := range rnids {
 				if rid >= nid {
 					continue
 				}
-				// log.Printf("\t%d reads %v: %v | %v", nid, reg, rid, t[rid])
-				s[nid].priority++
-				s[nid]._p++
 				f[nid] = append(f[nid], rid)
 				t[rid] = append(t[rid], nid)
 			}
 		}
 	}
 
+	// add edges for deriv
+	for i := range s {
+		pn := &s[i]
+		for _, deriv := range pn.derivOf {
+			derivID := m[deriv]
+			tos := t[derivID]
+			froms := f[i]
+			t[derivID] = append(tos, i)
+
+			// SUBTLE ISSUE
+			// ============
+			// this is here instead of before t[deriveID] =
+			// because putting this here will break cycles
+			// but also creates a dependency, which will be enforced by t.
+			//
+			// To understand more, try moving the guard around,
+			// and run TestRMSProp.
+			//
+			// If this guard is removed, TestRMSProp will essentially hang
+			// because there is a cycle.
+			// If this guard is placed before t[derivID] =...
+			// then a data race will happen.
+			if derivID >= i {
+				continue
+			}
+			f[i] = append(froms, derivID)
+
+		}
+	}
+
+	for i := range s {
+		n := &s[i]
+		for _, deriv := range n.derivOf {
+			id := m[deriv]
+			tos := t[id]
+			for _, tid := range tos {
+				if tid >= i {
+					continue
+				}
+				t[tid] = append(t[tid], i)
+				f[i] = append(f[i], tid)
+			}
+		}
+	}
+
 	for i, v := range t {
 		t[i] = set.Ints(v)
+	}
+	for i, v := range f {
+		f[i] = set.Ints(v)
+	}
+
+	for i := range s {
+		s[i].priority = int32(len(f[i]))
+		s[i]._p = int32(len(f[i]))
 	}
 
 	return execState{
@@ -868,11 +935,38 @@ func (m *tapeMachine) initExecState() {
 	m.execState.q2 = nil                                     // gc previous
 	m.execState.q2 = make(chan int, len(m.execState.sorted)) // make new one
 	m.execState.buf = m.buf
+
+	// loggging for failure
+	// fmt.Fprintf(m.buf, "%v\n", m.p)
+	// fmt.Fprintf(m.buf, "Priorities: \n")
+	// for i, s := range m.execState.sorted {
+	// 	fmt.Fprintf(m.buf, "\t%d: %d\n", i, s._p)
+	// }
+	// fmt.Fprintf(m.buf, "To:\n")
+	// for i, v := range m.execState.t {
+	// 	fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
+	// }
+	// fmt.Fprintf(m.buf, "From:\n")
+	// for i, v := range m.execState.f {
+	// 	fmt.Fprintf(m.buf, "\t%d: %v\n", i, v)
+	// }
+	// log.Printf("%v", m.buf.String())
+
 	for _, leaf := range m.p.g.leaves {
-		m.execState.q2 <- m.execState.m[leaf]
+		id := m.execState.m[leaf]
+		if m.execState.sorted[id].priority > 0 {
+			// there are dependencies.. not "pure" leaves
+			continue
+		}
+		m.execState.q2 <- id
 	}
 	for _, c := range m.p.g.constants {
-		m.execState.q2 <- m.execState.m[c]
+		id := m.execState.m[c]
+		if m.execState.sorted[id].priority > 0 {
+			// there are dependencies.. not "pure" leaves
+			continue
+		}
+		m.execState.q2 <- id
 	}
 }
 
