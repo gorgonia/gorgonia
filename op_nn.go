@@ -1324,6 +1324,7 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 
 	eps := float32(op.epsilon)
 	mom := float32(op.momentum)
+	// log.Printf("rm %v", rm)
 
 	// TODO: goroutinize this
 	for c := 0; c < channels; c++ {
