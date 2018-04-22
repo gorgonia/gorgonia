@@ -34,6 +34,7 @@ type tapeMachine struct {
 	bindNodesDV Nodes // nodes that require binding of DV
 	watchNodes  Nodes
 	watchRegs   []register
+	logCh       chan logTup
 	logger      *log.Logger
 	buf         *bytes.Buffer
 	valueFmt    string
@@ -196,8 +197,10 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 }
 
 func (m *tapeMachine) RunAll() (err error) {
+	m.Lock()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	defer m.Unlock()
 
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
@@ -228,9 +231,20 @@ func (m *tapeMachine) RunAll() (err error) {
 	return
 }
 
-func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
+func (m *tapeMachine) initRun() *sync.WaitGroup {
+	wg := new(sync.WaitGroup)
+	if m.logger != nil {
+		m.logCh = make(chan logTup, 1024) // make it non blocking
+		wg.Add(1)
+		go m.startLogging(wg)
+	}
 	m.buf = new(bytes.Buffer)
 	m.initExecState()
+	return wg
+}
+
+func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
+	initWG := m.initRun()
 
 	var wg sync.WaitGroup
 	threads := runtime.NumCPU()
@@ -244,6 +258,13 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	wg.Wait()
 	// log.Println(m.buf.String())
 	doneChan <- struct{}{}
+
+	// teardowns
+	if m.logCh != nil {
+		m.logf("DONE")
+		close(m.logCh)
+		initWG.Wait()
+	}
 }
 
 func (m *tapeMachine) execute(workers chan struct{}, errChan chan error, wg *sync.WaitGroup, id int) {
@@ -264,10 +285,7 @@ execloop:
 		}
 		instrs := m.p.m[pnode.Node]
 		for _, instr := range instrs {
-			// m.Lock()
-			// fmt.Fprintf(m.buf, "Executing %d : %v | %v\n", pnode.index, pnode, instr)
-			// m.Unlock()
-
+			m.logf("Executing %d : %v | %v\n", pnode.index, pnode, instr)
 			if err := m.executeOneInstr(instr); err != nil {
 				err = errors.Wrapf(err, "pnode %d: %v", pnode.index, pnode)
 				errChan <- err
@@ -382,9 +400,24 @@ func (m *tapeMachine) watchedInstrLogf(instr tapeInstr, format string, attrs ...
 	}
 }
 
-func (m *tapeMachine) logf(format string, attrs ...interface{}) {}
-func (m *tapeMachine) enterLogScope()                           {}
-func (m *tapeMachine) leaveLogScope()                           {}
+func (m *tapeMachine) startLogging(wg *sync.WaitGroup) {
+	for t := range m.logCh {
+		m.logger.Printf(t.format, t.attrs...)
+	}
+	wg.Done()
+}
+
+func (m *tapeMachine) logf(format string, attrs ...interface{}) {
+	if m.logger == nil {
+		return // NO OP
+	}
+	m.logCh <- logTup{
+		format: format,
+		attrs:  attrs,
+	}
+}
+func (m *tapeMachine) enterLogScope() {}
+func (m *tapeMachine) leaveLogScope() {}
 
 // func (m *tapeMachine) logf(format string, attrs ...interface{}) {
 // 	switch {
@@ -936,6 +969,8 @@ func (m *tapeMachine) initExecState() {
 	m.execState.q2 = make(chan int, len(m.execState.sorted)) // make new one
 	m.execState.buf = m.buf
 
+	// m.logf("%v\n", m.p)
+
 	// loggging for failure
 	// fmt.Fprintf(m.buf, "%v\n", m.p)
 	// fmt.Fprintf(m.buf, "Priorities: \n")
@@ -971,7 +1006,7 @@ func (m *tapeMachine) initExecState() {
 }
 
 func (m *tapeMachine) resetExecState() {
-	// s.q2 = nil
+	m.execState.q2 = nil
 	m.execState.workers = 0
 	m.execState.done = false
 	m.execState.err = false
@@ -1058,3 +1093,8 @@ const (
 	executed  int32 = -1
 	executing int32 = 1
 )
+
+type logTup struct {
+	format string
+	attrs  []interface{}
+}

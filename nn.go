@@ -256,42 +256,66 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 }
 
 func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
-	var gamma, beta, gammaGrad, betaGrad, means, vars, runningMean, runningVar *tensor.Dense
-	if auto {
-		// create these
-		dt, err := dtypeOf(x.Type())
-		if err != nil {
-			return nil, nil, err
-		}
-		gamma = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		beta = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		gammaGrad = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		betaGrad = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		means = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		vars = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		runningMean = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		runningVar = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
+	dt, err := dtypeOf(x.Type())
+	if err != nil {
+		return nil, nil, err
+	}
+	batches := x.Shape()[0]
+	channels := x.Shape()[1]
+	spatialDim := x.Shape().TotalSize() / (channels * batches)
 
-		beta.Zero()
-		means.Zero()
-		runningMean.Zero()
+	mean := &internalDV{
+		v: tensor.New(tensor.Of(dt), tensor.WithShape(channels)),
+		g: tensor.New(tensor.Of(dt), tensor.WithShape(channels), tensor.WithBacking(GlorotU(1)(dt, channels))), // random
+	}
+	variance := &internalDV{
+		v: tensor.New(tensor.Of(dt), tensor.WithShape(channels)),
+		g: tensor.New(tensor.Of(dt), tensor.WithShape(channels), tensor.WithBacking(GlorotU(1)(dt, channels))), // random
+	}
+	ma := &internalDV{
+		v: tensor.New(tensor.Of(dt), tensor.WithShape(1)),
+		g: tensor.New(tensor.Of(dt), tensor.WithShape(1), tensor.WithBacking(GlorotU(1)(dt, 1))), //scalar
+	}
+	mean_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	variance_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
+	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
+	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
+
+	var uno interface{}
+	switch dt {
+	case Float64:
+		uno = float64(1)
+	case Float32:
+		uno = float32(1)
+	}
+	spatialSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(spatialDim))
+	if err = spatialSumMultiplier.Memset(uno); err != nil {
+		return nil, nil, err
+	}
+
+	numByChans := tensor.New(tensor.Of(dt), tensor.WithShape(channels*batches))
+	if err = numByChans.Memset(uno); err != nil {
+		return nil, nil, err
 	}
 
 	op := &BatchNormOp{
 		momentum: momentum,
 		epsilon:  epsilon,
 
-		gamma:     gamma,
-		beta:      beta,
-		gammaGrad: gammaGrad,
-		betaGrad:  betaGrad,
+		mean:     mean,
+		variance: variance,
+		ma:       ma,
 
-		means: means,
-		vars:  vars,
+		mean_:                mean_,
+		variance_:            variance_,
+		tmp_:                 tmp,
+		xNorm:                xNorm,
+		batchSumMultiplier:   batchSumMultiplier,
+		numByChans:           numByChans,
+		spatialSumMultiplier: spatialSumMultiplier,
 
-		runningMean: runningMean,
-		runningVar:  runningVar,
-		training:    true,
+		training: true,
 	}
 
 	retVal, err := ApplyOp(op, x)
