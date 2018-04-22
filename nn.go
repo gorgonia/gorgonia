@@ -256,41 +256,13 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 }
 
 func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
-	var gamma, beta, gammaGrad, betaGrad, means, vars, runningMean, runningVar *tensor.Dense
 	if auto {
-		// create these
-		dt, err := dtypeOf(x.Type())
-		if err != nil {
-			return nil, nil, err
-		}
-		gamma = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		beta = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		gammaGrad = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		betaGrad = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		means = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		vars = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		runningMean = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
-		runningVar = tensor.New(tensor.WithShape(x.Shape()...), tensor.WithBacking(GlorotU(1.0)(dt, x.Shape()...)))
 
-		beta.Zero()
-		means.Zero()
-		runningMean.Zero()
 	}
 
 	op := &BatchNormOp{
 		momentum: momentum,
 		epsilon:  epsilon,
-
-		gamma:     gamma,
-		beta:      beta,
-		gammaGrad: gammaGrad,
-		betaGrad:  betaGrad,
-
-		means: means,
-		vars:  vars,
-
-		runningMean: runningMean,
-		runningVar:  runningVar,
 	}
 
 	retVal, err := ApplyOp(op, x)
