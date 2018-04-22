@@ -1305,7 +1305,7 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	n := input.Shape()[0]
 	channels := input.Shape()[1]
-	spatialDim := input.DataSize() / channels * n
+	spatialDim := input.Shape().TotalSize() / (channels * n)
 
 	inputF32s := input.Float32s()
 	outputF32s := output.Float32s()
@@ -1317,7 +1317,7 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	variance := op.variance.v.Float32s()
 	if !op.training {
 		// use stored mean/variance estimates
-		scaleFactor := float32(1)
+		scaleFactor := float32(1.0)
 		if fst := op.ma.v.Float32s()[0]; fst != 1 {
 			scaleFactor = fst
 		}
@@ -1329,7 +1329,7 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		// compute mean
 		M := channels * n
 		N := spatialDim
-		alpha := 1.0 / float32(n*spatialDim)
+		alpha := float32(1.0) / float32(n*spatialDim)
 		a := inputF32s
 		lda := N
 		x := op.spatialSumMultiplier.Float32s()
@@ -1341,13 +1341,12 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 
 		M = n
 		N = channels
-		alpha = 1
+		alpha = float32(1)
 		a = op.numByChans.Float32s()
 		lda = N
 		x = op.batchSumMultiplier.Float32s()
 		y = mean_
 		whichblas.Sgemv(blas.Trans, M, N, alpha, a, lda, x, incX, beta, y, incY)
-
 	}
 
 	// subtract mean
@@ -1383,8 +1382,8 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	vecf32.Sqrt(variance_)
 
 	// replicate variance to inputsize
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, op.batchSumMultiplier.Float32s(), channels, variance_, channels, 0, op.numByChans.Float32s(), channels)
-	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, channels*n, spatialDim, 1, 1, op.numByChans.Float32s(), spatialDim, op.spatialSumMultiplier.Float32s(), spatialDim, 0, op.tmp_.Float32s(), spatialDim)
+	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, op.batchSumMultiplier.Float32s(), 1, variance_, channels, 0, op.numByChans.Float32s(), channels)
+	whichblas.Sgemm(blas.NoTrans, blas.NoTrans, channels*n, spatialDim, 1, 1, op.numByChans.Float32s(), 1, op.spatialSumMultiplier.Float32s(), spatialDim, 0, op.tmp_.Float32s(), spatialDim)
 	vecf32.Div(outputF32s, op.tmp_.Float32s())
 	copy(op.xNorm.Float32s(), outputF32s) // caching
 
