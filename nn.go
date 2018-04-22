@@ -256,13 +256,64 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 }
 
 func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
-	if auto {
+	dt, err := dtypeOf(x.Type())
+	if err != nil {
+		return nil, nil, err
+	}
+	batches := x.Shape()[0]
+	channels := x.Shape()[1]
+	spatialDim := x.Shape().TotalSize() / (channels * batches)
 
+	mean := &internalDV{
+		v: tensor.New(tensor.Of(dt), tensor.WithShape(channels)),
+		g: tensor.New(tensor.Of(dt), tensor.WithShape(channels), tensor.WithBacking(GlorotU(1)(dt, channels))), // random
+	}
+	variance := &internalDV{
+		v: tensor.New(tensor.Of(dt), tensor.WithShape(channels)),
+		g: tensor.New(tensor.Of(dt), tensor.WithShape(channels), tensor.WithBacking(GlorotU(1)(dt, channels))), // random
+	}
+	ma := &internalDV{
+		v: tensor.New(tensor.Of(dt), tensor.WithShape(1)),
+		g: tensor.New(tensor.Of(dt), tensor.WithShape(1), tensor.WithBacking(GlorotU(1)(dt, 1))), //scalar
+	}
+	mean_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	variance_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
+	xNorm := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
+	batchSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(batches))
+
+	var uno interface{}
+	switch dt {
+	case Float64:
+		uno = float64(1)
+	case Float32:
+		uno = float32(1)
+	}
+	spatialSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(spatialDim))
+	if err = spatialSumMultiplier.Memset(uno); err != nil {
+		return nil, nil, err
+	}
+
+	numByChans := tensor.New(tensor.Of(dt), tensor.WithShape(channels*batches))
+	if err = numByChans.Memset(uno); err != nil {
+		return nil, nil, err
 	}
 
 	op := &BatchNormOp{
 		momentum: momentum,
 		epsilon:  epsilon,
+
+		mean:     mean,
+		variance: variance,
+		ma:       ma,
+
+		mean_:                mean_,
+		variance_:            variance_,
+		tmp_:                 tmp,
+		xNorm:                xNorm,
+		batchSumMultiplier:   batchSumMultiplier,
+		numByChans:           numByChans,
+		spatialSumMultiplier: spatialSumMultiplier,
 	}
 
 	retVal, err := ApplyOp(op, x)

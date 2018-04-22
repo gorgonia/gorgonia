@@ -1111,7 +1111,6 @@ func (dv *internalDV) Grad() (Value, error) {
 type BatchNormOp struct {
 	momentum float64 // momentum for the moving average
 	epsilon  float64 // small variance to be added to avoid dividing by 0
-	frac     float64 // fractions of moving average
 
 	// learnables
 	mean, variance, ma *internalDV
@@ -1217,7 +1216,7 @@ func (op *BatchNormOp) SetTesting()  { op.training = false }
 func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	n := input.Shape()[0]
 	channels := input.Shape()[1]
-	spatialDim := input.DataSize() / channels * n
+	spatialDim := input.Shape().TotalSize() / (channels * n)
 
 	inputF64s := input.Float64s()
 	outputF64s := output.Float64s()
@@ -1274,11 +1273,11 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 		whichblas.Dgemv(blas.Trans, n, channels, 1.0, op.numByChans.Float64s(), channels, op.batchSumMultiplier.Float64s(), 1, 0, variance_, 1) // E((X_EX)^2)
 
 		// compute and save moving average
-		op.ma.v.Float64s()[0] *= op.frac
+		op.ma.v.Float64s()[0] *= op.momentum
 		op.ma.v.Float64s()[0] += 1
 
 		// TODO: write axpby for gonum
-		whichblas.Dscal(len(mean), op.frac, mean, 1)
+		whichblas.Dscal(len(mean), op.momentum, mean, 1)
 		whichblas.Daxpy(len(mean_), 1.0, mean_, 1, mean, 1)
 
 		m := len(inputF64s) / channels
@@ -1286,7 +1285,7 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 		if m > 1 {
 			correctionFactor = float64(m) / (float64(m - 1))
 		}
-		whichblas.Dscal(len(variance), op.frac, variance, 1)
+		whichblas.Dscal(len(variance), op.momentum, variance, 1)
 		whichblas.Daxpy(len(variance_), correctionFactor, variance_, 1, variance, 1)
 	}
 
@@ -1295,8 +1294,8 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	vecf64.Sqrt(variance_)
 
 	// replicate variance to inputsize
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, op.batchSumMultiplier.Float64s(), channels, variance_, channels, 0, op.numByChans.Float64s(), channels)
-	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, channels*n, spatialDim, 1, 1, op.numByChans.Float64s(), spatialDim, op.spatialSumMultiplier.Float64s(), spatialDim, 0, op.tmp_.Float64s(), spatialDim)
+	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, n, channels, 1, 1, op.batchSumMultiplier.Float64s(), 1, variance_, channels, 0, op.numByChans.Float64s(), channels)
+	whichblas.Dgemm(blas.NoTrans, blas.NoTrans, channels*n, spatialDim, 1, 1, op.numByChans.Float64s(), 1, op.spatialSumMultiplier.Float64s(), spatialDim, 0, op.tmp_.Float64s(), spatialDim)
 	vecf64.Div(outputF64s, op.tmp_.Float64s())
 	copy(op.xNorm.Float64s(), outputF64s) // caching
 
@@ -1363,11 +1362,11 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		whichblas.Sgemv(blas.Trans, n, channels, 1.0, op.numByChans.Float32s(), channels, op.batchSumMultiplier.Float32s(), 1, 0, variance_, 1) // E((X_EX)^2)
 
 		// compute and save moving average
-		op.ma.v.Float32s()[0] *= float32(op.frac)
+		op.ma.v.Float32s()[0] *= float32(op.momentum)
 		op.ma.v.Float32s()[0] += 1
 
 		// TODO: write axpby for gonum
-		whichblas.Sscal(len(mean), float32(op.frac), mean, 1)
+		whichblas.Sscal(len(mean), float32(op.momentum), mean, 1)
 		whichblas.Saxpy(len(mean_), 1.0, mean_, 1, mean, 1)
 
 		m := len(inputF32s) / channels
@@ -1375,7 +1374,7 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		if m > 1 {
 			correctionFactor = float32(m) / (float32(m - 1))
 		}
-		whichblas.Sscal(len(variance), float32(op.frac), variance, 1)
+		whichblas.Sscal(len(variance), float32(op.momentum), variance, 1)
 		whichblas.Saxpy(len(variance_), correctionFactor, variance_, 1, variance, 1)
 	}
 
