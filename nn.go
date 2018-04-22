@@ -314,6 +314,8 @@ func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNorm
 		batchSumMultiplier:   batchSumMultiplier,
 		numByChans:           numByChans,
 		spatialSumMultiplier: spatialSumMultiplier,
+
+		training: true,
 	}
 
 	retVal, err := ApplyOp(op, x)

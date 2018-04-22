@@ -251,6 +251,7 @@ func TestBatchNorm(t *testing.T) {
 			}
 		}
 	}
+	t.Logf("%v", yVal)
 
 	sum /= float64(h * w * n)
 	variance /= float64(h * w * n)
