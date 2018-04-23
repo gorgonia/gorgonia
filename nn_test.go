@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
 
@@ -208,16 +209,58 @@ func TestDumb(t *testing.T) {
 
 func TestBatchNorm(t *testing.T) {
 	g := NewGraph()
-	x := NewTensor(g, Float64, 4, WithShape(2, 3, 4, 5))
+	x := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)))
 	y, _, err := BatchNorm(x, 0.9, 1e-5, true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, _ := Mean(y)
 
-	if _, err := Grad(c, x); err != nil {
+	var yVal Value
+	Read(y, &yVal)
+
+	cost, _ := Mean(y)
+
+	if _, err := Grad(cost, x); err != nil {
 		ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)
+	}
+
+	m := NewTapeMachine(g, BindDualValues(x))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	shape := x.Shape()
+	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
+
+	yVT := yVal.(*tensor.Dense)
+	var sum, variance float64
+	for j := 0; j < c; j++ {
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float64)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+	}
+	t.Logf("%v", yVal)
+
+	sum /= float64(h * w * n)
+	variance /= float64(h * w * n)
+
+	if !dawson.ToleranceF64(0, sum, 0.001) {
+		t.Errorf("Expected sum to be near 0. Got %v", sum)
+	}
+
+	if !dawson.ToleranceF64(1, variance, 0.001) {
+		t.Errorf("Expected variance to be near 1. Got %v", variance)
 	}
 
 }
