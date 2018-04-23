@@ -295,7 +295,7 @@ func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNorm
 	}
 
 	numByChans := tensor.New(tensor.Of(dt), tensor.WithShape(channels*batches))
-	if err = numByChans.Memset(uno); err != nil {
+	if err = batchSumMultiplier.Memset(uno); err != nil {
 		return nil, nil, err
 	}
 

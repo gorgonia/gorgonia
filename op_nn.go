@@ -1269,6 +1269,7 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 		// compute variance using var(X) = E(X-EX)^2)
 		copy(op.tmp_.Float64s(), outputF64s)
 		vecf64.Mul(op.tmp_.Float64s(), op.tmp_.Float64s()) // (X-EX) ^ 2
+
 		whichblas.Dgemv(blas.NoTrans, channels*n, spatialDim, 1.0/(float64(n*spatialDim)), op.tmp_.Float64s(), spatialDim, op.spatialSumMultiplier.Float64s(), 1, 0, op.numByChans.Float64s(), 1)
 		whichblas.Dgemv(blas.Trans, n, channels, 1.0, op.numByChans.Float64s(), channels, op.batchSumMultiplier.Float64s(), 1, 0, variance_, 1) // E((X_EX)^2)
 
