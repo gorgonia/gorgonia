@@ -16,7 +16,6 @@ type Nodes []*Node
 func (ns Nodes) Len() int { return len(ns) }
 func (ns Nodes) Less(i, j int) bool {
 	return uintptr(unsafe.Pointer(ns[i])) < uintptr(unsafe.Pointer(ns[j]))
-	// return ns[i].Hashcode() < ns[j].Hashcode()
 }
 func (ns Nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
 
