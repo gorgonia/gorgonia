@@ -208,10 +208,10 @@ func TestDumb(t *testing.T) {
 }
 */
 
-func TestBatchNorm(t *testing.T) {
+func TestBatchNorm_F64(t *testing.T) {
 	g := NewGraph()
 	x := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)))
-	y, _, err := BatchNorm(x, 0.9, 1e-5, true)
+	y, op, err := BatchNorm(x, 0.9, 1e-5, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,8 +235,8 @@ func TestBatchNorm(t *testing.T) {
 	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
 
 	yVT := yVal.(*tensor.Dense)
-	var sum, variance float64
 	for j := 0; j < c; j++ {
+		var sum, variance float64
 		for i := 0; i < n; i++ {
 			for k := 0; k < h; k++ {
 				for l := 0; l < w; l++ {
@@ -250,18 +250,138 @@ func TestBatchNorm(t *testing.T) {
 				}
 			}
 		}
+		sum /= float64(h * w * n)
+		variance /= float64(h * w * n)
+
+		if !dawson.ToleranceF64(sum, 0, 0.001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF64(variance, 1, 0.001) {
+			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
+		}
 	}
-	t.Logf("%v", yVal)
 
-	sum /= float64(h * w * n)
-	variance /= float64(h * w * n)
+	op.SetTesting()
+	m = NewTapeMachine(g, BindDualValues(x))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	yVT = yVal.(*tensor.Dense)
+	for j := 0; j < c; j++ {
+		var sum, variance float64
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float64)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+		sum /= float64(h * w * n)
+		variance /= float64(h * w * n)
 
-	if !dawson.ToleranceF64(0, sum, 0.001) {
-		t.Errorf("Expected sum to be near 0. Got %v", sum)
+		if !dawson.ToleranceF64(sum, 0, 0.001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF64(variance, 0.9833, 0.001) {
+			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
+		}
 	}
 
-	if !dawson.ToleranceF64(1, variance, 0.001) {
-		t.Errorf("Expected variance to be near 1. Got %v", variance)
+}
+
+func TestBatchNorm_F32(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)))
+	y, op, err := BatchNorm(x, 0.9, 1e-5, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var yVal Value
+	Read(y, &yVal)
+
+	cost, _ := Mean(y)
+
+	if _, err := Grad(cost, x); err != nil {
+		ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
+		t.Fatal(err)
+	}
+
+	m := NewTapeMachine(g, BindDualValues(x))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+
+	shape := x.Shape()
+	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
+
+	yVT := yVal.(*tensor.Dense)
+	for j := 0; j < c; j++ {
+		var sum, variance float32
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float32)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+		sum /= float32(h * w * n)
+		variance /= float32(h * w * n)
+
+		if !dawson.ToleranceF32(sum, 0, 0.001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF32(variance, 1, 0.001) {
+			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
+		}
+	}
+
+	op.SetTesting()
+	m = NewTapeMachine(g, BindDualValues(x))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	yVT = yVal.(*tensor.Dense)
+	for j := 0; j < c; j++ {
+		var sum, variance float32
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float32)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+		sum /= float32(h * w * n)
+		variance /= float32(h * w * n)
+
+		if !dawson.ToleranceF32(sum, 0, 0.001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF32(variance, 0.9833, 0.001) {
+			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
+		}
 	}
 
 }
