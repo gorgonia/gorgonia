@@ -19,6 +19,8 @@ var (
 	_ Op   = col2imOp{}
 	_ Op   = &maxPoolOp{}
 	_ Op   = &maxPoolDiffOp{}
+	_ Op   = &BatchNormOp{}
+	_ Op   = &batchnormDiffOp{}
 )
 
 /*
@@ -758,10 +760,7 @@ func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 
 // calcShape calculates the output shape given an input shape
 func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
-	b := s[0]
-	c := s[1]
-	h := s[2]
-	w := s[3]
+	b, c, h, w := s[0], s[1], s[2], s[3]
 
 	pooledH := ceilDivInt((h + 2*op.padH - op.h), op.strideH)
 	pooledW := ceilDivInt((w + 2*op.padW - op.w), op.strideW)
@@ -777,13 +776,8 @@ func (op *maxPoolOp) do(out, in tensor.Tensor) {
 	inStride := in.Strides()[1]
 	maskStride := op.mask.Strides()[1]
 
-	batches := outShape[0]
-	channels := outShape[1]
-	outH := outShape[2]
-	outW := outShape[3]
-
-	inH := inShape[2]
-	inW := inShape[3]
+	b, c, h, w := outShape[0], outShape[1], outShape[2], outShape[3]
+	inH, inW := inShape[2], inShape[3]
 
 	if op.mask == nil {
 		op.mask = tensor.New(tensor.Of(tensor.Int), tensor.WithShape(op.calcShape(inShape)...))
@@ -793,12 +787,12 @@ func (op *maxPoolOp) do(out, in tensor.Tensor) {
 
 	switch in.Dtype() {
 	case tensor.Float64:
-		op.f64s(batches, channels, outH, outW, inH, inW,
+		op.f64s(b, c, h, w, inH, inW,
 			outStride, inStride, maskStride,
 			out.Data().([]float64), in.Data().([]float64),
 			maskData)
 	case tensor.Float32:
-		op.f32s(batches, channels, outH, outW, inH, inW,
+		op.f32s(b, c, h, w, inH, inW,
 			outStride, inStride, maskStride,
 			out.Data().([]float32), in.Data().([]float32),
 			maskData)
@@ -979,25 +973,20 @@ func (op *maxPoolDiffOp) do(inGrad, in, pooled, pooledGrad tensor.Tensor) {
 	pooledStride := pooled.Strides()[1]
 	inStride := in.Strides()[1]
 	maskStride := op.mask.Strides()[1]
-
-	batches := pooledShape[0]
-	channels := pooledShape[1]
-	height := pooledShape[2]
-	width := pooledShape[3]
-
 	maskData := op.mask.Data().([]int)
 
+	b, c, h, w := pooledShape[0], pooledShape[1], pooledShape[2], pooledShape[3]
 	switch in.Dtype() {
 	case tensor.Float32:
 		inGradData := inGrad.Data().([]float32)
 		pooledGradData := pooledGrad.Data().([]float32)
-		op.f32s(batches, channels, height, width,
+		op.f32s(b, c, h, w,
 			inStride, pooledStride, maskStride,
 			inGradData, pooledGradData, maskData)
 	case tensor.Float64:
 		inGradData := inGrad.Data().([]float64)
 		pooledGradData := pooledGrad.Data().([]float64)
-		op.f64s(batches, channels, height, width,
+		op.f64s(b, c, h, w,
 			inStride, pooledStride, maskStride,
 			inGradData, pooledGradData, maskData)
 	}
@@ -1089,19 +1078,6 @@ func (op *clampOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "ConstClamp{%f, %f}()
 func (op *clampOp) Hashcode() uint32 { return simpleHash(op) }
 func (op *clampOp) String() string   { return fmt.Sprintf("ConstClamp{%f, %f}()", op.min, op.max) }
 
-type internalDV struct {
-	v *tensor.Dense
-	g *tensor.Dense
-}
-
-func (dv *internalDV) Value() Value { return dv.v }
-func (dv *internalDV) Grad() (Value, error) {
-	if dv.g == nil {
-		return nil, errors.Errorf("NO GRAD")
-	}
-	return dv.g, nil
-}
-
 // BatchNormOp is a batch normalization process as described by Ioffe and Szegedy (2015) -
 // http://arxiv.org/abs/1502.03167
 //
@@ -1113,7 +1089,7 @@ type BatchNormOp struct {
 	epsilon  float64 // small variance to be added to avoid dividing by 0
 
 	// learnables
-	mean, variance, ma *internalDV
+	mean, variance, ma *tensor.Dense
 
 	// scratch space
 	mean_, variance_, tmp_, xNorm                        *tensor.Dense
@@ -1224,9 +1200,9 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	copy(outputF64s, inputF64s)
 
 	mean_ := op.mean_.Float64s()
-	mean := op.mean.v.Float64s()
+	mean := op.mean.Float64s()
 	variance_ := op.variance_.Float64s()
-	variance := op.variance.v.Float64s()
+	variance := op.variance.Float64s()
 	tmp := op.tmp_.Float64s()
 	ssm := op.spatialSumMultiplier.Float64s()
 	nbc := op.numByChans.Float64s()
@@ -1238,7 +1214,7 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	if !op.training {
 		// use stored mean/variance estimates
 		scaleFactor := float64(1)
-		if fst := op.ma.v.Float64s()[0]; fst != 1 {
+		if fst := op.ma.Float64s()[0]; fst != 1 {
 			scaleFactor = fst
 		}
 		copy(mean_, mean)
@@ -1265,8 +1241,8 @@ func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 		whichblas.Dgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, variance_, 1) // E((X_EX)^2)
 
 		// compute and save moving average
-		op.ma.v.Float64s()[0] *= momentum
-		op.ma.v.Float64s()[0] += 1
+		op.ma.Float64s()[0] *= momentum
+		op.ma.Float64s()[0] += 1
 
 		// TODO: write axpby for gonum
 		whichblas.Dscal(len(mean), momentum, mean, 1)
@@ -1305,9 +1281,9 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	copy(outputF32s, inputF32s)
 
 	mean_ := op.mean_.Float32s()
-	mean := op.mean.v.Float32s()
+	mean := op.mean.Float32s()
 	variance_ := op.variance_.Float32s()
-	variance := op.variance.v.Float32s()
+	variance := op.variance.Float32s()
 	tmp := op.tmp_.Float32s()
 	ssm := op.spatialSumMultiplier.Float32s()
 	nbc := op.numByChans.Float32s()
@@ -1319,7 +1295,7 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 	if !op.training {
 		// use stored mean/variance estimates
 		scaleFactor := float32(1)
-		if fst := op.ma.v.Float32s()[0]; fst != 1 {
+		if fst := op.ma.Float32s()[0]; fst != 1 {
 			scaleFactor = fst
 		}
 		copy(mean_, mean)
@@ -1346,8 +1322,8 @@ func (op *BatchNormOp) f32s(input, output *tensor.Dense) (err error) {
 		whichblas.Sgemv(blas.Trans, n, channels, 1.0, nbc, channels, bsm, 1, 0, variance_, 1) // E((X_EX)^2)
 
 		// compute and save moving average
-		op.ma.v.Float32s()[0] *= momentum
-		op.ma.v.Float32s()[0] += 1
+		op.ma.Float32s()[0] *= momentum
+		op.ma.Float32s()[0] += 1
 
 		// TODO: write axpby for gonum
 		whichblas.Sscal(len(mean), momentum, mean, 1)

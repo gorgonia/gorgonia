@@ -264,18 +264,10 @@ func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNorm
 	channels := x.Shape()[1]
 	spatialDim := x.Shape().TotalSize() / (channels * batches)
 
-	mean := &internalDV{
-		v: tensor.New(tensor.Of(dt), tensor.WithShape(channels)),
-		g: tensor.New(tensor.Of(dt), tensor.WithShape(channels), tensor.WithBacking(GlorotU(1)(dt, channels))), // random
-	}
-	variance := &internalDV{
-		v: tensor.New(tensor.Of(dt), tensor.WithShape(channels)),
-		g: tensor.New(tensor.Of(dt), tensor.WithShape(channels), tensor.WithBacking(GlorotU(1)(dt, channels))), // random
-	}
-	ma := &internalDV{
-		v: tensor.New(tensor.Of(dt), tensor.WithShape(1)),
-		g: tensor.New(tensor.Of(dt), tensor.WithShape(1), tensor.WithBacking(GlorotU(1)(dt, 1))), //scalar
-	}
+	mean := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	variance := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
+	ma := tensor.New(tensor.Of(dt), tensor.WithShape(1))
+
 	mean_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	variance_ := tensor.New(tensor.Of(dt), tensor.WithShape(channels))
 	tmp := tensor.New(tensor.Of(dt), tensor.WithShape(x.Shape().Clone()...))
