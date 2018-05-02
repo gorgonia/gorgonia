@@ -270,7 +270,7 @@ func (g *ExprGraph) UnbindAll() {
 // UnbindAllNonInputs unbinds all the values from nodes that aren't input nodes
 func (g *ExprGraph) UnbindAllNonInputs() {
 	for _, n := range g.all {
-		if n.isInput() {
+		if n.isInput() || n.isConstant() {
 			continue
 		}
 		n.unbind()
