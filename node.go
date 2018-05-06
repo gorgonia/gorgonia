@@ -380,8 +380,32 @@ func (n *Node) Dims() int {
 // Type returns the type of the node
 func (n *Node) Type() hm.Type { return n.t }
 
+// Dtype returns the dtype of the node
+func (n *Node) Dtype() tensor.Dtype {
+	dt, err := dtypeOf(n.t)
+	if err != nil {
+		panic(err)
+	}
+	return dt
+}
+
 // Shape returns the shape of the node
 func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
+
+// Strides returns the strides of the value of the node
+func (n *Node) Strides() []int {
+	if n.boundTo != nil {
+		switch v := n.boundTo.(type) {
+		case *dualValue:
+			return v.Value.(tensor.Tensor).Strides()
+		case tensor.Tensor:
+			return v.Strides()
+		default:
+			log.Printf("Unhandled type for Strides(): %T. Using fallback method and assuming dense tensor types", n.boundTo)
+		}
+	}
+	return n.shape.CalcStrides()
+}
 
 // Device returns the device the data will be on
 func (n *Node) Device() Device { return n.dataOn }

@@ -160,7 +160,7 @@ type im2colOp struct {
 	dilationH, dilationW int
 }
 
-func makeIm2ColOp(kernelHeight, kernelWidth, padHeight, padWidth, strideHeight, strideWidth int) im2colOp {
+func makeIm2ColOp(kernelHeight, kernelWidth, padHeight, padWidth, strideHeight, strideWidth, dilationHeight, dilationWidth int) im2colOp {
 	return im2colOp{
 		h:         kernelHeight,
 		w:         kernelWidth,
@@ -168,8 +168,8 @@ func makeIm2ColOp(kernelHeight, kernelWidth, padHeight, padWidth, strideHeight, 
 		padW:      padWidth,
 		strideH:   strideHeight,
 		strideW:   strideWidth,
-		dilationH: 1,
-		dilationW: 1,
+		dilationH: dilationHeight,
+		dilationW: dilationWidth,
 	}
 }
 
