@@ -612,7 +612,7 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 			return nil, errors.Errorf("BatchedMatMul only works with 3D tensors as y")
 		}
 		if x[0] != y[0] {
-			return nil, errors.Errorf("BatchedMatMul has encounted a batch mismatch: %v %v", x, y)
+			return nil, errors.Errorf("BatchedMatMul has encountered a batch mismatch: %v %v", x, y)
 		}
 		batchSize := x[0]
 		if op.transA {

@@ -469,7 +469,7 @@ func (m *ExternMetadata) cleanup() {
 		}
 	}
 
-	// destory contexts
+	// destroy contexts
 	for i := range m.c {
 		m.c[i] = nil // tell gc to collect. ctx.finalizeCtx will run
 	}
