@@ -71,7 +71,7 @@ func main() {
 	for d := 0; d < devices; d++ {
 		var dev cu.Device
 		if dev, err = cu.GetDevice(d); err != nil {
-			log.Fatalf("Unable to get GPU%d - %+v", err)
+			log.Fatalf("Unable to get GPU%d - %+v", d, err)
 		}
 
 		maj, min, err := dev.ComputeCapability()

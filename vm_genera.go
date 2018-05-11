@@ -172,8 +172,6 @@ func (m *lispMachine) RunAll() (err error) {
 			return nil
 		}
 	}
-
-	return nil
 }
 
 // UnbindAll detaches the values from the node, allowing for them to be cleaned up the next GC cycle.

@@ -124,7 +124,6 @@ func makeValue(t hm.Type, s tensor.Shape) (retVal Value, err error) {
 		err = errors.Errorf(nyiTypeFail, "MakeValue", tt)
 		return
 	}
-	panic("Unreachable")
 }
 
 func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Value, err error) {
@@ -146,7 +145,6 @@ func makeValueFromMem(t hm.Type, s tensor.Shape, mem tensor.Memory) (retVal Valu
 		err = errors.Errorf(nyiTypeFail, "MakeValue", tt)
 		return
 	}
-	panic("Unreachable")
 }
 
 func makeScalarFromMem(dt tensor.Dtype, mem tensor.Memory) (retVal Value, err error) {

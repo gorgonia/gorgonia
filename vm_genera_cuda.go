@@ -75,7 +75,7 @@ func (m *lispMachine) calcMemSize() (err error) {
 			if n.isStmt {
 				continue
 			}
-			return errors.Wrapf(err, "Cannot calulate memsize of n(%v)", n)
+			return errors.Wrapf(err, "Cannot calculate memsize of n(%v)", n)
 		}
 		switch {
 		case n.isArg():
