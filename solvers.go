@@ -1160,13 +1160,19 @@ func (s *BarzilaiBorweinSolver) Step(model Nodes) error {
 					contractionAxes[axis] = axis
 				}
 
-				valGradDiffscalarProd, _ := tensor.Contract(valueDiff, gradDiff, contractionAxes, contractionAxes)
+				valGradDiffscalarProd, err := tensor.Contract(valueDiff, gradDiff, contractionAxes, contractionAxes)
+				if err != nil {
+					return errors.New("operationError")
+				}
 				defer returnTensor(valGradDiffscalarProd)
 
 				nominator += valGradDiffscalarProd.Data().(float64)
 
 				// ||(Grad(F)(x_i) - Grad(F)(x_{i-1}))||^2
-				gradDiffscalarProd, _ := tensor.Contract(gradDiff, gradDiff, contractionAxes, contractionAxes)
+				gradDiffscalarProd, err := tensor.Contract(gradDiff, gradDiff, contractionAxes, contractionAxes)
+				if err != nil {
+					return errors.New("operationError")
+				}
 				defer returnTensor(gradDiffscalarProd)
 
 				denominator += gradDiffscalarProd.Data().(float64)
