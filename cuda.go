@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/cu/dnn"
 	"gorgonia.org/tensor"
 )
 
@@ -62,6 +63,7 @@ type ExternMetadata struct {
 	b             batchedBLAS          // blas
 	c             []*cu.BatchedContext // context
 	d             []cu.Device          // device
+	n             []cudnn.Context
 	hasWork       []bool
 	workAvailable chan bool
 	syncChan      chan struct{}
