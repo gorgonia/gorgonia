@@ -225,7 +225,6 @@ func (m *tapeMachine) RunAll() (err error) {
 			return nil
 		}
 	}
-	return
 }
 
 func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {

@@ -418,7 +418,7 @@ func (b *bfc) coalesce() {
 				b.freelist.l--
 			case block.overlaps(next):
 				// unhandled yet
-				panic("Unhandled: overlaping coalesceing")
+				panic("Unhandled: overlapping coalesceing")
 			default:
 				break inner
 			}

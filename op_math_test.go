@@ -453,7 +453,7 @@ func TestBasicArithmetic(t *testing.T) {
 		as.Equal(bot.correctDerivA.Data(), xG.Data(), "Test %v xgrad", i)
 		as.Equal(bot.correctDerivB.Data(), yG.Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, yG)
 		if !as.cont {
-			t.Errorf("an error occured")
+			t.Errorf("an error occurred")
 		}
 
 		if assertGraphEngine(t, g, stdengType); t.Failed() {
