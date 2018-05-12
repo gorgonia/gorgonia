@@ -16,7 +16,7 @@ import (
 
 const CUDA = true
 
-var _ tensor.Engine = &ExternMetadata{}
+var _ External = &ExternMetadata{}
 
 const (
 	// Any address of a variable residing in global memory or returned by one of the
@@ -38,6 +38,7 @@ type CUDAMachine interface {
 	Contexts() []*cu.BatchedContext
 	Modules() map[string][]cu.Module
 	Functions() map[string][]cu.Function
+	CUDNNContext() cudnn.Context
 
 	ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int)
 }
@@ -63,7 +64,7 @@ type ExternMetadata struct {
 	b             batchedBLAS          // blas
 	c             []*cu.BatchedContext // context
 	d             []cu.Device          // device
-	n             []cudnn.Context
+	n             cudnn.Context
 	hasWork       []bool
 	workAvailable chan bool
 	syncChan      chan struct{}
@@ -180,6 +181,9 @@ func (m *ExternMetadata) Modules() map[string][]cu.Module { return m.m }
 
 // Functions returns a list of functions loaded (and refereable by name) in this CUDAMachine
 func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
+
+// CUDNNContext returns the CUDNN context
+func (m *ExternMetadata) CUDNNContext() cudnn.Context { return m.n }
 
 // Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
