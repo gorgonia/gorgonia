@@ -1,4 +1,4 @@
-// +build !noasm
+// +build !noasm,!wasm
 
 #include "textflag.h"
 
@@ -21,31 +21,3 @@ denomIsOne:
 	MOVQ	AX, q+16(FP)
 	MOVQ	$0, r+24(FP)
 	JMP	bye
-
-// popcnt(uint64) int
-TEXT ·popcnt(SB),NOSPLIT,$0
-	POPCNTQ    x+0(FP), AX
-	MOVQ       AX, ret+8(FP)
-	RET
-
-// clz(uint64) int
-TEXT ·clz(SB),4,$0-16
-        BSRQ  x+0(FP), AX
-        JZ zero
-        SUBQ  $63, AX
-        NEGQ AX
-        MOVQ AX, ret+8(FP)
-        RET
-zero:
-        MOVQ $64, ret+8(FP)
-        RET
-
-// func ctz(x uint64) int
-TEXT ·ctz(SB),4,$0-16
-        BSFQ  x+0(FP), AX
-        JZ zero
-        MOVQ AX, ret+8(FP)
-        RET
-zero:
-        MOVQ $64, ret+8(FP)
-        RET
