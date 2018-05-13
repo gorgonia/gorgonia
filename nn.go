@@ -172,6 +172,7 @@ func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, 
 // kernelShape: shape of the filter kernel
 // pad: len(pad) == 2
 // stride: len(stride) == 2
+// dilation: len(dilation) == 2
 func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *Node, err error) {
 	// niceness for defaults
 	if pad == nil {

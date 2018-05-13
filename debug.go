@@ -23,13 +23,13 @@ var (
 	compileDev        = false
 	shapeInferenceDev = false
 	typeSystemDev     = false
-	symdiffDev        = true
+	symdiffDev        = false
 	autodiffDev       = false
 	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
 	cudaDev           = false
-	allocatorDev      = false
+	allocatorDev      = true
 )
 
 var READMEMSTATS = true

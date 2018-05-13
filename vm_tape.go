@@ -121,6 +121,11 @@ func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
 	m.resetExecState()
+	for i := range m.gpumem {
+		returnValue(m.gpumem[i])
+		m.gpumem[i] = nil //
+	}
+
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions
