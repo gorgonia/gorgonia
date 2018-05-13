@@ -815,7 +815,7 @@ building mobile apps) in a year
 especially if you're also looking for a cofounder
 you don't have to learn programming to be at the leading edge of a domain that's changing fast
 other domains change fast
-but while learning to hack is not necessary, it is for the forseeable future sufficient
+but while learning to hack is not necessary, it is for the foreseeable future sufficient
 as marc andreessen put it, software is eating the world, and this trend has decades left to run
 knowing how to hack also means that when you have ideas, you'll be able to implement them
 that's not absolutely necessary (jeff bezos couldn't) but it's an advantage
@@ -993,7 +993,7 @@ barbershops are doing fine in the (a) department
 almost everyone needs their hair cut
 the problem for a barbershop, as for any retail establishment, is (b)
 a barbershop serves customers in person, and few will travel far for a haircut
-and even if they did the barbershop couldn't accomodate them
+and even if they did the barbershop couldn't accommodate them
 writing software is a great way to solve (b), but you can still end up constrained in (a)
 if you make software to teach english to chinese speakers, however, you're in startup territory
 most businesses are tightly constrained in (a) or (b)

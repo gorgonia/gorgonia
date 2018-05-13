@@ -98,7 +98,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	// LAYER 0
 	// here we convolve with stride = (1, 1) and padding = (1, 1),
 	// which is your bog standard convolution for convnet
-	if c0, err = gorgonia.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c0, err = gorgonia.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 0 Convolution failed")
 	}
 	if a0, err = gorgonia.Rectify(c0); err != nil {
@@ -112,7 +112,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	}
 
 	// Layer 1
-	if c1, err = gorgonia.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c1, err = gorgonia.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 1 Convolution failed")
 	}
 	if a1, err = gorgonia.Rectify(c1); err != nil {
@@ -126,7 +126,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	}
 
 	// Layer 2
-	if c2, err = gorgonia.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c2, err = gorgonia.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 2 Convolution failed")
 	}
 	if a2, err = gorgonia.Rectify(c2); err != nil {
@@ -233,7 +233,10 @@ func main() {
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
 
-	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
+	prog, locMap, _ := gorgonia.Compile(g)
+	log.Printf("%v", prog)
+
+	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
 
 	// pprof

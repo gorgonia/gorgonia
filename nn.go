@@ -130,7 +130,7 @@ func Rectify(x *Node) (retVal *Node, err error) {
 
 // Im2Col converts a BCHW image block to columns. The kernel, pad and stride parameter must be shape of size 2, no more no less
 // This poor naming scheme clearly comes from matlab
-func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error) {
+func Im2Col(n *Node, kernel, pad, stride, dilation tensor.Shape) (retVal *Node, err error) {
 	if kernel.Dims() != 2 {
 		return nil, errors.Errorf("kernel shape is supposed to have a dim of 2")
 	}
@@ -139,6 +139,9 @@ func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error)
 	}
 	if stride.Dims() != 2 {
 		return nil, errors.Errorf("strides is supposed to have a dim of 2")
+	}
+	if dilation.Dims() != 2 {
+		return nil, errors.Errorf("dilation is supposed to have a dim of 2")
 	}
 
 	if kernel[0] <= 0 || kernel[1] <= 0 {
@@ -152,7 +155,12 @@ func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error)
 	if pad[0] < 0 || pad[1] < 0 {
 		return nil, errors.Errorf("cannot have negative padding")
 	}
-	op := makeIm2ColOp(kernel[0], kernel[1], pad[0], pad[1], stride[0], stride[1])
+
+	if dilation[0] <= 0 || dilation[1] <= 0 {
+		return nil, errors.Errorf("canot have negative or 0 in dilation. %v", dilation)
+	}
+
+	op := makeIm2ColOp(kernel[0], kernel[1], pad[0], pad[1], stride[0], stride[1], dilation[0], dilation[1])
 	return ApplyOp(op, n)
 }
 
@@ -164,7 +172,16 @@ func Im2Col(n *Node, kernel, pad, stride tensor.Shape) (retVal *Node, err error)
 // kernelShape: shape of the filter kernel
 // pad: len(pad) == 2
 // stride: len(stride) == 2
-func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride []int) (retVal *Node, err error) {
+// dilation: len(dilation) == 2
+func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *Node, err error) {
+	// niceness for defaults
+	if pad == nil {
+		pad = []int{0, 0}
+	}
+	if dilation == nil {
+		dilation = []int{1, 1}
+	}
+
 	// checks
 	for _, s := range stride {
 		if s <= 0 {
@@ -178,8 +195,14 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride []int) (retV
 		}
 	}
 
+	for _, d := range dilation {
+		if d <= 0 {
+			return nil, errors.Errorf("Cannot use dilation less than or eq 0 %v", dilation)
+		}
+	}
+
 	var colIm *Node
-	if colIm, err = Im2Col(im, kernelShape, pad, stride); err != nil {
+	if colIm, err = Im2Col(im, kernelShape, pad, stride, dilation); err != nil {
 		return
 	}
 
@@ -223,8 +246,8 @@ func Conv2d(im, filter *Node, kernelShape tensor.Shape, pad, stride []int) (retV
 }
 
 // Conv1d is a 1D convlution. It relies on Conv2D
-func Conv1d(in, filter *Node, kernel, pad, stride int) (*Node, error) {
-	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride})
+func Conv1d(in, filter *Node, kernel, pad, stride, dilation int) (*Node, error) {
+	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
 }
 
 func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {

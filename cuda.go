@@ -10,12 +10,13 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/cu/dnn"
 	"gorgonia.org/tensor"
 )
 
 const CUDA = true
 
-var _ tensor.Engine = &ExternMetadata{}
+var _ External = &ExternMetadata{}
 
 const (
 	// Any address of a variable residing in global memory or returned by one of the
@@ -37,6 +38,7 @@ type CUDAMachine interface {
 	Contexts() []*cu.BatchedContext
 	Modules() map[string][]cu.Module
 	Functions() map[string][]cu.Function
+	CUDNNContext() *cudnn.Context
 
 	ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int)
 }
@@ -62,6 +64,7 @@ type ExternMetadata struct {
 	b             batchedBLAS          // blas
 	c             []*cu.BatchedContext // context
 	d             []cu.Device          // device
+	n             *cudnn.Context
 	hasWork       []bool
 	workAvailable chan bool
 	syncChan      chan struct{}
@@ -178,6 +181,9 @@ func (m *ExternMetadata) Modules() map[string][]cu.Module { return m.m }
 
 // Functions returns a list of functions loaded (and refereable by name) in this CUDAMachine
 func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
+
+// CUDNNContext returns the CUDNN context
+func (m *ExternMetadata) CUDNNContext() *cudnn.Context { return m.n }
 
 // Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
@@ -301,6 +307,7 @@ func (m *ExternMetadata) Reset() {
 			a.free(ptr + a.start)
 		}
 		a.coalesce()
+		a.reset() // reset statistcs
 	}
 }
 
@@ -430,6 +437,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 	if len(m.c) > 0 {
 		m.c[0].SetCurrent()
 	}
+	m.n = cudnn.NewContext()
 	m.m = make(map[string][]cu.Module)
 	m.f = make(map[string][]cu.Function)
 	go m.collectBLASWork()
@@ -470,7 +478,7 @@ func (m *ExternMetadata) cleanup() {
 		}
 	}
 
-	// destory contexts
+	// destroy contexts
 	for i := range m.c {
 		m.c[i] = nil // tell gc to collect. ctx.finalizeCtx will run
 	}

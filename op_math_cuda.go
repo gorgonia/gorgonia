@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 	"unsafe"
 
 	"gorgonia.org/cu"
@@ -119,7 +120,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	var mem, memB cu.DevicePtr
 	var size int64
 	cudaLogf("a: 0x%x b 0x%x", a.Uintptr(), b.Uintptr())
-	cudaLogf("a %v, b%v", a, b)
+	cudaLogf("a %v, b%v", a.Shape(), b.Shape())
 	switch {
 	case vv, vs, ss:
 		if prealloc == nil {
@@ -163,6 +164,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		extern.Signal()
 		cudaLogf("DONE. Prealloc \n%v", prealloc)
 		if prealloc != nil {
+			log.Printf("No func %v", name)
+			log.Printf("Preallo %x", prealloc.Uintptr())
 			return op.UsePreallocDo(prealloc, inputs...)
 		}
 
