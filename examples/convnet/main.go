@@ -222,13 +222,12 @@ func main() {
 	var costVal gorgonia.Value
 	gorgonia.Read(cost, &costVal)
 
-	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
-		log.Fatal(err)
-	}
+	// if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	// debug
 	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
-	// prog, _, _ := gorgonia.Compile(g)
 	// log.Printf("%v", prog)
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())

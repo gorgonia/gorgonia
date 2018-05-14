@@ -137,10 +137,53 @@ type convolutionDiff struct {
 	*convolution
 }
 
-func Conv2d(im, filter *G.Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *G.Node, err error) {
-	var op *convolution
-	if op, err = makeConvolutionOp(im, filter, kernelShape, pad, stride, dilation); err != nil {
-		return nil, err
+func (c convolutionDiff) Arity() int { return 4 }
+
+func (c convolutionDiff) Type() hm.Type {
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
+}
+
+func (c convolutionDiff) InferShape(...G.DimSizer) (tensor.Shape, error) {
+	return c.inShape.Clone(), nil
+}
+
+func (c convolutionDiff) Do(...G.Value) (G.Value, error) {
+	panic("not implemented")
+}
+
+func (c convolutionDiff) ReturnsPtr() bool { return true }
+
+func (c convolutionDiff) CallsExtern() bool { return true }
+
+func (c convolutionDiff) OverwritesInput() int { return -1 }
+
+func (c convolutionDiff) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "ConvolutionDiff:%v-%v-%v", c.Padding(), c.FilterStride(), c.Dilation())
+}
+
+func (c convolutionDiff) Hashcode() uint32 { return simpleHash(c) }
+
+func (c convolutionDiff) String() string {
+	return fmt.Sprintf("ConvolutionDiff:%v-%v-%v", c.Padding(), c.FilterStride(), c.Dilation())
+}
+
+func (c convolutionDiff) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inputs ...G.Value) (retVal G.Value, err error) {
+	if err = checkArity(c, len(inputs)); err != nil {
+		return
 	}
-	return G.ApplyOp(op, im, filter)
+	im, filter, output, grad := inputs[0], inputs[1], inputs[2], inputs[3]
+
+	machine := extern.(G.CUDAMachine)
+	ctx := machine.CUDNNContext()
+
+	if err = ctx.ConvolutionForward(1.0,
+		c.xDesc, im.(cudnn.Memory),
+		c.wDesc, filter.(cudnn.Memory),
+		c.Convolution,
+		cudnn.ConvolutionFwdAlgoImplicitGemm, nomem{},
+		0, 1.0,
+		c.yDesc, prealloc.(cudnn.Memory)); err != nil {
+		return
+	}
+	return prealloc, nil
 }

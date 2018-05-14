@@ -2,6 +2,8 @@ package nnops
 
 import (
 	"github.com/pkg/errors"
+	G "gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
 )
 
 func CheckConvolutionParams(pad, stride, dilation []int) error {
@@ -24,4 +26,12 @@ func CheckConvolutionParams(pad, stride, dilation []int) error {
 		}
 	}
 	return nil
+}
+
+func Conv2d(im, filter *G.Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *G.Node, err error) {
+	var op *convolution
+	if op, err = makeConvolutionOp(im, filter, kernelShape, pad, stride, dilation); err != nil {
+		return nil, err
+	}
+	return G.ApplyOp(op, im, filter)
 }
