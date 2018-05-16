@@ -28,10 +28,6 @@ func CheckConvolutionParams(pad, stride, dilation []int) error {
 	return nil
 }
 
-func Conv2d(im, filter *G.Node, kernelShape tensor.Shape, pad, stride, dilation []int) (retVal *G.Node, err error) {
-	var op *convolution
-	if op, err = makeConvolutionOp(im, filter, kernelShape, pad, stride, dilation); err != nil {
-		return nil, err
-	}
-	return G.ApplyOp(op, im, filter)
+func Conv1d(in, filter *G.Node, kernel, pad, stride, dilation int) (*G.Node, error) {
+	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
 }
