@@ -14,3 +14,7 @@ func Conv2d(im, filter *G.Node, kernelShape tensor.Shape, pad, stride, dilation 
 func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (*G.Node, error) {
 	return G.MaxPool2D(x, kernel, pad, stride)
 }
+
+func Dropout(x *G.Node, prob float64) (retVal *Node, err error) {
+	return G.Dropout(x, prob)
+}
