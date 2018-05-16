@@ -9,7 +9,7 @@ import (
 	"github.com/chewxy/hm"
 	"gorgonia.org/cu/dnn"
 	"gorgonia.org/cu/dnn/interop"
-	"gorgonia.org/gorgonia"
+	G "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
@@ -27,8 +27,9 @@ type maxpool struct {
 	yDesc *cudnn.TensorDescriptor
 }
 
-func newMaxPoolOp(x *gorgonia.Node, kernel, pad, stride []int) {
+func newMaxPoolOp(x *G.Node, kernel, pad, stride []int) (*maxpool, error) {
 	var xDesc *cudnn.TensorDescriptor
+	var err error
 	if xDesc, err = t2cudnn.Describe(x); err != nil {
 		return nil, err
 	}
@@ -39,21 +40,22 @@ func newMaxPoolOp(x *gorgonia.Node, kernel, pad, stride []int) {
 	}
 	return &maxpool{
 		Pooling: p,
-	}
+		xDesc:   xDesc,
+	}, nil
 }
 
 func (p *maxpool) Arity() int { return 1 }
 
 func (p *maxpool) Type() hm.Type { return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a')) }
 
-func (p *maxpool) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error) {
-	if err = checkArity(p, len(inputs)); err != nil {
-		return
+func (p *maxpool) InferShape(inputs ...G.DimSizer) (tensor.Shape, error) {
+	if err := checkArity(p, len(inputs)); err != nil {
+		return nil, err
 	}
 	return p.OutputShape(p.xDesc, 2) // only maxpool2d for now
 }
 
-func (p *maxpool) Do(...gorgonia.Value) (gorgonia.Value, error) {
+func (p *maxpool) Do(...G.Value) (G.Value, error) {
 	panic("not implemented")
 }
 
@@ -89,14 +91,14 @@ func (p *maxpool) String() string {
 		strides[0], strides[1])
 }
 
-func (p *maxpool) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
+func (p *maxpool) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inputs ...G.Value) (retVal G.Value, err error) {
 	if err = checkArity(p, len(inputs)); err != nil {
 		return
 	}
 	in := inputs[0]
 
 	if p.yDesc == nil {
-		if p.yDesc, err = t2cudnn.Describe(im); err != nil {
+		if p.yDesc, err = t2cudnn.Describe(in.(tensor.Tensor)); err != nil {
 			return
 		}
 	}
@@ -109,11 +111,11 @@ func (p *maxpool) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc
 
 func (p *maxpool) DiffWRT(inputs int) []bool { return []bool{true} }
 
-func (p *maxpool) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
+func (p *maxpool) SymDiff(inputs G.Nodes, output *G.Node, grad *G.Node) (retVal G.Nodes, err error) {
 	if err = checkArity(p, len(inputs)); err != nil {
 		return
 	}
-	diff := &maxpoolDiff{p.Pooling, p.xDesc}
+	diff := (*maxpoolDiff)(p)
 	x := inputs[0]
 
 	retVal = make(G.Nodes, 1)
@@ -121,14 +123,11 @@ func (p *maxpool) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *go
 	return
 }
 
-func (p *maxpool) DoDiff(ctx gorgonia.ExecutionContext, inputs gorgonia.Nodes, output *gorgonia.Node) error {
+func (p *maxpool) DoDiff(ctx G.ExecutionContext, inputs G.Nodes, output *G.Node) error {
 	panic("not implemented")
 }
 
-type maxpoolDiff struct {
-	*cudnn.Pooling
-	xDesc *cudnn.TensorDescriptor
-}
+type maxpoolDiff maxpool
 
 func (p *maxpoolDiff) Arity() int { return 3 }
 
@@ -136,11 +135,11 @@ func (p *maxpoolDiff) Type() hm.Type {
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
-func (p *maxpoolDiff) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error) {
+func (p *maxpoolDiff) InferShape(inputs ...G.DimSizer) (tensor.Shape, error) {
 	return inputs[0].(tensor.Shape).Clone(), nil
 }
 
-func (p *maxpoolDiff) Do(...gorgonia.Value) (gorgonia.Value, error) {
+func (p *maxpoolDiff) Do(...G.Value) (G.Value, error) {
 	panic("not implemented")
 }
 
@@ -176,11 +175,11 @@ func (p *maxpoolDiff) String() string {
 		strides[0], strides[1])
 }
 
-func (p *maxpoolDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
+func (p *maxpoolDiff) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inputs ...G.Value) (retVal G.Value, err error) {
 	if err = checkArity(p, len(inputs)); err != nil {
 		return
 	}
-	x, y, dy := inputs[0], inputs[1], input[2]
+	x, y, dy := inputs[0], inputs[1], inputs[2]
 
 	machine := extern.(G.CUDAMachine)
 	ctx := machine.CUDNNContext()

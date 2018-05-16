@@ -15,7 +15,7 @@ func Conv2d(im, filter *G.Node, kernelShape tensor.Shape, pad, stride, dilation 
 	return G.ApplyOp(op, im, filter)
 }
 
-func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (*G.Node, error) {
+func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (retVal *G.Node, err error) {
 	var op *maxpool
 	if op, err = newMaxPoolOp(x, kernel, pad, stride); err != nil {
 		return nil, err
