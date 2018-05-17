@@ -9,6 +9,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/cu/dnn"
+	"gorgonia.org/cu/dnn/interop"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
@@ -20,8 +21,8 @@ type dropout struct {
 }
 
 func newDropout(x *gorgonia.Node, prob float64) (*dropout, error) {
-	var xDesc *cudnn.TensorDescriptor
-	if xDesc, err = t2cudnn.Describe(x); err != nil {
+	xDesc, err := t2cudnn.Describe(x)
+	if err != nil {
 		return nil, err
 	}
 
@@ -55,7 +56,7 @@ func (op *dropout) CallsExtern() bool                            { return true }
 func (op *dropout) OverwritesInput() int                         { return -1 }
 func (op *dropout) WriteHash(h hash.Hash)                        { fmt.Fprintf(h, "Dropout %v", op.Dropout.Dropout()) }
 func (op *dropout) Hashcode() uint32                             { return simpleHash(op) }
-func (op *dropout) String() string                               { fmt.Sprintf("Dropout %v", op.Dropout.Dropout()) }
+func (op *dropout) String() string                               { return fmt.Sprintf("Dropout %v", op.Dropout.Dropout()) }
 func (op *dropout) DiffWRT(inputs int) []bool                    { return []bool{true, false} }
 
 func (op *dropout) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
@@ -67,23 +68,26 @@ func (op *dropout) DoDiff(ctx gorgonia.ExecutionContext, inputs gorgonia.Nodes, 
 }
 
 func (op *dropout) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
-	if err = checkArity(c, len(inputs)); err != nil {
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
 	x, s := inputs[0], inputs[1]
-	machine := extern.(G.CUDAMachine)
+	machine := extern.(gorgonia.CUDAMachine)
 	ctx := machine.CUDNNContext()
-	if err = op.Use(ctx, s.(cudnn.Memory), op.seed); err != nil {
+	memsize := calcMemSize(s.Dtype(), s.Shape())
+
+	if err = op.Use(ctx, s.(cudnn.Memory), memsize, op.seed); err != nil {
 		return nil, err
 	}
-	err = cudnn.DropoutForward(op.Dropout, op.xDesc, x.(cudnn.Memory), op.xDesc, prealloc.(cudnn.Memory), s.(cudunn.Memory))
+	err = ctx.DropoutForward(op.Dropout, op.xDesc, x.(cudnn.Memory), op.xDesc, prealloc.(cudnn.Memory), s.(cudnn.Memory), memsize)
 	return prealloc, err
 }
 
 // dropoutState is a dummy op. It's supposed to be like UniformRandomOp but doesn't actually do anything upon calling CUDADo. Instead it just returns the preallocated memory space.
 type dropoutState struct {
 	shape tensor.Shape
+	dt    tensor.Dtype
 }
 
 func (op *dropoutState) Arity() int { return 0 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
+	"gorgonia.org/tensor"
 )
 
 func simpleHash(op gorgonia.Op) uint32 {
@@ -29,3 +30,14 @@ type nomem struct{}
 func (nomem) Uintptr() uintptr           { return 0 }
 func (nomem) Pointer() unsafe.Pointer    { return nil }
 func (nomem) IsNativelyAccessible() bool { return false }
+
+func calcMemSize(dt tensor.Dtype, s tensor.Shape) uintptr {
+	var elemSize uintptr
+	if s.IsScalar() {
+		elemSize = 1
+	} else {
+		elemSize = uintptr(s.TotalSize())
+	}
+	dtSize := dt.Size()
+	return elemSize * dtSize
+}

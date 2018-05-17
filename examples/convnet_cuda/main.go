@@ -112,7 +112,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	}
 	log.Printf("p0 %v", p0.Shape())
 
-	if l0, err = gorgonia.Dropout(p0, m.d0); err != nil {
+	if l0, err = nnops.Dropout(p0, m.d0); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout")
 	}
 
@@ -126,7 +126,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if p1, err = nnops.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 1 Maxpooling failed")
 	}
-	if l1, err = gorgonia.Dropout(p1, m.d1); err != nil {
+	if l1, err = nnops.Dropout(p1, m.d1); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout to layer 1")
 	}
 
@@ -148,7 +148,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 		return errors.Wrap(err, "Unable to reshape layer 2")
 	}
 	log.Printf("r2 shape %v", r2.Shape())
-	if l2, err = gorgonia.Dropout(r2, m.d2); err != nil {
+	if l2, err = nnops.Dropout(r2, m.d2); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
 	log.Printf("l2 shape %v | %v", l2.Shape(), m.w3.Shape())
@@ -162,7 +162,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if a3, err = gorgonia.Rectify(fc); err != nil {
 		return errors.Wrapf(err, "Unable to activate fc")
 	}
-	if l3, err = gorgonia.Dropout(a3, m.d3); err != nil {
+	if l3, err = nnops.Dropout(a3, m.d3); err != nil {
 		return errors.Wrapf(err, "Unable to apply a dropout on layer 3")
 	}
 
