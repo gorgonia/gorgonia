@@ -24,5 +24,13 @@ func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (retVal *G.Nod
 }
 
 func Dropout(x *G.Node, prob float64) (retVal *Node, err error) {
-	retun nil, nil
+	var op *dropout
+	if op, err = newDropout(x, prob); err != nil {
+		return nil, err
+	}
+
+	states := &dropoutState{x.Shape().Clone()}
+	m := G.NewUniqueNode(G.WithType(x.Type()), G.WithOp(op), G.In(x.Graph()), G.WithShape(states.shape...))
+
+	return G.ApplyOp(op, x, m)
 }
