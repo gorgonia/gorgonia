@@ -30,7 +30,8 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 	}
 
 	states := &dropoutState{x.Shape().Clone(), x.Dtype()}
-	m := G.NewUniqueNode(G.WithType(x.Type()), G.WithOp(op), G.In(x.Graph()), G.WithShape(states.shape...))
+	m := G.NewUniqueNode(G.WithType(x.Type()), G.WithOp(states), G.In(x.Graph()), G.WithShape(states.shape...))
 
-	return G.ApplyOp(op, x, m)
+	retVal, err = G.ApplyOp(op, x, m)
+	return
 }

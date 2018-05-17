@@ -165,6 +165,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if l3, err = nnops.Dropout(a3, m.d3); err != nil {
 		return errors.Wrapf(err, "Unable to apply a dropout on layer 3")
 	}
+	log.Printf("l3 name %v | a3 name %v", l3, a3)
 
 	// output decode
 	var out *gorgonia.Node

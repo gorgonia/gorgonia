@@ -5,7 +5,6 @@ package nnops
 import (
 	"fmt"
 	"hash"
-	"log"
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/cu/dnn"
@@ -129,7 +128,6 @@ func (c *convolution) DiffWRT(inputs int) []bool {
 }
 
 func (c *convolution) SymDiff(inputs G.Nodes, output *G.Node, grad *G.Node) (retVal G.Nodes, err error) {
-	log.Printf("Inputs %v, Output %v, Grad %v", inputs, output, grad)
 	var outDesc *cudnn.TensorDescriptor
 	if outDesc, err = t2cudnn.Describe(output); err != nil {
 		return nil, err

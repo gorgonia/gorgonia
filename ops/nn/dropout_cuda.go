@@ -57,10 +57,13 @@ func (op *dropout) OverwritesInput() int                         { return -1 }
 func (op *dropout) WriteHash(h hash.Hash)                        { fmt.Fprintf(h, "Dropout %v", op.Dropout.Dropout()) }
 func (op *dropout) Hashcode() uint32                             { return simpleHash(op) }
 func (op *dropout) String() string                               { return fmt.Sprintf("Dropout %v", op.Dropout.Dropout()) }
-func (op *dropout) DiffWRT(inputs int) []bool                    { return []bool{true, false} }
+func (op *dropout) DiffWRT(inputs int) []bool                    { return []bool{true, false} } // it technically should be []bool{true, false}
 
 func (op *dropout) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
-	panic("not implemented")
+	diffOp := &dropoutDiff{op}
+	retVal = make(gorgonia.Nodes, 2) // retVal[1] will be nil
+	retVal[0], err = gorgonia.ApplyOp(diffOp, grad, inputs[1])
+	return
 }
 
 func (op *dropout) DoDiff(ctx gorgonia.ExecutionContext, inputs gorgonia.Nodes, output *gorgonia.Node) error {
@@ -111,4 +114,68 @@ func (op *dropoutState) String() string                                        {
 
 func (op *dropoutState) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
 	return prealloc, nil
+}
+
+type dropoutDiff struct {
+	*dropout
+}
+
+func (op *dropoutDiff) Arity() int { return 2 }
+
+func (op *dropoutDiff) Type() hm.Type {
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
+}
+
+func (op *dropoutDiff) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error) {
+	if err := checkArity(op, len(inputs)); err != nil {
+		return nil, err
+	}
+	return inputs[0].(tensor.Shape).Clone(), nil
+}
+
+func (op *dropoutDiff) Do(...gorgonia.Value) (gorgonia.Value, error) {
+	panic("not implemented")
+}
+
+func (op *dropoutDiff) ReturnsPtr() bool {
+	return true
+}
+
+func (op *dropoutDiff) CallsExtern() bool {
+	return true
+}
+
+func (op *dropoutDiff) OverwritesInput() int {
+	return -1
+}
+
+func (op *dropoutDiff) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "DropoutDiff %v", op.Dropout.Dropout())
+}
+
+func (op *dropoutDiff) Hashcode() uint32 {
+	return simpleHash(op)
+}
+
+func (op *dropoutDiff) String() string {
+	return fmt.Sprintf("DropoutDiff %v", op.Dropout.Dropout())
+}
+
+func (op *dropoutDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	dy, scratch := inputs[0], inputs[1]
+	machine := extern.(gorgonia.CUDAMachine)
+	ctx := machine.CUDNNContext()
+	memsize := calcMemSize(scratch.Dtype(), scratch.Shape())
+	if err = op.Use(ctx, scratch.(cudnn.Memory), memsize, op.seed); err != nil {
+		return nil, err
+	}
+
+	err = ctx.DropoutBackward(op.Dropout, op.xDesc, dy.(cudnn.Memory),
+		op.xDesc, prealloc.(cudnn.Memory),
+		scratch.(cudnn.Memory), memsize)
+	return prealloc, err
 }
