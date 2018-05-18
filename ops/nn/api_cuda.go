@@ -29,9 +29,21 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 		return nil, err
 	}
 
-	states := &dropoutState{x.Shape().Clone(), x.Dtype()}
+	states := &scratchOp{x.Shape().Clone(), x.Dtype()}
 	m := G.NewUniqueNode(G.WithType(x.Type()), G.WithOp(states), G.In(x.Graph()), G.WithShape(states.shape...))
 
 	retVal, err = G.ApplyOp(op, x, m)
 	return
+}
+
+func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
+	dt, err := dtypeOf(x.Type())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	batches := x.Shape()[0]
+	channels := x.Shape()[1]
+	spatialDim := x.Shape().TotalSize() / (channels * batches)
+
 }

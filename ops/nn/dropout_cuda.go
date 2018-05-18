@@ -87,35 +87,6 @@ func (op *dropout) CUDADo(extern gorgonia.External, dev gorgonia.Device, preallo
 	return prealloc, err
 }
 
-// dropoutState is a dummy op. It's supposed to be like UniformRandomOp but doesn't actually do anything upon calling CUDADo. Instead it just returns the preallocated memory space.
-type dropoutState struct {
-	shape tensor.Shape
-	dt    tensor.Dtype
-}
-
-func (op *dropoutState) Arity() int { return 0 }
-
-func (op *dropoutState) Type() hm.Type {
-	if op.shape.IsScalar() {
-		return op.dt
-	}
-	tt := &gorgonia.TensorType{Dims: op.shape.Dims(), Of: op.dt}
-	return tt
-}
-
-func (op *dropoutState) InferShape(...gorgonia.DimSizer) (tensor.Shape, error) { return op.shape, nil }
-func (op *dropoutState) Do(...gorgonia.Value) (gorgonia.Value, error)          { panic("not implemented") }
-func (op *dropoutState) ReturnsPtr() bool                                      { return true }
-func (op *dropoutState) CallsExtern() bool                                     { return true }
-func (op *dropoutState) OverwritesInput() int                                  { return -1 }
-func (op *dropoutState) WriteHash(h hash.Hash)                                 { fmt.Fprintf(h, "Spare Memory %v", op.shape) }
-func (op *dropoutState) Hashcode() uint32                                      { return simpleHash(op) }
-func (op *dropoutState) String() string                                        { return fmt.Sprintf("Spare Memory %v", op.shape) }
-
-func (op *dropoutState) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
-	return prealloc, nil
-}
-
 type dropoutDiff struct {
 	*dropout
 }

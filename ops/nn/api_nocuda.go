@@ -18,3 +18,7 @@ func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (*G.Node, erro
 func Dropout(x *G.Node, prob float64) (retVal *Node, err error) {
 	return G.Dropout(x, prob)
 }
+
+func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
+	return G.BatchNorm(x, momentum, epsilon, auto)
+}
