@@ -59,20 +59,21 @@ func TestDropout(t *testing.T) {
 }
 
 var im2colTests = []struct {
-	kernel tensor.Shape
-	pad    tensor.Shape
-	stride tensor.Shape
+	kernel   tensor.Shape
+	pad      tensor.Shape
+	stride   tensor.Shape
+	dilation tensor.Shape
 }{
-	{tensor.Shape{4, 4}, tensor.Shape{0, 0}, tensor.Shape{1, 1}},
-	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{2, 2}},
-	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{3, 3}},
+	{tensor.Shape{4, 4}, tensor.Shape{0, 0}, tensor.Shape{1, 1}, tensor.Shape{1, 1}},
+	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{2, 2}, tensor.Shape{1, 1}},
+	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{3, 3}, tensor.Shape{1, 1}},
 }
 
-func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape) {
+func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride, dilation tensor.Shape) {
 	assert := assert.New(t)
 	g := NewGraph()
 	x := NewTensor(g, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0))) // mnist, in batches of 10
-	y, err := Im2Col(x, kernel, pad, stride)
+	y, err := Im2Col(x, kernel, pad, stride, dilation)
 	if err != nil {
 		t.Error(err)
 		return
@@ -96,7 +97,7 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 
 	h := NewGraph()
 	a := NewTensor(h, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0)))
-	b, err := Im2Col(a, kernel, pad, stride)
+	b, err := Im2Col(a, kernel, pad, stride, dilation)
 	if err != nil {
 		t.Error(err)
 		return
@@ -127,7 +128,7 @@ func TestIm2Col(t *testing.T) {
 	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
 	for _, dt := range dts {
 		for _, i2ct := range im2colTests {
-			im2colTest(t, dt, i2ct.kernel, i2ct.pad, i2ct.stride)
+			im2colTest(t, dt, i2ct.kernel, i2ct.pad, i2ct.stride, i2ct.dilation)
 		}
 	}
 }
