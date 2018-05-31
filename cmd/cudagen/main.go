@@ -90,7 +90,7 @@ func main() {
 	}
 
 	gopath := os.Getenv("GOPATH")
-	if gopath = "" {
+	if gopath == "" {
 		gopath = path.Join(os.Getenv("HOME"), "go")
 	}
 	gorgoniaLoc := path.Join(gopath, "src/gorgonia.org/gorgonia")
