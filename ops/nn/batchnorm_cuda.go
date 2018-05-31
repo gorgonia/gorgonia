@@ -12,7 +12,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
-type batchnorm struct {
+type BatchNormOp struct {
 	mode              cudnn.BatchNormMode
 	momentum, epsilon float64
 
@@ -22,36 +22,47 @@ type batchnorm struct {
 	training bool
 }
 
-func (op *batchnorm) Arity() int { return 5 }
+func (op *BatchNormOp) Arity() int { return 7 }
 
-func (op *batchnorm) Type() hm.Type {
+func (op *BatchNormOp) Type() hm.Type {
 	// x, scale, bias, mean, var
-	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
+	return hm.NewFnType(hm.TypeVariable('a'), // x
+		hm.TypeVariable('a'), // scale
+		hm.TypeVariable('a'), // bias
+		hm.TypeVariable('a'), // running mean / expected mean
+		hm.TypeVariable('a'), // running var / expected var
+		hm.TypeVariable('a'), // cached mean
+		hm.TypeVariable('a'), // cachedVar
+		hm.TypeVariable('a')) // retVal
 }
 
-func (op *batchnorm) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error) {
+func (op *BatchNormOp) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error) {
 	if err := checkArity(op, len(inputs)); err != nil {
 		return nil, err
 	}
 	return inputs[0].(tensor.Shape).Clone(), nil
 }
 
-func (op *batchnorm) Do(...gorgonia.Value) (gorgonia.Value, error) {
+func (op *BatchNormOp) Do(...gorgonia.Value) (gorgonia.Value, error) {
 	panic("not implemented")
 }
 
-func (op *batchnorm) ReturnsPtr() bool      { return true }
-func (op *batchnorm) CallsExtern() bool     { return true }
-func (op *batchnorm) OverwritesInput() int  { return -1 }
-func (op *batchnorm) WriteHash(h hash.Hash) { fmt.Fprintf("BatchNorm %v %v", op.momentum, op.epsilon) }
-func (op *batchnorm) Hashcode() uint32      { return simpleHash(op) }
-func (op *batchnorm) String() string        { return fmt.Sprintf("BatchNorm %v %v", op.momentum, op.epsilon) }
+func (op *BatchNormOp) ReturnsPtr() bool     { return true }
+func (op *BatchNormOp) CallsExtern() bool    { return true }
+func (op *BatchNormOp) OverwritesInput() int { return -1 }
+func (op *BatchNormOp) WriteHash(h hash.Hash) {
+	fmt.Fprintf(h, "BatchNorm %v %v", op.momentum, op.epsilon)
+}
+func (op *BatchNormOp) Hashcode() uint32 { return simpleHash(op) }
+func (op *BatchNormOp) String() string   { return fmt.Sprintf("BatchNorm %v %v", op.momentum, op.epsilon) }
 
-func (op *batchnorm) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
+func (op *BatchNormOp) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
 	panic("not implemented")
 
 	machine := extern.(gorgonia.CUDAMachine)
 	ctx := machine.CUDNNContext()
+
+	x, bnScale, bnBias, mean, variance, cachedMean, cachedVar := inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6]
 
 	alpha := 0.0
 	beta := 1.0
@@ -62,36 +73,38 @@ func (op *batchnorm) CUDADo(extern gorgonia.External, dev gorgonia.Device, preal
 			op.bnScratch,
 			bnScale.(cudnn.Memory),
 			bnBias.(cudnn.Memory),
-			exponentialAverageFactor,
-			runningMean.(cudnn.Memory),
-			runningVar, (cudnn.Memory),
+			op.momentum,
+			mean.(cudnn.Memory),
+			variance.(cudnn.Memory),
 			op.epsilon,
 			cachedMean.(cudnn.Memory),
 			cachedVar.(cudnn.Memory),
 		)
 	} else {
 		err = ctx.BatchNormalizationForwardInference(op.mode, alpha, beta,
-			op.xDesc*TensorDescriptor, x.(cudnn.Memory),
-			op.xDesc*TensorDescriptor, y.(cudnn.Memory),
+			op.xDesc, x.(cudnn.Memory),
+			op.xDesc, prealloc.(cudnn.Memory),
 			op.bnScratch,
 			bnScale.(cudnn.Memory),
 			bnBias.(cudnn.Memory),
-			estimatedMean.(cudnn.Memory),
-			estimatedVariance.(cudnn.Memory),
-			epsilon)
-
+			mean.(cudnn.Memory),     // expected mean
+			variance.(cudnn.Memory), // expected variance
+			op.epsilon)
 	}
+	return prealloc, err
 }
 
-func (op *batchnorm) DiffWRT(inputs int) []bool { return []bool{true, false, false, false, false} }
+func (op *BatchNormOp) DiffWRT(inputs int) []bool {
+	return []bool{true, false, false, false, false, false, false}
+}
 
-func (op *batchnorm) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
+func (op *BatchNormOp) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
 	panic("not implemented")
 }
 
-func (op *batchnorm) DoDiff(ctx gorgonia.ExecutionContext, inputs gorgonia.Nodes, output *gorgonia.Node) error {
+func (op *BatchNormOp) DoDiff(ctx gorgonia.ExecutionContext, inputs gorgonia.Nodes, output *gorgonia.Node) error {
 	panic("not implemented")
 }
 
-func (op *batchnorm) SetTraining() { op.training = true }
-func (op *batchnorm) SetTesting()  { op.training = false }
+func (op *BatchNormOp) SetTraining() { op.training = true }
+func (op *BatchNormOp) SetTesting()  { op.training = false }

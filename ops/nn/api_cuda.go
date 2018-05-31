@@ -29,21 +29,28 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 		return nil, err
 	}
 
-	states := &scratchOp{x.Shape().Clone(), x.Dtype()}
+	states := &scratchOp{x.Shape().Clone(), x.Dtype(), ""}
 	m := G.NewUniqueNode(G.WithType(x.Type()), G.WithOp(states), G.In(x.Graph()), G.WithShape(states.shape...))
 
 	retVal, err = G.ApplyOp(op, x, m)
 	return
 }
 
-func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
-	dt, err := dtypeOf(x.Type())
-	if err != nil {
-		return nil, nil, err
-	}
+// func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*G.Node, *BatchNormOp, error) {
+// 	dt, err := dtypeOf(x.Type())
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	batches := x.Shape()[0]
-	channels := x.Shape()[1]
-	spatialDim := x.Shape().TotalSize() / (channels * batches)
+// 	batches := x.Shape()[0]
+// 	channels := x.Shape()[1]
+// 	spatialDim := x.Shape().TotalSize() / (channels * batches)
 
-}
+// 	scale := &scratchOp{x.Shape().Clone(), dt, "scale"}
+// 	bias := &scratchOp{x.Shape().Clone(), dt, "bias"}
+// 	mean := &scratchOp{x.Shape().Clone(), dt, "mean"}
+// 	variance := &scratchOp{x.Shape().Clone(), dt, "variance"}
+// 	cacheMean := &scratchOp{x.Shape().Clone(), dt, "cacheMean"}
+// 	cacheVariance := &scratchOp{x.Shape().Clone(), dt, "cacheVariance"}
+
+// }
