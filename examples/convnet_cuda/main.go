@@ -1,3 +1,5 @@
+// +build cuda
+
 package main
 
 import (
@@ -17,6 +19,7 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
+	"gorgonia.org/gorgonia/ops/nn"
 	"gorgonia.org/tensor"
 
 	"time"
@@ -98,41 +101,43 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	// LAYER 0
 	// here we convolve with stride = (1, 1) and padding = (1, 1),
 	// which is your bog standard convolution for convnet
-	if c0, err = gorgonia.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c0, err = nnops.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 0 Convolution failed")
 	}
 	if a0, err = gorgonia.Rectify(c0); err != nil {
 		return errors.Wrap(err, "Layer 0 activation failed")
 	}
-	if p0, err = gorgonia.MaxPool2D(a0, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
+	if p0, err = nnops.MaxPool2D(a0, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 0 Maxpooling failed")
 	}
-	if l0, err = gorgonia.Dropout(p0, m.d0); err != nil {
+	log.Printf("p0 %v", p0.Shape())
+
+	if l0, err = nnops.Dropout(p0, m.d0); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout")
 	}
 
 	// Layer 1
-	if c1, err = gorgonia.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c1, err = nnops.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 1 Convolution failed")
 	}
 	if a1, err = gorgonia.Rectify(c1); err != nil {
 		return errors.Wrap(err, "Layer 1 activation failed")
 	}
-	if p1, err = gorgonia.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
+	if p1, err = nnops.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 1 Maxpooling failed")
 	}
-	if l1, err = gorgonia.Dropout(p1, m.d1); err != nil {
+	if l1, err = nnops.Dropout(p1, m.d1); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout to layer 1")
 	}
 
 	// Layer 2
-	if c2, err = gorgonia.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c2, err = nnops.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 2 Convolution failed")
 	}
 	if a2, err = gorgonia.Rectify(c2); err != nil {
 		return errors.Wrap(err, "Layer 2 activation failed")
 	}
-	if p2, err = gorgonia.MaxPool2D(a2, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
+	if p2, err = nnops.MaxPool2D(a2, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 2 Maxpooling failed")
 	}
 	log.Printf("p2 shape %v", p2.Shape())
@@ -143,9 +148,10 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 		return errors.Wrap(err, "Unable to reshape layer 2")
 	}
 	log.Printf("r2 shape %v", r2.Shape())
-	if l2, err = gorgonia.Dropout(r2, m.d2); err != nil {
+	if l2, err = nnops.Dropout(r2, m.d2); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
+	log.Printf("l2 shape %v | %v", l2.Shape(), m.w3.Shape())
 
 	ioutil.WriteFile("tmp.dot", []byte(m.g.ToDot()), 0644)
 
@@ -156,9 +162,10 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if a3, err = gorgonia.Rectify(fc); err != nil {
 		return errors.Wrapf(err, "Unable to activate fc")
 	}
-	if l3, err = gorgonia.Dropout(a3, m.d3); err != nil {
+	if l3, err = nnops.Dropout(a3, m.d3); err != nil {
 		return errors.Wrapf(err, "Unable to apply a dropout on layer 3")
 	}
+	log.Printf("l3 name %v | a3 name %v", l3, a3)
 
 	// output decode
 	var out *gorgonia.Node
@@ -173,6 +180,8 @@ func main() {
 	flag.Parse()
 	parseDtype()
 	rand.Seed(1337)
+
+	log.Printf("gorgonia. %t", gorgonia.CUDA)
 
 	// intercept Ctrl+C
 	sigChan := make(chan os.Signal, 1)
@@ -222,9 +231,9 @@ func main() {
 	var costVal gorgonia.Value
 	gorgonia.Read(cost, &costVal)
 
-	// if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
+		log.Fatal(err)
+	}
 
 	// debug
 	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
@@ -236,7 +245,7 @@ func main() {
 	log.Printf("%v", prog)
 
 	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
-	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
+	// solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
 
 	// pprof
 	// handlePprof(sigChan, doneChan)
@@ -290,7 +299,7 @@ func main() {
 			if err = vm.RunAll(); err != nil {
 				log.Fatalf("Failed at epoch  %d: %v", i, err)
 			}
-			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
+			// solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
 			vm.Reset()
 			bar.Increment()
 		}

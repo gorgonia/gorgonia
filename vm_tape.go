@@ -76,6 +76,7 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	m.gpuLocks = make([]sync.Mutex, m.p.gpulocs)
 
 	m.init() // init ExternalMetadata
+
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 	}
