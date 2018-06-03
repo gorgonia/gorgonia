@@ -74,9 +74,10 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	}
 	m.cpumem = make([]Value, m.p.cpulocs)
 	m.gpumem = make([]Value, m.p.gpulocs)
-	m.cpuLocks = make([]sync.Mutex, prog.cpulocs)
-	m.gpuLocks = make([]sync.Mutex, prog.gpulocs)
-	m.init()
+	m.cpuLocks = make([]sync.Mutex, m.p.cpulocs)
+	m.gpuLocks = make([]sync.Mutex, m.p.gpulocs)
+
+	m.init() // init ExternalMetadata
 
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
@@ -123,15 +124,12 @@ func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
-<<<<<<< HEAD
 	m.resetExecState()
-=======
-
 	for i := range m.gpumem {
 		returnValue(m.gpumem[i])
 		m.gpumem[i] = nil //
 	}
->>>>>>> origin/v0.9.0-working
+
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions

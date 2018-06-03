@@ -762,8 +762,8 @@ func (op *maxPoolOp) checkInput(inputs ...Value) (tensor.Tensor, error) {
 func (op *maxPoolOp) calcShape(s tensor.Shape) tensor.Shape {
 	b, c, h, w := s[0], s[1], s[2], s[3]
 
-	pooledH := ceilDivInt((h + 2*op.padH - op.h), op.strideH)
-	pooledW := ceilDivInt((w + 2*op.padW - op.w), op.strideW)
+	pooledH := ceilDivInt((h - op.padH - op.h + 1), op.strideH)
+	pooledW := ceilDivInt((w - op.padW - op.w + 1), op.strideW)
 	return tensor.Shape{b, c, pooledH, pooledW}
 }
 
