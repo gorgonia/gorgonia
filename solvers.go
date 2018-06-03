@@ -73,6 +73,9 @@ func WithL2Reg(l2reg float64) SolverOpt {
 		case *VanillaSolver:
 			st.l2reg = l2reg
 			st.useL2Reg = true
+		case *MomentumSGDSolver:
+			st.l2reg = l2reg
+			st.useL2Reg = true
 		}
 	}
 	return f
@@ -88,6 +91,9 @@ func WithL1Reg(l1reg float64) SolverOpt {
 		case *VanillaSolver:
 			st.l1reg = l1reg
 			st.useL1Reg = true
+		case *MomentumSGDSolver:
+			st.l1reg = l1reg
+			st.useL1Reg = true
 		}
 	}
 	return f
@@ -100,6 +106,8 @@ func WithBatchSize(batch float64) SolverOpt {
 		case *AdamSolver:
 			st.batch = batch
 		case *VanillaSolver:
+			st.batch = batch
+		case *MomentumSGDSolver:
 			st.batch = batch
 		}
 	}
@@ -132,8 +140,10 @@ func WithClip(clip float64) SolverOpt {
 		case *VanillaSolver:
 			st.clip = clip
 			st.useClip = true
-
 		case *BarzilaiBorweinSolver:
+			st.clip = clip
+			st.useClip = true
+		case *MomentumSGDSolver:
 			st.clip = clip
 			st.useClip = true
 		}
@@ -152,6 +162,8 @@ func WithLearnRate(eta float64) SolverOpt {
 		case *VanillaSolver:
 			st.eta = eta
 		case *BarzilaiBorweinSolver:
+			st.eta = eta
+		case *MomentumSGDSolver:
 			st.eta = eta
 		}
 	}
@@ -189,6 +201,15 @@ func WithRho(rho float64) SolverOpt {
 		}
 	}
 	return f
+}
+
+func WithMomentum(momentum float64) SolverOpt {
+	f := func(s Solver) {
+		switch st := s.(type) {
+		case *MomentumSGDSolver:
+			st.momentum = momentum
+		}
+	}
 }
 
 // RMSPropSolver is a solver that implements Geoffrey Hinton's RMSProp gradient descent optimization algorithm.
@@ -893,6 +914,232 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 			*(grad.(*F64)) = F64(0.0)
 		default:
 			return errors.Errorf(nyiFail, "VanillaSolver.step", w)
+		}
+	}
+	return
+}
+
+// MomentumSGDSolver is the stochastic gradient descent optimizer with momentum item.
+type MomentumSGDSolver struct {
+	eta      float64 // learn rate
+	momentum float64 // momentum
+	clip     float64 // clip gradients
+	l1reg    float64 // l1 regularization parameter
+	l2reg    float64 // l2 regularization parameter
+	batch    float64 // batch size
+
+	useClip, useL1Reg, useL2Reg bool
+
+	cache []*dualValue
+}
+
+// NewMomentumSGDSolver creates a new MomentumSGDSolver with sane-ish default values
+func NewMomentumSGDSolver(opts ...SolverOpt) *MomentumSGDSolver {
+	s := &MomentumSGDSolver{
+		eta: 0.001,
+		momentum: 0.9,
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+// Step steps through each node in the model and applies the Momentum stochastic gradient descent algorithm on the value.
+//
+// This function will error out if the nodes do not have an associated Grad value.
+func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
+	if s.cache == nil {
+		s.cache = make([]*dualValue, len(model))
+	}
+
+	for i, n := range model {
+		var weights, grad Value
+		if weights, grad, err = extractWeightGrad(n); err != nil {
+			return err
+		}
+
+		var cached *dualValue
+		if cached = s.cache[i]; cached == nil {
+			if cached, err = newCachedDV(n, weights, grad, true); err != nil {
+				return err
+			}
+			s.cache[i] = cached
+		}
+
+		cv := cached.Value
+		// cw = cw * momentum - eta * grad
+		switch cw := cv.(type) {
+		case *tensor.Dense:
+			g := grad.(*tensor.Dense)
+
+			var l1reg, l2reg, clip, negClip, eta, momentum, onePerBatch interface{}
+			switch w.Dtype() {
+			case tensor.Float64:
+				l1reg = s.l1reg
+				l2reg = s.l2reg
+				clip = s.clip
+				negClip = -s.clip
+				eta = -s.eta
+				momentum = s.momentum
+				onePerBatch = float64(1) / s.batch
+			case tensor.Float32:
+				l1reg = float32(s.l1reg)
+				l2reg = float32(s.l2reg)
+				clip = float32(s.clip)
+				negClip = float32(-s.clip)
+				eta = float32(-s.eta)
+				momentum = float32(s.momentum)
+				onePerBatch = float32(1) / float32(s.batch)
+			}
+
+			// prep the regularization of gradients
+			var l1regs, l2regs tensor.Tensor
+			if s.useL1Reg {
+				if l1regs, err = tensor.Sign(w); err != nil {
+					return errors.Wrap(err, signFail)
+				}
+
+				if l1regs, err = tensor.Mul(l1reg, l1regs, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				if _, err = tensor.Add(g, l1regs, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, addFail)
+				}
+
+				defer returnTensor(l1regs)
+			}
+
+			if s.useL2Reg {
+				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+
+				if _, err = tensor.Add(g, l2regs, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, addFail)
+				}
+
+				defer returnTensor(l2regs)
+			}
+
+			if s.batch > 1 {
+				if _, err = tensor.Mul(onePerBatch, g, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, pointWiseMulFail)
+				}
+			}
+
+			if s.useClip && s.clip > 0 {
+				if _, err = tensor.Clamp(g, negClip, clip, tensor.UseUnsafe()); err != nil {
+					return errors.Wrap(err, clampFail)
+				}
+			}
+
+			// momentum
+			if _, err = tensor.Mul(g, eta, tensor.UseUnsafe()); err != nil {
+				return errors.Wrap(err, pointWiseMulFail)
+			}
+
+			var upd tensor.Tensor
+			if upd, err = tensor.Mul(cw, momentum); err != nil {
+				return errors.Wrap(err, pointWiseMulFail)
+			}
+
+			if _, err = tensor.Add(upd, g, tensor.UseUnsafe()); err != nil {
+				return errors.Wrap(err, pointWiseMulFail)
+			}
+
+			if _, err = tensor.Add(w, upd, tensor.UseUnsafe()); err != nil {
+				return errors.Wrap(err, addFail)
+			}
+			defer returnTensor(upd)
+
+			g.Zero()
+
+		case *F32:
+			l1reg := float32(s.l1reg)
+			l2reg := float32(s.l2reg)
+			batch := float32(s.batch)
+			clip := float32(s.clip)
+			eta := float32(s.eta)
+			momentum := float32(s.momentum)
+
+			g := grad.(*F32).any()
+			w := weights.any()
+			c := cw.any()
+
+			if s.useL1Reg {
+				if wv < 0 {
+					l1reg = -l1reg
+				}
+				g += l1reg
+			}
+
+			if s.useL2Reg {
+				l2reg *= wv
+				g += l2reg
+			}
+
+			if batch > 1 {
+				g *= (1 / batch)
+			}
+
+			if s.useClip {
+				if g > clip {
+					g = clip
+				} else if g < -clip {
+					g = -clip
+				}
+			}
+
+			upd := c * momentum - eta * g
+			w += upd
+
+			*(weights.(*F32)) = F32(w)
+			*(grad.(*F32)) = F32(0.0)
+		case *F64:
+			l1reg := s.l1reg
+			l2reg := s.l2reg
+			batch := s.batch
+			clip := s.clip
+			eta := s.eta
+			momentum := s.momentum
+
+			g := grad.(*F64).any()
+			w := weights.any()
+			c := cw.any()
+
+			if s.useL1Reg {
+				if wv < 0 {
+					l1reg = -l1reg
+				}
+				g += l1reg
+			}
+
+			if s.useL2Reg {
+				l2reg *= wv
+				g += l2reg
+			}
+
+			if batch > 1 {
+				g *= (1 / batch)
+			}
+
+			if s.useClip {
+				if g > clip {
+					g = clip
+				} else if g < -clip {
+					g = -clip
+				}
+			}
+
+			upd := c * momentum - eta * g
+			w += upd
+
+			*(weights.(*F64)) = F64(w)
+			*(grad.(*F64)) = F64(0.0)
+		default:
+			return errors.Errorf(nyiFail, "MomentumSGDSolver.step", cv)
 		}
 	}
 	return
