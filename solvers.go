@@ -73,7 +73,7 @@ func WithL2Reg(l2reg float64) SolverOpt {
 		case *VanillaSolver:
 			st.l2reg = l2reg
 			st.useL2Reg = true
-		case *MomentumSGDSolver:
+		case *Momentum:
 			st.l2reg = l2reg
 			st.useL2Reg = true
 		}
@@ -91,7 +91,7 @@ func WithL1Reg(l1reg float64) SolverOpt {
 		case *VanillaSolver:
 			st.l1reg = l1reg
 			st.useL1Reg = true
-		case *MomentumSGDSolver:
+		case *Momentum:
 			st.l1reg = l1reg
 			st.useL1Reg = true
 		}
@@ -107,7 +107,7 @@ func WithBatchSize(batch float64) SolverOpt {
 			st.batch = batch
 		case *VanillaSolver:
 			st.batch = batch
-		case *MomentumSGDSolver:
+		case *Momentum:
 			st.batch = batch
 		}
 	}
@@ -143,7 +143,7 @@ func WithClip(clip float64) SolverOpt {
 		case *BarzilaiBorweinSolver:
 			st.clip = clip
 			st.useClip = true
-		case *MomentumSGDSolver:
+		case *Momentum:
 			st.clip = clip
 			st.useClip = true
 		}
@@ -163,7 +163,7 @@ func WithLearnRate(eta float64) SolverOpt {
 			st.eta = eta
 		case *BarzilaiBorweinSolver:
 			st.eta = eta
-		case *MomentumSGDSolver:
+		case *Momentum:
 			st.eta = eta
 		}
 	}
@@ -206,7 +206,7 @@ func WithRho(rho float64) SolverOpt {
 func WithMomentum(momentum float64) SolverOpt {
 	f := func(s Solver) {
 		switch st := s.(type) {
-		case *MomentumSGDSolver:
+		case *Momentum:
 			st.momentum = momentum
 		}
 	}
@@ -919,8 +919,8 @@ func (s *VanillaSolver) Step(model []ValueGrad) (err error) {
 	return
 }
 
-// MomentumSGDSolver is the stochastic gradient descent optimizer with momentum item.
-type MomentumSGDSolver struct {
+// Momentum is the stochastic gradient descent optimizer with momentum item.
+type Momentum struct {
 	eta      float64 // learn rate
 	momentum float64 // momentum
 	clip     float64 // clip gradients
@@ -933,9 +933,9 @@ type MomentumSGDSolver struct {
 	cache []*dualValue
 }
 
-// NewMomentumSGDSolver creates a new MomentumSGDSolver with sane-ish default values
-func NewMomentumSGDSolver(opts ...SolverOpt) *MomentumSGDSolver {
-	s := &MomentumSGDSolver{
+// NewMomentum creates a new Momentum with sane-ish default values
+func NewMomentum(opts ...SolverOpt) *Momentum {
+	s := &Momentum{
 		eta: 0.001,
 		momentum: 0.9,
 	}
@@ -948,7 +948,7 @@ func NewMomentumSGDSolver(opts ...SolverOpt) *MomentumSGDSolver {
 // Step steps through each node in the model and applies the Momentum stochastic gradient descent algorithm on the value.
 //
 // This function will error out if the nodes do not have an associated Grad value.
-func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
+func (s *Momentum) Step(model []ValueGrad) (err error) {
 	if s.cache == nil {
 		s.cache = make([]*dualValue, len(model))
 	}
@@ -974,7 +974,7 @@ func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
 			g := grad.(*tensor.Dense)
 
 			var l1reg, l2reg, clip, negClip, eta, momentum, onePerBatch interface{}
-			switch w.Dtype() {
+			switch cw.Dtype() {
 			case tensor.Float64:
 				l1reg = s.l1reg
 				l2reg = s.l2reg
@@ -996,7 +996,7 @@ func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
 			// prep the regularization of gradients
 			var l1regs, l2regs tensor.Tensor
 			if s.useL1Reg {
-				if l1regs, err = tensor.Sign(w); err != nil {
+				if l1regs, err = tensor.Sign(cw); err != nil {
 					return errors.Wrap(err, signFail)
 				}
 
@@ -1012,7 +1012,7 @@ func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
 			}
 
 			if s.useL2Reg {
-				if l2regs, err = tensor.Mul(l2reg, w); err != nil {
+				if l2regs, err = tensor.Mul(l2reg, cw); err != nil {
 					return errors.Wrap(err, pointWiseMulFail)
 				}
 
@@ -1049,7 +1049,7 @@ func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tensor.Add(w, upd, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(cw, upd, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
 			defer returnTensor(upd)
@@ -1065,18 +1065,18 @@ func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
 			momentum := float32(s.momentum)
 
 			g := grad.(*F32).any()
-			w := weights.any()
+			w := weights.(*F32).any()
 			c := cw.any()
 
 			if s.useL1Reg {
-				if wv < 0 {
+				if w < 0 {
 					l1reg = -l1reg
 				}
 				g += l1reg
 			}
 
 			if s.useL2Reg {
-				l2reg *= wv
+				l2reg *= w
 				g += l2reg
 			}
 
@@ -1106,18 +1106,18 @@ func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
 			momentum := s.momentum
 
 			g := grad.(*F64).any()
-			w := weights.any()
+			w := weights.(*F64).any()
 			c := cw.any()
 
 			if s.useL1Reg {
-				if wv < 0 {
+				if w < 0 {
 					l1reg = -l1reg
 				}
 				g += l1reg
 			}
 
 			if s.useL2Reg {
-				l2reg *= wv
+				l2reg *= w
 				g += l2reg
 			}
 
@@ -1139,7 +1139,7 @@ func (s *MomentumSGDSolver) Step(model Nodes) (err error) {
 			*(weights.(*F64)) = F64(w)
 			*(grad.(*F64)) = F64(0.0)
 		default:
-			return errors.Errorf(nyiFail, "MomentumSGDSolver.step", cv)
+			return errors.Errorf(nyiFail, "Momentum.step", cv)
 		}
 	}
 	return

@@ -271,6 +271,43 @@ func TestVanillaSolver(t *testing.T) {
 	assert.InDelta(0, costFloat, costThreshold)
 }
 
+func TestMomentum(t *testing.T) {
+	assert := assert.New(t)
+
+	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	const costThreshold = 0.39
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	solver := NewMomentum()
+
+	maxIterations := 1000
+
+	costFloat := 42.0
+	for 0 != maxIterations {
+		m.Reset()
+		err = m.RunAll()
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		costFloat = cost.Value().Data().(float64)
+		if costThreshold > math.Abs(costFloat) {
+			break
+		}
+
+		err = solver.Step([]ValueGrad{z})
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		maxIterations--
+	}
+
+	assert.InDelta(0, costFloat, costThreshold)
+}
+
 func TestAdamSolver(t *testing.T) {
 	assert := assert.New(t)
 
