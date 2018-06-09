@@ -161,10 +161,15 @@ func WithGrad(any interface{}) NodeConsOpt {
 			panic("Different types ")
 		}
 
-		if err := n.bind(v); err != nil {
-			panic(err)
+		if dv, ok := n.boundTo.(*dualValue); !ok {
+			if err := n.bind(&dualValue{Value: n.boundTo, d: v}); err != nil {
+				panic(err)
+			}
+		} else {
+			dv.d = v
 		}
 	}
+	return f
 }
 
 // WithInit is a node construction option to initialize a *Node with the InitWFn provided.
