@@ -145,6 +145,28 @@ func WithValue(any interface{}) NodeConsOpt {
 	return f
 }
 
+// WithGrad is a node construction option that binds the value to the *Node. This function may panic if:
+//	- There isn't already a value associated with the node (.boundTo == nil)
+//	- The type of the Value does not match the value of the node.
+func WithGrad(any interface{}) NodeConsOpt {
+	v, t, _, err := anyToValue(any)
+	if err != nil {
+		panic(err)
+	}
+	f := func(n *Node) {
+		if n.boundTo == nil {
+			panic("No value already bound to node")
+		}
+		if !TypeOf(n.boundTo).Eq(t) {
+			panic("Different types ")
+		}
+
+		if err := n.bind(v); err != nil {
+			panic(err)
+		}
+	}
+}
+
 // WithInit is a node construction option to initialize a *Node with the InitWFn provided.
 func WithInit(fn InitWFn) NodeConsOpt {
 	f := func(n *Node) {
