@@ -210,6 +210,7 @@ func WithMomentum(momentum float64) SolverOpt {
 			st.momentum = momentum
 		}
 	}
+	return f
 }
 
 // RMSPropSolver is a solver that implements Geoffrey Hinton's RMSProp gradient descent optimization algorithm.
@@ -936,7 +937,7 @@ type Momentum struct {
 // NewMomentum creates a new Momentum with sane-ish default values
 func NewMomentum(opts ...SolverOpt) *Momentum {
 	s := &Momentum{
-		eta: 0.001,
+		eta:      0.001,
 		momentum: 0.9,
 	}
 	for _, opt := range opts {
@@ -1092,7 +1093,7 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 				}
 			}
 
-			upd := c * momentum - eta * g
+			upd := c*momentum - eta*g
 			w += upd
 
 			*(weights.(*F32)) = F32(w)
@@ -1133,7 +1134,7 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 				}
 			}
 
-			upd := c * momentum - eta * g
+			upd := c*momentum - eta*g
 			w += upd
 
 			*(weights.(*F64)) = F64(w)
