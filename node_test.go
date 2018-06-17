@@ -105,6 +105,10 @@ func TestNodeBasics(t *testing.T) {
 	}
 	returnNode(n)
 
+	// This is acceptable and should not panic
+	n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
+	returnNode(n)
+
 	// bad stuff
 	var f func()
 
@@ -128,7 +132,7 @@ func TestNodeBasics(t *testing.T) {
 
 	// shape type mismatch
 	f = func() {
-		n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
+		n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 2))
 	}
 	assert.Panics(t, f)
 
