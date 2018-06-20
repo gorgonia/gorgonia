@@ -294,7 +294,7 @@ execloop:
 		for _, instr := range instrs {
 			m.logf("Executing %d : %v | %v\n", pnode.index, pnode, instr)
 			if err := m.executeOneInstr(instr); err != nil {
-				err = errors.Wrapf(err, "pnode %d: %v", pnode.index, pnode)
+				err = errors.Wrapf(err, "pnode %d: %v\n%v", pnode.index, pnode, pnode.Value())
 				errChan <- err
 				m.execState.error()
 				workers <- struct{}{}
