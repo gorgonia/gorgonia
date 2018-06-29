@@ -261,8 +261,8 @@ func main() {
 
 	// Output:
 	// z: 4.5
-	// dz/dx: 1 | 1
-	// dz/dy: 1 | 1
+	// dz/dx: 1 | 1 :: float64{1}
+	// dz/dy: 1 | 1 :: float64{1}
 }
 ```
 
@@ -431,7 +431,7 @@ BenchmarkOneMil-8       	      50	  33169036 ns/op
 # API Stability #
 Gorgonia's API is as of right now, not considered stable. It will be stable from version 1.0 forwards.
 
-As we move towards 1.0, the github repository will be moved to the [organization gorgonia](https://gorgonia.org/gorgonia/issues/98). See the issue for more updates.
+As we move towards 1.0, the github repository will be moved to the [organization gorgonia](https://github.com/gorgonia/gorgonia/issues/98). See the issue for more updates.
 
 # Roadmap #
 
