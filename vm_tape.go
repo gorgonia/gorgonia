@@ -548,6 +548,7 @@ func (instr free) String() string { return fmt.Sprintf("Free %v", instr.readsFro
 type loadArg struct {
 	index   int64
 	writeTo register
+	name    string
 }
 
 func (instr loadArg) ID() int64         { return instr.index }
@@ -580,7 +581,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 }
 
 func (instr loadArg) String() string {
-	return fmt.Sprintf("loadArg %x to %v", instr.index, instr.writeTo)
+	return fmt.Sprintf("loadArg %x (%v) to %v", instr.index, instr.name, instr.writeTo)
 }
 
 type execOp struct {
