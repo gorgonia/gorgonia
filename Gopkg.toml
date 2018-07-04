@@ -39,14 +39,6 @@
 
 [[constraint]]
   branch = "master"
-  name = "gorgonia.org/vecf32"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/chewxy/vecf64"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/leesper/go_rng"
 
 [[constraint]]
@@ -60,10 +52,6 @@
 [[constraint]]
   branch = "master"
   name = "github.com/xtgo/set"
-
-[[constraint]]
-  branch = "master"
-  name = "golang.org/x/tools"
 
 [[constraint]]
   branch = "master"
