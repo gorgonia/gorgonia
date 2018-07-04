@@ -3,7 +3,14 @@
 
 [[projects]]
   name = "github.com/awalterschulze/gographviz"
-  packages = [".","ast","internal/errors","internal/lexer","internal/parser","internal/token"]
+  packages = [
+    ".",
+    "ast",
+    "internal/errors",
+    "internal/lexer",
+    "internal/parser",
+    "internal/token"
+  ]
   revision = "c84395e536e1a1199093a4e6253d1bee99e4cd2a"
   version = "v2.0"
 
@@ -100,14 +107,37 @@
 [[projects]]
   branch = "master"
   name = "gonum.org/v1/gonum"
-  packages = ["blas","blas/blas64","blas/gonum","floats","graph","graph/internal/linear","graph/internal/ordered","graph/internal/set","graph/topo","graph/traverse","internal/asm/c128","internal/asm/f32","internal/asm/f64","internal/math32","lapack","lapack/gonum","lapack/lapack64","mat"]
-  revision = "052ff404ed7bcbcf5c326f45dd2e8021cef6af9f"
+  packages = [
+    "blas",
+    "blas/blas64",
+    "blas/gonum",
+    "floats",
+    "graph",
+    "graph/internal/linear",
+    "graph/internal/ordered",
+    "graph/internal/set",
+    "graph/topo",
+    "graph/traverse",
+    "internal/asm/c128",
+    "internal/asm/f32",
+    "internal/asm/f64",
+    "internal/math32",
+    "lapack",
+    "lapack/gonum",
+    "lapack/lapack64",
+    "mat"
+  ]
+  revision = "e9e56344e335b77c52738092530a60fd12db0351"
+
 
 [[projects]]
   branch = "master"
   name = "gonum.org/v1/netlib"
-  packages = ["blas/netlib","internal/binding"]
-  revision = "2930667cbeaa66fe9a41ef1955d751339ba1fc54"
+  packages = [
+    "blas/netlib",
+    "internal/binding"
+  ]
+  revision = "d22599e22c25311208d69b30773390fc4d359d1f"
 
 [[projects]]
   name = "gopkg.in/cheggaaa/pb.v1"
@@ -129,7 +159,11 @@
 
 [[projects]]
   name = "gorgonia.org/tensor"
-  packages = [".","internal/execution","internal/storage"]
+  packages = [
+    ".",
+    "internal/execution",
+    "internal/storage"
+  ]
   revision = "2ab2564f998fe504b94a1679c1c95277cdedea47"
   version = "v0.8.1"
 

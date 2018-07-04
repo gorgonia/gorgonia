@@ -223,14 +223,14 @@ func TestBatchNorm_F64(t *testing.T) {
 	cost, _ := Mean(y)
 
 	if _, err := Grad(cost, x); err != nil {
-		ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)
 	}
 
-	m := NewTapeMachine(g, BindDualValues(x))
+	m := NewTapeMachine(g, BindDualValues(x), TraceExec())
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
+	ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
 
 	shape := x.Shape()
 	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
@@ -254,11 +254,11 @@ func TestBatchNorm_F64(t *testing.T) {
 		sum /= float64(h * w * n)
 		variance /= float64(h * w * n)
 
-		if !dawson.ToleranceF64(sum, 0, 0.001) {
+		if !dawson.ToleranceF64(sum, 0, 0.00001) {
 			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
 		}
 
-		if !dawson.ToleranceF64(variance, 1, 0.001) {
+		if !dawson.ToleranceF64(variance, 1, 0.0001) {
 			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
 		}
 	}
@@ -287,11 +287,11 @@ func TestBatchNorm_F64(t *testing.T) {
 		sum /= float64(h * w * n)
 		variance /= float64(h * w * n)
 
-		if !dawson.ToleranceF64(sum, 0, 0.001) {
+		if !dawson.ToleranceF64(sum, 0, 0.00001) {
 			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
 		}
 
-		if !dawson.ToleranceF64(variance, 0.9833, 0.001) {
+		if !dawson.ToleranceF64(variance, 0.9833, 0.0001) {
 			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
 		}
 	}
