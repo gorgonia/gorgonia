@@ -465,7 +465,7 @@ func (m *ExternMetadata) cleanup() {
 		cu.SetCurrentContext(c.Context.CUDAContext())
 		for _, v := range m.m {
 			mod := v[i]
-			cu.Unload(mod)
+			mod.Unload() // TODO: check errors
 		}
 	}
 

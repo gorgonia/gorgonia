@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
@@ -25,6 +26,7 @@ func (m *lispMachine) init() error {
 	m.df = df
 
 	if err := m.calcMemSize(); err != nil {
+		log.Printf("err1")
 		return err
 	}
 

@@ -245,6 +245,7 @@ func TestGraph_Clone(t *testing.T) {
 	z2 := Must(Square(z))
 
 	// add a collided
+	z2t := z2.Type()
 	delete(g.byHash, z2.hash)
 	g.byHash[0xdeadbeef] = z2
 	col := new(Node)
@@ -253,6 +254,7 @@ func TestGraph_Clone(t *testing.T) {
 	col.hash = 0xdeadbeef
 	col.hashed = true
 	col.boundTo = newF64(0)
+	col.t = z2t
 	g.AddNode(col)
 
 	colleen := new(Node)
@@ -261,6 +263,7 @@ func TestGraph_Clone(t *testing.T) {
 	colleen.hash = 0xdeadbeef
 	colleen.hashed = true
 	colleen.boundTo = newF64(0)
+	colleen.t = z2t
 	g.AddNode(colleen)
 
 	one := onef64
