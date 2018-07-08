@@ -1142,9 +1142,7 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 		var tensordot *Node
 		switch {
 		case grad.Shape().IsScalar():
-			tensordot, err = HadamardProd(other, grad)
-
-			if err != nil {
+			if tensordot, err = HadamardProd(other, grad); err != nil {
 				return nil, err
 			}
 
@@ -1158,8 +1156,7 @@ func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal No
 					return nil, err
 				}
 
-				otherCorrectShape, err = Reshape(other, tensor.Shape{otherVecDims, 1})
-				if err != nil {
+				if otherCorrectShape, err = Reshape(other, tensor.Shape{otherVecDims, 1}); err != nil {
 					return nil, err
 				}
 			}

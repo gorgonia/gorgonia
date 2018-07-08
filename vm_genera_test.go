@@ -97,8 +97,7 @@ func TestLispMachineMechanics(t *testing.T) {
 
 	machine := NewLispMachine(g)
 	defer machine.Close()
-	err = machine.RunAll()
-	if err != nil {
+	if err = machine.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -120,8 +119,7 @@ func TestLispMachineMechanics(t *testing.T) {
 	sg := g.SubgraphRoots(readSzp2, szp2)
 	machine = NewLispMachine(sg)
 	defer machine.Close()
-	err = machine.RunAll()
-	if err != nil {
+	if err = machine.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -143,8 +141,7 @@ func TestLispMachineMechanics(t *testing.T) {
 	szp3dv := szp3.boundTo.(*dualValue)
 	szp3dvv := szp3dv.Value
 
-	err = machine.RunAll()
-	if err != nil {
+	if err = machine.RunAll(); err != nil {
 		t.Error(err)
 	}
 

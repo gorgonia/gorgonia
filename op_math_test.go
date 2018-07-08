@@ -526,9 +526,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("vectors: Cannot ApplyOp:", err)
 		return
 	}
@@ -576,9 +574,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrix vector: Cannot ApplyOp:", err)
 		return
 	}
@@ -627,9 +623,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 2,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrices: Cannot ApplyOp:", err)
 		return
 	}
@@ -678,9 +672,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrices total contraction: Cannot ApplyOp:", err)
 		return
 	}

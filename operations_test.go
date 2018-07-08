@@ -33,8 +33,7 @@ func TestApplyOp(t *testing.T) {
 
 	ct = NewConstant(tensor.Ones(tensor.Float64, 3, 3)) // no graph set for ct
 	op = newElemBinOp(addOpType, cpi, ct)
-	added, err = ApplyOpWithName(op, "+ pi constTensor(3,3)_ones", cpi, ct)
-	if err != nil {
+	if added, err = ApplyOpWithName(op, "+ pi constTensor(3,3)_ones", cpi, ct); err != nil {
 		t.Error(err)
 	}
 }
@@ -745,15 +744,11 @@ func TestTensordot(t *testing.T) {
 
 	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
 
-	tensordot, err = Tensordot([]int{0}, []int{0}, a, b)
-
-	if err != nil {
+	if tensordot, err = Tensordot([]int{0}, []int{0}, a, b); err != nil {
 		t.Fatal(err)
 	}
 
-	dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
-
-	if err != nil {
+	if dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -785,23 +780,23 @@ func TestTensordot(t *testing.T) {
 
 	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(2), WithInit(ValuesOf(1.0)))
 
-	tensordot, err = Tensordot([]int{1}, []int{0}, a, b)
-
-	if err != nil {
+	if tensordot, err = Tensordot([]int{1}, []int{0}, a, b); err != nil {
 		t.Fatal(err)
 	}
 
-	dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
-
-	if err != nil {
+	if dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b}); err != nil {
 		t.Fatal(err)
 	}
 
 	// Need to multiply dtensordot with identiy matrix, otherwise the transpose action in symdiff is not performed
 	id = NewConstant(tensor.I(Float64, 2, 2, 0))
 
-	dtensordot0, err = Mul(id, dtensordot[0])
-	dtensordot1, err = Mul(id, dtensordot[1])
+	if dtensordot0, err = Mul(id, dtensordot[0]); err != nil {
+		t.Fatal(err)
+	}
+	if dtensordot1, err = Mul(id, dtensordot[1]); err != nil {
+		t.Fatal(err)
+	}
 
 	m = NewTapeMachine(g)
 	defer m.Close()
@@ -826,23 +821,23 @@ func TestTensordot(t *testing.T) {
 
 	c = NewTensor(g, Float64, 2, WithName("c"), WithShape(2, 2), WithInit(ValuesOf(1.0)))
 
-	tensordot, err = Tensordot([]int{1}, []int{1}, a, b)
-
-	if err != nil {
+	if tensordot, err = Tensordot([]int{1}, []int{1}, a, b); err != nil {
 		t.Fatal(err)
 	}
 
-	dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
-
-	if err != nil {
+	if dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b}); err != nil {
 		t.Fatal(err)
 	}
 
 	// Need to multiply dtensordot with identiy matrix, otherwise the transpose action in symdiff is not performed
 	id = NewConstant(tensor.I(Float64, 2, 2, 0))
 
-	dtensordot0, err = Mul(id, dtensordot[0])
-	dtensordot1, err = Mul(id, dtensordot[1])
+	if dtensordot0, err = Mul(id, dtensordot[0]); err != nil {
+		t.Fatal(err)
+	}
+	if dtensordot1, err = Mul(id, dtensordot[1]); err != nil {
+		t.Fatal(err)
+	}
 
 	m = NewTapeMachine(g)
 	if err = m.RunAll(); err != nil {
@@ -864,23 +859,23 @@ func TestTensordot(t *testing.T) {
 
 	c = NewTensor(g, Float64, 1, WithName("c"), WithShape(1), WithInit(ValuesOf(1.0)))
 
-	tensordot, err = Tensordot([]int{0, 1}, []int{0, 1}, a, b)
-
-	if err != nil {
+	if tensordot, err = Tensordot([]int{0, 1}, []int{0, 1}, a, b); err != nil {
 		t.Fatal(err)
 	}
 
-	dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b})
-
-	if err != nil {
+	if dtensordot, err = Backpropagate(Nodes{tensordot}, Nodes{c}, Nodes{a, b}); err != nil {
 		t.Fatal(err)
 	}
 
 	// Need to multiply dtensordot with identiy matrix, otherwise the transpose action in symdiff is not performed
 	id = NewConstant(tensor.I(Float64, 2, 2, 0))
 
-	dtensordot0, err = Mul(id, dtensordot[0])
-	dtensordot1, err = Mul(id, dtensordot[1])
+	if dtensordot0, err = Mul(id, dtensordot[0]); err != nil {
+		t.Fatal(err)
+	}
+	if dtensordot1, err = Mul(id, dtensordot[1]); err != nil {
+		t.Fatal(err)
+	}
 
 	m = NewTapeMachine(g)
 	defer m.Close()
