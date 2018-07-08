@@ -3,7 +3,6 @@ package gorgonia_test
 import (
 	"fmt"
 	"log"
-	"runtime"
 
 	. "gorgonia.org/gorgonia"
 )
@@ -27,7 +26,7 @@ func Example_basic() {
 
 	// create a VM to run the program on
 	machine := NewTapeMachine(g)
-	defer runtime.GC()
+	defer machine.Close()
 
 	// set initial values then run
 	Let(x, 2.0)

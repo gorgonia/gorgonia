@@ -26,7 +26,7 @@ func TestCUDACube(t *testing.T) {
 	Read(x3, &x3Val)
 
 	m := NewTapeMachine(g)
-	defer runtime.GC()
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -114,7 +114,7 @@ func TestMultiDeviceArithmetic(t *testing.T) {
 
 	logger := log.New(os.Stderr, "", 0)
 	m := NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
-
+	defer m.Close()
 	t.Logf("zpx.Device: %v", zpx.Device())
 	t.Logf("x.Device: %v", x.Device())
 	t.Logf("y.Device: %v", y.Device())

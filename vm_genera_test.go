@@ -19,46 +19,56 @@ func TestLispMachineBasics(t *testing.T) {
 	// test various flags first
 	g := NewGraph()
 	m = NewLispMachine(g)
+	defer m.Close()
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.runFwd())
 	assert.True(m.runBwd())
 
 	logger := log.New(&buf, "", 0)
 	m = NewLispMachine(g, WithLogger(logger))
+	defer m.Close()
 	assert.Equal(logger, m.logger)
 	assert.Equal(byte(0x0), m.logFlags) // if you pass in a logger without telling which direction to log... nothing gets logged
 
 	m = NewLispMachine(g, WithLogger(nil))
+	defer m.Close()
 	assert.NotNil(m.logger)
 
 	m = NewLispMachine(g, WithValueFmt("%v"))
+	defer m.Close()
 	assert.Equal("%v", m.valueFmt)
 
 	m = NewLispMachine(g, WithNaNWatch())
+	defer m.Close()
 	assert.Equal(byte(0x7), m.runFlags)
 	assert.True(m.watchNaN())
 
 	m = NewLispMachine(g, WithInfWatch())
+	defer m.Close()
 	assert.Equal(byte(0xb), m.runFlags)
 	assert.True(m.watchInf())
 
 	m = NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
 	assert.Equal(byte(0x1), m.runFlags)
 	assert.True(m.runFwd())
 	assert.False(m.runBwd())
 
 	m = NewLispMachine(g, ExecuteBwdOnly())
+	defer m.Close()
 	assert.Equal(byte(0x2), m.runFlags)
 	assert.True(m.runBwd())
 	assert.False(m.runFwd())
 
 	m = NewLispMachine(g, LogFwd())
+	defer m.Close()
 	assert.Equal(byte(0x1), m.logFlags)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.logFwd())
 	assert.False(m.logBwd())
 
 	m = NewLispMachine(g, LogBwd())
+	defer m.Close()
 	assert.Equal(byte(0x2), m.logFlags)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.logBwd())
@@ -66,6 +76,7 @@ func TestLispMachineBasics(t *testing.T) {
 
 	// if you pass in a watchlist, but don't have any logger, well, it's not gonna log anything
 	m = NewLispMachine(g, WithWatchlist())
+	defer m.Close()
 	assert.Equal(byte(0x80), m.logFlags)
 	assert.Equal(byte(0x3), m.runFlags)
 	assert.True(m.watchAll())
@@ -85,6 +96,7 @@ func TestLispMachineMechanics(t *testing.T) {
 	Let(y, tensor.New(tensor.WithShape(y.shape...), tensor.WithBacking(yBack)))
 
 	machine := NewLispMachine(g)
+	defer machine.Close()
 	err = machine.RunAll()
 	if err != nil {
 		t.Error(err)
@@ -107,6 +119,7 @@ func TestLispMachineMechanics(t *testing.T) {
 
 	sg := g.SubgraphRoots(readSzp2, szp2)
 	machine = NewLispMachine(sg)
+	defer machine.Close()
 	err = machine.RunAll()
 	if err != nil {
 		t.Error(err)
@@ -120,8 +133,9 @@ func TestLispMachineMechanics(t *testing.T) {
 	// this is to test that if given the same root that had previously been executed on, it will not reallocate a new *dv
 	sg = g.SubgraphRoots(szp3)
 	machine = NewLispMachine(sg)
-	err = machine.RunAll()
-	if err != nil {
+	defer machine.Close()
+
+	if err = machine.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -146,8 +160,8 @@ func TestLispMachineMechanics(t *testing.T) {
 	cost := Must(Add(sz, x))
 	sg = g.Subgraph(cost)
 	machine = NewLispMachine(sg)
-	err = machine.RunAll()
-	if err == nil {
+	defer machine.Close()
+	if err = machine.RunAll(); err == nil {
 		t.Error("Expected a AutoDiff error")
 	}
 }
@@ -208,7 +222,7 @@ func TestLispMachineRepeatedRuns(t *testing.T) {
 				continue
 			}
 		}
-
+		m.Close()
 		runtime.GC()
 	}
 

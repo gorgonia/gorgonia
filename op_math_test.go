@@ -391,7 +391,7 @@ func TestBasicArithmetic(t *testing.T) {
 			t.Errorf("BasicArithmetic - TapeMachine failure")
 			t.FailNow()
 		}
-
+		m1.Close()
 		runtime.GC()
 	}
 
@@ -455,7 +455,7 @@ func TestBasicArithmetic(t *testing.T) {
 			t.Errorf("Test %d  - LispMachine failure in test", i)
 			t.FailNow()
 		}
-
+		m1.Close()
 		runtime.GC()
 	}
 }

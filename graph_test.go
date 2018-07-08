@@ -330,6 +330,7 @@ func TestGraph_Clone(t *testing.T) {
 	Let(x, tensor.New(tensor.WithBacking([]float64{1, 2})))
 	Let(y, tensor.New(tensor.WithBacking([]float64{3, 4})))
 	m := NewLispMachine(g, ExecuteFwdOnly()) // the gradient has been precalculated
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}

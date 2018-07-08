@@ -64,6 +64,7 @@ func TestBroadcast(t *testing.T) {
 	}
 
 	m = NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
@@ -79,6 +80,7 @@ func TestBroadcast(t *testing.T) {
 	}
 
 	m = NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}

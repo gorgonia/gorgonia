@@ -104,6 +104,7 @@ func TestMul(t *testing.T) {
 		assert.Equal(mts.gradW, gradW.Data().([]float64))
 		assert.True(mts.xshape.Eq(gradX.Shape()))
 		assert.True(mts.wshape.Eq(gradW.Shape()))
+		m.Close()
 	}
 
 	t.Logf("Testing Mul with LispMachine")
@@ -149,6 +150,7 @@ func TestMul(t *testing.T) {
 		assert.Equal(mts.gradW, gradW.Data().([]float64))
 		assert.True(mts.xshape.Eq(gradX.Shape()))
 		assert.True(mts.wshape.Eq(gradW.Shape()))
+		m.Close()
 	}
 }
 
@@ -281,7 +283,6 @@ func TestGt(t *testing.T) {
 		if gtts.retSame {
 			Must(Sum(ret2))
 			m2 = NewLispMachine(h)
-
 		} else {
 			m2 = NewLispMachine(h, ExecuteFwdOnly())
 		}
@@ -293,6 +294,8 @@ func TestGt(t *testing.T) {
 		if !ValueEq(ret.Value(), ret2.Value()) {
 			t.Errorf("Test %d. Expected %v. Got  %v", i, ret.Value(), ret2.Value())
 		}
+		m1.Close()
+		m2.Close()
 		runtime.GC()
 	}
 
@@ -311,6 +314,7 @@ func TestGt(t *testing.T) {
 	Grad(cost, T)
 
 	m1 := NewTapeMachine(g)
+	defer m1.Close()
 	if err = m1.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -331,6 +335,7 @@ func TestGt(t *testing.T) {
 	Must(Sum(gt2))
 
 	m2 := NewLispMachine(h)
+	defer m2.Close()
 	if err = m2.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -359,6 +364,7 @@ func TestSoftMax(t *testing.T) {
 	}
 
 	m := NewTapeMachine(g)
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -383,8 +389,8 @@ func TestSoftMax(t *testing.T) {
 	Must(Slice(logsm2, S(2)))
 
 	m2 := NewLispMachine(g2)
-	err = m2.RunAll()
-	if err != nil {
+	defer m2.Close()
+	if err = m2.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -501,6 +507,9 @@ func TestSlice(t *testing.T) {
 			t.Errorf("Test %q - Expected sG and s2G to have the same value", sts.name)
 		}
 
+		m1.Close()
+		m2.Close()
+
 		// For visual checks
 		// xG, err := x.Grad()
 		// t.Logf("Test  %q x: \n%+v,\n%+v", sts.name, x.Value(), xG)
@@ -514,7 +523,7 @@ func TestSlice(t *testing.T) {
 	Grad(cost, x)
 
 	m := NewTapeMachine(g)
-
+	defer m.Close()
 	// mutate the graph before running
 	UnsafeLet(sliced, S(1))
 	UnsafeLet(cost, S(2))
@@ -649,6 +658,9 @@ func TestSum(t *testing.T) {
 		if !ValueEq(sG, bG) {
 			t.Errorf("Expected the values of the partial derivatives of both machines to be the same")
 		}
+
+		m.Close()
+		m2.Close()
 	}
 }
 
@@ -662,6 +674,7 @@ func TestNorm(t *testing.T) {
 		return
 	}
 	m := NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
 
 	xT := tensor.New(tensor.WithShape(3, 3), tensor.WithBacking(tensor.Range(tensor.Float64, 0, 9)))
 	Let(x, xT)
@@ -709,9 +722,8 @@ func TestTensordot(t *testing.T) {
 	}
 
 	m := NewTapeMachine(g)
-	err = m.RunAll()
-
-	if nil != err {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -752,9 +764,8 @@ func TestTensordot(t *testing.T) {
 	dtensordot1 := Must(Mul(id, dtensordot[1]))
 
 	m = NewTapeMachine(g)
-	err = m.RunAll()
-
-	if nil != err {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -793,9 +804,8 @@ func TestTensordot(t *testing.T) {
 	dtensordot1, err = Mul(id, dtensordot[1])
 
 	m = NewTapeMachine(g)
-	err = m.RunAll()
-
-	if nil != err {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -835,9 +845,7 @@ func TestTensordot(t *testing.T) {
 	dtensordot1, err = Mul(id, dtensordot[1])
 
 	m = NewTapeMachine(g)
-	err = m.RunAll()
-
-	if nil != err {
+	if err = m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -875,9 +883,8 @@ func TestTensordot(t *testing.T) {
 	dtensordot1, err = Mul(id, dtensordot[1])
 
 	m = NewTapeMachine(g)
-	err = m.RunAll()
-
-	if nil != err {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
 

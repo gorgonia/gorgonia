@@ -164,6 +164,7 @@ func TestRMSPropSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.68
 	if nil != err {
 		t.Fatal(err)
@@ -201,6 +202,7 @@ func TestAdaGradSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dSquare(-0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.39
 	if nil != err {
 		t.Fatal(err)
@@ -238,6 +240,7 @@ func TestVanillaSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.185
 	if nil != err {
 		t.Fatal(err)
@@ -275,6 +278,7 @@ func TestMomentum(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.39
 	if nil != err {
 		t.Fatal(err)
@@ -312,6 +316,7 @@ func TestAdamSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.113
 	if nil != err {
 		t.Fatal(err)
@@ -349,6 +354,7 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.00002
 	if nil != err {
 		t.Fatal(err)

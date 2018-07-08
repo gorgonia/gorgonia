@@ -77,6 +77,7 @@ func linregSetup(Float tensor.Dtype) (m, c *Node, machine VM) {
 }
 
 func linregRun(m, c *Node, machine VM, iter int) (retM, retC Value) {
+	defer machine.Close()
 	model := []ValueGrad{m, c}
 	solver := NewVanillaSolver(WithLearnRate(0.001), WithClip(5)) // good idea to clip
 

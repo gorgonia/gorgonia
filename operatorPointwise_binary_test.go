@@ -59,6 +59,8 @@ func ssBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 	}
 
 	m2 := NewTapeMachine(g2, TraceExec(), BindDualValues())
+	defer m2.Close()
+	defer m1.Close()
 
 	Let(x, randX)
 	Let(y, randY)
@@ -163,6 +165,8 @@ func ttBinOpTest(t *testing.T, op ʘBinaryOperatorType, dt tensor.Dtype) (err er
 
 	// lg := log.New(os.Stderr, "", 0)
 	m2 := NewTapeMachine(g2, TraceExec())
+	defer m2.Close()
+	defer m1.Close()
 
 	// m2 := NewTapeMachine(prog, locMap, TraceExec(), WithLogger(logger), WithWatchlist())
 
