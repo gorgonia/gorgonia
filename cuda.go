@@ -60,17 +60,16 @@ type ExternMetadata struct {
 	freeMem  []int64 // free memory available in this context
 	totalMem []int64 // total memory available in this context
 
-	a             []*bfc               // arena
-	b             batchedBLAS          // blas
-	c             []*cu.BatchedContext // context
-	d             []cu.Device          // device
-	n             *cudnn.Context
+	a             []*bfc                   // arena
+	b             batchedBLAS              // blas
+	c             []*cu.BatchedContext     // context
+	d             []cu.Device              // device
+	f             map[string][]cu.Function // known functions
+	m             map[string][]cu.Module   // known modules
+	n             *cudnn.Context           // cuDNN
 	hasWork       []bool
 	workAvailable chan bool
 	syncChan      chan struct{}
-
-	m map[string][]cu.Module
-	f map[string][]cu.Function
 
 	sync.Mutex        // lock to protect using
 	u          Device // using which device?
@@ -190,6 +189,7 @@ func (m *ExternMetadata) CUDNNContext() *cudnn.Context { return m.n }
 func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
 	d := int(dev)
 	if d >= len(m.a) {
+		log.Printf("m: %p m.a %v", m, len(m.a))
 		return nil, noopError{} // this should not be a noopError
 	}
 
@@ -332,22 +332,25 @@ func (m *ExternMetadata) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 }
 func (m *ExternMetadata) WorksWith(order tensor.DataOrder) bool { return true }
 
-func (m *ExternMetadata) init(sizes []int64) {
-	if m.initialzed {
-		return
-	}
+func (m *ExternMetadata) init(sizes []int64) (err error) {
+	m.Lock()
+	initialized := m.initialzed
+	m.Unlock()
 
+	if initialized {
+		return nil
+	}
 	devices, err := cu.NumDevices()
 	if err != nil {
-		cudaLogf("Failed to get number of devices: %v", err)
-		return
+		return errors.Wrapf(err, "Failed to get number of devices")
 	}
 
 	if devices == 0 {
-		cudaLogf("No devices found")
-		return
+		return errors.New("No Devices Found")
 	}
 
+	m.Lock()
+	defer m.Unlock()
 	m.workAvailable = make(chan bool)
 	m.syncChan = make(chan struct{})
 	m.a = make([]*bfc, devices)
@@ -369,9 +372,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 	for i := range m.c {
 		dev, err := cu.GetDevice(i)
 		if err != nil {
-			cudaLogf("Failed to get device %d: %v", i, err)
-			m.initFail()
-			return
+			return errors.Wrapf(err, "Failed to get device %d", i)
 		}
 
 		ctxFlag := cu.SchedAuto
@@ -379,25 +380,19 @@ func (m *ExternMetadata) init(sizes []int64) {
 		// ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
 		if err != nil {
 			if err == cu.OutOfMemory {
-				var free, total int64
-				if free, total, err = cu.MemInfo(); err != nil {
-					cudaLogf("Error while getting mem info: %v", err)
+				free, total, err2 := cu.MemInfo()
+				if err2 != nil {
+					return errors.Wrapf(err, "Out of memory. Additionally errors were found while retrieving mem info %v", err2)
 				}
-				cudaLogf("Out of memory. ???! Free: %v, total %v", free, total)
-				m.initFail()
-				return
+				return errors.Wrapf(err, "Out of memory. Free: %v, total %v | %v", free, total, cuctx)
 			}
-			cudaLogf("Failed to make context for device %d. Error: %v", i, err)
-			m.initFail()
-			return
+			return errors.Wrapf(err, "Failed to make context for device %d", i)
 		}
 		ctx := cu.CtxFromCUContext(dev, cuctx, ctxFlag)
 
 		var attrs []int
 		if attrs, err = dev.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
-			cudaLogf("Failed to get attributes for device %d. Error: %v", i, err)
-			m.initFail()
-			return
+			return errors.Wrapf(err, "Failed to get attributes for device %d.", i)
 		}
 
 		m.warp[i] = attrs[0]
@@ -411,9 +406,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 
 		free, total, err := cu.MemInfo()
 		if err != nil {
-			cudaLogf("Failed to get free and total mem for device %d", i)
-			m.initFail()
-			return
+			return errors.Wrapf(err, "Failed to get free and total mem for device %d", i)
 		}
 		m.freeMem[i] = free
 		m.totalMem[i] = total
@@ -426,8 +419,7 @@ func (m *ExternMetadata) init(sizes []int64) {
 			}
 			ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
 			if err != nil {
-				cudaLogf("Failed to allocate %v bytes of managed memory for %v. Err: %v", allocsize, i, err)
-				m.initFail()
+				return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, i)
 			}
 			m.a[i].reserve(uintptr(ptr), allocsize)
 		}
@@ -444,18 +436,27 @@ func (m *ExternMetadata) init(sizes []int64) {
 
 	m.initialzed = true
 	cudaLogf("CUDA initialized. Contexts: %v", m.c)
+	return nil
 }
 
 func (m *ExternMetadata) initFail() {
+	m.Lock()
 	cudaLogf("Cleanup")
+
+	m.a = nil
+	m.b = nil
 	m.c = nil
-	m.m = nil
+	m.d = nil
 	m.f = nil
+	m.m = nil
+	m.n = nil
 
 	if m.workAvailable != nil {
 		close(m.workAvailable)
 	}
 	m.workAvailable = nil
+
+	m.Unlock()
 }
 
 // cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
@@ -479,9 +480,27 @@ func (m *ExternMetadata) cleanup() {
 	}
 
 	// destroy contexts
+	if m.n != nil {
+		err := m.n.Close() // TODO: check error
+		if err != nil {
+			cudaLogf("Error destroying cuDNN Context %v", err)
+		}
+	}
+
+	if m.b != nil {
+		if err := m.b.Close(); err != nil {
+			cudaLogf("Error closing batched BLAS %v", err)
+		}
+	}
+
 	for i := range m.c {
+		err := m.c[i].Close()
+		if err != nil {
+			cudaLogf("Error closing CUDA context: %v", err)
+		}
 		m.c[i] = nil // tell gc to collect. ctx.finalizeCtx will run
 	}
+
 }
 
 // collectWork is a muxer for all the channels for the different devices
@@ -494,8 +513,11 @@ func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
 
 // collectBLASWork is a muxer for CBLAS/CuBLAS (if any) and the devices
 func (m *ExternMetadata) collectBLASWork() {
-	if m.b != nil {
-		for range m.b.WorkAvailable() {
+	m.Lock()
+	b := m.b
+	m.Unlock()
+	if b != nil {
+		for range b.WorkAvailable() {
 			m.blasHasWork = true
 			m.workAvailable <- false
 		}

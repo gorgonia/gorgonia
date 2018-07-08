@@ -9,7 +9,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
-var binOpTests = []struct {
+type binOpTest struct {
 	binOp func(*Node, *Node) (*Node, error)
 	a, b  Value
 
@@ -17,7 +17,9 @@ var binOpTests = []struct {
 	correctDerivA Value
 	correctDerivB Value
 	correctShape  tensor.Shape
-}{
+}
+
+var binOpTests = []binOpTest{
 
 	{Add,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),

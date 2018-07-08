@@ -118,6 +118,11 @@ func (m *tapeMachine) Reset() {
 	}
 }
 
+func (m *tapeMachine) Close() error {
+	finalizeTapeMachine(m)
+	return nil
+}
+
 // Prog returns the compiled program. This would mainly be used in debugging functions
 func (m *tapeMachine) Prog() *program { return m.p }
 
@@ -505,7 +510,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 		var mem tensor.Memory
 		memsize := calcMemSize(dt, instr.s)
 		if mem, err = m.ExternMetadata.Get(dev, memsize); err != nil {
-			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
+			return errors.Wrapf(err, "Unable to allocate %v bytes from %v | %T", memsize, dev, err)
 		}
 		v, err = makeValueFromMem(instr.t, instr.s, mem)
 	}
