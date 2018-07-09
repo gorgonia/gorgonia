@@ -97,8 +97,7 @@ func TestBackprop(t *testing.T) {
 
 	grad = g.AddNode(gradOut)
 	inputs = Nodes{x, w}
-	ret, err = Backpropagate(Nodes{res}, Nodes{grad}, inputs)
-	if err != nil {
+	if ret, err = Backpropagate(Nodes{res}, Nodes{grad}, inputs); err != nil {
 		t.Error(err)
 	}
 

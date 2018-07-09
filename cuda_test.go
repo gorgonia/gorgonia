@@ -25,6 +25,7 @@ func TestDevCUDA(t *testing.T) {
 
 	logger := log.New(os.Stderr, "", 0)
 	m := NewTapeMachine(g, WithLogger(logger), TraceExec())
+	defer m.Close()
 
 	prog, locMap, _ := Compile(g)
 	t.Logf("prog:\n%v\n", prog)
@@ -98,6 +99,7 @@ func BenchmarkOneMilCUDA(b *testing.B) {
 	Must(Sigmoid(x))
 
 	m := NewTapeMachine(g)
+	defer m.Close()
 
 	// runtime.LockOSThread()
 	for n := 0; n < b.N; n++ {
@@ -117,6 +119,7 @@ func BenchmarkOneMil(b *testing.B) {
 	Must(Sigmoid(x))
 
 	m := NewTapeMachine(g)
+	defer m.Close()
 
 	for n := 0; n < b.N; n++ {
 		if err := m.RunAll(); err != nil {

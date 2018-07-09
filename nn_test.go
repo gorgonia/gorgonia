@@ -35,6 +35,7 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 
 	// m := NewTapeMachine(g, TraceExec(), BindDualValues(), WithLogger(logger), WithWatchlist())
 	m := NewTapeMachine(g, TraceExec(), BindDualValues())
+	defer m.Close()
 	cudaLogf("%v", m.Prog())
 	if err := m.RunAll(); err != nil {
 		t.Logf("Execution Log\n%v", m.buf.String())
@@ -88,6 +89,7 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride, dilation ten
 	}
 
 	m := NewTapeMachine(g, BindDualValues())
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
 		return
@@ -105,6 +107,7 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride, dilation ten
 	}
 	cost2 := Must(Sum(b))
 	n := NewLispMachine(h)
+	defer n.Close()
 	if err = n.RunAll(); err != nil {
 		t.Error(err)
 		return
@@ -154,7 +157,6 @@ func TestMaxPool2D(t *testing.T) {
 		if err := m.RunAll(); err != nil {
 			t.Fatal(err)
 		}
-
 		// t.Logf("x %v", x.Value())
 		// t.Logf("y: %v", y.Value())
 		// t.Logf("c: %v", cost.Value())
@@ -185,29 +187,11 @@ func TestMaxPool2D(t *testing.T) {
 		assert.Equal(grads[0].Value().Data(), aG.Data())
 		assert.Equal(cost.Value().Data(), cost2.Value().Data())
 
+		m.Close()
+		m2.Close()
 	}
 
 }
-
-/*
-func TestDumb(t *testing.T) {
-	g := NewGraph()
-	x := NewTensor(g, Float32, 4, WithShape(10, 128, 6, 6), WithInit(RangedFrom(0)))
-	// x := NewTensor(g, Float32, 4, WithShape(10, 128, 6, 6), WithName("x"))
-	p := Must(MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}))
-	r := Must(Reshape(p, tensor.Shape{10, 512}))
-	c := Must(Sum(r))
-	Grad(c, x)
-	// ioutil.WriteFile("dumbdumb.dot", []byte(g.ToDot()), 0644)
-	// prog, _, _ := Compile(g)
-	// log.Printf("%v", prog)
-	logger := log.New(os.Stderr, "", 0)
-	m := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("%+s"))
-	if err := m.RunAll(); err != nil {
-		t.Fatal(err)
-	}
-}
-*/
 
 func TestBatchNorm_F64(t *testing.T) {
 	g := NewGraph()
@@ -230,6 +214,7 @@ func TestBatchNorm_F64(t *testing.T) {
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
+	m.Close()
 	ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
 
 	shape := x.Shape()
@@ -268,6 +253,7 @@ func TestBatchNorm_F64(t *testing.T) {
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
+	m.Close()
 	yVT = yVal.(*tensor.Dense)
 	for j := 0; j < c; j++ {
 		var sum, variance float64
@@ -320,6 +306,7 @@ func TestBatchNorm_F32(t *testing.T) {
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
+	m.Close()
 
 	shape := x.Shape()
 	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
@@ -357,6 +344,7 @@ func TestBatchNorm_F32(t *testing.T) {
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
+	m.Close()
 	yVT = yVal.(*tensor.Dense)
 	for j := 0; j < c; j++ {
 		var sum, variance float32

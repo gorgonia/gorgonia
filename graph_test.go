@@ -246,6 +246,7 @@ func TestGraph_Clone(t *testing.T) {
 	z2 := Must(Square(z))
 
 	// add a collided
+	z2t := z2.Type()
 	delete(g.byHash, z2.hash)
 	g.byHash[0xdeadbeef] = z2
 	col := new(Node)
@@ -254,6 +255,7 @@ func TestGraph_Clone(t *testing.T) {
 	col.hash = 0xdeadbeef
 	col.hashed = true
 	col.boundTo = newF64(0)
+	col.t = z2t
 	g.AddNode(col)
 
 	colleen := new(Node)
@@ -262,6 +264,7 @@ func TestGraph_Clone(t *testing.T) {
 	colleen.hash = 0xdeadbeef
 	colleen.hashed = true
 	colleen.boundTo = newF64(0)
+	colleen.t = z2t
 	g.AddNode(colleen)
 
 	one := onef64
@@ -328,6 +331,7 @@ func TestGraph_Clone(t *testing.T) {
 	Let(x, tensor.New(tensor.WithBacking([]float64{1, 2})))
 	Let(y, tensor.New(tensor.WithBacking([]float64{3, 4})))
 	m := NewLispMachine(g, ExecuteFwdOnly()) // the gradient has been precalculated
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}

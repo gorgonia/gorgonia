@@ -237,7 +237,7 @@ func main() {
 
 	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
-
+	defer vm.Close()
 	// pprof
 	// handlePprof(sigChan, doneChan)
 

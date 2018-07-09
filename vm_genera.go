@@ -107,6 +107,11 @@ func (m *lispMachine) Reset() {
 	m.bwd = len(m.q) - 1
 }
 
+func (m *lispMachine) Close() error {
+	finalizeLispMachine(m)
+	return nil
+}
+
 // RunAll traverses a graph and executes every node. Backpropagation is done if necessary
 func (m *lispMachine) RunAll() (err error) {
 	runtime.LockOSThread()

@@ -18,7 +18,7 @@ import (
 
 var debug = flag.Bool("debug", false, "compile with debug mode (-linelinfo is added to nvcc call)")
 
-var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\n")
+var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\r?\n")
 
 func stripExt(fullpath string) string {
 	_, filename := filepath.Split(fullpath)

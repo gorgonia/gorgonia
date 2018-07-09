@@ -9,7 +9,7 @@ import (
 	"gorgonia.org/tensor"
 )
 
-var binOpTests = []struct {
+type binOpTest struct {
 	binOp func(*Node, *Node) (*Node, error)
 	a, b  Value
 
@@ -17,7 +17,9 @@ var binOpTests = []struct {
 	correctDerivA Value
 	correctDerivB Value
 	correctShape  tensor.Shape
-}{
+}
+
+var binOpTests = []binOpTest{
 
 	{Add,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
@@ -396,7 +398,7 @@ func TestBasicArithmetic(t *testing.T) {
 			t.Errorf("BasicArithmetic - TapeMachine failure")
 			t.FailNow()
 		}
-
+		m1.Close()
 		runtime.GC()
 	}
 
@@ -460,7 +462,7 @@ func TestBasicArithmetic(t *testing.T) {
 			t.Errorf("Test %d  - LispMachine failure in test", i)
 			t.FailNow()
 		}
-
+		m1.Close()
 		runtime.GC()
 	}
 }
@@ -531,9 +533,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("vectors: Cannot ApplyOp:", err)
 		return
 	}
@@ -581,9 +581,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrix vector: Cannot ApplyOp:", err)
 		return
 	}
@@ -632,9 +630,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 2,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrices: Cannot ApplyOp:", err)
 		return
 	}
@@ -683,9 +679,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrices total contraction: Cannot ApplyOp:", err)
 		return
 	}
