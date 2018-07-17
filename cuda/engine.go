@@ -1,6 +1,8 @@
 package cuda
 
 import (
+	"sync"
+
 	"gorgonia.org/cu"
 	"gorgonia.org/cu/blas"
 	"gorgonia.org/cu/dnn"
@@ -9,6 +11,7 @@ import (
 
 type Engine struct {
 	tensor.Engine
+	sync.Mutex
 
 	a bfc
 	b cublas.Standard
@@ -32,6 +35,7 @@ type Engine struct {
 
 	syncChan      chan struct{}
 	workAvailable chan bool
+	initialized   bool
 }
 
 func (e *Engine) AllocAccessible() bool { return true }

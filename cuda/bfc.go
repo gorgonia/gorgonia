@@ -311,12 +311,16 @@ type bfc struct {
 }
 
 func newBFC(alignment int64) *bfc {
-	b := &bfc{
+	b := makeBFC(alignment)
+	return &b
+}
+
+func makeBFC(alignment int64) bfc {
+	return bfc{
 		blockSize: alignment,
 		freelist:  new(freelist),
 		used:      make(map[uintptr]int64),
 	}
-	return b
 }
 
 func (b *bfc) reset() {

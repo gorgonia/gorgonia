@@ -1,6 +1,7 @@
 package cuda
 
 import (
+	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 	"gorgonia.org/cu/blas"
 	"gorgonia.org/cu/dnn"
@@ -9,6 +10,15 @@ import (
 //  this file implements all the methods required to fulfil the External interface
 
 var _ External = &Engine{}
+
+const (
+	// Any address of a variable residing in global memory or returned by one of the
+	// memory allocation routines from the driver or runtime API is always aligned to at
+	// least 256 bytes.
+	//
+	memalign    = 32
+	scalarAlign = 8
+)
 
 // HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
 func (e *Engine) HasFunc(name string) bool { _, ok := e.f[name]; return ok }
@@ -67,8 +77,124 @@ func (e *Engine) ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, b
 		gridDimX = blocks
 		blockDimX = maxThreads
 	}
-
 	return
+}
+
+// Init creates a CUDA engine with the given size for the given device
+func (e *Engine) Init(device cu.Device, size int64) error {
+	e.Lock()
+	initialized := e.initialized
+	e.Unlock()
+
+	if initialized {
+		return nil
+	}
+
+	e.Lock()
+	e.d = device
+	if err = e.doInit(size); err != nil {
+		e.Unlock()
+		err2 := e.Close()
+		if err2 != nil {
+			return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v. Additionally, there were errors that occured when cleaning up %v", size, device, err)
+		}
+		return errors.Wrapf(err, "Failed to initialize CUDA Engine with size %d for device %v", size, device)
+	}
+	e.initialized = true
+	e.Unlock()
+}
+
+func (e *Engine) doInit(size int64) (err error) {
+	e.workAvailable = make(chan bool)
+	e.syncChan = make(chan struct{})
+	e.a = makeBFC(memalign)
+
+	// create and set context
+	var cuctx cu.CUContext
+	ctxFlag := cu.SchedAuto
+	if cuctx, err = e.d.MakeContext(ctxFlag); err != nil {
+		if err == cu.OutOfMemory {
+			free, total, err2 := cu.MemInfo()
+			if err2 != nil {
+				return errors.Wrapf(err, "Out of memory. Additionally errors were found while retrieving mem info %v", err2)
+			}
+			return errors.Wrapf(err, "Out of memory. Free: %v, total %v | %v", free, total, cuctx)
+		}
+		return errors.Wrapf(err, "Failed to make context for device %d", e.d)
+	}
+	e.c = cu.NewBatchedContext(cu.CtxFromCUContext(e.d, cuctx, ctxFlag), e.d)
+
+	var attrs []int
+	if attrs, err = dev.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
+		return errors.Wrapf(err, "Failed to get attributes for device %d.", i)
+	}
+
+	e.warp = attrs[0]
+	e.mtpb = attrs[1]
+	e.mgdx = attrs[2]
+	e.mgdy = attrs[3]
+	e.mgdz = attrs[4]
+	e.mbdx = attrs[5]
+	e.mbdy = attrs[6]
+	e.mbdz = attrs[7]
+
+	e.n = cudnn.NewContext()
+	e.m = make(map[string]cu.Module)
+	e.f = make(map[string]cu.Function)
+
+	// actual work to allocate from graphics card
+
+	if e.freeMem, e.totalMem, err = cu.MemInfo(); err != nil {
+		return errors.Wrapf(err, "Failed to get free and total mem for device %d", i)
+	}
+
+	// actually reserve memory for the allocator
+	var allocsize int64 = 2*size + (size / 2) + minAllocSize
+	if allocsize > free {
+		allocsize = free
+	}
+	ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, i)
+	}
+	m.a.reserve(uintptr(ptr), allocsize)
+
+}
+
+func (e *Engine) Close() error {
+	e.Lock()
+	defer e.Unlock()
+
+	e.c.Cleanup() // frees all ancillary allocations in C land
+	cu.SetCurrentContext(e.c.Context.CUDAContext())
+
+	// Unload all modules (and consequently all functions)
+	for name, mod := range e.m {
+		if err := mod.Unload(); err != nil {
+			return errors.Wrapf(err, "Failed to unload module %v", name)
+		}
+	}
+
+	// Free all CUDA memory
+	if e.a.start != 0 {
+		cu.MemFree(cu.DevicePtr(e.a.start))
+	}
+	e.a.reset()
+
+	if err := e.b.Close(); err != nil {
+		return errors.Wrapf(err, "Failed to close cuBLAS context")
+	}
+
+	if e.workAvailable != nil {
+		close(e.workAvailable)
+	}
+
+	if err := e.c.Close(); err != nil {
+		return errors.Wrapf(err, "Failed to cloes CUDA Context ")
+	}
+
+	e.initialized = false
+	return nil
 }
 
 // blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging
