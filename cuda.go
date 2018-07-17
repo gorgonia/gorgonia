@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/cu/blas"
 	"gorgonia.org/cu/dnn"
 	"gorgonia.org/tensor"
 )
@@ -61,7 +62,7 @@ type ExternMetadata struct {
 	totalMem []int64 // total memory available in this context
 
 	a             []*bfc                   // arena
-	b             batchedBLAS              // blas
+	bs            []*cublas.Standard       // blas
 	c             []*cu.BatchedContext     // context
 	d             []cu.Device              // device
 	f             map[string][]cu.Function // known functions
@@ -76,6 +77,9 @@ type ExternMetadata struct {
 
 	blasHasWork bool
 	initialzed  bool
+
+	// future me worries about this
+	b batchedBLAS // blas
 }
 
 // elemGridSize calculates the gridsize for elementwise operations
@@ -157,10 +161,10 @@ func (m *ExternMetadata) DoWork() error {
 		}
 	}
 
-	if m.blasHasWork {
-		m.b.DoWork()
-		m.blasHasWork = false
-	}
+	// if m.blasHasWork {
+	// 	m.b.DoWork()
+	// 	m.blasHasWork = false
+	// }
 	return nil
 }
 
@@ -189,7 +193,6 @@ func (m *ExternMetadata) CUDNNContext() *cudnn.Context { return m.n }
 func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
 	d := int(dev)
 	if d >= len(m.a) {
-		log.Printf("m: %p m.a %v", m, len(m.a))
 		return nil, noopError{} // this should not be a noopError
 	}
 
@@ -488,11 +491,16 @@ func (m *ExternMetadata) cleanup() {
 	}
 
 	if m.b != nil {
-		if err := m.b.Close(); err != nil {
-			cudaLogf("Error closing batched BLAS %v", err)
-		}
+		// if err := m.b.Close(); err != nil {
+		// 	cudaLogf("Error closing batched BLAS %v", err)
+		// }
 	}
 
+	for _, b := range m.bs {
+		if err := b.Close(); err != nil {
+			cudaLogf("Error closing cuBLAS")
+		}
+	}
 	for i := range m.c {
 		err := m.c[i].Close()
 		if err != nil {
@@ -513,15 +521,15 @@ func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
 
 // collectBLASWork is a muxer for CBLAS/CuBLAS (if any) and the devices
 func (m *ExternMetadata) collectBLASWork() {
-	m.Lock()
-	b := m.b
-	m.Unlock()
-	if b != nil {
-		for range b.WorkAvailable() {
-			m.blasHasWork = true
-			m.workAvailable <- false
-		}
-	}
+	// m.Lock()
+	// b := m.b
+	// m.Unlock()
+	// if b != nil {
+	// 	for range b.WorkAvailable() {
+	// 		m.blasHasWork = true
+	// 		m.workAvailable <- false
+	// 	}
+	// }
 }
 
 func (m *ExternMetadata) signal() { m.workAvailable <- true }

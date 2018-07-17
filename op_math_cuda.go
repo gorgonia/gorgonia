@@ -194,6 +194,16 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	return
 }
 
+/* LINEAR ALGEBRA STUFF */
+
+func (op linAlgBinOp) CallsExtern() bool { return true }
+
+func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+
+}
+
+/* API stuff  */
+
 // NewAddOp creates a new *ExternalOp that wraps a add op
 func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	add := newElemBinOp(addOpType, a, b)
