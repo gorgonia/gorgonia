@@ -68,6 +68,10 @@ func (e *Engine) Memcpy(dst tensor.Memory, src tensor.Memory) error {
 	panic("not implemented")
 }
 
+func (e *Engine) memcpy(dst tensor.Memory, src tensor.Memory, size int64) error {
+	panic("not implemented")
+}
+
 func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 	panic("not implemented")
 
