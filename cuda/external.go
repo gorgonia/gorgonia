@@ -1,6 +1,8 @@
 package cuda
 
 import (
+	"log"
+
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 	"gorgonia.org/cu/blas"
@@ -200,6 +202,7 @@ func (e *Engine) Close() error {
 }
 
 func (e *Engine) DoWork() error {
+	log.Printf("DO WORK")
 	e.c.DoWork()
 	return e.c.Errors()
 }

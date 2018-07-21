@@ -10,8 +10,15 @@ import (
 	"sync/atomic"
 )
 
+const DEBUG = true
+
+var TABCOUNT uint32
 var _logger_ = log.New(os.Stderr, "", 0)
 var replacement = "\n"
+
+var (
+	allocatorDev = false
+)
 
 func tabcount() int {
 	return int(atomic.LoadUint32(&TABCOUNT))

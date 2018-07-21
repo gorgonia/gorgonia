@@ -58,7 +58,6 @@ func (m *tapeMachine) loadStdLib() {
 			if err := e.LoadCUDAFunc(name, data, funcs); err != nil {
 				panic(err)
 			}
-
 		}
 	}
 }

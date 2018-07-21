@@ -1,6 +1,8 @@
 package cuda
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 )
@@ -27,7 +29,8 @@ func (e *Engine) LoadCUDAFunc(moduleName, data string, funcs []string) (err erro
 		if fn, err = mod.Function(name); err != nil {
 			return errors.Wrapf(err, "Unable to get function %q in Device %v context %x", name, e.d, e.c)
 		}
-		fns[name] = fn
+		fqn := fmt.Sprintf("%v.%v", moduleName, name)
+		fns[fqn] = fn
 	}
 	if e.m == nil {
 		e.m = make(map[string]cu.Module)
