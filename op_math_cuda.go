@@ -104,18 +104,29 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 
 	aT := a.(tensor.Tensor)
 	bT := b.(tensor.Tensor)
-	pT := prealloc.(tensor.Tensor)
 	tensor.WithEngine(e)(aT)
 	tensor.WithEngine(e)(bT)
-	tensor.WithEngine(e)(pT)
+
+	pT, ok := prealloc.(tensor.Tensor)
+	if ok {
+		tensor.WithEngine(e)(pT)
+	}
 
 	boType := op.binOpType()
 	if fn := binOps[boType]; fn != nil {
-		return (*fn)(aT, bT, tensor.WithReuse(pT))
+		if ok {
+			return (*fn)(aT, bT, tensor.WithReuse(pT))
+		} else {
+			return (*fn)(aT, bT, tensor.UseUnsafe())
+		}
 	}
 
 	if fn := cmpOps[boType]; fn != nil {
-		return (*fn)(aT, bT, tensor.WithReuse(pT))
+		if ok {
+			return (*fn)(aT, bT, tensor.WithReuse(pT))
+		} else {
+			return (*fn)(aT, bT, tensor.UseUnsafe())
+		}
 	}
 
 	return nil, errors.Errorf("op %v cannot be done by CUDA", op)

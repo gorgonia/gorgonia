@@ -83,11 +83,6 @@ func (m *ExternMetadata) DoWork() error {
 			return err
 		}
 	}
-
-	// if m.blasHasWork {
-	// 	m.b.DoWork()
-	// 	m.blasHasWork = false
-	// }
 	return nil
 }
 

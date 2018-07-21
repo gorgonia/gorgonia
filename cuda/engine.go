@@ -55,7 +55,9 @@ type Engine struct {
 
 	syncChan      chan struct{}
 	workAvailable chan bool
+	err           error
 	initialized   bool
+	running       bool
 }
 
 func (e *Engine) AllocAccessible() bool { return true }
@@ -104,7 +106,7 @@ func (e *Engine) Memcpy(dst tensor.Memory, src tensor.Memory) error {
 	d := cu.DevicePtr(dst.Uintptr())
 	s := cu.DevicePtr(src.Uintptr())
 	e.c.Memcpy(d, s, size)
-	e.signal()
+	e.Signal()
 	<-e.syncChan
 	return e.c.Error()
 }

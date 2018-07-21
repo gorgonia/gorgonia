@@ -1,7 +1,7 @@
 package cuda
 
 import (
-	"log"
+	"runtime"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
@@ -28,13 +28,8 @@ func (e *Engine) HasFunc(name string) bool { _, ok := e.f[name]; return ok }
 func (e *Engine) Sync() chan struct{} { return e.syncChan }
 
 func (e *Engine) Signal() {
-	if e.workAvailable != nil {
-		e.signal()
-		<-e.syncChan
-	}
+	e.workAvailable <- true
 }
-
-func (e *Engine) signal() { e.workAvailable <- true }
 
 func (e *Engine) Context() *cu.BatchedContext { return &e.c }
 
@@ -162,6 +157,7 @@ func (e *Engine) doInit(size int64) (err error) {
 		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, e.d)
 	}
 	e.a.reserve(uintptr(ptr), allocsize)
+	go e.Run()
 	return nil
 }
 
@@ -185,8 +181,20 @@ func (e *Engine) Close() error {
 	}
 	e.a.reset()
 
-	if err := e.b.Close(); err != nil {
-		return errors.Wrapf(err, "Failed to close cuBLAS context")
+	closeB := func() error {
+		return e.b.Close()
+	}
+
+	if err := e.c.Do(closeB); err != nil {
+		return errors.Wrap(e.err, "Failed to close cuBLAS context")
+	}
+
+	closeN := func() error {
+		return e.n.Close()
+	}
+
+	if err := e.c.Do(closeN); err != nil {
+		return errors.Wrap(e.err, "Failed to close cuDNN context")
 	}
 
 	if e.workAvailable != nil {
@@ -202,9 +210,46 @@ func (e *Engine) Close() error {
 }
 
 func (e *Engine) DoWork() error {
-	log.Printf("DO WORK")
 	e.c.DoWork()
 	return e.c.Errors()
+}
+
+func (e *Engine) Run() {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	e.Lock()
+	if e.running {
+		e.Unlock()
+		return
+	}
+	e.Unlock()
+
+	for {
+		select {
+		case <-e.c.WorkAvailable():
+			e.c.DoWork()
+			if err := e.c.Errors(); err != nil {
+				e.Lock()
+				e.err = err
+				e.running = false
+				e.Unlock()
+				break
+			}
+		case w := <-e.c.Work():
+			if w != nil {
+				err := w()
+				e.c.ErrChan() <- err
+
+				if err != nil {
+					e.Lock()
+					e.err = err
+					e.running = false
+					e.Unlock()
+					break
+				}
+			}
+		}
+	}
 }
 
 // blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging
