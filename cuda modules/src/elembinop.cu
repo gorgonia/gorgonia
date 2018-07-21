@@ -174,6 +174,7 @@ extern "C" { SVFNBINOP(pow, f32, float, powf) }
 extern "C" { SSFNBINOP(pow, f64, double, pow) }
 extern "C" { SSFNBINOP(pow, f32, float, powf) }
 
+/*
 extern "C" { VVFNBINOP(mod, f64, double, modf) }
 extern "C" { VVFNBINOP(mod, f32, float, modff) }
 extern "C" { VSFNBINOP(mod, f64, double, modf) }
@@ -182,4 +183,4 @@ extern "C" { SVFNBINOP(mod, f64, double, modf) }
 extern "C" { SVFNBINOP(mod, f32, float, modff) }
 extern "C" { SSFNBINOP(mod, f64, double, modf) }
 extern "C" { SSFNBINOP(mod, f32, float, modff) }
-
+*/

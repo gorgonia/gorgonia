@@ -7,7 +7,6 @@ import (
 	"log"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 )
 
@@ -36,7 +35,9 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	// build name
 	name := fmt.Sprintf("%v.%v_f%d", elemUnaryOpMod, op.unaryOpType(), int(dt.Size())*8)
 
-	if !extern.HasFunc(name) {
+	machine := extern.(CUDAMachine)
+	eng := machine.Engines()[int(dev)]
+	if !eng.HasFunc(name) {
 		cudaLogf("extern does not have func %q", name)
 		extern.Signal()
 
@@ -48,9 +49,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 		}
 		return Copy(prealloc, retVal)
 	}
-
-	machine := extern.(CUDAMachine)
-	fn := machine.Functions()[name][int(dev)]
+	fn := eng.Functions()[name]
 	ctx := machine.Contexts()[int(dev)]
 
 	if prealloc == nil {
@@ -158,8 +157,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		}
 	}
 
-	hasFn := extern.HasFunc(name)
-	if !hasFn {
+	eng := machine.Engines()[int(dev)]
+	if !eng.HasFunc(name) {
 		cudaLogf("NoFn: %q", name)
 		extern.Signal()
 		cudaLogf("DONE. Prealloc \n%v", prealloc)
@@ -177,7 +176,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 		return op.Do(inputs...)
 	}
 
-	fn := machine.Functions()[name][int(dev)]
+	fn := eng.Functions()[name]
 	var args []unsafe.Pointer
 
 	cudaLogf("%v mem %v, memB %v", op, mem, memB)
@@ -197,11 +196,11 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 
 /* LINEAR ALGEBRA STUFF */
 
-func (op linAlgBinOp) CallsExtern() bool { return true }
+func (op linAlgBinOp) CallsExtern() bool { return false }
 
-func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
-	return nil, errors.Errorf("NYI")
-}
+// func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+// 	return nil, errors.Errorf("NYI")
+// }
 
 /* API stuff  */
 

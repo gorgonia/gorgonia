@@ -59,4 +59,7 @@ type External interface {
 
 	// Close cleans up the machine, and closes all available resources
 	Close() error
+
+	// DoWork sends a signal to the batched CUDA Context to actually do work
+	DoWork() error
 }

@@ -29,6 +29,9 @@ func (e *Engine) LoadCUDAFunc(moduleName, data string, funcs []string) (err erro
 		}
 		fns[name] = fn
 	}
+	if e.m == nil {
+		e.m = make(map[string]cu.Module)
+	}
 	e.m[moduleName] = mod
 	e.f = fns
 	return nil

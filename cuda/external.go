@@ -139,6 +139,7 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.mbdy = attrs[6]
 	e.mbdz = attrs[7]
 
+	e.b = *(cublas.New(cublas.WithContext(e.c.Context)))
 	e.n = *(cudnn.NewContext())
 	e.m = make(map[string]cu.Module)
 	e.f = make(map[string]cu.Function)
@@ -196,6 +197,11 @@ func (e *Engine) Close() error {
 
 	e.initialized = false
 	return nil
+}
+
+func (e *Engine) DoWork() error {
+	e.c.DoWork()
+	return e.c.Errors()
 }
 
 // blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging

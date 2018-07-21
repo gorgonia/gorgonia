@@ -17,7 +17,11 @@ import (
 
 const CUDA = true
 
-var _ External = &ExternMetadata{}
+var (
+	_ External    = &ExternMetadata{}
+	_ CUDAMachine = &tapeMachine{}
+	_ CUDAMachine = &lispMachine{}
+)
 
 const (
 	// Any address of a variable residing in global memory or returned by one of the
@@ -36,10 +40,9 @@ var cudaStdFuncs map[string][]string
 // CUDAMachine is a representation of CUDA capable VMs.
 type CUDAMachine interface {
 	External
+	Engines() []cuda.Engine
 	Contexts() []*cu.BatchedContext
-	Modules() map[string][]cu.Module
-	Functions() map[string][]cu.Function
-	CUDNNContext() []*cudnn.Context
+	CUDNNContexts() []*cudnn.Context
 
 	ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int)
 }
@@ -51,7 +54,8 @@ type ExternMetadata struct {
 	sync.Mutex
 
 	// operational stuff
-	u cu.Device // device currently in use
+	u cu.Device   // device currently in use
+	b batchedBLAS // UNUSED
 
 	engines       []cuda.Engine
 	workAvailable chan bool
@@ -75,8 +79,7 @@ func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
 	for _, e := range m.engines {
-		e.DoWork()
-		if err := e.Errors(); err != nil {
+		if err := e.DoWork(); err != nil {
 			return err
 		}
 	}
@@ -87,6 +90,8 @@ func (m *ExternMetadata) DoWork() error {
 	// }
 	return nil
 }
+
+func (m *ExternMetadata) Engines() []cuda.Engine { return m.engines }
 
 // Contexts return a slice of contexts that is being used by this CUDAMachine
 func (m *ExternMetadata) Contexts() []*cu.BatchedContext {
@@ -234,14 +239,17 @@ func (m *ExternMetadata) init(sizes []int64) (err error) {
 	defer m.Unlock()
 	m.engines = make([]cuda.Engine, len(sizes))
 	for i := range m.engines {
+		e := &m.engines[i]
 		dev, err := cu.GetDevice(i)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get device %d", i)
 		}
 
-		if err = m.engines[i].Init(dev, sizes[i]); err != nil {
+		if err = e.Init(dev, sizes[i]); err != nil {
 			return err
 		}
+		ctx := e.Context()
+		go m.collectWork(i, ctx.WorkAvailable())
 	}
 
 	m.initialized = true
@@ -249,31 +257,32 @@ func (m *ExternMetadata) init(sizes []int64) (err error) {
 	return nil
 }
 
+func (m *ExternMetadata) initFail() {
+	cudaLogf("Cleanup")
+	m.engines = nil
+
+	if m.workAvailable != nil {
+		close(m.workAvailable)
+	}
+	m.workAvailable = nil
+}
+
 // cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
 func (m *ExternMetadata) cleanup() {
-
+	for _, e := range m.engines {
+		e.Close()
+	}
 }
 
 // collectWork is a muxer for all the channels for the different devices
 func (m *ExternMetadata) collectWork(devID int, workAvailable <-chan struct{}) {
 	for range workAvailable {
-		m.hasWork[devID] = true
 		m.workAvailable <- false
 	}
 }
 
 // collectBLASWork is a muxer for CBLAS/CuBLAS (if any) and the devices
-func (m *ExternMetadata) collectBLASWork() {
-	// m.Lock()
-	// b := m.b
-	// m.Unlock()
-	// if b != nil {
-	// 	for range b.WorkAvailable() {
-	// 		m.blasHasWork = true
-	// 		m.workAvailable <- false
-	// 	}
-	// }
-}
+func (m *ExternMetadata) collectBLASWork() {}
 
 func (m *ExternMetadata) signal() { m.workAvailable <- true }
 
@@ -346,35 +355,3 @@ func (n *Node) GradOnDevice(toDev Device, extern External) (retVal Value, allocO
 	retVal, err = extern.Transfer(toDev, fromDev, d, synchronous)
 	return
 }
-
-// func (m *ExternMetadata) AllocAccessible() bool {
-// 	panic("not implemented")
-// }
-
-// func (m *ExternMetadata) Alloc(size int64) (tensor.Memory, error) {
-// 	panic("not implemented")
-// }
-
-// func (m *ExternMetadata) Free(mem tensor.Memory, size int64) error {
-// 	panic("not implemented")
-// }
-
-// func (m *ExternMetadata) Memset(mem tensor.Memory, val interface{}) error {
-// 	panic("not implemented")
-// }
-
-// func (m *ExternMetadata) Memclr(mem tensor.Memory) {
-// 	panic("not implemented")
-// }
-
-// func (m *ExternMetadata) Memcpy(dst tensor.Memory, src tensor.Memory) error {
-// 	panic("not implemented")
-// }
-
-// func (m *ExternMetadata) Accessible(mem tensor.Memory) (tensor.Memory, error) {
-// 	panic("not implemented")
-// }
-
-// func (m *ExternMetadata) WorksWith(order tensor.DataOrder) bool {
-// 	panic("not implemented")
-// }
