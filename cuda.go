@@ -10,8 +10,8 @@ import (
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
-	"gorgonia.org/cu/blas"
 	"gorgonia.org/cu/dnn"
+	"gorgonia.org/gorgonia/cuda"
 	"gorgonia.org/tensor"
 )
 
@@ -39,7 +39,7 @@ type CUDAMachine interface {
 	Contexts() []*cu.BatchedContext
 	Modules() map[string][]cu.Module
 	Functions() map[string][]cu.Function
-	CUDNNContext() *cudnn.Context
+	CUDNNContext() []*cudnn.Context
 
 	ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int)
 }
@@ -48,103 +48,23 @@ type CUDAMachine interface {
 // The slices in there are indexed by deviceID
 type ExternMetadata struct {
 	tensor.Engine
+	sync.Mutex
 
-	warp []int // WarpSize
-	mtpb []int // MaxThreadsPerBlock
-	mgdx []int // MaxGridDimX
-	mgdy []int // MaxGridDimY
-	mgdz []int // MaxGridDimZ
-	mbdx []int // MaxBlockDimX
-	mbdy []int // MaxBlockDimY
-	mbdz []int // MaxBlockDimZ
+	// operational stuff
+	u cu.Device // device currently in use
 
-	freeMem  []int64 // free memory available in this context
-	totalMem []int64 // total memory available in this context
-
-	a             []*bfc                   // arena
-	bs            []*cublas.Standard       // blas
-	c             []*cu.BatchedContext     // context
-	d             []cu.Device              // device
-	f             map[string][]cu.Function // known functions
-	m             map[string][]cu.Module   // known modules
-	n             *cudnn.Context           // cuDNN
-	hasWork       []bool
+	engines       []cuda.Engine
 	workAvailable chan bool
 	syncChan      chan struct{}
-
-	sync.Mutex        // lock to protect using
-	u          Device // using which device?
-
-	blasHasWork bool
-	initialzed  bool
-
-	// future me worries about this
-	b batchedBLAS // blas
+	initialized   bool
 }
 
 // elemGridSize calculates the gridsize for elementwise operations
 func (md *ExternMetadata) ElemGridSize(n, dev int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int) {
-	if dev > len(md.warp) {
+	if dev >= len(md.engines) {
 		// error
 	}
-
-	maxThreads := md.mtpb[dev]
-	maxGridX := md.mgdx[dev]
-	maxGridY := md.mgdy[dev]
-	maxGridZ := md.mgdz[dev]
-
-	blockDimX = 1
-	blockDimY = 1
-	blockDimZ = 1
-	gridDimX = 1
-	gridDimY = 1
-	gridDimZ = 1
-
-	blocks := calcBlocks(n, maxThreads)
-	switch {
-	case blocks == 1:
-		blockDimX = n
-	case blocks >= maxGridX*maxGridY*maxGridZ:
-		// what kind of monstrosity is this??!
-	case blocks >= maxGridX*maxGridY:
-		gridDimX = maxGridX
-		gridDimY = maxGridY
-		gridDimZ = calcBlocks(blocks%(maxGridX*maxGridY), maxGridZ)
-		blockDimX = maxThreads
-	case blocks >= maxGridX:
-		gridDimX = maxGridX
-		gridDimY = calcBlocks(blocks%(maxGridX), maxGridY)
-		blockDimX = maxThreads
-	default:
-		gridDimX = blocks
-		blockDimX = maxThreads
-	}
-
-	return
-}
-
-// blockThread is an easier version of calculating <<threads, blocks>> for CUDA. Useful for debugging
-func (md *ExternMetadata) blockThread(n, dev int) (blocks, threads int) {
-	switch {
-	case n <= 32:
-		threads = 32
-	case n <= 64:
-		threads = 64
-	case n <= 128:
-		threads = 128
-	case n <= 256:
-		threads = 256
-	case n <= 512:
-		threads = 512
-	default:
-		threads = 1024
-	}
-
-	blocks = (n + threads - 1) / threads
-	if blocks < 0 || blocks > 128 {
-		blocks = 128
-	}
-	return
+	return md.engines[dev].ElemGridSize(n)
 }
 
 // WorkAvailable returns a channel of empty struct, which is used to signal to the VM when there is work available. The VM will then call the DoWork method
@@ -154,9 +74,9 @@ func (m *ExternMetadata) Sync() chan struct{} { return m.syncChan }
 
 // DoWork flushes any batched cgo calls. In this build it flushes any batched CUDA calls and any batched CBLAS calls.
 func (m *ExternMetadata) DoWork() error {
-	for _, c := range m.c {
-		c.DoWork()
-		if err := c.Errors(); err != nil {
+	for _, e := range m.engines {
+		e.DoWork()
+		if err := e.Errors(); err != nil {
 			return err
 		}
 	}
@@ -168,82 +88,70 @@ func (m *ExternMetadata) DoWork() error {
 	return nil
 }
 
-// HasFunc returns true if the execution is external (cgo/cuda/openCL) AND the external device contains the function with the given name
-//
-// Note that BLAS names will always return false, even if using a BLAS that requires cgo calls (like Intel MKL)
-func (m *ExternMetadata) HasFunc(name string) bool {
-	_, ok := m.f[name]
-	return ok
+// Contexts return a slice of contexts that is being used by this CUDAMachine
+func (m *ExternMetadata) Contexts() []*cu.BatchedContext {
+	retVal := make([]*cu.BatchedContext, 0, len(m.engines))
+	for _, e := range m.engines {
+		retVal = append(retVal, e.Context())
+	}
+	return retVal
 }
 
-// Contexts return a slice of contexts that is being used by this CUDAMachine
-func (m *ExternMetadata) Contexts() []*cu.BatchedContext { return m.c }
-
-// Modules returns a list of modules loaded (and referable by name) in this CUDAMachine
-func (m *ExternMetadata) Modules() map[string][]cu.Module { return m.m }
-
-// Functions returns a list of functions loaded (and refereable by name) in this CUDAMachine
-func (m *ExternMetadata) Functions() map[string][]cu.Function { return m.f }
-
 // CUDNNContext returns the CUDNN context
-func (m *ExternMetadata) CUDNNContext() *cudnn.Context { return m.n }
+func (m *ExternMetadata) CUDNNContexts() []*cudnn.Context {
+	retVal := make([]*cudnn.Context, 0, len(m.engines))
+	for _, e := range m.engines {
+		retVal = append(retVal, e.CUDNNContext())
+	}
+	return retVal
+}
 
 // Get gets a previously allocated memory slab of the provided size. If no memories of that size exist,
 // it returns a NoOpError. The caller is then responsible for allocating the memory themselves.
 func (m *ExternMetadata) Get(dev Device, size int64) (tensor.Memory, error) {
 	d := int(dev)
-	if d >= len(m.a) {
+	if d >= len(m.engines) {
 		return nil, noopError{} // this should not be a noopError
 	}
-
-	ptr, err := m.a[d].alloc(size)
-	return cu.DevicePtr(ptr), err
-
-	// if pool, ok := m.arena[d][size]; ok {
-	// 	return pool.get()
-	// }
-	// return nil, noopError{}
+	return m.engines[dev].Get(size)
 }
 
 // GetFromValue allocates a memory on the GPU, and then copies the data over. v MUST be on CPU.
 func (m *ExternMetadata) GetFromValue(dev Device, v Value) (tensor.Memory, error) {
 	d := int(dev)
-	if d >= len(m.a) {
+	if d >= len(m.engines) {
 		return nil, noopError{}
 	}
 	memsize := calcMemSize(v.Dtype(), v.Shape())
 
-	ptr, err := m.a[d].alloc(memsize)
+	mem, err := m.engines[dev].Get(memsize)
 	if err != nil {
 		return nil, err
 	}
-
-	ctx := m.Contexts()[d]
-	ctx.MemcpyHtoD(cu.DevicePtr(ptr), v.Pointer(), memsize)
+	ptr := cu.DevicePtr(mem.Uintptr())
+	ctx := m.engines[dev].Context()
+	ctx.MemcpyHtoD(ptr, v.Pointer(), memsize)
 	return cu.DevicePtr(ptr), nil
 }
 
 // Put puts a previously allocated memory slab of the provided size back into the pool
 func (m *ExternMetadata) Put(dev Device, mem tensor.Memory, size int64) {
 	d := int(dev)
-	if d >= len(m.a) {
+	if d >= len(m.engines) {
 		return // wat??
 	}
 
-	addr := uintptr(mem.Uintptr())
-	m.a[d].free(addr)
+	m.engines[dev].Put(mem, size)
 }
 
 // PutValue puts a previously allocated memory slab back into the pool
 func (m *ExternMetadata) PutValue(dev Device, v Value) {
 	d := int(dev)
-	if d >= len(m.a) {
+	if d >= len(m.engines) {
 		return
 	}
-
-	// memsize := calcMemSize(v.Dtype(), v.Shape())
-	addr := uintptr(v.Uintptr())
-	m.a[d].free(addr)
+	memsize := calcMemSize(v.Dtype(), v.Shape())
+	m.engines[dev].Put(v, memsize)
 }
 
 // Transfer transfers data from device to device.
@@ -258,11 +166,11 @@ func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bo
 	switch {
 	case fromDev == CPU && toDev != CPU:
 		d := int(toDev)
-		if d > len(m.c) {
+		if d > len(m.engines) {
 			return nil, errors.Errorf("No context for ToDev")
 		}
-		ctx := m.c[d]
 
+		ctx := m.engines[d].Context()
 		var mem tensor.Memory
 		if mem, err = m.Get(toDev, memsize); err != nil {
 			return
@@ -272,11 +180,11 @@ func (m *ExternMetadata) Transfer(toDev, fromDev Device, v Value, synchronous bo
 
 	case fromDev != CPU && toDev == CPU:
 		d := int(fromDev)
-		if d > len(m.c) {
+		if d > len(m.engines) {
 			return nil, errors.Errorf("No context for FromDev")
 		}
-		ctx := m.c[d]
 
+		ctx := m.engines[d].Context()
 		if retVal, err = makeValue(TypeOf(v), v.Shape()); err != nil {
 			return
 		}
@@ -300,44 +208,14 @@ func (m *ExternMetadata) Signal() {
 
 // Reset frees all the memories, and coalesces the allocator
 func (m *ExternMetadata) Reset() {
-	for _, a := range m.a {
-		used := make([]uintptr, 0, len(a.used))
-		for k := range a.used {
-			used = append(used, k)
-		}
-
-		for _, ptr := range used {
-			a.free(ptr + a.start)
-		}
-		a.coalesce()
-		a.reset() // reset statistcs
+	for i := range m.engines {
+		m.engines[i].ResetAllocator()
 	}
 }
 
-// Use tells the system which device to use
-func (m *ExternMetadata) Use(dev Device) {
-	m.Lock()
-	m.u = dev
-	m.Unlock()
-}
-
-func (m *ExternMetadata) AllocAccessible() bool                    { return false }
-func (m *ExternMetadata) Alloc(size int64) (tensor.Memory, error)  { return m.Get(m.u, size) }
-func (m *ExternMetadata) Free(mem tensor.Memory, size int64) error { m.Put(m.u, mem, size); return nil }
-func (m *ExternMetadata) Memset(mem tensor.Memory, val interface{}) error {
-	return errors.Errorf("Cannot set memory")
-}
-func (m *ExternMetadata) Memclr(tensor.Memory)                {}
-func (m *ExternMetadata) Memcpy(dst, src tensor.Memory) error { return errors.New("NYI") }
-func (m *ExternMetadata) Accessible(mem tensor.Memory) (tensor.Memory, error) {
-	// TODO
-	return nil, errors.New("NYI")
-}
-func (m *ExternMetadata) WorksWith(order tensor.DataOrder) bool { return true }
-
 func (m *ExternMetadata) init(sizes []int64) (err error) {
 	m.Lock()
-	initialized := m.initialzed
+	initialized := m.initialized
 	m.Unlock()
 
 	if initialized {
@@ -354,160 +232,25 @@ func (m *ExternMetadata) init(sizes []int64) (err error) {
 
 	m.Lock()
 	defer m.Unlock()
-	m.workAvailable = make(chan bool)
-	m.syncChan = make(chan struct{})
-	m.a = make([]*bfc, devices)
-	m.c = make([]*cu.BatchedContext, devices)
-	m.hasWork = make([]bool, devices)
-
-	m.warp = make([]int, devices)
-	m.mtpb = make([]int, devices)
-	m.mgdx = make([]int, devices)
-	m.mgdy = make([]int, devices)
-	m.mgdz = make([]int, devices)
-	m.mbdx = make([]int, devices)
-	m.mbdy = make([]int, devices)
-	m.mbdz = make([]int, devices)
-
-	m.freeMem = make([]int64, devices)
-	m.totalMem = make([]int64, devices)
-
-	for i := range m.c {
+	m.engines = make([]cuda.Engine, len(sizes))
+	for i := range m.engines {
 		dev, err := cu.GetDevice(i)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get device %d", i)
 		}
 
-		ctxFlag := cu.SchedAuto
-		cuctx, err := dev.MakeContext(ctxFlag)
-		// ctx, err := dev.MakeContext(cu.SchedBlockingSync) // for debugging
-		if err != nil {
-			if err == cu.OutOfMemory {
-				free, total, err2 := cu.MemInfo()
-				if err2 != nil {
-					return errors.Wrapf(err, "Out of memory. Additionally errors were found while retrieving mem info %v", err2)
-				}
-				return errors.Wrapf(err, "Out of memory. Free: %v, total %v | %v", free, total, cuctx)
-			}
-			return errors.Wrapf(err, "Failed to make context for device %d", i)
+		if err = m.engines[i].Init(dev, sizes[i]); err != nil {
+			return err
 		}
-		ctx := cu.CtxFromCUContext(dev, cuctx, ctxFlag)
-
-		var attrs []int
-		if attrs, err = dev.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
-			return errors.Wrapf(err, "Failed to get attributes for device %d.", i)
-		}
-
-		m.warp[i] = attrs[0]
-		m.mtpb[i] = attrs[1]
-		m.mgdx[i] = attrs[2]
-		m.mgdy[i] = attrs[3]
-		m.mgdz[i] = attrs[4]
-		m.mbdx[i] = attrs[5]
-		m.mbdy[i] = attrs[6]
-		m.mbdz[i] = attrs[7]
-
-		free, total, err := cu.MemInfo()
-		if err != nil {
-			return errors.Wrapf(err, "Failed to get free and total mem for device %d", i)
-		}
-		m.freeMem[i] = free
-		m.totalMem[i] = total
-		m.a[i] = newBFC(memalign)
-
-		if len(sizes) > 0 {
-			var allocsize int64 = 2*sizes[i] + (sizes[i] / 2) + minAllocSize
-			if allocsize > free {
-				allocsize = free
-			}
-			ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, i)
-			}
-			m.a[i].reserve(uintptr(ptr), allocsize)
-		}
-		m.c[i] = cu.NewBatchedContext(ctx, dev)
-		go m.collectWork(i, m.c[i].WorkAvailable())
 	}
-	if len(m.c) > 0 {
-		m.c[0].SetCurrent()
-	}
-	m.n = cudnn.NewContext()
-	m.m = make(map[string][]cu.Module)
-	m.f = make(map[string][]cu.Function)
-	go m.collectBLASWork()
 
-	m.initialzed = true
-	cudaLogf("CUDA initialized. Contexts: %v", m.c)
+	m.initialized = true
+	cudaLogf("CUDA initialized. Engines: %v", m.engines)
 	return nil
-}
-
-func (m *ExternMetadata) initFail() {
-	m.Lock()
-	cudaLogf("Cleanup")
-
-	m.a = nil
-	m.b = nil
-	m.c = nil
-	m.d = nil
-	m.f = nil
-	m.m = nil
-	m.n = nil
-
-	if m.workAvailable != nil {
-		close(m.workAvailable)
-	}
-	m.workAvailable = nil
-
-	m.Unlock()
 }
 
 // cleanup cleans up the ancillary allocations made during the calling of batched CUDA functions.
 func (m *ExternMetadata) cleanup() {
-	for i, c := range m.c {
-		c.Cleanup()
-		cu.SetCurrentContext(c.Context.CUDAContext())
-		for _, v := range m.m {
-			mod := v[i]
-			mod.Unload() // TODO: check errors
-		}
-	}
-
-	for _, a := range m.a {
-		if a == nil {
-			continue
-		}
-		if a.start != 0 {
-			cu.MemFree(cu.DevicePtr(a.start))
-		}
-	}
-
-	// destroy contexts
-	if m.n != nil {
-		err := m.n.Close() // TODO: check error
-		if err != nil {
-			cudaLogf("Error destroying cuDNN Context %v", err)
-		}
-	}
-
-	if m.b != nil {
-		// if err := m.b.Close(); err != nil {
-		// 	cudaLogf("Error closing batched BLAS %v", err)
-		// }
-	}
-
-	for _, b := range m.bs {
-		if err := b.Close(); err != nil {
-			cudaLogf("Error closing cuBLAS")
-		}
-	}
-	for i := range m.c {
-		err := m.c[i].Close()
-		if err != nil {
-			cudaLogf("Error closing CUDA context: %v", err)
-		}
-		m.c[i] = nil // tell gc to collect. ctx.finalizeCtx will run
-	}
 
 }
 
@@ -603,3 +346,35 @@ func (n *Node) GradOnDevice(toDev Device, extern External) (retVal Value, allocO
 	retVal, err = extern.Transfer(toDev, fromDev, d, synchronous)
 	return
 }
+
+// func (m *ExternMetadata) AllocAccessible() bool {
+// 	panic("not implemented")
+// }
+
+// func (m *ExternMetadata) Alloc(size int64) (tensor.Memory, error) {
+// 	panic("not implemented")
+// }
+
+// func (m *ExternMetadata) Free(mem tensor.Memory, size int64) error {
+// 	panic("not implemented")
+// }
+
+// func (m *ExternMetadata) Memset(mem tensor.Memory, val interface{}) error {
+// 	panic("not implemented")
+// }
+
+// func (m *ExternMetadata) Memclr(mem tensor.Memory) {
+// 	panic("not implemented")
+// }
+
+// func (m *ExternMetadata) Memcpy(dst tensor.Memory, src tensor.Memory) error {
+// 	panic("not implemented")
+// }
+
+// func (m *ExternMetadata) Accessible(mem tensor.Memory) (tensor.Memory, error) {
+// 	panic("not implemented")
+// }
+
+// func (m *ExternMetadata) WorksWith(order tensor.DataOrder) bool {
+// 	panic("not implemented")
+// }

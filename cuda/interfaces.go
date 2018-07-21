@@ -14,6 +14,9 @@ type Arena interface {
 
 	// Puts the memory back into arena
 	Put(mem tensor.Memory, size int64)
+
+	// ResetAllocator resets the allocator statisttics, but doesn't actually deallocate  real memory
+	ResetAllocator()
 }
 
 // External is a representation of an external device, conceptually modelled as a machine
@@ -34,7 +37,7 @@ type External interface {
 	Signal()
 
 	// Context returns the Context (the default implementation returns a *cu.BatchedContext)
-	Context() cu.Context
+	Context() *cu.BatchedContext
 
 	// CUDNNContext returns the cuDNN context
 	CUDNNContext() *cudnn.Context

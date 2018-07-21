@@ -7,6 +7,7 @@ import (
 	"log"
 	"unsafe"
 
+	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 )
 
@@ -198,8 +199,8 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 
 func (op linAlgBinOp) CallsExtern() bool { return true }
 
-func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
-
+func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+	return nil, errors.Errorf("NYI")
 }
 
 /* API stuff  */

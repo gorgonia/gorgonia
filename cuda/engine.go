@@ -122,4 +122,4 @@ func (e *Engine) WorksWith(order tensor.DataOrder) bool { return true }
 
 func (e *Engine) NonStdAlloc() {}
 
-func (e *Engine) ContextErr() error { return e.c.Error() }
+func (e *Engine) Errors() error { return e.c.Errors() }

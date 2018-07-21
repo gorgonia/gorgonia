@@ -18,3 +18,16 @@ func (e *Engine) Put(mem tensor.Memory, size int64) {
 	addr := uintptr(mem.Uintptr())
 	e.a.free(addr)
 }
+
+func (e *Engine) ResetAllocator() {
+	used := make([]uintptr, 0, len(e.a.used))
+	for k := range e.a.used {
+		used = append(used, k)
+	}
+
+	for _, ptr := range used {
+		e.a.free(ptr + e.a.start)
+	}
+	e.a.coalesce()
+	e.a.reset() // reset statistcs
+}

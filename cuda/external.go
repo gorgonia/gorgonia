@@ -34,7 +34,7 @@ func (e *Engine) Signal() {
 
 func (e *Engine) signal() { e.workAvailable <- true }
 
-func (e *Engine) Context() cu.Context { return &e.c }
+func (e *Engine) Context() *cu.BatchedContext { return &e.c }
 
 func (e *Engine) CUDNNContext() *cudnn.Context { return &e.n }
 
