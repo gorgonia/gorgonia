@@ -172,7 +172,8 @@ func (m *lispMachine) loadStdLib() {
 			continue
 		}
 		for i := range m.engines {
-			if err := m.engines[i].LoadCUDAFunc(name, data, funcs); err != nil {
+			e := &m.engines[i]
+			if err := e.LoadCUDAFunc(name, data, funcs); err != nil {
 				panic(err)
 			}
 
