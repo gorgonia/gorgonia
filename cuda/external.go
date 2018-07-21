@@ -81,7 +81,7 @@ func (e *Engine) ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, b
 }
 
 // Init creates a CUDA engine with the given size for the given device
-func (e *Engine) Init(device cu.Device, size int64) error {
+func (e *Engine) Init(device cu.Device, size int64) (err error) {
 	e.Lock()
 	initialized := e.initialized
 	e.Unlock()
@@ -102,6 +102,7 @@ func (e *Engine) Init(device cu.Device, size int64) error {
 	}
 	e.initialized = true
 	e.Unlock()
+	return
 }
 
 func (e *Engine) doInit(size int64) (err error) {
@@ -122,11 +123,11 @@ func (e *Engine) doInit(size int64) (err error) {
 		}
 		return errors.Wrapf(err, "Failed to make context for device %d", e.d)
 	}
-	e.c = cu.NewBatchedContext(cu.CtxFromCUContext(e.d, cuctx, ctxFlag), e.d)
+	e.c = *(cu.NewBatchedContext(cu.CtxFromCUContext(e.d, cuctx, ctxFlag), e.d))
 
 	var attrs []int
-	if attrs, err = dev.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
-		return errors.Wrapf(err, "Failed to get attributes for device %d.", i)
+	if attrs, err = e.d.Attributes(cu.WarpSize, cu.MaxThreadsPerBlock, cu.MaxGridDimX, cu.MaxGridDimY, cu.MaxGridDimZ, cu.MaxBlockDimX, cu.MaxBlockDimY, cu.MaxBlockDimZ); err != nil {
+		return errors.Wrapf(err, "Failed to get attributes for device %v.", e.d)
 	}
 
 	e.warp = attrs[0]
@@ -138,27 +139,27 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.mbdy = attrs[6]
 	e.mbdz = attrs[7]
 
-	e.n = cudnn.NewContext()
+	e.n = *(cudnn.NewContext())
 	e.m = make(map[string]cu.Module)
 	e.f = make(map[string]cu.Function)
 
 	// actual work to allocate from graphics card
 
 	if e.freeMem, e.totalMem, err = cu.MemInfo(); err != nil {
-		return errors.Wrapf(err, "Failed to get free and total mem for device %d", i)
+		return errors.Wrapf(err, "Failed to get free and total mem for device %v", e.d)
 	}
 
 	// actually reserve memory for the allocator
 	var allocsize int64 = 2*size + (size / 2) + minAllocSize
-	if allocsize > free {
-		allocsize = free
+	if allocsize > e.freeMem {
+		allocsize = e.freeMem
 	}
 	ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, i)
+		return errors.Wrapf(err, "Failed to allocate %v bytes of managed memory for %v", allocsize, e.d)
 	}
-	m.a.reserve(uintptr(ptr), allocsize)
-
+	e.a.reserve(uintptr(ptr), allocsize)
+	return nil
 }
 
 func (e *Engine) Close() error {

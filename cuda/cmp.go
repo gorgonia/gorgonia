@@ -36,7 +36,7 @@ func (e *Engine) Lt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -84,7 +84,7 @@ func (e *Engine) LtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -133,7 +133,7 @@ func (e *Engine) Lte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -181,7 +181,7 @@ func (e *Engine) LteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -230,7 +230,7 @@ func (e *Engine) Gt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -278,7 +278,7 @@ func (e *Engine) GtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -327,7 +327,7 @@ func (e *Engine) Gte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -375,7 +375,7 @@ func (e *Engine) GteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -424,7 +424,7 @@ func (e *Engine) ElEq(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -472,7 +472,7 @@ func (e *Engine) EqScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -521,7 +521,7 @@ func (e *Engine) ElNe(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -569,7 +569,7 @@ func (e *Engine) NeScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse

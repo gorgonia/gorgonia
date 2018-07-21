@@ -28,7 +28,7 @@ func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.Fu
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse
@@ -76,7 +76,7 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 		mem = cu.DevicePtr(reuse.Uintptr())
 		memA := cu.DevicePtr(a.Uintptr())
 		memSize := int64(a.MemSize())
-		e.Memcpy(mem, memA)
+		e.memcpy(mem, memA, memSize)
 
 		size = int64(logicalSize(reuse.Shape()))
 		retVal = reuse

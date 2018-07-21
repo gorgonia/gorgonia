@@ -52,7 +52,7 @@ type External interface {
 	ElemGridSize(n int) (gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ int)
 
 	// Init initializes the machine
-	Init(size int64) error
+	Init(device cu.Device, size int64) error
 
 	// Close cleans up the machine, and closes all available resources
 	Close() error

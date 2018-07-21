@@ -84,12 +84,33 @@ func (e *Engine) Memclr(mem tensor.Memory) {
 	panic("not implemented")
 }
 
+// Memcpy is part of the implementation of tensor.Engine. It is eager, and will signal the context to actually do work.
+// The memory that will be copied is up to the smallest of sizes between dst and src.
+// i.e. if dst is 8 bytes and src is 16 bytes, only the first 8 bytes of src will be copied.
+// Likewise, if dst is 20 bytes and src is 3 bytes, only 3 bytes will be copied.
 func (e *Engine) Memcpy(dst tensor.Memory, src tensor.Memory) error {
-	panic("not implemented")
+	sSize := src.MemSize()
+	dSize := dst.MemSize()
+
+	var size int64
+	switch {
+	case dSize < sSize:
+		size = int64(dSize)
+	case sSize < dSize:
+		size = int64(sSize)
+	default:
+		size = int64(dSize)
+	}
+	d := cu.DevicePtr(dst.Uintptr())
+	s := cu.DevicePtr(src.Uintptr())
+	e.c.Memcpy(d, s, size)
+	e.signal()
+	<-e.syncChan
+	return e.c.Error()
 }
 
-func (e *Engine) memcpy(dst tensor.Memory, src tensor.Memory, size int64) error {
-	panic("not implemented")
+func (e *Engine) memcpy(dst cu.DevicePtr, src cu.DevicePtr, size int64) {
+	e.c.Memcpy(dst, src, size)
 }
 
 func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {

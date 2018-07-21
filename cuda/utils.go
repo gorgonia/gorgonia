@@ -19,7 +19,7 @@ func getDenseTensor(t tensor.Tensor) (tensor.DenseTensor, error) {
 }
 
 func handleFuncOpts(expShape tensor.Shape, expType tensor.Dtype, o tensor.DataOrder, strict bool, opts ...tensor.FuncOpt) (reuse tensor.DenseTensor, safe, toReuse, incr, same bool, err error) {
-	fo := ParseFuncOpts(opts...)
+	fo := tensor.ParseFuncOpts(opts...)
 
 	reuseT, incr := fo.IncrReuse()
 	safe = fo.Safe()
@@ -40,7 +40,7 @@ func handleFuncOpts(expShape tensor.Shape, expType tensor.Dtype, o tensor.DataOr
 
 		if reuse.DataSize() != expShape.TotalSize() && !expShape.IsScalar() {
 			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
-			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch - reuse.len() %v, expShape.TotalSize() %v", reuse.len(), expShape.TotalSize())
+			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch - reuse.len() %v, expShape.TotalSize() %v", reuse.DataSize(), expShape.TotalSize())
 			return
 		}
 
