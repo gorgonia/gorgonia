@@ -76,7 +76,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	for _, reg := range instr.readFrom {
 		v := m.getValue(reg)
 		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v)
+		m.watchedLogf(m.valueFmt, v.Uintptr())
 	}
 	m.leaveLogScope()
 
@@ -123,7 +123,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	}
 	m.watchedLogf("Result:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedLogf(m.valueFmt, v.Uintptr())
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
@@ -201,7 +201,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	m.watchedLogf("Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedLogf(m.valueFmt, v.Uintptr())
 	m.leaveLogScope()
 
 	return nil

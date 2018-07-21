@@ -198,6 +198,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 func (m *tapeMachine) RunAll() (err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	defer m.DoWork()
 
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
@@ -495,6 +496,8 @@ func (instr alloc) writes() register  { return instr.writeTo }
 
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(instr.t); err != nil {
@@ -517,6 +520,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	if err != nil {
 		return
 	}
+	m.logf("Result: 0x%x", v.Uintptr())
 
 	m.writeValue(instr.writeTo, v)
 	return nil

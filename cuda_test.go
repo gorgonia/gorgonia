@@ -3,6 +3,8 @@
 package gorgonia
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"gorgonia.org/tensor"
@@ -21,7 +23,8 @@ func TestDevCUDA(t *testing.T) {
 	xmy2 := Must(Square(xmy))
 	xpy2s := Must(Slice(xpy2, S(0)))
 
-	m := NewTapeMachine(g, TraceExec())
+	logger := log.New(os.Stderr, "", 0)
+	m := NewTapeMachine(g, WithLogger(logger), TraceExec(), WithWatchlist(), WithValueFmt("0x%x"))
 	defer m.Close()
 
 	prog, locMap, _ := Compile(g)
@@ -31,9 +34,9 @@ func TestDevCUDA(t *testing.T) {
 		t.Errorf("%+v", err)
 	}
 
-	t.Logf("x: %v", x.Value())
-	t.Logf("y: %v", y.Value())
-	t.Logf("xpy %v", xpy.Value())
+	t.Logf("x: \n%v", x.Value())
+	t.Logf("y: \n%v", y.Value())
+	t.Logf("xpy \n%v", xpy.Value())
 	t.Logf("xpy2: \n%v", xpy2.Value())
 	t.Logf("xpy2s \n%v", xpy2s.Value())
 	t.Logf("xmy2 \n%v", xmy2.Value())

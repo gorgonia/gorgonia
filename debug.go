@@ -28,8 +28,8 @@ var (
 	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
-	cudaDev           = false
-	allocatorDev      = true
+	cudaDev           = true
+	allocatorDev      = false
 )
 
 var READMEMSTATS = true

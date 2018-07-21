@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -24,7 +25,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 		return
 	}
 
-	cudaLogf("CUDADoing %v | prealloc %v | %v", op, prealloc, inputs)
+	cudaLogf("CUDADoing %v | prealloc %x | %x", op, prealloc.Uintptr(), inputs[0].Uintptr())
 	enterLogScope()
 	defer leaveLogScope()
 
@@ -53,9 +54,12 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	fn := eng.Functions()[name]
 	ctx := machine.Contexts()[int(dev)]
 
+	retVal = prealloc
 	if prealloc == nil {
 		prealloc = a
+		retVal = a
 	}
+
 	var mem cu.DevicePtr
 	if prealloc.Uintptr() == a.Uintptr() && a.Shape().Eq(prealloc.Shape()) {
 		mem = cu.DevicePtr(a.Uintptr())
@@ -77,7 +81,9 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	cudaLogf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
 	cudaLogf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-	return prealloc, nil
+
+	log.Printf("retVal 0x%x", retVal.Uintptr())
+	return
 }
 
 func (op elemBinOp) CallsExtern() bool { return true }
@@ -106,6 +112,7 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	bT := b.(tensor.Tensor)
 	tensor.WithEngine(e)(aT)
 	tensor.WithEngine(e)(bT)
+	log.Printf("aT.Engine %T", aT.Engine())
 
 	pT, ok := prealloc.(tensor.Tensor)
 	if ok {

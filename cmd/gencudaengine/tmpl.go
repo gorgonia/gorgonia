@@ -34,12 +34,13 @@ func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.Fu
 		retVal = reuse
 	case !safe:
 		mem = cu.DevicePtr(a.Uintptr())
-		retVal = reuse
+		retVal = a
 		size = int64(logicalSize(a.Shape()))
 	default:
 		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
 	}
 
+	memB = cu.DevicePtr(b.Uintptr())
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{
@@ -47,6 +48,9 @@ func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.Fu
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
+	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	logf("CUDADO %q, Mem: %v MemB: %v size %v, args %v", name, mem, memB, size, args)
+	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
@@ -56,6 +60,12 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 	name := constructName1(a, leftTensor, "add")
 	if !e.HasFunc(name) {
 		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+	}
+
+	var bMem tensor.Memory
+	var ok bool
+	if bMem, ok = b.(tensor.Memory); !ok {
+		return nil, errors.Errorf("b has to be a tensor.Memory. Got %T instead", b)
 	}
 
 	if err = unaryCheck(a); err != nil {
@@ -82,12 +92,13 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 		retVal = reuse
 	case !safe:
 		mem = cu.DevicePtr(a.Uintptr())
-		retVal = reuse
+		retVal = a
 		size = int64(logicalSize(a.Shape()))
 	default:
 		return nil, errors.New("Impossible state: A reuse tensor must be passed in, or the operation must be unsafe. Incr and safe operations are not supported")
 	}
 
+	memB = cu.DevicePtr(bMem.Uintptr())
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{
@@ -95,6 +106,9 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 		unsafe.Pointer(&memB),
 		unsafe.Pointer(&size),
 	}
+	logf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	logf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
+	logf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
