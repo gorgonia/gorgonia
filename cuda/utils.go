@@ -1,6 +1,8 @@
 package cuda
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
 )
@@ -84,7 +86,7 @@ func binaryCheck(a, b tensor.Tensor) (err error) {
 	return nil
 }
 
-func unaryCheck(a Tensor) error {
+func unaryCheck(a tensor.Tensor) error {
 	at := a.Dtype()
 	switch at {
 	case tensor.Float32, tensor.Float64:
@@ -103,4 +105,31 @@ func logicalSize(s tensor.Shape) int {
 		return 1
 	}
 	return s.TotalSize()
+}
+
+func constructName2(a, b tensor.Tensor, fn string) (name string) {
+	dt := a.Dtype()
+	as := a.Shape()
+	bs := b.Shape()
+	switch {
+	case as.IsScalar() && bs.IsScalar():
+		name = fmt.Sprintf("%v.%s_ss_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+	case as.IsScalar() && !bs.IsScalar():
+		name = fmt.Sprintf("%v.%s_sv_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+	case !as.IsScalar() && bs.IsScalar():
+		name = fmt.Sprintf("%v.%s_vs_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+	default:
+		name = fmt.Sprintf("%v.%s_vv_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+	}
+	return
+}
+
+func constructName1(a tensor.Tensor, leftTensor bool, fn string) (name string) {
+	dt := a.Dtype()
+	if leftTensor {
+		name = fmt.Sprintf("%v.%s_vs_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+	} else {
+		name = fmt.Sprintf("%v.%s_ss_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+	}
+	return
 }

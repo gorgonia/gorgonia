@@ -9,6 +9,26 @@ import (
 	"gorgonia.org/tensor"
 )
 
+var (
+	_ tensor.Adder = &Engine{}
+	_ tensor.Suber = &Engine{}
+	_ tensor.Muler = &Engine{}
+	_ tensor.Diver = &Engine{}
+	_ tensor.Power = &Engine{}
+	_ tensor.Moder = &Engine{}
+	// _ tensor.FMAer       = &Engine{}
+	_ tensor.MatMuler    = &Engine{}
+	_ tensor.MatVecMuler = &Engine{}
+	_ tensor.OuterProder = &Engine{}
+	// _ tensor.Dotter      = &Engine{}
+	// _ tensor.SVDer       = &Engine{}
+	_ tensor.Lter   = &Engine{}
+	_ tensor.Lteer  = &Engine{}
+	_ tensor.Gter   = &Engine{}
+	_ tensor.Gteer  = &Engine{}
+	_ tensor.ElEqer = &Engine{}
+)
+
 type Engine struct {
 	tensor.Engine
 	sync.Mutex
