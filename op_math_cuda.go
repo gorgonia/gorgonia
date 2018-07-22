@@ -179,11 +179,50 @@ func (op elemBinOp) ssop(a, b, prealloc Value, e *cuda.Engine) (retVal Value, er
 
 /* LINEAR ALGEBRA STUFF */
 
-func (op linAlgBinOp) CallsExtern() bool { return false }
+func (op linAlgBinOp) CallsExtern() bool { return true }
 
-// func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
-// 	return nil, errors.Errorf("NYI")
-// }
+func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	m := extern.(CUDAMachine)
+	e := &m.Engines()[int(dev)]
+
+	a := inputs[0]
+	b := inputs[1]
+
+	aT, ok := a.(tensor.Tensor)
+	if !ok {
+		return nil, errors.Errorf("Expected a a to be a Tensor. Got %T instead", a)
+	}
+	bT, ok := b.(tensor.Tensor)
+	if !ok {
+		return nil, errors.Errorf("Expected a b to be a Tensor. Got %T instead", b)
+	}
+
+	pT, ok := prealloc.(tensor.Tensor)
+	if !ok {
+		return nil, errors.Errorf("Expected a prealloc to be a Tensor. Got %T instead", prealloc)
+	}
+	tensor.WithEngine(e)(bT)
+	tensor.WithEngine(e)(aT)
+	tensor.WithEngine(e)(pT)
+
+	switch op.āBinaryOperator {
+	case matMulOperator:
+		return tensor.MatMul(aT, bT, tensor.WithReuse(pT))
+	case matVecMulOperator:
+		return tensor.MatVecMul(aT, bT, tensor.WithReuse(pT))
+	case vecDotOperator:
+		return nil, errors.New("NYI")
+	case outerProdOperator:
+		return tensor.Outer(aT, bT, tensor.WithReuse(pT))
+	case batchedMatMulOperator:
+		return nil, errors.New("NYI")
+	}
+	panic("Unreachable")
+}
 
 /* API stuff  */
 

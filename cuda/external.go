@@ -136,7 +136,7 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.mbdy = attrs[6]
 	e.mbdz = attrs[7]
 
-	e.b = *(cublas.New(cublas.WithContext(e.c.Context)))
+	e.b.Init(cublas.WithContext(&e.c))
 	e.n = *(cudnn.NewContext())
 	e.m = make(map[string]cu.Module)
 	e.f = make(map[string]cu.Function)

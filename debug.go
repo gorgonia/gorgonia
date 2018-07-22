@@ -20,7 +20,7 @@ func init() {
 // these constants are used during development time - mainly on tracing statements to see the values of certain things.
 // I use these instead of say, Delve because most of the time, the larger picture has to be known. Delve tends to give small picture views
 var (
-	compileDev        = true
+	compileDev        = false
 	shapeInferenceDev = false
 	typeSystemDev     = false
 	symdiffDev        = false
@@ -28,7 +28,7 @@ var (
 	machineDev        = false
 	stabilizationDev  = false
 	solverDev         = false
-	cudaDev           = false
+	cudaDev           = true
 	allocatorDev      = false
 )
 
