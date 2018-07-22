@@ -636,13 +636,8 @@ func (instr *execOp) String() string {
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
-	// m.logf("Executing DoWork")
-	// m.ExternMetadata.DoWork()
-	if m.WorkAvailable() == nil {
-		return nil
-	}
-	m.ExternMetadata.Signal()
-	return nil
+	m.logf("Executing DoWork")
+	return m.ExternMetadata.DoWork()
 }
 
 func (instr flushInstr) ID() int64         { return -1 }
@@ -689,7 +684,6 @@ func (instr *readInstr) exec(m *tapeMachine) (err error) {
 	}
 
 	*instr.into = v2
-	m.logf("instr.into %v", *instr.into)
 	return nil
 }
 

@@ -4,10 +4,10 @@ import "text/template"
 
 const binopRaw = `// {{.Method}} implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructName2(a, b, "{{.ScalarMethod | lower}}")
 
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform {{.Method}}(). The tensor engine does not have the function %q", name)
 	}
 
 	if err = binaryCheck(a, b); err != nil {
@@ -57,9 +57,9 @@ func (e *Engine) {{.Method}}(a tensor.Tensor, b tensor.Tensor, opts ...tensor.Fu
 
 // {{.ScalarMethod}}Scalar implements tensor.{{.Method}}er. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructName1(a, leftTensor, "{{.ScalarMethod | lower}}")
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform {{.ScalarMethod}}Scalar(). The tensor engine does not have the function %q", name)
 	}
 
 	var bMem tensor.Memory
@@ -99,6 +99,10 @@ func (e *Engine) {{.ScalarMethod}}Scalar(a tensor.Tensor, b interface{}, leftTen
 	}
 
 	memB = cu.DevicePtr(bMem.Uintptr())
+	if !leftTensor {
+		mem, memB = memB, mem
+	}
+	
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{

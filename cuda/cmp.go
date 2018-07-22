@@ -12,10 +12,10 @@ import (
 
 // Lt implements tensor.Lter. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Lt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructName2(a, b, "lt")
 
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform Lt(). The tensor engine does not have the function %q", name)
 	}
 
 	if err = binaryCheck(a, b); err != nil {
@@ -65,9 +65,9 @@ func (e *Engine) Lt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 
 // LtScalar implements tensor.Lter. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) LtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructName1(a, leftTensor, "lt")
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform LtScalar(). The tensor engine does not have the function %q", name)
 	}
 
 	var bMem tensor.Memory
@@ -107,6 +107,10 @@ func (e *Engine) LtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 	}
 
 	memB = cu.DevicePtr(bMem.Uintptr())
+	if !leftTensor {
+		mem, memB = memB, mem
+	}
+
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{
@@ -123,10 +127,10 @@ func (e *Engine) LtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 
 // Lte implements tensor.Lteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Lte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructName2(a, b, "lte")
 
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform Lte(). The tensor engine does not have the function %q", name)
 	}
 
 	if err = binaryCheck(a, b); err != nil {
@@ -176,9 +180,9 @@ func (e *Engine) Lte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // LteScalar implements tensor.Lteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) LteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructName1(a, leftTensor, "lte")
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform LteScalar(). The tensor engine does not have the function %q", name)
 	}
 
 	var bMem tensor.Memory
@@ -218,6 +222,10 @@ func (e *Engine) LteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 	}
 
 	memB = cu.DevicePtr(bMem.Uintptr())
+	if !leftTensor {
+		mem, memB = memB, mem
+	}
+
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{
@@ -234,10 +242,10 @@ func (e *Engine) LteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 // Gt implements tensor.Gter. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Gt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructName2(a, b, "gt")
 
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform Gt(). The tensor engine does not have the function %q", name)
 	}
 
 	if err = binaryCheck(a, b); err != nil {
@@ -287,9 +295,9 @@ func (e *Engine) Gt(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (r
 
 // GtScalar implements tensor.Gter. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) GtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructName1(a, leftTensor, "gt")
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform GtScalar(). The tensor engine does not have the function %q", name)
 	}
 
 	var bMem tensor.Memory
@@ -329,6 +337,10 @@ func (e *Engine) GtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 	}
 
 	memB = cu.DevicePtr(bMem.Uintptr())
+	if !leftTensor {
+		mem, memB = memB, mem
+	}
+
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{
@@ -345,10 +357,10 @@ func (e *Engine) GtScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 
 // Gte implements tensor.Gteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) Gte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructName2(a, b, "gte")
 
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform Gte(). The tensor engine does not have the function %q", name)
 	}
 
 	if err = binaryCheck(a, b); err != nil {
@@ -398,9 +410,9 @@ func (e *Engine) Gte(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (
 
 // GteScalar implements tensor.Gteer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) GteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructName1(a, leftTensor, "gte")
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform GteScalar(). The tensor engine does not have the function %q", name)
 	}
 
 	var bMem tensor.Memory
@@ -440,6 +452,10 @@ func (e *Engine) GteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 	}
 
 	memB = cu.DevicePtr(bMem.Uintptr())
+	if !leftTensor {
+		mem, memB = memB, mem
+	}
+
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{
@@ -456,10 +472,10 @@ func (e *Engine) GteScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts
 
 // ElEq implements tensor.ElEqer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) ElEq(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructName2(a, b, "eq")
 
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform ElEq(). The tensor engine does not have the function %q", name)
 	}
 
 	if err = binaryCheck(a, b); err != nil {
@@ -509,9 +525,9 @@ func (e *Engine) ElEq(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 
 // EqScalar implements tensor.ElEqer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) EqScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructName1(a, leftTensor, "eq")
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform EqScalar(). The tensor engine does not have the function %q", name)
 	}
 
 	var bMem tensor.Memory
@@ -551,6 +567,10 @@ func (e *Engine) EqScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 	}
 
 	memB = cu.DevicePtr(bMem.Uintptr())
+	if !leftTensor {
+		mem, memB = memB, mem
+	}
+
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{
@@ -567,10 +587,10 @@ func (e *Engine) EqScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 
 // ElNe implements tensor.ElNeer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) ElNe(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName2(a, b, "add")
+	name := constructName2(a, b, "ne")
 
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform ElNe(). The tensor engine does not have the function %q", name)
 	}
 
 	if err = binaryCheck(a, b); err != nil {
@@ -620,9 +640,9 @@ func (e *Engine) ElNe(a tensor.Tensor, b tensor.Tensor, opts ...tensor.FuncOpt) 
 
 // NeScalar implements tensor.ElNeer. It does not support safe or increment operation options and will return an error if those options are passed in
 func (e *Engine) NeScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts ...tensor.FuncOpt) (retVal tensor.Tensor, err error) {
-	name := constructName1(a, leftTensor, "add")
+	name := constructName1(a, leftTensor, "ne")
 	if !e.HasFunc(name) {
-		return nil, errors.Errorf("Unable to perform Add(). The tensor engine does not have the function %q", name)
+		return nil, errors.Errorf("Unable to perform NeScalar(). The tensor engine does not have the function %q", name)
 	}
 
 	var bMem tensor.Memory
@@ -662,6 +682,10 @@ func (e *Engine) NeScalar(a tensor.Tensor, b interface{}, leftTensor bool, opts 
 	}
 
 	memB = cu.DevicePtr(bMem.Uintptr())
+	if !leftTensor {
+		mem, memB = memB, mem
+	}
+
 	fn := e.f[name]
 	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
 	args := []unsafe.Pointer{

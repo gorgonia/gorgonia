@@ -3,6 +3,7 @@
 package gorgonia
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -22,9 +23,17 @@ func TestDevCUDA(t *testing.T) {
 	WithName("xpy2")(xpy2)
 	xmy2 := Must(Square(xmy))
 	xpy2s := Must(Slice(xpy2, S(0)))
+	ioutil.WriteFile("fullgraph.dot", []byte(g.ToDot()), 0644)
+
+	var xpyV, xmyV, xpy2V, xpy2sV, xmy2V Value
+	Read(xpy, &xpyV)
+	Read(xmy, &xmyV)
+	Read(xpy2, &xpy2V)
+	Read(xpy2s, &xpy2sV)
+	Read(xmy2, &xmy2V)
 
 	logger := log.New(os.Stderr, "", 0)
-	m := NewTapeMachine(g, WithLogger(logger), TraceExec(), WithWatchlist(), WithValueFmt("0x%x"))
+	m := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("0x%x"))
 	defer m.Close()
 
 	prog, locMap, _ := Compile(g)
@@ -36,10 +45,11 @@ func TestDevCUDA(t *testing.T) {
 
 	t.Logf("x: \n%v", x.Value())
 	t.Logf("y: \n%v", y.Value())
-	t.Logf("xpy \n%v", xpy.Value())
-	t.Logf("xpy2: \n%v", xpy2.Value())
-	t.Logf("xpy2s \n%v", xpy2s.Value())
-	t.Logf("xmy2 \n%v", xmy2.Value())
+	t.Logf("xpy \n%v", xpyV)
+	t.Logf("xmy \n%v", xmyV)
+	t.Logf("xpy2: \n%v", xpy2V)
+	t.Logf("xpy2s \n%v", xpy2sV)
+	t.Logf("xmy2 \n%v", xmy2V)
 
 	if assertGraphEngine(t, g, stdengType); t.Failed() {
 		t.FailNow()

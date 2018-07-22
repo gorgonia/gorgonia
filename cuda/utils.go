@@ -129,7 +129,7 @@ func constructName1(a tensor.Tensor, leftTensor bool, fn string) (name string) {
 	if leftTensor {
 		name = fmt.Sprintf("%v.%s_vs_f%d", elemBinOpMod, fn, int(dt.Size()*8))
 	} else {
-		name = fmt.Sprintf("%v.%s_ss_f%d", elemBinOpMod, fn, int(dt.Size()*8))
+		name = fmt.Sprintf("%v.%s_sv_f%d", elemBinOpMod, fn, int(dt.Size()*8))
 	}
 	return
 }

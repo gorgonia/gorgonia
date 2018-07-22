@@ -4,11 +4,11 @@ package gorgonia
 
 import (
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
+	"gorgonia.org/gorgonia/cuda"
 	"gorgonia.org/tensor"
 )
 
@@ -81,8 +81,6 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	cudaLogf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
 	cudaLogf("LaunchKernel Params. mem: %v. Size %v", mem, size)
 	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-
-	log.Printf("retVal 0x%x", retVal.Uintptr())
 	return
 }
 
@@ -101,42 +99,82 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	as := a.Shape()
 	bs := b.Shape()
 
-	if as.IsScalar() && bs.IsScalar() {
-		return nil, errors.Errorf("NYI")
-	}
-
 	m := extern.(CUDAMachine)
 	e := &m.Engines()[int(dev)]
 
-	aT := a.(tensor.Tensor)
-	bT := b.(tensor.Tensor)
-	tensor.WithEngine(e)(aT)
-	tensor.WithEngine(e)(bT)
-	log.Printf("aT.Engine %T", aT.Engine())
+	if as.IsScalar() && bs.IsScalar() {
+		return op.ssop(a, b, prealloc, e)
+	}
 
-	pT, ok := prealloc.(tensor.Tensor)
-	if ok {
+	if aT, ok := a.(tensor.Tensor); ok {
+		tensor.WithEngine(e)(aT)
+	}
+	if bT, ok := b.(tensor.Tensor); ok {
+		tensor.WithEngine(e)(bT)
+	}
+
+	pT, toReuse := prealloc.(tensor.Tensor)
+	if toReuse {
 		tensor.WithEngine(e)(pT)
 	}
 
 	boType := op.binOpType()
 	if fn := binOps[boType]; fn != nil {
-		if ok {
-			return (*fn)(aT, bT, tensor.WithReuse(pT))
+		if toReuse {
+			return (*fn)(a, b, tensor.WithReuse(pT))
 		} else {
-			return (*fn)(aT, bT, tensor.UseUnsafe())
+			return (*fn)(a, b, tensor.UseUnsafe())
 		}
 	}
 
 	if fn := cmpOps[boType]; fn != nil {
-		if ok {
-			return (*fn)(aT, bT, tensor.WithReuse(pT))
+		if toReuse {
+			return (*fn)(a, b, tensor.WithReuse(pT))
 		} else {
-			return (*fn)(aT, bT, tensor.UseUnsafe())
+			return (*fn)(a, b, tensor.UseUnsafe())
 		}
 	}
 
 	return nil, errors.Errorf("op %v cannot be done by CUDA", op)
+}
+
+func (op elemBinOp) ssop(a, b, prealloc Value, e *cuda.Engine) (retVal Value, err error) {
+	dt := a.Dtype()
+	ctx := e.Context()
+	opName := ʘBinOpNames[op.binOpType()]
+	name := fmt.Sprintf("%v.%v_ss_f%d", elemBinOpMod, opName, int(dt.Size())*8)
+	var mem, memB cu.DevicePtr
+	var size int64
+	if prealloc == nil {
+		mem = cu.DevicePtr(a.Uintptr())
+		retVal = a
+		size = int64(logicalSize(a.Shape()))
+	} else {
+		mem = cu.DevicePtr(prealloc.Uintptr())
+		memA := cu.DevicePtr(a.Uintptr())
+		memSize := int64(a.MemSize())
+		ctx.Memcpy(mem, memA, memSize)
+
+		size = int64(logicalSize(prealloc.Shape()))
+		retVal = prealloc
+	}
+	memB = cu.DevicePtr(b.Uintptr())
+	fn := e.Functions()[name]
+
+	var args []unsafe.Pointer
+	cudaLogf("%v mem %v, memB %v", op, mem, memB)
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
+	args = []unsafe.Pointer{
+		unsafe.Pointer(&mem),
+		unsafe.Pointer(&memB),
+		unsafe.Pointer(&size),
+	}
+
+	cudaLogf("CUDADO %q, size %v", name, size)
+	cudaLogf("LaunchKernel params. mem: %v memB: %v size: %v", mem, memB, size)
+	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
+	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	return
 }
 
 /* LINEAR ALGEBRA STUFF */

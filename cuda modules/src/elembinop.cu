@@ -60,6 +60,12 @@ extern "C" { VVBINOP(lt, f32, float, <)}
 extern "C" { VVBINOP(lte, f64, double, <=)}
 extern "C" { VVBINOP(lte, f32, float, <=)}
 
+extern "C" { VVBINOP(eq, f64, double, ==)}
+extern "C" { VVBINOP(eq, f32, float, ==)}
+
+extern "C" { VVBINOP(ne, f64, double, !=)}
+extern "C" { VVBINOP(ne, f32, float, !=)}
+
 
 /* VECTOR-SCALAR BIN OP */
 
@@ -87,6 +93,12 @@ extern "C" { VSBINOP(lt, f32, float, <)}
 extern "C" { VSBINOP(lte, f64, double, <=)}
 extern "C" { VSBINOP(lte, f32, float, <=)}
 
+extern "C" { VSBINOP(eq, f64, double, ==)}
+extern "C" { VSBINOP(eq, f32, float, ==)}
+
+extern "C" { VSBINOP(ne, f64, double, !=)}
+extern "C" { VSBINOP(ne, f32, float, !=)}
+
 /* SCALAR-VECTOR BIN OP */
 
 extern "C" { SVBINOP(add, f64, double, +) }
@@ -113,6 +125,12 @@ extern "C" { SVBINOP(lt, f32, float, <) }
 extern "C" { SVBINOP(lte, f64, double, <=) }
 extern "C" { SVBINOP(lte, f32, float, <=) }
 
+extern "C" { SVBINOP(eq, f64, double, ==) }
+extern "C" { SVBINOP(eq, f32, float, ==) }
+
+extern "C" { SVBINOP(ne, f64, double, !=) }
+extern "C" { SVBINOP(ne, f32, float, !=) }
+
 /* SCALAR-SCALAR BIN OP */	
 
 extern "C" { SSBINOP(add, f64, double, +) }
@@ -138,6 +156,12 @@ extern "C" { SSBINOP(lt, f32, float, <)}
 
 extern "C" { SSBINOP(lte, f64, double, <=)}
 extern "C" { SSBINOP(lte, f32, float, <=)}
+
+extern "C" { SSBINOP(eq, f64, double, ==)}
+extern "C" { SSBINOP(eq, f32, float, ==)}
+
+extern "C" { SSBINOP(ne, f64, double, !=)}
+extern "C" { SSBINOP(ne, f32, float, !=)}
 
 /* FUNCTION BIN OP */
 

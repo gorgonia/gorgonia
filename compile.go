@@ -219,6 +219,7 @@ func (cg *codegenerator) updateLastWrites(reg register, n *Node) {
 }
 
 func (cg *codegenerator) flush() {
+	compileLogf("Flushing")
 	for _, instrID := range cg.queue {
 		cg.flushed[instrID] = struct{}{}
 	}
@@ -321,6 +322,10 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
 		from := cg.df.intervals[children[0]].result
 		to := cg.df.intervals[node].result
 
+		// TODO add from to queue
+		instrID := cg.sorted.index(node)
+		cg.queue = append(cg.queue, instrID)
+
 		instr := deviceTransport{
 			from: from, to: to,
 		}
@@ -374,80 +379,85 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 				cg.allocated[writeTo] = struct{}{}
 			}
 		}
+	}
+	compileLogf("Node Reads %v", reads)
+	// check if any previously buffered cBLAS or cuBLAS calls need to be flushed
+	// it doesn't matter if the machine isn't using a batchedBLAS. flushInstr would just be a no-op at runtime
+	for _, read := range reads {
+		if lastWriteNode, ok := cg.lastWrites[read]; ok {
+			instrID := cg.sorted.index(lastWriteNode)
+			var op Op
+			var onDev, nodeOnDev Device
 
-		// check if any previously buffered cBLAS or cuBLAS calls need to be flushed
-		// it doesn't matter if the machine isn't using a batchedBLAS. flushInstr would just be a no-op at runtime
-		for _, read := range reads {
-			if lastWriteNode, ok := cg.lastWrites[read]; ok {
-				instrID := cg.sorted.index(lastWriteNode)
-				var op Op
-				var onDev, nodeOnDev Device
-
-				switch {
-				case lastWriteNode.isArg(), lastWriteNode.isStmt:
-					continue
-				default:
-					op = lastWriteNode.op
-				}
-				switch op.(type) {
-				case CUDADoer:
-					onDev = Device(0)
-				case CLDoer:
-					onDev = Device(0)
-				default:
-					onDev = CPU
-				}
-
-				switch node.op.(type) {
-				case CUDADoer:
-					nodeOnDev = Device(0)
-				case CLDoer:
-					nodeOnDev = Device(0)
-				default:
-					nodeOnDev = CPU
-				}
-
-				// if we have sequential Extern calls,  we just add it to the batch.
-				// sequential in this can mean several instructions apart. For example:
-				//		4 	A × B 	; read %2	; write to %3
-				//		 	⋮	(doesn't use %3 or %10)
-				//			⋮
-				//		10  Aᵀ × B	; read %3	; write to %10
-				//			⋮	(doesn't use %3, or %10)
-				//			⋮
-				//		12 	+		; read %10	; write to %12
-				//
-				// It is before instruction 12 that the flush will be added. 4 and 10 are considered sequential
-				//
-				// It is not sequential when both are not the same devices
-				switch {
-				case !op.CallsExtern():
-					// op doesn't call extern... don't bother flushing
-				case op.CallsExtern() && node.op.CallsExtern() && onDev == nodeOnDev:
-					// same device, both calls extern
-					// no flush needed
-				case op.CallsExtern() && node.op.CallsExtern() && onDev != nodeOnDev:
-					// different devices, both calls extern
-					// flush needed
-					fallthrough
-				case op.CallsExtern() && !node.op.CallsExtern():
-					// node is gonna use the value immediately
-					// flush needed
-					fallthrough
-				default:
-					if _, ok := cg.flushed[instrID]; !ok {
-						// cg.instructions = append(cg.instructions, flushInstr{})
-						cg.addInstr(node, flushInstr{})
-						cg.flush()
-					}
-				}
-
-				// viaticum := cg.instructions[instrID] // ;) - it IS on the way
-				// if instr, ok := viaticum.(*execOp); ok {
-				// if op.CallsExtern() && !node.op.CallsExtern() {
-				// }
-				// }
+			switch {
+			case lastWriteNode.isArg(), lastWriteNode.isStmt:
+				continue
+			default:
+				op = lastWriteNode.op
 			}
+			switch op.(type) {
+			case CUDADoer:
+				onDev = Device(0)
+			case CLDoer:
+				onDev = Device(0)
+			default:
+				onDev = CPU
+			}
+
+			switch node.op.(type) {
+			case CUDADoer:
+				nodeOnDev = Device(0)
+			case CLDoer:
+				nodeOnDev = Device(0)
+			default:
+				nodeOnDev = CPU
+			}
+
+			// if we have sequential Extern calls,  we just add it to the batch.
+			// sequential in this can mean several instructions apart. For example:
+			//		4 	A × B 	; read %2	; write to %3
+			//		 	⋮	(doesn't use %3 or %10)
+			//			⋮
+			//		10  Aᵀ × B	; read %3	; write to %10
+			//			⋮	(doesn't use %3, or %10)
+			//			⋮
+			//		12 	+		; read %10	; write to %12
+			//
+			// It is before instruction 12 that the flush will be added. 4 and 10 are considered sequential
+			//
+			// It is not sequential when both are not the same devices
+			switch {
+			case !op.CallsExtern():
+				compileLogf("ToFlush: Node doesn't call extern. NO FLUSH")
+				// op doesn't call extern... don't bother flushing
+			case op.CallsExtern() && node.op.CallsExtern() && onDev == nodeOnDev:
+				compileLogf("ToFlush: Both calls extern, both same device. NO FLUSH")
+				// same device, both calls extern
+				// no flush needed
+			case op.CallsExtern() && node.op.CallsExtern() && onDev != nodeOnDev:
+				compileLogf("ToFlush:  Differing devices")
+				// different devices, both calls extern
+				// flush needed
+				fallthrough
+			case op.CallsExtern() && !node.op.CallsExtern():
+				compileLogf("ToFlush: Node requires value immediately")
+				// node is gonna use the value immediately
+				// flush needed
+				fallthrough
+			default:
+				compileLogf("ToFlush: FLUSH")
+				if _, ok := cg.flushed[instrID]; !ok {
+					// cg.instructions = append(cg.instructions, flushInstr{})
+					cg.addInstr(node, flushInstr{})
+					cg.flush()
+				}
+			}
+
+			// viaticum := cg.instructions[instrID] // ;) - it IS on the way
+			// if instr, ok := viaticum.(*execOp); ok {
+			// if op.CallsExtern() && !node.op.CallsExtern() {
+			// }
+			// }
 		}
 
 		// check the overwrites - if the overwrite and the resulting register is the same,
