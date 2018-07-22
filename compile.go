@@ -322,15 +322,21 @@ func (cg *codegenerator) addStmt(node *Node, interv *interval, i int) {
 		from := cg.df.intervals[children[0]].result
 		to := cg.df.intervals[node].result
 
-		// TODO add from to queue
-		instrID := cg.sorted.index(node)
-		cg.queue = append(cg.queue, instrID)
-
 		instr := deviceTransport{
 			from: from, to: to,
 		}
 		cg.addInstr(node, instr)
+
+		if op.from != CPU && op.to == CPU {
+			instrID := cg.sorted.index(op.toNode)
+			if _, ok := cg.flushed[instrID]; !ok {
+				// cg.instructions = append(cg.instructions, flushInstr{})
+				cg.addInstr(node, flushInstr{})
+				cg.flush()
+			}
+		}
 		cg.updateLastWrites(writeTo, node)
+
 	}
 }
 
