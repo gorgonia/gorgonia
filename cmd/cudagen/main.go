@@ -32,6 +32,12 @@ func compileCUDA(src, targetLoc string, maj, min int) {
 	arch := fmt.Sprintf("-arch=compute_%d%d", maj, min)
 	output := fmt.Sprintf("-o=%v", path.Join(targetLoc, name+".ptx"))
 
+	if _, err := os.Stat(targetLoc); os.IsNotExist(err) {
+		if err := os.Mkdir(targetLoc, 0777); err != nil {
+			log.Fatalf("FAILED TO CREATE TARGET DIR %q. Unable to proceed with nvcc compilation. Error was %v", targetLoc, err)
+		}
+	}
+
 	var stderr bytes.Buffer
 
 	var slow *exec.Cmd
@@ -42,7 +48,7 @@ func compileCUDA(src, targetLoc string, maj, min int) {
 	}
 
 	slow.Stderr = &stderr
-	if err := slow.Run(); err != nil {
+	if err := slow.Run(); err != nil || stderr.Len() != 0 {
 		log.Fatalf("Failed to compile with nvcc. Error: %v. nvcc error: %v", err, stderr.String())
 	}
 

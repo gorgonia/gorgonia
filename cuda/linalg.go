@@ -3,8 +3,8 @@ package cuda
 import (
 	"log"
 
-	"github.com/gonum/blas"
 	"github.com/pkg/errors"
+	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/tensor"
 )
 
