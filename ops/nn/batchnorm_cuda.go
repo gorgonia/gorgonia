@@ -60,7 +60,7 @@ func (op *BatchNormOp) CUDADo(extern gorgonia.External, dev gorgonia.Device, pre
 	panic("not implemented")
 
 	machine := extern.(gorgonia.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 
 	x, bnScale, bnBias, mean, variance, cachedMean, cachedVar := inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6]
 

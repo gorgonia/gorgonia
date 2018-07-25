@@ -300,7 +300,7 @@ func main() {
 			if err = vm.RunAll(); err != nil {
 				log.Fatalf("Failed at epoch  %d: %v", i, err)
 			}
-			// solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
+			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
 			vm.Reset()
 			bar.Increment()
 		}

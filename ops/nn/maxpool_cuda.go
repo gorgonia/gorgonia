@@ -104,7 +104,7 @@ func (p *maxpool) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inpu
 	}
 
 	machine := extern.(G.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 	err = ctx.PoolingForward(p.Pooling, 1.0, p.xDesc, in.(cudnn.Memory), 0, p.yDesc, prealloc.(cudnn.Memory))
 	return prealloc, err
 }
@@ -182,7 +182,7 @@ func (p *maxpoolDiff) CUDADo(extern G.External, dev G.Device, prealloc G.Value, 
 	x, y, dy := inputs[0], inputs[1], inputs[2]
 
 	machine := extern.(G.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 	err = ctx.PoolingBackward(p.Pooling, 1.0, p.yDesc, y.(cudnn.Memory), p.yDesc, dy.(cudnn.Memory), p.xDesc, x.(cudnn.Memory), 0, p.yDesc, prealloc.(cudnn.Memory))
 	return prealloc, err
 }

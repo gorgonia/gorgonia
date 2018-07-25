@@ -105,7 +105,7 @@ func (c *convolution) CUDADo(extern G.External, dev G.Device, prealloc G.Value, 
 	}
 
 	machine := extern.(G.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 
 	if err = ctx.ConvolutionForward(1.0,
 		c.xDesc, im.(cudnn.Memory),
@@ -193,7 +193,7 @@ func (c *convDiffIm) CUDADo(extern G.External, dev G.Device, prealloc G.Value, i
 	filter, grad := inputs[0], inputs[1]
 
 	machine := extern.(G.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 
 	if err = ctx.ConvolutionBackwardData(1.0,
 		c.wDesc, filter.(cudnn.Memory),
@@ -249,7 +249,7 @@ func (c *convDiffFilter) CUDADo(extern G.External, dev G.Device, prealloc G.Valu
 	im, grad := inputs[0], inputs[1]
 
 	machine := extern.(G.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 
 	if err = ctx.ConvolutionBackwardFilter(1.0,
 		c.xDesc, im.(cudnn.Memory),

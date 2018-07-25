@@ -77,7 +77,7 @@ func (op *dropout) CUDADo(extern gorgonia.External, dev gorgonia.Device, preallo
 
 	x, s := inputs[0], inputs[1]
 	machine := extern.(gorgonia.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 	memsize := calcMemSize(s.Dtype(), s.Shape())
 
 	if err = op.Use(ctx, s.(cudnn.Memory), memsize, op.seed); err != nil {
@@ -139,7 +139,7 @@ func (op *dropoutDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, pre
 
 	dy, scratch := inputs[0], inputs[1]
 	machine := extern.(gorgonia.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	ctx := machine.CUDNNContexts()[int(dev)]
 	memsize := calcMemSize(scratch.Dtype(), scratch.Shape())
 	if err = op.Use(ctx, scratch.(cudnn.Memory), memsize, op.seed); err != nil {
 		return nil, err
