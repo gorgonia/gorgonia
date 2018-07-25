@@ -107,6 +107,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if p0, err = gorgonia.MaxPool2D(a0, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
 		return errors.Wrap(err, "Layer 0 Maxpooling failed")
 	}
+	log.Printf("p0 shape %v", p0.Shape())
 	if l0, err = gorgonia.Dropout(p0, m.d0); err != nil {
 		return errors.Wrap(err, "Unable to apply a dropout")
 	}

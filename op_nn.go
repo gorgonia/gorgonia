@@ -1187,7 +1187,7 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 }
 
 func (op *BatchNormOp) SetTraining() { op.Reset(); op.training = true }
-func (op *BatchNormOp) SetTesting()  { op.Reset(); op.training = false }
+func (op *BatchNormOp) SetTesting()  { op.training = false }
 
 func (op *BatchNormOp) Reset() error {
 	dt := op.ma.Dtype()
