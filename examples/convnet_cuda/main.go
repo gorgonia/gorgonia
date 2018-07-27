@@ -5,7 +5,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -19,16 +18,16 @@ import (
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/gorgonia/examples/mnist"
-	"gorgonia.org/gorgonia/ops/nn"
+	nnops "gorgonia.org/gorgonia/ops/nn"
 	"gorgonia.org/tensor"
 
 	"time"
 
-	"gopkg.in/cheggaaa/pb.v1"
+	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
 var (
-	epochs     = flag.Int("epochs", 100, "Number of epochs to train for")
+	epochs     = flag.Int("epochs", 2, "Number of epochs to train for")
 	dataset    = flag.String("dataset", "train", "Which dataset to train on? Valid options are \"train\" or \"test\"")
 	dtype      = flag.String("dtype", "float64", "Which dtype to use")
 	batchsize  = flag.Int("batchsize", 100, "Batch size")
@@ -152,8 +151,6 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 		return errors.Wrap(err, "Unable to apply a dropout on layer 2")
 	}
 	log.Printf("l2 shape %v | %v", l2.Shape(), m.w3.Shape())
-
-	ioutil.WriteFile("tmp.dot", []byte(m.g.ToDot()), 0644)
 
 	// Layer 3
 	if fc, err = gorgonia.Mul(l2, m.w3); err != nil {
@@ -298,7 +295,7 @@ func main() {
 			gorgonia.Let(x, xVal)
 			gorgonia.Let(y, yVal)
 			if err = vm.RunAll(); err != nil {
-				log.Fatalf("Failed at epoch  %d: %v", i, err)
+				log.Fatalf("Failed at epoch  %d: %+v", i, err)
 			}
 			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
 			vm.Reset()

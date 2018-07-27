@@ -209,6 +209,22 @@ func (op linAlgBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	tensor.WithEngine(e)(aT)
 	tensor.WithEngine(e)(pT)
 
+	if op.transA && op.āBinaryOperator != batchedMatMulOperator {
+		if err = aT.T(); err != nil {
+			return nil, errors.Wrap(err, tFail)
+		}
+		// untranspose
+		defer aT.T()
+	}
+
+	if op.transB && op.āBinaryOperator != batchedMatMulOperator {
+		if err = bT.T(); err != nil {
+			return nil, errors.Wrap(err, tFail)
+		}
+		// untranspose
+		defer bT.T()
+	}
+
 	switch op.āBinaryOperator {
 	case matMulOperator:
 		return tensor.MatMul(aT, bT, tensor.WithReuse(pT))

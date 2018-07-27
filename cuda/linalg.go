@@ -1,8 +1,6 @@
 package cuda
 
 import (
-	"log"
-
 	"github.com/pkg/errors"
 	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/tensor"
@@ -205,8 +203,6 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 		panic("Unreachable")
 	}
 
-	log.Printf("HERE: m %d n %d k %d | %v", m, n, k, ad.Dtype())
-
 	e.c.DoWork()
 	switch ad.Dtype() {
 	case tensor.Float64:
@@ -216,7 +212,6 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 		alpha, beta := float64(1), float64(0)
 
 		e.c.Do(func() error {
-			log.Printf("BEFORE DGemm %v", e.b.Err())
 			e.b.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
 			return nil
 		})

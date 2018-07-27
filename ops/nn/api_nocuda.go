@@ -15,10 +15,10 @@ func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (*G.Node, erro
 	return G.MaxPool2D(x, kernel, pad, stride)
 }
 
-func Dropout(x *G.Node, prob float64) (retVal *Node, err error) {
+func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 	return G.Dropout(x, prob)
 }
 
-func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
+func BatchNorm(x *G.Node, momentum, epsilon float64, auto bool) (*G.Node, *G.BatchNormOp, error) {
 	return G.BatchNorm(x, momentum, epsilon, auto)
 }

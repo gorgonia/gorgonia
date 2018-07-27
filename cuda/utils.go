@@ -2,6 +2,7 @@ package cuda
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/tensor"
@@ -39,6 +40,7 @@ func handleFuncOpts(expShape tensor.Shape, expType tensor.Dtype, o tensor.DataOr
 		}
 
 		if reuse.DataSize() != expShape.TotalSize() && !expShape.IsScalar() {
+			log.Printf("REUSE CHECK reuse shape %v, expected Shape %v", reuse.Shape(), expShape)
 			err = errors.Errorf(shapeMismatch, reuse.Shape(), expShape)
 			err = errors.Wrapf(err, "Cannot use reuse: shape mismatch - reuse.len() %v, expShape.TotalSize() %v", reuse.DataSize(), expShape.TotalSize())
 			return
@@ -73,6 +75,7 @@ func binaryCheck(a, b tensor.Tensor) (err error) {
 		return errors.Errorf(typeMismatch, at, bt)
 	}
 	if !a.Shape().Eq(b.Shape()) {
+		log.Printf("BINARY CHECK %v %v", a.Shape(), b.Shape())
 		return errors.Errorf(shapeMismatch, b.Shape(), a.Shape())
 	}
 
