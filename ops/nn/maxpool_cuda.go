@@ -130,31 +130,29 @@ func (p *maxpool) DoDiff(ctx G.ExecutionContext, inputs G.Nodes, output *G.Node)
 
 type maxpoolDiff maxpool
 
-func (p *maxpoolDiff) Arity() int { return 3 }
+func (op *maxpoolDiff) Arity() int { return 3 }
 
-func (p *maxpoolDiff) Type() hm.Type {
+func (op *maxpoolDiff) Type() hm.Type {
 	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
-func (p *maxpoolDiff) InferShape(inputs ...G.DimSizer) (tensor.Shape, error) {
+func (op *maxpoolDiff) InferShape(inputs ...G.DimSizer) (tensor.Shape, error) {
 	return inputs[0].(tensor.Shape).Clone(), nil
 }
 
-func (p *maxpoolDiff) Do(...G.Value) (G.Value, error) {
-	panic("not implemented")
-}
+func (op *maxpoolDiff) Do(...G.Value) (G.Value, error) { panic("not implemented") }
 
-func (p *maxpoolDiff) ReturnsPtr() bool { return true }
+func (op *maxpoolDiff) ReturnsPtr() bool { return true }
 
-func (p *maxpoolDiff) CallsExtern() bool { return true }
+func (op *maxpoolDiff) CallsExtern() bool { return true }
 
-func (p *maxpoolDiff) OverwritesInput() int { return -1 }
+func (op *maxpoolDiff) OverwritesInput() int { return -1 }
 
-func (p *maxpoolDiff) WriteHash(h hash.Hash) {
-	xShape := p.xDesc.Shape()
-	kernel := p.Shape()
-	padding := p.Padding()
-	strides := p.Strides()
+func (op *maxpoolDiff) WriteHash(h hash.Hash) {
+	xShape := op.xDesc.Shape()
+	kernel := op.Shape()
+	padding := op.Padding()
+	strides := op.Strides()
 	fmt.Fprintf(h, "MaxPoolDiff{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		xShape[0], xShape[1], xShape[2], xShape[3],
 		kernel[0], kernel[1],
@@ -162,13 +160,13 @@ func (p *maxpoolDiff) WriteHash(h hash.Hash) {
 		strides[0], strides[1])
 }
 
-func (p *maxpoolDiff) Hashcode() uint32 { return simpleHash(p) }
+func (op *maxpoolDiff) Hashcode() uint32 { return simpleHash(op) }
 
-func (p *maxpoolDiff) String() string {
-	xShape := p.xDesc.Shape()
-	kernel := p.Shape()
-	padding := p.Padding()
-	strides := p.Strides()
+func (op *maxpoolDiff) String() string {
+	xShape := op.xDesc.Shape()
+	kernel := op.Shape()
+	padding := op.Padding()
+	strides := op.Strides()
 	return fmt.Sprintf("MaxPoolDiff{%d, %d, %d, %d}(kernel: (%d, %d), pad: (%d, %d), stride: (%d, %d))",
 		xShape[0], xShape[1], xShape[2], xShape[3],
 		kernel[0], kernel[1],
@@ -176,14 +174,15 @@ func (p *maxpoolDiff) String() string {
 		strides[0], strides[1])
 }
 
-func (p *maxpoolDiff) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inputs ...G.Value) (retVal G.Value, err error) {
-	if err = checkArity(p, len(inputs)); err != nil {
+func (op *maxpoolDiff) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inputs ...G.Value) (retVal G.Value, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 	x, y, dy := inputs[0], inputs[1], inputs[2]
 
 	machine := extern.(G.CUDAMachine)
+	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
-	err = ctx.PoolingBackward(p.Pooling, 1.0, p.yDesc, y.(cudnn.Memory), p.yDesc, dy.(cudnn.Memory), p.xDesc, x.(cudnn.Memory), 0, p.yDesc, prealloc.(cudnn.Memory))
+	err = ctx.PoolingBackward(op.Pooling, 1.0, op.yDesc, y.(cudnn.Memory), op.yDesc, dy.(cudnn.Memory), op.xDesc, x.(cudnn.Memory), 0, op.xDesc, prealloc.(cudnn.Memory))
 	return prealloc, err
 }

@@ -126,47 +126,37 @@ func (op *dropoutDiff) Do(...gorgonia.Value) (gorgonia.Value, error) {
 	panic("not implemented")
 }
 
-func (op *dropoutDiff) ReturnsPtr() bool {
-	return true
-}
+func (op *dropoutDiff) ReturnsPtr() bool { return true }
 
-func (op *dropoutDiff) CallsExtern() bool {
-	return true
-}
+func (op *dropoutDiff) CallsExtern() bool { return true }
 
-func (op *dropoutDiff) OverwritesInput() int {
-	return 0
-}
+func (op *dropoutDiff) OverwritesInput() int { return 0 }
 
-func (op *dropoutDiff) WriteHash(h hash.Hash) {
-	fmt.Fprintf(h, "DropoutDiff %v", op.Dropout.Dropout())
-}
+func (op *dropoutDiff) WriteHash(h hash.Hash) { fmt.Fprintf(h, "DropoutDiff %v", op.Dropout.Dropout()) }
 
-func (op *dropoutDiff) Hashcode() uint32 {
-	return simpleHash(op)
-}
+func (op *dropoutDiff) Hashcode() uint32 { return simpleHash(op) }
 
-func (op *dropoutDiff) String() string {
-	return fmt.Sprintf("DropoutDiff %v", op.Dropout.Dropout())
-}
+func (op *dropoutDiff) String() string { return fmt.Sprintf("DropoutDiff %v", op.Dropout.Dropout()) }
 
 func (op *dropoutDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
 	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
-	dy, scratch := inputs[0], inputs[1]
+	dy := inputs[0]
 	machine := extern.(gorgonia.CUDAMachine)
 	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
-	memsize := calcMemSize(scratch.Dtype(), scratch.Shape())
-	if err = op.Use(ctx, scratch.(cudnn.Memory), memsize, op.seed); err != nil {
-		return nil, err
+
+	if !op.IsReady() {
+		return nil, errors.New("OP is not ready")
 	}
 
+	scratch := op.States()
+	memsize, _ := op.RequiredStateSize(ctx)
+
 	err = ctx.DropoutBackward(op.Dropout, op.xDesc, dy.(cudnn.Memory),
-		op.xDesc, prealloc.(cudnn.Memory),
-		scratch.(cudnn.Memory), memsize)
+		op.xDesc, prealloc.(cudnn.Memory), scratch, memsize)
 	return prealloc, err
 }
 
