@@ -89,11 +89,19 @@ func (op *dropout) CUDADo(extern gorgonia.External, dev gorgonia.Device, preallo
 		return nil, errors.Wrap(err, "Unable to get required state size for Dropout")
 	}
 	if !op.IsReady() {
-		var x cu.DevicePtr
-		if x, err = machine.Contexts()[int(dev)].MemAlloc(int64(memsize)); err != nil {
+		// var x cu.DevicePtr
+		// machine.Engines()[int(dev)].DoWork()
+		// if x, err = machine.Contexts()[int(dev)].MemAlloc(int64(memsize)); err != nil {
+		// 	return nil, errors.Wrapf(err, "Unable to allocate %v bytes of memory of scratch space for Dropout", memsize)
+		// }
+
+		x, err := machine.Engines()[int(dev)].Get(int64(memsize))
+		if err != nil {
 			return nil, errors.Wrapf(err, "Unable to allocate %v bytes of memory of scratch space for Dropout", memsize)
 		}
-		s = tmpWrapper(x)
+
+		s = tmpWrapper(x.(cu.DevicePtr))
+		// s = x.(cudnn.Memory)
 		if err = op.Use(ctx, s, memsize, op.seed); err != nil {
 			return nil, errors.Wrapf(err, "Unable to set dropout to use context %v", ctx)
 		}
@@ -130,7 +138,7 @@ func (op *dropoutDiff) ReturnsPtr() bool { return true }
 
 func (op *dropoutDiff) CallsExtern() bool { return true }
 
-func (op *dropoutDiff) OverwritesInput() int { return 0 }
+func (op *dropoutDiff) OverwritesInput() int { return -1 }
 
 func (op *dropoutDiff) WriteHash(h hash.Hash) { fmt.Fprintf(h, "DropoutDiff %v", op.Dropout.Dropout()) }
 

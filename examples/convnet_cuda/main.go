@@ -30,7 +30,7 @@ var (
 	epochs     = flag.Int("epochs", 2, "Number of epochs to train for")
 	dataset    = flag.String("dataset", "train", "Which dataset to train on? Valid options are \"train\" or \"test\"")
 	dtype      = flag.String("dtype", "float64", "Which dtype to use")
-	batchsize  = flag.Int("batchsize", 100, "Batch size")
+	batchsize  = flag.Int("batchsize", 1000, "Batch size")
 	cpuprofile = flag.String("cpuprofile", "", "CPU profiling")
 )
 
@@ -225,7 +225,8 @@ func main() {
 	cost = gorgonia.Must(gorgonia.Neg(cost))
 
 	// we wanna track costs
-	var costVal gorgonia.Value
+	var costVal, lossesVal gorgonia.Value
+	gorgonia.Read(losses, &lossesVal)
 	gorgonia.Read(cost, &costVal)
 
 	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
@@ -238,10 +239,11 @@ func main() {
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
 
-	prog, locMap, _ := gorgonia.Compile(g)
-	log.Printf("%v", prog)
+	// prog, locMap, _ := gorgonia.Compile(g)
+	// log.Printf("%v", prog)
 
-	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
+	// vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
+	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
 	defer vm.Close()
 
@@ -265,6 +267,8 @@ func main() {
 	bar := pb.New(batches)
 	bar.SetRefreshRate(time.Second)
 	bar.SetMaxWidth(80)
+
+	var xxx int
 
 	for i := 0; i < *epochs; i++ {
 		bar.Prefix(fmt.Sprintf("Epoch %d", i))
@@ -300,6 +304,11 @@ func main() {
 			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
 			vm.Reset()
 			bar.Increment()
+			if xxx < 5 {
+				log.Printf("Cost %v", costVal)
+				log.Printf("Losses\n%v", lossesVal)
+				xxx++
+			}
 		}
 		log.Printf("Epoch %d | cost %v", i, costVal)
 

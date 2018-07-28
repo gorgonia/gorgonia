@@ -35,7 +35,7 @@ func newMaxPoolOp(x *G.Node, kernel, pad, stride []int) (*maxpool, error) {
 	}
 
 	var p *cudnn.Pooling
-	if p, err = cudnn.NewPooling(cudnn.MaxPooling, cudnn.PropagateNan, kernel, stride, pad); err != nil {
+	if p, err = cudnn.NewPooling(cudnn.MaxPooling, cudnn.NotPropagateNan, kernel, stride, pad); err != nil {
 		return nil, err
 	}
 	return &maxpool{
