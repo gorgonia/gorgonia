@@ -82,7 +82,7 @@ func (op *dropout) CUDADo(extern gorgonia.External, dev gorgonia.Device, preallo
 	ctx := machine.CUDNNContexts()[int(dev)]
 	memsize := calcMemSize(s.Dtype(), s.Shape())
 	if err = op.Use(ctx, s.(cudnn.Memory), memsize, op.seed); err != nil {
-		return nil, errors.Wrap(err, "Unable to set dropout to use context %v", ctx)
+		return nil, errors.Wrapf(err, "Unable to set dropout to use context %v", ctx)
 	}
 	err = ctx.DropoutForward(op.Dropout, op.xDesc, x.(cudnn.Memory), op.xDesc, prealloc.(cudnn.Memory), s.(cudnn.Memory), memsize)
 	return prealloc, err
