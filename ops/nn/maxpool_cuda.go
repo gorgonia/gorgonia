@@ -99,7 +99,7 @@ func (p *maxpool) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inpu
 	in := inputs[0]
 
 	if p.yDesc == nil {
-		if p.yDesc, err = t2cudnn.Describe(in.(tensor.Tensor)); err != nil {
+		if p.yDesc, err = t2cudnn.Describe(prealloc.(tensor.Tensor)); err != nil {
 			return
 		}
 	}
