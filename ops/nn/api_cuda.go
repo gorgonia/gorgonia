@@ -29,10 +29,10 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 		return nil, err
 	}
 
-	states := &scratchOp{x.Shape().Clone(), x.Dtype(), ""}
-	m := G.NewUniqueNode(G.WithType(x.Type()), G.WithOp(states), G.In(x.Graph()), G.WithShape(states.shape...))
+	// states := &scratchOp{x.Shape().Clone(), x.Dtype(), ""}
+	// m := G.NewUniqueNode(G.WithType(x.Type()), G.WithOp(states), G.In(x.Graph()), G.WithShape(states.shape...))
 
-	retVal, err = G.ApplyOp(op, x, m)
+	retVal, err = G.ApplyOp(op, x)
 	return
 }
 

@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"hash"
 	"time"
+	"unsafe"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
+	"gorgonia.org/cu"
 	cudnn "gorgonia.org/cu/dnn"
 	t2cudnn "gorgonia.org/cu/dnn/interop"
 	"gorgonia.org/gorgonia"
@@ -38,10 +40,10 @@ func newDropout(x *gorgonia.Node, prob float64) (*dropout, error) {
 	}, nil
 }
 
-func (op *dropout) Arity() int { return 2 }
+func (op *dropout) Arity() int { return 1 }
 
 func (op *dropout) Type() hm.Type {
-	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
 func (op *dropout) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error) {
@@ -62,8 +64,8 @@ func (op *dropout) DiffWRT(inputs int) []bool                    { return []bool
 
 func (op *dropout) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
 	diffOp := &dropoutDiff{op}
-	retVal = make(gorgonia.Nodes, 2) // retVal[1] will be nil
-	retVal[0], err = gorgonia.ApplyOp(diffOp, grad, inputs[1])
+	retVal = make(gorgonia.Nodes, 1) // retVal[1] will be nil
+	retVal[0], err = gorgonia.ApplyOp(diffOp, grad)
 	return
 }
 
@@ -76,15 +78,30 @@ func (op *dropout) CUDADo(extern gorgonia.External, dev gorgonia.Device, preallo
 		return
 	}
 
-	x, s := inputs[0], inputs[1]
+	x := inputs[0]
 	machine := extern.(gorgonia.CUDAMachine)
 	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
-	memsize := calcMemSize(s.Dtype(), s.Shape())
-	if err = op.Use(ctx, s.(cudnn.Memory), memsize, op.seed); err != nil {
-		return nil, errors.Wrapf(err, "Unable to set dropout to use context %v", ctx)
+
+	var s cudnn.Memory
+	var memsize uintptr
+	if memsize, err = op.RequiredStateSize(ctx); err != nil {
+		return nil, errors.Wrap(err, "Unable to get required state size for Dropout")
 	}
-	err = ctx.DropoutForward(op.Dropout, op.xDesc, x.(cudnn.Memory), op.xDesc, prealloc.(cudnn.Memory), s.(cudnn.Memory), memsize)
+	if !op.IsReady() {
+		var x cu.DevicePtr
+		if x, err = machine.Contexts()[int(dev)].MemAlloc(int64(memsize)); err != nil {
+			return nil, errors.Wrapf(err, "Unable to allocate %v bytes of memory of scratch space for Dropout", memsize)
+		}
+		s = tmpWrapper(x)
+		if err = op.Use(ctx, s, memsize, op.seed); err != nil {
+			return nil, errors.Wrapf(err, "Unable to set dropout to use context %v", ctx)
+		}
+	} else {
+		s = op.States()
+	}
+
+	err = ctx.DropoutForward(op.Dropout, op.xDesc, x.(cudnn.Memory), op.xDesc, prealloc.(cudnn.Memory), s, memsize)
 	return prealloc, err
 }
 
@@ -92,10 +109,10 @@ type dropoutDiff struct {
 	*dropout
 }
 
-func (op *dropoutDiff) Arity() int { return 2 }
+func (op *dropoutDiff) Arity() int { return 1 }
 
 func (op *dropoutDiff) Type() hm.Type {
-	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'), hm.TypeVariable('a'))
+	return hm.NewFnType(hm.TypeVariable('a'), hm.TypeVariable('a'))
 }
 
 func (op *dropoutDiff) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error) {
@@ -118,7 +135,7 @@ func (op *dropoutDiff) CallsExtern() bool {
 }
 
 func (op *dropoutDiff) OverwritesInput() int {
-	return -1
+	return 0
 }
 
 func (op *dropoutDiff) WriteHash(h hash.Hash) {
@@ -140,6 +157,7 @@ func (op *dropoutDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, pre
 
 	dy, scratch := inputs[0], inputs[1]
 	machine := extern.(gorgonia.CUDAMachine)
+	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
 	memsize := calcMemSize(scratch.Dtype(), scratch.Shape())
 	if err = op.Use(ctx, scratch.(cudnn.Memory), memsize, op.seed); err != nil {
@@ -151,3 +169,11 @@ func (op *dropoutDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, pre
 		scratch.(cudnn.Memory), memsize)
 	return prealloc, err
 }
+
+type tmpWrapper cu.DevicePtr
+
+func (p tmpWrapper) Uintptr() uintptr { return cu.DevicePtr(p).Uintptr() }
+
+func (p tmpWrapper) Pointer() unsafe.Pointer { return unsafe.Pointer(cu.DevicePtr(p).Uintptr()) }
+
+func (p tmpWrapper) IsNativelyAccessible() bool { return false }

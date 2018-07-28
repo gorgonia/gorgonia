@@ -5,7 +5,6 @@ package nnops
 import (
 	"fmt"
 	"hash"
-	"log"
 
 	"github.com/chewxy/hm"
 	cudnn "gorgonia.org/cu/dnn"
@@ -107,11 +106,6 @@ func (p *maxpool) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inpu
 	machine := extern.(G.CUDAMachine)
 	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
-	machine.Engines()[int(dev)].Context().Do(func() error {
-		log.Printf("in\n%1.3g", in.Data())
-		log.Printf("prealloc \n%1.3g", prealloc.Data())
-		return nil
-	})
 	err = ctx.PoolingForward(p.Pooling, 1.0, p.xDesc, in.(cudnn.Memory), 0, p.yDesc, prealloc.(cudnn.Memory))
 	return prealloc, err
 }
