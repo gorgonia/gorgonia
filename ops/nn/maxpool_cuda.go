@@ -5,10 +5,11 @@ package nnops
 import (
 	"fmt"
 	"hash"
+	"log"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/cu/dnn"
-	"gorgonia.org/cu/dnn/interop"
+	cudnn "gorgonia.org/cu/dnn"
+	t2cudnn "gorgonia.org/cu/dnn/interop"
 	G "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
@@ -35,7 +36,7 @@ func newMaxPoolOp(x *G.Node, kernel, pad, stride []int) (*maxpool, error) {
 	}
 
 	var p *cudnn.Pooling
-	if p, err = cudnn.NewPooling(cudnn.MaxPooling, cudnn.NotPropagateNan, kernel, stride, pad); err != nil {
+	if p, err = cudnn.NewPooling(cudnn.MaxPooling, cudnn.PropagateNan, kernel, stride, pad); err != nil {
 		return nil, err
 	}
 	return &maxpool{
@@ -104,7 +105,13 @@ func (p *maxpool) CUDADo(extern G.External, dev G.Device, prealloc G.Value, inpu
 	}
 
 	machine := extern.(G.CUDAMachine)
+	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
+	machine.Engines()[int(dev)].Context().Do(func() error {
+		log.Printf("in\n%1.3g", in.Data())
+		log.Printf("prealloc \n%1.3g", prealloc.Data())
+		return nil
+	})
 	err = ctx.PoolingForward(p.Pooling, 1.0, p.xDesc, in.(cudnn.Memory), 0, p.yDesc, prealloc.(cudnn.Memory))
 	return prealloc, err
 }

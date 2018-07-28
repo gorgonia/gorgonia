@@ -211,10 +211,7 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 		C := pd.Float64s()
 		alpha, beta := float64(1), float64(0)
 
-		e.c.Do(func() error {
-			e.b.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
-			return nil
-		})
+		e.c.Do(func() error { e.b.Dgemm(tA, tB, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc); return nil })
 
 	case tensor.Float32:
 		A := ad.Float32s()
@@ -225,6 +222,7 @@ func (e *Engine) MatMul(a, b, prealloc tensor.Tensor) (err error) {
 	default:
 		return errors.Errorf("Unsupported Dtype %v", ad.Dtype())
 	}
+
 	return e.b.Err()
 }
 

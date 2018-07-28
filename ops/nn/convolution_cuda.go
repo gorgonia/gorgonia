@@ -7,8 +7,8 @@ import (
 	"hash"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/cu/dnn"
-	"gorgonia.org/cu/dnn/interop"
+	cudnn "gorgonia.org/cu/dnn"
+	t2cudnn "gorgonia.org/cu/dnn/interop"
 	G "gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
@@ -105,6 +105,7 @@ func (c *convolution) CUDADo(extern G.External, dev G.Device, prealloc G.Value, 
 	}
 
 	machine := extern.(G.CUDAMachine)
+	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
 
 	if err = ctx.ConvolutionForward(1.0,

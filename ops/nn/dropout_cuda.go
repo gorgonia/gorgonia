@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/chewxy/hm"
-	"gorgonia.org/cu/dnn"
-	"gorgonia.org/cu/dnn/interop"
+	"github.com/pkg/errors"
+	cudnn "gorgonia.org/cu/dnn"
+	t2cudnn "gorgonia.org/cu/dnn/interop"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
@@ -77,11 +78,11 @@ func (op *dropout) CUDADo(extern gorgonia.External, dev gorgonia.Device, preallo
 
 	x, s := inputs[0], inputs[1]
 	machine := extern.(gorgonia.CUDAMachine)
+	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
 	memsize := calcMemSize(s.Dtype(), s.Shape())
-
 	if err = op.Use(ctx, s.(cudnn.Memory), memsize, op.seed); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Unable to set dropout to use context %v", ctx)
 	}
 	err = ctx.DropoutForward(op.Dropout, op.xDesc, x.(cudnn.Memory), op.xDesc, prealloc.(cudnn.Memory), s.(cudnn.Memory), memsize)
 	return prealloc, err

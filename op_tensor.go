@@ -1170,8 +1170,24 @@ func (op reshapeOp) WriteHash(h hash.Hash) {
 
 func (op reshapeOp) Hashcode() uint32 { return simpleHash(op) }
 
-func (op reshapeOp) String() string {
-	return fmt.Sprintf("Reshape%v", op.to)
+func (op reshapeOp) String() string { return fmt.Sprintf("Reshape%v", op.to) }
+
+func (op reshapeOp) CUDADo(extern External, dev Device, prealloc Value, vals ...Value) (retVal Value, err error) {
+	if err := checkArity(op, len(vals)); err != nil {
+		return nil, err
+	}
+	val := vals[0]
+	switch v := val.(type) {
+	case tensor.Tensor:
+		if err := v.Reshape(op.to...); err != nil {
+			return nil, err
+		}
+		return v, nil
+	case Scalar:
+		return nil, errors.Errorf(nyiTypeFail, "reshape.Do", "Scalar")
+	}
+
+	panic("Unreachable")
 }
 
 func (op reshapeOp) DiffWRT(i int) []bool { return []bool{true} }
