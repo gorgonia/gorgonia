@@ -18,7 +18,7 @@ Gorgonia:
 
 # Why Use Gorgonia? #
 
-The main reason to use Gorgonia is developer comfort. If you're using a Go stack extensively, now you have access to the ability to create production-ready machine learning systems in an environment that you are already familiar and comfortable with. 
+The main reason to use Gorgonia is developer comfort. If you're using a Go stack extensively, now you have access to the ability to create production-ready machine learning systems in an environment that you are already familiar and comfortable with.
 
 ML/AI at large is usually split into two stages: the experimental stage where one builds various models, test and retest; and the deployed state where a model after being tested and played with, is deployed. This necessitate different roles like data scientist and data engineer.
 
@@ -28,23 +28,30 @@ Gorgonia aims to do the same, but for the Go environment. Gorgonia is currently 
 
 # Installation #
 
-The package is go-gettable: `go get -u gorgonia.org/gorgonia`. Additionally, Gorgonia uses [dep](https://github.com/golang/dep) as its vendoring tool.
+The package is go-gettable: `go get -u gorgonia.org/gorgonia`.
 
 The current version is 0.8.x
 
+# Developers: Getting started
 
-## Versioning ## 
+Gorgonia uses [Go modules](https://github.com/golang/go/wiki/Modules), and a `go.mod` files reflecting the latest requirements of the code is provided in the repository.
+
+In order to build the package, use `vgo build`, and optionally `vgo vendor` to download all the dependencies and optionally store them in `vendor`. This folder is added
+to `.gitignore` and will not be checked in. You should now be able to run the tests with `go test ./...`. If everything went well, you should get a `PASS` and you are now
+ready to hack away!
+
+## Versioning ##
 
 We use [semver 2.0.0](http://semver.org/) for our versioning. Before 1.0, Gorgonia's APIs are expected to change quite a bit. API is defined by the exported functions, variables and methods. For the developers' sanity, there are minor differences to semver that we will apply prior to version 1.0. They are enumerated below:
 
-* The MINOR number will be incremented every time there is a deletrious break in API. This means any deletion, or any change in function signature or interface methods will lead to a change in MINOR number. 
-* Additive changes will NOT change the MINOR version number prior to version 1.0. This means that if new functionality were added that does not break the way you use Gorgonia, there will not be an increment in the MINOR version. There will be an increment in the PATCH version.  
+* The MINOR number will be incremented every time there is a deletrious break in API. This means any deletion, or any change in function signature or interface methods will lead to a change in MINOR number.
+* Additive changes will NOT change the MINOR version number prior to version 1.0. This means that if new functionality were added that does not break the way you use Gorgonia, there will not be an increment in the MINOR version. There will be an increment in the PATCH version.
 
 ## Go Version Support ##
 
 Gorgonia aims to support 5 versions below the Master branch of Go. This means Gorgonia will support the current released version of Go, and up to 4 previous versions - providing something doesn't break. Where possible a shim will be provided (for things like new `sort` APIs or `math/bits` which came out in Go 1.9).
 
-The current version of Go is 1.9.2. The earliest version Gorgonia supports is Go 1.6.x. 
+The current version of Go is 1.9.2. The earliest version Gorgonia supports is Go 1.6.x.
 
 ## Dependencies ##
 
@@ -72,9 +79,9 @@ Gorgonia's project has a [mailing list](https://groups.google.com/forum/#!forum/
 
 # Usage #
 
-Gorgonia works by creating a computation graph, and then executing it. Think of it as a programming language, but is limited to mathematical functions, and has no branching capability (no if/then or loops). In fact this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree). 
+Gorgonia works by creating a computation graph, and then executing it. Think of it as a programming language, but is limited to mathematical functions, and has no branching capability (no if/then or loops). In fact this is the dominant paradigm that the user should be used to thinking about. The computation graph is an [AST](http://en.wikipedia.org/wiki/Abstract_syntax_tree).
 
-Microsoft's [CNTK](https://github.com/Microsoft/CNTK), with its BrainScript, is perhaps the best at exemplifying the idea that building of a computation graph and running of the computation graphs are different things, and that the user should be in different modes of thoughts when going about them. 
+Microsoft's [CNTK](https://github.com/Microsoft/CNTK), with its BrainScript, is perhaps the best at exemplifying the idea that building of a computation graph and running of the computation graphs are different things, and that the user should be in different modes of thoughts when going about them.
 
 Whilst Gorgonia's implementation doesn't enforce the separation of thought as far as CNTK's BrainScript does, the syntax does help a little bit.
 
@@ -123,7 +130,7 @@ You might note that it's a little more verbose than other packages of similar na
 
 The author would like to contend that this is a Good Thing - to shift one's thinking to a machine-based thinking. It helps a lot in figuring out where things might go wrong.
 
-Additionally, there are no support for branching - that is to say there are no conditionals (if/else) or loops. The aim is not to build a Turing-complete computer. 
+Additionally, there are no support for branching - that is to say there are no conditionals (if/else) or loops. The aim is not to build a Turing-complete computer.
 
 ### VMs ###
 
@@ -140,7 +147,7 @@ Prior to release of Gorgonia, there was a third VM - a stack based VM that is si
 
 ## Differentiation ##
 
-Gorgonia performs both symbolic and automatic differentiation. There are subtle differences between the two processes. The author has found that it's best to think of it this way - Automatic differentiation is differentiation that happens at runtime, concurrently with the execution of the graph, while symbolic differentiation is differentiation that happens during the compilation phase. 
+Gorgonia performs both symbolic and automatic differentiation. There are subtle differences between the two processes. The author has found that it's best to think of it this way - Automatic differentiation is differentiation that happens at runtime, concurrently with the execution of the graph, while symbolic differentiation is differentiation that happens during the compilation phase.
 
 Runtime of course, refers to the execution of the expression graph, not the program's actual runtime.
 
@@ -278,7 +285,7 @@ By the way, Gorgonia comes with nice-ish graph printing abilities. Here's an exa
 
 ![graph1](https://raw.githubusercontent.com/gorgonia/gorgonia/master/media/exprGraph_example2.png)
 
-To read the graph is easy. The expression builds from bottom up, while the derivations build from top down. This way the derivative of each node is roughly on the same level. 
+To read the graph is easy. The expression builds from bottom up, while the derivations build from top down. This way the derivative of each node is roughly on the same level.
 
 Red-outlined nodes indicate that it's a root node. Green outlined nodes indicate that they're a leaf node. Nodes with a yellow background indicate that it's an input node. The dotted arrows indicate which node is the gradient node for the pointed-to node.
 
@@ -306,7 +313,7 @@ A Node is rendered thusly:
 
 Gorgonia comes with CUDA support out of the box. However, usage is specialized. To use CUDA, you must build your application with the build tag `cuda`, like so:
 
-``` 
+```
 go build -tags='cuda' .
 ```
 
@@ -318,7 +325,7 @@ Furthermore, there are some additional requirements:
 3. The CUDA ops must be manually enabled in your code with the `UseCudaFor` option.
 4. `runtime.LockOSThread()` must be called in the main function where the VM is running. CUDA requires thread affinity, and therefore the OS thread must be locked.
 
-Because `nvcc` only plays well with `gcc` version 6 and below (the current version is 7), this is also quite helpful: `sudo ln -s /path/to/gcc-6 /usr/local/cuda-9.0/bin/gcc` 
+Because `nvcc` only plays well with `gcc` version 6 and below (the current version is 7), this is also quite helpful: `sudo ln -s /path/to/gcc-6 /usr/local/cuda-9.0/bin/gcc`
 
 ### Example ###
 
@@ -373,13 +380,13 @@ If the program is to be run using CUDA, then this must be invoked:
 go run -tags='cuda'
 ```
 
-And even so, only the `tanh` function uses CUDA. 
+And even so, only the `tanh` function uses CUDA.
 
 ### Rationale ###
 
 The main reasons for having such complicated requirements for using CUDA is quite simply performance related. As Dave Cheney famously wrote, [cgo is not Go](https://dave.cheney.net/2016/01/18/cgo-is-not-go). To use CUDA, cgo is unfortunately required. And to use cgo, plenty of tradeoffs need to be made.
 
-Therefore the solution was to nestle the CUDA related code in a build tag, `cuda`. That way by default no cgo is used (well, kind-of - you could still use `cblas` or `blase`). 
+Therefore the solution was to nestle the CUDA related code in a build tag, `cuda`. That way by default no cgo is used (well, kind-of - you could still use `cblas` or `blase`).
 
 The reason for requiring [CUDA toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is because there are many CUDA [Compute Capabilities](http://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities), and generating code for them all would yield a huge binary for no real good reason. Rather, users are encouraged to compile for their specific Compute Capabilities.
 
@@ -387,7 +394,7 @@ Lastly, the reason for requiring an explicit specification to use CUDA for which
 
 ### `Op`s supported by CUDA ###
 
-As of now, only the very basic simple ops support CUDA: 
+As of now, only the very basic simple ops support CUDA:
 
 Elementwise unary operations:
 
@@ -435,7 +442,7 @@ As we move towards 1.0, the github repository will be moved to the [organization
 
 # Roadmap #
 
-Here are the goals for Gorgonia, sorted by importance 
+Here are the goals for Gorgonia, sorted by importance
 
 - [ ] 80+% test coverage. Current coverage is 50% for Gorgonia and 80% for the `tensor`.
 - [ ] More advanced operations (like `einsum`). The current Tensor operators are pretty primitive.
@@ -454,7 +461,7 @@ Here are the goals for Gorgonia, sorted by importance
 
 The primary goal for Gorgonia is to be a *highly performant* machine learning/graph computation-based library that can scale across multiple machines. It should bring the appeal of Go (simple compilation and deployment process) to the ML world. It's a long way from there currently, however, the baby steps are already there.
 
-The secondary goal for Gorgonia is to provide a platform for exploration for non-standard deep-learning and neural network related things. This includes things like neo-hebbian learning, corner-cutting algorithms, evolutionary algorithms and the like. 
+The secondary goal for Gorgonia is to provide a platform for exploration for non-standard deep-learning and neural network related things. This includes things like neo-hebbian learning, corner-cutting algorithms, evolutionary algorithms and the like.
 
 
 # Contributing #
@@ -465,7 +472,7 @@ See also: CONTRIBUTING.md
 
 
 ## Contributors and Significant Contributors ##
-All contributions are welcome. However, there is a new class of contributor, called Significant Contributors. 
+All contributions are welcome. However, there is a new class of contributor, called Significant Contributors.
 
 A Significant Contributor is one who has shown *deep understanding* of how the library works and/or its environs.  Here are examples of what constitutes a Significant Contribution:
 
@@ -484,9 +491,9 @@ The best way of support right now is to open a ticket on Github.
 
 ### Why are there seemingly random `runtime.GC()` calls in the tests? ###
 
-The answer to this is simple - the design of the package uses CUDA in a particular way: specifically, a CUDA device and context is tied to a `VM`, instead of at the package level. This means for every `VM` created, a different CUDA context is created per device per `VM`. This way all the operations will play nicely with other applications that may be using CUDA (this needs to be stress-tested, however). 
+The answer to this is simple - the design of the package uses CUDA in a particular way: specifically, a CUDA device and context is tied to a `VM`, instead of at the package level. This means for every `VM` created, a different CUDA context is created per device per `VM`. This way all the operations will play nicely with other applications that may be using CUDA (this needs to be stress-tested, however).
 
-The CUDA contexts are only destroyed when the `VM` gets garbage collected (with the help of a finalizer function). In the tests, about 100 `VM`s get created, and garbage collection for the most part can be considered random. This leads to cases where the GPU runs out of memory as there are too many contexts being used. 
+The CUDA contexts are only destroyed when the `VM` gets garbage collected (with the help of a finalizer function). In the tests, about 100 `VM`s get created, and garbage collection for the most part can be considered random. This leads to cases where the GPU runs out of memory as there are too many contexts being used.
 
 Therefore at the end of any tests that may use GPU, a `runtime.GC()` call is made to force garbage collection, freeing GPU memories.
 
