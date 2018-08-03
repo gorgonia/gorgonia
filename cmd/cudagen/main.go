@@ -11,7 +11,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"gorgonia.org/cu"
 )
@@ -23,8 +22,7 @@ var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\r?\n")
 func stripExt(fullpath string) string {
 	_, filename := filepath.Split(fullpath)
 	ext := path.Ext(filename)
-	name := strings.TrimRight(filename, ext)
-	return name
+	return filename[:len(filename)-len(ext)]
 }
 
 func compileCUDA(src, targetLoc string, maj, min int) {
