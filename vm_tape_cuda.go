@@ -40,7 +40,10 @@ func (m *tapeMachine) init() {
 		funcs = append(funcs, fn)
 	}
 
-	m.ExternMetadata.init(m.p.gpumem)
+	if err := m.ExternMetadata.init(m.p.gpumem); err != nil {
+		m.ExternMetadata.initFail()
+		panic(err)
+	}
 	m.loadStdLib()
 
 	// cudaLogf("funcs %v", funcs)

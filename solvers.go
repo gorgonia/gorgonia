@@ -937,6 +937,7 @@ type Momentum struct {
 // NewMomentum creates a new Momentum with sane-ish default values
 func NewMomentum(opts ...SolverOpt) *Momentum {
 	s := &Momentum{
+		batch:    1,
 		eta:      0.001,
 		momentum: 0.9,
 	}
@@ -970,8 +971,10 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 
 		cv := cached.Value
 		// cw = cw * momentum - eta * grad
+		// w = w + cw
 		switch cw := cv.(type) {
 		case *tensor.Dense:
+			w := weights.(*tensor.Dense)
 			g := grad.(*tensor.Dense)
 
 			var l1reg, l2reg, clip, negClip, eta, momentum, onePerBatch interface{}
@@ -1041,19 +1044,19 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			var upd tensor.Tensor
-			if upd, err = tensor.Mul(cw, momentum); err != nil {
+			// cw * momentum
+			if _, err = tensor.Mul(cw, momentum, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tensor.Add(upd, g, tensor.UseUnsafe()); err != nil {
+			//  cw * momentum - eta * grad
+			if _, err = tensor.Add(cw, g, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, pointWiseMulFail)
 			}
 
-			if _, err = tensor.Add(cw, upd, tensor.UseUnsafe()); err != nil {
+			if _, err = tensor.Add(w, cw, tensor.UseUnsafe()); err != nil {
 				return errors.Wrap(err, addFail)
 			}
-			defer returnTensor(upd)
 
 			g.Zero()
 
@@ -1093,8 +1096,8 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 				}
 			}
 
-			upd := c*momentum - eta*g
-			w += upd
+			c = c*momentum - eta*g
+			w += c
 
 			*(weights.(*F32)) = F32(w)
 			*(grad.(*F32)) = F32(0.0)
@@ -1134,8 +1137,8 @@ func (s *Momentum) Step(model []ValueGrad) (err error) {
 				}
 			}
 
-			upd := c*momentum - eta*g
-			w += upd
+			c = c*momentum - eta*g
+			w += c
 
 			*(weights.(*F64)) = F64(w)
 			*(grad.(*F64)) = F64(0.0)

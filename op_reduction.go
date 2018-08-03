@@ -71,8 +71,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	retVal[0], err = Broadcast(mulOpType, gradNode, eq, bcpat)
-	if err != nil {
+	if retVal[0], err = Broadcast(mulOpType, gradNode, eq, bcpat); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 	return

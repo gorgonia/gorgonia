@@ -300,8 +300,7 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 	if p == 2 {
 		if retVal, err = Square(a); err == nil {
 			if retVal, err = Sum(retVal, axis); err == nil {
-				retVal, err = Sqrt(retVal)
-				if err != nil {
+				if retVal, err = Sqrt(retVal); err != nil {
 					return nil, errors.Wrap(err, operationError)
 				}
 			} else {
@@ -332,8 +331,7 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 
 	if retVal, err = Pow(a, b); err == nil {
 		if retVal, err = Sum(retVal, axis); err == nil {
-			retVal, err = Pow(retVal, inv)
-			if err != nil {
+			if retVal, err = Pow(retVal, inv); err != nil {
 				return nil, errors.Wrap(err, operationError)
 			}
 		} else {

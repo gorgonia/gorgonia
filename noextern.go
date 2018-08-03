@@ -18,13 +18,17 @@ type ExternMetadata struct {
 	syncChan      chan struct{}
 }
 
-func (m *ExternMetadata) init() {
+func (m *ExternMetadata) init() error {
 	m.syncChan = make(chan struct{})
 	if m.b != nil {
 		m.workAvailable = make(chan bool)
 		go m.collectBLASWork()
 	}
+	return nil
 }
+
+// initFail is a no-op
+func (m *ExternMetadata) initFail() {}
 
 // HasFunc will always return false in this build
 func (m ExternMetadata) HasFunc(name string) bool { return false }

@@ -236,6 +236,7 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 		// index:   index,
 		index:   node.ID(),
 		writeTo: writeTo,
+		name:    node.Name(),
 	}
 	// cg.instructions = append(cg.instructions, instr)
 

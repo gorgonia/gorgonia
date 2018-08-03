@@ -22,6 +22,9 @@ import (
 type VM interface {
 	RunAll() error
 	Reset()
+
+	// Close closes all the machine resources (CUDA, if any, loggers if any)
+	Close() error
 }
 
 const (

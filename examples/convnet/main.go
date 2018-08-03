@@ -237,7 +237,7 @@ func main() {
 
 	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
 	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
-
+	defer vm.Close()
 	// pprof
 	// handlePprof(sigChan, doneChan)
 
@@ -282,7 +282,7 @@ func main() {
 				log.Fatal("Unable to slice y")
 			}
 			if err = xVal.(*tensor.Dense).Reshape(bs, 1, 28, 28); err != nil {
-				log.Fatal("Unable to reshape %v", err)
+				log.Fatalf("Unable to reshape %v", err)
 			}
 
 			gorgonia.Let(x, xVal)

@@ -4,6 +4,7 @@ package gorgonia
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
@@ -25,6 +26,7 @@ func (m *lispMachine) init() error {
 	m.df = df
 
 	if err := m.calcMemSize(); err != nil {
+		log.Printf("err1")
 		return err
 	}
 
@@ -38,7 +40,10 @@ func (m *lispMachine) init() error {
 	for fn := range m.f {
 		funcs = append(funcs, fn)
 	}
-	m.ExternMetadata.init(m.gpumem)
+	if err := m.ExternMetadata.init(m.gpumem); err != nil {
+		m.ExternMetadata.initFail()
+		return err
+	}
 	m.loadStdLib()
 
 	if len(m.Functions()) == 0 {
@@ -48,8 +53,8 @@ func (m *lispMachine) init() error {
 }
 
 func finalizeLispMachine(m *lispMachine) {
-	m.cleanup()
-	m.initFail()
+	m.ExternMetadata.cleanup()
+	m.ExternMetadata.initFail()
 }
 
 func (m *lispMachine) WorkAvailable() <-chan bool {

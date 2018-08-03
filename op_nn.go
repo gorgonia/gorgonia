@@ -1186,8 +1186,36 @@ func (op *BatchNormOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Va
 	return prealloc, err
 }
 
-func (op *BatchNormOp) SetTraining() { op.training = true }
+func (op *BatchNormOp) SetTraining() { op.Reset(); op.training = true }
 func (op *BatchNormOp) SetTesting()  { op.training = false }
+
+func (op *BatchNormOp) Reset() error {
+	dt := op.ma.Dtype()
+	var uno interface{}
+	switch dt {
+	case Float64:
+		uno = float64(1)
+	case Float32:
+		uno = float32(1)
+	}
+
+	if err := op.spatialSumMultiplier.Memset(uno); err != nil {
+		return err
+	}
+
+	if err := op.batchSumMultiplier.Memset(uno); err != nil {
+		return err
+	}
+
+	op.mean.Zero()
+	op.variance.Zero()
+	op.ma.Zero()
+	op.mean_.Zero()
+	op.variance_.Zero()
+	op.tmp_.Zero()
+	op.numByChans.Zero()
+	return nil
+}
 
 func (op *BatchNormOp) f64s(input, output *tensor.Dense) (err error) {
 	n := input.Shape()[0]

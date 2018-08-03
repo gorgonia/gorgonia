@@ -5,11 +5,12 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/tensor"
 )
 
-var binOpTests = []struct {
+type binOpTest struct {
 	binOp func(*Node, *Node) (*Node, error)
 	a, b  Value
 
@@ -17,7 +18,9 @@ var binOpTests = []struct {
 	correctDerivA Value
 	correctDerivB Value
 	correctShape  tensor.Shape
-}{
+}
+
+var binOpTests = []binOpTest{
 
 	{Add,
 		tensor.New(tensor.WithBacking([]float64{1, 2, 3, 4})),
@@ -343,126 +346,114 @@ var binOpTests = []struct {
 }
 
 func TestBasicArithmetic(t *testing.T) {
-	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		// log.Printf("TEST %d", i)
-		// if i != 22 {
-		// 	continue
-		// }
-		g := NewGraph()
-		xV, _ := CloneValue(bot.a)
-		yV, _ := CloneValue(bot.b)
-		x := NodeFromAny(g, xV, WithName("x"))
-		y := NodeFromAny(g, yV, WithName("y"))
-
-		var ret *Node
-		var retVal Value
-		var err error
-		if ret, err = bot.binOp(x, y); err != nil {
-			t.Errorf("Test %d: %v", i, err)
-			continue
+		if err := testOneArithTape(t, bot, i); err != nil {
+			t.Fatalf("Test %d, Err: %+v", i, err)
 		}
-		Read(ret, &retVal)
-
-		cost := Must(Sum(ret))
-		var grads Nodes
-		if grads, err = Grad(cost, x, y); err != nil {
-			t.Errorf("Test %d: error while symbolic op: %v", i, err)
-			continue
-		}
-
-		m1 := NewTapeMachine(g)
-		// log.Printf("%v", m1.Prog())
-		if err = m1.RunAll(); err != nil {
-			log.Printf("m.buf \n%v", m1.buf.String())
-			t.Errorf("Test %d: error while running %v", i, err)
-			runtime.GC()
-			continue
-		}
-
-		as := newAssertState(assert)
-		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
-		as.True(bot.correctShape.Eq(ret.Shape()))
-		as.Equal(2, len(grads))
-		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
-		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
-		if !as.cont {
-			prog := m1.Prog()
-			t.Logf("Test %d failed. Prog: %v", i, prog)
-			t.Logf("Exec Log \n%v", m1.buf.String())
-		}
-
-		if assertGraphEngine(t, g, stdengType); t.Failed() {
-			t.Errorf("BasicArithmetic - TapeMachine failure")
-			t.FailNow()
-		}
-
 		runtime.GC()
 	}
 
 	for i, bot := range binOpTests {
-		// log.Printf("i: %d", i)
-		// if i != 1 {
-		// 	continue
-		// }
-		g := NewGraph()
-		xV, _ := CloneValue(bot.a)
-		yV, _ := CloneValue(bot.b)
-		x := NodeFromAny(g, xV, WithName("x"))
-		y := NodeFromAny(g, yV, WithName("y"))
-
-		var ret *Node
-		var retVal Value
-		var err error
-		if ret, err = bot.binOp(x, y); err != nil {
-			t.Errorf("Test %d: %v", i, err)
-			continue
+		log.Printf("Test %d", i)
+		if err := testOneArithLisp(t, bot, i); err != nil {
+			t.Fatalf("Test %d, Err: %+v", i, err)
 		}
-		Read(ret, &retVal)
-
-		if xV.Shape().IsScalar() && yV.Shape().IsScalar() {
-
-		} else {
-			Must(Sum(ret))
-		}
-
-		m1 := NewLispMachine(g)
-		if err = m1.RunAll(); err != nil {
-			t.Errorf("Test %d: error while running %+v", i, err)
-			runtime.GC()
-			continue
-		}
-
-		as := newAssertState(assert)
-		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
-		as.True(bot.correctShape.Eq(ret.Shape()))
-
-		var xG, yG Value
-		if xG, err = x.Grad(); err != nil {
-			t.Errorf("Test %d: error while getting grad of x: %v", i, err)
-			runtime.GC()
-			continue
-		}
-
-		if yG, err = y.Grad(); err != nil {
-			t.Errorf("Test %d: error while getting grad of x: %v", i, err)
-			runtime.GC()
-			continue
-		}
-
-		as.Equal(bot.correctDerivA.Data(), xG.Data(), "Test %v xgrad", i)
-		as.Equal(bot.correctDerivB.Data(), yG.Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, yG)
-		if !as.cont {
-			t.Errorf("an error occurred")
-		}
-
-		if assertGraphEngine(t, g, stdengType); t.Failed() {
-			t.Errorf("Test %d  - LispMachine failure in test", i)
-			t.FailNow()
-		}
-
 		runtime.GC()
 	}
+}
+
+func testOneArithLisp(t *testing.T, bot binOpTest, i int) error {
+	g := NewGraph()
+	xV, _ := CloneValue(bot.a)
+	yV, _ := CloneValue(bot.b)
+	x := NodeFromAny(g, xV, WithName("x"))
+	y := NodeFromAny(g, yV, WithName("y"))
+
+	var ret *Node
+	var retVal Value
+	var err error
+	if ret, err = bot.binOp(x, y); err != nil {
+		return errors.Wrapf(err, "do binop failure")
+	}
+	Read(ret, &retVal)
+
+	if !(xV.Shape().IsScalar() && yV.Shape().IsScalar()) {
+		Must(Sum(ret))
+	}
+	m1 := NewLispMachine(g)
+	defer m1.Close()
+	if err = m1.RunAll(); err != nil {
+		return errors.Wrapf(err, "Error while running")
+	}
+
+	as := newAssertState(assert.New(t))
+	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+	as.True(bot.correctShape.Eq(ret.Shape()))
+
+	var xG, yG Value
+	if xG, err = x.Grad(); err != nil {
+		return errors.Wrapf(err, "Failed to get the grad of x")
+	}
+
+	if yG, err = y.Grad(); err != nil {
+		return errors.Wrapf(err, "Failed to get the grad of y")
+	}
+
+	as.Equal(bot.correctDerivA.Data(), xG.Data(), "Test %v xgrad", i)
+	as.Equal(bot.correctDerivB.Data(), yG.Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, yG)
+	if !as.cont {
+		t.Errorf("an error occurred")
+	}
+
+	if assertGraphEngine(t, g, stdengType); t.Failed() {
+		return errors.New("Lisp Machine Graph Engine expected")
+	}
+	return nil
+}
+
+func testOneArithTape(t *testing.T, bot binOpTest, i int) error {
+	g := NewGraph()
+	xV, _ := CloneValue(bot.a)
+	yV, _ := CloneValue(bot.b)
+	x := NodeFromAny(g, xV, WithName("x"))
+	y := NodeFromAny(g, yV, WithName("y"))
+
+	var ret *Node
+	var retVal Value
+	var err error
+	if ret, err = bot.binOp(x, y); err != nil {
+		return errors.Wrapf(err, "binOp() failed")
+	}
+	Read(ret, &retVal)
+
+	cost := Must(Sum(ret))
+	var grads Nodes
+	if grads, err = Grad(cost, x, y); err != nil {
+		return errors.Wrapf(err, "Grad failed")
+	}
+
+	m1 := NewTapeMachine(g)
+	defer m1.Close()
+	if err = m1.RunAll(); err != nil {
+		t.Logf("%v", m1.Prog())
+		return errors.Wrapf(err, "Error while running")
+	}
+
+	as := newAssertState(assert.New(t))
+	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+	as.True(bot.correctShape.Eq(ret.Shape()))
+	as.Equal(2, len(grads))
+	as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+	as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
+	if !as.cont {
+		prog := m1.Prog()
+		return errors.Errorf("Failed. Prog %v", prog)
+	}
+
+	if assertGraphEngine(t, g, stdengType); t.Failed() {
+		return errors.Errorf("BasicArithmetic. Engine of Graph is not stdengType.")
+	}
+	return nil
 }
 
 func TestTensordotOpDoDiff(t *testing.T) {
@@ -531,9 +522,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("vectors: Cannot ApplyOp:", err)
 		return
 	}
@@ -581,9 +570,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrix vector: Cannot ApplyOp:", err)
 		return
 	}
@@ -632,9 +619,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 2,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrices: Cannot ApplyOp:", err)
 		return
 	}
@@ -683,9 +668,7 @@ func TestTensordotOpDoDiff(t *testing.T) {
 		retDims: 1,
 	}
 
-	c, err = ApplyOp(tensordot, a, b)
-
-	if err != nil {
+	if c, err = ApplyOp(tensordot, a, b); err != nil {
 		log.Fatal("matrices total contraction: Cannot ApplyOp:", err)
 		return
 	}

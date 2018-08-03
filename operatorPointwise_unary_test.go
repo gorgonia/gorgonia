@@ -54,6 +54,8 @@ func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Nod
 
 	m0 := NewLispMachine(g)
 	m1 := NewTapeMachine(h)
+	defer m1.Close()
+	defer m0.Close()
 
 	Let(x, xV)
 	if err = m0.RunAll(); err != nil {

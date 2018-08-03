@@ -248,6 +248,7 @@ func TestTransposeOp(t *testing.T) {
 	var err error
 
 	m = NewLispMachine(g)
+	defer m.Close()
 	if err = m.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -261,6 +262,7 @@ func TestTransposeOp(t *testing.T) {
 	Grad(cost2, B)
 
 	m = NewTapeMachine(h)
+	defer m.Close()
 	if err = m.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -322,6 +324,8 @@ func TestConcatOp(t *testing.T) {
 	Let(x, xT)
 	m1 := NewTapeMachine(g)
 	m2 := NewLispMachine(g2)
+	defer m1.Close()
+	defer m2.Close()
 
 	if err = m1.RunAll(); err != nil {
 		t.Fatal(err)

@@ -57,13 +57,13 @@ func TestBroadcast(t *testing.T) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
 	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
-	z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1}))
-	if err != nil {
+	if z, err = Broadcast(addOpType, x, y, NewBroadcastPattern(nil, []byte{1})); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatal(err)
 	}
 
 	m = NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
@@ -72,13 +72,13 @@ func TestBroadcast(t *testing.T) {
 	g = NewGraph()
 	x = NewMatrix(g, Float64, WithShape(2, 3), WithValue(xT), WithName("x"))
 	y = NewVector(g, Float64, WithShape(2), WithValue(yT), WithName("y"))
-	z, err = Broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil))
-	if err != nil {
+	if z, err = Broadcast(addOpType, y, x, NewBroadcastPattern([]byte{1}, nil)); err != nil {
 		ioutil.WriteFile("Broadcast.dot", []byte(g.ToDot()), 0644)
 		t.Fatalf("%+v", err)
 	}
 
 	m = NewLispMachine(g, ExecuteFwdOnly())
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}

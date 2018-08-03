@@ -75,8 +75,7 @@ func (op elemUnaryOp) CUDADo(extern External, dev Device, prealloc Value, inputs
 	cudaLogf("gx %d, gy %d, gz %d | bx %d by %d, bz %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
 	cudaLogf("CUDADO %q, Mem: %v size %v, args %v", name, mem, size, args)
 	cudaLogf("LaunchKernel Params. mem: %v. Size %v", mem, size)
-	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
-	// ctx.LaunchAndSync(fn, blocks, 1, 1, threads, 1, 1, 0, cu.Stream(0), args)
+	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return prealloc, nil
 }
 
@@ -191,9 +190,19 @@ func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs .
 	cudaLogf("CUDADO %q, size %v", name, size)
 	cudaLogf("LaunchKernel params. mem: %v memB: %v size: %v", mem, memB, size)
 	cudaLogf("%d, %d, %d, %d, %d, %d", gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ)
-	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.Stream(0), args)
+	ctx.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
 	return
 }
+
+/* LINEAR ALGEBRA STUFF */
+
+func (op linAlgBinOp) CallsExtern() bool { return true }
+
+func (op elemBinOp) CUDADo(extern External, dev Device, prealloc Value, inputs ...Value) (retVal Value, err error) {
+
+}
+
+/* API stuff  */
 
 // NewAddOp creates a new *ExternalOp that wraps a add op
 func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {

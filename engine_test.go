@@ -61,6 +61,7 @@ func TestBasicEngine(t *testing.T) {
 	Let(x, tensor.New(tensor.WithBacking([]float64{0, 1})))
 	Let(y, tensor.New(tensor.WithBacking([]float64{3, 2})))
 	m := NewTapeMachine(g, TraceExec())
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}

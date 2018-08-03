@@ -25,6 +25,7 @@ type BLAS interface {
 type batchedBLAS interface {
 	WorkAvailable() <-chan struct{}
 	DoWork()
+	Close() error
 	BLAS
 }
 

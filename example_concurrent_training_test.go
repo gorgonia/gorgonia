@@ -142,6 +142,7 @@ func concurrentTraining(xV, yV Value, bs []batch, es int) {
 	for chunk := 0; chunk < threads; chunk++ {
 		trainer := newConcurrentTrainer()
 		ts[chunk] = trainer
+		defer trainer.vm.Close()
 	}
 
 	for e := 0; e < es; e++ {
