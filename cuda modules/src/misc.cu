@@ -11,33 +11,33 @@
 	}
 
 extern "C" { 
-	__global__ void isnan_f32(float* A, int size, bool* retVal) {
+	__global__ void hasNaN_f32(float* A, int size, int* retVal) {
 		THREADID
 		CHECKSIZE
 		if (isnan(A[idx])) {
-			*retVal = true;
+			(*retVal)++;
 		}
 		return;
 	}
 }
 
 extern "C" { 
-	__global__ void isnan_f64(double* A, int size, bool* retVal) {
+	__global__ void hasNaN_f64(double* A, int size, int* retVal) {
 		THREADID
 		CHECKSIZE
 		if (isnan(A[idx])) {
-			*retVal = true;
+			(*retVal)++;
 		}
 		return;
 	}
 }
 
 extern "C" { 
-	__global__ void isinf_f32(float* A, int size, bool* retVal) {
+	__global__ void hasInf_f32(float* A, int size, int* retVal) {
 		THREADID
 		CHECKSIZE
 		if (isinf(A[idx])) {
-			*retVal = true;
+			(*retVal)++;
 		}
 		return;
 	}
@@ -45,11 +45,11 @@ extern "C" {
 
 
 extern "C" { 
-	__global__ void isinf_f64(double* A, int size, bool* retVal) {
+	__global__ void hasInf_f64(double* A, int size, int* retVal) {
 		THREADID
 		CHECKSIZE
 		if (isinf(A[idx])) {
-			*retVal = true;
+			(*retVal)++;
 		}
 		return;
 	}

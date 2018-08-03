@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"hash/fnv"
+	"log"
 	"math"
 
 	"github.com/chewxy/math32"
@@ -131,6 +132,11 @@ func hasInf(v Value) bool {
 	case *F32:
 		return math32.IsInf(float32(*vt), 0)
 	case tensor.Tensor:
+		if e, ok := vt.Engine().(tensor.InfChecker); ok {
+			ok, _ := e.HasInf(vt) // BUG: errors not checked
+			return ok
+		}
+
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
 			return false
@@ -167,10 +173,17 @@ func hasNaN(v Value) bool {
 	case *F32:
 		return math32.IsNaN(float32(*vt))
 	case tensor.Tensor:
+		if e, ok := vt.Engine().(tensor.NaNChecker); ok {
+			ok, _ := e.HasNaN(vt) // BUG: errors not checked
+			return ok
+		}
+		log.Printf("Value's engine %T", vt.Engine())
+
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
 			return false
 		}
+
 		switch dt {
 		case tensor.Float32:
 			data := vt.Data().([]float32)

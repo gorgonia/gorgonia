@@ -1,8 +1,13 @@
 package cuda
 
-import (
-	"sync"
+import "C"
 
+import (
+	"fmt"
+	"sync"
+	"unsafe"
+
+	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 	"gorgonia.org/cu/blas"
 	"gorgonia.org/cu/dnn"
@@ -117,7 +122,6 @@ func (e *Engine) memcpy(dst cu.DevicePtr, src cu.DevicePtr, size int64) {
 
 func (e *Engine) Accessible(mem tensor.Memory) (tensor.Memory, error) {
 	panic("not implemented")
-
 }
 
 func (e *Engine) WorksWith(order tensor.DataOrder) bool { return true }
@@ -125,3 +129,53 @@ func (e *Engine) WorksWith(order tensor.DataOrder) bool { return true }
 func (e *Engine) NonStdAlloc() {}
 
 func (e *Engine) Errors() error { return e.c.Errors() }
+
+func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
+	dt := a.Dtype()
+	name := fmt.Sprintf("misc.hasNaN_f%v", int(dt.Size()*8))
+
+	if !e.HasFunc(name) {
+		return false, errors.Errorf("Unable to perform HasNaN(). The tensor engine does not have the function %q", name)
+	}
+
+	mem := cu.DevicePtr(a.Uintptr())
+	size := int64(logicalSize(a.Shape()))
+	fn := e.f[name]
+
+	var retVal C.int
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
+	args := []unsafe.Pointer{
+		unsafe.Pointer(&mem),
+		unsafe.Pointer(&size),
+		unsafe.Pointer(&retVal),
+	}
+	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	e.Signal()
+	<-e.syncChan
+	return int(retVal) > 0, e.c.Error()
+}
+
+func (e *Engine) HasInf(a tensor.Tensor) (bool, error) {
+	dt := a.Dtype()
+	name := fmt.Sprintf("misc.hasInf_f%v", int(dt.Size()*8))
+
+	if !e.HasFunc(name) {
+		return false, errors.Errorf("Unable to perform HasInf(). The tensor engine does not have the function %q", name)
+	}
+
+	mem := cu.DevicePtr(a.Uintptr())
+	size := int64(logicalSize(a.Shape()))
+	fn := e.f[name]
+
+	var retVal C.int
+	gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ := e.ElemGridSize(int(size))
+	args := []unsafe.Pointer{
+		unsafe.Pointer(&mem),
+		unsafe.Pointer(&size),
+		unsafe.Pointer(&retVal),
+	}
+	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
+	e.Signal()
+	<-e.syncChan
+	return int(retVal) > 0, e.c.Error()
+}
