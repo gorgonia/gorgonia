@@ -22,3 +22,7 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 func BatchNorm(x *G.Node, momentum, epsilon float64, auto bool) (*G.Node, *G.BatchNormOp, error) {
 	return G.BatchNorm(x, momentum, epsilon, auto)
 }
+
+func Rectify(x *G.Node) (retVal *G.Node, err error) {
+	return G.Rectify(x)
+}
