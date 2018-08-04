@@ -37,7 +37,7 @@ func (m *tapeMachine) init() {
 		panic(err)
 	}
 	m.loadStdLib()
-
+	m.Engine = m.ExternMetadata.Engine
 }
 
 // loads the standardlib
@@ -62,26 +62,10 @@ func (m *tapeMachine) loadStdLib() {
 	}
 }
 
-func (instr *execOp) exec(m *tapeMachine) (err error) {
-	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLogScope()
-	defer m.leaveLogScope()
-
-	enterLogScope()
-	defer leaveLogScope()
-
-	m.watchedLogf("Inputs:")
-	m.enterLogScope()
-	var inputs []Value
-	for _, reg := range instr.readFrom {
-		v := m.getValue(reg)
-		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v.Uintptr())
-	}
-	m.leaveLogScope()
+func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
+	var v Value
 
 	toDev := instr.writeTo.device
-	var v Value
 	switch op := instr.op.(type) {
 	case CUDADoer:
 		prealloc := m.getValue(instr.writeTo)
@@ -121,9 +105,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		}
 
 	}
-	m.watchedLogf("Result:")
+	m.watchedInstrLogf(instr, "Result:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v.Uintptr())
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
@@ -199,9 +183,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	}
 
-	m.watchedLogf("Written To: %v", instr.writeTo)
+	m.watchedInstrLogf(instr, "Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v.Uintptr())
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 
 	return nil
