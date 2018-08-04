@@ -266,6 +266,9 @@ func UnsafeLet(n *Node, be interface{}) error {
 		}
 
 	case Value:
+		if !n.Dtype().Eq(v.Dtype()) {
+			return errors.Errorf("Unable to let %v be %v. Expected Dtype of %v. Got %v instead", n.name, be, n.Dtype(), v.Dtype())
+		}
 		n.bind(v)
 	default:
 		var val Value

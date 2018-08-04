@@ -83,7 +83,8 @@ func NewStackedDA(g *ExprGraph, batchSize, size, inputs, outputs, layers int, hi
 }
 
 func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
-	var inputs, model Nodes
+	var inputs Nodes
+	var model []ValueGrad
 	var machines []VM
 
 	inputs = Nodes{sda.input}
@@ -114,7 +115,7 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 
 	solver := NewVanillaSolver(WithBatchSize(float64(sda.BatchSize)))
 	// solver := NewVanillaSolver()
-	model = make(Nodes, 3)
+	model = make([]ValueGrad, 3)
 
 	batches := x.Shape()[0] / sda.BatchSize
 	avgCosts := make([]float64, len(sda.autoencoders))
@@ -160,7 +161,7 @@ func (sda *StackedDA) Pretrain(x tensor.Tensor, epoch int) (err error) {
 }
 
 func (sda *StackedDA) Finetune(x tensor.Tensor, y []int, epoch int) (err error) {
-	var model Nodes
+	var model []ValueGrad
 	for i, da := range sda.autoencoders {
 		if i > 0 {
 			hidden := sda.hiddenLayers[i-1]

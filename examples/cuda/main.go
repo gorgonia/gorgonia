@@ -16,6 +16,7 @@ func main() {
 	xpy2 := T.Must(T.Tanh(xpy))
 
 	m := T.NewTapeMachine(g, T.UseCudaFor("tanh"))
+	defer m.Close()
 
 	T.Let(x, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))
 	T.Let(y, tensor.New(tensor.WithShape(100, 100), tensor.WithBacking(tensor.Random(tensor.Float32, 100*100))))

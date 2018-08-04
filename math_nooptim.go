@@ -4,7 +4,11 @@ package gorgonia
 
 // this file holds the non-hacky version of anything that is in the math_fast.go file
 
-import "math"
+import (
+	"math"
+
+	"github.com/chewxy/math32"
+)
 
 // SetOptimizationLevel sets the fast math optimization level. By default, fast math is turned off,
 // and this function is a no-op.
@@ -37,4 +41,12 @@ func _sigmoidf32(x float32) float32 {
 		return 1
 	}
 	return float32(1.0 / (1.0 + math.Exp(float64(-x))))
+}
+
+func _inverseSqrtf64(x float64) float64 {
+	return 1 / math.Sqrt(x)
+}
+
+func _inverseSqrtf32(x float32) float32 {
+	return 1 / math32.Sqrt(x)
 }

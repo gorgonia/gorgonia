@@ -108,6 +108,7 @@ type codegenerator struct {
 	freed      map[register]struct{}
 	deferFree  map[register]struct{}
 	instrMap   map[*Node]fragment
+	instrRange map[*Node]intervalRange
 	queue      []int // queue to flush
 
 	lastReads map[register]int
@@ -130,6 +131,7 @@ func newCodeGenerator(inputs, sorted Nodes, df *dataflow) *codegenerator {
 		freed:      make(map[register]struct{}),
 		deferFree:  make(map[register]struct{}),
 		instrMap:   make(map[*Node]fragment),
+		instrRange: make(map[*Node]intervalRange),
 		lastReads:  make(map[register]int),
 
 		g:      inputs[0].g,
@@ -234,6 +236,7 @@ func (cg *codegenerator) addArg(node *Node, interv *interval) {
 		// index:   index,
 		index:   node.ID(),
 		writeTo: writeTo,
+		name:    node.Name(),
 	}
 	// cg.instructions = append(cg.instructions, instr)
 
@@ -601,8 +604,11 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 
 	cg.instructions = make(fragment, 0, instructionCount)
 	for _, node := range cg.sorted {
+		start := len(cg.instructions)
 		instrs := cg.instrMap[node]
 		cg.instructions = append(cg.instructions, instrs...)
+		end := len(cg.instructions)
+		cg.instrRange[node] = intervalRange{from: start, to: end}
 	}
 
 	return &program{
@@ -610,6 +616,7 @@ func (cg *codegenerator) gen() (*program, map[*Node]register) {
 		args:         len(cg.inputs),
 		g:            cg.g,
 		m:            cg.instrMap,
+		r:            cg.instrRange,
 	}, cg.locMap
 }
 

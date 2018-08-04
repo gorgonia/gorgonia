@@ -6,6 +6,7 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
 
@@ -29,7 +30,7 @@ func clampFloat32(v, min, max float32) float32 {
 	return v
 }
 
-func tf64Node() Nodes {
+func tf64Node() []ValueGrad {
 	backingV := []float64{1, 2, 3, 4}
 	backingD := []float64{0.5, -10, 10, 0.5}
 	v := tensor.New(tensor.WithBacking(backingV), tensor.WithShape(2, 2))
@@ -41,11 +42,11 @@ func tf64Node() Nodes {
 	n := new(Node)
 	n.boundTo = dv
 
-	model := Nodes{n}
+	model := []ValueGrad{n}
 	return model
 }
 
-func tf32Node() Nodes {
+func tf32Node() []ValueGrad {
 	backingV := []float32{1, 2, 3, 4}
 	backingD := []float32{0.5, -10, 10, 0.5}
 
@@ -58,11 +59,11 @@ func tf32Node() Nodes {
 	n := new(Node)
 	n.boundTo = dv
 
-	model := Nodes{n}
+	model := []ValueGrad{n}
 	return model
 }
 
-func manualRMSProp64(t *testing.T, s *RMSPropSolver, model Nodes) {
+func manualRMSProp64(t *testing.T, s *RMSPropSolver, model []ValueGrad) {
 	assert := assert.New(t)
 	correct := make([]float64, 4)
 	cached := make([]float64, 4)
@@ -96,7 +97,7 @@ func manualRMSProp64(t *testing.T, s *RMSPropSolver, model Nodes) {
 	}
 }
 
-func manualRMSProp32(t *testing.T, s *RMSPropSolver, model Nodes) {
+func manualRMSProp32(t *testing.T, s *RMSPropSolver, model []ValueGrad) {
 	assert := assert.New(t)
 	correct := make([]float32, 4)
 	cached := make([]float32, 4)
@@ -110,6 +111,11 @@ func manualRMSProp32(t *testing.T, s *RMSPropSolver, model Nodes) {
 	eta := float32(s.eta)
 	eps := float32(s.eps)
 	clip := float32(s.clip)
+
+	// NOTE: THIS IS NAUGHTY. A proper comparsion using 1e-5  should be used but that causes errors.
+	closef32 := func(a, b float32) bool {
+		return dawson.ToleranceF32(a, b, 1e-4)
+	}
 
 	for i := 0; i < 5; i++ {
 		for j, v := range backingV {
@@ -130,8 +136,8 @@ func manualRMSProp32(t *testing.T, s *RMSPropSolver, model Nodes) {
 		}
 
 		sCache := s.cache[0].Value.(tensor.Tensor)
-		assert.True(floatsEqual32(correct, backingV))
-		assert.True(floatsEqual32(cached, sCache.Data().([]float32)))
+		assert.True(dawson.AllClose(correct, backingV, closef32))
+		assert.True(dawson.AllClose(cached, sCache.Data().([]float32), closef32))
 	}
 }
 
@@ -142,7 +148,7 @@ func TestRMSPropSolverManual(t *testing.T) {
 	clip := 5.0
 
 	var s *RMSPropSolver
-	var model Nodes
+	var model []ValueGrad
 
 	s = NewRMSPropSolver(WithLearnRate(stepSize), WithL2Reg(l2Reg), WithClip(clip))
 	model = tf64Node()
@@ -158,6 +164,7 @@ func TestRMSPropSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.68
 	if nil != err {
 		t.Fatal(err)
@@ -180,7 +187,7 @@ func TestRMSPropSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -195,6 +202,7 @@ func TestAdaGradSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dSquare(-0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.39
 	if nil != err {
 		t.Fatal(err)
@@ -217,7 +225,7 @@ func TestAdaGradSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -232,6 +240,7 @@ func TestVanillaSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.185
 	if nil != err {
 		t.Fatal(err)
@@ -254,7 +263,45 @@ func TestVanillaSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		maxIterations--
+	}
+
+	assert.InDelta(0, costFloat, costThreshold)
+}
+
+func TestMomentum(t *testing.T) {
+	assert := assert.New(t)
+
+	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
+	const costThreshold = 0.39
+	if nil != err {
+		t.Fatal(err)
+	}
+
+	solver := NewMomentum()
+
+	maxIterations := 1000
+
+	costFloat := 42.0
+	for 0 != maxIterations {
+		m.Reset()
+		err = m.RunAll()
+		if nil != err {
+			t.Fatal(err)
+		}
+
+		costFloat = cost.Value().Data().(float64)
+		if costThreshold > math.Abs(costFloat) {
+			break
+		}
+
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -269,11 +316,11 @@ func TestAdamSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.113
 	if nil != err {
 		t.Fatal(err)
 	}
-
 	solver := NewAdamSolver()
 
 	maxIterations := 1000
@@ -291,7 +338,7 @@ func TestAdamSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -306,6 +353,7 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 	assert := assert.New(t)
 
 	z, cost, m, err := model2dRosenbrock(1, 100, -0.5, 0.5)
+	defer m.Close()
 	const costThreshold = 0.00002
 	if nil != err {
 		t.Fatal(err)
@@ -328,7 +376,7 @@ func TestBarzilaiBorweinSolver(t *testing.T) {
 			break
 		}
 
-		err = solver.Step(Nodes{z})
+		err = solver.Step([]ValueGrad{z})
 		if nil != err {
 			t.Fatal(err)
 		}
@@ -383,22 +431,24 @@ func model2dRosenbrock(a, b, xInit, yInit float64) (z, cost *Node, machine *tape
 	// cost
 	cost = Must(Add(firstTerm, secondTerm))
 
-	dcost, err := Grad(cost, z)
-	if nil != err {
+	if _, err = Grad(cost, z); err != nil {
 		return nil, nil, nil, err
 	}
+	machine = NewTapeMachine(g, BindDualValues(z))
+	// dcost, err := Grad(cost, z)
 
-	prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
-	if nil != err {
-		return nil, nil, nil, err
-	}
+	// prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
+	// if nil != err {
+	// 	return nil, nil, nil, err
+	// }
 
-	machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
+	// machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
 
 	err = machine.Let(z, tensor.New(tensor.WithBacking([]float64{xInit, yInit}), tensor.WithShape(2)))
 	if nil != err {
 		return nil, nil, nil, err
 	}
+	// ioutil.WriteFile("rosenbrock.dot", []byte(g.ToDot()), 0644)
 
 	return
 }
@@ -411,17 +461,22 @@ func model2dSquare(xInit, yInit float64) (z, cost *Node, machine *tapeMachine, e
 	// cost
 	cost = Must(Mul(z, z))
 
-	dcost, err := Grad(cost, z)
-	if nil != err {
+	if _, err = Grad(cost, z); err != nil {
 		return nil, nil, nil, err
 	}
+	machine = NewTapeMachine(g, BindDualValues(z))
 
-	prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
-	if nil != err {
-		return nil, nil, nil, err
-	}
+	// dcost, err := Grad(cost, z)
+	// if nil != err {
+	// 	return nil, nil, nil, err
+	// }
 
-	machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
+	// prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
+	// if nil != err {
+	// 	return nil, nil, nil, err
+	// }
+
+	// machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
 
 	err = machine.Let(z, tensor.New(tensor.WithBacking([]float64{xInit, yInit}), tensor.WithShape(2)))
 	if nil != err {

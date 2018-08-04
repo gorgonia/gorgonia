@@ -34,13 +34,16 @@ func (m *tapeMachine) init() {
 		return
 	}
 	// functions to be loaded
-	cudaLogf("%v", m.f)
+	cudaLogf("%v", m.ExternMetadata.f)
 	funcs := make([]string, 0, len(m.ExternMetadata.f))
-	for fn := range m.f {
+	for fn := range m.ExternMetadata.f {
 		funcs = append(funcs, fn)
 	}
 
-	m.ExternMetadata.init(m.p.gpumem)
+	if err := m.ExternMetadata.init(m.p.gpumem); err != nil {
+		m.ExternMetadata.initFail()
+		panic(err)
+	}
 	m.loadStdLib()
 
 	// cudaLogf("funcs %v", funcs)
@@ -48,7 +51,7 @@ func (m *tapeMachine) init() {
 	// 	m.LoadCUDAFunc(f, cudaStdLib[f])
 	// }
 	cudaLogf("m.c = %v", m.c)
-	cudaLogf("m.f = %v", m.f)
+	cudaLogf("m.ExternMetadata.f = %v", m.ExternMetadata.f)
 }
 
 // LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
@@ -100,10 +103,10 @@ func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 		}
 	}
 
-	m.m[moduleName] = mods
+	m.ExternMetadata.m[moduleName] = mods
 	for _, name := range funcs {
 		fqn := fmt.Sprintf("%v.%v", moduleName, name)
-		m.f[fqn] = fns[name]
+		m.ExternMetadata.f[fqn] = fns[name]
 	}
 
 	cudaLogf("Loaded %q", moduleName)
@@ -111,7 +114,7 @@ func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err
 }
 
 func (m *tapeMachine) loadDummyFunc(name string) {
-	m.f[name] = nil
+	m.ExternMetadata.f[name] = nil
 }
 
 // loads the standardlib
@@ -141,24 +144,8 @@ func (m *tapeMachine) loadDummyStdLib() {
 	}
 }
 
-func (instr *execOp) exec(m *tapeMachine) (err error) {
-	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLogScope()
-	defer m.leaveLogScope()
-
-	enterLogScope()
-	defer leaveLogScope()
-
-	m.watchedLogf("Inputs:")
-	m.enterLogScope()
-	var inputs []Value
-	for _, reg := range instr.readFrom {
-		v := m.getValue(reg)
-		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v)
-	}
-	m.leaveLogScope()
-
+func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
+	// pc := int(instr.id)
 	toDev := instr.writeTo.device
 	var v Value
 	switch op := instr.op.(type) {
@@ -200,16 +187,18 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		}
 
 	}
-	m.watchedLogf("Result:")
+	m.watchedInstrLogf(instr, "Result:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
 	// Write
+	setEngine(v, m.Engine)
 	m.writeValue(instr.writeTo, v)
-	node := m.p.g.Node(instr.id).(*Node)
 
+	// additional processing
+	node := m.p.g.Node(instr.id).(*Node)
 	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
 		m.Signal()
 		if err = node.bindCopy(v); err != nil {
@@ -277,9 +266,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	}
 
-	m.watchedLogf("Written To: %v", instr.writeTo)
+	m.watchedInstrLogf(instr, "Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 
 	return nil

@@ -67,7 +67,7 @@ func newConvNet(g *gorgonia.ExprGraph) *convnet {
 	w0 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(32, 1, 3, 3), gorgonia.WithName("w0"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
 	w1 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(64, 32, 3, 3), gorgonia.WithName("w1"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
 	w2 := gorgonia.NewTensor(g, dt, 4, gorgonia.WithShape(128, 64, 3, 3), gorgonia.WithName("w2"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
-	w3 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(128*2*2, 625), gorgonia.WithName("w3"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
+	w3 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(128*3*3, 625), gorgonia.WithName("w3"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
 	w4 := gorgonia.NewMatrix(g, dt, gorgonia.WithShape(625, 10), gorgonia.WithName("w4"), gorgonia.WithInit(gorgonia.GlorotN(1.0)))
 	return &convnet{
 		g:  g,
@@ -84,7 +84,9 @@ func newConvNet(g *gorgonia.ExprGraph) *convnet {
 	}
 }
 
-func (m *convnet) learnables() gorgonia.Nodes { return gorgonia.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4} }
+func (m *convnet) learnables() gorgonia.Nodes {
+	return gorgonia.Nodes{m.w0, m.w1, m.w2, m.w3, m.w4}
+}
 
 // This function is particularly verbose for educational reasons. In reality, you'd wrap up the layers within a layer struct type and perform per-layer activations
 func (m *convnet) fwd(x *gorgonia.Node) (err error) {
@@ -96,7 +98,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	// LAYER 0
 	// here we convolve with stride = (1, 1) and padding = (1, 1),
 	// which is your bog standard convolution for convnet
-	if c0, err = gorgonia.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c0, err = gorgonia.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 0 Convolution failed")
 	}
 	if a0, err = gorgonia.Rectify(c0); err != nil {
@@ -110,7 +112,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	}
 
 	// Layer 1
-	if c1, err = gorgonia.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c1, err = gorgonia.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 1 Convolution failed")
 	}
 	if a1, err = gorgonia.Rectify(c1); err != nil {
@@ -124,7 +126,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	}
 
 	// Layer 2
-	if c2, err = gorgonia.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}); err != nil {
+	if c2, err = gorgonia.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 2 Convolution failed")
 	}
 	if a2, err = gorgonia.Rectify(c2); err != nil {
@@ -220,20 +222,22 @@ func main() {
 	var costVal gorgonia.Value
 	gorgonia.Read(cost, &costVal)
 
-	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
-		log.Fatal(err)
-	}
+	// if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	// debug
 	// ioutil.WriteFile("fullGraph.dot", []byte(g.ToDot()), 0644)
-	// prog, _, _ := gorgonia.Compile(g)
 	// log.Printf("%v", prog)
 	// logger := log.New(os.Stderr, "", 0)
 	// vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...), gorgonia.WithLogger(logger), gorgonia.WithWatchlist())
 
-	vm := gorgonia.NewTapeMachine(g, gorgonia.BindDualValues(m.learnables()...))
-	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
+	prog, locMap, _ := gorgonia.Compile(g)
+	log.Printf("%v", prog)
 
+	vm := gorgonia.NewTapeMachine(g, gorgonia.WithPrecompiled(prog, locMap), gorgonia.BindDualValues(m.learnables()...))
+	solver := gorgonia.NewRMSPropSolver(gorgonia.WithBatchSize(float64(bs)))
+	defer vm.Close()
 	// pprof
 	// handlePprof(sigChan, doneChan)
 
@@ -286,7 +290,7 @@ func main() {
 			if err = vm.RunAll(); err != nil {
 				log.Fatalf("Failed at epoch  %d: %v", i, err)
 			}
-			solver.Step(m.learnables())
+			solver.Step(gorgonia.NodesToValueGrads(m.learnables()))
 			vm.Reset()
 			bar.Increment()
 		}

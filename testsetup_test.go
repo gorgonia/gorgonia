@@ -10,6 +10,7 @@ import (
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
 
@@ -17,16 +18,13 @@ type errorStacker interface {
 	ErrorStack() string
 }
 
-const EPSILON64 float64 = 1e-10
-const EPSILON32 float32 = 1e-5
-
 func floatsEqual64(a, b []float64) bool {
 	if len(a) != len(b) {
 		return false
 	}
 
 	for i, v := range a {
-		if !closeF64(v, b[i]) {
+		if !dawson.CloseF64(v, b[i]) {
 			return false
 		}
 	}
@@ -39,7 +37,7 @@ func floatsEqual32(a, b []float32) bool {
 	}
 
 	for i, v := range a {
-		if !closeF32(v, b[i]) {
+		if !dawson.CloseF32(v, b[i]) {
 			return false
 		}
 	}

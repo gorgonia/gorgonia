@@ -17,15 +17,16 @@ var (
 	floorf64 = sf64UnaryOperator(math.Floor)
 
 	// differentiable
-	sinf64     = sf64UnaryOperator(math.Sin)
-	cosf64     = sf64UnaryOperator(math.Cos)
-	expf64     = sf64UnaryOperator(math.Exp)
-	lnf64      = sf64UnaryOperator(math.Log)
-	log2f64    = sf64UnaryOperator(math.Log2)
-	negf64     = sf64UnaryOperator(_negf64)
-	squaref64  = sf64UnaryOperator(_squaref64)
-	sqrtf64    = sf64UnaryOperator(math.Sqrt)
-	inversef64 = sf64UnaryOperator(_inversef64)
+	sinf64         = sf64UnaryOperator(math.Sin)
+	cosf64         = sf64UnaryOperator(math.Cos)
+	expf64         = sf64UnaryOperator(math.Exp)
+	lnf64          = sf64UnaryOperator(math.Log)
+	log2f64        = sf64UnaryOperator(math.Log2)
+	negf64         = sf64UnaryOperator(_negf64)
+	squaref64      = sf64UnaryOperator(_squaref64)
+	sqrtf64        = sf64UnaryOperator(math.Sqrt)
+	inversef64     = sf64UnaryOperator(_inversef64)
+	inverseSqrtf64 = sf64UnaryOperator(_inverseSqrtf64)
 
 	// activation functions
 	cubef64    = sf64UnaryOperator(_cubef64)
@@ -48,15 +49,16 @@ var (
 	floorf32 = sf32UnaryOperator(math32.Floor)
 
 	// start differentiable
-	sinf32     = sf32UnaryOperator(math32.Sin)
-	cosf32     = sf32UnaryOperator(math32.Cos)
-	expf32     = sf32UnaryOperator(math32.Exp)
-	lnf32      = sf32UnaryOperator(math32.Log)
-	log2f32    = sf32UnaryOperator(math32.Log2)
-	negf32     = sf32UnaryOperator(_negf32)
-	squaref32  = sf32UnaryOperator(_squaref32)
-	sqrtf32    = sf32UnaryOperator(math32.Sqrt)
-	inversef32 = sf32UnaryOperator(_inversef32)
+	sinf32         = sf32UnaryOperator(math32.Sin)
+	cosf32         = sf32UnaryOperator(math32.Cos)
+	expf32         = sf32UnaryOperator(math32.Exp)
+	lnf32          = sf32UnaryOperator(math32.Log)
+	log2f32        = sf32UnaryOperator(math32.Log2)
+	negf32         = sf32UnaryOperator(_negf32)
+	squaref32      = sf32UnaryOperator(_squaref32)
+	sqrtf32        = sf32UnaryOperator(math32.Sqrt)
+	inversef32     = sf32UnaryOperator(_inversef32)
+	inverseSqrtf32 = sf32UnaryOperator(_inverseSqrtf32)
 
 	// typically used in activation functions
 	cubef32    = sf32UnaryOperator(_cubef32)
@@ -86,7 +88,8 @@ const (
 	negOpType
 	squareOpType
 	sqrtOpType
-	inverseOpType // multiplicative inverse
+	inverseOpType     // multiplicative inverse
+	inverseSqrtOpType // 1/sqrt(x)
 
 	// typically used in activation functions
 	cubeOpType
@@ -115,7 +118,8 @@ var ʘUnaryOpStrs = [maxʘUnaryOperator]string{
 	"abs", "sign", "ceil", "floor",
 	"sin", "cos", "exp",
 	"ln", "log2", "neg", "square", "sqrt",
-	"inv", "cube", "tanh", "sigmoid",
+	"inv", "invSqrt",
+	"cube", "tanh", "sigmoid",
 
 	"log1p", "expm1", "softplus",
 }
@@ -126,7 +130,8 @@ var ʘUnaryOpDifferentiable = [maxʘUnaryOperator]bool{
 	true, false, false, false,
 	true, true, true,
 	true, true, true, true, true,
-	true, true, true, true,
+	true, true,
+	true, true, true,
 
 	true, true, true,
 }
@@ -135,7 +140,7 @@ var ʘUnaryOpDiffExprs = [maxʘUnaryOperator]func(x, y, gradY *Node) (*Node, err
 	absDiffExpr, nondiffUnaryOpExpr, nondiffUnaryOpExpr, nondiffUnaryOpExpr,
 	sinDiffExpr, cosDiffExpr, expDiffExpr,
 	lnDiffExpr, log2DiffExpr, negDiffExpr, squareDiffExpr, sqrtDiffExpr,
-	inverseDiffExpr, cubeDiffExpr, tanhDiffExpr, sigmoidDiffExpr,
+	inverseDiffExpr, inverseSqrtDiffExpr, cubeDiffExpr, tanhDiffExpr, sigmoidDiffExpr,
 
 	log1pDiffExpr, expm1DiffExpr, softplusDiffExpr,
 }
@@ -144,7 +149,7 @@ var ʘUnaryOpDiffFns = [maxʘUnaryOperator]func(x, y *Node) error{
 	absDiff, nondiffUnaryOp, nondiffUnaryOp, nondiffUnaryOp,
 	sinDiff, cosDiff, expDiff,
 	lnDiff, log2Diff, negDiff, squareDiff, sqrtDiff,
-	inverseDiff, cubeDiff, tanhDiff, sigmoidDiff,
+	inverseDiff, inverseSqrtDiff, cubeDiff, tanhDiff, sigmoidDiff,
 
 	log1pDiff, expm1Diff, softplusDiff,
 }
@@ -163,6 +168,7 @@ var sf64UnaryOperators = [maxʘUnaryOperator]*sf64UnaryOperator{
 	&squaref64,
 	&sqrtf64,
 	&inversef64,
+	&inverseSqrtf64,
 	&cubef64,
 	&tanhf64,
 	&sigmoidf64,
@@ -186,6 +192,7 @@ var sf32UnaryOperators = [maxʘUnaryOperator]*sf32UnaryOperator{
 	&squaref32,
 	&sqrtf32,
 	&inversef32,
+	&inverseSqrtf32,
 	&cubef32,
 	&tanhf32,
 	&sigmoidf32,

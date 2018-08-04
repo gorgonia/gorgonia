@@ -102,9 +102,7 @@ func matMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 }
 
 func matMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
+	xdv, ydv, zdv := getDV3(x, y, z)
 
 	op := linAlgBinOp{
 		āBinaryOperator: matMulOperator,
@@ -204,9 +202,7 @@ func matVecMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 }
 
 func matVecMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
+	xdv, ydv, zdv := getDV3(x, y, z)
 
 	op := linAlgBinOp{
 		āBinaryOperator: outerProdOperator,
@@ -248,9 +244,7 @@ func vecDotDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes, er
 }
 
 func vecDotDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
+	xdv, ydv, zdv := getDV3(x, y, z)
 
 	mul := newElemBinOp(mulOpType, x, z)
 	err = mul.IncrDo(xdv.d, ydv.Value, zdv.d)
@@ -280,9 +274,7 @@ func outerProdDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal Nodes,
 }
 
 func outerProdDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
+	xdv, ydv, zdv := getDV3(x, y, z)
 
 	mul := newElemBinOp(mulOpType, x, z)
 	err = mul.IncrDo(xdv.d, xdv.Value, zdv.d)
@@ -352,9 +344,7 @@ func batchedMatMulDiffExpr(transA, transB bool, x, y, z, gradZ *Node) (retVal No
 }
 
 func batchedMatMulDiff(ctx ExecutionContext, transA, transB bool, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
+	xdv, ydv, zdv := getDV3(x, y, z)
 
 	op := linAlgBinOp{
 		āBinaryOperator: batchedMatMulOperator,
@@ -437,7 +427,7 @@ func batchedMatMul(a, b, c tensor.Tensor, transA, transB, incr bool) (retVal ten
 	batchSize := shapeA[0]
 
 	if c == nil {
-		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(batchSize, shapeA[2], shapeB[1]))
+		c = tensor.New(tensor.Of(a.Dtype()), tensor.WithShape(batchSize, shapeA[2], shapeB[1]), tensor.WithEngine(a.Engine()))
 	}
 
 	var as, bs, cs tensor.Tensor

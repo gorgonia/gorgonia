@@ -18,7 +18,7 @@ import (
 
 var debug = flag.Bool("debug", false, "compile with debug mode (-linelinfo is added to nvcc call)")
 
-var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\n")
+var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\r?\n")
 
 func stripExt(fullpath string) string {
 	_, filename := filepath.Split(fullpath)
@@ -90,6 +90,9 @@ func main() {
 	}
 
 	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = path.Join(os.Getenv("HOME"), "go")
+	}
 	gorgoniaLoc := path.Join(gopath, "src/gorgonia.org/gorgonia")
 	cuLoc := path.Join(gorgoniaLoc, "cuda modules/src")
 	ptxLoc := path.Join(gorgoniaLoc, "cuda modules/target")

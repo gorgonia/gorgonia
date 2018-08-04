@@ -56,8 +56,8 @@ func newConcurrentTrainer() *concurrentTrainer {
 }
 
 type cost struct {
-	Nodes
-	VM // placed for debugging purposes. In real life use you can just use a channel of Nodes
+	Nodes []ValueGrad
+	VM    // placed for debugging purposes. In real life use you can just use a channel of Nodes
 
 	// cost Value
 }
@@ -70,7 +70,7 @@ func (t *concurrentTrainer) train(x, y Value, costChan chan cost, wg *sync.WaitG
 	}
 
 	costChan <- cost{
-		Nodes{t.x, t.y},
+		[]ValueGrad{t.x, t.y},
 		t.vm,
 		// t.cost,
 	}
@@ -142,6 +142,7 @@ func concurrentTraining(xV, yV Value, bs []batch, es int) {
 	for chunk := 0; chunk < threads; chunk++ {
 		trainer := newConcurrentTrainer()
 		ts[chunk] = trainer
+		defer trainer.vm.Close()
 	}
 
 	for e := 0; e < es; e++ {
@@ -164,7 +165,7 @@ func nonConcurrentTraining(xV, yV Value, es int) {
 	solver := NewVanillaSolver(WithLearnRate(1), WithBatchSize(batchSize))
 	for i := 0; i < es; i++ {
 		vm.RunAll()
-		solver.Step(Nodes{x, y})
+		solver.Step([]ValueGrad{x, y})
 		vm.Reset()
 	}
 }

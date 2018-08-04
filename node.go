@@ -7,6 +7,7 @@ import (
 	"hash"
 	"hash/fnv"
 	"log"
+	"sync"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/chewxy/hm"
@@ -49,6 +50,8 @@ type Node struct {
 	unchanged     bool // has this node been modified
 	isStmt        bool // is this a statement node
 	ofInterest    bool // is this node of particular interest? (for debugging)
+
+	sync.Mutex
 }
 
 // NodeConsOpt is a function that provides construction options for any Node.
@@ -197,7 +200,12 @@ func WithShape(shp ...int) NodeConsOpt {
 		// if nd == 1 && s.IsVector() {
 		// 	goto safe
 		// }
-		if nd != s.Dims() {
+		isVec := s.IsColVec() || s.IsRowVec()
+		acceptVec := (isVec && (nd == 1))
+		sameDims := nd == s.Dims()
+		acceptScalar := nd == 0 && scalarEquiv(s)
+
+		if !acceptVec && !sameDims && !acceptScalar {
 			panic(fmt.Sprintf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims()))
 		}
 		// safe:
@@ -262,6 +270,9 @@ func (n *Node) isRoot() bool {
 	}
 	return len(n.g.to[n]) == 0
 }
+
+// IsVar returns true if  the node represents a differentiable variable (i.e. it's an argument to the function that is not a statement)
+func (n *Node) IsVar() bool { return n.isArg() && !n.isStmt && !n.isConstant() }
 
 // type related isX() helper methods
 
@@ -401,8 +412,32 @@ func (n *Node) Dims() int {
 // Type returns the type of the node
 func (n *Node) Type() hm.Type { return n.t }
 
+// Dtype returns the dtype of the node
+func (n *Node) Dtype() tensor.Dtype {
+	dt, err := dtypeOf(n.t)
+	if err != nil {
+		panic(err)
+	}
+	return dt
+}
+
 // Shape returns the shape of the node
 func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
+
+// Strides returns the strides of the value of the node
+func (n *Node) Strides() []int {
+	if n.boundTo != nil {
+		switch v := n.boundTo.(type) {
+		case *dualValue:
+			return v.Value.(tensor.Tensor).Strides()
+		case tensor.Tensor:
+			return v.Strides()
+		default:
+			log.Printf("Unhandled type for Strides(): %T. Using fallback method and assuming dense tensor types", n.boundTo)
+		}
+	}
+	return n.shape.CalcStrides()
+}
 
 // Device returns the device the data will be on
 func (n *Node) Device() Device { return n.dataOn }
