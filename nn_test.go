@@ -37,8 +37,8 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 	m := NewTapeMachine(g, TraceExec(), BindDualValues())
 	defer m.Close()
 	cudaLogf("%v", m.Prog())
-	defer runtime.GC()
 	if err := m.RunAll(); err != nil {
+		t.Logf("Execution Log\n%v", m.buf.String())
 		return err
 	}
 	return nil
@@ -46,6 +46,7 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 
 func TestDropout(t *testing.T) {
 	// t.Skip()
+	defer runtime.GC()
 
 	if err := dropoutTest(t, Float64); err != nil {
 		t.Errorf("%+v", err)

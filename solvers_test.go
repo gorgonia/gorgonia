@@ -321,7 +321,6 @@ func TestAdamSolver(t *testing.T) {
 	if nil != err {
 		t.Fatal(err)
 	}
-
 	solver := NewAdamSolver()
 
 	maxIterations := 1000
@@ -432,22 +431,24 @@ func model2dRosenbrock(a, b, xInit, yInit float64) (z, cost *Node, machine *tape
 	// cost
 	cost = Must(Add(firstTerm, secondTerm))
 
-	dcost, err := Grad(cost, z)
-	if nil != err {
+	if _, err = Grad(cost, z); err != nil {
 		return nil, nil, nil, err
 	}
+	machine = NewTapeMachine(g, BindDualValues(z))
+	// dcost, err := Grad(cost, z)
 
-	prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
-	if nil != err {
-		return nil, nil, nil, err
-	}
+	// prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
+	// if nil != err {
+	// 	return nil, nil, nil, err
+	// }
 
-	machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
+	// machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
 
 	err = machine.Let(z, tensor.New(tensor.WithBacking([]float64{xInit, yInit}), tensor.WithShape(2)))
 	if nil != err {
 		return nil, nil, nil, err
 	}
+	// ioutil.WriteFile("rosenbrock.dot", []byte(g.ToDot()), 0644)
 
 	return
 }
@@ -460,17 +461,22 @@ func model2dSquare(xInit, yInit float64) (z, cost *Node, machine *tapeMachine, e
 	// cost
 	cost = Must(Mul(z, z))
 
-	dcost, err := Grad(cost, z)
-	if nil != err {
+	if _, err = Grad(cost, z); err != nil {
 		return nil, nil, nil, err
 	}
+	machine = NewTapeMachine(g, BindDualValues(z))
 
-	prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
-	if nil != err {
-		return nil, nil, nil, err
-	}
+	// dcost, err := Grad(cost, z)
+	// if nil != err {
+	// 	return nil, nil, nil, err
+	// }
 
-	machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
+	// prog, locMap, err := CompileFunction(g, Nodes{z}, Nodes{cost, dcost[0]})
+	// if nil != err {
+	// 	return nil, nil, nil, err
+	// }
+
+	// machine = NewTapeMachine(g, WithPrecompiled(prog, locMap), BindDualValues(z))
 
 	err = machine.Let(z, tensor.New(tensor.WithBacking([]float64{xInit, yInit}), tensor.WithShape(2)))
 	if nil != err {

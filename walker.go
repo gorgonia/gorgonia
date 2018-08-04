@@ -33,7 +33,6 @@ func walkGraph(start *Node, ch chan *Node, walked NodeSet) {
 	for _, child := range start.children {
 		walkGraph(child, ch, walked)
 	}
-
 }
 
 // Sort topologically sorts a ExprGraph: root of graph will be first

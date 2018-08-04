@@ -10,6 +10,7 @@ import (
 )
 
 func TestGraphBasics(t *testing.T) {
+	// t.Skip()
 	assert := assert.New(t)
 	g, x, y, xy := simpleEqn()
 
