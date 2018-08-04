@@ -129,5 +129,5 @@ func (op *activationDiff) String() string {
 }
 
 func (op *activationDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
-
+	x, y, dy := inputs[0], inputs[1], inputs[2]
 }
