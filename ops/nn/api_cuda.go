@@ -36,6 +36,15 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 	return
 }
 
+func Rectify(x *Node) (retVal *Node, err error) {
+	var op *activation
+	if op, err = newRelu(); err != nil {
+		return nil, err
+	}
+	retVal, err = G.ApplyOp(op, x)
+	return
+}
+
 // func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*G.Node, *BatchNormOp, error) {
 // 	dt, err := dtypeOf(x.Type())
 // 	if err != nil {
