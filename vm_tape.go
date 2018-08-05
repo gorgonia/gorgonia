@@ -238,6 +238,10 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 			errChan <- err
 			return
 		}
+		// only proceed to check NaNs and Infs for execOp
+		if _, ok := instr.(*execOp); !ok {
+			continue
+		}
 
 		if m.watchNaN() {
 			writeTo := instr.writes().id
@@ -506,9 +510,11 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 
 	dev := instr.writeTo.device
 	var v Value
+	var e tensor.Engine
 	switch dev {
 	case CPU:
 		v, err = makeValue(instr.t, instr.s)
+		e = m.Engine
 	default:
 		var mem tensor.Memory
 		memsize := calcMemSize(dt, instr.s)
@@ -516,11 +522,17 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 			return errors.Wrapf(err, "Unable to allocate %v bytes from %v | %T", memsize, dev, err)
 		}
 		v, err = makeValueFromMem(instr.t, instr.s, mem)
+		e = &m.Engines()[int(dev)]
 	}
 	if err != nil {
 		return
 	}
-	m.logf("Result: 0x%x", v.Uintptr())
+	setEngine(v, e)
+	if vt, ok := v.(tensor.Tensor); ok {
+		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
+	} else {
+		m.watchedLogf("%x", v.Uintptr())
+	}
 
 	m.writeValue(instr.writeTo, v)
 	return nil

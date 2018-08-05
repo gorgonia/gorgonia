@@ -88,6 +88,8 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		if v, err = op.CUDADo(m, toDev, prealloc, inputs...); err != nil {
 			return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 		}
+		e := &m.Engines()[int(toDev)]
+		setEngine(v, e)
 	case CLDoer:
 	default:
 		switch {
@@ -119,16 +121,20 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				return errors.Wrap(err, opDoFail)
 			}
 		}
+		setEngine(v, m.Engine)
 
 	}
-	m.watchedLogf("Result:")
+	m.watchedLogf("Result E:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v.Uintptr())
+	if vt, ok := v.(tensor.Tensor); ok {
+		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
+	} else {
+		m.watchedLogf("%x", v.Uintptr())
+	}
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
 	// Write
-	setEngine(v, m.Engine)
 	m.writeValue(instr.writeTo, v)
 	node := m.p.g.Node(instr.id).(*Node)
 
