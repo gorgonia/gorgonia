@@ -130,4 +130,25 @@ func (op *activationDiff) String() string {
 
 func (op *activationDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
 	x, y, dy := inputs[0], inputs[1], inputs[2]
+	if op.dxDesc == nil {
+		if op.dxDesc, err = t2cudnn.Describe(prealloc.(tensor.Tensor)); err != nil {
+			return
+		}
+	}
+	if op.dyDesc == nil {
+		if op.dyDesc, err = t2cudnn.Describe(dy.(tensor.Tensor)); err != nil {
+			return
+		}
+	}
+	machine := extern.(G.CUDAMachine)
+	machine.Engines()[int(dev)].DoWork()
+	ctx := machine.CUDNNContexts()[int(dev)]
+
+	err = ctx.ActivationBackward(op.activation, 1,
+		op.yDesc, y.(cudnn.Memory),
+		op.dyDesc, dy.(cudnn.Memory),
+		op.xDesc, x.(cudnn.Memory),
+		0,
+		op.dxDesc, prealloc.(cudnn.Memory))
+	return prealloc, err
 }
