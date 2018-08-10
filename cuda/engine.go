@@ -150,8 +150,7 @@ func (e *Engine) HasNaN(a tensor.Tensor) (bool, error) {
 		unsafe.Pointer(&retVal),
 	}
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-	e.Signal()
-	<-e.syncChan
+	e.DoWork()
 	return int(retVal) > 0, e.c.Error()
 }
 
@@ -175,7 +174,6 @@ func (e *Engine) HasInf(a tensor.Tensor) (bool, error) {
 		unsafe.Pointer(&retVal),
 	}
 	e.c.LaunchAndSync(fn, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, 0, cu.NoStream, args)
-	e.Signal()
-	<-e.syncChan
+	e.DoWork()
 	return int(retVal) > 0, e.c.Error()
 }
