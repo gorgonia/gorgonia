@@ -137,6 +137,7 @@ func (e *Engine) doInit(size int64) (err error) {
 	e.mbdz = attrs[7]
 
 	e.b.Init(cublas.WithContext(&e.c))
+
 	e.n = *(cudnn.NewContext())
 	e.m = make(map[string]cu.Module)
 	e.f = make(map[string]cu.Function)
@@ -149,8 +150,8 @@ func (e *Engine) doInit(size int64) (err error) {
 
 	// actually reserve memory for the allocator
 	var allocsize int64 = 2*size + (size / 2) + minAllocSize
-	if allocsize > e.freeMem {
-		allocsize = e.freeMem
+	if allocsize >= e.freeMem {
+		return errors.Errorf("Unable to get %v bytes. Free memory available %v", allocsize, e.freeMem)
 	}
 	ptr, err := cu.MemAllocManaged(allocsize, cu.AttachGlobal)
 	if err != nil {
