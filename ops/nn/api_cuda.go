@@ -36,7 +36,7 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 	return
 }
 
-func Rectify(x *Node) (retVal *Node, err error) {
+func Rectify(x *G.Node) (retVal *G.Node, err error) {
 	var op *activation
 	if op, err = newRelu(); err != nil {
 		return nil, err

@@ -7,6 +7,7 @@ import (
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/cu/dnn"
+	t2cudnn "gorgonia.org/cu/dnn/interop"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
@@ -16,9 +17,12 @@ type activation struct {
 	xDesc, yDesc *cudnn.TensorDescriptor
 }
 
-func newRelu() *activation {
-	act := cudnn.NewActivation(cudnn.ReLU, cudnn.PropagateNan, 1.0)
-	return &activation{act}
+func newRelu() (*activation, error) {
+	act, err := cudnn.NewActivation(cudnn.ReLU, cudnn.PropagateNan, 1.0)
+	if err != nil {
+		return nil, err
+	}
+	return &activation{Activation: act}, nil
 }
 
 func (op *activation) Arity() int { return 1 }
@@ -63,7 +67,7 @@ func (op *activation) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad
 }
 
 func (op *activation) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
-	if err = checkArity(c, len(inputs)); err != nil {
+	if err = checkArity(op, len(inputs)); err != nil {
 		return
 	}
 
@@ -75,13 +79,13 @@ func (op *activation) CUDADo(extern gorgonia.External, dev gorgonia.Device, prea
 		}
 	}
 	if op.yDesc == nil {
-		if op.yDesc, err = t2cudnn.Describe(y.(tensor.Tensor)); err != nil {
+		if op.yDesc, err = t2cudnn.Describe(prealloc.(tensor.Tensor)); err != nil {
 			return
 		}
 	}
 
-	machine := extern.(G.CUDAMachine)
-	ctx := machine.CUDNNContext()
+	machine := extern.(gorgonia.CUDAMachine)
+	ctx := machine.CUDNNContexts()[int(dev)]
 	err = ctx.ActivationForward(op.Activation, 1, op.xDesc, x.(cudnn.Memory), 0, op.yDesc, prealloc.(cudnn.Memory))
 	return prealloc, err
 }
@@ -140,11 +144,11 @@ func (op *activationDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, 
 			return
 		}
 	}
-	machine := extern.(G.CUDAMachine)
+	machine := extern.(gorgonia.CUDAMachine)
 	machine.Engines()[int(dev)].DoWork()
 	ctx := machine.CUDNNContexts()[int(dev)]
 
-	err = ctx.ActivationBackward(op.activation, 1,
+	err = ctx.ActivationBackward(op.Activation, 1,
 		op.yDesc, y.(cudnn.Memory),
 		op.dyDesc, dy.(cudnn.Memory),
 		op.xDesc, x.(cudnn.Memory),
