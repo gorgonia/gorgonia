@@ -3,6 +3,7 @@
 package nnops
 
 import (
+	"fmt"
 	"hash"
 
 	"github.com/chewxy/hm"
@@ -48,22 +49,24 @@ func (op *activation) CallsExtern() bool { return true }
 
 func (op *activation) OverwritesInput() int { return -1 }
 
-func (op *activation) WriteHash(h hash.Hash) {
-	panic("not implemented")
-}
+func (op *activation) WriteHash(h hash.Hash) { fmt.Fprintf(h, "%v", op.Activation.Mode()) }
 
-func (op *activation) Hashcode() uint32 {
-	panic("not implemented")
-}
+func (op *activation) Hashcode() uint32 { return simpleHash(op) }
 
-func (op *activation) String() string {
-	panic("not implemented")
-}
+func (op *activation) String() string { return fmt.Sprintf("%v", op.Activation.Mode) }
 
 func (op *activation) DiffWRT(inputs int) []bool { return []bool{true} }
 
 func (op *activation) SymDiff(inputs gorgonia.Nodes, output *gorgonia.Node, grad *gorgonia.Node) (retVal gorgonia.Nodes, err error) {
-	panic("not implemented")
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	diffOp := &activationDiff{activation: op}
+
+	retVal = make(gorgonia.Nodes, 1)
+	retVal[0], err = gorgonia.ApplyOp(diffOp, inputs[0], output, grad)
+	return
 }
 
 func (op *activation) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
@@ -96,7 +99,7 @@ type activationDiff struct {
 }
 
 func (op *activationDiff) Arity() int {
-	return 4 // x, y, dy, dx
+	return 3 // x, y, dy, dx
 }
 
 func (op *activationDiff) Type() hm.Type {
@@ -110,9 +113,7 @@ func (op *activationDiff) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape,
 	return inputs[0].(tensor.Shape).Clone(), nil
 }
 
-func (op *activationDiff) Do(...gorgonia.Value) (gorgonia.Value, error) {
-	panic("not implemented")
-}
+func (op *activationDiff) Do(...gorgonia.Value) (gorgonia.Value, error) { panic("not implemented") }
 
 func (op *activationDiff) ReturnsPtr() bool { return true }
 
@@ -120,17 +121,11 @@ func (op *activationDiff) CallsExtern() bool { return true }
 
 func (op *activationDiff) OverwritesInput() int { return -1 }
 
-func (op *activationDiff) WriteHash(h hash.Hash) {
-	panic("not implemented")
-}
+func (op *activationDiff) WriteHash(h hash.Hash) { fmt.Fprintf(h, "DIFF%v", op.Activation.Mode()) }
 
-func (op *activationDiff) Hashcode() uint32 {
-	panic("not implemented")
-}
+func (op *activationDiff) Hashcode() uint32 { return simpleHash(op) }
 
-func (op *activationDiff) String() string {
-	panic("not implemented")
-}
+func (op *activationDiff) String() string { return fmt.Sprintf("DIFF %v", op.Activation.Mode()) }
 
 func (op *activationDiff) CUDADo(extern gorgonia.External, dev gorgonia.Device, prealloc gorgonia.Value, inputs ...gorgonia.Value) (retVal gorgonia.Value, err error) {
 	x, y, dy := inputs[0], inputs[1], inputs[2]

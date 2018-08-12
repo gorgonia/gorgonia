@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	epochs     = flag.Int("epochs", 2, "Number of epochs to train for")
+	epochs     = flag.Int("epochs", 10, "Number of epochs to train for")
 	dataset    = flag.String("dataset", "train", "Which dataset to train on? Valid options are \"train\" or \"test\"")
 	dtype      = flag.String("dtype", "float64", "Which dtype to use")
 	batchsize  = flag.Int("batchsize", 100, "Batch size")
@@ -231,7 +231,7 @@ func main() {
 	gorgonia.Read(cost, &costVal)
 
 	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	// debug
@@ -270,6 +270,7 @@ func main() {
 	bar.SetMaxWidth(80)
 
 	var xxx int
+	var avgcost float64
 
 	for i := 0; i < *epochs; i++ {
 		bar.Prefix(fmt.Sprintf("Epoch %d", i))
@@ -310,8 +311,10 @@ func main() {
 				log.Printf("Losses\n%v", lossesVal)
 				xxx++
 			}
+			avgcost += costVal.Data().(float64)
 		}
-		log.Printf("Epoch %d | cost %v", i, costVal)
+		log.Printf("Epoch %d | cost %v", i, avgcost/float64(batches))
+		avgcost = 0
 
 	}
 }
