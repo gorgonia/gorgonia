@@ -66,7 +66,9 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 	}
 	m.cpumem = make([]Value, m.p.cpulocs)
 	m.gpumem = make([]Value, m.p.gpulocs)
+	log.Printf("Init")
 	m.init()
+	log.Printf("Done Init")
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 	}
@@ -254,7 +256,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 					return
 				}
 
-				if hasNaN(v) {
+				if hasNaN(v, CPU) {
 					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
@@ -274,7 +276,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 					return
 				}
 
-				if hasInf(v) {
+				if hasInf(v, CPU) {
 					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err

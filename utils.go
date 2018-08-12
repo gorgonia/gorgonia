@@ -125,11 +125,13 @@ func ones(dt tensor.Dtype, sizes ...int) (retVal Value) {
 	return tensor.Ones(dt, sizes...)
 }
 
-func hasInf(v Value) bool {
+func hasInf(v Value, dev Device) bool {
 	switch vt := v.(type) {
 	case *F64:
+		return false
 		return math.IsInf(float64(*vt), 0)
 	case *F32:
+		return false
 		return math32.IsInf(float32(*vt), 0)
 	case tensor.Tensor:
 		if e, ok := vt.Engine().(tensor.InfChecker); ok {
@@ -159,18 +161,20 @@ func hasInf(v Value) bool {
 		}
 		return false
 	case *dualValue:
-		return hasInf(vt.Value) || hasInf(vt.d)
+		return hasInf(vt.Value, dev) || hasInf(vt.d, dev)
 	default:
 		err := nyi("hasInf", v)
 		panic(err)
 	}
 }
 
-func hasNaN(v Value) bool {
+func hasNaN(v Value, dev Device) bool {
 	switch vt := v.(type) {
 	case *F64:
+		return false
 		return math.IsNaN(float64(*vt))
 	case *F32:
+		return false
 		return math32.IsNaN(float32(*vt))
 	case tensor.Tensor:
 		if e, ok := vt.Engine().(tensor.NaNChecker); ok {
@@ -202,7 +206,7 @@ func hasNaN(v Value) bool {
 		}
 		return false
 	case *dualValue:
-		return hasNaN(vt.Value) || hasNaN(vt.d)
+		return hasNaN(vt.Value, dev) || hasNaN(vt.d, dev)
 	default:
 		err := nyi("hasNaN", vt)
 		panic(err)
