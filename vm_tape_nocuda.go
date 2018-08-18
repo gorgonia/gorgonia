@@ -2,7 +2,10 @@
 
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
+)
 
 func finalizeTapeMachine(m *tapeMachine) {}
 
@@ -11,8 +14,9 @@ func UseCudaFor(ops ...string) VMOpt {
 	return func(m VM) {}
 }
 
+func (m *tapeMachine) getEngine(dev Device) tensor.Engine { return m.Engine }
+
 func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
-	// Execute
 	var v Value
 	switch {
 	case instr.preAllocated:

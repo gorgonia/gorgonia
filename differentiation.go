@@ -340,3 +340,17 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	}
 	return
 }
+
+// SetDerivOf is used to hack around the fundamental limitations of Gorgonia.
+//
+// Specifically it is used to set a node as the derivative of another node,
+// used in the cuDNN version of batch norm.
+//
+// The cuDNN BatchNorm operation produces the derivatives for the scale and bias as a side effect
+// of calculating the derivative of the input. Because Gorgonia's Ops are modelled as pure functions (and no tuples)
+// this causes a bit of trouble. With the clever use of scratch space ops multireturn can be simulated.
+// But this causes derivatives to not be set correctly.
+func SetDerivOf(deriv, of *Node) {
+	deriv.derivOf = append(deriv.derivOf, of)
+	of.deriv = deriv
+}

@@ -15,6 +15,10 @@ func Conv2d(im, filter *G.Node, kernelShape tensor.Shape, pad, stride, dilation 
 	return G.ApplyOp(op, im, filter)
 }
 
+func Conv1d(in, filter *G.Node, kernel, pad, stride, dilation int) (*G.Node, error) {
+	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
+}
+
 func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (retVal *G.Node, err error) {
 	var op *maxpool
 	if op, err = newMaxPoolOp(x, kernel, pad, stride); err != nil {
@@ -36,21 +40,50 @@ func Dropout(x *G.Node, prob float64) (retVal *G.Node, err error) {
 	return
 }
 
-// func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*G.Node, *BatchNormOp, error) {
-// 	dt, err := dtypeOf(x.Type())
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
+func Rectify(x *G.Node) (retVal *G.Node, err error) {
+	var op *activation
+	if op, err = newRelu(); err != nil {
+		return nil, err
+	}
+	retVal, err = G.ApplyOp(op, x)
+	return
+}
 
-// 	batches := x.Shape()[0]
-// 	channels := x.Shape()[1]
-// 	spatialDim := x.Shape().TotalSize() / (channels * batches)
+func BatchNorm(x, scale, bias *G.Node, momentum, epsilon float64) (retVal, γ, β *G.Node, op *BatchNormOp, err error) {
+	dt, err := dtypeOf(x.Type())
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 
-// 	scale := &scratchOp{x.Shape().Clone(), dt, "scale"}
-// 	bias := &scratchOp{x.Shape().Clone(), dt, "bias"}
-// 	mean := &scratchOp{x.Shape().Clone(), dt, "mean"}
-// 	variance := &scratchOp{x.Shape().Clone(), dt, "variance"}
-// 	cacheMean := &scratchOp{x.Shape().Clone(), dt, "cacheMean"}
-// 	cacheVariance := &scratchOp{x.Shape().Clone(), dt, "cacheVariance"}
+	// batches := x.Shape()[0]
+	channels := x.Shape()[1]
+	H, W := x.Shape()[2], x.Shape()[3]
+	// spatialDim := x.Shape().TotalSize() / (channels * batches)
+	scratchShape := tensor.Shape{1, channels, H, W}
 
-// }
+	// scaleScratch := &scratchOp{x.Shape().Clone(), dt, "scale"}
+	// biasScratch := &scratchOp{x.Shape().Clone(), dt, "bias"}
+	meanScratch := &gpuScratchOp{scratchOp{x.Shape().Clone(), dt, "mean"}}
+	varianceScratch := &gpuScratchOp{scratchOp{x.Shape().Clone(), dt, "variance"}}
+	cacheMeanScratch := &gpuScratchOp{scratchOp{scratchShape, dt, "cacheMean"}}
+	cacheVarianceScratch := &gpuScratchOp{scratchOp{scratchShape, dt, "cacheVariance"}}
+
+	g := x.Graph()
+	dims := len(x.Shape())
+	mean := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_mean"), G.WithOp(meanScratch))
+	variance := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_variance"), G.WithOp(varianceScratch))
+	cacheMean := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithOp(cacheMeanScratch))
+	cacheVariance := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithOp(cacheVarianceScratch))
+
+	if scale == nil {
+		scale = G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_γ"), G.WithInit(G.GlorotN(1.0)))
+	}
+
+	if bias == nil {
+		bias = G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_β"), G.WithInit(G.GlorotN(1.0)))
+	}
+
+	op = newBatchNormOp(momentum, epsilon)
+	retVal, err = G.ApplyOp(op, x, scale, bias, mean, variance, cacheMean, cacheVariance)
+	return retVal, scale, bias, op, err
+}

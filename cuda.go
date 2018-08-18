@@ -217,7 +217,6 @@ func (m *ExternMetadata) init(sizes []int64) (err error) {
 	m.Lock()
 	initialized := m.initialized
 	m.Unlock()
-
 	if initialized {
 		return nil
 	}
@@ -230,6 +229,7 @@ func (m *ExternMetadata) init(sizes []int64) (err error) {
 		return errors.New("No Devices Found")
 	}
 
+	cudaLogf("Creating Engines")
 	m.Lock()
 	defer m.Unlock()
 	m.engines = make([]cuda.Engine, len(sizes))

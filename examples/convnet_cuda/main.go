@@ -27,10 +27,10 @@ import (
 )
 
 var (
-	epochs     = flag.Int("epochs", 2, "Number of epochs to train for")
+	epochs     = flag.Int("epochs", 10, "Number of epochs to train for")
 	dataset    = flag.String("dataset", "train", "Which dataset to train on? Valid options are \"train\" or \"test\"")
 	dtype      = flag.String("dtype", "float64", "Which dtype to use")
-	batchsize  = flag.Int("batchsize", 1000, "Batch size")
+	batchsize  = flag.Int("batchsize", 100, "Batch size")
 	cpuprofile = flag.String("cpuprofile", "", "CPU profiling")
 )
 
@@ -103,7 +103,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if c0, err = nnops.Conv2d(x, m.w0, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 0 Convolution failed")
 	}
-	if a0, err = gorgonia.Rectify(c0); err != nil {
+	if a0, err = nnops.Rectify(c0); err != nil {
 		return errors.Wrap(err, "Layer 0 activation failed")
 	}
 	if p0, err = nnops.MaxPool2D(a0, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
@@ -119,7 +119,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if c1, err = nnops.Conv2d(l0, m.w1, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 1 Convolution failed")
 	}
-	if a1, err = gorgonia.Rectify(c1); err != nil {
+	if a1, err = nnops.Rectify(c1); err != nil {
 		return errors.Wrap(err, "Layer 1 activation failed")
 	}
 	if p1, err = nnops.MaxPool2D(a1, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
@@ -133,7 +133,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if c2, err = nnops.Conv2d(l1, m.w2, tensor.Shape{3, 3}, []int{1, 1}, []int{1, 1}, []int{1, 1}); err != nil {
 		return errors.Wrap(err, "Layer 2 Convolution failed")
 	}
-	if a2, err = gorgonia.Rectify(c2); err != nil {
+	if a2, err = nnops.Rectify(c2); err != nil {
 		return errors.Wrap(err, "Layer 2 activation failed")
 	}
 	if p2, err = nnops.MaxPool2D(a2, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}); err != nil {
@@ -156,7 +156,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 	if fc, err = gorgonia.Mul(l2, m.w3); err != nil {
 		return errors.Wrapf(err, "Unable to multiply l2 and w3")
 	}
-	if a3, err = gorgonia.Rectify(fc); err != nil {
+	if a3, err = nnops.Rectify(fc); err != nil {
 		return errors.Wrapf(err, "Unable to activate fc")
 	}
 	if l3, err = nnops.Dropout(a3, m.d3); err != nil {
@@ -170,6 +170,7 @@ func (m *convnet) fwd(x *gorgonia.Node) (err error) {
 		return errors.Wrapf(err, "Unable to multiply l3 and w4")
 	}
 	m.out, err = gorgonia.SoftMax(out)
+	log.Printf("DONE")
 	return
 }
 
@@ -230,7 +231,7 @@ func main() {
 	gorgonia.Read(cost, &costVal)
 
 	if _, err = gorgonia.Grad(cost, m.learnables()...); err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v", err)
 	}
 
 	// debug
@@ -269,6 +270,7 @@ func main() {
 	bar.SetMaxWidth(80)
 
 	var xxx int
+	var avgcost float64
 
 	for i := 0; i < *epochs; i++ {
 		bar.Prefix(fmt.Sprintf("Epoch %d", i))
@@ -309,8 +311,10 @@ func main() {
 				log.Printf("Losses\n%v", lossesVal)
 				xxx++
 			}
+			avgcost += costVal.Data().(float64)
 		}
-		log.Printf("Epoch %d | cost %v", i, costVal)
+		log.Printf("Epoch %d | cost %v", i, avgcost/float64(batches))
+		avgcost = 0
 
 	}
 }

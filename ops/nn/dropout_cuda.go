@@ -56,7 +56,7 @@ func (op *dropout) InferShape(inputs ...gorgonia.DimSizer) (tensor.Shape, error)
 func (op *dropout) Do(...gorgonia.Value) (gorgonia.Value, error) { panic("not implemented") }
 func (op *dropout) ReturnsPtr() bool                             { return true }
 func (op *dropout) CallsExtern() bool                            { return true }
-func (op *dropout) OverwritesInput() int                         { return -1 }
+func (op *dropout) OverwritesInput() int                         { return 0 }
 func (op *dropout) WriteHash(h hash.Hash)                        { fmt.Fprintf(h, "Dropout %v", op.Dropout.Dropout()) }
 func (op *dropout) Hashcode() uint32                             { return simpleHash(op) }
 func (op *dropout) String() string                               { return fmt.Sprintf("Dropout %v", op.Dropout.Dropout()) }

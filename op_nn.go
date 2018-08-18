@@ -1083,7 +1083,7 @@ func (op *clampOp) String() string   { return fmt.Sprintf("ConstClamp{%f, %f}()"
 //
 // Normalization is done as:
 // 	γ(x - μ) / σ + β
-// The scaling factor γ and offset factor  β are optional
+// γ is the scaling factor and β is the offset factor. These are created by BatchNorm()
 type BatchNormOp struct {
 	momentum float64 // momentum for the moving average
 	epsilon  float64 // small variance to be added to avoid dividing by 0
@@ -1097,14 +1097,6 @@ type BatchNormOp struct {
 
 	// training? if training then update movingMean and movingVar
 	training bool
-}
-
-func newBatchNorm(momentum, epsilon float64) *BatchNormOp {
-	retVal := &BatchNormOp{
-		momentum: momentum,
-		epsilon:  epsilon,
-	}
-	return retVal
 }
 
 func (op *BatchNormOp) Arity() int { return 1 }

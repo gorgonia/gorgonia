@@ -601,6 +601,7 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	switch dev {
 	case CPU:
 		v, err = makeValue(instr.t, instr.s)
+
 	default:
 		var mem tensor.Memory
 		memsize := calcMemSize(dt, instr.s)
@@ -612,7 +613,12 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	if err != nil {
 		return
 	}
-	m.logf("Result: 0x%x", v.Uintptr())
+	setEngine(v, m.getEngine(dev))
+	if vt, ok := v.(tensor.Tensor); ok {
+		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
+	} else {
+		m.watchedLogf("%x", v.Uintptr())
+	}
 
 	m.writeValue(instr.writeTo, v)
 	return nil
