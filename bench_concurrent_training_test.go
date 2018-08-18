@@ -1,5 +1,3 @@
-// +build concurrentTraining
-
 package gorgonia_test
 
 import (
@@ -8,6 +6,10 @@ import (
 
 	"gorgonia.org/tensor"
 )
+
+type Closer interface {
+	Close() error
+}
 
 func BenchmarkTrainingConcurrent(b *testing.B) {
 	xV, yV, bs := prep()
@@ -34,4 +36,5 @@ func BenchmarkTapeMachineExecution(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		linregRun(m, c, machine, 100)
 	}
+	machine.(Closer).Close()
 }
