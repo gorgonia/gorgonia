@@ -363,10 +363,16 @@ func (m *tapeMachine) writeValue(r register, v Value) {
 func (m *tapeMachine) naughtyValues(instr tapeInstr, typ string, fn func(v Value) bool) error {
 	writeTo := instr.writes().id
 	id := instr.ID()
+
 	if writeTo > 0 && id > 0 {
 		v := m.getValue(instr.writes())
+
 		if v == nil {
 			return errors.Errorf(nyiFail, "converting tensor.Memory to Value", "watch"+typ)
+		}
+		if dev := instr.writes().device; dev != CPU {
+			e := m.getEngine(dev)
+			v = ScalarAsTensor(v, 2, e)
 		}
 
 		if fn(v) {
@@ -615,9 +621,9 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	}
 	setEngine(v, m.getEngine(dev))
 	if vt, ok := v.(tensor.Tensor); ok {
-		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
+		m.watchedInstrLogf(instr, "%x | %T", v.Uintptr(), vt.Engine())
 	} else {
-		m.watchedLogf("%x", v.Uintptr())
+		m.watchedInstrLogf(instr, "%x", v.Uintptr())
 	}
 
 	m.writeValue(instr.writeTo, v)

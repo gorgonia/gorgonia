@@ -494,7 +494,7 @@ func (m *lispMachine) forward() (err error) {
 	m.watchedLogf("Added to Queue")
 
 	if m.watchNaN() && !n.isStmt {
-		if hasNaN(n.boundTo, dev) {
+		if hasNaN(n.boundTo) {
 			return errors.New("NaN found in value")
 		}
 	}
@@ -542,12 +542,12 @@ func (m *lispMachine) backward() (err error) {
 	m.leaveLogScope()
 
 	if m.watchNaN() {
-		if hasNaN(instr.output.boundTo,instr.ctx.Device ) {
+		if hasNaN(instr.output.boundTo) {
 			return errors.New("NaN found in value")
 		}
 
 		for _, in := range instr.inputs {
-			if hasNaN(in.boundTo, instr.ctx.Device) {
+			if hasNaN(in.boundTo) {
 				return errors.New("NaN found in value")
 			}
 		}

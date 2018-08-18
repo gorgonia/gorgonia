@@ -125,13 +125,13 @@ func ones(dt tensor.Dtype, sizes ...int) (retVal Value) {
 	return tensor.Ones(dt, sizes...)
 }
 
-func hasInf(v Value, dev Device) bool {
+func hasInf(v Value) bool {
 	switch vt := v.(type) {
 	case *F64:
-		return false
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math.IsInf(float64(*vt), 0)
 	case *F32:
-		return false
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math32.IsInf(float32(*vt), 0)
 	case tensor.Tensor:
 		if e, ok := vt.Engine().(tensor.InfChecker); ok {
@@ -161,20 +161,20 @@ func hasInf(v Value, dev Device) bool {
 		}
 		return false
 	case *dualValue:
-		return hasInf(vt.Value, dev) || hasInf(vt.d, dev)
+		return hasInf(vt.Value) || hasInf(vt.d)
 	default:
 		err := nyi("hasInf", v)
 		panic(err)
 	}
 }
 
-func hasNaN(v Value, dev Device) bool {
+func hasNaN(v Value) bool {
 	switch vt := v.(type) {
 	case *F64:
-		return false
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math.IsNaN(float64(*vt))
 	case *F32:
-		return false
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math32.IsNaN(float32(*vt))
 	case tensor.Tensor:
 		if e, ok := vt.Engine().(tensor.NaNChecker); ok {
@@ -206,7 +206,7 @@ func hasNaN(v Value, dev Device) bool {
 		}
 		return false
 	case *dualValue:
-		return hasNaN(vt.Value, dev) || hasNaN(vt.d, dev)
+		return hasNaN(vt.Value) || hasNaN(vt.d)
 	default:
 		err := nyi("hasNaN", vt)
 		panic(err)
