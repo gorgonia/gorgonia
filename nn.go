@@ -278,10 +278,10 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	return ApplyOp(op, x)
 }
 
-func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNormOp, error) {
+func BatchNorm(x, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
 	dt, err := dtypeOf(x.Type())
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	batches := x.Shape()[0]
 	channels := x.Shape()[1]
@@ -306,15 +306,15 @@ func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNorm
 	}
 	spatialSumMultiplier := tensor.New(tensor.Of(dt), tensor.WithShape(spatialDim))
 	if err = spatialSumMultiplier.Memset(uno); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	numByChans := tensor.New(tensor.Of(dt), tensor.WithShape(channels*batches))
 	if err = batchSumMultiplier.Memset(uno); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
-	op := &BatchNormOp{
+	op = &BatchNormOp{
 		momentum: momentum,
 		epsilon:  epsilon,
 
@@ -332,7 +332,20 @@ func BatchNorm(x *Node, momentum, epsilon float64, auto bool) (*Node, *BatchNorm
 
 		training: true,
 	}
+	g := x.Graph()
+	dims := x.Shape().Dims()
+	scale := NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
+	if bias == nil {
+		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
+	}
 
-	retVal, err := ApplyOp(op, x)
-	return retVal, op, err
+	if retVal, err = ApplyOp(op, x, scale, bias); err != nil {
+		return nil, nil, nil, nil, err
+	}
+	if retVal, err = HadamardProd(scale, retVal); err != nil {
+		return nil, nil, nil, nil, err
+	}
+	retVal, err = Add(retVal, bias)
+
+	return retVal, scale, bias, op, err
 }

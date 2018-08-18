@@ -62,6 +62,13 @@ func (m *tapeMachine) loadStdLib() {
 	}
 }
 
+func (m *tapeMachine) getEngine(dev Device) tensor.Engine {
+	if dev == CPU {
+		return m.Engine
+	}
+	return &m.Engines()[int(dev)]
+}
+
 func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v. Node is: %x", instr, instr.id)
 	m.enterLogScope()

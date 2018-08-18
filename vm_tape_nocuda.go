@@ -2,7 +2,10 @@
 
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
+)
 
 func finalizeTapeMachine(m *tapeMachine) {}
 
@@ -10,6 +13,8 @@ func finalizeTapeMachine(m *tapeMachine) {}
 func UseCudaFor(ops ...string) VMOpt {
 	return func(m VM) {}
 }
+
+func (m *tapeMachine) getEngine(dev Device) tensor.Engine { return m.Engine }
 
 func (instr *execOp) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v. Node is: %x", instr, instr.id)

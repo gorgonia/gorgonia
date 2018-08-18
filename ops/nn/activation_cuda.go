@@ -53,7 +53,7 @@ func (op *activation) WriteHash(h hash.Hash) { fmt.Fprintf(h, "%v", op.Activatio
 
 func (op *activation) Hashcode() uint32 { return simpleHash(op) }
 
-func (op *activation) String() string { return fmt.Sprintf("%v", op.Activation.Mode) }
+func (op *activation) String() string { return fmt.Sprintf("%v", op.Activation.Mode()) }
 
 func (op *activation) DiffWRT(inputs int) []bool { return []bool{true} }
 

@@ -512,11 +512,10 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 
 	dev := instr.writeTo.device
 	var v Value
-	var e tensor.Engine
 	switch dev {
 	case CPU:
 		v, err = makeValue(instr.t, instr.s)
-		e = m.Engine
+
 	default:
 		var mem tensor.Memory
 		memsize := calcMemSize(dt, instr.s)
@@ -524,12 +523,11 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 			return errors.Wrapf(err, "Unable to allocate %v bytes from %v | %T", memsize, dev, err)
 		}
 		v, err = makeValueFromMem(instr.t, instr.s, mem)
-		e = &m.Engines()[int(dev)]
 	}
 	if err != nil {
 		return
 	}
-	setEngine(v, e)
+	setEngine(v, m.getEngine(dev))
 	if vt, ok := v.(tensor.Tensor); ok {
 		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
 	} else {
