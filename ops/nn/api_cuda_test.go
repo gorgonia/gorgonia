@@ -116,7 +116,7 @@ func TestBatchNorm_F64(t *testing.T) {
 func TestDevBN(t *testing.T) {
 	g := G.NewGraph()
 	x := G.NewTensor(g, G.Float64, 4, G.WithShape(5, 2, 3, 4), G.WithInit(G.Gaussian(0, 1)), G.WithName("x"))
-	y, _, _, op, err := BatchNorm(x, nil, 0.9, 1e-5)
+	y, _, _, op, err := BatchNorm(x, nil, nil, 0.9, 1e-5)
 	if err != nil {
 		t.Fatal(err)
 	}

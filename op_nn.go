@@ -1099,11 +1099,11 @@ type BatchNormOp struct {
 	training bool
 }
 
-func (op *BatchNormOp) Arity() int { return 3 }
+func (op *BatchNormOp) Arity() int { return 1 }
 
 func (op *BatchNormOp) Type() hm.Type {
 	t := TensorType{Dims: 4, Of: hm.TypeVariable('a')}
-	return hm.NewFnType(t, t, t, t)
+	return hm.NewFnType(t, t)
 }
 
 func (op *BatchNormOp) InferShape(ns ...DimSizer) (tensor.Shape, error) {

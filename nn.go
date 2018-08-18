@@ -278,7 +278,7 @@ func MaxPool2D(x *Node, kernel tensor.Shape, pad, stride []int) (*Node, error) {
 	return ApplyOp(op, x)
 }
 
-func BatchNorm(x, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
+func BatchNorm(x, scale, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, op *BatchNormOp, err error) {
 	dt, err := dtypeOf(x.Type())
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -334,12 +334,15 @@ func BatchNorm(x, bias *Node, momentum, epsilon float64) (retVal, γ, β *Node, 
 	}
 	g := x.Graph()
 	dims := x.Shape().Dims()
-	scale := NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
+
+	if scale == nil {
+		scale = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_γ"), WithInit(GlorotN(1.0)))
+	}
 	if bias == nil {
 		bias = NewTensor(g, dt, dims, WithShape(x.Shape().Clone()...), WithName(x.Name()+"_β"), WithInit(GlorotN(1.0)))
 	}
 
-	if retVal, err = ApplyOp(op, x, scale, bias); err != nil {
+	if retVal, err = ApplyOp(op, x); err != nil {
 		return nil, nil, nil, nil, err
 	}
 	if retVal, err = HadamardProd(scale, retVal); err != nil {

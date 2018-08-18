@@ -15,6 +15,10 @@ func Conv2d(im, filter *G.Node, kernelShape tensor.Shape, pad, stride, dilation 
 	return G.ApplyOp(op, im, filter)
 }
 
+func Conv1d(in, filter *G.Node, kernel, pad, stride, dilation int) (*G.Node, error) {
+	return Conv2d(in, filter, tensor.Shape{1, kernel}, []int{0, pad}, []int{1, stride}, []int{1, dilation})
+}
+
 func MaxPool2D(x *G.Node, kernel tensor.Shape, pad, stride []int) (retVal *G.Node, err error) {
 	var op *maxpool
 	if op, err = newMaxPoolOp(x, kernel, pad, stride); err != nil {
@@ -45,7 +49,7 @@ func Rectify(x *G.Node) (retVal *G.Node, err error) {
 	return
 }
 
-func BatchNorm(x, bias *G.Node, momentum, epsilon float64) (retVal, γ, β *G.Node, op *BatchNormOp, err error) {
+func BatchNorm(x, scale, bias *G.Node, momentum, epsilon float64) (retVal, γ, β *G.Node, op *BatchNormOp, err error) {
 	dt, err := dtypeOf(x.Type())
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -66,11 +70,14 @@ func BatchNorm(x, bias *G.Node, momentum, epsilon float64) (retVal, γ, β *G.No
 
 	g := x.Graph()
 	dims := len(x.Shape())
-	scale := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_γ"), G.WithInit(G.GlorotN(1.0)))
 	mean := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_mean"), G.WithOp(meanScratch))
 	variance := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_variance"), G.WithOp(varianceScratch))
 	cacheMean := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithOp(cacheMeanScratch))
 	cacheVariance := G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithOp(cacheVarianceScratch))
+
+	if scale == nil {
+		scale = G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_γ"), G.WithInit(G.GlorotN(1.0)))
+	}
 
 	if bias == nil {
 		bias = G.NewTensor(g, dt, dims, G.WithShape(scratchShape.Clone()...), G.WithName(x.Name()+"_β"), G.WithInit(G.GlorotN(1.0)))
