@@ -76,8 +76,10 @@ func linregSetup(Float tensor.Dtype) (m, c *Node, machine VM) {
 	return m, c, machine
 }
 
-func linregRun(m, c *Node, machine VM, iter int) (retM, retC Value) {
-	defer machine.Close()
+func linregRun(m, c *Node, machine VM, iter int, autoCleanup bool) (retM, retC Value) {
+	if autoCleanup {
+		defer machine.Close()
+	}
 	model := []ValueGrad{m, c}
 	solver := NewVanillaSolver(WithLearnRate(0.001), WithClip(5)) // good idea to clip
 
@@ -105,7 +107,7 @@ func linregRun(m, c *Node, machine VM, iter int) (retM, retC Value) {
 func linearRegression(Float tensor.Dtype, iter int) (retM, retC Value) {
 	defer runtime.GC()
 	m, c, machine := linregSetup(Float)
-	return linregRun(m, c, machine, iter)
+	return linregRun(m, c, machine, iter, true)
 }
 
 // Linear Regression Example

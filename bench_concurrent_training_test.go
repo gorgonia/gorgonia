@@ -1,8 +1,7 @@
-// +build concurrentTraining
-
 package gorgonia_test
 
 import (
+	"io"
 	"runtime"
 	"testing"
 
@@ -32,6 +31,7 @@ func BenchmarkTrainingNonConcurrent(b *testing.B) {
 func BenchmarkTapeMachineExecution(b *testing.B) {
 	m, c, machine := linregSetup(tensor.Float64)
 	for i := 0; i < b.N; i++ {
-		linregRun(m, c, machine, 100)
+		linregRun(m, c, machine, 100, false)
 	}
+	machine.(io.Closer).Close()
 }

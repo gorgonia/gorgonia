@@ -1,5 +1,3 @@
-// +build concurrentTraining
-
 package gorgonia_test
 
 import (
