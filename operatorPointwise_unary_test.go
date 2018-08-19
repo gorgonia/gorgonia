@@ -7,6 +7,7 @@ import (
 
 	"github.com/chewxy/math32"
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
 
@@ -53,6 +54,8 @@ func unaryOpTest(t *testing.T, dt tensor.Dtype, shape tensor.Shape, fn func(*Nod
 
 	m0 := NewLispMachine(g)
 	m1 := NewTapeMachine(h)
+	defer m1.Close()
+	defer m0.Close()
 
 	Let(x, xV)
 	if err = m0.RunAll(); err != nil {
@@ -412,7 +415,7 @@ func TestCubeDiff(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.True(closeF64(correct, extractF64(xG)), "%v != %v", xG, correct)
+	assert.True(dawson.CloseF64(correct, extractF64(xG)), "%v != %v", xG, correct)
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d
@@ -444,7 +447,7 @@ func TestSigmoidDiff(t *testing.T) {
 
 	correct := math.Exp(-v) / ((1 + math.Exp(-v)) * (1 + math.Exp(-v)))
 	xG := x.boundTo.(*dualValue).d
-	assert.True(closeF64(correct, extractF64(xG)))
+	assert.True(dawson.CloseF64(correct, extractF64(xG)))
 
 	// Tensor edition
 	xdvd := xT.boundTo.(*dualValue).d

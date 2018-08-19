@@ -30,6 +30,7 @@ func Example_symbolicDiff() {
 
 	// create a VM to run the program on
 	machine := NewTapeMachine(g)
+	defer machine.Close()
 
 	// set initial values then run
 	Let(x, 2.0)

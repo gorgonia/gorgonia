@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"encoding/gob"
 	"fmt"
+	"hash"
 	"io"
 	"unsafe"
 
@@ -62,4 +63,12 @@ type Tensor interface {
 	ReadNpy(io.Reader) error
 	gob.GobEncoder
 	gob.GobDecoder
+}
+
+type hashWriter interface {
+	WriteHash(hash.Hash)
+}
+
+type arityer interface {
+	Arity() int
 }

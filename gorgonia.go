@@ -230,7 +230,7 @@ func Grad(cost *Node, WRTs ...*Node) (retVal Nodes, err error) {
 	case Float32:
 		gradOut = onef32
 	default:
-		return nil, errors.Wrapf(err, "%s not yet implemented for %v of %T", dt.String(), "Grad()'s gradOut")
+		return nil, errors.Wrapf(err, "%s not yet implemented for %v of %T", dt.String(), "Grad()'s gradOut", gradOut)
 	}
 
 	gradOut = cost.g.AddNode(gradOut)
@@ -266,6 +266,9 @@ func UnsafeLet(n *Node, be interface{}) error {
 		}
 
 	case Value:
+		if !n.Dtype().Eq(v.Dtype()) {
+			return errors.Errorf("Unable to let %v be %v. Expected Dtype of %v. Got %v instead", n.name, be, n.Dtype(), v.Dtype())
+		}
 		n.bind(v)
 	default:
 		var val Value

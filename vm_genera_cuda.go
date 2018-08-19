@@ -3,10 +3,9 @@
 package gorgonia
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/pkg/errors"
-	"gorgonia.org/cu"
 	"gorgonia.org/tensor"
 )
 
@@ -25,6 +24,7 @@ func (m *lispMachine) init() error {
 	m.df = df
 
 	if err := m.calcMemSize(); err != nil {
+		log.Printf("err1")
 		return err
 	}
 
@@ -33,23 +33,21 @@ func (m *lispMachine) init() error {
 		return nil
 	}
 
-	cudaLogf("%v", m.f)
-	funcs := make([]string, 0, len(m.ExternMetadata.f))
-	for fn := range m.f {
-		funcs = append(funcs, fn)
+	if err := m.ExternMetadata.init(m.gpumem); err != nil {
+		m.ExternMetadata.initFail()
+		return err
 	}
-	m.ExternMetadata.init(m.gpumem)
 	m.loadStdLib()
 
-	if len(m.Functions()) == 0 {
+	if len(m.engines) == 0 {
 		m.ForceCPU()
 	}
 	return nil
 }
 
 func finalizeLispMachine(m *lispMachine) {
-	m.cleanup()
-	m.initFail()
+	m.ExternMetadata.cleanup()
+	m.ExternMetadata.initFail()
 }
 
 func (m *lispMachine) WorkAvailable() <-chan bool {
@@ -173,70 +171,14 @@ func (m *lispMachine) loadStdLib() {
 			// panic("WTF")
 			continue
 		}
-		if err := m.LoadCUDAFunc(name, data, funcs); err != nil {
-			cudaLogf("Unable to load %q.: %v", name, err)
-			// panic(err)
-		}
-	}
-}
-
-// LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
-//
-// The convention is to have one function per module, sharing the same name.
-func (m *lispMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err error) {
-	if len(m.c) == 0 {
-		return nil
-	}
-
-	mods := make([]cu.Module, len(m.c))
-	fns := make(map[string][]cu.Function)
-	for i, c := range m.c {
-		if err = cu.SetCurrentContext(c.Context.CUDAContext()); err != nil {
-			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
-			return
-		}
-
-		var mod cu.Module
-		if mod, err = cu.LoadData(data); err != nil {
-			err = errors.Wrapf(err, "Failed to load module %q data for %dth context %x", moduleName, i, c)
-			return
-		}
-
-		var fs []cu.Function
-		for _, name := range funcs {
-			var ok bool
-			if fs, ok = fns[name]; !ok {
-				fs = make([]cu.Function, len(m.c))
+		for i := range m.engines {
+			e := &m.engines[i]
+			if err := e.LoadCUDAFunc(name, data, funcs); err != nil {
+				panic(err)
 			}
 
-			var fn cu.Function
-			if fn, err = mod.Function(name); err != nil {
-				err = errors.Wrapf(err, "Unable to get function %q in %dth context %x", name, i, c)
-				return
-			}
-			fs[i] = fn
-			fns[name] = fs
-		}
-
-		mods[i] = mod
-	}
-
-	// set the first to current
-	if len(m.c) > 0 {
-		if err = cu.SetCurrentContext(m.c[0].Context.CUDAContext()); err != nil {
-			err = errors.Wrapf(err, "Unable to set current")
-			return
 		}
 	}
-
-	m.m[moduleName] = mods
-	for _, name := range funcs {
-		fqn := fmt.Sprintf("%v.%v", moduleName, name)
-		m.f[fqn] = fns[name]
-	}
-
-	cudaLogf("Loaded %q", moduleName)
-	return nil
 }
 
 // ForceCPU forces the lispMachine to have the nodes run on the CPU

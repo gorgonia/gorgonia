@@ -186,3 +186,28 @@ func calcMemSize(dt tensor.Dtype, s tensor.Shape) int64 {
 	dtSize := int64(dt.Size())
 	return elemSize * dtSize
 }
+
+// ScalarAsTensor returns the tensor representation of a scalar. It is particularly useful as a "reshape" of tensors of sorts
+//
+// The Value passed in are either Scalar, tensor.Tensor, or *dualValue. Anything else will panic.
+func ScalarAsTensor(v Value, dims int, e tensor.Engine) Value {
+	switch a := v.(type) {
+	case Scalar:
+		sh := make(tensor.Shape, dims)
+		for i := range sh {
+			sh[i] = 1
+		}
+		return tensor.New(tensor.WithShape(sh...), tensor.Of(a.Dtype()), tensor.FromMemory(a.Uintptr(), a.MemSize()), tensor.WithEngine(e))
+	case tensor.Tensor:
+		return a
+	case *dualValue:
+		b := new(dualValue)
+		b.Value = ScalarAsTensor(a.Value, dims, e)
+		b.d = ScalarAsTensor(a.d, dims, e)
+		return b
+	case nil:
+		return nil
+	default:
+		panic(fmt.Sprintf("Unable to convert %v to Tensor", v))
+	}
+}
