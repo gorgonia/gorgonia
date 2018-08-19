@@ -153,6 +153,7 @@ func main() {
 	fmt.Printf("%v", prog) // print the instructions
 	// With our program, we initialize a new TapeMachine that will execute our program
 	machine := G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
+	defer machine.Close()
 	// Note that NewTapeMachine() will compile if WithPrecomiled() is not provided.
 	// Internally, Gorgonia will figure out that a compilation process needs to happen,
 	// so it will call Compile(g), which will output the prog and locMap internally.
@@ -203,6 +204,7 @@ func main() {
 	prog, locMap, err = G.CompileFunction(g, G.Nodes{x}, G.Nodes{pred})
 	handleError(err)
 	machine = G.NewTapeMachine(g, G.WithPrecompiled(prog, locMap))
+	defer machine.Close()
 
 	machine.Let(w, wT)
 	machine.Let(b, 0.0)

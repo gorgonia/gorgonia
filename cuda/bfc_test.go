@@ -1,4 +1,4 @@
-package gorgonia
+package cuda
 
 import "testing"
 

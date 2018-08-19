@@ -2,6 +2,8 @@ package gorgonia
 
 import (
 	"fmt"
+	"hash/fnv"
+	"log"
 	"math"
 
 	"github.com/chewxy/math32"
@@ -14,6 +16,15 @@ const (
 	maxFloat32 = math32.MaxFloat32
 	maxFloat64 = math.MaxFloat64
 )
+
+// NodesToValueGrads is a utility function that converts a Nodes to a slice of ValueGrad for the solvers
+func NodesToValueGrads(in Nodes) (out []ValueGrad) {
+	out = make([]ValueGrad, len(in))
+	for i := range in {
+		out[i] = in[i]
+	}
+	return out
+}
 
 func graphNodeToNode(in []graph.Node) (out Nodes) {
 	out = make(Nodes, len(in))
@@ -117,10 +128,17 @@ func ones(dt tensor.Dtype, sizes ...int) (retVal Value) {
 func hasInf(v Value) bool {
 	switch vt := v.(type) {
 	case *F64:
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math.IsInf(float64(*vt), 0)
 	case *F32:
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math32.IsInf(float32(*vt), 0)
 	case tensor.Tensor:
+		if e, ok := vt.Engine().(tensor.InfChecker); ok {
+			ok, _ := e.HasInf(vt) // BUG: errors not checked
+			return ok
+		}
+
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
 			return false
@@ -153,14 +171,23 @@ func hasInf(v Value) bool {
 func hasNaN(v Value) bool {
 	switch vt := v.(type) {
 	case *F64:
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math.IsNaN(float64(*vt))
 	case *F32:
+		// works only on CPU. GPU values  have to be converted to a Tensor
 		return math32.IsNaN(float32(*vt))
 	case tensor.Tensor:
+		if e, ok := vt.Engine().(tensor.NaNChecker); ok {
+			ok, _ := e.HasNaN(vt) // BUG: errors not checked
+			return ok
+		}
+		log.Printf("Value's engine %T", vt.Engine())
+
 		dt := vt.Dtype()
 		if dt != tensor.Float64 && dt != tensor.Float32 {
 			return false
 		}
+
 		switch dt {
 		case tensor.Float32:
 			data := vt.Data().([]float32)
@@ -198,10 +225,6 @@ func setZero(val Value) (retVal Value) {
 	}
 }
 
-type arityer interface {
-	Arity() int
-}
-
 func checkArity(op arityer, inputs int) error {
 	if inputs != op.Arity() && op.Arity() >= 0 {
 		return errors.Errorf("%v has an arity of %d. Got %d instead", op, op.Arity(), inputs)
@@ -225,4 +248,44 @@ func minInt(a, b int) int {
 
 func ceilDivInt(a, b int) int {
 	return (a + b - 1) / b
+}
+
+func simpleHash(op hashWriter) uint32 {
+	h := fnv.New32a()
+	op.WriteHash(h)
+	return h.Sum32()
+}
+
+func getDV(x, y *Node) (xdv, ydv *dualValue) {
+	return x.boundTo.(*dualValue), y.boundTo.(*dualValue)
+}
+
+func getDV3(x, y, z *Node) (xdv, ydv, zdv *dualValue) {
+	return x.boundTo.(*dualValue), y.boundTo.(*dualValue), z.boundTo.(*dualValue)
+}
+
+func getConst(x *Node, constant string) (retVal *Node, err error) {
+	var dt tensor.Dtype
+	if dt, err = dtypeOf(x.t); err != nil {
+		return nil, errors.Wrap(err, dtypeOfFail)
+	}
+
+	if m, ok := constmap[constant]; ok {
+		if n, ok := m[dt]; ok {
+			return n, nil
+		}
+	}
+	return nil, errors.Errorf("constant %d not provided for %v", constant, dt)
+}
+
+func scalarEquiv(s tensor.Shape) bool {
+	if len(s) == 0 {
+		return true
+	}
+	prod := 1
+	for _, v := range s {
+		prod *= v
+	}
+
+	return prod == 1
 }

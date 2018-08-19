@@ -37,6 +37,36 @@ func Zeroes() InitWFn {
 	return f
 }
 
+func Ones() InitWFn {
+	f := func(dt tensor.Dtype, s ...int) interface{} {
+		size := tensor.Shape(s).TotalSize()
+		switch dt {
+		case tensor.Float64:
+			retVal := make([]float64, size)
+			for i := range retVal {
+				retVal[i] = 1
+			}
+			return retVal
+		case tensor.Float32:
+			retVal := make([]float32, size)
+			for i := range retVal {
+				retVal[i] = 1
+			}
+			return retVal
+		case tensor.Int:
+			retVal := make([]int, size)
+			for i := range retVal {
+				retVal[i] = 1
+			}
+			return retVal
+		default:
+			err := errors.Errorf(nyiTypeFail, "Ones", dt)
+			panic(err)
+		}
+	}
+	return f
+}
+
 // RangedFrom creates an InitWFn that populates a Value starting with the provided start, increamenting the number for each element in the value by 1
 func RangedFrom(start int) InitWFn {
 	f := func(dt tensor.Dtype, s ...int) interface{} {

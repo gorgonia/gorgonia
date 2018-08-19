@@ -111,7 +111,8 @@ func CloneValue(v Value) (Value, error) {
 		retVal := *vt
 		return &retVal, nil
 	case tensor.Tensor:
-		return vt.Clone().(*tensor.Dense), nil
+		retVal := vt.Clone().(*tensor.Dense)
+		return retVal, nil
 	case CloneErrorer:
 		ret, err := vt.Clone()
 		if err != nil {

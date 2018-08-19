@@ -4,6 +4,12 @@ package gorgonia
 
 func (op elemUnaryOp) CallsExtern() bool { return false }
 func (op elemBinOp) CallsExtern() bool   { return false }
+func (op linAlgBinOp) CallsExtern() bool {
+	if op.āBinaryOperator != vecDotOperator {
+		return true
+	}
+	return false
+}
 
 func NewAddOp(a, b *Node, ctx ExecutionContext) *ExternalOp {
 	add := newElemBinOp(addOpType, a, b)

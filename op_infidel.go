@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"hash/fnv"
 
 	"github.com/chewxy/hm"
 	"gorgonia.org/tensor"
@@ -36,11 +35,7 @@ func (op letOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error)
 func (op letOp) Do(vals ...Value) (Value, error)                                 { return nil, nil }
 func (op letOp) String() string                                                  { return "=" }
 func (op letOp) WriteHash(h hash.Hash)                                           { h.Write([]byte("let")) }
-func (op letOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op letOp) Hashcode() uint32                                                { return simpleHash(op) }
 
 func (op letOp) isStmt() bool { return true }
 
@@ -60,11 +55,7 @@ func (op readOp) SymDiff(inputs Nodes, outputNode, gradNode *Node) (Nodes, error
 func (op readOp) Do(vals ...Value) (Value, error)                                 { return nil, nil }
 func (op readOp) String() string                                                  { return "print" }
 func (op readOp) WriteHash(h hash.Hash)                                           { h.Write([]byte("print")) }
-func (op readOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op readOp) Hashcode() uint32                                                { return simpleHash(op) }
 
 func (op readOp) isStmt() bool { return true }
 
@@ -82,11 +73,7 @@ func (op devTrans) ReturnsPtr() bool                             { return false 
 func (op devTrans) CallsExtern() bool                            { return true }
 func (op devTrans) OverwritesInput() int                         { return -1 }
 func (op devTrans) WriteHash(h hash.Hash)                        { fmt.Fprintf(h, "from:%vto%v", op.from, op.to) }
-func (op devTrans) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op devTrans) Hashcode() uint32                             { return simpleHash(op) }
 
 func (op devTrans) String() string { return fmt.Sprintf("[CP %v %v]", op.from, op.to) }
 func (op devTrans) isStmt() bool   { return true }

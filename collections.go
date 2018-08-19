@@ -16,7 +16,6 @@ type Nodes []*Node
 func (ns Nodes) Len() int { return len(ns) }
 func (ns Nodes) Less(i, j int) bool {
 	return uintptr(unsafe.Pointer(ns[i])) < uintptr(unsafe.Pointer(ns[j]))
-	// return ns[i].Hashcode() < ns[j].Hashcode()
 }
 func (ns Nodes) Swap(i, j int) { ns[i], ns[j] = ns[j], ns[i] }
 
@@ -64,7 +63,7 @@ func (ns Nodes) Format(s fmt.State, c rune) {
 	case 'd':
 		s.Write([]byte("["))
 		for i, n := range ns {
-			fmt.Fprintf(s, "%x", n.Hashcode())
+			fmt.Fprintf(s, "%x", n.ID())
 			if i < len(ns)-1 {
 				fmt.Fprintf(s, "%s", delimiter)
 			}

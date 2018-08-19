@@ -18,7 +18,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"hash/fnv"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -151,9 +150,12 @@ func (op elemBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err err
 			switch {
 			case x.IsScalar() && y.IsScalar():
 				// preserve ambiguous scalar shape
-				if (len(x) > 0) && (1 == x[0]) && (len(y) > 0) && (1 == y[0]) {
+				switch {
+				case len(x) > 0 && x[0] == 1:
 					retVal = x
-				} else {
+				case len(y) > 0 && y[0] == 1:
+					retVal = y
+				default:
 					retVal = scalarShape
 				}
 			case x.IsScalar() && !y.IsScalar():
@@ -276,16 +278,7 @@ func (op elemBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (er
 	return
 }
 
-func (op elemBinOp) ReturnsPtr() bool {
-	// if _, ok := op.arg0.(TensorType); ok {
-	// 	return true
-	// } else if _, ok := op.arg1.(TensorType); ok {
-	// 	return true
-	// }
-
-	// return false
-	return true
-}
+func (op elemBinOp) ReturnsPtr() bool { return true }
 
 func (op elemBinOp) OverwritesInput() int {
 	if _, ok := op.arg0.(TensorType); ok {
@@ -306,11 +299,7 @@ func (op elemBinOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "%v,%v", op.arg0, op.arg1)
 }
 
-func (op elemBinOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op elemBinOp) Hashcode() uint32 { return simpleHash(op) }
 
 // Fulfils UsePreallocDoer interface
 func (op elemBinOp) UsePreallocDo(prealloc Value, inputs ...Value) (retVal Value, err error) {
@@ -461,13 +450,7 @@ func (op elemUnaryOp) Do(inputs ...Value) (retVal Value, err error) {
 	return op.do(inputs[0])
 }
 
-func (op elemUnaryOp) ReturnsPtr() bool {
-	// if op.argTensor {
-	// 	return true
-	// }
-	// return false
-	return true
-}
+func (op elemUnaryOp) ReturnsPtr() bool { return true }
 
 func (op elemUnaryOp) OverwritesInput() int {
 	if op.argTensor {
@@ -488,11 +471,7 @@ func (op elemUnaryOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op elemUnaryOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op elemUnaryOp) Hashcode() uint32 { return simpleHash(op) }
 
 // fulfils UnsafeDoer interface
 func (op elemUnaryOp) UnsafeDo(inputs ...Value) (Value, error) {
@@ -511,19 +490,7 @@ func (op elemUnaryOp) isUnary() bool { return true }
 func (op elemUnaryOp) do(a Value, opts ...tensor.FuncOpt) (retVal Value, err error) {
 	switch v := a.(type) {
 	case tensor.Tensor:
-		var t tensor.Tensor
-		var fn interface{}
-		switch opFn := op.ʘUnaryOperator.(type) {
-		case *sf64UnaryOperator:
-			fn = (func(float64) float64)(*opFn)
-		case *sf32UnaryOperator:
-			fn = (func(float32) float32)(*opFn)
-		}
-
-		if t, err = v.Apply(fn, opts...); err != nil {
-			return nil, errors.Wrap(err, applyFail)
-		}
-		retVal = t
+		return unaryCheckApply(op.ʘUnaryOperator, v, opts...)
 	case Scalar:
 		vt := v.Dtype()
 		switch vt {
@@ -579,6 +546,10 @@ func (op linAlgBinOp) InferShape(inputs ...DimSizer) (retVal tensor.Shape, err e
 		if op.transB {
 			y = transpose2D(y)
 			defer tensor.ReturnInts(y)
+		}
+
+		if x[1] != y[0] {
+			return nil, errors.Errorf("Inner dimensions do not match up")
 		}
 
 		retVal = tensor.Shape{x[0], y[1]}
@@ -657,12 +628,6 @@ func (op linAlgBinOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (
 func (op linAlgBinOp) Do(inputs ...Value) (retVal Value, err error) { return op.do(inputs) }
 func (op linAlgBinOp) ReturnsPtr() bool                             { return true }
 func (op linAlgBinOp) OverwritesInput() int                         { return -1 }
-func (op linAlgBinOp) CallsExtern() bool {
-	if op.āBinaryOperator != vecDotOperator {
-		return true
-	}
-	return false
-}
 
 func (op linAlgBinOp) WriteHash(h hash.Hash) {
 	if err := binary.Write(h, binary.LittleEndian, op.āBinaryOperator); err != nil {
@@ -682,11 +647,7 @@ func (op linAlgBinOp) WriteHash(h hash.Hash) {
 	}
 }
 
-func (op linAlgBinOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op linAlgBinOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op linAlgBinOp) String() string {
 	var buf bytes.Buffer
@@ -811,4 +772,423 @@ func (op linAlgBinOp) preallocBatchMatMul(incr bool, prealloc Value, inputs ...V
 	a, b := inputs[0].(tensor.Tensor), inputs[1].(tensor.Tensor)
 	c := prealloc.(tensor.Tensor)
 	return batchedMatMul(a, b, c, op.transA, op.transB, incr)
+}
+
+type tensordotOp struct {
+	aAxes   []int
+	bAxes   []int
+	aDims   int
+	bDims   int
+	retDims int // Dimension of the tensor resulting from operation
+}
+
+func (op tensordotOp) Arity() int { return 2 }
+
+func (op tensordotOp) Type() hm.Type {
+	tRet := newTensorType(op.retDims, hm.TypeVariable('a'))
+	ta := newTensorType(op.aDims, hm.TypeVariable('a'))
+	tb := newTensorType(op.bDims, hm.TypeVariable('a'))
+
+	return hm.NewFnType(ta, tb, tRet)
+}
+
+func (op tensordotOp) InferShape(ds ...DimSizer) (tensor.Shape, error) {
+	if err := checkArity(op, len(ds)); err != nil {
+		return nil, errors.Wrap(err, "tensordot")
+	}
+
+	shapes, err := DimSizersToShapes(ds)
+	if err != nil {
+		return nil, err
+	}
+
+	aShape := shapes[0]
+	bShape := shapes[1]
+
+	aAxes := op.aAxes
+	bAxes := op.bAxes
+
+	shapeBackingLen := op.retDims
+
+	shapeBacking := make([]int, shapeBackingLen, shapeBackingLen)
+
+	shapeBackingPos := 0
+
+	for aShapeIndex, aShapeValue := range aShape {
+		if 0 > contains(aAxes, aShapeIndex) {
+			shapeBacking[shapeBackingPos] = aShapeValue
+			shapeBackingPos++
+		}
+	}
+
+	for bShapeIndex, bShapeValue := range bShape {
+		if 0 > contains(bAxes, bShapeIndex) {
+			shapeBacking[shapeBackingPos] = bShapeValue
+			shapeBackingPos++
+		}
+	}
+
+	return tensor.Shape(shapeBacking), nil
+}
+
+func (op tensordotOp) Do(vals ...Value) (Value, error) {
+	if err := checkArity(op, len(vals)); err != nil {
+		return nil, errors.Wrap(err, "tensordot")
+	}
+
+	ts, err := valuesToTensors(vals)
+	if err != nil {
+		return nil, err
+	}
+
+	return tensor.Contract(ts[0], ts[1], op.aAxes, op.bAxes)
+}
+
+func (op tensordotOp) ReturnsPtr() bool { return true }
+
+func (op tensordotOp) CallsExtern() bool { return false }
+
+func (op tensordotOp) OverwritesInput() int { return -1 }
+
+func (op tensordotOp) WriteHash(h hash.Hash) {
+	h.Write([]byte("tensordotOp"))
+	fmt.Fprintf(h, "aAxes: %d, bAxes: %d, dims: %d", op.aAxes, op.bAxes, op.retDims)
+
+	return
+}
+
+func (op tensordotOp) Hashcode() uint32 { return simpleHash(op) }
+
+func (op tensordotOp) String() string {
+	return fmt.Sprintf("Tensordot(aAxes=%d, bAxes=%d)", op.aAxes, op.bAxes)
+}
+
+func (op tensordotOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) error {
+	odv := output.boundTo.(*dualValue)
+	odvd := odv.d.(tensor.Tensor)
+
+	for inNr, in := range inputs {
+		// abuse of language below: "i" up front will refer to current "in"
+		// "other" for the other input (there are only two)
+
+		// Who's derivative are we calculating?
+		var iAxes []int
+		var otherAxes []int
+		var otherdv *dualValue
+		var iWasFirstArgument bool
+
+		if 0 == inNr {
+			iAxes = op.aAxes
+			otherAxes = op.bAxes
+			otherdv = inputs[1].boundTo.(*dualValue)
+			iWasFirstArgument = true
+		} else {
+			iAxes = op.bAxes
+			otherAxes = op.aAxes
+			otherdv = inputs[0].boundTo.(*dualValue)
+			iWasFirstArgument = false
+		}
+
+		idv := in.boundTo.(*dualValue)
+		idvd := idv.d.(tensor.Tensor)
+
+		otherdvv := otherdv.Value.(tensor.Tensor)
+
+		// Below a tensordot will be performed: Its output axes will be in the wrong order w.r.t to the input.
+		// What is the correct permutation/pattern?
+		iAxesCoSorted := make([]int, len(iAxes))
+		for index, value := range iAxes {
+			iAxesCoSorted[index] = value
+		}
+
+		otherAxesSorted := make([]int, len(otherAxes))
+		for index, value := range otherAxes {
+			otherAxesSorted[index] = value
+		}
+
+		sortUniqueIntWithImitator(otherAxesSorted, iAxesCoSorted)
+
+		pattern := make([]int, len(in.shape))
+		counter := len(iAxes)
+
+		for patternIndex := 0; patternIndex < len(pattern); patternIndex++ {
+			iAxesCoSortedIndex := contains(iAxesCoSorted, patternIndex)
+			if 0 <= iAxesCoSortedIndex {
+				pattern[patternIndex] = iAxesCoSortedIndex
+			} else {
+				pattern[patternIndex] = counter
+				counter++
+			}
+		}
+
+		// Which axes of the other tensor and the output should be contracted?
+		// Other tensor: All axes that weren't contracted (with i ;-) ) in the original tensordot
+		// With the exception of scalars
+		dOtherAxes := make([]int, otherdvv.Dims())
+
+		if !otherdvv.IsScalar() {
+			var dOtherAxesIndex int
+
+			for axis := 0; axis < otherdvv.Dims(); axis++ {
+				if 0 > contains(otherAxes, axis) {
+					dOtherAxes[dOtherAxesIndex] = axis
+					dOtherAxesIndex++
+				}
+			}
+
+			dOtherAxes = dOtherAxes[0:dOtherAxesIndex]
+		}
+
+		// Output: All axes which belong to other in the output of original tensordot, so this depends on input ordering
+		dOutputAxes := make([]int, len(dOtherAxes))
+		if iWasFirstArgument {
+			outputOtherAxesStart := odvd.Dims() - len(dOtherAxes)
+
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dOutputAxes[axis] = outputOtherAxesStart + axis
+			}
+		} else {
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dOutputAxes[axis] = axis
+			}
+		}
+
+		// perform tensordot
+		switch st := odvd.(type) {
+		case *tensor.Dense:
+
+			otherdvvDense := otherdvv.(*tensor.Dense)
+			odvdDense := odvd.(*tensor.Dense)
+			var tensordot *tensor.Dense
+			var err error
+
+			switch {
+			case odvdDense.IsScalar():
+				tensordot, err = otherdvvDense.MulScalar(odvdDense, true)
+
+			case otherdvvDense.IsVector() && odvdDense.IsVector() && 0 == len(dOtherAxes): // TensorMul does not support creating matrix from two vectors
+				// Reformat vectors, so that MatMul will create a matrix from them
+				var otherdvvDenseShapeOld tensor.Shape
+				var odvdDenseShapeOld tensor.Shape
+
+				otherdvvDenseReshaped := false
+				if !otherdvvDense.IsColVec() {
+					otherdvvDenseShapeOld = otherdvvDense.Shape().Clone()
+
+					otherdvvVecDims, err := (otherdvvDense.AP.Shape()).DimSize(0)
+
+					if err != nil {
+						return err
+					}
+
+					otherdvvDenseReshaped = true
+					otherdvvDense.Reshape(otherdvvVecDims, 1)
+				}
+
+				odvdDenseReshaped := false
+				if !odvdDense.IsRowVec() {
+					odvdDenseShapeOld = odvdDense.Shape().Clone()
+					odvdDenseVecDims, err := (odvdDense.AP.Shape()).DimSize(0)
+
+					if err != nil {
+						return err
+					}
+
+					odvdDenseReshaped = true
+					odvdDense.Reshape(1, odvdDenseVecDims)
+				}
+
+				tensordot, err = otherdvvDense.MatMul(odvdDense)
+
+				// Undo Reshape
+				if otherdvvDenseReshaped {
+					otherdvvDense.Reshape(otherdvvDenseShapeOld...)
+				}
+
+				if odvdDenseReshaped {
+					odvdDense.Reshape(odvdDenseShapeOld...)
+				}
+
+			default:
+				tensordot, err = otherdvvDense.TensorMul(odvdDense, dOtherAxes, dOutputAxes)
+			}
+
+			if err != nil {
+				return err
+			}
+
+			tensordotPerm, err := tensor.T(tensordot, pattern...)
+
+			if err != nil {
+				return err
+			}
+
+			tensordotPermDense := tensordotPerm.(*tensor.Dense)
+
+			d := idvd.(*tensor.Dense)
+			d.Add(tensordotPermDense, tensor.UseUnsafe()) // TODO: Should output directly into d and save the add
+
+		default:
+			return errors.Errorf(nyiTypeFail, "Do Diff (hack)", st)
+		}
+	}
+
+	return nil
+}
+
+func (op tensordotOp) DiffWRT(inputs int) []bool {
+	retVal := make([]bool, inputs)
+	for i := range retVal {
+		retVal[i] = true
+	}
+	return retVal
+}
+
+func (op tensordotOp) SymDiff(inputs Nodes, output *Node, grad *Node) (retVal Nodes, err error) {
+	if err = checkArity(op, len(inputs)); err != nil {
+		return
+	}
+
+	retVal = make(Nodes, len(inputs))
+
+	for inNr, in := range inputs {
+		// abuse of language below: "i" up front will refer to current "in"
+		// "other" for the other input (there are only two)
+
+		// Who's derivative are we calculating?
+		var iAxes []int
+		var otherAxes []int
+		var iWasFirstArgument bool
+		var other *Node
+
+		if 0 == inNr {
+			iAxes = op.aAxes
+			otherAxes = op.bAxes
+			other = inputs[1]
+			iWasFirstArgument = true
+		} else {
+			iAxes = op.bAxes
+			otherAxes = op.aAxes
+			other = inputs[0]
+			iWasFirstArgument = false
+		}
+
+		// Below a tensordot will be performed: Its output axes will be in the wrong order w.r.t to the input.
+		// What is the correct permutation/pattern?
+		iAxesCoSorted := make([]int, len(iAxes))
+		for index, value := range iAxes {
+			iAxesCoSorted[index] = value
+		}
+
+		otherAxesSorted := make([]int, len(otherAxes))
+		for index, value := range otherAxes {
+			otherAxesSorted[index] = value
+		}
+
+		sortUniqueIntWithImitator(otherAxesSorted, iAxesCoSorted)
+
+		pattern := make([]int, len(in.shape))
+		counter := len(iAxes)
+
+		for patternIndex := 0; patternIndex < len(pattern); patternIndex++ {
+			iAxesCoSortedIndex := contains(iAxesCoSorted, patternIndex)
+			if 0 <= iAxesCoSortedIndex {
+				pattern[patternIndex] = iAxesCoSortedIndex
+			} else {
+				pattern[patternIndex] = counter
+				counter++
+			}
+		}
+
+		// Which axes of the other tensor and the output should be contracted?
+		// Other tensor: All axes that weren't contracted (with i ;-) ) in the original tensordot
+		// With the exception of scalars
+		dOtherAxes := make([]int, other.Dims())
+
+		if !other.IsScalar() {
+			var dOtherAxesIndex int
+
+			for axis := 0; axis < other.Dims(); axis++ {
+				if 0 > contains(otherAxes, axis) {
+					dOtherAxes[dOtherAxesIndex] = axis
+					dOtherAxesIndex++
+				}
+			}
+
+			dOtherAxes = dOtherAxes[0:dOtherAxesIndex]
+		}
+
+		// Grad: All axes which belong to other in the output of original tensordot, so this depends on input ordering
+		dGradAxes := make([]int, len(dOtherAxes))
+		if iWasFirstArgument {
+			gradAxesStart := grad.Dims() - len(dOtherAxes)
+
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dGradAxes[axis] = gradAxesStart + axis
+			}
+		} else {
+			for axis := 0; axis < len(dOtherAxes); axis++ {
+				dGradAxes[axis] = axis
+			}
+		}
+
+		// perform tensordot
+		var tensordot *Node
+		switch {
+		case grad.Shape().IsScalar():
+			if tensordot, err = HadamardProd(other, grad); err != nil {
+				return nil, err
+			}
+
+		case other.Shape().IsVector() && grad.Shape().IsVector() && 0 == len(dOtherAxes): // TensorMul does not support creating matrix from two vectors
+			// Reformat vectors, so that MatMul will create a matrix from them
+			otherCorrectShape := other
+			if !other.IsColVec() {
+				otherVecDims, err := (other.Shape()).DimSize(0)
+
+				if err != nil {
+					return nil, err
+				}
+
+				if otherCorrectShape, err = Reshape(other, tensor.Shape{otherVecDims, 1}); err != nil {
+					return nil, err
+				}
+			}
+
+			gradCorrectShape := grad
+			if !grad.IsRowVec() {
+				gradVecDims, err := (grad.Shape()).DimSize(0)
+
+				if err != nil {
+					return nil, err
+				}
+
+				if gradCorrectShape, err = Reshape(grad, tensor.Shape{1, gradVecDims}); err != nil {
+					return nil, err
+				}
+			}
+
+			op := linAlgBinOp{āBinaryOperator: matMulOperator}
+			if tensordot, err = binOpNode(op, otherCorrectShape, gradCorrectShape); err != nil {
+				return nil, err
+			}
+
+		default:
+			tensordot, err = Tensordot(dOtherAxes, dGradAxes, other, grad)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		ret, err := Transpose(tensordot, pattern...)
+
+		if err != nil {
+			return nil, err
+		}
+
+		retVal[inNr] = ret
+	}
+
+	return retVal, nil
 }

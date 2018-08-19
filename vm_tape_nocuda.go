@@ -2,7 +2,10 @@
 
 package gorgonia
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"gorgonia.org/tensor"
+)
 
 func finalizeTapeMachine(m *tapeMachine) {}
 
@@ -11,23 +14,9 @@ func UseCudaFor(ops ...string) VMOpt {
 	return func(m VM) {}
 }
 
-func (instr *execOp) exec(m *tapeMachine) (err error) {
-	m.logf("Executing %v. Node is: %x", instr, instr.id)
-	m.enterLogScope()
-	defer m.leaveLogScope()
+func (m *tapeMachine) getEngine(dev Device) tensor.Engine { return m.Engine }
 
-	// Read
-	m.watchedLogf("Inputs:")
-	m.enterLogScope()
-	var inputs []Value
-	for _, reg := range instr.readFrom {
-		v := m.cpumem[reg.id]
-		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v)
-	}
-	m.leaveLogScope()
-
-	// Execute
+func (instr *execOp) execKernel(m *tapeMachine, inputs []Value) (err error) {
 	var v Value
 	switch {
 	case instr.preAllocated:
@@ -36,6 +25,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 			if v, err = pd.UsePreallocDo(p, inputs...); err != nil {
 				return errors.Wrapf(err, "Happened while attempting to execute %v. Node is %x. Register was: %v ", instr, instr.id, instr.writeTo.id)
 			}
+
 		} else {
 			// TODO: maybe warn?
 			if v, err = instr.op.Do(inputs...); err != nil {
@@ -59,17 +49,18 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		}
 	}
 
-	m.watchedLogf("Result:")
+	m.watchedInstrLogf(instr, "Result:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
 	// Write
-	dest := instr.writeTo.id
-	m.cpumem[dest] = v
-	node := m.p.g.Node(instr.id).(*Node)
+	setEngine(v, m.Engine)
+	m.writeValue(instr.writeTo, v)
 
+	// additional processing
+	node := m.p.g.Node(instr.id).(*Node)
 	if m.trace() && (len(m.watchNodes) == 0 || m.watchNodes.Contains(node)) {
 		if err = node.bindCopy(v); err != nil {
 			return errors.Wrapf(err, "TraceExec failed to bind copy")
@@ -87,9 +78,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 			if src.boundTo != nil {
 				dv := dvUnit(src.boundTo)
-
 				add := newEBOByType(addOpType, TypeOf(dv.d), TypeOf(v))
-
 				if d, err := add.UnsafeDo(dv.d, v); err == nil {
 					dv.SetDeriv(d)
 					src.bind(dv)
@@ -101,9 +90,9 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	}
 
-	m.watchedLogf("Written To: %v", instr.writeTo)
+	m.watchedInstrLogf(instr, "Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedInstrLogf(instr, m.valueFmt, v)
 	m.leaveLogScope()
 	return nil
 }
