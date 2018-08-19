@@ -59,6 +59,8 @@ type Engine struct {
 	totalMem int64
 
 	syncChan      chan struct{}
+	finishChan    chan struct{}
+	finishChan2   chan struct{}
 	workAvailable chan bool
 	err           error
 	initialized   bool
