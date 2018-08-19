@@ -3,11 +3,12 @@ package gorgonia
 import (
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/tensor"
 )
 
-func TestConstDeriv(t *testing.T) {
+func TestIssue182(t *testing.T) {
 	// This test revolves around repeated calls to run a VM.
 	// Formerly, upon running the VM once, the derivation of the constant is set.
 	// This derivation value would get Add()ed to upon subsequqent calls to run the VM.
@@ -45,4 +46,43 @@ func TestConstDeriv(t *testing.T) {
 	if _, ok := a.boundTo.(*dualValue); ok {
 		t.Fatalf("Expected constants to not have derivatives")
 	}
+}
+
+func TestIssue217(t *testing.T) {
+	//it works, cost = 22
+	if err := issue217(tensor.Shape{2, 2}, tensor.Shape{2, 2}); err != nil {
+		t.Fatal(err)
+	}
+
+	//panic: Node Σ[0](%2) :: float32, has 0 dimensions(Shape: ()). Input shape is (1, 1)...
+	if err := issue217(tensor.Shape{2, 2}, tensor.Shape{2, 1}); err != nil {
+		t.Fatal(err)
+	}
+
+	//panic: Node Σ[1](%2) :: float32, has 0 dimensions(Shape: ()). Input shape is (1, 1)...
+	if err := issue217(tensor.Shape{1, 2}, tensor.Shape{2, 2}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func issue217(xS, yS tensor.Shape) error {
+
+	g := NewGraph()
+	x := NewMatrix(g, Float32, WithName("x"), WithShape(xS...), WithInit(RangedFrom(0)))
+	y := NewMatrix(g, Float32, WithName("y"), WithShape(yS...), WithInit(RangedFrom(0)))
+
+	z := Must(Mul(x, y))
+	cost := Must(Sum(z))
+	//cost := Must(Mean(z))
+
+	_, err := Grad(cost, x, y)
+	if err != nil {
+		return errors.Wrap(err, "Grad")
+	}
+
+	m := NewTapeMachine(g)
+	if err = m.RunAll(); err != nil {
+		return errors.Wrap(err, "Run")
+	}
+	return nil
 }
