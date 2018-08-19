@@ -189,14 +189,14 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 	wrtSet := wrt.mapSet()
 	badWRTs := wrtSet.Difference(affectsOutput)
 	if len(badWRTs) > 0 {
-		return nil, errors.Errorf("Non differentiable WRTs: %v", badWRTs)
+		return nil, SymDiffError{nodes: badWRTs.ToSlice(), err: errors.New("Non Differentiable WRTs")}
 	}
 
 	outputSet := outputs.mapSet()
 	badOutputs := outputSet.Difference(affectedByOutput)
 	if len(badOutputs) > 0 {
 		symdiffLogf("badOutputs: %#v", badOutputs)
-		return nil, errors.Errorf("Non differentiable outputs: %v", badOutputs)
+		return nil, SymDiffError{nodes: badOutputs.ToSlice(), err: errors.New("Non-Differentable Outputs")}
 	}
 
 	// map a node to a list of gradient terms
@@ -237,19 +237,29 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		// Check if there is any grads coming into this node
 		if len(nodeGradMap[node]) < 1 {
 			leaveLogScope()
-			return nil, errors.Errorf("No gradient node found for Node ID %x - %v", node.ID(), node)
+			return nil, SymDiffError{
+				single:  node,
+				gradMap: nodeGradMap,
+				err:     errors.New("No gradients found for node"),
+			}
 		}
 
 		// once we've reached a node, we already backpropagated from its dependents
 		// so we sum up the gradients
-		symdiffLogf("nodeGradMap[node]: %d", nodeGradMap[node])
+		symdiffLogf("nodeGradMap[%x]: %d", node.ID(), nodeGradMap[node])
 		if len(nodeGradMap[node]) > 1 {
 
 			var n *Node
 			symdiffLogf("reduce adding")
 			if n, err = ReduceAdd(nodeGradMap[node], WithGroupName(gradClust)); err != nil {
 				leaveLogScope()
-				return nil, errors.Wrap(err, "ReduceAdd failed during differentiation")
+				return nil, SymDiffError{
+					single:  node,
+					nodes:   nodeGradMap[node],
+					gradMap: nodeGradMap,
+					err:     errors.Wrap(err, "ReduceAdd failed during differentiation"),
+				}
+
 			}
 			symdiffLogf("reduced to... %x", n.ID())
 			// node.derives = append(node.derives, n)
@@ -273,13 +283,21 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 			var ok bool
 
 			if op, ok = node.op.(SDOp); !ok {
-				// error
+				return nil, SymDiffError{
+					single: node,
+					err:    errors.New("Not a SymDifOp"),
+				}
 			}
 
 			symdiffLogf("op: %v || optype: %v ||  node: %v || Children: %#Y || Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
 			if childrenGrads, err = op.SymDiff(node.children, node, gradNode); err != nil {
 				leaveLogScope()
-				return nil, errors.Wrapf(err, "SymDiff for %v. OpType: %v. Node Type: %v. Children: %#v. Grad: %v", node.op, node.op.Type(), node.t, node.children, gradNode)
+				return nil, SymDiffError{
+					single:  node,
+					grad:    gradNode,
+					gradMap: nodeGradMap,
+					err:     errors.Wrapf(err, ".SymDiff() failed"),
+				}
 			}
 
 			symdiffLogf("Derived(%d): %P", len(childrenGrads), childrenGrads)
@@ -321,4 +339,18 @@ func Backpropagate(outputs, gradOutputs, wrt Nodes) (retVal Nodes, err error) {
 		retVal = append(retVal, nodeGradMap[n][0])
 	}
 	return
+}
+
+// SetDerivOf is used to hack around the fundamental limitations of Gorgonia.
+//
+// Specifically it is used to set a node as the derivative of another node,
+// used in the cuDNN version of batch norm.
+//
+// The cuDNN BatchNorm operation produces the derivatives for the scale and bias as a side effect
+// of calculating the derivative of the input. Because Gorgonia's Ops are modelled as pure functions (and no tuples)
+// this causes a bit of trouble. With the clever use of scratch space ops multireturn can be simulated.
+// But this causes derivatives to not be set correctly.
+func SetDerivOf(deriv, of *Node) {
+	deriv.derivOf = append(deriv.derivOf, of)
+	of.deriv = deriv
 }

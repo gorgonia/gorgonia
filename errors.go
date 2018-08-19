@@ -77,3 +77,18 @@ func checkErrSetDeriv(err error, dv *dualValue) error {
 	}
 	return err
 }
+
+// SymDiffError provides the context at which an error occured
+type SymDiffError struct {
+	nodes   Nodes
+	single  *Node
+	grad    *Node
+	gradMap map[*Node]Nodes
+	err     error
+}
+
+func (err SymDiffError) Error() string          { return err.err.Error() }
+func (err SymDiffError) Nodes() Nodes           { return err.nodes }
+func (err SymDiffError) Node() *Node            { return err.single }
+func (err SymDiffError) Grads() map[*Node]Nodes { return err.gradMap }
+func (err SymDiffError) Grad() *Node            { return err.grad }

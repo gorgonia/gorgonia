@@ -27,6 +27,7 @@ func Example_autodiff() {
 
 	// by default, LispMachine performs forward mode and backwards mode execution
 	m := NewLispMachine(g)
+	defer m.Close()
 	if err = m.RunAll(); err != nil {
 		log.Fatal(err)
 	}

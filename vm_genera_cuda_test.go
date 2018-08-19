@@ -29,6 +29,7 @@ func TestGeneraCUDA_init(t *testing.T) {
 	// logger := log.New(os.Stderr, "", 0)
 	// m := NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
 	m := NewLispMachine(g)
+	defer m.Close()
 
 	t.Logf("%v", m.sorted)
 	t.Logf("%v %v", m.cpumem, m.gpumem)
@@ -72,6 +73,7 @@ func TestGenera_ForceCPU(t *testing.T) {
 	Let(x, xV)
 	Let(y, yV)
 	m := NewLispMachine(g, WithManualGradient())
+	defer m.Close()
 	m.ForceCPU()
 
 	if err := m.RunAll(); err != nil {

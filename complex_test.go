@@ -128,6 +128,7 @@ func TestWeirdNetwork(t *testing.T) {
 	/* SET UP COMPLETE */
 
 	m := NewTapeMachine(g, BindDualValues(model...))
+	defer m.Close()
 
 	// for debug purposes
 	// prog, locMap, err := Compile(g)

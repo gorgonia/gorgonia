@@ -3,8 +3,6 @@
 package gorgonia
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 	"gorgonia.org/tensor"
@@ -33,85 +31,13 @@ func (m *tapeMachine) init() {
 		cudaLogf("No CUDA ops")
 		return
 	}
-	// functions to be loaded
-	cudaLogf("%v", m.f)
-	funcs := make([]string, 0, len(m.ExternMetadata.f))
-	for fn := range m.f {
-		funcs = append(funcs, fn)
-	}
 
-	m.ExternMetadata.init(m.p.gpumem)
+	if err := m.ExternMetadata.init(m.p.gpumem); err != nil {
+		m.ExternMetadata.initFail()
+		panic(err)
+	}
 	m.loadStdLib()
 
-	// cudaLogf("funcs %v", funcs)
-	// for _, f := range funcs {
-	// 	m.LoadCUDAFunc(f, cudaStdLib[f])
-	// }
-	cudaLogf("m.c = %v", m.c)
-	cudaLogf("m.f = %v", m.f)
-}
-
-// LoadCUDAFunc loads a string representing a CUDA PTX file into the machine.
-//
-// The convention is to have one function per module, sharing the same name.
-func (m *tapeMachine) LoadCUDAFunc(moduleName, data string, funcs []string) (err error) {
-	if len(m.c) == 0 {
-		return nil
-	}
-
-	mods := make([]cu.Module, len(m.c))
-	fns := make(map[string][]cu.Function)
-	for i, c := range m.c {
-		if err = cu.SetCurrentContext(c.Context.CUDAContext()); err != nil {
-			err = errors.Wrapf(err, "Unable to set current context when loading module %q at context %d", moduleName, i)
-			return
-		}
-
-		var mod cu.Module
-		if mod, err = cu.LoadData(data); err != nil {
-			err = errors.Wrapf(err, "Failed to load module %q data for %dth context %x", moduleName, i, c)
-			return
-		}
-
-		var fs []cu.Function
-		for _, name := range funcs {
-			var ok bool
-			if fs, ok = fns[name]; !ok {
-				fs = make([]cu.Function, len(m.c))
-			}
-
-			var fn cu.Function
-			if fn, err = mod.Function(name); err != nil {
-				err = errors.Wrapf(err, "Unable to get function %q in %dth context %x", name, i, c)
-				return
-			}
-			fs[i] = fn
-			fns[name] = fs
-		}
-
-		mods[i] = mod
-	}
-
-	// set the first to current
-	if len(m.c) > 0 {
-		if err = cu.SetCurrentContext(m.c[0].Context.CUDAContext()); err != nil {
-			err = errors.Wrapf(err, "Unable to set current")
-			return
-		}
-	}
-
-	m.m[moduleName] = mods
-	for _, name := range funcs {
-		fqn := fmt.Sprintf("%v.%v", moduleName, name)
-		m.f[fqn] = fns[name]
-	}
-
-	cudaLogf("Loaded %q", moduleName)
-	return nil
-}
-
-func (m *tapeMachine) loadDummyFunc(name string) {
-	m.f[name] = nil
 }
 
 // loads the standardlib
@@ -124,21 +50,23 @@ func (m *tapeMachine) loadStdLib() {
 		funcs, ok := cudaStdFuncs[name]
 		if !ok {
 			cudaLogf("No funcs for module %q", name)
+			// panic("WTF")
 			continue
 		}
-		if err := m.LoadCUDAFunc(name, data, funcs); err != nil {
-			cudaLogf("Unable to load %q.: %v", name, err)
+		for i := range m.engines {
+			e := &m.engines[i]
+			if err := e.LoadCUDAFunc(name, data, funcs); err != nil {
+				panic(err)
+			}
 		}
 	}
 }
 
-func (m *tapeMachine) loadDummyStdLib() {
-	if cudaStdLib == nil {
-		return
+func (m *tapeMachine) getEngine(dev Device) tensor.Engine {
+	if dev == CPU {
+		return m.Engine
 	}
-	for name := range cudaStdLib {
-		m.loadDummyFunc(name)
-	}
+	return &m.Engines()[int(dev)]
 }
 
 func (instr *execOp) exec(m *tapeMachine) (err error) {
@@ -155,7 +83,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 	for _, reg := range instr.readFrom {
 		v := m.getValue(reg)
 		inputs = append(inputs, v)
-		m.watchedLogf(m.valueFmt, v)
+		m.watchedLogf(m.valueFmt, v.Uintptr())
 	}
 	m.leaveLogScope()
 
@@ -167,6 +95,8 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 		if v, err = op.CUDADo(m, toDev, prealloc, inputs...); err != nil {
 			return errors.Wrapf(err, "Happened while attempting to use CUDA to execute %v. Node is %x. Register was %v", instr, instr.id, instr.writeTo.id)
 		}
+		e := &m.Engines()[int(toDev)]
+		setEngine(v, e)
 	case CLDoer:
 	default:
 		switch {
@@ -198,11 +128,16 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 				return errors.Wrap(err, opDoFail)
 			}
 		}
+		setEngine(v, m.Engine)
 
 	}
-	m.watchedLogf("Result:")
+	m.watchedLogf("Result E:")
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	if vt, ok := v.(tensor.Tensor); ok {
+		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
+	} else {
+		m.watchedLogf("%x", v.Uintptr())
+	}
 	m.leaveLogScope()
 	// TODO: type and shape checks
 
@@ -279,7 +214,7 @@ func (instr *execOp) exec(m *tapeMachine) (err error) {
 
 	m.watchedLogf("Written To: %v", instr.writeTo)
 	m.enterLogScope()
-	m.watchedLogf(m.valueFmt, v)
+	m.watchedLogf(m.valueFmt, v.Uintptr())
 	m.leaveLogScope()
 
 	return nil

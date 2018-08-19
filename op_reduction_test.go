@@ -56,8 +56,8 @@ func TestSumOpDiff(t *testing.T) {
 	// ioutil.WriteFile("SumOp.dot", []byte(g.ToDot()), 0644)
 
 	m = NewTapeMachine(g)
-	err = m.RunAll()
-	if err != nil {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -65,10 +65,9 @@ func TestSumOpDiff(t *testing.T) {
 	a = NewVector(g2, Float64, WithShape(5), WithInit(RangedFrom(0)))
 	b = Must(Sum(a))
 
-	m2 = NewLispMachine(g2)
-	m2.doWatchAll()
-	err = m2.RunAll()
-	if err != nil {
+	m2 = NewLispMachine(g2, WithWatchlist())
+	defer m2.Close()
+	if err = m2.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -109,8 +108,8 @@ func TestSumOpDiff(t *testing.T) {
 	Grad(y, x)
 
 	m = NewTapeMachine(g)
-	err = m.RunAll()
-	if err != nil {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -119,8 +118,8 @@ func TestSumOpDiff(t *testing.T) {
 	b = Must(Sum(a))
 
 	m2 = NewLispMachine(g2)
-	err = m2.RunAll()
-	if err != nil {
+	defer m2.Close()
+	if err = m2.RunAll(); err != nil {
 		t.Error(err)
 	}
 
@@ -150,14 +149,13 @@ func TestSumOpDiff(t *testing.T) {
 	y = Must(Sum(x))
 	z = Must(Add(y, twof64))
 
-	_, err = Grad(z, x)
-	if err != nil {
+	if _, err = Grad(z, x); err != nil {
 		t.Fatal(err)
 	}
 
 	m = NewTapeMachine(g)
-	err = m.RunAll()
-	if err != nil {
+	defer m.Close()
+	if err = m.RunAll(); err != nil {
 		t.Errorf("%v", m.Prog())
 		t.Error(err)
 	}
@@ -168,8 +166,8 @@ func TestSumOpDiff(t *testing.T) {
 	c = Must(Add(b, twof64))
 
 	m2 = NewLispMachine(g2)
-	err = m2.RunAll()
-	if err != nil {
+	defer m2.Close()
+	if err = m2.RunAll(); err != nil {
 		t.Fatalf("%+v", err)
 	}
 

@@ -48,7 +48,9 @@ const (
 	binOpFail           = "Binary operator received %d arguments"
 	hadamardProdFail    = "Failed to carry hadamardProd()"
 	hadamardDivFail     = "Failed to carry hadamardDiv()"
+	cubeFail            = "Failed to carry cube()"
 	negFail             = "Failed to carry Neg()"
+	invFail             = "Failed to carry Inv()"
 	pointWiseMulFail    = "Failed to carry PointWiseMul()"
 	pointWiseSquareFail = "Failed to carry PointWiseSquare()"
 	clampFail           = "Failed to carry Clamp()"
@@ -95,6 +97,34 @@ var (
 	onef64ConstOp  = onef64.op.(constant)
 	zerof32ConstOp = zerof32.op.(constant)
 	zerof64ConstOp = zerof64.op.(constant)
+
+	constmap map[string]map[tensor.Dtype]*Node
 )
 
 var oneone = tensor.Shape{1, 1}
+
+func init() {
+	constmap = map[string]map[tensor.Dtype]*Node{
+		"zero": {
+			Float32: zerof32,
+			Float64: zerof64,
+		},
+		"one": {
+			Float32: onef32,
+			Float64: onef64,
+		},
+		"two": {
+			Float32: twof32,
+			Float64: twof64,
+		},
+		"three": {
+			Float32: threef32,
+			Float64: threef64,
+		},
+		"log2": {
+			Float32: ln2f32,
+			Float64: ln2f64,
+		},
+	}
+
+}

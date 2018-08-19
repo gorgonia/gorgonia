@@ -228,9 +228,9 @@ func newCharRNN(m *model) *charRNN {
 	return r
 }
 
-func (r *charRNN) learnables() (retVal Nodes) {
+func (r *charRNN) learnables() (retVal []ValueGrad) {
 	for _, l := range r.ls {
-		lin := Nodes{
+		lin := []ValueGrad{
 			l.wix,
 			l.wih,
 			l.bias_i,
@@ -367,6 +367,7 @@ func (r *charRNN) predict() {
 		// logger := log.New(f, "", 0)
 		// machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
 		machine := NewLispMachine(g, ExecuteFwdOnly())
+		defer machine.Close()
 		machine.ForceCPU()
 		if err := machine.RunAll(); err != nil {
 			if ctxerr, ok := err.(contextualError); ok {
@@ -406,6 +407,7 @@ func (r *charRNN) predict() {
 		// logger := log.New(f, "", 0)
 		// machine := NewLispMachine(g, ExecuteFwdOnly(), WithLogger(logger), WithWatchlist(), LogBothDir())
 		machine := NewLispMachine(g, ExecuteFwdOnly())
+		defer machine.Close()
 		machine.ForceCPU()
 		if err := machine.RunAll(); err != nil {
 			if ctxerr, ok := err.(contextualError); ok {
@@ -471,6 +473,7 @@ func run(r *charRNN, iter int, solver Solver) (retCost, retPerp float32, err err
 	// machine := NewLispMachine(g, WithLogger(logger), WithValueFmt("%-1.1s"), LogBothDir(), WithWatchlist())
 
 	machine := NewLispMachine(g)
+	defer machine.Close()
 	if err = machine.RunAll(); err != nil {
 		if ctxerr, ok := err.(contextualError); ok {
 			ioutil.WriteFile("FAIL.dot", []byte(ctxerr.Node().RestrictedToDot(3, 3)), 0644)

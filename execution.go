@@ -19,7 +19,6 @@ type Arena interface {
 // External is a representation of an external device (cuda/cgo/openCL), conceptually modelled as a machine.
 type External interface {
 	Arena
-	HasFunc(string) bool
 	Signal() // signals the machine to do work
 	Sync() chan struct{}
 }

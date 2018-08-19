@@ -55,8 +55,6 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 
 	m.doAlloc()
 
-	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
-
 	if m.p == nil || m.locMap == nil {
 		prog, locMap, err := Compile(g)
 		if err != nil {
@@ -65,14 +63,15 @@ func NewTapeMachine(g *ExprGraph, opts ...VMOpt) *tapeMachine {
 
 		m.p = prog
 		m.locMap = locMap
-		m.cpumem = make([]Value, prog.cpulocs)
-		m.gpumem = make([]Value, prog.gpulocs)
 	}
+	m.cpumem = make([]Value, m.p.cpulocs)
+	m.gpumem = make([]Value, m.p.gpulocs)
 	m.init()
 	for _, n := range m.p.g.AllNodes() {
 		setEngine(n.boundTo, m.Engine)
 	}
 
+	runtime.SetFinalizer(m, finalizeTapeMachine) // a "defer" to deinitialize CUDA stuff (if using CUDA build)
 	return m
 }
 
@@ -112,6 +111,16 @@ func (m *tapeMachine) dontBindDV()  { m.runFlags &= (^(byte(1) << spare3)) }
 func (m *tapeMachine) Reset() {
 	m.pc = 0
 	m.ExternMetadata.Reset()
+
+	for i := range m.gpumem {
+		returnValue(m.gpumem[i])
+		m.gpumem[i] = nil //
+	}
+}
+
+func (m *tapeMachine) Close() error {
+	finalizeTapeMachine(m)
+	return nil
 }
 
 // Prog returns the compiled program. This would mainly be used in debugging functions
@@ -189,6 +198,7 @@ func (m *tapeMachine) Run(frag fragment) (err error) {
 func (m *tapeMachine) RunAll() (err error) {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	defer m.DoWork()
 
 	workAvailable := m.ExternMetadata.WorkAvailable()
 	syncChan := m.ExternMetadata.Sync()
@@ -222,10 +232,15 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 	for ; m.pc < len(m.p.instructions); m.pc++ {
 		instr := m.p.instructions[m.pc]
 		m.logf("PC %d", m.pc)
+		// log.Printf("PC %d", m.pc)
 		if err := instr.exec(m); err != nil {
 			err = errors.Wrapf(err, "PC %d. Failed to execute instruction %v", m.pc, instr)
 			errChan <- err
 			return
+		}
+		// only proceed to check NaNs and Infs for execOp
+		if _, ok := instr.(*execOp); !ok {
+			continue
 		}
 
 		if m.watchNaN() {
@@ -239,7 +254,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 					return
 				}
 
-				if hasNaN(v) {
+				if hasNaN(v, CPU) {
 					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("NaN found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
@@ -259,7 +274,7 @@ func (m *tapeMachine) runall(errChan chan error, doneChan chan struct{}) {
 					return
 				}
 
-				if hasInf(v) {
+				if hasInf(v, CPU) {
 					n := m.p.g.Node(id).(*Node)
 					err := errors.Errorf("Inf found in value. Node: %v(%x)", n, n.ID())
 					errChan <- err
@@ -415,6 +430,14 @@ func (p *program) String() string {
 // Graph enables the end user to inspect the graph (typically useful for debugging)
 func (p *program) Graph() *ExprGraph { return p.g }
 
+func (p *program) CPUMemReq() int64 { return p.cpumem }
+
+func (p *program) GPUMemReq() []int64 {
+	retVal := make([]int64, len(p.gpumem))
+	copy(retVal, p.gpumem)
+	return retVal
+}
+
 /* REGISTER */
 
 type register struct {
@@ -477,6 +500,8 @@ func (instr alloc) writes() register  { return instr.writeTo }
 
 func (instr alloc) exec(m *tapeMachine) (err error) {
 	m.logf("Executing %v", instr)
+	m.enterLogScope()
+	defer m.leaveLogScope()
 
 	var dt tensor.Dtype
 	if dt, err = dtypeOf(instr.t); err != nil {
@@ -488,16 +513,23 @@ func (instr alloc) exec(m *tapeMachine) (err error) {
 	switch dev {
 	case CPU:
 		v, err = makeValue(instr.t, instr.s)
+
 	default:
 		var mem tensor.Memory
 		memsize := calcMemSize(dt, instr.s)
 		if mem, err = m.ExternMetadata.Get(dev, memsize); err != nil {
-			return errors.Wrapf(err, "Unable to allocate %v bytes from %v", memsize, dev)
+			return errors.Wrapf(err, "Unable to allocate %v bytes from %v | %T", memsize, dev, err)
 		}
 		v, err = makeValueFromMem(instr.t, instr.s, mem)
 	}
 	if err != nil {
 		return
+	}
+	setEngine(v, m.getEngine(dev))
+	if vt, ok := v.(tensor.Tensor); ok {
+		m.watchedLogf("%x | %T", v.Uintptr(), vt.Engine())
+	} else {
+		m.watchedLogf("%x", v.Uintptr())
 	}
 
 	m.writeValue(instr.writeTo, v)
@@ -535,6 +567,7 @@ func (instr free) String() string { return fmt.Sprintf("Free %v", instr.readsFro
 type loadArg struct {
 	index   int64
 	writeTo register
+	name    string
 }
 
 func (instr loadArg) ID() int64         { return instr.index }
@@ -547,6 +580,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 	defer m.leaveLogScope()
 
 	node := m.p.g.Node(instr.index).(*Node)
+	m.logf("node %v", node)
 
 	if node.boundTo == nil {
 		return errors.Errorf("No value bound to node %v (%x)", node, node.ID())
@@ -566,7 +600,7 @@ func (instr loadArg) exec(m *tapeMachine) error {
 }
 
 func (instr loadArg) String() string {
-	return fmt.Sprintf("loadArg %x to %v", instr.index, instr.writeTo)
+	return fmt.Sprintf("loadArg %x (%v) to %v", instr.index, instr.name, instr.writeTo)
 }
 
 type execOp struct {
@@ -612,13 +646,8 @@ func (instr *execOp) String() string {
 type flushInstr struct{}
 
 func (instr flushInstr) exec(m *tapeMachine) error {
-	// m.logf("Executing DoWork")
-	// m.ExternMetadata.DoWork()
-	if m.WorkAvailable() == nil {
-		return nil
-	}
-	m.ExternMetadata.Signal()
-	return nil
+	m.logf("Executing DoWork")
+	return m.ExternMetadata.DoWork()
 }
 
 func (instr flushInstr) ID() int64         { return -1 }
@@ -665,7 +694,6 @@ func (instr *readInstr) exec(m *tapeMachine) (err error) {
 	}
 
 	*instr.into = v2
-	m.logf("instr.into %v", *instr.into)
 	return nil
 }
 
