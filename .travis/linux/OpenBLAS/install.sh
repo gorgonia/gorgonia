@@ -54,7 +54,7 @@ set -ex
 
 # install gonum/blas against OpenBLAS
 export CGO_LDFLAGS="-L/usr/lib -lopenblas"
-go get github.com/gonum/blas
+go get  gonum.org/v1/gonum/blas
 go install -v -x gonum.org/v1/gonum/blas
 
 
