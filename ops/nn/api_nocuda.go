@@ -27,6 +27,6 @@ func Rectify(x *G.Node) (retVal *G.Node, err error) {
 	return G.Rectify(x)
 }
 
-func BatchNorm(x, scale, bias *G.Node, momentum, epsilon float64) (retVal, γ, β *G.Node, op *BatchNormOp, err error) {
+func BatchNorm(x, scale, bias *G.Node, momentum, epsilon float64) (retVal, γ, β *G.Node, op *G.BatchNormOp, err error) {
 	return G.BatchNorm(x, scale, bias, momentum, epsilon)
 }
