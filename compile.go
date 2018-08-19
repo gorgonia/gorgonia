@@ -395,8 +395,9 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 			var op Op
 			var onDev, nodeOnDev Device
 
+			_, isDevTrans := lastWriteNode.Op().(devTrans)
 			switch {
-			case lastWriteNode.isArg(), lastWriteNode.isStmt:
+			case lastWriteNode.isArg(), lastWriteNode.isStmt && !isDevTrans:
 				continue
 			default:
 				op = lastWriteNode.op
@@ -436,7 +437,7 @@ func (cg *codegenerator) addNode(node, replacement *Node, interv *interval, i in
 			case !op.CallsExtern():
 				compileLogf("ToFlush: Node doesn't call extern. NO FLUSH")
 				// op doesn't call extern... don't bother flushing
-			case op.CallsExtern() && node.op.CallsExtern() && onDev == nodeOnDev:
+			case op.CallsExtern() && node.op.CallsExtern() && onDev == nodeOnDev && !isDevTrans:
 				compileLogf("ToFlush: Both calls extern, both same device. NO FLUSH")
 				// same device, both calls extern
 				// no flush needed
