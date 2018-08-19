@@ -148,6 +148,7 @@ func (op *BatchNormOp) DoDiff(ctx gorgonia.ExecutionContext, inputs gorgonia.Nod
 
 func (op *BatchNormOp) SetTraining() { op.training = true }
 func (op *BatchNormOp) SetTesting()  { op.training = false }
+func (op *BatchNormOp) Reset() error { return nil }
 
 type batchNormDiffOp struct {
 	*BatchNormOp
