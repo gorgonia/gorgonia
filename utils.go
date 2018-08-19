@@ -275,7 +275,7 @@ func getConst(x *Node, constant string) (retVal *Node, err error) {
 			return n, nil
 		}
 	}
-	return nil, errors.Errorf("constant %d not provided for %v", constant, dt)
+	return nil, errors.Errorf("constant %v not provided for %v", constant, dt)
 }
 
 func scalarEquiv(s tensor.Shape) bool {

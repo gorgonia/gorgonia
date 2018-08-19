@@ -440,7 +440,7 @@ func (m *lispMachine) forward() (err error) {
 			var mem tensor.Memory
 			memsize := calcMemSize(dt, n.shape)
 			if mem, err = m.Get(dev, memsize); err != nil {
-				return errors.Wrapf(err, allocFail, memsize)
+				return errors.Wrapf(err, allocFail, memsize, dev)
 			}
 
 			var reuse Value
@@ -542,7 +542,7 @@ func (m *lispMachine) backward() (err error) {
 	m.leaveLogScope()
 
 	if m.watchNaN() {
-		if hasNaN(instr.output.boundTo,instr.ctx.Device ) {
+		if hasNaN(instr.output.boundTo, instr.ctx.Device) {
 			return errors.New("NaN found in value")
 		}
 
