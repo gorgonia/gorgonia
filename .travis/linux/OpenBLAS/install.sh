@@ -55,7 +55,7 @@ travis_retry sudo apt-get install liblapack-dev liblapack3 libopenblas-base libo
 # install gonum/blas against OpenBLAS
 export CGO_LDFLAGS="-L/usr/lib -lopenblas"
 go get github.com/gonum/blas
-go install -v -x github.com/gonum/blas
+go install -v -x gonum.org/v1/gonum/blas
 
 
 # run the OS common installation script
