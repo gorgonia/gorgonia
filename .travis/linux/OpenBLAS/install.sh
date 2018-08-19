@@ -50,7 +50,7 @@ set -ex
 # # copy the cache files into /usr
 # sudo cp -r ${CACHE_DIR}/* /usr/
 
-travis_retry sudo apt-get install liblapack-dev liblapack3 libopenblas-base libopenblas-dev
+# travis_retry sudo apt-get install liblapack-dev liblapack3 libopenblas-base libopenblas-dev
 
 # install gonum/blas against OpenBLAS
 export CGO_LDFLAGS="-L/usr/lib -lopenblas"
