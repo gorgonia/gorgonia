@@ -82,6 +82,12 @@ func TestNodeBasics(t *testing.T) {
 	returnNode(n)
 	returnNode(c0)
 
+	n = newNode(In(g), WithValue(F64(3.14)), WithGrad(F64(1)))
+	if _, ok := n.boundTo.(*dualValue); !ok {
+		t.Error("Expected a dual Value")
+	}
+	returnNode(n)
+
 	// WithValue but no type
 	n = newNode(In(g), WithValue(F64(3.14)))
 	if !n.t.Eq(Float64) {
@@ -97,6 +103,10 @@ func TestNodeBasics(t *testing.T) {
 	if !ValueEq(n.boundTo, newF64(3.14)) {
 		t.Error("Expected *Node to be bound to the correct value. Something has gone really wrong here")
 	}
+	returnNode(n)
+
+	// This is acceptable and should not panic
+	n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
 	returnNode(n)
 
 	// bad stuff
@@ -122,7 +132,13 @@ func TestNodeBasics(t *testing.T) {
 
 	// shape type mismatch
 	f = func() {
-		n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 1))
+		n = newNode(In(g), WithType(makeTensorType(1, Float64)), WithShape(2, 2))
+	}
+	assert.Panics(t, f)
+
+	// bad grads
+	f = func() {
+		n = newNode(WithGrad(F64(3.14)))
 	}
 	assert.Panics(t, f)
 }

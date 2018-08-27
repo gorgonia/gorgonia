@@ -45,8 +45,8 @@ func TestGraphBasics(t *testing.T) {
 	assert.Equal(correctTo, g.to[x])
 
 	correctTo = Nodes{xy}
-	assert.Equal(correctTo, graphNodeToNode(g.To(y)))
-	assert.Equal(correctTo, graphNodeToNode(g.To(x)))
+	assert.Equal(correctTo, graphNodeToNode(g.To(y.ID())))
+	assert.Equal(correctTo, graphNodeToNode(g.To(x.ID())))
 
 	assert.Equal(3, len(g.Nodes()))
 
@@ -119,7 +119,7 @@ func TestGraphCollisions(t *testing.T) {
 
 	assert.Equal(col, col2)
 	assert.Equal(4, len(g.AllNodes()), "%v", g.AllNodes())
-	assert.True(g.Has(col))
+	assert.True(g.Has(col.ID()))
 
 	colleen := new(Node)
 	colleen.name = "COLLEEN THE COLLISION"
@@ -129,7 +129,7 @@ func TestGraphCollisions(t *testing.T) {
 
 	assert.Equal(colleen, colleen2)
 	assert.Equal(5, len(g.AllNodes()), "%v", g.AllNodes())
-	assert.True(g.Has(colleen))
+	assert.True(g.Has(colleen.ID()))
 
 }
 
@@ -245,6 +245,7 @@ func TestGraph_Clone(t *testing.T) {
 	z2 := Must(Square(z))
 
 	// add a collided
+	z2t := z2.Type()
 	delete(g.byHash, z2.hash)
 	g.byHash[0xdeadbeef] = z2
 	col := new(Node)
@@ -253,6 +254,7 @@ func TestGraph_Clone(t *testing.T) {
 	col.hash = 0xdeadbeef
 	col.hashed = true
 	col.boundTo = newF64(0)
+	col.t = z2t
 	g.AddNode(col)
 
 	colleen := new(Node)
@@ -261,6 +263,7 @@ func TestGraph_Clone(t *testing.T) {
 	colleen.hash = 0xdeadbeef
 	colleen.hashed = true
 	colleen.boundTo = newF64(0)
+	colleen.t = z2t
 	g.AddNode(colleen)
 
 	one := onef64
@@ -327,6 +330,7 @@ func TestGraph_Clone(t *testing.T) {
 	Let(x, tensor.New(tensor.WithBacking([]float64{1, 2})))
 	Let(y, tensor.New(tensor.WithBacking([]float64{3, 4})))
 	m := NewLispMachine(g, ExecuteFwdOnly()) // the gradient has been precalculated
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}

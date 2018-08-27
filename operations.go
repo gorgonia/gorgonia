@@ -43,24 +43,6 @@ func binOpNode(op BinaryOp, a, b *Node) (retVal *Node, err error) {
 	return ApplyOp(op, a, b)
 }
 
-// Add performs pointwise a + b
-func Add(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(addOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
-// Sub performs pointwise a - b
-func Sub(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(subOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
-// HadamardProd performs pointwise a * b
-func HadamardProd(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(mulOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
 // Mul is the general handler for multiplication of nodes. It is extremely overloaded. Only use if you know what you're doing
 //
 // If any of the nodes are ScalarType, then it'll be redirected to HadamardProd() instead
@@ -109,12 +91,6 @@ func OuterProd(a, b *Node) (retVal *Node, err error) {
 	return binOpNode(op, a, b)
 }
 
-// HadamardDiv performs pointwise a / b
-func HadamardDiv(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(divOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
 // Div is a shortcut function for HadamardDiv for scalar values. For matrix/tensor values, the matrix division operation is not yet handled, and will panic.
 func Div(a, b *Node) (retVal *Node, err error) {
 	if a.IsScalar() || b.IsScalar() {
@@ -123,27 +99,6 @@ func Div(a, b *Node) (retVal *Node, err error) {
 
 	// otherwise, matrix division
 	panic("Unhandled")
-}
-
-// Pow performs pointwise exponentiation
-func Pow(a, b *Node) (retVal *Node, err error) {
-	op := newElemBinOp(powOpType, a, b)
-	return binOpNode(op, a, b)
-}
-
-// Gt performs a pointwise comparison a > b. retSame indicates if the return value should be the same type as the input values
-func Gt(a, b *Node, retSame bool) (retVal *Node, err error) {
-	op := newElemBinOp(gtOpType, a, b)
-	op.retSame = retSame
-	retVal, err = binOpNode(op, a, b)
-	return
-}
-
-// Gte performs pointwise comparison a >= b. retSame indicates if the return value should be the same type as the input values
-func Gte(a, b *Node, retSame bool) (retVal *Node, err error) {
-	op := newElemBinOp(gteOpType, a, b)
-	op.retSame = retSame
-	return binOpNode(op, a, b)
 }
 
 /* UNARY STUFF */
@@ -177,108 +132,6 @@ func unaryOpNode(op Op, a *Node) (retVal *Node, err error) {
 	}
 
 	return ApplyOp(op, a)
-}
-
-// Abs performs pointwise |a|
-func Abs(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(absOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sign performs pointwise sign() on the input. Returns -1 for a negative, +1 for positive
-func Sign(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(signOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Ceil performs pointwise ceil() on the input.
-func Ceil(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(ceilOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Floor performs pointwise floor() on the input.
-func Floor(a *Node) (retval *Node, err error) {
-	op := newElemUnaryOp(floorOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sin performs pointwise sin() on the input.
-func Sin(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(sinOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Cos performs pointwise cos() on the input.
-func Cos(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(cosOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Exp performs pointwise exp() on the input.
-func Exp(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(expOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Log performs pointwise log() on the input. Note that this is the natural logarithm.
-func Log(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(lnOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Log2 performs pointwise log2() on the input.
-func Log2(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(log2OpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Neg performs pointwise neg() on the input.
-func Neg(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(negOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Square performs pointwise ^2 on the input.
-func Square(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(squareOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sqrt performs pointwise sqrt on the input.
-func Sqrt(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(sqrtOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Inverse performs pointwise inverse() on the input. Note this means the reciprocal.
-func Inverse(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(inverseOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Cube performs pointwise ^3 on the input.
-func Cube(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(cubeOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Sigmoid performs pointwise sigmoid() on the input.
-func Sigmoid(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(sigmoidOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Tanh performs pointwise tanh() on the input.
-func Tanh(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(tanhOpType, a)
-	return unaryOpNode(op, a)
-}
-
-// Log1p performs pointwise log1p() on the input.
-func Log1p(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(log1pOpType, a)
-	return unaryOpNode(op, a)
 }
 
 // more complex unaries
@@ -342,12 +195,6 @@ func LogSumExp(a *Node, axis int) (retVal *Node, err error) {
 		}
 	}
 	return nil, errors.Wrap(err, operationError)
-}
-
-// Softplus performs a softplus on the input.
-func Softplus(a *Node) (retVal *Node, err error) {
-	op := newElemUnaryOp(softplusOpType, a)
-	return unaryOpNode(op, a)
 }
 
 /* Aggregate Functions */
@@ -453,8 +300,7 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 	if p == 2 {
 		if retVal, err = Square(a); err == nil {
 			if retVal, err = Sum(retVal, axis); err == nil {
-				retVal, err = Sqrt(retVal)
-				if err != nil {
+				if retVal, err = Sqrt(retVal); err != nil {
 					return nil, errors.Wrap(err, operationError)
 				}
 			} else {
@@ -485,8 +331,7 @@ func Norm(a *Node, axis, p int) (retVal *Node, err error) {
 
 	if retVal, err = Pow(a, b); err == nil {
 		if retVal, err = Sum(retVal, axis); err == nil {
-			retVal, err = Pow(retVal, inv)
-			if err != nil {
+			if retVal, err = Pow(retVal, inv); err != nil {
 				return nil, errors.Wrap(err, operationError)
 			}
 		} else {
@@ -676,6 +521,34 @@ func Concat(axis int, ns ...*Node) (retVal *Node, err error) {
 
 // Reshape reshapes a node and returns a new node with the new shape
 func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
+	// check shape
+	var negs int
+	var infer int
+	for i, s := range to {
+		if s < 0 {
+			negs++
+			infer = i
+		}
+	}
+	if negs > 1 {
+		return nil, errors.Errorf("Unfortunately, inference of reshape parameters only allow for one variable (a negative number). Got %v instead", to)
+	}
+
+	if negs == 1 {
+		prod := 1
+		for i, s := range to {
+			if i == infer {
+				continue
+			}
+			prod *= s
+		}
+		inferred, rem := divmod(n.Shape().TotalSize(), prod)
+		if rem != 0 {
+			return nil, errors.Errorf("Cannot reshape %v to %v", n.Shape(), to)
+		}
+		to[infer] = inferred
+	}
+
 	op := reshapeOp{
 		from: n.Shape(),
 		to:   to,
@@ -685,7 +558,7 @@ func Reshape(n *Node, to tensor.Shape) (retVal *Node, err error) {
 
 /* Contraction related operations */
 
-// Tensor contraction of a and b along specified axes.
+// Tensordot performs a tensor contraction of a and b along specified axes.
 func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 
 	// Check if input tensors actually have dim >= 1
@@ -698,9 +571,9 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 		return nil, errors.New("Number of Axes supplied along which to contract tensors does not match")
 	}
 
-	// Check for dublicate indices
-	if containsDublicate(aAxes) || containsDublicate(bAxes) {
-		return nil, errors.New("Supplied axes to contract along contain dublicates")
+	// Check for duplicate indices
+	if containsDuplicate(aAxes) || containsDuplicate(bAxes) {
+		return nil, errors.New("Supplied axes to contract along contain duplicates")
 	}
 
 	// Check for more compatibility
@@ -738,7 +611,7 @@ func Tensordot(aAxes []int, bAxes []int, a, b *Node) (retVal *Node, err error) {
 
 // Private functions
 
-func containsDublicate(slice []int) bool {
+func containsDuplicate(slice []int) bool {
 	if nil == slice {
 		return false
 	}

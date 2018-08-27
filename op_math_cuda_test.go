@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"gorgonia.org/tensor"
 )
@@ -25,7 +26,7 @@ func TestCUDACube(t *testing.T) {
 	Read(x3, &x3Val)
 
 	m := NewTapeMachine(g)
-	defer runtime.GC()
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
 	}
@@ -41,61 +42,60 @@ func TestCUDACube(t *testing.T) {
 }
 
 func TestCUDABasicArithmetic(t *testing.T) {
-	assert := assert.New(t)
 	for i, bot := range binOpTests {
-		// log.Printf("TEST %d", i)
-		// if i != 2 {
+		// if i != 5 {
 		// 	continue
 		// }
-
-		g := NewGraph()
-		xV, _ := CloneValue(bot.a)
-		yV, _ := CloneValue(bot.b)
-		x := NodeFromAny(g, xV, WithName("x"))
-		y := NodeFromAny(g, yV, WithName("y"))
-
-		var ret *Node
-		var retVal Value
-		var err error
-		if ret, err = bot.binOp(x, y); err != nil {
-			t.Errorf("Test %d: %v", i, err)
-			runtime.GC()
-			continue
-		}
-		Read(ret, &retVal)
-
-		cost := Must(Sum(ret))
-		var grads Nodes
-		if grads, err = Grad(cost, x, y); err != nil {
-			t.Errorf("Test %d: error while symbolic op: %v", i, err)
-			runtime.GC()
-			continue
-		}
-
-		// logger := log.New(os.Stderr, "", 0)
-		// m1 := NewTapeMachine(g, UseCudaFor(), WithLogger(logger), WithWatchlist())
-		m1 := NewTapeMachine(g)
-		if err = m1.RunAll(); err != nil {
-			t.Logf("%v", m1.Prog())
-			t.Fatalf("Test %d: error while running %+v", i, err)
-			runtime.GC()
-			continue
-		}
-
-		as := newAssertState(assert)
-		as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
-		as.True(bot.correctShape.Eq(ret.Shape()))
-		as.Equal(2, len(grads))
-		as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
-		as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
-		if !as.cont {
-			prog := m1.Prog()
-			t.Fatalf("Test %d failed. Prog: %v", i, prog)
+		log.Printf("Test %d", i)
+		if err := testOneCUDABasicArithmetic(t, bot, i); err != nil {
+			t.Fatalf("Test %d. Err %+v", i, err)
 		}
 		runtime.GC()
 	}
 
 	// _logger_ = spare
+}
+
+func testOneCUDABasicArithmetic(t *testing.T, bot binOpTest, i int) error {
+	g := NewGraph()
+	xV, _ := CloneValue(bot.a)
+	yV, _ := CloneValue(bot.b)
+	x := NodeFromAny(g, xV, WithName("x"))
+	y := NodeFromAny(g, yV, WithName("y"))
+
+	var ret *Node
+	var retVal Value
+	var err error
+	if ret, err = bot.binOp(x, y); err != nil {
+		return err
+	}
+	Read(ret, &retVal)
+
+	cost := Must(Sum(ret))
+	var grads Nodes
+	if grads, err = Grad(cost, x, y); err != nil {
+		return err
+	}
+
+	m1 := NewTapeMachine(g)
+	defer m1.Close()
+	if err = m1.RunAll(); err != nil {
+		t.Logf("%v", m1.Prog())
+		return err
+	}
+
+	as := newAssertState(assert.New(t))
+	as.Equal(bot.correct.Data(), retVal.Data(), "Test %d result", i)
+	as.True(bot.correctShape.Eq(ret.Shape()))
+	as.Equal(2, len(grads))
+	as.Equal(bot.correctDerivA.Data(), grads[0].Value().Data(), "Test %v xgrad", i)
+	as.Equal(bot.correctDerivB.Data(), grads[1].Value().Data(), "Test %v ygrad. Expected %v. Got %v", i, bot.correctDerivB, grads[1].Value())
+	if !as.cont {
+		prog := m1.Prog()
+		return errors.Errorf("Failed. Prog %v", prog)
+	}
+	return nil
+
 }
 
 func TestMultiDeviceArithmetic(t *testing.T) {
@@ -114,7 +114,7 @@ func TestMultiDeviceArithmetic(t *testing.T) {
 
 	logger := log.New(os.Stderr, "", 0)
 	m := NewLispMachine(g, WithLogger(logger), WithWatchlist(), LogBothDir())
-
+	defer m.Close()
 	t.Logf("zpx.Device: %v", zpx.Device())
 	t.Logf("x.Device: %v", x.Device())
 	t.Logf("y.Device: %v", y.Device())

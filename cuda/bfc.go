@@ -1,4 +1,4 @@
-package gorgonia
+package cuda
 
 import (
 	"bytes"
@@ -162,13 +162,13 @@ func (l *freelist) insert(block *memblock) {
 		return
 	}
 
+	allocatorLogf("insert block")
 insert:
 	for b := l.first; b != nil; b = b.next {
 		overlaps := b.overlaps(block)
 		switch {
 		case b.address < block.address && overlaps:
 			// coalesce block into b
-
 			blockCap := block.cap()
 			bcap := b.cap()
 			if blockCap <= bcap {
@@ -180,6 +180,11 @@ insert:
 			return
 
 		case b.address < block.address && !overlaps:
+			if b.next == nil {
+				allocatorLogf("Uh oh")
+				allocatorLogf("b: %v", b)
+				allocatorLogf("l %v", l)
+			}
 			if b.next.address >= block.cap() {
 				bnext := b.next
 				b.next = block
@@ -188,6 +193,7 @@ insert:
 				bnext.prev = block
 				l.l++
 				return
+
 			}
 		case b.address == block.address:
 			if b.size > block.size {
@@ -217,6 +223,7 @@ insert:
 }
 
 func (l *freelist) remove(block *memblock) {
+	allocatorLogf("remove %v from free list", block)
 	if l.first == block {
 		l.first = block.next
 	} else {
@@ -304,12 +311,23 @@ type bfc struct {
 }
 
 func newBFC(alignment int64) *bfc {
-	b := &bfc{
+	b := makeBFC(alignment)
+	return &b
+}
+
+func makeBFC(alignment int64) bfc {
+	return bfc{
 		blockSize: alignment,
 		freelist:  new(freelist),
 		used:      make(map[uintptr]int64),
 	}
-	return b
+}
+
+func (b *bfc) reset() {
+	b.allocated = 0
+	b.allocs = 0
+	b.frees = 0
+
 }
 
 func (b *bfc) reserve(start uintptr, size int64) {
@@ -334,6 +352,8 @@ func (b *bfc) alloc(size int64) (mem uintptr, err error) {
 	allocatorLogf("BFC Allocating %v", size)
 	allocatorLogf("before alloc: %v", b.freelist)
 	defer allocatorLogf("after alloc: %v", b.freelist)
+	enterLogScope()
+	defer leaveLogScope()
 	if size <= 0 {
 		return 0, errors.Errorf("Cannot allocate memory with size 0 or less")
 	}
@@ -362,7 +382,15 @@ func (b *bfc) alloc(size int64) (mem uintptr, err error) {
 }
 
 func (b *bfc) free(address uintptr) {
+	allocatorLogf("BFC Free 0x%x", address)
+	enterLogScope()
+	defer leaveLogScope()
+
+	allocatorLogf("Before: %v", b.freelist)
+	defer allocatorLogf("After: %v", b.freelist)
+
 	a := address - b.start // get internal address
+	allocatorLogf("Internal address 0x%x", a)
 	size, ok := b.used[a]
 	if !ok {
 		allocatorLogf("a: 0x%x | 0x%x", a, address)
@@ -372,7 +400,6 @@ func (b *bfc) free(address uintptr) {
 
 	}
 	block := newMemblock(a, size)
-	allocatorLogf("FREE %v", block)
 	b.freelist.insert(block)
 	delete(b.used, a)
 
@@ -418,7 +445,7 @@ func (b *bfc) coalesce() {
 				b.freelist.l--
 			case block.overlaps(next):
 				// unhandled yet
-				panic("Unhandled: overlaping coalesceing")
+				panic("Unhandled: overlapping coalesceing")
 			default:
 				break inner
 			}

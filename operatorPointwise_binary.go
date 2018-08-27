@@ -432,8 +432,7 @@ func addDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 }
 
 func addDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	// set up the op to be executed
 	op := NewAddOp(x, z, ctx)
@@ -543,8 +542,7 @@ func subDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 }
 
 func subDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	add := NewAddOp(x, z, ctx)
 	sub := NewSubOp(y, z, ctx)
@@ -662,8 +660,7 @@ func hadamardProdDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 }
 
 func hadamardProdDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, y)
 
 	var mul *ExternalOp
 	var dev Device
@@ -832,13 +829,10 @@ func hadamardDivDiffExpr(x, y, z, gradZ *Node) (retVal Nodes, err error) {
 }
 
 func hadamardDivDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
-
-	div := newEBOByType(divOpType, TypeOf(zdv.d), TypeOf(ydv.Value))
+	xdv, ydv, zdv := getDV3(x, y, z)
 
 	// dzdx = 1/y * dz
+	div := newEBOByType(divOpType, TypeOf(zdv.d), TypeOf(ydv.Value))
 	err = div.IncrDo(xdv.d, zdv.d, ydv.Value)
 	if err != nil {
 		var ver Valuer
@@ -935,9 +929,7 @@ func hadamardPowDiffExpr(x, y, z, grad *Node) (retVal Nodes, err error) {
 }
 
 func hadamardPowDiff(ctx ExecutionContext, x, y, z *Node) (err error) {
-	xdv := x.boundTo.(*dualValue)
-	ydv := y.boundTo.(*dualValue)
-	zdv := z.boundTo.(*dualValue)
+	xdv, ydv, zdv := getDV3(x, y, z)
 
 	var ym1 Value
 	switch ydvt := ydv.Value.(type) {

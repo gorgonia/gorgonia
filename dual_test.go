@@ -45,8 +45,7 @@ func TestDVBindVar(t *testing.T) {
 	op = newEBOByType(addOpType, TypeOf(x), TypeOf(y))
 	xdv = constantDV(x)
 	ydv = constantDV(y)
-	retVal, err = dvBindVar(op, []*dualValue{xdv, ydv})
-	if err != nil {
+	if retVal, err = dvBindVar(op, []*dualValue{xdv, ydv}); err != nil {
 		t.Error(err)
 	}
 	assert.Equal(t, []float64{1, 1, 1, 1}, retVal.d.Data())

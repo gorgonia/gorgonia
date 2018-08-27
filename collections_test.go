@@ -20,7 +20,7 @@ func TestNodes(t *testing.T) {
 	n1h := n1.Hashcode()
 	n2h := n2.Hashcode()
 	n3h := n3.Hashcode()
-	t.Logf("%x, %x, %x, %x", n0.hash, n1.hash, n2.hash, n3.hash)
+	t.Logf("%x, %x, %x, %x", n0h, n1h, n2h, n3h)
 
 	set := Nodes{n0, n1, n2, n3, n0, n0}
 
@@ -79,7 +79,7 @@ func TestNodes(t *testing.T) {
 n1, 
 n2, 
 n3]`,
-		fmt.Sprintf("[%x, %x, %x, %x]", n0h, n1h, n2h, n3h),
+		fmt.Sprintf("[%x, %x, %x, %x]", n0.id, n1.id, n2.id, n3.id),
 		"[n0, n1, n2, n3]",
 		"[n0 :: <nil>, n1 :: <nil>, n2 :: <nil>, n3 :: <nil>]",
 		"[<nil>, <nil>, <nil>, <nil>]",

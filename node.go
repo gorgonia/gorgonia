@@ -145,6 +145,33 @@ func WithValue(any interface{}) NodeConsOpt {
 	return f
 }
 
+// WithGrad is a node construction option that binds the value to the *Node. This function may panic if:
+//	- There isn't already a value associated with the node (.boundTo == nil)
+//	- The type of the Value does not match the value of the node.
+func WithGrad(any interface{}) NodeConsOpt {
+	v, t, _, err := anyToValue(any)
+	if err != nil {
+		panic(err)
+	}
+	f := func(n *Node) {
+		if n.boundTo == nil {
+			panic("No value already bound to node")
+		}
+		if !TypeOf(n.boundTo).Eq(t) {
+			panic("Different types ")
+		}
+
+		if dv, ok := n.boundTo.(*dualValue); !ok {
+			if err := n.bind(&dualValue{Value: n.boundTo, d: v}); err != nil {
+				panic(err)
+			}
+		} else {
+			dv.d = v
+		}
+	}
+	return f
+}
+
 // WithInit is a node construction option to initialize a *Node with the InitWFn provided.
 func WithInit(fn InitWFn) NodeConsOpt {
 	f := func(n *Node) {
@@ -170,7 +197,12 @@ func WithShape(shp ...int) NodeConsOpt {
 		// if nd == 1 && s.IsVector() {
 		// 	goto safe
 		// }
-		if nd != s.Dims() {
+		isVec := s.IsColVec() || s.IsRowVec()
+		acceptVec := (isVec && (nd == 1))
+		sameDims := nd == s.Dims()
+		acceptScalar := nd == 0 && scalarEquiv(s)
+
+		if !acceptVec && !sameDims && !acceptScalar {
 			panic(fmt.Sprintf("Node %v, has %d dimensions(Shape: %v). Input shape is %v, which has %d dimensions", n, n.Dims(), n.shape, s, s.Dims()))
 		}
 		// safe:
@@ -235,6 +267,9 @@ func (n *Node) isRoot() bool {
 	}
 	return len(n.g.to[n]) == 0
 }
+
+// IsVar returns true if  the node represents a differentiable variable (i.e. it's an argument to the function that is not a statement)
+func (n *Node) IsVar() bool { return n.isArg() && !n.isStmt && !n.isConstant() }
 
 // type related isX() helper methods
 
@@ -374,8 +409,32 @@ func (n *Node) Dims() int {
 // Type returns the type of the node
 func (n *Node) Type() hm.Type { return n.t }
 
+// Dtype returns the dtype of the node
+func (n *Node) Dtype() tensor.Dtype {
+	dt, err := dtypeOf(n.t)
+	if err != nil {
+		panic(err)
+	}
+	return dt
+}
+
 // Shape returns the shape of the node
 func (n *Node) Shape() tensor.Shape { return n.shape.Clone() }
+
+// Strides returns the strides of the value of the node
+func (n *Node) Strides() []int {
+	if n.boundTo != nil {
+		switch v := n.boundTo.(type) {
+		case *dualValue:
+			return v.Value.(tensor.Tensor).Strides()
+		case tensor.Tensor:
+			return v.Strides()
+		default:
+			log.Printf("Unhandled type for Strides(): %T. Using fallback method and assuming dense tensor types", n.boundTo)
+		}
+	}
+	return n.shape.CalcStrides()
+}
 
 // Device returns the device the data will be on
 func (n *Node) Device() Device { return n.dataOn }
@@ -478,7 +537,7 @@ func (n *Node) RestrictedToDot(up, down int) string {
 		origLen := len(upQ)
 		for i := 0; i < origLen; i++ {
 			qn := upQ[i]
-			toQN := graphNodeToNode(g.To(qn))
+			toQN := graphNodeToNode(g.To(qn.ID()))
 			upQ = append(upQ, toQN...)
 			ns = append(ns, toQN...)
 		}

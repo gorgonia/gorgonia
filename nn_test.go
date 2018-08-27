@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gorgonia.org/dawson"
 	"gorgonia.org/tensor"
 )
 
@@ -34,6 +35,7 @@ func dropoutTest(t *testing.T, dt tensor.Dtype) error {
 
 	// m := NewTapeMachine(g, TraceExec(), BindDualValues(), WithLogger(logger), WithWatchlist())
 	m := NewTapeMachine(g, TraceExec(), BindDualValues())
+	defer m.Close()
 	cudaLogf("%v", m.Prog())
 	defer runtime.GC()
 	if err := m.RunAll(); err != nil {
@@ -58,20 +60,21 @@ func TestDropout(t *testing.T) {
 }
 
 var im2colTests = []struct {
-	kernel tensor.Shape
-	pad    tensor.Shape
-	stride tensor.Shape
+	kernel   tensor.Shape
+	pad      tensor.Shape
+	stride   tensor.Shape
+	dilation tensor.Shape
 }{
-	{tensor.Shape{4, 4}, tensor.Shape{0, 0}, tensor.Shape{1, 1}},
-	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{2, 2}},
-	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{3, 3}},
+	{tensor.Shape{4, 4}, tensor.Shape{0, 0}, tensor.Shape{1, 1}, tensor.Shape{1, 1}},
+	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{2, 2}, tensor.Shape{1, 1}},
+	{tensor.Shape{3, 3}, tensor.Shape{1, 1}, tensor.Shape{3, 3}, tensor.Shape{1, 1}},
 }
 
-func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape) {
+func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride, dilation tensor.Shape) {
 	assert := assert.New(t)
 	g := NewGraph()
 	x := NewTensor(g, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0))) // mnist, in batches of 10
-	y, err := Im2Col(x, kernel, pad, stride)
+	y, err := Im2Col(x, kernel, pad, stride, dilation)
 	if err != nil {
 		t.Error(err)
 		return
@@ -85,23 +88,25 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 	}
 
 	m := NewTapeMachine(g, BindDualValues())
+	defer m.Close()
 	if err := m.RunAll(); err != nil {
 		t.Error(err)
 		return
 	}
-	t.Logf("x: %v", x.Value())
-	t.Logf("c: %3.3f", cost.Value())
-	t.Logf("xG: %v", grads[0].Value())
+	// t.Logf("x: %v", x.Value())
+	// t.Logf("c: %3.3f", cost.Value())
+	// t.Logf("xG: %v", grads[0].Value())
 
 	h := NewGraph()
 	a := NewTensor(h, dt, 4, WithShape(2, 1, 28, 28), WithInit(RangedFrom(0)))
-	b, err := Im2Col(a, kernel, pad, stride)
+	b, err := Im2Col(a, kernel, pad, stride, dilation)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	cost2 := Must(Sum(b))
 	n := NewLispMachine(h)
+	defer n.Close()
 	if err = n.RunAll(); err != nil {
 		t.Error(err)
 		return
@@ -112,9 +117,9 @@ func im2colTest(t *testing.T, dt tensor.Dtype, kernel, pad, stride tensor.Shape)
 		return
 	}
 
-	t.Logf("a: %v", a.Value())
-	t.Logf("c: %3.3f", cost2.Value())
-	t.Logf("aG: %v", aG)
+	// t.Logf("a: %v", a.Value())
+	// t.Logf("c: %3.3f", cost2.Value())
+	// t.Logf("aG: %v", aG)
 
 	assert.Equal(x.Value().Data(), a.Value().Data())
 	assert.Equal(grads[0].Value().Data(), aG.Data())
@@ -126,7 +131,7 @@ func TestIm2Col(t *testing.T) {
 	dts := []tensor.Dtype{tensor.Float64, tensor.Float32}
 	for _, dt := range dts {
 		for _, i2ct := range im2colTests {
-			im2colTest(t, dt, i2ct.kernel, i2ct.pad, i2ct.stride)
+			im2colTest(t, dt, i2ct.kernel, i2ct.pad, i2ct.stride, i2ct.dilation)
 		}
 	}
 }
@@ -151,11 +156,10 @@ func TestMaxPool2D(t *testing.T) {
 		if err := m.RunAll(); err != nil {
 			t.Fatal(err)
 		}
-
-		t.Logf("x %v", x.Value())
-		t.Logf("y: %v", y.Value())
-		t.Logf("c: %v", cost.Value())
-		t.Logf("xG: %v", grads[0])
+		// t.Logf("x %v", x.Value())
+		// t.Logf("y: %v", y.Value())
+		// t.Logf("c: %v", cost.Value())
+		// t.Logf("xG: %v", grads[0])
 
 		h := NewGraph()
 		a := NewTensor(h, dt, 4, WithShape(1, 2, 3, 4), WithInit(RangedFrom(0)))
@@ -182,26 +186,194 @@ func TestMaxPool2D(t *testing.T) {
 		assert.Equal(grads[0].Value().Data(), aG.Data())
 		assert.Equal(cost.Value().Data(), cost2.Value().Data())
 
+		m.Close()
+		m2.Close()
 	}
 
 }
 
-/*
-func TestDumb(t *testing.T) {
+func TestBatchNorm_F64(t *testing.T) {
 	g := NewGraph()
-	x := NewTensor(g, Float32, 4, WithShape(10, 128, 6, 6), WithInit(RangedFrom(0)))
-	// x := NewTensor(g, Float32, 4, WithShape(10, 128, 6, 6), WithName("x"))
-	p := Must(MaxPool2D(x, tensor.Shape{2, 2}, []int{0, 0}, []int{2, 2}))
-	r := Must(Reshape(p, tensor.Shape{10, 512}))
-	c := Must(Sum(r))
-	Grad(c, x)
-	// ioutil.WriteFile("dumbdumb.dot", []byte(g.ToDot()), 0644)
-	// prog, _, _ := Compile(g)
-	// log.Printf("%v", prog)
-	logger := log.New(os.Stderr, "", 0)
-	m := NewTapeMachine(g, WithLogger(logger), WithWatchlist(), WithValueFmt("%+s"))
+	x := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)), WithName("x"))
+	scale := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Ones()), WithName("scale"))
+	bias := NewTensor(g, Float64, 4, WithShape(5, 2, 3, 4), WithInit(Zeroes()), WithName("bias"))
+	y, _, _, op, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var yVal Value
+	Read(y, &yVal)
+
+	cost, _ := Mean(y)
+
+	if _, err := Grad(cost, x); err != nil {
+		t.Fatal(err)
+	}
+
+	m := NewTapeMachine(g, BindDualValues(x), TraceExec())
 	if err := m.RunAll(); err != nil {
 		t.Fatal(err)
 	}
+	m.Close()
+	ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
+
+	shape := x.Shape()
+	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
+
+	yVT := yVal.(*tensor.Dense)
+	for j := 0; j < c; j++ {
+		var sum, variance float64
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float64)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+		sum /= float64(h * w * n)
+		variance /= float64(h * w * n)
+
+		if !dawson.ToleranceF64(sum, 0, 0.00001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF64(variance, 1, 0.0001) {
+			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
+		}
+	}
+
+	op.SetTesting()
+	m = NewTapeMachine(g, BindDualValues(x))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	m.Close()
+	yVT = yVal.(*tensor.Dense)
+	for j := 0; j < c; j++ {
+		var sum, variance float64
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float64)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+		sum /= float64(h * w * n)
+		variance /= float64(h * w * n)
+
+		if !dawson.ToleranceF64(sum, 0, 0.00001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF64(variance, 0.9833, 0.0001) {
+			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
+		}
+	}
+
 }
-*/
+
+func TestBatchNorm_F32(t *testing.T) {
+	g := NewGraph()
+	x := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Gaussian(0, 1)))
+	scale := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Ones()), WithName("scale"))
+	bias := NewTensor(g, Float32, 4, WithShape(5, 2, 3, 4), WithInit(Zeroes()), WithName("bias"))
+	y, _, _, op, err := BatchNorm(x, scale, bias, 0.9, 1e-5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var yVal Value
+	Read(y, &yVal)
+
+	cost, _ := Mean(y)
+
+	if _, err := Grad(cost, x); err != nil {
+		ioutil.WriteFile("foo.dot", []byte(g.ToDot()), 0644)
+		t.Fatal(err)
+	}
+
+	m := NewTapeMachine(g, BindDualValues(x))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	m.Close()
+
+	shape := x.Shape()
+	n, c, h, w := shape[0], shape[1], shape[2], shape[3]
+
+	yVT := yVal.(*tensor.Dense)
+	for j := 0; j < c; j++ {
+		var sum, variance float32
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float32)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+		sum /= float32(h * w * n)
+		variance /= float32(h * w * n)
+
+		if !dawson.ToleranceF32(sum, 0, 0.001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF32(variance, 1, 0.001) {
+			t.Errorf("channel %d: Expected variance to be near 1. Got %v", j, variance)
+		}
+	}
+
+	op.SetTesting()
+	m = NewTapeMachine(g, BindDualValues(x))
+	if err := m.RunAll(); err != nil {
+		t.Fatal(err)
+	}
+	m.Close()
+	yVT = yVal.(*tensor.Dense)
+	for j := 0; j < c; j++ {
+		var sum, variance float32
+		for i := 0; i < n; i++ {
+			for k := 0; k < h; k++ {
+				for l := 0; l < w; l++ {
+					at, err := yVT.At(i, j, k, l)
+					if err != nil {
+						t.Fatal(err)
+					}
+					atf := at.(float32)
+					sum += atf
+					variance += atf * atf
+				}
+			}
+		}
+		sum /= float32(h * w * n)
+		variance /= float32(h * w * n)
+
+		if !dawson.ToleranceF32(sum, 0, 0.001) {
+			t.Errorf("channel %d: Expected sum to be near 0. Got %v", j, sum)
+		}
+
+		if !dawson.ToleranceF32(variance, 0.9833, 0.001) {
+			t.Errorf("channel %d: Expected variance to be near 0.98. Got %v", j, variance)
+		}
+	}
+
+}

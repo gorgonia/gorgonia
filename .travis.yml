@@ -5,10 +5,9 @@ branches:
   only:
     - master
 go:
-  - 1.6.x
-  - 1.7.x
   - 1.8.x
   - 1.9.x
+  - 1.10.x
   - tip
 
 env:
@@ -24,13 +23,13 @@ cache:
   - .travis/OpenBLAS.cache
 
 before_install:
-  - source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/install_cuda.sh
   - go get github.com/mattn/goveralls
 
+go_import_path: gorgonia.org/gorgonia
 
 # Install the appropriate blas library (if any) and associated gonum software.
 install:
-- travis_wait source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/install.sh
+- travis_wait source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/install.sh
 
 script: 
 - source ${TRAVIS_BUILD_DIR}/.travis/$TRAVIS_OS_NAME/$BLAS_LIB/test.sh

@@ -11,26 +11,30 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"gorgonia.org/cu"
 )
 
 var debug = flag.Bool("debug", false, "compile with debug mode (-linelinfo is added to nvcc call)")
 
-var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\n")
+var funcNameRegex = regexp.MustCompile("// .globl	(.+?)\r?\n")
 
 func stripExt(fullpath string) string {
 	_, filename := filepath.Split(fullpath)
 	ext := path.Ext(filename)
-	name := strings.TrimRight(filename, ext)
-	return name
+	return filename[:len(filename)-len(ext)]
 }
 
 func compileCUDA(src, targetLoc string, maj, min int) {
 	name := stripExt(src)
 	arch := fmt.Sprintf("-arch=compute_%d%d", maj, min)
 	output := fmt.Sprintf("-o=%v", path.Join(targetLoc, name+".ptx"))
+
+	if _, err := os.Stat(targetLoc); os.IsNotExist(err) {
+		if err := os.Mkdir(targetLoc, 0777); err != nil {
+			log.Fatalf("FAILED TO CREATE TARGET DIR %q. Unable to proceed with nvcc compilation. Error was %v", targetLoc, err)
+		}
+	}
 
 	var stderr bytes.Buffer
 
@@ -42,7 +46,7 @@ func compileCUDA(src, targetLoc string, maj, min int) {
 	}
 
 	slow.Stderr = &stderr
-	if err := slow.Run(); err != nil {
+	if err := slow.Run(); err != nil || stderr.Len() != 0 {
 		log.Fatalf("Failed to compile with nvcc. Error: %v. nvcc error: %v", err, stderr.String())
 	}
 
@@ -71,7 +75,7 @@ func main() {
 	for d := 0; d < devices; d++ {
 		var dev cu.Device
 		if dev, err = cu.GetDevice(d); err != nil {
-			log.Fatalf("Unable to get GPU%d - %+v", err)
+			log.Fatalf("Unable to get GPU%d - %+v", d, err)
 		}
 
 		maj, min, err := dev.ComputeCapability()
@@ -90,6 +94,9 @@ func main() {
 	}
 
 	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = path.Join(os.Getenv("HOME"), "go")
+	}
 	gorgoniaLoc := path.Join(gopath, "src/gorgonia.org/gorgonia")
 	cuLoc := path.Join(gorgoniaLoc, "cuda modules/src")
 	ptxLoc := path.Join(gorgoniaLoc, "cuda modules/target")

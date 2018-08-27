@@ -11,7 +11,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
-	"hash/fnv"
 
 	"github.com/chewxy/hm"
 	"github.com/pkg/errors"
@@ -72,8 +71,7 @@ func (op maxOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 		return nil, errors.Wrap(err, operationError)
 	}
 
-	retVal[0], err = Broadcast(mulOpType, gradNode, eq, bcpat)
-	if err != nil {
+	if retVal[0], err = Broadcast(mulOpType, gradNode, eq, bcpat); err != nil {
 		return nil, errors.Wrap(err, operationError)
 	}
 	return
@@ -99,11 +97,7 @@ func (op maxOp) WriteHash(h hash.Hash) {
 	fmt.Fprintf(h, "%v->%v", op.d, op.along)
 }
 
-func (op maxOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
+func (op maxOp) Hashcode() uint32 { return simpleHash(op) }
 
 func (op maxOp) String() string { return fmt.Sprintf("MaxAlong%v", op.along) }
 func (op maxOp) isUnary() bool  { return true }
@@ -221,8 +215,7 @@ func (op sumOp) SymDiff(inputs Nodes, output, gradNode *Node) (retVal Nodes, err
 	symdiffLogf("repeat: %v", repeat.Type())
 	symdiffLogf("children %#Y", children)
 	symdiffLogf("children: %v", children)
-	retVal[0], err = ApplyOp(repeat, children...)
-	if err != nil {
+	if retVal[0], err = ApplyOp(repeat, children...); err != nil {
 		return nil, errors.Wrap(err, applyOpFail)
 	}
 	retVal[0].setGroup(gradClust)
@@ -235,8 +228,7 @@ func (op sumOp) DoDiff(ctx ExecutionContext, inputs Nodes, output *Node) (err er
 	}
 
 	x := inputs[0]
-	xdv := x.boundTo.(*dualValue)
-	ydv := output.boundTo.(*dualValue)
+	xdv, ydv := getDV(x, output)
 	xShape := xdv.Value.Shape()
 
 	var T tensor.Tensor
@@ -320,8 +312,7 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 		return
 	}
 
-	a := inputs[0]
-	at := a.(tensor.Tensor)
+	at := inputs[0].(tensor.Tensor)
 	switch t := at.(type) {
 	case *tensor.Dense:
 		var ret *tensor.Dense
@@ -340,20 +331,10 @@ func (op sumOp) Do(inputs ...Value) (retVal Value, err error) {
 	return
 }
 
-func (op sumOp) ReturnsPtr() bool     { return true }
-func (op sumOp) OverwritesInput() int { return 0 }
-func (op sumOp) CallsExtern() bool    { return false }
-
-func (op sumOp) WriteHash(h hash.Hash) {
-	h.Write([]byte("sum"))
-	fmt.Fprintf(h, "%v->%v", op.along, op.inputShape)
-}
-
-func (op sumOp) Hashcode() uint32 {
-	h := fnv.New32a()
-	op.WriteHash(h)
-	return h.Sum32()
-}
-
-func (op sumOp) String() string { return fmt.Sprintf("Σ%v", op.along) }
-func (op sumOp) isUnary() bool  { return true }
+func (op sumOp) ReturnsPtr() bool      { return true }
+func (op sumOp) OverwritesInput() int  { return 0 }
+func (op sumOp) CallsExtern() bool     { return false }
+func (op sumOp) WriteHash(h hash.Hash) { fmt.Fprintf(h, "sum%v->%v", op.along, op.inputShape) }
+func (op sumOp) Hashcode() uint32      { return simpleHash(op) }
+func (op sumOp) String() string        { return fmt.Sprintf("Σ%v", op.along) }
+func (op sumOp) isUnary() bool         { return true }
