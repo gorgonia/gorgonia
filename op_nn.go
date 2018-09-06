@@ -3,6 +3,7 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
+	"log"
 	"time"
 
 	"github.com/chewxy/hm"
@@ -297,8 +298,8 @@ func (op im2colOp) calcShape(s tensor.Shape) (retVal tensor.Shape) {
 }
 
 func (op im2colOp) retHW(h, w int) (retHeight, retWidth int) {
-	retHeight = (h+2*op.padH-((op.dilationH*op.h-1)+1))/op.strideH + 1
-	retWidth = (w+2*op.padW-((op.dilationW*op.w-1)+1))/op.strideW + 1
+	retHeight = (h+2*op.padH-(op.dilationH*(op.h-1)+1))/op.strideH + 1
+	retWidth = (w+2*op.padW-(op.dilationW*(op.w-1)+1))/op.strideW + 1
 	return
 }
 
@@ -376,17 +377,17 @@ func (op im2colOp) f64s(chans, height, width, chanStride, retHeight, retWidth in
 							col[colIdx] = 0
 							colIdx++
 						}
-						continue
-					}
-					inCol := -op.padW + kernelCol*op.dilationW
-					for outCol := retWidth; outCol > 0; outCol-- {
-						if inCol >= 0 && inCol < width {
-							col[colIdx] = im[inRow*width+inCol]
-						} else {
-							col[colIdx] = 0
+					} else {
+						inCol := -op.padW + kernelCol*op.dilationW
+						for outCol := retWidth; outCol > 0; outCol-- {
+							if inCol >= 0 && inCol < width {
+								col[colIdx] = im[inRow*width+inCol]
+							} else {
+								col[colIdx] = 0
+							}
+							colIdx++
+							inCol += op.strideW
 						}
-						colIdx++
-						inCol += op.strideW
 					}
 					inRow += op.strideH
 				}
@@ -396,34 +397,60 @@ func (op im2colOp) f64s(chans, height, width, chanStride, retHeight, retWidth in
 }
 
 func (op im2colOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float32) {
-	var colIdx int
-	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-				inRow := -op.padH + kernelRow*op.dilationH
-				for outRow := retHeight; outRow > 0; outRow-- {
-					if !(inRow >= 0 && inRow < height) {
-						for outCol := retWidth; outCol > 0; outCol-- {
-							col[colIdx] = 0
-							colIdx++
-						}
-						continue
+	// Variant of original pulled out from the crypts of ancient times
+	log.Printf("chans %v, height %v, width %v, chanStride %v, retHeight %v, retWidth %v", chans, height, width, chanStride, retHeight, retWidth)
+	retChans := chans * chanStride
+	for c := 0; c < chans; c++ {
+		offsetW := c % op.w
+		offsetH := (c / op.w) % op.h
+		imC := c / op.h / op.w
+
+		for h := 0; h < retHeight; h++ {
+			for w := 0; w < retWidth; w++ {
+				padH := h*op.strideH - op.padH + offsetH
+				padW := w*op.strideW - op.padW + offsetW
+				if padH >= 0 && padH < height && padW >= 0 && padW < width {
+					// do something
+					if retChans*retWidth*h+retChans*w+c < len(col) {
+						col[retChans*retWidth*h+retChans*w+c] =
+							im[(imC*height+padH)*width+padW]
 					}
-					inCol := -op.padW + kernelCol*op.dilationW
-					for outCol := retWidth; outCol > 0; outCol-- {
-						if inCol >= 0 && inCol < width {
-							col[colIdx] = im[inRow*width+inCol]
-						} else {
-							col[colIdx] = 0
-						}
-						colIdx++
-						inCol += op.strideW
-					}
-					inRow += op.strideH
+					continue
 				}
+				col[retChans*retWidth*h+retChans*w+c] = 0
 			}
 		}
 	}
+
+	// var colIdx int
+	// for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
+	// 	for kernelRow := 0; kernelRow < op.h; kernelRow++ {
+	// 		for kernelCol := 0; kernelCol < op.w; kernelCol++ {
+	// 			inRow := -op.padH + kernelRow*op.dilationH
+	// 			for outRow := retHeight; outRow > 0; outRow-- {
+	// 				if !(inRow >= 0 && inRow < height) {
+	// 					for outCol := retWidth; outCol > 0; outCol-- {
+	// 						col[colIdx] = 0
+	// 						colIdx++
+	// 					}
+	// 				} else {
+	// 					inCol := -op.padW + kernelCol*op.dilationW
+	// 					for outCol := retWidth; outCol > 0; outCol-- {
+	// 						if inCol >= 0 && inCol < width {
+	// 							col[colIdx] = im[inRow*width+inCol]
+	// 							colIdx++
+	// 						} else {
+	// 							col[colIdx] = 0
+	// 							colIdx++
+	// 						}
+	// 						inCol += op.strideW
+	// 					}
+	// 				}
+	// 				inRow += op.strideH
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 type col2imOp struct {
