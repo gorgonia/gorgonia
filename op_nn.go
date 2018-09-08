@@ -3,7 +3,6 @@ package gorgonia
 import (
 	"fmt"
 	"hash"
-	"log"
 	"time"
 
 	"github.com/chewxy/hm"
@@ -304,17 +303,22 @@ func (op im2colOp) retHW(h, w int) (retHeight, retWidth int) {
 }
 
 func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
+	inputT := input.(*tensor.Dense)
+	outputT := prealloc.(*tensor.Dense)
+
 	// extract bchw - this bit can be expanded in the future, but for now we only support bchw
-	s := input.Shape()
+	s := inputT.Shape()
 	b := s[0]
 	c := s[1]
 	h := s[2]
 	w := s[3]
 
+	inputStrides := inputT.Strides()
 	retHeight, retWidth := op.retHW(h, w)
-	batchStrideIm := c * h * w
-	batchStrideCol := (op.w * op.h * c) * retHeight * retWidth
+	batchStrideIm := inputStrides[0]
+	batchStrideCol := outputT.Strides()[0]
 	chanStride := h * w
+	inRowStride := inputStrides[2]
 
 	var imStart, imEnd, colStart, colEnd int
 	imEnd = imStart + batchStrideIm
@@ -325,39 +329,33 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 		imData := input.Data().([]float64)
 		colData := prealloc.Data().([]float64)
 		for i := 0; i < b; i++ {
-			op.f64s(c, h, w, chanStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			imStart := i * batchStrideIm
+			colStart := i * batchStrideCol
 
-			colStart += batchStrideCol
-			colEnd += batchStrideCol
-
-			imStart += batchStrideIm
-			imEnd += batchStrideIm
-
-			if imEnd > len(imData) {
+			if imEnd = imStart + batchStrideIm; imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd > len(colData) {
+			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+
+			op.f64s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
 		}
 	case tensor.Float32:
 		imData := input.Data().([]float32)
 		colData := prealloc.Data().([]float32)
 		for i := 0; i < b; i++ {
-			op.f32s(c, h, w, chanStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
+			imStart := i * batchStrideIm
+			colStart := i * batchStrideCol
 
-			colStart += batchStrideCol
-			colEnd += batchStrideCol
-
-			imStart += batchStrideIm
-			imEnd += batchStrideIm
-
-			if imEnd > len(imData) {
+			if imEnd = imStart + batchStrideIm; imEnd >= len(imData) {
 				imEnd = len(imData)
 			}
-			if colEnd > len(colData) {
+			if colEnd = colStart + batchStrideCol; colEnd >= len(colData) {
 				colEnd = len(colData)
 			}
+
+			op.f32s(c, h, w, chanStride, inRowStride, retHeight, retWidth, imData[imStart:imEnd], colData[colStart:colEnd])
 		}
 	default:
 		return nil, errors.Errorf(nyiFail, "im2col", input.Dtype())
@@ -365,92 +363,62 @@ func (op im2colOp) do(prealloc, input Value) (retVal Value, err error) {
 	return prealloc, nil
 }
 
-func (op im2colOp) f64s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float64) {
+func (op im2colOp) f64s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float64) {
 	var colIdx int
-	for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-		for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-			for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-				inRow := -op.padH + kernelRow*op.dilationH
-				for outRow := retHeight; outRow > 0; outRow-- {
-					if !(inRow >= 0 && inRow < height) {
-						for outCol := retWidth; outCol > 0; outCol-- {
-							col[colIdx] = 0
-							colIdx++
+	for ch := 0; ch < chans; ch, im = ch+1, im[chanStride:] {
+		for r := 0; r < retHeight; r++ {
+			for c := 0; c < retWidth; c++ {
+				for kr := 0; kr < op.h; kr++ {
+					inRow := -op.padH + kr*op.dilationH + r*op.strideH
+					for kc := 0; kc < op.w; kc++ {
+						inCol := -op.padW + kc*op.dilationW + c*op.strideW
+						var val float64
+
+						switch {
+						case inRow < 0:
+						case inCol < 0:
+						case inRow*inRowStride+inCol >= len(im):
+						case inCol >= inRowStride:
+						default:
+							val = im[inRow*inRowStride+inCol]
 						}
-					} else {
-						inCol := -op.padW + kernelCol*op.dilationW
-						for outCol := retWidth; outCol > 0; outCol-- {
-							if inCol >= 0 && inCol < width {
-								col[colIdx] = im[inRow*width+inCol]
-							} else {
-								col[colIdx] = 0
-							}
-							colIdx++
-							inCol += op.strideW
-						}
+
+						col[colIdx] = val
+						colIdx++
 					}
-					inRow += op.strideH
 				}
 			}
 		}
 	}
 }
 
-func (op im2colOp) f32s(chans, height, width, chanStride, retHeight, retWidth int, im, col []float32) {
-	// Variant of original pulled out from the crypts of ancient times
-	log.Printf("chans %v, height %v, width %v, chanStride %v, retHeight %v, retWidth %v", chans, height, width, chanStride, retHeight, retWidth)
-	retChans := chans * chanStride
-	for c := 0; c < chans; c++ {
-		offsetW := c % op.w
-		offsetH := (c / op.w) % op.h
-		imC := c / op.h / op.w
+func (op im2colOp) f32s(chans, height, width, chanStride, inRowStride, retHeight, retWidth int, im, col []float32) {
+	var colIdx int
+	for ch := 0; ch < chans; ch, im = ch+1, im[chanStride:] {
+		for r := 0; r < retHeight; r++ {
+			for c := 0; c < retWidth; c++ {
+				for kr := 0; kr < op.h; kr++ {
+					inRow := -op.padH + kr*op.dilationH + r*op.strideH
+					for kc := 0; kc < op.w; kc++ {
+						inCol := -op.padW + kc*op.dilationW + c*op.strideW
+						var val float32
 
-		for h := 0; h < retHeight; h++ {
-			for w := 0; w < retWidth; w++ {
-				padH := h*op.strideH - op.padH + offsetH
-				padW := w*op.strideW - op.padW + offsetW
-				if padH >= 0 && padH < height && padW >= 0 && padW < width {
-					// do something
-					if retChans*retWidth*h+retChans*w+c < len(col) {
-						col[retChans*retWidth*h+retChans*w+c] =
-							im[(imC*height+padH)*width+padW]
+						switch {
+						case inRow < 0:
+						case inCol < 0:
+						case inRow*inRowStride+inCol >= len(im):
+						case inCol >= inRowStride:
+						default:
+							val = im[inRow*inRowStride+inCol]
+						}
+
+						col[colIdx] = val
+						colIdx++
 					}
-					continue
 				}
-				col[retChans*retWidth*h+retChans*w+c] = 0
 			}
 		}
 	}
-
-	// var colIdx int
-	// for ch := chans; ch > 0; ch, im = ch-1, im[chanStride:] {
-	// 	for kernelRow := 0; kernelRow < op.h; kernelRow++ {
-	// 		for kernelCol := 0; kernelCol < op.w; kernelCol++ {
-	// 			inRow := -op.padH + kernelRow*op.dilationH
-	// 			for outRow := retHeight; outRow > 0; outRow-- {
-	// 				if !(inRow >= 0 && inRow < height) {
-	// 					for outCol := retWidth; outCol > 0; outCol-- {
-	// 						col[colIdx] = 0
-	// 						colIdx++
-	// 					}
-	// 				} else {
-	// 					inCol := -op.padW + kernelCol*op.dilationW
-	// 					for outCol := retWidth; outCol > 0; outCol-- {
-	// 						if inCol >= 0 && inCol < width {
-	// 							col[colIdx] = im[inRow*width+inCol]
-	// 							colIdx++
-	// 						} else {
-	// 							col[colIdx] = 0
-	// 							colIdx++
-	// 						}
-	// 						inCol += op.strideW
-	// 					}
-	// 				}
-	// 				inRow += op.strideH
-	// 			}
-	// 		}
-	// 	}
-	// }
 }
 
 type col2imOp struct {
