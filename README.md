@@ -331,7 +331,7 @@ import (
 	"runtime"
 
 	T "gorgonia.org/gorgonia"
-	"gorgonia.org/gorgonia/tensor"
+	"gorgonia.org/tensor"
 )
 
 func main() {
