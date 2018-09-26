@@ -1141,7 +1141,7 @@ func (op reshapeOp) Do(vals ...Value) (Value, error) {
 	var val Value
 	var err error
 	if val, err = CloneValue(vals[0]); err != nil {
-		return nil, errors.Wrapf(err, cloneFail, vals[0])
+		return nil, errors.Wrapf(err, "%v %v", cloneFail, vals[0])
 	}
 	if !val.Shape().Eq(op.from) {
 		return nil, errors.Errorf("Shape mismatch. Input shape is %v. Expected %v", val.Shape(), op.from)
